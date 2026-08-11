@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+.env
+.env.local
+npm-debug.log*
+
+# Данные парсинга - не храним в git, кроме .gitkeep
+/data/**
+!/data/.gitkeep
+!/data/**/.gitkeep
+
+# Персистентные сессии браузера (куки, пройденные капчи/челленджи) - только локально
+.sessions/
+
+.DS_Store

@@ -1,0 +1,133 @@
+/**
+ * Единая схема данных, которой должны соответствовать все адаптеры источников.
+ * Используется парсером для нормализации и будущим сайтом для отображения цен.
+ */
+
+export const SOURCES = [
+  'wildberries',
+  'ozon',
+  'pyaterochka',
+  'magnit',
+  'lenta',
+] as const;
+
+export type SourceName = (typeof SOURCES)[number];
+
+/**
+ * Статус получения данных по источнику за последний прогон:
+ * - ok      — данные получены живьём в этом прогоне
+ * - stale   — источник недоступен (блок/капча), отдаём последние известные цены
+ * - blocked — источник недоступен и старых данных нет вовсе
+ * - error   — неожиданная ошибка адаптера (не связанная с антиботом)
+ */
+export const SOURCE_STATUSES = ['ok', 'stale', 'blocked', 'error'] as const;
+export type SourceStatus = (typeof SOURCE_STATUSES)[number];
+
+/** Стратегии получения данных, см. apps/parser/src/fetch/strategy.ts */
+export const FETCH_STRATEGIES = ['feed', 'intercept', 'in_page_fetch', 'cached'] as const;
+export type FetchStrategyName = (typeof FETCH_STRATEGIES)[number];
+
+export interface Product {
+  /** Источник данных */
+  source: SourceName;
+  /** Идентификатор товара у источника (артикул/id) */
+  sourceId: string;
+  /** Название товара, как на сайте источника */
+  name: string;
+  /** Бренд, если удалось определить */
+  brand?: string;
+  /** Объём в миллилитрах, если удалось определить */
+  volumeMl?: number;
+  /** Текущая цена в рублях */
+  price: number;
+  /** Цена до скидки, если есть */
+  oldPrice?: number;
+  /** Валюта (пока только рубли) */
+  currency: 'RUB';
+  /** Ссылка на карточку товара */
+  url: string;
+  /** Ссылка на изображение товара */
+  imageUrl?: string;
+  /** Категория/раздел, из которого получен товар */
+  category?: string;
+  /** Момент получения данных (ISO 8601) */
+  fetchedAt: string;
+  /** true, если запись перенесена из предыдущего успешного прогона (источник сейчас недоступен) */
+  stale?: boolean;
+  /** Когда товар был получен живьём в последний раз (актуально для stale-записей) */
+  lastSeenAt?: string;
+}
+
+/** Конфигурация запроса к конкретному источнику (см. apps/parser/config/products.json) */
+export interface SourceQueryConfig {
+  /** Поисковый запрос (для маркетплейсов) */
+  query?: string;
+  /** Ключевые слова категории для фильтрации фидов/выдачи (наследуются из ProductsConfig.keywords) */
+  keywords?: string[];
+  /** Слаг/идентификатор категории на сайте источника */
+  categorySlug?: string;
+  /** Числовой id категории во внутреннем API источника (Магнит/Пятёрочка) */
+  categoryId?: string;
+  /** Код магазина (Магнит: storeCode) */
+  storeCode?: string;
+  /** Код магазина доставки (Пятёрочка: sapCode) */
+  sapCode?: string;
+  /** Регион/город для ритейлеров, влияющий на цены и наличие */
+  regionId?: string;
+  /** Явный список брендов/названий для фильтрации результатов */
+  brands?: string[];
+  /** Ограничение на количество страниц/товаров за один запуск */
+  maxItems?: number;
+  /** URL партнёрского товарного фида (YML/CSV), если используется стратегия feed */
+  feedUrl?: string;
+  /** Порядок стратегий получения данных для этого источника, по умолчанию берётся из адаптера */
+  strategies?: FetchStrategyName[];
+}
+
+export interface ProductsConfig {
+  category: string;
+  keywords: string[];
+  brands: string[];
+  sources: Partial<Record<SourceName, SourceQueryConfig>>;
+}
+
+export interface AdapterFetchResult {
+  products: Product[];
+  /** Какая стратегия из strategies реально сработала в этом вызове */
+  strategyUsed: FetchStrategyName;
+}
+
+/** Общий интерфейс адаптера источника данных */
+export interface SourceAdapter {
+  source: SourceName;
+  /** Стратегии в порядке приоритета, которые поддерживает адаптер */
+  strategies: FetchStrategyName[];
+  fetchPrices(config: SourceQueryConfig): Promise<AdapterFetchResult>;
+}
+
+/** Результат работы одного адаптера, включая информацию об ошибках */
+export interface AdapterRunResult {
+  source: SourceName;
+  status: SourceStatus;
+  /** Стратегия, которой удалось получить данные (или на которой остановились) */
+  strategyUsed?: FetchStrategyName;
+  products: Product[];
+  error?: string;
+  startedAt: string;
+  finishedAt: string;
+}
+
+/** Персистентое состояние по источнику между запусками (data/state.json) */
+export interface SourceState {
+  source: SourceName;
+  status: SourceStatus;
+  strategyUsed?: FetchStrategyName;
+  lastAttemptAt?: string;
+  lastSuccessAt?: string;
+  lastError?: string;
+}
+
+export interface ParserState {
+  updatedAt: string;
+  sources: Partial<Record<SourceName, SourceState>>;
+}

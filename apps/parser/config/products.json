@@ -1,0 +1,39 @@
+{
+  "category": "energy_drinks",
+  "keywords": ["энергетик", "энергетический напиток"],
+  "brands": [
+    "Red Bull",
+    "Adrenaline Rush",
+    "Flash Up",
+    "Burn",
+    "Monster",
+    "Tornado",
+    "Gorilla",
+    "Drive Me",
+    "Bang",
+    "Predator"
+  ],
+  "sources": {
+    "wildberries": {
+      "query": "энергетический напиток",
+      "maxItems": 200
+    },
+    "ozon": {
+      "query": "энергетический напиток",
+      "maxItems": 100
+    },
+    "pyaterochka": {
+      "query": "энергетик",
+      "maxItems": 48
+    },
+    "magnit": {
+      "categoryId": "",
+      "storeCode": "",
+      "maxItems": 36
+    },
+    "lenta": {
+      "query": "энергетик",
+      "maxItems": 48
+    }
+  }
+}

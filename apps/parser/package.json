@@ -1,0 +1,32 @@
+{
+  "name": "@canrush/parser",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "parse": "tsx src/index.ts",
+    "schedule": "tsx src/index.ts --schedule",
+    "doctor": "tsx src/index.ts doctor",
+    "session:unlock": "tsx src/index.ts session:unlock",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@canrush/shared": "*",
+    "axios": "^1.7.9",
+    "csv-parse": "^7.0.2",
+    "dotenv": "^16.4.7",
+    "fast-xml-parser": "^5.10.1",
+    "node-cron": "^3.0.3",
+    "p-limit": "^6.2.0",
+    "p-retry": "^6.2.1",
+    "playwright": "^1.49.1",
+    "robots-parser": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.19.2"
+  }
+}
