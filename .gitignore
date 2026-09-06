@@ -15,3 +15,10 @@ npm-debug.log*
 .sessions/
 
 .DS_Store
+
+# Next.js
+.next/
+out/
+
+# Скачанные изображения товаров (генерируются парсером, не хранятся в git)
+apps/site/public/images/

@@ -69,6 +69,9 @@ function toProducts(raw: WbProductRaw[], config: SourceQueryConfig): Product[] {
       },
       config.brands ?? [],
       fetchedAt,
+      config.brandAliases ?? {},
+      config.flavors ?? [],
+      config.flavorAliases ?? {},
     );
   });
 

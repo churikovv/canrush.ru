@@ -8,22 +8,22 @@
     "apps/*"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20.9.0"
   },
   "scripts": {
+    "dev": "npm run dev -w apps/site",
     "build": "npm run build --workspaces --if-present",
-    "lint": "eslint . --ext .ts",
-    "test": "vitest run",
+    "lint": "eslint apps/parser packages/shared && cd apps/site && eslint .",
+    "test": "npm run test --workspaces --if-present",
     "parse": "npm run parse -w apps/parser --",
     "schedule": "npm run schedule -w apps/parser --",
     "doctor": "npm run doctor -w apps/parser --",
     "session:unlock": "npm run session:unlock -w apps/parser --"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "eslint": "^8.57.0",
+    "eslint": "9.39.5",
     "typescript": "^5.5.4",
-    "vitest": "^2.1.9"
+    "typescript-eslint": "8.68.0",
+    "vitest": "4.1.11"
   }
 }

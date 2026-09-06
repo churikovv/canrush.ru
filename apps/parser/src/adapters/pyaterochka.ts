@@ -163,6 +163,9 @@ const inPageFetchStrategy: StrategyDefinition = {
           },
           config.brands ?? [],
           fetchedAt,
+          config.brandAliases ?? {},
+          config.flavors ?? [],
+          config.flavorAliases ?? {},
         );
       });
 

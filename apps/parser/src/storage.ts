@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { AdapterRunResult, Product } from '@canrush/shared';
+import type { AdapterRunResult, CatalogGroup, FlavorVariant, Product } from '@canrush/shared';
 import { dedupeProducts } from './normalize.js';
 
 // apps/parser/src/storage.ts -> repo root /data
@@ -63,6 +63,55 @@ export async function mergeWithPrevious(results: AdapterRunResult[]): Promise<Pr
   return mergeResults(results, previous);
 }
 
+/**
+ * Группирует плоский список товаров в карточки каталога по паре (бренд, вкус).
+ * Товары без определённого бренда попадают в 'Unknown', без вкуса — в 'original'.
+ * Внутри каждой группы — список вариантов (по источникам/объёмам) с ценами.
+ */
+export function groupByFlavor(products: Product[]): CatalogGroup[] {
+  const groups = new Map<string, CatalogGroup>();
+
+  for (const product of products) {
+    const brand = product.brand ?? 'Unknown';
+    const flavor = product.flavor ?? 'original';
+    const key = `${brand}|${flavor}`;
+
+    const variant: FlavorVariant = {
+      source: product.source,
+      retailer: product.retailer,
+      volumeMl: product.volumeMl,
+      price: product.price,
+      oldPrice: product.oldPrice,
+      url: product.url,
+      imageUrl: product.imageUrl,
+      promoEndsAt: product.promoEndsAt,
+      stale: product.stale,
+      fetchedAt: product.fetchedAt,
+    };
+
+    const existing = groups.get(key);
+    if (!existing) {
+      groups.set(key, {
+        brand,
+        flavor,
+        variants: [variant],
+        minPrice: variant.price,
+        coverImageUrl: variant.imageUrl,
+      });
+    } else {
+      existing.variants.push(variant);
+      if (variant.price < existing.minPrice) {
+        existing.minPrice = variant.price;
+      }
+      if (!existing.coverImageUrl && variant.imageUrl) {
+        existing.coverImageUrl = variant.imageUrl;
+      }
+    }
+  }
+
+  return [...groups.values()];
+}
+
 /** Сохраняет сырой результат запуска одного адаптера в data/raw/<source>/<timestamp>.json */
 export async function saveRawSnapshot(result: AdapterRunResult): Promise<string> {
   const timestamp = result.finishedAt.replace(/[:.]/g, '-');
@@ -74,10 +123,12 @@ export async function saveRawSnapshot(result: AdapterRunResult): Promise<string>
 /** Перезаписывает консолидированный срез всех источников для использования на сайте. */
 export async function saveLatest(products: Product[]): Promise<string> {
   const filePath = path.join(DATA_DIR, 'latest.json');
+  const groups = groupByFlavor(products);
   await writeJson(filePath, {
     generatedAt: new Date().toISOString(),
     count: products.length,
     products,
+    groups,
   });
   return filePath;
 }
@@ -88,10 +139,12 @@ export async function saveHistorySnapshot(
   date: Date = new Date(),
 ): Promise<string> {
   const filePath = path.join(DATA_DIR, 'history', `${todayIso(date)}.json`);
+  const groups = groupByFlavor(products);
   await writeJson(filePath, {
     date: todayIso(date),
     count: products.length,
     products,
+    groups,
   });
   return filePath;
 }

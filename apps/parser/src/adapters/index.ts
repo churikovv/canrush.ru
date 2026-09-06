@@ -1,4 +1,5 @@
 import type { SourceAdapter, SourceName } from '@canrush/shared';
+import { edadealAdapter } from './edadeal.js';
 import { lentaAdapter } from './lenta.js';
 import { magnitAdapter } from './magnit.js';
 import { ozonAdapter } from './ozon.js';
@@ -12,4 +13,5 @@ export const adapters: Partial<Record<SourceName, SourceAdapter>> = {
   pyaterochka: pyaterochkaAdapter,
   magnit: magnitAdapter,
   lenta: lentaAdapter,
+  edadeal: edadealAdapter,
 };

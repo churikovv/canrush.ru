@@ -144,6 +144,9 @@ const interceptStrategy: StrategyDefinition = {
             },
             config.brands ?? [],
             fetchedAt,
+            config.brandAliases ?? {},
+            config.flavors ?? [],
+            config.flavorAliases ?? {},
           );
         })
         .filter((p): p is Product => p !== null);

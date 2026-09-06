@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AdapterRunResult, Product } from '@canrush/shared';
-import { mergeResults } from '../src/storage.js';
+import { groupByFlavor, mergeResults } from '../src/storage.js';
 
 function product(overrides: Partial<Product>): Product {
   return {
@@ -77,5 +77,50 @@ describe('mergeResults', () => {
     expect(merged).toHaveLength(1);
     expect(merged[0]?.price).toBe(130);
     expect(merged[0]?.stale).toBeUndefined();
+  });
+});
+
+describe('groupByFlavor', () => {
+  it('группирует товары по паре бренд+вкус', () => {
+    const products = [
+      product({ source: 'wildberries', sourceId: '1', brand: 'Red Bull', flavor: 'original', price: 129 }),
+      product({ source: 'ozon', sourceId: '2', brand: 'Red Bull', flavor: 'original', price: 119 }),
+      product({ source: 'wildberries', sourceId: '3', brand: 'Red Bull', flavor: 'kiwi', price: 139 }),
+    ];
+
+    const groups = groupByFlavor(products);
+    expect(groups).toHaveLength(2);
+
+    const original = groups.find((g) => g.flavor === 'original');
+    expect(original?.brand).toBe('Red Bull');
+    expect(original?.variants).toHaveLength(2);
+    expect(original?.minPrice).toBe(119);
+
+    const kiwi = groups.find((g) => g.flavor === 'kiwi');
+    expect(kiwi?.variants).toHaveLength(1);
+    expect(kiwi?.minPrice).toBe(139);
+  });
+
+  it('присваивает Unknown/original для товаров без бренда/вкуса', () => {
+    const products = [product({ source: 'wildberries', sourceId: '1', price: 100 })];
+    const groups = groupByFlavor(products);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.brand).toBe('Unknown');
+    expect(groups[0]?.flavor).toBe('original');
+  });
+
+  it('выбирает coverImageUrl из первого варианта с изображением', () => {
+    const products = [
+      product({ source: 'wildberries', sourceId: '1', brand: 'Burn', flavor: 'original', price: 100, imageUrl: undefined }),
+      product({ source: 'ozon', sourceId: '2', brand: 'Burn', flavor: 'original', price: 90, imageUrl: 'https://img.ru/burn.jpg' }),
+    ];
+
+    const groups = groupByFlavor(products);
+    expect(groups[0]?.coverImageUrl).toBe('https://img.ru/burn.jpg');
+  });
+
+  it('возвращает пустой массив для пустого входа', () => {
+    expect(groupByFlavor([])).toEqual([]);
   });
 });

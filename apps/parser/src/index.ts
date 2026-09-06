@@ -6,6 +6,7 @@ import { withSession } from './browser/session.js';
 import { SOURCE_CHECK_URLS } from './browser/targets.js';
 import { runParser } from './run.js';
 import { startSchedule } from './schedule.js';
+import { applyLocalImages, downloadProductImages, loadLatestData, saveLatestData } from './images.js';
 
 type Flags = Record<string, string | boolean>;
 
@@ -79,6 +80,29 @@ function printSummary(results: Awaited<ReturnType<typeof runParser>>): void {
   }
 }
 
+async function runDownloadImages(): Promise<void> {
+  console.log('Загружаю data/latest.json…');
+  const data = await loadLatestData();
+  const totalImages = new Set(data.products.map((p) => p.imageUrl).filter(Boolean)).size;
+  console.log(`Уникальных изображений: ${totalImages}`);
+
+  let lastPercent = -1;
+  const urlMap = await downloadProductImages(data.products, (downloaded, total, skipped) => {
+    const percent = Math.floor((downloaded / total) * 100);
+    if (percent !== lastPercent) {
+      lastPercent = percent;
+      process.stdout.write(`\r  скачано: ${downloaded}/${total} (пропущено: ${skipped}) — ${percent}%`);
+    }
+  });
+  console.log('');
+
+  console.log(`Готово: ${urlMap.size} изображений в локальном кэше.`);
+  console.log('Обновляю data/latest.json…');
+  const updated = applyLocalImages(data, urlMap);
+  await saveLatestData(updated);
+  console.log('data/latest.json обновлён с локальными путями.');
+}
+
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
   const first = argv[0];
@@ -108,8 +132,12 @@ async function main(): Promise<void> {
       await unlockSession(only);
       return;
     }
+    case 'download-images': {
+      await runDownloadImages();
+      return;
+    }
     default:
-      throw new Error(`Неизвестная команда: "${command}". Доступны: run, doctor, session:unlock`);
+      throw new Error(`Неизвестная команда: "${command}". Доступны: run, doctor, session:unlock, download-images`);
   }
 }
 

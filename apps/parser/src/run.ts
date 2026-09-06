@@ -36,6 +36,9 @@ export async function runParser(options: RunOptions = {}): Promise<AdapterRunRes
       ...sourceConfig,
       keywords: sourceConfig.keywords ?? config.keywords,
       brands: sourceConfig.brands ?? config.brands,
+      brandAliases: sourceConfig.brandAliases ?? config.brandAliases,
+      flavors: sourceConfig.flavors ?? config.flavors,
+      flavorAliases: sourceConfig.flavorAliases ?? config.flavorAliases,
     };
     const startedAt = new Date().toISOString();
 

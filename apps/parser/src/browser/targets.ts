@@ -10,4 +10,5 @@ export const SOURCE_CHECK_URLS: Record<SourceName, string> = {
   pyaterochka: 'https://5ka.ru/',
   magnit: 'https://magnit.ru/',
   lenta: 'https://lenta.com/',
+  edadeal: 'https://edadeal.ru/moskva/offers',
 };

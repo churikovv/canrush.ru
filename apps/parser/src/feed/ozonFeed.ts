@@ -48,7 +48,17 @@ export const ozonFeedStrategy: StrategyDefinition = {
     const maxItems = config.maxItems ?? 200;
     const products = matched
       .slice(0, maxItems)
-      .map((offer) => normalizeProduct(source, offer, brands, fetchedAt));
+      .map((offer) =>
+        normalizeProduct(
+          source,
+          offer,
+          brands,
+          fetchedAt,
+          config.brandAliases ?? {},
+          config.flavors ?? [],
+          config.flavorAliases ?? {},
+        ),
+      );
 
     return dedupeProducts(products);
   },

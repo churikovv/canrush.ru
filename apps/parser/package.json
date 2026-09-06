@@ -10,6 +10,7 @@
     "schedule": "tsx src/index.ts --schedule",
     "doctor": "tsx src/index.ts doctor",
     "session:unlock": "tsx src/index.ts session:unlock",
+    "download-images": "tsx src/index.ts download-images",
     "test": "vitest run"
   },
   "dependencies": {
