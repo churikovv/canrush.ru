@@ -5,6 +5,7 @@ import { dedupeProducts } from './normalize.js';
 
 // apps/parser/src/storage.ts -> repo root /data
 const DATA_DIR = path.resolve(import.meta.dirname, '../../../data');
+const SITE_CATALOG_PATH = path.resolve(import.meta.dirname, '../../site/data/catalog.json');
 
 function todayIso(date: Date): string {
   return date.toISOString().slice(0, 10); // YYYY-MM-DD
@@ -65,7 +66,7 @@ export async function mergeWithPrevious(results: AdapterRunResult[]): Promise<Pr
 
 /**
  * Группирует плоский список товаров в карточки каталога по паре (бренд, вкус).
- * Товары без определённого бренда попадают в 'Unknown', без вкуса — в 'original'.
+ * Товары без определённого бренда попадают в 'Unknown', без определённого вкуса — в 'unknown'.
  * Внутри каждой группы — список вариантов (по источникам/объёмам) с ценами.
  */
 export function groupByFlavor(products: Product[]): CatalogGroup[] {
@@ -73,7 +74,7 @@ export function groupByFlavor(products: Product[]): CatalogGroup[] {
 
   for (const product of products) {
     const brand = product.brand ?? 'Unknown';
-    const flavor = product.flavor ?? 'original';
+    const flavor = product.flavor ?? 'unknown';
     const key = `${brand}|${flavor}`;
 
     const variant: FlavorVariant = {
@@ -112,6 +113,48 @@ export function groupByFlavor(products: Product[]): CatalogGroup[] {
   return [...groups.values()];
 }
 
+/**
+ * Пороговое отношение цены к медиане группы, ниже которого вариант считается
+ * подозрительно дешёвым и удаляется. Например 0.5 — цена ниже половины медианы.
+ */
+const SUSPICIOUS_PRICE_RATIO = 0.5;
+
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
+}
+
+/**
+ * Удаляет из каждой группы варианты с ценой ниже SUSPICIOUS_PRICE_RATIO от медианы
+ * цен группы. Пересчитывает minPrice и убирает группы, оставшиеся без вариантов.
+ * Группы с одним вариантом не фильтруются (медиана = цена единственного варианта).
+ */
+export function filterSuspiciousVariants(groups: CatalogGroup[]): CatalogGroup[] {
+  const result: CatalogGroup[] = [];
+  for (const group of groups) {
+    if (group.variants.length <= 1) {
+      result.push(group);
+      continue;
+    }
+    const med = median(group.variants.map((v) => v.price));
+    const threshold = med * SUSPICIOUS_PRICE_RATIO;
+    const kept = group.variants.filter((v) => v.price >= threshold);
+    if (kept.length === 0) {
+      result.push(group);
+      continue;
+    }
+    if (kept.length === group.variants.length) {
+      result.push(group);
+      continue;
+    }
+    const minPrice = kept.reduce((min, v) => (v.price < min ? v.price : min), kept[0]!.price);
+    result.push({ ...group, variants: kept, minPrice });
+  }
+  return result;
+}
+
 /** Сохраняет сырой результат запуска одного адаптера в data/raw/<source>/<timestamp>.json */
 export async function saveRawSnapshot(result: AdapterRunResult): Promise<string> {
   const timestamp = result.finishedAt.replace(/[:.]/g, '-');
@@ -120,16 +163,29 @@ export async function saveRawSnapshot(result: AdapterRunResult): Promise<string>
   return filePath;
 }
 
+export async function saveSiteCatalog(groups: CatalogGroup[], generatedAt: string = new Date().toISOString()): Promise<string> {
+  await writeJson(SITE_CATALOG_PATH, {
+    generatedAt,
+    count: groups.length,
+    groups,
+  });
+  return SITE_CATALOG_PATH;
+}
+
 /** Перезаписывает консолидированный срез всех источников для использования на сайте. */
 export async function saveLatest(products: Product[]): Promise<string> {
   const filePath = path.join(DATA_DIR, 'latest.json');
-  const groups = groupByFlavor(products);
-  await writeJson(filePath, {
-    generatedAt: new Date().toISOString(),
-    count: products.length,
-    products,
-    groups,
-  });
+  const generatedAt = new Date().toISOString();
+  const groups = filterSuspiciousVariants(groupByFlavor(products));
+  await Promise.all([
+    writeJson(filePath, {
+      generatedAt,
+      count: products.length,
+      products,
+      groups,
+    }),
+    saveSiteCatalog(groups, generatedAt),
+  ]);
   return filePath;
 }
 
@@ -139,7 +195,7 @@ export async function saveHistorySnapshot(
   date: Date = new Date(),
 ): Promise<string> {
   const filePath = path.join(DATA_DIR, 'history', `${todayIso(date)}.json`);
-  const groups = groupByFlavor(products);
+  const groups = filterSuspiciousVariants(groupByFlavor(products));
   await writeJson(filePath, {
     date: todayIso(date),
     count: products.length,

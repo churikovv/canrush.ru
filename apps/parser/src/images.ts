@@ -4,9 +4,10 @@ import path from 'node:path';
 import axios from 'axios';
 import type { CatalogGroup, Product } from '@canrush/shared';
 import { DEFAULT_USER_AGENT, delay } from './http.js';
+import { saveSiteCatalog } from './storage.js';
 
 // apps/parser/src/images.ts -> apps/site/public/images/products
-const IMAGES_DIR = path.resolve(import.meta.dirname, '../../apps/site/public/images/products');
+const IMAGES_DIR = path.resolve(import.meta.dirname, '../../site/public/images/products');
 const LOCAL_URL_PREFIX = '/images/products/';
 
 /** Пауза между скачиваниями, чтобы не нагружать CDN источника. */
@@ -99,30 +100,53 @@ export function applyLocalImages(
  * Скачивает все уникальные изображения из списка товаров в локальный кэш.
  * Уже существующие файлы пропускаются. Возвращает карту remote URL → локальный путь.
  */
+export interface ImageDownloadProgress {
+  processed: number;
+  total: number;
+  downloaded: number;
+  skipped: number;
+  failed: number;
+}
+
 export async function downloadProductImages(
   products: Product[],
-  onProgress?: (downloaded: number, total: number, skipped: number) => void,
+  onProgress?: (progress: ImageDownloadProgress) => void,
 ): Promise<Map<string, string>> {
   const uniqueUrls = [...new Set(products.map((p) => p.imageUrl).filter((u): u is string => Boolean(u)))];
   const urlMap = new Map<string, string>();
 
   let downloaded = 0;
   let skipped = 0;
+  let failed = 0;
 
   for (let i = 0; i < uniqueUrls.length; i++) {
     const url = uniqueUrls[i]!;
-    const local = await downloadImage(url);
-    if (local) {
-      urlMap.set(url, local);
-      // Считаем пропущенные: если файл уже существовал, downloadImage не логирует это.
-      // Различаем по наличию файла до скачивания — упрощаем: просто считаем успехи.
-      downloaded++;
+    const isLocal = url.startsWith(LOCAL_URL_PREFIX);
+    const filename = isLocal ? url.slice(LOCAL_URL_PREFIX.length) : imageFilename(url);
+    const exists = await fileExists(localFilePath(filename));
+    let local: string | undefined;
+
+    if (exists) {
+      local = isLocal ? url : localUrl(filename);
+      skipped++;
+    } else if (isLocal) {
+      failed++;
+    } else {
+      local = await downloadImage(url);
+      if (local) downloaded++;
+      else failed++;
     }
-    skipped = i + 1 - downloaded;
 
-    onProgress?.(downloaded, uniqueUrls.length, skipped);
+    if (local) urlMap.set(url, local);
+    onProgress?.({
+      processed: i + 1,
+      total: uniqueUrls.length,
+      downloaded,
+      skipped,
+      failed,
+    });
 
-    if (i < uniqueUrls.length - 1) {
+    if (!exists && !isLocal && i < uniqueUrls.length - 1) {
       await delay(DOWNLOAD_DELAY_MS);
     }
   }
@@ -150,19 +174,23 @@ export async function saveLatestData(data: {
 }): Promise<void> {
   const dataDir = path.resolve(import.meta.dirname, '../../../data');
   const filePath = path.join(dataDir, 'latest.json');
+  const generatedAt = data.generatedAt ?? new Date().toISOString();
   await mkdir(dataDir, { recursive: true });
-  await writeFile(
-    filePath,
-    JSON.stringify(
-      {
-        generatedAt: data.generatedAt ?? new Date().toISOString(),
-        count: data.products.length,
-        products: data.products,
-        groups: data.groups,
-      },
-      null,
-      2,
+  await Promise.all([
+    writeFile(
+      filePath,
+      JSON.stringify(
+        {
+          generatedAt,
+          count: data.products.length,
+          products: data.products,
+          groups: data.groups,
+        },
+        null,
+        2,
+      ),
+      'utf-8',
     ),
-    'utf-8',
-  );
+    saveSiteCatalog(data.groups, generatedAt),
+  ]);
 }

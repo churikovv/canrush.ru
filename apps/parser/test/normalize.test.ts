@@ -8,6 +8,7 @@ import {
   extractVolumeMl,
   normalizeProduct,
 } from '../src/normalize.js';
+import { loadProductsConfig } from '../src/config.js';
 
 describe('extractVolumeMl', () => {
   it('извлекает объём в литрах и переводит в мл', () => {
@@ -82,6 +83,23 @@ describe('detectFlavor', () => {
 
   it('возвращает undefined, если вкус не найден', () => {
     expect(detectFlavor('Red Bull Energy Drink 0.25л', flavors, aliases)).toBeUndefined();
+  });
+});
+
+describe('configured flavor detection', () => {
+  const config = loadProductsConfig();
+  const aliases = config.flavorAliases ?? {};
+
+  it('определяет новые вкусы и русские падежные формы', () => {
+    expect(detectFlavor('Burn со вкусом Гуавы 449мл', config.flavors, aliases)).toBe('guava');
+    expect(detectFlavor('Lit Energy Raspberry со вкусом малины 450мл', config.flavors, aliases)).toBe('raspberry');
+    expect(detectFlavor('Red Bull Черника 355мл', config.flavors, aliases)).toBe('blueberry');
+  });
+
+  it('предпочитает конкретный вкус словам Original и Classic', () => {
+    expect(detectFlavor('Ninja Star Original Cherry со вкусом вишни', config.flavors, aliases)).toBe('cherry');
+    expect(detectFlavor('Red Bull классический/персик 473 мл', config.flavors, aliases)).toBe('peach');
+    expect(detectFlavor('Lit Energy Classic со вкусом клюквы и барбариса', config.flavors, aliases)).toBe('barberry');
   });
 });
 

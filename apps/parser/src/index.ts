@@ -7,6 +7,7 @@ import { SOURCE_CHECK_URLS } from './browser/targets.js';
 import { runParser } from './run.js';
 import { startSchedule } from './schedule.js';
 import { applyLocalImages, downloadProductImages, loadLatestData, saveLatestData } from './images.js';
+import { downloadRetailerIcons } from './retailer-icons.js';
 
 type Flags = Record<string, string | boolean>;
 
@@ -87,11 +88,13 @@ async function runDownloadImages(): Promise<void> {
   console.log(`Уникальных изображений: ${totalImages}`);
 
   let lastPercent = -1;
-  const urlMap = await downloadProductImages(data.products, (downloaded, total, skipped) => {
-    const percent = Math.floor((downloaded / total) * 100);
+  const urlMap = await downloadProductImages(data.products, ({ processed, total, downloaded, skipped, failed }) => {
+    const percent = Math.floor((processed / total) * 100);
     if (percent !== lastPercent) {
       lastPercent = percent;
-      process.stdout.write(`\r  скачано: ${downloaded}/${total} (пропущено: ${skipped}) — ${percent}%`);
+      process.stdout.write(
+        `\r  обработано: ${processed}/${total} (новых: ${downloaded}, уже были: ${skipped}, ошибок: ${failed}) — ${percent}%`,
+      );
     }
   });
   console.log('');
@@ -101,6 +104,25 @@ async function runDownloadImages(): Promise<void> {
   const updated = applyLocalImages(data, urlMap);
   await saveLatestData(updated);
   console.log('data/latest.json обновлён с локальными путями.');
+}
+
+async function runDownloadIcons(): Promise<void> {
+  console.log('Загружаю data/latest.json…');
+  const data = await loadLatestData();
+  const retailers = new Set(data.products.map((p) => p.retailer).filter(Boolean));
+  console.log(`Уникальных сетей: ${retailers.size}`);
+
+  let lastPercent = -1;
+  await downloadRetailerIcons(data.products, ({ processed, total, downloaded, skipped, failed }) => {
+    const percent = total > 0 ? Math.floor((processed / total) * 100) : 100;
+    if (percent !== lastPercent) {
+      lastPercent = percent;
+      process.stdout.write(
+        `\r  обработано: ${processed}/${total} (новых: ${downloaded}, уже были: ${skipped}, ошибок: ${failed}) — ${percent}%`,
+      );
+    }
+  });
+  console.log('\nГотово. Манифест сохранён в apps/site/data/retailer-icons.json.');
 }
 
 async function main(): Promise<void> {
@@ -136,8 +158,12 @@ async function main(): Promise<void> {
       await runDownloadImages();
       return;
     }
+    case 'download-icons': {
+      await runDownloadIcons();
+      return;
+    }
     default:
-      throw new Error(`Неизвестная команда: "${command}". Доступны: run, doctor, session:unlock, download-images`);
+      throw new Error(`Неизвестная команда: "${command}". Доступны: run, doctor, session:unlock, download-images, download-icons`);
   }
 }
 

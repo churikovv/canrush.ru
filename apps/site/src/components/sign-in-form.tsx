@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { authClient } from '@/lib/auth-client';
 
 type FormState = 'idle' | 'sending' | 'sent';
@@ -86,8 +87,8 @@ export function SignInForm() {
         {formState === 'sending' ? 'Отправляем…' : 'Получить ссылку для входа'}
       </button>
       <p className="privacy-note">
-        Email используется для входа и будущего избранного. Перед публичным запуском здесь появится
-        ссылка на политику обработки данных.
+        Нажимая кнопку, вы принимаете <Link href="/terms">Пользовательское соглашение</Link>. Порядок
+        обработки данных описан в <Link href="/privacy">Политике</Link>.
       </p>
     </form>
   );

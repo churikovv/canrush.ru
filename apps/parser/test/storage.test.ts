@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AdapterRunResult, Product } from '@canrush/shared';
-import { groupByFlavor, mergeResults } from '../src/storage.js';
+import { filterSuspiciousVariants, groupByFlavor, mergeResults } from '../src/storage.js';
 
 function product(overrides: Partial<Product>): Product {
   return {
@@ -101,13 +101,13 @@ describe('groupByFlavor', () => {
     expect(kiwi?.minPrice).toBe(139);
   });
 
-  it('присваивает Unknown/original для товаров без бренда/вкуса', () => {
+  it('не смешивает неопределённый вкус с оригинальным', () => {
     const products = [product({ source: 'wildberries', sourceId: '1', price: 100 })];
     const groups = groupByFlavor(products);
 
     expect(groups).toHaveLength(1);
     expect(groups[0]?.brand).toBe('Unknown');
-    expect(groups[0]?.flavor).toBe('original');
+    expect(groups[0]?.flavor).toBe('unknown');
   });
 
   it('выбирает coverImageUrl из первого варианта с изображением', () => {
@@ -122,5 +122,74 @@ describe('groupByFlavor', () => {
 
   it('возвращает пустой массив для пустого входа', () => {
     expect(groupByFlavor([])).toEqual([]);
+  });
+});
+
+describe('filterSuspiciousVariants', () => {
+  it('удаляет варианты дешевле 50% от медианы группы', () => {
+    // Медиана = 100 (сортируем [20, 100, 120] → mid=100), порог = 50
+    const products = [
+      product({ source: 'edadeal', sourceId: '1', brand: 'Red Bull', flavor: 'original', price: 100 }),
+      product({ source: 'edadeal', sourceId: '2', brand: 'Red Bull', flavor: 'original', price: 120 }),
+      product({ source: 'edadeal', sourceId: '3', brand: 'Red Bull', flavor: 'original', price: 20 }),
+    ];
+    const groups = groupByFlavor(products);
+    const filtered = filterSuspiciousVariants(groups);
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.variants).toHaveLength(2);
+    expect(filtered[0]?.variants.map((v) => v.price).sort((a, b) => a - b)).toEqual([100, 120]);
+    expect(filtered[0]?.minPrice).toBe(100);
+  });
+
+  it('не фильтрует группы с одним вариантом', () => {
+    const products = [
+      product({ source: 'wildberries', sourceId: '1', brand: 'Burn', flavor: 'original', price: 10 }),
+    ];
+    const groups = groupByFlavor(products);
+    const filtered = filterSuspiciousVariants(groups);
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.variants).toHaveLength(1);
+    expect(filtered[0]?.minPrice).toBe(10);
+  });
+
+  it('оставляет группу, если фильтрация удалила бы все варианты', () => {
+    // Все цены ниже 50% медианы → оставляем как есть
+    const products = [
+      product({ source: 'edadeal', sourceId: '1', brand: 'Flash', flavor: 'original', price: 10 }),
+      product({ source: 'edadeal', sourceId: '2', brand: 'Flash', flavor: 'original', price: 12 }),
+    ];
+    const groups = groupByFlavor(products);
+    const filtered = filterSuspiciousVariants(groups);
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.variants).toHaveLength(2);
+  });
+
+  it('работает с чётным числом вариантов (медиана = среднее двух центральных)', () => {
+    // Цены: [10, 50, 100, 110] → медиана = (50+100)/2 = 75, порог = 37.5
+    const products = [
+      product({ source: 'edadeal', sourceId: '1', brand: 'X', flavor: 'original', price: 100 }),
+      product({ source: 'edadeal', sourceId: '2', brand: 'X', flavor: 'original', price: 110 }),
+      product({ source: 'edadeal', sourceId: '3', brand: 'X', flavor: 'original', price: 50 }),
+      product({ source: 'edadeal', sourceId: '4', brand: 'X', flavor: 'original', price: 10 }),
+    ];
+    const groups = groupByFlavor(products);
+    const filtered = filterSuspiciousVariants(groups);
+
+    expect(filtered[0]?.variants).toHaveLength(3);
+    expect(filtered[0]?.variants.map((v) => v.price).sort((a, b) => a - b)).toEqual([50, 100, 110]);
+  });
+
+  it('не трогает группы, где все варианты выше порога', () => {
+    const products = [
+      product({ source: 'wildberries', sourceId: '1', brand: 'Y', flavor: 'original', price: 100 }),
+      product({ source: 'ozon', sourceId: '2', brand: 'Y', flavor: 'original', price: 90 }),
+    ];
+    const groups = groupByFlavor(products);
+    const filtered = filterSuspiciousVariants(groups);
+
+    expect(filtered[0]?.variants).toHaveLength(2);
   });
 });

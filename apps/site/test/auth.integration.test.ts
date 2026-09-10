@@ -56,8 +56,19 @@ function verificationRequest(token: string, ip: string): Request {
 }
 
 beforeAll(async () => {
-  const result = await pool.query(`select to_regclass('"verification"')::text as table_name`);
-  if (!result.rows[0]?.table_name) throw new Error('Run the test database migration first');
+  const result = await pool.query(`
+    select
+      to_regclass('"verification"')::text as verification,
+      to_regclass('"favorite"')::text as favorite,
+      exists (
+        select 1 from information_schema.columns
+        where table_schema = 'public' and table_name = 'user' and column_name = 'username'
+      ) as profile
+  `);
+  const schema = result.rows[0];
+  if (!schema?.verification || !schema.favorite || !schema.profile) {
+    throw new Error('Run the test database migration first');
+  }
 });
 
 afterAll(async () => {

@@ -69,7 +69,11 @@ function flavorCandidates(
 ): Array<{ alias: string; canonical: string }> {
   return knownFlavors
     .flatMap((canonical) => [canonical, ...(aliases[canonical] ?? [])].map((alias) => ({ alias, canonical })))
-    .sort((a, b) => normalizeBrandText(b.alias).length - normalizeBrandText(a.alias).length);
+    .sort(
+      (a, b) =>
+        Number(a.canonical === 'original') - Number(b.canonical === 'original') ||
+        normalizeBrandText(b.alias).length - normalizeBrandText(a.alias).length,
+    );
 }
 
 /** Пытается определить вкус из названия товара по списку известных вкусов и алиасов. */

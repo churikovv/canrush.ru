@@ -64,6 +64,9 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
 - **Next.js site**: `apps/site/tsconfig.json` намеренно использует `module: ESNext`
   и `moduleResolution: Bundler`; правило расширений `.js` из NodeNext к нему не
   применяется. Корневой `npm run dev` запускает этот workspace.
+- **Данные каталога сайта**: `saveLatest` синхронизирует группы в игнорируемый
+  `apps/site/data/catalog.json`. После парсинга запускай `npm -w apps/parser run
+  download-images`, чтобы локализовать изображения и обновить этот срез.
 - **Magic Link invariants**: токен живёт 5 минут, хранится как хэш и погашается
   один раз. Email-ссылка ведёт на GET interstitial, а вход выполняется только
   явным POST через Server Action. Action вызывает встроенный `magicLinkVerify`
@@ -90,7 +93,7 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
   без флага `u` — JS считает word-границу только по ASCII. См. `extractVolumeMl`
   в `apps/parser/src/normalize.ts` (используется `(?![a-zа-яё])`).
 - **Не коммить**: `.sessions/`, `data/raw/`, `data/history/`, `data/latest.json`,
-  `data/state.json`, `.env` (см. `.gitignore`).
+  `data/state.json`, `apps/site/data/`, `apps/site/public/images/`, `.env` (см. `.gitignore`).
 - **Робототехника**: `src/robots.ts` уважает `robots.txt`. Не отключай его.
 - **Едадил — агрегатор**: `source: 'edadeal'`, а сеть (Пятёрочка/Магнит/…) — в
   `Product.retailer`; цены только акционные (`promoEndsAt`). Это единственный

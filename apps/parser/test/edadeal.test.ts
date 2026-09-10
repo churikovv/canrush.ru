@@ -130,11 +130,13 @@ describe('mapEdadealResponse', () => {
     expect(bristol.volumeMl).toBe(355); // из «0,355Л» в названии, а не из quantityUnit «г»
   });
 
-  it('определяет бренд, срок акции и собирает ссылку на карточку Едадила', () => {
+  it('определяет бренд, срок акции и собирает ссылку на поиск Едадила', () => {
     const magnit = products.find((p) => p.sourceId === 'meta-magnit')!;
     expect(magnit.brand).toBe('Flash Up');
     expect(magnit.promoEndsAt).toBe(new Date(1789430400000).toISOString());
-    expect(magnit.url).toBe('https://edadeal.ru/moskva/metaoffers/meta-magnit?baseOfferUuid=offer-a');
+    expect(magnit.url).toBe(
+      'https://edadeal.ru/moskva/search?text=' + encodeURIComponent('Энергетический напиток Flash Up Energy Банан-Фейхоа 450мл').replace(/%20/g, '+'),
+    );
     expect(magnit.imageUrl).toBe('https://leonardo.edadeal.io/img/1');
     expect(magnit.fetchedAt).toBe(FETCHED_AT);
 
@@ -142,7 +144,9 @@ describe('mapEdadealResponse', () => {
     expect(fiveKa.promoEndsAt).toBeUndefined();
 
     const bristol = products.find((p) => p.sourceId === 'meta-bristol')!;
-    expect(bristol.url).toBe('https://edadeal.ru/moskva/metaoffers/meta-bristol');
+    expect(bristol.url).toBe(
+      'https://edadeal.ru/moskva/search?text=' + encodeURIComponent('Энергетический Б/А Напиток Red Bull Blue Edition Ж/Б 0,355Л').replace(/%20/g, '+'),
+    );
     expect(bristol.brand).toBe('Red Bull');
   });
 
@@ -202,5 +206,58 @@ describe('resolveLocality', () => {
     const spb = resolveLocality('54');
     expect(spb.geoId).toBe('54');
     expect(spb.slug).toBe('moskva');
+  });
+});
+
+describe('expired offer filtering', () => {
+  it('отсекает офферы с dateEnd в прошлом', () => {
+    const pastTimestamp = new Date('2026-08-01').getTime();
+    const result = mapEdadealResponse(
+      {
+        items: [
+          {
+            itemType: 'meta_offer',
+            uuid: 'meta-expired',
+            title: 'Энергетический напиток Burn 450 мл',
+            partner: { name: 'Дикси' },
+            priceData: { new: { type: 'value', value: 5000 } },
+            dateEnd: pastTimestamp,
+          },
+          {
+            itemType: 'meta_offer',
+            uuid: 'meta-active',
+            title: 'Энергетический напиток Burn 450 мл',
+            partner: { name: 'Пятёрочка' },
+            priceData: { new: { type: 'value', value: 6000 } },
+            dateEnd: new Date('2026-12-31').getTime(),
+          },
+        ],
+      },
+      { brands: BRANDS, keywords: ['энергетик'] },
+      MOSCOW,
+      FETCHED_AT,
+    );
+    expect(result.map((p) => p.sourceId)).toEqual(['meta-active']);
+  });
+
+  it('оставляет офферы без dateEnd (бессрочные)', () => {
+    const result = mapEdadealResponse(
+      {
+        items: [
+          {
+            itemType: 'meta_offer',
+            uuid: 'meta-no-end',
+            title: 'Энергетический напиток Burn 450 мл',
+            partner: { name: 'Магнит' },
+            priceData: { new: { type: 'value', value: 5000 } },
+          },
+        ],
+      },
+      { brands: BRANDS, keywords: ['энергетик'] },
+      MOSCOW,
+      FETCHED_AT,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0]?.sourceId).toBe('meta-no-end');
   });
 });

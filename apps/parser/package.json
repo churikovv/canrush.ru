@@ -11,6 +11,7 @@
     "doctor": "tsx src/index.ts doctor",
     "session:unlock": "tsx src/index.ts session:unlock",
     "download-images": "tsx src/index.ts download-images",
+    "download-icons": "tsx src/index.ts download-icons",
     "test": "vitest run"
   },
   "dependencies": {

@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
+import { CookieNotice } from '@/components/cookie-notice';
+import { SiteMotionProvider } from '@/components/site-motion-provider';
+import { YandexMetrika } from '@/components/yandex-metrika';
+import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/seo';
 import './globals.css';
 
 const objectSans = localFont({
@@ -17,12 +21,47 @@ const objectSans = localFont({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://canrush.ru'),
+  metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME,
   title: {
-    default: 'CanRush',
+    default: 'CanRush — цены и рейтинги энергетиков',
     template: '%s | CanRush',
   },
-  description: 'Сервис по поиску цен на энергетические напитки.',
+  description: DEFAULT_DESCRIPTION,
+  manifest: '/manifest.webmanifest',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'ru_RU',
+    siteName: SITE_NAME,
+    url: SITE_URL,
+    title: 'CanRush — цены и рейтинги энергетиков',
+    description: DEFAULT_DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary',
+    title: 'CanRush — цены и рейтинги энергетиков',
+    description: DEFAULT_DESCRIPTION,
+  },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+    yandex: process.env.YANDEX_SITE_VERIFICATION,
+  },
+  formatDetection: {
+    address: false,
+    email: false,
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
@@ -34,12 +73,18 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="ru" className={objectSans.variable}>
+    <html lang="ru" className={objectSans.variable} data-scroll-behavior="smooth">
       <body>
-        <a className="skip-link" href="#main-content">
-          Перейти к содержанию
-        </a>
-        {children}
+        <SiteMotionProvider>
+          <a className="skip-link" href="#main-content">
+            Перейти к содержанию
+          </a>
+          {children}
+          <CookieNotice />
+          <Suspense fallback={null}>
+            <YandexMetrika />
+          </Suspense>
+        </SiteMotionProvider>
       </body>
     </html>
   );

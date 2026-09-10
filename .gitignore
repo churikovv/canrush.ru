@@ -22,3 +22,5 @@ out/
 
 # Скачанные изображения товаров (генерируются парсером, не хранятся в git)
 apps/site/public/images/
+apps/site/data/
+apps/apps/site/public/images/

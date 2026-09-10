@@ -31,6 +31,29 @@ export type FetchStrategyName = (typeof FETCH_STRATEGIES)[number];
 export type BrandAliases = Record<string, string[]>;
 export type FlavorAliases = Record<string, string[]>;
 
+export const ENERGY_DRINK_BRAND_ALIASES: BrandAliases = {
+  'Red Bull': ['Ред Булл', 'Редбулл', 'Ред Бул', 'Редбул'],
+  'Adrenaline Rush': ['Adrenalin Rush', 'Адреналин Раш'],
+  'Flash Up': ['FlashUp', 'Флэш Ап', 'Флеш Ап', 'Флэшап', 'Флешап'],
+  Burn: ['Берн', 'Бёрн', 'Бурн'],
+  Monster: ['Monster Energy', 'Монстр', 'Монстер', 'Монстр Энерджи', 'Монстер Энерджи'],
+  Tornado: ['Tornado Energy', 'Торнадо'],
+  Gorilla: ['Горилла'],
+  'Drive Me': ['Драйв Ми', 'Драйвми'],
+  Bang: ['Бэнг', 'Банг'],
+  Predator: ['Предатор'],
+  Adrenaline: ['Адреналин'],
+  'Volt Energy': ['Вольт Энерджи', 'Вольт'],
+  'Lit Energy': ['Лит Энерджи', 'Лит'],
+  Jaguar: ['Ягуар'],
+  'My Element': ['Element', 'Май Элемент', 'Элемент'],
+  Vulkan: ['Вулкан'],
+  'M-150': ['М-150', 'М150'],
+  'Doma By Guf': ['Дома Бай Гуф', 'Гуф'],
+  'Ninja Star': ['Ниндзя Стар'],
+  BOMBBAR: ['Бомббар', 'Бомб Бар', 'Бомбар'],
+};
+
 export interface Product {
   /** Источник данных */
   source: SourceName;

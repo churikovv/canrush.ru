@@ -8,12 +8,14 @@ export function proxy(request: NextRequest) {
   const productionHttps = process.env.NODE_ENV === 'production' && request.nextUrl.protocol === 'https:';
   const directives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${development ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://mc.yandex.ru https://yastatic.net${development ? " 'unsafe-eval'" : ''}`,
     development ? "style-src 'self' 'unsafe-inline'" : `style-src 'self' 'nonce-${nonce}'`,
     "style-src-attr 'unsafe-inline'",
-    "img-src 'self' blob: data:",
+    "img-src 'self' blob: data: https://mc.yandex.ru",
     "font-src 'self'",
-    "connect-src 'self'",
+    "connect-src 'self' https://mc.yandex.ru",
+    "child-src blob: https://mc.yandex.ru",
+    "frame-src blob: https://mc.yandex.ru",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -40,7 +42,10 @@ export function proxy(request: NextRequest) {
   if (
     pathname === '/auth/confirm' ||
     pathname === '/auth/error' ||
-    pathname === '/profile' ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/tierlists') ||
+    pathname.startsWith('/catalog/') ||
     pathname.startsWith('/api/auth')
   ) {
     response.headers.set('Cache-Control', 'private, no-store, max-age=0');

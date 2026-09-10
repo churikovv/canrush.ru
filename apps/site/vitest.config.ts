@@ -9,6 +9,11 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    exclude: ['test/auth.integration.test.ts', 'node_modules/**', '.next/**'],
+    exclude: [
+      'test/auth.integration.test.ts',
+      'test/admin.integration.test.ts',
+      'node_modules/**',
+      '.next/**',
+    ],
   },
 });

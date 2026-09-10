@@ -15,8 +15,10 @@
     "test:auth": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
+    "@canrush/shared": "^0.1.0",
     "better-auth": "1.7.2",
     "dotenv": "16.6.1",
+    "motion": "^13.2.0",
     "next": "16.3.3",
     "nodemailer": "9.0.6",
     "pg": "8.23.0",

@@ -158,10 +158,24 @@ function matchesCategory(
   );
 }
 
-function offerUrl(meta: EdadealMetaOffer, locality: EdadealLocality): string {
-  const base = `${SITE_URL}/${locality.slug}/metaoffers/${meta.uuid}`;
-  const baseOffer = meta.offerUuids?.[0];
-  return baseOffer ? `${base}?baseOfferUuid=${baseOffer}` : base;
+/**
+ * Ссылка на поиск Едадила по названию товара в городе пользователя.
+ * Ведёт на страницу поиска, которая всегда работает (в отличие от прямых
+ * ссылок на metaoffer, которые часто 404 — особенно у мелких магазинов,
+ * чьи акции заканчиваются быстрее, чем пользователь кликает).
+ */
+function offerSearchUrl(productName: string, locality: EdadealLocality): string {
+  const params = new URLSearchParams({ text: productName });
+  return `${SITE_URL}/${locality.slug}/search?${params.toString()}`;
+}
+
+/**
+ * Проверяет, истёк ли срок акции оффера (dateEnd в прошлом).
+ * Офферы без dateEnd считаются бессрочными (не истёкшие).
+ */
+function isOfferExpired(meta: EdadealMetaOffer, now: Date = new Date()): boolean {
+  if (typeof meta.dateEnd !== 'number' || !Number.isFinite(meta.dateEnd)) return false;
+  return meta.dateEnd <= now.getTime();
 }
 
 /**
@@ -182,12 +196,14 @@ export function mapEdadealResponse(
   const flavorAliases = config.flavorAliases ?? {};
 
   const products: Product[] = [];
+  const now = new Date(fetchedAt);
   for (const meta of flattenMetaOffers(data.items)) {
     const name = meta.title?.trim();
     const price = minPrice(meta.priceData?.new);
     const apiBrand = meta.brandUuid ? brandByUuid.get(meta.brandUuid) : undefined;
     if (!name || price === undefined) continue;
     if (!matchesCategory(name, keywords, brands, brandAliases, apiBrand)) continue;
+    if (isOfferExpired(meta, now)) continue;
 
     const oldPrice = minPrice(meta.priceData?.old);
     const product = normalizeProduct(
@@ -198,7 +214,7 @@ export function mapEdadealResponse(
         brand: apiBrand,
         price,
         oldPrice: oldPrice !== undefined && oldPrice > price ? oldPrice : undefined,
-        url: offerUrl(meta, locality),
+        url: offerSearchUrl(name, locality),
         imageUrl: meta.imageUrl,
         category: 'energy_drinks',
       },
