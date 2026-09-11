@@ -23,7 +23,16 @@ COPY .eslintrc.cjs eslint.config.mjs ./
 RUN npm run build -w @canrush/shared
 
 # Build the site (produces .next/standalone/)
-RUN npm run build -w @canrush/site
+# Dummy env vars needed at build time — auth.ts calls getAuthEnv() at module level
+RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" \
+    BETTER_AUTH_URL="http://localhost:3000" \
+    BETTER_AUTH_SECRET="build-time-dummy-secret-not-used-at-runtime-32bytes" \
+    SMTP_HOST="localhost" \
+    SMTP_PORT="465" \
+    SMTP_USER="build@localhost" \
+    SMTP_PASSWORD="build" \
+    MAIL_FROM_NAME="CanRush" \
+    npm run build -w @canrush/site
 
 # ---- Production stage ----
 FROM node:20-slim AS production

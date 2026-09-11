@@ -48,7 +48,7 @@ services:
       # Product images (parser downloads, site serves)
       - product-images:/app/apps/site/public/images
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3001:3000"
     networks:
       - canrush-net
 
@@ -81,29 +81,12 @@ services:
     networks:
       - canrush-net
 
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    depends_on:
-      - site
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    networks:
-      - canrush-net
-
 volumes:
   postgres-data:
   catalog-data:
   product-images:
   parser-data:
   parser-sessions:
-  caddy-data:
-  caddy-config:
 
 networks:
   canrush-net:
