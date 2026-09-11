@@ -2,12 +2,18 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react';
 
 export function SiteFooter() {
   const footerRef = useRef<HTMLElement>(null);
   const reducedMotion = useReducedMotion();
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice(window.matchMedia('(pointer: coarse)').matches);
+  }, []);
+
   const { scrollYProgress } = useScroll({
     target: footerRef,
     offset: ['start end', 'start 0.68'],
@@ -20,11 +26,13 @@ export function SiteFooter() {
   const y = useTransform(attachmentProgress, [0, 1], [28, 0]);
   const scale = useTransform(attachmentProgress, [0, 1], [0.992, 1]);
 
+  const enableAnimation = !reducedMotion && !isTouchDevice;
+
   return (
     <motion.footer
       ref={footerRef}
       className="brand-footer"
-      style={reducedMotion ? undefined : { y, scale }}
+      style={enableAnimation ? { y, scale } : undefined}
     >
       <div className="footer-main">
         <div className="footer-intro">
