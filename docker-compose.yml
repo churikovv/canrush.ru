@@ -1,0 +1,110 @@
+# Docker Compose for canrush.ru deployment
+# Usage:
+#   1. Copy deploy/.env.example to .env and fill in secrets
+#   2. docker compose up -d
+#   3. Run migrations: docker compose exec site node scripts/migrate.mjs
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-canrush}
+      POSTGRES_USER: ${POSTGRES_USER:-canrush}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-canrush} -d ${POSTGRES_DB:-canrush}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    # Don't expose the port to the host — only internal access
+    networks:
+      - canrush-net
+
+  site:
+    build:
+      context: .
+      dockerfile: apps/site/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-canrush}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-canrush}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://canrush.ru}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      SMTP_HOST: ${SMTP_HOST:-smtp.spaceweb.ru}
+      SMTP_PORT: "465"
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-CanRush}
+      GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
+    volumes:
+      # Shared catalog data (parser writes, site reads)
+      - catalog-data:/app/data
+      # Product images (parser downloads, site serves)
+      - product-images:/app/apps/site/public/images
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - canrush-net
+
+  parser:
+    build:
+      context: .
+      dockerfile: apps/parser/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      CRON_SCHEDULE: ${CRON_SCHEDULE:-0 6 * * *}
+      OZON_FEED_URL: ${OZON_FEED_URL:-}
+      TG_BOT_TOKEN: ${TG_BOT_TOKEN:-}
+      TG_CHAT_ID: ${TG_CHAT_ID:-}
+      PARSER_BROWSER_CHANNEL: ${PARSER_BROWSER_CHANNEL:-}
+    volumes:
+      # Shared catalog data (parser writes catalog.json + retailer-icons.json)
+      - catalog-data:/app/apps/site/data
+      # Product images (parser downloads)
+      - product-images:/app/apps/site/public/images
+      # Parser's own data (latest.json, history/, raw/, state.json)
+      - parser-data:/app/data
+      # Browser sessions (cookies, solved challenges)
+      - parser-sessions:/app/apps/parser/.sessions
+    # Playwright needs --ipc=host for Chromium stability in Docker
+    ipc: host
+    networks:
+      - canrush-net
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - site
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - canrush-net
+
+volumes:
+  postgres-data:
+  catalog-data:
+  product-images:
+  parser-data:
+  parser-sessions:
+  caddy-data:
+  caddy-config:
+
+networks:
+  canrush-net:
+    driver: bridge

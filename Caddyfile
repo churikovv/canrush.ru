@@ -1,0 +1,30 @@
+# Caddy reverse proxy — automatic HTTPS via Let's Encrypt
+# Replace canrush.ru with your domain if different
+
+canrush.ru, www.canrush.ru {
+	# Reverse proxy to the Next.js site
+	reverse_proxy site:3000
+
+	# Compression
+	encode gzip zstd
+
+	# Security headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# Remove Server header
+		-Server
+	}
+
+	# Static assets caching
+	@static path /_next/static/* /images/* /brand/*
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	# Request body size limit (for forms, file uploads)
+	request_body {
+		max_size 10MB
+	}
+}
