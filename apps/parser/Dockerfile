@@ -26,7 +26,7 @@ RUN npm run build -w @canrush/parser
 
 # ---- Production stage ----
 # Playwright official image includes Chromium and all system deps
-FROM mcr.microsoft.com/playwright:v1.49.1-noble AS production
+FROM mcr.microsoft.com/playwright:v1.62.1-noble AS production
 
 WORKDIR /app
 
