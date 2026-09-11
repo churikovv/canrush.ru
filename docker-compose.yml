@@ -43,8 +43,9 @@ services:
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-CanRush}
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
     volumes:
-      # Shared catalog data (parser writes, site reads)
-      - catalog-data:/app/data
+      # Shared catalog data (parser writes to /app/apps/site/data, site reads from cwd/data)
+      # Next.js standalone server sets cwd to /app/apps/site, so mount there
+      - catalog-data:/app/apps/site/data
       # Product images (parser downloads, site serves)
       - product-images:/app/apps/site/public/images
     ports:
