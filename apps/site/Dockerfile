@@ -43,7 +43,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy standalone server (preserves monorepo structure)
-COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/apps/site/.next/standalone ./
 
 # Copy static assets and public files (not included in standalone)
 COPY --from=builder /app/apps/site/.next/static ./apps/site/.next/static
