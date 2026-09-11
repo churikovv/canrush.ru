@@ -26,6 +26,7 @@ html {
   min-width: 320px;
   background: var(--color-brand);
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -39,6 +40,7 @@ body {
   line-height: 1.5;
   font-kerning: normal;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
 button,
@@ -1968,7 +1970,13 @@ html[data-cookie-notice="visible"] .brand-footer {
   border: 1px solid var(--color-control);
   border-radius: 16px;
   padding: 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .catalog-store-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .catalog-store-offer {
