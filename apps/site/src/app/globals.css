@@ -4645,3 +4645,38 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
   .brand-header { gap: 12px; }
   .profile-navigation { gap: 6px; }
 }
+
+.review-edit-fields { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 24px; }
+.review-photo-editor { display: grid; gap: 10px; }
+.review-photo-picker { position: relative; display: inline-flex; align-items: center; width: fit-content; min-height: 44px; padding: 10px 14px; border-radius: 8px; background: var(--color-control); }
+.review-photo-picker input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.review-photo-picker:focus-within { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.review-photo-picker:has(input:disabled) { opacity: .5; }
+.review-photo-previews, .review-photo-thumbnails { display: flex; flex-wrap: wrap; gap: 12px; }
+.review-photo-preview { width: 96px; display: grid; gap: 4px; }
+.review-photo-preview img, .review-photo-thumbnails img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; }
+.review-photo-preview button { min-height: 40px; border: 0; background: none; font: inherit; font-size: .8rem; cursor: pointer; text-decoration: underline; }
+.review-photo-thumbnails button { padding: 0; border: 0; background: transparent; cursor: zoom-in; border-radius: 8px; }
+.review-photo-thumbnails img { display: block; }
+.review-photo-dialog { position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; height: 100dvh; max-height: none; margin: 0; border: 0; padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom)); background: #151719; color: white; overflow: hidden; }
+.review-photo-dialog[open] { display: flex; flex-direction: column; gap: 8px; }
+.review-photo-dialog::backdrop { background: #151719; }
+.review-photo-dialog button { background: #303438; color: white; border: 0; border-radius: 8px; min-height: 44px; min-width: 44px; padding: 8px 14px; font: inherit; cursor: pointer; }
+.review-photo-dialog button:disabled { opacity: .4; cursor: default; }
+.review-photo-dialog button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+.review-photo-toolbar, .review-photo-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; }
+.review-photo-zoom-controls { display: flex; justify-content: center; gap: 8px; flex-shrink: 0; }
+.review-photo-stage { position: relative; display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; overflow: hidden; touch-action: none; user-select: none; cursor: grab; }
+.review-photo-stage:active { cursor: grabbing; }
+.review-photo-stage img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: none; flex-shrink: 0; }
+.review-photo-load { position: absolute; padding: 20px; text-align: center; }
+.review-photo-navigation p { text-align: center; font-size: .8rem; max-width: 55ch; color: #d8dcdf; }
+
+.profile-reviews-back { color: var(--color-brand-deep); width: fit-content; padding: 8px 0; }
+.profile-reviews-count { color: var(--color-muted-strong); font-size: 1rem; vertical-align: middle; }
+.profile-reviews-list { display: grid; gap: 32px; }
+.profile-review-entry { border-top: 1px solid var(--color-control); padding-top: 20px; min-width: 0; }
+.profile-review-entry h2 { margin: 0 0 16px; font-size: 1.125rem; line-height: 1.4; overflow-wrap: anywhere; }
+.profile-review-entry h2 a { color: var(--color-brand-deep); }
+.profile-reviews-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .875rem; }
+.profile-reviews-pagination a { padding: 12px 0; color: var(--color-brand-deep); }

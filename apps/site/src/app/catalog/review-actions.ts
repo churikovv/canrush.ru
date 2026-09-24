@@ -8,6 +8,7 @@ import { getCatalogGroup } from '@/lib/catalog';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 import { isUserBlocked } from '@/lib/moderation';
 import { validateReviewInput } from '@/lib/review-fields';
+import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { deleteReview, upsertReview } from '@/lib/reviews';
 import type { ReviewFieldErrors } from '@/lib/review-fields';
 
@@ -15,6 +16,7 @@ export interface ReviewFormState {
   status?: 'success' | 'error';
   message?: string;
   fieldErrors?: ReviewFieldErrors;
+  photos?: string[];
 }
 
 async function requireUser() {
@@ -56,9 +58,12 @@ export async function submitReviewAction(
     return { status: 'error', message: 'Проверьте оценки и текст.', fieldErrors: validation.errors };
   }
 
+  let photos: string[];
   try {
-    await upsertReview(user.id, brand, flavor, validation.data);
-  } catch {
+    const attachments = await prepareReviewPhotos(formData);
+    photos = await upsertReview(user.id, brand, flavor, validation.data, attachments);
+  } catch (error) {
+    if (error instanceof ReviewPhotoError) return { status: 'error', message: error.message };
     return { status: 'error', message: 'Не удалось сохранить отзыв. Попробуйте ещё раз.' };
   }
 
@@ -66,7 +71,7 @@ export async function submitReviewAction(
   revalidatePath(`/catalog/${slug}`);
   revalidatePath('/catalog');
   revalidatePath('/profile');
-  return { status: 'success', message: 'Отзыв сохранён.' };
+  return { status: 'success', message: 'Отзыв сохранён.', photos };
 }
 
 export async function deleteReviewAction(formData: FormData): Promise<void> {

@@ -107,7 +107,7 @@ export function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, admi
             value={profile.tierListCount}
             href={tierListsHref}
           />
-          <ProfileInfoRow icon="/brand/icons/stat-reviews.svg" label="Отзывы" value={profile.reviewCount} />
+          <ProfileInfoRow icon="/brand/icons/stat-reviews.svg" label="Отзывы" value={profile.reviewCount} href={`/profile/${profile.username}/reviews`} />
           <ProfileInfoRow
             icon="/brand/icons/stat-favorites.svg"
             iconSize={12}

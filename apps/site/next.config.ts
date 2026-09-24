@@ -2,6 +2,10 @@ import type { NextConfig } from 'next';
 
 const nextConfig = {
   output: 'standalone',
+  experimental: {
+    serverActions: { bodySizeLimit: '26mb' },
+    proxyClientMaxBodySize: '26mb',
+  },
   outputFileTracingIncludes: {
     '/prices': ['./data/catalog.json'],
     '/catalog/*': ['./data/ingredients.json'],

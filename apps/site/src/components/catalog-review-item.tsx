@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import type { ReviewData } from '@/lib/reviews';
 
 const CRITERIA = [
@@ -70,6 +71,7 @@ export function CatalogReviewItem({ review }: { review: ReviewData }) {
       </dl>
 
       <p className="review-item-text">{review.text}</p>
+      <ReviewPhotoGallery photos={review.photos} />
 
       {telegramHref ? (
         <footer className="review-item-footer">

@@ -1,4 +1,6 @@
 import type { QueryResultRow } from 'pg';
+import type { PreparedReviewPhoto } from './review-photos';
+import { MAX_REVIEW_PHOTOS, PHOTO_ID_PATTERN } from './review-photo-limits';
 import { getPool } from '@/db/pool';
 
 export interface ReviewAuthor {
@@ -10,6 +12,7 @@ export interface ReviewAuthor {
 export interface ReviewData {
   id: string;
   author: ReviewAuthor;
+  photos: string[];
   brand: string;
   flavor: string;
   design: number;
@@ -38,6 +41,7 @@ export interface ReviewInput {
 const EMPTY_SUMMARY: ReviewSummary = { count: 0, design: 0, taste: 0, composition: 0, overall: 0 };
 
 interface ReviewRow extends QueryResultRow {
+  photos: string[];
   id: string;
   brand: string;
   flavor: string;
@@ -55,6 +59,7 @@ interface ReviewRow extends QueryResultRow {
 const REVIEW_SELECT = `
   select r."id", r."brand", r."flavor", r."design", r."taste", r."composition", r."text",
          r."createdAt", r."updatedAt",
+         array(select p."id"::text from "reviewPhoto" p where p."reviewId" = r."id" order by p."position") as photos,
          u."username", u."name", u."telegramChannel"
   from "review" r
   join "user" u on u."id" = r."userId"
@@ -63,6 +68,7 @@ const REVIEW_SELECT = `
 function toReview(row: ReviewRow): ReviewData {
   return {
     id: row.id,
+    photos: row.photos,
     author: {
       username: row.username,
       name: row.name,
@@ -164,18 +170,46 @@ export async function upsertReview(
   brand: string,
   flavor: string,
   input: ReviewInput,
-): Promise<void> {
-  await getPool().query(
-    `insert into "review" ("userId", "brand", "flavor", "design", "taste", "composition", "text")
-     values ($1, $2, $3, $4, $5, $6, $7)
-     on conflict ("userId", "brand", "flavor")
-     do update set "design" = excluded."design",
-                   "taste" = excluded."taste",
-                   "composition" = excluded."composition",
-                   "text" = excluded."text",
-                   "updatedAt" = current_timestamp`,
-    [userId, brand, flavor, input.design, input.taste, input.composition, input.text],
-  );
+  attachments?: { retained: string[]; photos: PreparedReviewPhoto[] },
+): Promise<string[]> {
+  const client = await getPool().connect();
+  try {
+    await client.query('begin');
+    const result = await client.query<{ id: string }>(
+      `insert into "review" ("userId", "brand", "flavor", "design", "taste", "composition", "text")
+       values ($1, $2, $3, $4, $5, $6, $7)
+       on conflict ("userId", "brand", "flavor")
+       do update set "design" = excluded."design", "taste" = excluded."taste",
+         "composition" = excluded."composition", "text" = excluded."text", "updatedAt" = current_timestamp
+       returning "id"`,
+      [userId, brand, flavor, input.design, input.taste, input.composition, input.text],
+    );
+    const reviewId = result.rows[0]!.id;
+    if (attachments) {
+      const { retained, photos } = attachments;
+      if (retained.length + photos.length > MAX_REVIEW_PHOTOS || new Set(retained).size !== retained.length || retained.some(id => !PHOTO_ID_PATTERN.test(id))) throw new Error('Invalid photo selection');
+      const owned = await client.query<{ id: string }>('select "id" from "reviewPhoto" where "reviewId" = $1', [reviewId]);
+      if (retained.some(id => !owned.rows.some(row => row.id === id))) throw new Error('Photo does not belong to this review');
+      await client.query('delete from "reviewPhoto" where "reviewId" = $1 and not ("id" = any($2::uuid[]))', [reviewId, retained]);
+      // Retained photos keep their order/slots; new photos fill free slots. The parent upsert serializes edits.
+      const occupied = await client.query<{ position: number }>('select "position" from "reviewPhoto" where "reviewId" = $1', [reviewId]);
+      const slots = new Set(occupied.rows.map(row => row.position));
+      for (const photo of photos) {
+        let position = 0;
+        while (slots.has(position)) position++;
+        await client.query('insert into "reviewPhoto" ("reviewId", "position", "data", "thumbnail") values ($1, $2, $3, $4)', [reviewId, position, photo.data, photo.thumbnail]);
+        slots.add(position);
+      }
+    }
+    const saved = await client.query<{ id: string }>('select "id" from "reviewPhoto" where "reviewId" = $1 order by "position"', [reviewId]);
+    await client.query('commit');
+    return saved.rows.map(row => row.id);
+  } catch (error) {
+    await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function deleteReview(userId: string, brand: string, flavor: string): Promise<void> {
@@ -183,4 +217,16 @@ export async function deleteReview(userId: string, brand: string, flavor: string
     'delete from "review" where "userId" = $1 and "brand" = $2 and "flavor" = $3',
     [userId, brand, flavor],
   );
+}
+
+
+export const PROFILE_REVIEWS_PAGE_SIZE = 20;
+
+export async function getReviewsForUser(userId: string, page = 1): Promise<ReviewData[]> {
+  const safePage = Number.isSafeInteger(page) && page > 0 ? page : 1;
+  const result = await getPool().query<ReviewRow>(
+    `${REVIEW_SELECT} where r."userId" = $1 order by r."createdAt" desc, r."id" desc limit $2 offset $3`,
+    [userId, PROFILE_REVIEWS_PAGE_SIZE, (safePage - 1) * PROFILE_REVIEWS_PAGE_SIZE],
+  );
+  return result.rows.map(toReview);
 }

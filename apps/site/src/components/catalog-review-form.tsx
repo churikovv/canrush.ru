@@ -8,6 +8,7 @@ import {
   submitReviewAction,
   type ReviewFormState,
 } from '@/app/catalog/review-actions';
+import { MAX_REVIEW_PHOTOS, MAX_REVIEW_PHOTO_BYTES, REVIEW_PHOTO_TYPES } from '@/lib/review-photo-limits';
 import type { ReviewData } from '@/lib/reviews';
 
 interface CatalogReviewFormProps {
@@ -113,9 +114,45 @@ function DeleteButton() {
 }
 
 export function CatalogReviewForm({ brand, flavor, existing, authenticated }: CatalogReviewFormProps) {
-  const [state, formAction] = useActionState<ReviewFormState, FormData>(submitReviewAction, {});
+  const [files, setFiles] = useState<Array<{ file: File; url: string }>>([]);
+  const [retained, setRetained] = useState(existing?.photos ?? []);
+  const [photoError, setPhotoError] = useState('');
+  const previews = useRef(new Set<string>());
+  const [text, setText] = useState(existing?.text ?? '');
+  const [state, formAction, pending] = useActionState<ReviewFormState, FormData>(async (previous, data) => {
+    files.forEach(({ file }) => data.append('photos', file));
+    retained.forEach(id => data.append('retainedPhoto', id));
+    try {
+      const result = await submitReviewAction(previous, data);
+      if (result.status === 'success') {
+        previews.current.forEach(url => URL.revokeObjectURL(url));
+        previews.current.clear();
+        setFiles([]);
+        setRetained(result.photos ?? []);
+        setPhotoError('');
+      }
+      return result;
+    } catch {
+      return { status: 'error', message: 'Не удалось отправить отзыв. Проверьте соединение и попробуйте ещё раз.' };
+    }
+  }, {});
+  useEffect(() => {
+    const urls = previews.current;
+    return () => { urls.forEach(url => URL.revokeObjectURL(url)); };
+  }, []);
+  function choosePhotos(selected: FileList | null) {
+    const added = Array.from(selected ?? []);
+    if (added.length + files.length + retained.length > MAX_REVIEW_PHOTOS) { setPhotoError('Можно добавить не более 5 фотографий.'); return; }
+    if (added.some(file => file.size > MAX_REVIEW_PHOTO_BYTES || !REVIEW_PHOTO_TYPES.includes(file.type))) { setPhotoError('Выберите JPG, PNG или WebP не больше 5 МБ каждый.'); return; }
+    setPhotoError('');
+    setFiles(current => [...current, ...added.map(file => {
+      const url = URL.createObjectURL(file);
+      previews.current.add(url);
+      return { file, url };
+    })]);
+  }
   const errorSummaryRef = useRef<HTMLDivElement>(null);
-  const [textLength, setTextLength] = useState(existing?.text.length ?? 0);
+  const textLength = text.length;
 
   useEffect(() => {
     if (state.status === 'error') errorSummaryRef.current?.focus();
@@ -148,6 +185,7 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
         </div>
       ) : null}
 
+      <fieldset className="review-edit-fields" disabled={pending}>
       <div className="review-criteria">
         {CRITERIA.map(({ name, label }) => (
           <StarInput
@@ -168,13 +206,13 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
         <textarea
           id="review-text"
           name="text"
-          defaultValue={existing?.text ?? ''}
+          value={text}
           maxLength={1000}
           rows={4}
           placeholder="Что понравилось или не понравилось?"
           aria-invalid={Boolean(state.fieldErrors?.text)}
           aria-describedby={state.fieldErrors?.text ? 'review-text-error' : 'review-text-help'}
-          onChange={(event) => setTextLength(event.currentTarget.value.length)}
+          onChange={(event) => setText(event.currentTarget.value)}
           required
         />
         <p className="field-help" id="review-text-help">
@@ -186,6 +224,31 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
           </p>
         ) : null}
       </div>
+
+      <div className="review-photo-editor">
+        <label htmlFor="review-photos">Фотографии · {retained.length + files.length} / 5</label>
+        <p id="review-photos-help" className="field-help">До 5 фотографий в формате JPG, PNG или WebP, до 5 МБ каждая.</p>
+        <span className="review-photo-picker">
+          <span aria-hidden="true">{retained.length + files.length >= MAX_REVIEW_PHOTOS ? 'Добавлено 5 фото' : 'Добавить фото'}</span>
+          <input id="review-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-label="Добавить фотографии"
+            aria-describedby="review-photos-help" disabled={retained.length + files.length >= MAX_REVIEW_PHOTOS}
+            onChange={event => { choosePhotos(event.currentTarget.files); event.currentTarget.value = ''; }} />
+        </span>
+        {photoError ? <p role="alert" className="field-error">{photoError}</p> : null}
+        <div className="review-photo-previews">
+          {retained.map((id, index) => <div key={id} className="review-photo-preview">
+            {/* eslint-disable-next-line @next/next/no-img-element -- private uncached photo route */}
+            <img src={`/api/review-photos/${id}?size=thumbnail`} alt={`Сохранённая фотография ${index + 1}`} />
+            <button type="button" onClick={() => setRetained(current => current.filter(value => value !== id))} aria-label={`Удалить сохранённую фотографию ${index + 1}`}>Удалить</button>
+          </div>)}
+          {files.map(({ file, url }, index) => <div key={url} className="review-photo-preview">
+            {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
+            <img src={url} alt={`Новая фотография ${index + 1}: ${file.name}`} />
+            <button type="button" onClick={() => { URL.revokeObjectURL(url); previews.current.delete(url); setFiles(current => current.filter(item => item.url !== url)); }} aria-label={`Удалить новую фотографию ${index + 1}`}>Удалить</button>
+          </div>)}
+        </div>
+      </div>
+      </fieldset>
 
       <p className="review-channel-note">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
