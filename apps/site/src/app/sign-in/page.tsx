@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import { BrandShell } from '@/components/brand-shell';
+import { ProfileNavigation } from '@/components/profile-navigation';
 import { SignInForm } from '@/components/sign-in-form';
 import { auth } from '@/lib/auth';
 
@@ -18,7 +19,7 @@ export default async function SignInPage() {
   if (session) redirect('/profile');
 
   return (
-    <BrandShell>
+    <BrandShell headerAction={<ProfileNavigation />}>
       <div className="auth-layout sign-in-layout">
         <section className="auth-intro">
           <div className="auth-illustration" aria-hidden="true">

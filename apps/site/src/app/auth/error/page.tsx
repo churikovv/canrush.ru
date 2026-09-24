@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BrandShell } from '@/components/brand-shell';
+import { ProfileNavigation } from '@/components/profile-navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,7 @@ export default async function AuthErrorPage({ searchParams }: ErrorPageProps) {
   const copy = errorCopy(error);
 
   return (
-    <BrandShell>
+    <BrandShell headerAction={<ProfileNavigation />}>
       <section className="auth-layout compact-layout">
         <p className="section-label">Безопасный вход</p>
         <h1>{copy.title}</h1>

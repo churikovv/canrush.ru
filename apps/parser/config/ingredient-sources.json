@@ -1,0 +1,96 @@
+[
+  {
+    "id": "okolo",
+    "name": "ОКОЛО Маркет",
+    "host": "okolo.market",
+    "market": "RU",
+    "strategy": "http",
+    "paths": [
+      "/product/"
+    ],
+    "priority": 1,
+    "evidence": "2026-09-24: 22/23 карточки доступны, 3 полных состава",
+    "notes": "Состав часто отсутствует. Несколько штрихкодов могут относиться к разным версиям.",
+    "examples": [
+      "https://okolo.market/product/napitok-energeticheskiy-burn-guava-gazirovannyy-bezalkogolnyy-d-b-0-449-l/"
+    ]
+  },
+  {
+    "id": "baltika",
+    "name": "Фирменный магазин Балтика",
+    "host": "baltika4you.ru",
+    "market": "RU",
+    "strategy": "http",
+    "paths": [
+      "/flash-up-"
+    ],
+    "priority": 1,
+    "evidence": "2026-09-24: полный состав Банан–фейхоа получен через Tavily",
+    "notes": "Приоритетный источник для Flash Up; прямой доступ зависит от страницы.",
+    "examples": [
+      "https://baltika4you.ru/flash-up-energy-banan-feyhoa-banka-0-45"
+    ]
+  },
+  {
+    "id": "edostavka",
+    "name": "Едоставка",
+    "host": "edostavka.by",
+    "market": "BY",
+    "strategy": "http",
+    "paths": [
+      "/product/"
+    ],
+    "priority": 2,
+    "evidence": "2026-09-24: Burn Тропический микс доступен напрямую с составом",
+    "notes": "Белорусский рынок. Не переносить автоматически на российскую версию даже при производстве в РФ.",
+    "examples": [
+      "https://edostavka.by/product/1810707"
+    ]
+  },
+  {
+    "id": "magnit",
+    "name": "Магнит",
+    "host": "magnit.ru",
+    "market": "RU",
+    "strategy": "tavily",
+    "paths": [
+      "/product/"
+    ],
+    "priority": 2,
+    "evidence": "2026-09-24: Tavily Extract прочитал Burn и Gorilla",
+    "notes": "Встречаются противоречия в описании и повреждённые числа витаминов.",
+    "examples": [
+      "https://magnit.ru/product/1000315358"
+    ]
+  },
+  {
+    "id": "azefoods",
+    "name": "Azefoods",
+    "host": "azefoods.ru",
+    "market": "RU",
+    "strategy": "http",
+    "paths": [
+      "/product/"
+    ],
+    "priority": 3,
+    "evidence": "2026-09-24: найден состав Gorilla Манго–кокос через Tavily",
+    "notes": "Оптовый источник; нужна сверка этикетки.",
+    "examples": []
+  },
+  {
+    "id": "barista",
+    "name": "Barista-Ltd",
+    "host": "www.barista-ltd.ru",
+    "market": "RU",
+    "strategy": "http",
+    "paths": [
+      "/magazin/"
+    ],
+    "priority": 3,
+    "evidence": "2026-09-24: состав Gorilla Original получен, версия сомнительна",
+    "notes": "Описание может смешивать обычный напиток и вариант без сахара.",
+    "examples": [
+      "https://www.barista-ltd.ru/magazin/gorilla-energy-original-450ml-can.html"
+    ]
+  }
+]

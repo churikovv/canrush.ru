@@ -11,18 +11,25 @@ interface FavoriteRow extends QueryResultRow {
 
 interface LatestData {
   groups?: CatalogGroup[];
+  generatedAt?: string;
 }
 
 const LATEST_DATA_PATH = path.join(process.cwd(), 'data', 'catalog.json');
 
-export async function loadCatalogGroups(): Promise<CatalogGroup[]> {
+export async function loadCatalogSnapshot() {
   try {
     const raw = await readFile(LATEST_DATA_PATH, 'utf-8');
-    return (JSON.parse(raw) as LatestData).groups ?? [];
+    const data = JSON.parse(raw) as LatestData;
+    const generatedAt = data.generatedAt && Number.isFinite(Date.parse(data.generatedAt)) ? data.generatedAt : null;
+    return { groups: data.groups ?? [], generatedAt };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    return [];
+    return { groups: [], generatedAt: null };
   }
+}
+
+export async function loadCatalogGroups(): Promise<CatalogGroup[]> {
+  return (await loadCatalogSnapshot()).groups;
 }
 
 function groupKey(brand: string, flavor: string): string {

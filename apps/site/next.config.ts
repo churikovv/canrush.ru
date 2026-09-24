@@ -2,6 +2,10 @@ import type { NextConfig } from 'next';
 
 const nextConfig = {
   output: 'standalone',
+  outputFileTracingIncludes: {
+    '/prices': ['./data/catalog.json'],
+    '/catalog/*': ['./data/ingredients.json'],
+  },
   poweredByHeader: false,
   reactStrictMode: true,
   serverExternalPackages: ['pg'],

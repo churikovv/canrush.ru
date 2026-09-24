@@ -1964,6 +1964,25 @@ html[data-cookie-notice="visible"] .brand-footer {
   line-height: 1.4;
 }
 
+.catalog-store-groups {
+  display: grid;
+  gap: 20px;
+}
+
+.catalog-store-volume {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.catalog-store-volume h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
 .catalog-store-list {
   display: grid;
   gap: 12px;
@@ -2040,6 +2059,44 @@ html[data-cookie-notice="visible"] .brand-footer {
   border-radius: 16px;
   padding: 16px;
   line-height: 1.5;
+}
+
+/* Source-attributed composition, kept separate from price offers. */
+.catalog-ingredients-disclaimer {
+  display: grid;
+  gap: 4px;
+  max-width: 72ch;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.catalog-ingredients-disclaimer p {
+  margin: 0;
+}
+
+.catalog-ingredients-status {
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.catalog-ingredients-text {
+  max-width: 80ch;
+  margin: 0;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.catalog-ingredients-version,
+.catalog-ingredients-source {
+  margin: 0;
+  color: var(--color-muted-strong);
+  font-size: 0.875rem;
+}
+
+.catalog-ingredients-source a {
+  color: var(--color-text);
+  text-underline-offset: 3px;
 }
 
 /* Reviews */
@@ -4411,7 +4468,36 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
   }
 
   .main-surface.catalog-detail-surface {
-    padding: 0 clamp(56px, 6vw, 96px) 112px;
+    display: flex;
+    padding: 0;
+    background: #f3f5f5;
+  }
+
+  .catalog-detail-surface .catalog-product-detail {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .catalog-detail-surface .catalog-product-information {
+    flex: 1;
+    padding: 32px clamp(56px, 6vw, 96px) 112px;
+    box-shadow: none;
+  }
+
+  .catalog-detail-surface .catalog-favorite-button {
+    color: var(--color-muted-strong);
+    font-size: 0.875rem;
+  }
+
+  .catalog-detail-surface .catalog-favorite-button:hover:not(:disabled) {
+    color: var(--color-text);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    opacity: 1;
+  }
+
+  .catalog-detail-surface .catalog-favorite-button img {
+    display: none;
   }
 
   .catalog-grid {
@@ -4513,4 +4599,49 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
   .brand-footer {
     transform: none !important;
   }
+}
+
+/* Retailer comparison uses the catalogue's flat, typographic layout. */
+.price-analytics-surface { width: 100%; }
+.price-analytics { width: min(100%, 1120px); margin: 0 auto; padding: 32px 32px 64px; }
+.price-analytics > a { color: var(--color-brand, #006eff); }
+.price-analytics-heading { margin: 32px 0 24px; }
+.price-analytics-heading h1 { font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.08; margin: 0 0 16px; }
+.price-analytics-heading p { margin: 10px 0; }
+.price-analytics-notice { padding: 16px 0; border-top: 1px solid #d9dddd; border-bottom: 1px solid #d9dddd; color: #525858; line-height: 1.5; }
+.price-chart-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin: 32px 0; }
+.price-chart-controls label { display: grid; gap: 8px; }
+.price-chart-controls select { width: 100%; min-width: 0; min-height: 48px; padding: 10px 12px; border: 1px solid #c6cccc; border-radius: 8px; background: white; color: #252929; font: inherit; }
+.price-chart-controls select:focus-visible, .price-chart-empty button:focus-visible { outline: 2px solid #006eff; outline-offset: 3px; }
+.price-chart-summary { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.price-chart-summary h2 { font-size: 1.5rem; margin: 0; }
+.price-chart-summary h2 span { font-weight: normal; font-size: 1rem; color: #596060; white-space: nowrap; }
+.price-chart-summary p, .price-chart-hint { color: #596060; font-size: .875rem; line-height: 1.5; }
+.price-chart-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 24px 0; }
+.price-chart-table th, .price-chart-table td { padding: 16px 0; border-bottom: 1px solid #e0e4e4; text-align: left; }
+.price-chart-table thead th { color: #596060; font-size: .8rem; font-weight: normal; }
+.price-chart-table th:first-child { width: 25%; padding-right: 16px; overflow-wrap: anywhere; }
+.price-chart-table th:last-child, .price-chart-table td:last-child { width: 80px; text-align: right; }
+.price-chart-value { display: flex; align-items: center; gap: 12px; }
+.price-chart-value strong { min-width: 64px; font-variant-numeric: tabular-nums; text-align: right; }
+.price-chart-track { flex: 1; height: 24px; }
+.price-chart-track > span { display: block; height: 100%; background: #006eff; border-radius: 0 4px 4px 0; }
+.price-chart-method { border-top: 1px solid #c6cccc; margin-top: 32px; padding-top: 20px; line-height: 1.6; }
+.price-chart-method summary { cursor: pointer; padding: 8px 0; }
+.price-chart-method p { max-width: 80ch; color: #525858; }
+.price-chart-empty { padding: 40px 0; }
+.price-chart-empty button { background: #006eff; color: white; border: 0; border-radius: 8px; padding: 12px 20px; font: inherit; cursor: pointer; }
+@media (max-width: 640px) {
+  .price-analytics { padding: 24px 16px 40px; }
+  .price-chart-controls { grid-template-columns: 1fr; gap: 16px; }
+  .price-chart-table th:first-child { width: 32%; padding-right: 8px; }
+  .price-chart-table th:last-child, .price-chart-table td:last-child { width: 54px; }
+  .price-chart-value { gap: 6px; }
+  .price-chart-value strong { min-width: 48px; font-size: .875rem; }
+  .price-chart-table tbody th { font-size: .875rem; }
+}
+
+@media (max-width: 767px) {
+  .brand-header { gap: 12px; }
+  .profile-navigation { gap: 6px; }
 }

@@ -5,6 +5,7 @@ import { BrandShell } from '@/components/brand-shell';
 import { CatalogProductDetail } from '@/components/catalog-product-detail';
 import type { ProductTab } from '@/components/catalog-product-tabs';
 import { ProfileNavigation } from '@/components/profile-navigation';
+import { getProductIngredients } from '@/lib/ingredients';
 import { auth } from '@/lib/auth';
 import { getCatalogGroup, isFavorite } from '@/lib/catalog';
 import { catalogRetailerCount, decodeCatalogGroupSlug, flavorName } from '@/lib/catalog-query';
@@ -55,17 +56,19 @@ export default async function CatalogProductPage({
   ]);
   if (!group) notFound();
 
-  const [favorite, reviews, summary, userReview] = await Promise.all([
+  const [favorite, reviews, summary, userReview, ingredients] = await Promise.all([
     session ? isFavorite(session.user.id, group.brand, group.flavor) : Promise.resolve(false),
     getReviewsForProduct(group.brand, group.flavor),
     getReviewSummary(group.brand, group.flavor),
     session ? getUserReview(session.user.id, group.brand, group.flavor) : Promise.resolve(null),
+    getProductIngredients(group.brand, group.flavor),
   ]);
 
   return (
     <BrandShell headerAction={<ProfileNavigation active="catalog" />} surfaceClassName="catalog-detail-surface">
       <CatalogProductDetail
         group={group}
+        ingredients={ingredients}
         favorite={favorite}
         authenticated={Boolean(session)}
         reviews={reviews}

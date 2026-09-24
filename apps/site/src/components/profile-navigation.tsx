@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-type ProfileNavigationActive = 'catalog' | 'favorites' | 'tierlists' | 'profile';
+type ProfileNavigationActive = 'catalog' | 'favorites' | 'tierlists' | 'prices' | 'profile';
 
 interface ProfileNavigationProps {
   active?: ProfileNavigationActive;
@@ -34,6 +34,18 @@ export function ProfileNavigation({ active }: ProfileNavigationProps) {
       >
         <Image src={ICONS.search} width={24} height={24} alt="" />
         <span className="profile-navigation-label">Каталог</span>
+      </Link>
+      <Link
+        className="profile-navigation-item"
+        href="/prices"
+        aria-label="Цены по магазинам"
+        title="Цены по магазинам"
+        aria-current={active === 'prices' ? 'page' : undefined}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 19V12M12 19V5M19 19V9" stroke="var(--color-brand, #006eff)" strokeWidth="4" strokeLinecap="round" />
+        </svg>
+        <span className="profile-navigation-label">Цены</span>
       </Link>
       <Link
         className="profile-navigation-item"

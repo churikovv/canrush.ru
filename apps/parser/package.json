@@ -12,11 +12,14 @@
     "session:unlock": "tsx src/index.ts session:unlock",
     "download-images": "tsx src/index.ts download-images",
     "download-icons": "tsx src/index.ts download-icons",
-    "test": "vitest run"
+    "test": "vitest run",
+    "ingredients": "tsx src/ingredients/cli.ts",
+    "ingredients:publish": "tsx src/ingredients/publish-cli.ts"
   },
   "dependencies": {
     "@canrush/shared": "*",
     "axios": "^1.7.9",
+    "cheerio": "^1.2.0",
     "csv-parse": "^7.0.2",
     "dotenv": "^16.4.7",
     "fast-xml-parser": "^5.10.1",

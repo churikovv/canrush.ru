@@ -18,7 +18,9 @@
     "parse": "npm run parse -w apps/parser --",
     "schedule": "npm run schedule -w apps/parser --",
     "doctor": "npm run doctor -w apps/parser --",
-    "session:unlock": "npm run session:unlock -w apps/parser --"
+    "session:unlock": "npm run session:unlock -w apps/parser --",
+    "ingredients": "npm run ingredients -w apps/parser --",
+    "ingredients:publish": "npm run ingredients:publish -w apps/parser"
   },
   "devDependencies": {
     "eslint": "9.39.5",

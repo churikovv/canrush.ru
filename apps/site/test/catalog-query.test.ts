@@ -3,6 +3,7 @@ import type { CatalogGroup } from '@canrush/shared';
 import {
   catalogGroupSlug,
   catalogOffers,
+  catalogOffersByVolume,
   decodeCatalogGroupSlug,
   filterCatalogGroups,
   flavorName,
@@ -112,7 +113,7 @@ describe('catalog query', () => {
     expect(result.map((item) => item.flavor)).toEqual(['mango']);
   });
 
-  it('показывает объём как свойство предложения, а не как фильтр', () => {
+  it('сохраняет минимальную цену магазина для каждого объёма', () => {
     const result = catalogOffers(
       group({
         variants: [
@@ -129,6 +130,23 @@ describe('catalog query', () => {
       ['Пятёрочка', 449, 90],
       ['Пятёрочка', 500, 120],
     ]);
+  });
+
+  it('группирует точные объёмы по возрастанию, сортирует цены и оставляет неизвестный объём последним', () => {
+    const product = group({ variants: [
+      { source: 'edadeal', retailer: 'Metro', price: 50, url: 'unknown', fetchedAt: '1' },
+      { source: 'edadeal', retailer: 'Metro', volumeMl: 450, price: 80, url: '450', fetchedAt: '1' },
+      { source: 'edadeal', retailer: 'Metro', volumeMl: 250, price: 90, url: '250', fetchedAt: '1' },
+      { source: 'edadeal', retailer: 'Metro', volumeMl: 250, price: 100, url: 'duplicate', fetchedAt: '1' },
+      { source: 'edadeal', retailer: 'Лента', volumeMl: 250, price: 70, url: 'cheapest', fetchedAt: '1' },
+      { source: 'edadeal', retailer: 'Metro', volumeMl: 449, price: 75, url: '449', fetchedAt: '1' },
+    ] });
+    const original = structuredClone(product);
+    expect(catalogOffersByVolume(product).map(({ volumeMl, offers }) => [volumeMl, offers.map(o => o.price)])).toEqual([
+      [250, [70, 90]], [449, [75]], [450, [80]], [undefined, [50]],
+    ]);
+    expect(product).toEqual(original);
+    expect(catalogOffersByVolume(group({ variants: [] }))).toEqual([]);
   });
 
   it('показывает понятные названия новых и неопределённых вкусов', () => {

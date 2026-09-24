@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BrandShell } from '@/components/brand-shell';
+import { ProfileNavigation } from '@/components/profile-navigation';
 import { isMagicLinkToken } from '@/lib/magic-link-url';
 import { confirmMagicLink } from './actions';
 
@@ -22,7 +23,7 @@ export default async function ConfirmPage({ searchParams }: ConfirmPageProps) {
   const validToken = isMagicLinkToken(token);
 
   return (
-    <BrandShell>
+    <BrandShell headerAction={<ProfileNavigation />}>
       <section className="auth-layout compact-layout">
         <p className="section-label">Проверка ссылки</p>
         <h1>{validToken ? 'Подтвердите вход' : 'Ссылка не подходит'}</h1>

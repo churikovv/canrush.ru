@@ -93,6 +93,18 @@ export function catalogOffers(group: CatalogGroup): FlavorVariant[] {
   return [...byRetailerAndVolume.values()].sort((left, right) => left.price - right.price);
 }
 
+export function catalogOffersByVolume(group: CatalogGroup): { volumeMl: number | undefined; offers: FlavorVariant[] }[] {
+  const volumes = new Map<number | undefined, FlavorVariant[]>();
+  for (const offer of catalogOffers(group)) {
+    const offers = volumes.get(offer.volumeMl) ?? [];
+    offers.push(offer);
+    volumes.set(offer.volumeMl, offers);
+  }
+  return [...volumes.entries()]
+    .sort(([left], [right]) => (left ?? Infinity) - (right ?? Infinity))
+    .map(([volumeMl, offers]) => ({ volumeMl, offers }));
+}
+
 function normalizeText(value: string): string {
   return value.toLocaleLowerCase('ru-RU').replace(/ё/gu, 'е').trim();
 }
