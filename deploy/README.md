@@ -76,7 +76,7 @@ Internet → Caddy (80/443, TLS) → Site (3000) → PostgreSQL (5432, internal)
 | Volume           | Site mount                     | Parser mount                      | Purpose                          |
 |------------------|--------------------------------|-----------------------------------|----------------------------------|
 | `catalog-data`   | `/app/data`                    | `/app/apps/site/data`             | `catalog.json`, `retailer-icons.json` |
-| `product-images` | `/app/apps/site/public/images` | `/app/apps/site/public/images`    | Downloaded product images        |
+| `product-images` | `/app/apps/site/public/images` | `/app/apps/site/public/images`    | Downloaded product images and retailer logos (`retailers/`) |
 | `parser-data`    | —                              | `/app/data`                       | `latest.json`, `history/`, `raw/` |
 | `parser-sessions`| —                              | `/app/apps/parser/.sessions`      | Browser sessions (cookies, CAPTCHA) |
 

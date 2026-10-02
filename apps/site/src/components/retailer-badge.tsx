@@ -12,22 +12,34 @@ interface RetailerBadgeProps {
 interface RetailerAsset {
   src: string;
   size: number;
+  tile?: boolean;
 }
 
-type RetailerIconManifest = Record<string, string>;
+type RetailerIconManifest = Record<string, string | { src?: unknown; tile?: unknown }>;
 
-let manifestCache: RetailerIconManifest | null = null;
+const MANIFEST_TTL_MS = 60_000;
+let manifestCache: { manifest: RetailerIconManifest; loadedAt: number } | null = null;
 
-async function loadManifest(): Promise<RetailerIconManifest> {
-  if (manifestCache) return manifestCache;
+async function readManifest(): Promise<RetailerIconManifest> {
   try {
     const manifestPath = path.join(process.cwd(), 'data', 'retailer-icons.json');
-    const raw = await readFile(manifestPath, 'utf-8');
-    manifestCache = JSON.parse(raw) as RetailerIconManifest;
+    return JSON.parse(await readFile(manifestPath, 'utf-8')) as RetailerIconManifest;
   } catch {
-    manifestCache = {};
+    return {};
   }
-  return manifestCache;
+}
+
+async function loadManifest(): Promise<RetailerIconManifest> {
+  if (manifestCache && Date.now() - manifestCache.loadedAt < MANIFEST_TTL_MS) return manifestCache.manifest;
+  const manifest = await readManifest();
+  manifestCache = { manifest, loadedAt: Date.now() };
+  return manifest;
+}
+
+function manifestAsset(entry: RetailerIconManifest[string] | undefined, badgeSize: number): RetailerAsset | null {
+  if (typeof entry === 'string') return { src: entry, size: 18 };
+  if (!entry || typeof entry.src !== 'string' || !entry.src.startsWith('/')) return null;
+  return entry.tile === true ? { src: entry.src, size: badgeSize, tile: true } : { src: entry.src, size: 18 };
 }
 
 function handcraftedAsset(name: string): RetailerAsset | null {
@@ -40,13 +52,12 @@ function handcraftedAsset(name: string): RetailerAsset | null {
   return null;
 }
 
-async function retailerAsset(name: string): Promise<RetailerAsset | null> {
+async function retailerAsset(name: string, badgeSize: number): Promise<RetailerAsset | null> {
   const handcrafted = handcraftedAsset(name);
   if (handcrafted) return handcrafted;
 
   const manifest = await loadManifest();
-  const iconPath = manifest[name];
-  return iconPath ? { src: iconPath, size: 18 } : null;
+  return manifestAsset(manifest[name], badgeSize);
 }
 
 function initials(name: string): string {
@@ -61,11 +72,12 @@ function initials(name: string): string {
 }
 
 export async function RetailerBadge({ name, size = 'small', decorative = false }: RetailerBadgeProps) {
-  const asset = await retailerAsset(name);
+  const asset = await retailerAsset(name, size === 'large' ? 34 : 28);
   const accessibility = decorative ? { 'aria-hidden': true as const } : { role: 'img', 'aria-label': `Магазин ${name}` };
+  const className = `retailer-badge retailer-badge-${size}${asset?.tile ? ' retailer-badge-tile' : ''}`;
 
   return (
-    <span className={`retailer-badge retailer-badge-${size}`} title={name} {...accessibility}>
+    <span className={className} title={name} {...accessibility}>
       {asset ? <Image src={asset.src} width={asset.size} height={asset.size} alt="" /> : <span>{initials(name)}</span>}
     </span>
   );

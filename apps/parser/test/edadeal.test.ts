@@ -31,7 +31,11 @@ const SAMPLE: EdadealSearchResponse = {
           uuid: 'meta-magnit',
           title: 'Энергетический напиток Flash Up Energy Банан-Фейхоа 450мл',
           brandUuid: 'flash',
-          partner: { name: 'Магнит', slug: 'magnit' },
+          partner: {
+            name: 'Магнит',
+            slug: 'magnit',
+            imageUrl: 'https://leonardo.edadeal.io/dyn/re/retailers/images/icons/sq/magnit.png',
+          },
           priceData: { new: { type: 'range', from: 4699, to: 4999 } },
           quantity: 450,
           quantityUnit: 'мл',
@@ -109,6 +113,7 @@ describe('mapEdadealResponse', () => {
     expect(magnit.price).toBe(46.99);
     expect(magnit.oldPrice).toBeUndefined();
     expect(magnit.retailer).toBe('Магнит');
+    expect(magnit.retailerIconUrl).toBe('https://leonardo.edadeal.io/dyn/re/retailers/images/icons/sq/magnit.png');
   });
 
   it('заполняет oldPrice только если старая цена выше новой', () => {

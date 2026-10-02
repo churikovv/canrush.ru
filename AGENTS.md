@@ -108,6 +108,13 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
   выдача собирается через брендовые батчи (обычный ответ обрезан до 600 групп),
   бренд — по `brandUuid`, затем через глобальные `brandAliases`. Не убирай паузу
   800 мс между запросами.
+- **Иконки сетей**: адаптер Едадила кладёт логотип сети (`partner.imageUrl`) в
+  `Product.retailerIconUrl`. `npm -w apps/parser run download-icons` скачивает
+  его в `apps/site/public/images/retailers/` (общий volume с сайтом) и пишет в
+  `apps/site/data/retailer-icons.json` запись `{ src, tile }`; favicon по домену —
+  только запасной вариант. Логотипы принимаются лишь с `https://leonardo.edadeal.io`.
+  Сайт показывает `tile` на всю плашку, ручные иконки из `public/brand/retailers`
+  имеют приоритет. Запускай после парсинга вместе с `download-images`.
 - **Антибот/блокировки — это норма**: источники часто возвращают 403/498/капчу.
   Не пытайся «обойти» защиту агрессивнее — используй `session:unlock` и
   stale-фоллбэк (`mergeResults` в `storage.ts`). Не увеличивай частоту запросов

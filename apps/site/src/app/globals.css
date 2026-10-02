@@ -1830,6 +1830,16 @@ html[data-cookie-notice="visible"] .brand-footer {
   object-fit: contain;
 }
 
+.retailer-badge-tile {
+  background: transparent;
+}
+
+.retailer-badge-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .catalog-load-more {
   display: flex;
   width: min(100%, 342px);

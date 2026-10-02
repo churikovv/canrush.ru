@@ -66,7 +66,7 @@ export interface EdadealMetaOffer {
   uuid: string;
   title?: string;
   brandUuid?: string;
-  partner?: { uuid?: string; name?: string; slug?: string };
+  partner?: { uuid?: string; name?: string; slug?: string; imageUrl?: string };
   priceData?: { new?: EdadealPrice; old?: EdadealPrice };
   imageUrl?: string;
   quantity?: number;
@@ -229,6 +229,7 @@ export function mapEdadealResponse(
       ...product,
       volumeMl: product.volumeMl ?? quantityToMl(meta.quantity, meta.quantityUnit),
       retailer: meta.partner?.name,
+      retailerIconUrl: meta.partner?.imageUrl,
       promoEndsAt: meta.dateEnd ? new Date(meta.dateEnd).toISOString() : undefined,
     });
   }
