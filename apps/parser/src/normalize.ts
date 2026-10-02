@@ -1,4 +1,7 @@
+import { namedProductFlavor, isPlainOriginal } from './product-lines.js';
 import type { BrandAliases, FlavorAliases, Product, SourceName } from '@canrush/shared';
+
+export const NORMALIZATION_VERSION = 8;
 
 export interface RawProductInput {
   sourceId: string;
@@ -82,10 +85,15 @@ export function detectFlavor(
   knownFlavors: string[],
   aliases: FlavorAliases = {},
 ): string | undefined {
-  const normalizedName = ` ${normalizeBrandText(name)} `;
-  return flavorCandidates(knownFlavors, aliases).find(({ alias }) =>
-    normalizedName.includes(` ${normalizeBrandText(alias)} `),
-  )?.canonical;
+  let remaining = ` ${normalizeBrandText(name)} `;
+  const matches = new Set<string>();
+  for (const { alias, canonical } of flavorCandidates(knownFlavors, aliases)) {
+    const needle = ` ${normalizeBrandText(alias)} `;
+    if (remaining.includes(needle)) { matches.add(canonical); remaining = remaining.split(needle).join(' '); }
+  }
+  if (matches.size > 1) matches.delete('original');
+  const flavors = [...matches].sort();
+  return flavors.length > 1 ? `blend:${flavors.join('+')}` : flavors[0];
 }
 
 /** Приводит вкус от источника к каноническому названию, неизвестные — сохраняет как есть. */
@@ -111,16 +119,30 @@ export function normalizeProduct(
   knownFlavors: string[] = [],
   flavorAliases: FlavorAliases = {},
 ): Product {
+  const brand = detectBrand(raw.name, knownBrands, brandAliases) ?? (raw.brand ? canonicalizeBrand(raw.brand, knownBrands, brandAliases) : undefined);
+  let flavor = raw.flavor ? canonicalizeFlavor(raw.flavor, knownFlavors, flavorAliases) : detectFlavor(raw.name, knownFlavors, flavorAliases);
+  const name = normalizeBrandText(raw.name);
+  const sugarfree = /(?:^| )(?:sugar ?free|zero(?: sugar)?|зеро(?: шугар)?|бе[зх] сахара|б сах(?:ара)?)(?: |$)/u.test(name);
+  if (brand === 'Red Bull') {
+    // Imported product families are not interchangeable with the European editions.
+    if (/(?:^| )(?:krating|sods|soda)(?: |$)/u.test(name)) flavor = undefined;
+    else if (!flavor && knownFlavors.includes('original')) {
+      const remainder = name.replace(/red ?bull|ред ?булл/gu, ' ')
+        .replace(/\d+(?:[., ]\d+)?/gu, ' ')
+        .split(/\s+/u).filter(Boolean)
+        .filter(word => !['энергетический','энергетик','энерг','напиток','газированный','тонизирующий','безалкогольный','energy','drink','ж','б','а','алк','л','мл','шт','x','х','большая','банка','без','сахара','сах','sugarfree','sugar','free','zero'].includes(word));
+      if (!remainder.length) flavor = 'original';
+    }
+  }
+  flavor = namedProductFlavor(brand, name) ?? flavor;
+  if (!flavor && knownFlavors.includes('original') && isPlainOriginal(brand, name)) flavor = 'original';
+  if (sugarfree && flavor && !flavor.startsWith('monster_ultra_') && flavor !== 'monster_absolute_zero' && !flavor.endsWith(':sugarfree') && flavor !== 'sugarfree') flavor = flavor === 'original' ? 'sugarfree' : `${flavor}:sugarfree`;
   return {
     source,
     sourceId: raw.sourceId,
     name: raw.name.trim(),
-    brand: raw.brand
-      ? canonicalizeBrand(raw.brand, knownBrands, brandAliases)
-      : detectBrand(raw.name, knownBrands, brandAliases),
-    flavor: raw.flavor
-      ? canonicalizeFlavor(raw.flavor, knownFlavors, flavorAliases)
-      : detectFlavor(raw.name, knownFlavors, flavorAliases),
+    brand,
+    flavor,
     volumeMl: extractVolumeMl(raw.name),
     price: raw.price,
     oldPrice: raw.oldPrice,

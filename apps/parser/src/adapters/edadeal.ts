@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { isAxiosError } from 'axios';
+import { CITIES } from '@canrush/shared';
 import type { BrandAliases, Product, SourceAdapter, SourceQueryConfig } from '@canrush/shared';
 import { SourceBlockedError, StrategyNotApplicableError } from '../fetch/errors.js';
 import { runStrategies, type StrategyDefinition } from '../fetch/strategy.js';
@@ -42,10 +43,7 @@ export interface EdadealLocality {
 }
 
 /** Города, для которых знаем и geoid, и слаг в URL. Добавлять по мере необходимости. */
-export const KNOWN_LOCALITIES: Record<string, EdadealLocality> = {
-  '213': { geoId: '213', slug: 'moskva', lat: 55.755863, lng: 37.6177 },
-  '2': { geoId: '2', slug: 'sankt-peterburg', lat: 59.938784, lng: 30.314997 },
-};
+export const KNOWN_LOCALITIES: Record<string, EdadealLocality> = Object.fromEntries(CITIES.map(city => [city.geoId, { geoId: city.geoId, slug: city.slug, lat: city.lat, lng: city.lng }]));
 
 interface EdadealPriceValue {
   type: 'value';
@@ -101,10 +99,7 @@ export function resolveLocality(regionId: string | undefined): EdadealLocality {
   const geoId = regionId && regionId.trim() !== '' ? regionId.trim() : DEFAULT_GEO_ID;
   const known = KNOWN_LOCALITIES[geoId];
   if (known) return known;
-  // Неизвестный geoid: цены по нему API отдаст, но слаг для ссылок неизвестен —
-  // ведём на общий каталог Москвы, чем на несуществующий город.
-  const fallback = KNOWN_LOCALITIES[DEFAULT_GEO_ID]!;
-  return { ...fallback, geoId };
+  throw new Error(`Неподдерживаемый регион Едадила: ${geoId}`);
 }
 
 function kopecksToRub(value: number): number {

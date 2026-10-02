@@ -1,9 +1,9 @@
 #!/usr/bin/env node
+import { reindexCatalog } from './reindex-catalog.js';
 import 'dotenv/config';
-import { SOURCES, type SourceName } from '@canrush/shared';
-import { detectChallenge, waitForClear } from './browser/challenge.js';
-import { withSession } from './browser/session.js';
-import { SOURCE_CHECK_URLS } from './browser/targets.js';
+import type { SourceName } from '@canrush/shared';
+const SOURCES = ['edadeal'] as const;
+import { parseCities, runRegionalParser } from './regions.js';
 import { runParser } from './run.js';
 import { startSchedule } from './schedule.js';
 import { applyLocalImages, downloadProductImages, loadLatestData, saveLatestData } from './images.js';
@@ -34,41 +34,6 @@ function parseSources(flags: Flags): SourceName[] | undefined {
     throw new Error(`Неизвестные источники: ${invalid.join(', ')}. Доступны: ${SOURCES.join(', ')}`);
   }
   return requested as SourceName[];
-}
-
-async function runDoctor(sources: SourceName[], headed: boolean): Promise<void> {
-  console.log('Диагностика источников (использует сохранённые сессии из .sessions/):\n');
-  for (const source of sources) {
-    const url = SOURCE_CHECK_URLS[source];
-    try {
-      await withSession(source, { headless: !headed }, async (context) => {
-        const page = await context.newPage();
-        const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-        const waited = await waitForClear(page, 10_000);
-        const state = waited === 'challenge' ? await detectChallenge(page, response) : waited;
-        console.log(`  ${source.padEnd(12)} ${state.toUpperCase()} (HTTP ${response?.status() ?? '?'})`);
-      });
-    } catch (err) {
-      console.log(`  ${source.padEnd(12)} ERROR (${(err as Error).message})`);
-    }
-  }
-}
-
-async function unlockSession(source: SourceName): Promise<void> {
-  console.log(`Открываю "${source}" в видимом браузере.`);
-  console.log('Пройдите проверку/капчу и, если потребуется, выберите магазин доставки.');
-  console.log('Когда каталог откроется нормально — вернитесь в терминал и нажмите Enter.\n');
-
-  await withSession(source, { headless: false }, async (context) => {
-    const page = await context.newPage();
-    await page.goto(SOURCE_CHECK_URLS[source], { waitUntil: 'domcontentloaded', timeout: 60_000 });
-    await new Promise<void>((resolve) => {
-      process.stdin.resume();
-      process.stdin.once('data', () => resolve());
-    });
-  });
-
-  console.log(`\nСессия для "${source}" сохранена в apps/parser/.sessions/${source}`);
 }
 
 function printSummary(results: Awaited<ReturnType<typeof runParser>>): void {
@@ -132,28 +97,25 @@ async function main(): Promise<void> {
   const command = hasSubcommand && first ? first : 'run';
   const flags = parseFlags(hasSubcommand ? argv.slice(1) : argv);
   const sources = parseSources(flags);
+  if (flags.cities !== undefined && typeof flags.cities !== 'string') throw new Error('Укажите --cities=all или список городов.');
+  const cities = typeof flags.cities === 'string' ? parseCities(flags.cities) : undefined;
+  if (cities && sources && (sources.length !== 1 || sources[0] !== 'edadeal')) throw new Error('Региональный прогон поддерживает только --source=edadeal.');
 
   switch (command) {
     case 'run': {
       if (flags.schedule) {
-        startSchedule({ sources });
+        startSchedule({ sources, cities });
         return;
+      }
+      if (cities) {
+        await runRegionalParser({ cities, force: flags.force === true }); return;
       }
       const results = await runParser({ sources });
       printSummary(results);
       return;
     }
-    case 'doctor':
-      await runDoctor(sources ?? [...SOURCES], Boolean(flags.headed));
-      return;
-    case 'session:unlock': {
-      const only = sources?.length === 1 ? sources[0] : undefined;
-      if (!only) {
-        throw new Error('Укажите ровно один источник: --source=<name>');
-      }
-      await unlockSession(only);
-      return;
-    }
+    case 'reindex-catalog':
+      await reindexCatalog(); return;
     case 'download-images': {
       await runDownloadImages();
       return;
@@ -163,7 +125,7 @@ async function main(): Promise<void> {
       return;
     }
     default:
-      throw new Error(`Неизвестная команда: "${command}". Доступны: run, doctor, session:unlock, download-images, download-icons`);
+      throw new Error(`Неизвестная команда: "${command}". Доступны: run, reindex-catalog, download-images, download-icons`);
   }
 }
 

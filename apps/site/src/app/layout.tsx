@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { Suspense, type ReactNode } from 'react';
+import { ActivityHeartbeat } from '@/components/profile-presence';
 import { CookieNotice } from '@/components/cookie-notice';
 import { SiteMotionProvider } from '@/components/site-motion-provider';
 import { YandexMetrika } from '@/components/yandex-metrika';
@@ -81,6 +82,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           </a>
           {children}
           <CookieNotice />
+          <ActivityHeartbeat />
           <Suspense fallback={null}>
             <YandexMetrika />
           </Suspense>

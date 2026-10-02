@@ -6,7 +6,6 @@ import { MotionConfig } from 'motion/react';
 
 const PRESSABLE_SELECTOR = [
   'button:not(.motion-local):not(:disabled)',
-  'a.profile-navigation-item',
   'a.profile-edit-link',
   'a.catalog-card-link',
   'a.catalog-favorite-button',
@@ -19,7 +18,6 @@ const PRESSABLE_SELECTOR = [
 const HOVERABLE_SELECTOR = [
   'a.catalog-card-link',
   'a.tier-list-card-preview',
-  'a.profile-navigation-item',
 ].join(',');
 
 function useSiteMicroInteractions(): void {

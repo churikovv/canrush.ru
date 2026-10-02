@@ -5,7 +5,7 @@ import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { TierListEditor } from '@/components/tier-list-editor';
 import { auth } from '@/lib/auth';
-import { loadCatalogGroups } from '@/lib/catalog';
+import { loadAllCatalogGroups } from '@/lib/catalog';
 import { ensureOwnProfile } from '@/lib/profile';
 import { catalogGroupsToTierProducts } from '@/lib/tier-lists';
 
@@ -21,7 +21,7 @@ export default async function NewTierListPage() {
   if (!session) redirect('/sign-in');
   await ensureOwnProfile(session.user);
 
-  const products = catalogGroupsToTierProducts(await loadCatalogGroups()).sort(
+  const products = catalogGroupsToTierProducts(await loadAllCatalogGroups()).sort(
     (left, right) => right.retailerCount - left.retailerCount || left.brand.localeCompare(right.brand, 'ru-RU'),
   );
 

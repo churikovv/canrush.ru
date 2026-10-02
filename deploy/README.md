@@ -98,28 +98,19 @@ docker compose logs -f parser
 ### Run parser manually (one-time, all sources)
 
 ```bash
-docker compose exec parser npx tsx apps/parser/src/index.ts run
+docker compose exec parser node apps/parser/dist/index.js run
 ```
 
 ### Run parser for specific sources
 
 ```bash
-docker compose exec parser npx tsx apps/parser/src/index.ts run --source=ozon,wildberries
+docker compose exec parser node apps/parser/dist/index.js run --source=edadeal
 ```
 
 ### Download product images
 
 ```bash
-docker compose exec parser npx tsx apps/parser/src/index.ts download-images
-```
-
-### Unlock a blocked source session
-
-If a source is blocked (403/CAPTCHA), you need to run the unlock command with a visible browser. This requires SSH with X11 forwarding or a VNC session:
-
-```bash
-# On the VPS, with X11 forwarding:
-docker compose exec -e DISPLAY=$DISPLAY parser npx tsx apps/parser/src/index.ts session:unlock --source=wildberries
+docker compose exec parser node apps/parser/dist/index.js download-images
 ```
 
 ### Run database migrations after updates
@@ -156,3 +147,13 @@ docker compose down -v
 - **Sessions** (`.sessions/`) are persisted in a Docker volume so cookies and solved CAPTCHAs survive container restarts.
 - **Retailer icons** (`public/brand/retailers/`) are committed to the repo and baked into the site image. They are NOT in a shared volume.
 - The site's `public/images/` directory is a shared volume populated by the parser at runtime.
+
+### Региональный запуск
+
+После обновления контейнеров выполните один начальный региональный сбор:
+
+```bash
+docker compose exec parser node apps/parser/dist/index.js --cities=all --source=edadeal
+```
+
+Существующие volumes сохраняют `data/regions`, `data/image-cache`, `apps/site/data/regions` и общие изображения. Планировщик по умолчанию обновляет все города ежедневно в 06:00 МСК; свежие срезы повторно не запрашиваются в течение 6 часов. Дополнительные ключи API для выбора города и браузерной геолокации не нужны. Обновите также `Caddyfile`: `Permissions-Policy` разрешает `geolocation=(self)`; старое `geolocation=()` блокирует определение города даже после разрешения браузера.

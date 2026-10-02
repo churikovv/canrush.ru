@@ -1,5 +1,7 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
+import { isResolvedFlavor } from '@canrush/shared';
+import { cache } from 'react';
+import { selectedCity } from '@/lib/location';
+import { activeOffers, readCityCatalog, readAllCatalogGroups } from '@/lib/catalog-files';
 import type { CatalogGroup, FlavorVariant } from '@canrush/shared';
 import type { QueryResultRow } from 'pg';
 import { getPool } from '@/db/pool';
@@ -9,28 +11,17 @@ interface FavoriteRow extends QueryResultRow {
   flavor: string;
 }
 
-interface LatestData {
-  groups?: CatalogGroup[];
-  generatedAt?: string;
-}
-
-const LATEST_DATA_PATH = path.join(process.cwd(), 'data', 'catalog.json');
-
-export async function loadCatalogSnapshot() {
-  try {
-    const raw = await readFile(LATEST_DATA_PATH, 'utf-8');
-    const data = JSON.parse(raw) as LatestData;
-    const generatedAt = data.generatedAt && Number.isFinite(Date.parse(data.generatedAt)) ? data.generatedAt : null;
-    return { groups: data.groups ?? [], generatedAt };
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    return { groups: [], generatedAt: null };
-  }
-}
-
-export async function loadCatalogGroups(): Promise<CatalogGroup[]> {
-  return (await loadCatalogSnapshot()).groups;
-}
+export const loadCatalogSnapshot = cache(async () => {
+  const city = await selectedCity();
+  const data = await readCityCatalog(city.id);
+  const generatedAt = data?.generatedAt && Number.isFinite(Date.parse(data.generatedAt)) ? data.generatedAt : null;
+  const status = data?.status === 'stale' || (generatedAt && Date.now() - Date.parse(generatedAt) > 24 * 60 * 60 * 1000) ? 'stale' : data?.status ?? (generatedAt ? 'ok' : 'unavailable');
+  const covers = new Map((await readAllCatalogGroups()).filter(group => isResolvedFlavor(group.flavor)).map(group => [JSON.stringify([group.brand, group.flavor]), group.coverImageUrl]));
+  const groups = activeOffers(data?.groups ?? []).map(group => ({ ...group, coverImageUrl: isResolvedFlavor(group.flavor) ? covers.get(JSON.stringify([group.brand, group.flavor])) ?? group.coverImageUrl : group.coverImageUrl }));
+  return { city, groups, generatedAt, status };
+});
+export async function loadCatalogGroups(): Promise<CatalogGroup[]> { return (await loadCatalogSnapshot()).groups; }
+export const loadAllCatalogGroups = cache(readAllCatalogGroups);
 
 function groupKey(brand: string, flavor: string): string {
   return `${brand}\u0000${flavor}`;
@@ -38,7 +29,12 @@ function groupKey(brand: string, flavor: string): string {
 
 export async function getCatalogGroup(brand: string, flavor: string): Promise<CatalogGroup | null> {
   const groups = await loadCatalogGroups();
-  return groups.find((group) => group.brand === brand && group.flavor === flavor) ?? null;
+  const local = groups.find(group => group.brand === brand && group.flavor === flavor);
+  if (local) return local;
+  const identity = (await loadAllCatalogGroups()).find(group => group.brand === brand && group.flavor === flavor);
+  if (identity) return { ...identity, variants: [], minPrice: 0 };
+  if (flavor === 'unknown' && (await getPool().query('select 1 from review where brand=$1 and flavor=$2 limit 1', [brand, flavor])).rowCount) return { brand, flavor, variants: [], minPrice: 0 };
+  return null;
 }
 
 export async function isFavorite(userId: string, brand: string, flavor: string): Promise<boolean> {
@@ -57,7 +53,8 @@ export async function getFavoriteGroups(userId: string): Promise<CatalogGroup[]>
     ),
     loadCatalogGroups(),
   ]);
-  const groupsByKey = new Map(groups.map((group) => [groupKey(group.brand, group.flavor), group]));
+  const groupsByKey = new Map((await loadAllCatalogGroups()).map(group => [groupKey(group.brand, group.flavor), { ...group, variants: [] as FlavorVariant[], minPrice: 0 }]));
+  for (const group of groups) groupsByKey.set(groupKey(group.brand, group.flavor), group);
   return favorites.rows
     .map((favorite) => groupsByKey.get(groupKey(favorite.brand, favorite.flavor)))
     .filter((group): group is CatalogGroup => Boolean(group));

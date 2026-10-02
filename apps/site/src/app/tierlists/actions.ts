@@ -6,7 +6,8 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getPool } from '@/db/pool';
 import { auth } from '@/lib/auth';
-import { loadCatalogGroups } from '@/lib/catalog';
+import { getProfileCommunity } from '@/lib/profile-community';
+import { loadAllCatalogGroups } from '@/lib/catalog';
 import { isUserBlocked } from '@/lib/moderation';
 import { ensureOwnProfile } from '@/lib/profile';
 import { validateTierListInput, type TierListFieldErrors } from '@/lib/tier-list-fields';
@@ -74,7 +75,7 @@ export async function saveTierListAction(
     return { status: 'error', message: 'Тирлист не найден или недоступен для редактирования.' };
   }
 
-  const groups = await loadCatalogGroups();
+  const groups = await loadAllCatalogGroups();
   const allowedProducts = new Set(groups.map((group) => itemKey(group.brand, group.flavor)));
   for (const item of existing?.items ?? []) allowedProducts.add(itemKey(item.brand, item.flavor));
   if (validation.data.items.some((item) => !allowedProducts.has(itemKey(item.brand, item.flavor)))) {
@@ -136,6 +137,8 @@ export async function saveTierListAction(
   } finally {
     client.release();
   }
+
+  await getProfileCommunity(user.id);
 
   revalidatePath('/tierlists');
   revalidatePath(`/tierlists/${slug}`);

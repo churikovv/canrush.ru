@@ -25,8 +25,7 @@ RUN npm run build -w @canrush/shared
 RUN npm run build -w @canrush/parser
 
 # ---- Production stage ----
-# Playwright official image includes Chromium and all system deps
-FROM mcr.microsoft.com/playwright:v1.62.1-noble AS production
+FROM node:20-slim AS production
 
 WORKDIR /app
 
@@ -48,7 +47,7 @@ COPY --from=builder /app/apps/parser/config ./apps/parser/config
 COPY --from=builder /app/package.json /app/package-lock.json ./
 
 # Create runtime directories
-RUN mkdir -p /app/data /app/apps/site/data /app/apps/site/public/images/products /app/apps/site/public/brand/retailers /app/apps/parser/.sessions
+RUN mkdir -p /app/data /app/apps/site/data /app/apps/site/public/images/products /app/apps/site/public/brand/retailers
 
 # Run the scheduler using compiled output (node, not tsx)
 CMD ["node", "apps/parser/dist/index.js", "--schedule"]

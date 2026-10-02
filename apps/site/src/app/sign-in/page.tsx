@@ -19,7 +19,7 @@ export default async function SignInPage() {
   if (session) redirect('/profile');
 
   return (
-    <BrandShell headerAction={<ProfileNavigation />}>
+    <BrandShell headerAction={<ProfileNavigation active="profile" />}>
       <div className="auth-layout sign-in-layout">
         <section className="auth-intro">
           <div className="auth-illustration" aria-hidden="true">

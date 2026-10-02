@@ -13,7 +13,6 @@ const TABS: readonly Tab[] = [
   { section: 'catalog', href: '/catalog', label: 'Каталог' },
   { section: 'prices', href: '/prices', label: 'Цены', accessibleLabel: 'Цены по магазинам' },
   { section: 'tierlists', href: '/tierlists', label: 'Тирлисты' },
-  { section: 'favorites', href: '/profile/favorites', label: 'Избранное' },
   { section: 'profile', href: '/profile', label: 'Профиль' },
 ];
 
@@ -26,7 +25,7 @@ export function SiteTabBar({ active }: { active?: NavigationSection }) {
           className="site-tab-bar-item"
           href={href}
           aria-label={accessibleLabel}
-          aria-current={active === section ? 'page' : undefined}
+          aria-current={(active === 'favorites' ? 'profile' : active) === section ? 'page' : undefined}
         >
           <NavigationIcon section={section} />
           <SiteTabBarLabel>{label}</SiteTabBarLabel>

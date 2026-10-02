@@ -5,7 +5,7 @@ import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { ProfileTierLists } from '@/components/profile-tier-lists';
 import { auth } from '@/lib/auth';
-import { loadCatalogGroups } from '@/lib/catalog';
+import { loadAllCatalogGroups } from '@/lib/catalog';
 import { getProfileByUsername } from '@/lib/profile';
 import { getPublishedTierListsForUser, tierListProductsForPlacements } from '@/lib/tier-lists';
 
@@ -20,7 +20,7 @@ export default async function PublicTierListsPage({ params }: { params: Promise<
   const [profile, session, groups] = await Promise.all([
     getProfileByUsername(username),
     auth.api.getSession({ headers: await headers() }),
-    loadCatalogGroups(),
+    loadAllCatalogGroups(),
   ]);
   if (!profile) notFound();
 
@@ -29,7 +29,7 @@ export default async function PublicTierListsPage({ params }: { params: Promise<
     const products = tierListProductsForPlacements(groups, lists.flatMap((list) => list.preview));
     const ownerName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
     return (
-      <BrandShell headerAction={<ProfileNavigation active="tierlists" />} surfaceClassName="profile-surface">
+      <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
         <ProfileTierLists lists={lists} products={products} ownerName={ownerName} isOwn={false} />
       </BrandShell>
     );
@@ -39,7 +39,7 @@ export default async function PublicTierListsPage({ params }: { params: Promise<
   const products = tierListProductsForPlacements(groups, lists.flatMap((list) => list.preview));
   const ownerName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
   return (
-    <BrandShell headerAction={<ProfileNavigation active="tierlists" />} surfaceClassName="profile-surface">
+    <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
       <ProfileTierLists lists={lists} products={products} ownerName={ownerName} isOwn={false} />
     </BrandShell>
   );

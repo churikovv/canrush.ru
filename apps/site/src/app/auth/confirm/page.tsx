@@ -23,7 +23,7 @@ export default async function ConfirmPage({ searchParams }: ConfirmPageProps) {
   const validToken = isMagicLinkToken(token);
 
   return (
-    <BrandShell headerAction={<ProfileNavigation />}>
+    <BrandShell headerAction={<ProfileNavigation active="profile" />}>
       <section className="auth-layout compact-layout">
         <p className="section-label">Проверка ссылки</p>
         <h1>{validToken ? 'Подтвердите вход' : 'Ссылка не подходит'}</h1>

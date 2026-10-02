@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import type { CatalogGroup } from '@canrush/shared';
-import { loadCatalogGroups } from '@/lib/catalog';
+import { loadAllCatalogGroups } from '@/lib/catalog';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 import { SITE_URL } from '@/lib/seo';
 import { getPublishedTierListSitemapEntries } from '@/lib/tier-lists';
@@ -17,7 +17,7 @@ function productUpdatedAt(group: CatalogGroup): Date | undefined {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [groups, tierLists] = await Promise.all([
-    loadCatalogGroups(),
+    loadAllCatalogGroups(),
     getPublishedTierListSitemapEntries().catch(() => []),
   ]);
 

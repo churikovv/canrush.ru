@@ -1,5 +1,5 @@
 import type { FetchStrategyName, Product, SourceName, SourceQueryConfig } from '@canrush/shared';
-import { ChallengeRequiredError, SourceBlockedError, StrategyNotApplicableError } from './errors.js';
+import { SourceBlockedError, StrategyNotApplicableError } from './errors.js';
 
 export interface StrategyContext {
   source: SourceName;
@@ -19,8 +19,8 @@ export interface StrategyResult {
 }
 
 /**
- * Прогоняет "живые" стратегии адаптера по порядку (feed → intercept → in_page_fetch)
- * до первого успеха. "Мягкие" ошибки (недоступна/заблокирована/нужен челлендж) не
+ * Прогоняет HTTP-стратегии адаптера
+ * до первого успеха. "Мягкие" ошибки (недоступна/заблокирована) не
  * прерывают цепочку — переходим к следующей стратегии. Если все стратегии исчерпаны,
  * бросаем SourceBlockedError — на этом уровне run.ts решает, откатиться ли на
  * последние сохранённые данные (стратегия "cached", см. src/run.ts).
@@ -42,7 +42,6 @@ export async function runStrategies(
     } catch (err) {
       if (
         err instanceof StrategyNotApplicableError ||
-        err instanceof ChallengeRequiredError ||
         err instanceof SourceBlockedError
       ) {
         softErrors.push(err.message);

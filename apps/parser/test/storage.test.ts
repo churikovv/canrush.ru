@@ -107,7 +107,7 @@ describe('groupByFlavor', () => {
 
     expect(groups).toHaveLength(1);
     expect(groups[0]?.brand).toBe('Unknown');
-    expect(groups[0]?.flavor).toBe('unknown');
+    expect(groups[0]?.flavor).toMatch(/^unresolved:/);
   });
 
   it('выбирает coverImageUrl из первого варианта с изображением', () => {

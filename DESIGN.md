@@ -34,7 +34,7 @@ Use a 4/8 px rhythm. Mobile gutters are 12 or 24 px, matching Figma. Controls us
 ## Components
 
 - Header: blue surface, 36 by 30 px Figma logo mark, simple text actions with accessible labels. Navigation buttons appear from 960 px; below that the tab bar replaces them.
-- Tab bar: below 960 px, a classic iOS bar fixed to the bottom: white surface, 0.5 px top hairline, 50 px items plus the bottom safe area (44 px in short landscape viewports). Tabs, in order: Каталог, Цены, Тирлисты, Избранное, Профиль. Phones stack 24 px filled icons over 12 px labels (11 px below 360 px so every label fits at 320 px); from 640 px and in landscape the icon sits beside a 14 px label and items center at up to 144 px each. Unselected tabs use `--color-muted-strong`; the current tab uses a `--color-brand` icon and a Heavy `--color-brand-deep` label, so color is not the only cue. A tapped tab takes the selected style while navigation is pending. Fixed bottom UI stacks above it through `--site-tab-bar-offset`.
+- Tab bar: below 960 px, a classic iOS bar fixed to the bottom: white surface, 0.5 px top hairline, 50 px items plus the bottom safe area (44 px in short landscape viewports). Tabs, in order: Каталог, Цены, Тирлисты, Профиль. Favorites are accessed from the profile card; favorites pages highlight the Profile tab. Phones stack 24 px filled icons over 12 px labels (11 px below 360 px so every label fits at 320 px); from 640 px and in landscape the icon sits beside a 14 px label and items center at up to 144 px each. Unselected tabs use `--color-muted-strong`; the current tab uses a `--color-brand` icon and a Heavy `--color-brand-deep` label, so color is not the only cue. A tapped tab takes the selected style while navigation is pending. Fixed bottom UI stacks above it through `--site-tab-bar-offset`.
 - Auth panel: one visible email label, helper text, 48 to 56 px input and button, inline validation and one primary action.
 - Primary button: black surface, white text, 16 px radius, clear hover, focus, active, loading and disabled states.
 - Profile banner: blue 342 by 120 proportion on mobile with the exact Figma profile illustration aligned left.
@@ -58,3 +58,15 @@ Start at 375 to 390 px and support 320 px without horizontal scrolling. At deskt
 ## Assets
 
 Use local files under `apps/site/public/brand`. Preserve SVG view boxes and explicit rendered dimensions. Do not redraw, recolor or stretch the logo and profile illustration.
+
+
+## Profile customization
+
+- The public profile and edit screen share `ProfileHeader`; Save occupies the header action position used by Edit.
+- Desktop edit fields use the available page width; phones stack fields and image controls.
+- Avatar and banner uploads preview in the header before saving. Custom images use centered cover cropping; the built-in brand artwork remains the default.
+- One earned tag can be active, or none. The selected tag is visible near the username in existing and new reviews. The Admin tag requires current admin rights.
+
+Профиль: компактный синий бейдж уровня рядом с тегом, отдельная карточка XP с прогрессом и ссылкой на рейтинг. Стена использует аватар, ник, тег и уровень автора. Редактирование изображений — нативный modal dialog с квадратной областью аватара и баннером 4:1, ползунками масштаба и положения; перетаскивание файлов доступно непосредственно на изображениях. Вкладка профиля активна и на страницах входа, подтверждения и всех разделах `/profile`.
+
+Город располагается рядом с логотипом в синем хедере, на мобильном справа. Выбор в нативном диалоге: поиск, список городов, текущий выбор, определение по геолокации с явным подтверждением найденного города; отказ и отсутствие покрытия не блокируют ручной выбор. Каталог и цены коротко подписаны выбранным городом; регион без данных имеет честное пустое состояние.

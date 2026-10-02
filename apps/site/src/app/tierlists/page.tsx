@@ -6,7 +6,7 @@ import { ProfileNavigation } from '@/components/profile-navigation';
 import { ShareTierListButton } from '@/components/share-tier-list-button';
 import { TierBoard } from '@/components/tier-board';
 import { TierListCard } from '@/components/tier-list-card';
-import { loadCatalogGroups } from '@/lib/catalog';
+import { loadAllCatalogGroups } from '@/lib/catalog';
 import {
   buildOfficialTierList,
   getCommunityTierLists,
@@ -23,7 +23,7 @@ export const metadata: Metadata = seoMetadata({
 });
 
 export default async function TierListsPage() {
-  const groups = await loadCatalogGroups();
+  const groups = await loadAllCatalogGroups();
   const [official, community] = await Promise.all([buildOfficialTierList(groups), getCommunityTierLists()]);
   const communityProducts = tierListProductsForPlacements(groups, community.flatMap((list) => list.preview));
 

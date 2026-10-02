@@ -1,3 +1,4 @@
+import { isResolvedFlavor } from '@canrush/shared';
 import { CatalogReviewForm } from '@/components/catalog-review-form';
 import { CatalogReviewItem } from '@/components/catalog-review-item';
 import { RatingStars } from '@/components/rating-stars';
@@ -42,6 +43,10 @@ export function CatalogProductReviews({
   userReview,
   authenticated,
 }: CatalogProductReviewsProps) {
+  if (!isResolvedFlavor(flavor)) return <section className="catalog-product-section catalog-reviews">
+    <p>Вкус этого предложения не подтверждён. Общий рейтинг и новые отзывы недоступны, чтобы не смешивать разные напитки.</p>
+    {flavor === 'unknown' && <><p>Отзывы ниже относятся к старой смешанной карточке. Они не перенесены на конкретные вкусы.</p>{reviews.map(review => <CatalogReviewItem key={review.id} review={review} />)}</>}
+  </section>;
   const hasReviews = summary.count > 0;
   const overall = hasReviews ? summary.overall : 0;
 

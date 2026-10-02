@@ -1,9 +1,10 @@
 'use client';
 
+import { PriceFilterInput } from '@/components/price-filter-input';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { type ChangeEvent, type FormEvent, useEffect, useRef, useTransition } from 'react';
+import { type ChangeEvent, type FormEvent, useEffect, useRef, useState, useTransition } from 'react';
 
 const SEARCH_DELAY_MS = 300;
 const CATALOG_PARAMS = ['q', 'brand', 'flavor', 'sort'] as const;
@@ -34,6 +35,13 @@ function catalogHref(form: HTMLFormElement, query?: string): string {
 
 export function CatalogControls({ brands, flavors, query, brand, flavor, sort }: CatalogControlsProps) {
   const router = useRouter();
+  const [selectedBrand, setSelectedBrand] = useState(brand);
+  const [selectedFlavor, setSelectedFlavor] = useState(flavor);
+  const [previousFilters, setPreviousFilters] = useState({ brand, flavor });
+  if (previousFilters.brand !== brand || previousFilters.flavor !== flavor) {
+    setPreviousFilters({ brand, flavor });
+    setSelectedBrand(brand); setSelectedFlavor(flavor);
+  }
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -76,6 +84,7 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort }:
 
   function handleReset(): void {
     clearTimer();
+    setSelectedBrand(''); setSelectedFlavor('');
     if (inputRef.current) inputRef.current.value = '';
   }
 
@@ -110,28 +119,16 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort }:
           <Image src="/brand/icons/catalog-filter.svg" width={24} height={24} alt="" />
         </summary>
         <div className="catalog-filter-panel">
-          <label>
-            <span>Бренд</span>
-            <select name="brand" defaultValue={brand}>
-              <option value="">Все бренды</option>
-              {brands.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Вкус</span>
-            <select name="flavor" defaultValue={flavor}>
-              <option value="">Все вкусы</option>
-              {flavors.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div>
+            <label htmlFor="catalog-brand">Бренд</label>
+            <input type="hidden" name="brand" value={selectedBrand} />
+            <PriceFilterInput id="catalog-brand" value={selectedBrand} options={brands.map(value => ({ value, label: value }))} allLabel="Все бренды" onChange={setSelectedBrand} />
+          </div>
+          <div>
+            <label htmlFor="catalog-flavor">Вкус</label>
+            <input type="hidden" name="flavor" value={selectedFlavor} />
+            <PriceFilterInput id="catalog-flavor" value={selectedFlavor} options={flavors} allLabel="Все вкусы" onChange={setSelectedFlavor} />
+          </div>
           <div className="catalog-filter-actions">
             <Link href="/catalog" onClick={handleReset}>
               Сбросить
@@ -149,9 +146,10 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort }:
           onChange={(event) => event.currentTarget.form?.requestSubmit()}
           aria-label="Сортировка каталога"
         >
-          <option value="deals">Выгодные</option>
+          <option value="deals">Самые дешевые</option>
+          <option value="discount">Большая скидка</option>
           <option value="brand">По бренду</option>
-          <option value="stores">Больше магазинов</option>
+          <option value="stores">Кол-во магазинов</option>
           <option value="price-desc">Сначала дорогие</option>
         </select>
         <Image src="/brand/icons/chevron-down.svg" width={16} height={16} alt="" />

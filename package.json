@@ -17,8 +17,6 @@
     "test": "npm run test --workspaces --if-present",
     "parse": "npm run parse -w apps/parser --",
     "schedule": "npm run schedule -w apps/parser --",
-    "doctor": "npm run doctor -w apps/parser --",
-    "session:unlock": "npm run session:unlock -w apps/parser --",
     "ingredients": "npm run ingredients -w apps/parser --",
     "ingredients:publish": "npm run ingredients:publish -w apps/parser"
   },
@@ -26,6 +24,7 @@
     "eslint": "9.39.5",
     "typescript": "^5.5.4",
     "typescript-eslint": "8.68.0",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
+    "playwright": "^1.49.1"
   }
 }

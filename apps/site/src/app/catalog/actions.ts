@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getPool } from '@/db/pool';
 import { auth } from '@/lib/auth';
+import { getProfileCommunity } from '@/lib/profile-community';
 import { getCatalogGroup } from '@/lib/catalog';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 
@@ -40,6 +41,8 @@ export async function toggleFavoriteAction(formData: FormData): Promise<void> {
   } finally {
     client.release();
   }
+
+  await getProfileCommunity(session.user.id);
 
   revalidatePath(`/catalog/${catalogGroupSlug(brand, flavor)}`);
   revalidatePath('/profile');

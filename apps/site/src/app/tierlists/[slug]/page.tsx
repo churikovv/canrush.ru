@@ -8,7 +8,7 @@ import { ProfileNavigation } from '@/components/profile-navigation';
 import { ShareTierListButton } from '@/components/share-tier-list-button';
 import { TierBoard } from '@/components/tier-board';
 import { auth } from '@/lib/auth';
-import { loadCatalogGroups } from '@/lib/catalog';
+import { loadAllCatalogGroups } from '@/lib/catalog';
 import { seoMetadata } from '@/lib/seo';
 import { getTierListBySlug, tierListProductsForPlacements } from '@/lib/tier-lists';
 
@@ -37,7 +37,7 @@ export default async function TierListPage({ params }: { params: TierListParams 
   const [list, session, groups] = await Promise.all([
     getTierListBySlug(slug),
     auth.api.getSession({ headers: await headers() }),
-    loadCatalogGroups(),
+    loadAllCatalogGroups(),
   ]);
   if (!list) notFound();
 

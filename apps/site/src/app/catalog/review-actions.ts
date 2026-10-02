@@ -1,9 +1,12 @@
 'use server';
 
+import { isResolvedFlavor } from '@canrush/shared';
+
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
+import { getProfileCommunity } from '@/lib/profile-community';
 import { getCatalogGroup } from '@/lib/catalog';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 import { isUserBlocked } from '@/lib/moderation';
@@ -44,6 +47,7 @@ export async function submitReviewAction(
     return { status: 'error', message: 'Некорректные данные.' };
   }
 
+  if (!isResolvedFlavor(flavor)) return { status: 'error', message: 'Сначала нужно уточнить вкус напитка. Отзыв к смешанной карточке добавить нельзя.' };
   const group = await getCatalogGroup(brand, flavor);
   if (!group) return { status: 'error', message: 'Товар не найден.' };
 
@@ -66,6 +70,8 @@ export async function submitReviewAction(
     if (error instanceof ReviewPhotoError) return { status: 'error', message: error.message };
     return { status: 'error', message: 'Не удалось сохранить отзыв. Попробуйте ещё раз.' };
   }
+
+  await getProfileCommunity(user.id);
 
   const slug = catalogGroupSlug(brand, flavor);
   revalidatePath(`/catalog/${slug}`);

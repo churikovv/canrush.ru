@@ -12,6 +12,8 @@ interface ProfileRow extends QueryResultRow {
   favoriteCount: number;
   reviewCount: number;
   tierListCount: number;
+  avatarId: string | null;
+  bannerId: string | null;
 }
 
 export interface ProfileData {
@@ -24,6 +26,8 @@ export interface ProfileData {
   favoriteCount: number;
   reviewCount: number;
   tierListCount: number;
+  avatarId: string | null;
+  bannerId: string | null;
 }
 
 const PROFILE_SELECT = `
@@ -34,6 +38,8 @@ const PROFILE_SELECT = `
     u."email",
     u."createdAt",
     u."telegramChannel",
+    (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
+    (select id::text from "profileImage" where "userId" = u.id and kind = 'banner') as "bannerId",
     coalesce((select count(*)::int from "favorite" f where f."userId" = u."id"), 0) as "favoriteCount",
     coalesce((select count(*)::int from "review" r where r."userId" = u."id"), 0) as "reviewCount",
     coalesce((select count(*)::int from "tierList" tl where tl."userId" = u."id" and tl."status" = 'published'), 0) as "tierListCount"
@@ -49,6 +55,8 @@ function toProfile(row: ProfileRow): ProfileData | null {
     email: row.email,
     createdAt: row.createdAt,
     telegramChannel: row.telegramChannel,
+    avatarId: row.avatarId,
+    bannerId: row.bannerId,
     favoriteCount: Number(row.favoriteCount),
     reviewCount: Number(row.reviewCount),
     tierListCount: Number(row.tierListCount),

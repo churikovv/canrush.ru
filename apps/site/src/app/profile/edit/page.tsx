@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileEditForm } from '@/components/profile-edit-form';
 import { ProfileNavigation } from '@/components/profile-navigation';
-import { ProfileHero } from '@/components/profile-view';
 import { auth } from '@/lib/auth';
 import { ensureOwnProfile } from '@/lib/profile';
 
@@ -23,10 +22,7 @@ export default async function ProfileEditPage() {
 
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-      <div className="profile-layout profile-edit-layout ym-hide-content">
-        <ProfileHero profile={profile} />
-        <ProfileEditForm profile={profile} />
-      </div>
+      <ProfileEditForm profile={profile} />
     </BrandShell>
   );
 }

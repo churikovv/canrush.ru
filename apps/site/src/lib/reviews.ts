@@ -1,12 +1,16 @@
 import type { QueryResultRow } from 'pg';
 import type { PreparedReviewPhoto } from './review-photos';
 import { MAX_REVIEW_PHOTOS, PHOTO_ID_PATTERN } from './review-photo-limits';
+import { profileTagLabel } from '@/lib/profile-achievements';
 import { getPool } from '@/db/pool';
 
 export interface ReviewAuthor {
   username: string;
   name: string;
   telegramChannel: string | null;
+  tag: string | null;
+  avatarId: string | null;
+  xp?: number;
 }
 
 export interface ReviewData {
@@ -54,13 +58,21 @@ interface ReviewRow extends QueryResultRow {
   username: string;
   name: string;
   telegramChannel: string | null;
+  tag: string | null;
+  avatarId: string | null;
+  xp?: number;
 }
 
 const REVIEW_SELECT = `
   select r."id", r."brand", r."flavor", r."design", r."taste", r."composition", r."text",
          r."createdAt", r."updatedAt",
          array(select p."id"::text from "reviewPhoto" p where p."reviewId" = r."id" order by p."position") as photos,
-         u."username", u."name", u."telegramChannel"
+         u."username", u."name", u."telegramChannel",
+         coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
+         (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
+         case when u."profileTags"[1] = 'admin' then
+           case when exists(select 1 from "siteAdmin" where email = lower(u.email)) then 'admin' end
+         when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag
   from "review" r
   join "user" u on u."id" = r."userId"
 `;
@@ -73,6 +85,9 @@ function toReview(row: ReviewRow): ReviewData {
       username: row.username,
       name: row.name,
       telegramChannel: row.telegramChannel,
+      tag: profileTagLabel(row.tag) ?? null,
+      avatarId: row.avatarId,
+      xp: row.xp ?? 0,
     },
     brand: row.brand,
     flavor: row.flavor,

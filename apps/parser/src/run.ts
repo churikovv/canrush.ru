@@ -21,7 +21,8 @@ export interface RunOptions {
  */
 export async function runParser(options: RunOptions = {}): Promise<AdapterRunResult[]> {
   const config = loadProductsConfig();
-  const targets = options.sources ?? (Object.keys(config.sources) as SourceName[]);
+  const targets = options.sources ?? ['edadeal'];
+  if (targets.some(source => source !== 'edadeal')) throw new Error('Поддерживается только источник edadeal.');
   const delayMs = options.delayMsBetweenSources ?? 3000;
 
   let state = await loadState();

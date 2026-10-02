@@ -207,10 +207,9 @@ describe('resolveLocality', () => {
     expect(resolveLocality('2').slug).toBe('sankt-peterburg');
   });
 
-  it('для неизвестного geoid сохраняет geoid, но ссылки строит на слаг Москвы', () => {
-    const spb = resolveLocality('54');
-    expect(spb.geoId).toBe('54');
-    expect(spb.slug).toBe('moskva');
+  it('использует координаты и слаг Екатеринбурга, неизвестный город отклоняет', () => {
+    expect(resolveLocality('54')).toMatchObject({ geoId: '54', slug: 'ekaterinburg', lat: 56.838011 });
+    expect(() => resolveLocality('invalid')).toThrow('Неподдерживаемый');
   });
 });
 

@@ -12,15 +12,6 @@ export function ProfileNavigation({ active }: ProfileNavigationProps) {
       <nav className="profile-navigation" aria-label="Основная навигация">
         <Link
           className="profile-navigation-item"
-          href="/profile/favorites"
-          aria-label="Избранное"
-          aria-current={active === 'favorites' ? 'page' : undefined}
-        >
-          <NavigationIcon section="favorites" />
-          <span className="profile-navigation-label">Избранное</span>
-        </Link>
-        <Link
-          className="profile-navigation-item"
           href="/catalog"
           aria-label="Каталог"
           aria-current={active === 'catalog' ? 'page' : undefined}
@@ -51,7 +42,7 @@ export function ProfileNavigation({ active }: ProfileNavigationProps) {
           className="profile-navigation-item"
           href="/profile"
           aria-label="Профиль"
-          aria-current={active === 'profile' ? 'page' : undefined}
+          aria-current={(active === 'profile' || active === 'favorites') ? 'page' : undefined}
         >
           <NavigationIcon section="profile" />
           <span className="profile-navigation-label">Профиль</span>

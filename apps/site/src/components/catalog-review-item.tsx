@@ -1,3 +1,5 @@
+import { ProfileExperience } from '@/components/profile-experience';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import type { ReviewData } from '@/lib/reviews';
@@ -34,14 +36,15 @@ export function CatalogReviewItem({ review }: { review: ReviewData }) {
       <header className="review-item-header">
         <div className="review-item-identity">
           <span className="review-item-avatar" aria-hidden="true">
-            {authorInitial(review)}
+            {review.author.avatarId ? <Image src={`/api/profile-images/${review.author.avatarId}`} width={40} height={40} unoptimized alt="" /> : authorInitial(review)}
           </span>
           <div className="review-item-author">
             <Link className="review-item-name" href={profileHref}>
               {authorDisplay(review)}
             </Link>
             <div className="review-item-meta">
-              <span>@{review.author.username}</span>
+              <span>@{review.author.username}</span><ProfileExperience username={review.author.username} initial={{ xp: review.author.xp ?? 0, rank: null }} />
+              {review.author.tag && <span className="profile-tag review-author-tag">{review.author.tag}</span>}
               <span aria-hidden="true">·</span>
               <time dateTime={createdAt.toISOString()}>{formatDate(createdAt)}</time>
             </div>

@@ -99,7 +99,7 @@ describe('configured flavor detection', () => {
   it('предпочитает конкретный вкус словам Original и Classic', () => {
     expect(detectFlavor('Ninja Star Original Cherry со вкусом вишни', config.flavors, aliases)).toBe('cherry');
     expect(detectFlavor('Red Bull классический/персик 473 мл', config.flavors, aliases)).toBe('peach');
-    expect(detectFlavor('Lit Energy Classic со вкусом клюквы и барбариса', config.flavors, aliases)).toBe('barberry');
+    expect(detectFlavor('Lit Energy Classic со вкусом клюквы и барбариса', config.flavors, aliases)).toBe('blend:barberry+cranberry');
   });
 });
 

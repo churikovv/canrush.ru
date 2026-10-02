@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import type { CatalogGroup } from '@canrush/shared';
+import { isResolvedFlavor, type CatalogGroup } from '@canrush/shared';
 import { RetailerBadge } from '@/components/retailer-badge';
 import { cheapestVariant } from '@/lib/catalog';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
@@ -30,7 +30,7 @@ export function CatalogProductCard({ group, eager, summary }: CatalogProductCard
   const visibleRetailers = retailerNames.slice(0, 4);
   const remaining = retailerNames.length - visibleRetailers.length;
   const href = `/catalog/${catalogGroupSlug(group.brand, group.flavor)}`;
-  const ratingValue = summary && summary.count > 0 ? summary.overall : 0;
+  const ratingValue = isResolvedFlavor(group.flavor) && summary && summary.count > 0 ? summary.overall : 0;
 
   return (
     <article className="catalog-card">
@@ -53,12 +53,12 @@ export function CatalogProductCard({ group, eager, summary }: CatalogProductCard
         <div className="catalog-card-meta">
           <div
             className="catalog-card-rating"
-            aria-label={`Рейтинг ${ratingValue.toFixed(1)} из 5`}
+            aria-label={isResolvedFlavor(group.flavor) ? `Рейтинг ${ratingValue.toFixed(1)} из 5` : 'Вкус не подтверждён, рейтинг недоступен'}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.3l6.5-.9z" strokeLinejoin="round" />
             </svg>
-            <strong>{ratingValue.toFixed(1)}</strong>
+            <strong>{isResolvedFlavor(group.flavor) ? ratingValue.toFixed(1) : '—'}</strong>
           </div>
           <span>{group.brand}</span>
         </div>
@@ -73,7 +73,7 @@ export function CatalogProductCard({ group, eager, summary }: CatalogProductCard
             ) : null}
             {cheapestVolume ? <span className="catalog-card-volume">{cheapestVolume}</span> : null}
           </div>
-        ) : null}
+        ) : <p className="catalog-city-caption">Нет предложений в городе</p>}
 
         <div className="catalog-card-retailers" aria-hidden="true">
           {visibleRetailers.map((retailer) => (

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { AdapterRunResult, CatalogGroup, FlavorVariant, Product } from '@canrush/shared';
@@ -74,8 +75,8 @@ export function groupByFlavor(products: Product[]): CatalogGroup[] {
 
   for (const product of products) {
     const brand = product.brand ?? 'Unknown';
-    const flavor = product.flavor ?? 'unknown';
-    const key = `${brand}|${flavor}`;
+    const flavor = product.flavor && product.flavor !== 'unknown' ? product.flavor : `unresolved:${createHash('sha256').update(JSON.stringify([product.source, product.sourceId, product.name])).digest('hex').slice(0, 24)}`;
+    const key = JSON.stringify([brand, flavor]);
 
     const variant: FlavorVariant = {
       source: product.source,

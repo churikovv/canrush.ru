@@ -53,7 +53,7 @@ export function retailerPriceStatistics(observations: PriceObservation[], brand 
   for (const row of observations) {
     if ((brand && row.brand !== brand) || (volumeMl !== undefined && row.volumeMl !== volumeMl)) continue;
     const prices = stores.get(row.retailer) ?? [];
-    prices.push(volumeMl === undefined ? row.price * 100 / row.volumeMl : row.price);
+    prices.push(row.price * 100 / row.volumeMl);
     stores.set(row.retailer, prices);
   }
   return [...stores].map(([retailer, values]) => {
@@ -62,4 +62,20 @@ export function retailerPriceStatistics(observations: PriceObservation[], brand 
     const median = sorted.length % 2 ? sorted[middle]! : (sorted[middle - 1]! + sorted[middle]!) / 2;
     return { retailer, count: values.length, mean: values.reduce((sum, price) => sum + price, 0) / values.length, median };
   });
+}
+
+export type PriceSort = 'median' | 'count' | 'retailer' | 'deviation';
+
+export function compareRetailerPrices(observations: PriceObservation[], brand = '', volumeMl?: number, sort: PriceSort = 'median', direction: 'asc' | 'desc' = sort === 'count' ? 'desc' : 'asc') {
+  const rows = retailerPriceStatistics(observations, brand, volumeMl);
+  const count = rows.reduce((sum, row) => sum + row.count, 0);
+  const average = count ? rows.reduce((sum, row) => sum + row.mean * row.count, 0) / count : 0;
+  rows.sort((a, b) => {
+    const primary = sort === 'retailer' ? a.retailer.localeCompare(b.retailer, 'ru')
+      : sort === 'count' ? a.count - b.count : a.median - b.median;
+    return primary * (direction === 'asc' ? 1 : -1)
+      || (sort === 'count' ? a.median - b.median : b.count - a.count)
+      || a.retailer.localeCompare(b.retailer, 'ru');
+  });
+  return { count, average, rows: rows.map(row => ({ ...row, deviation: average ? Math.round((row.median / average - 1) * 100) : 0 })) };
 }

@@ -64,10 +64,8 @@ services:
     environment:
       NODE_ENV: production
       CRON_SCHEDULE: ${CRON_SCHEDULE:-0 6 * * *}
-      OZON_FEED_URL: ${OZON_FEED_URL:-}
       TG_BOT_TOKEN: ${TG_BOT_TOKEN:-}
       TG_CHAT_ID: ${TG_CHAT_ID:-}
-      PARSER_BROWSER_CHANNEL: ${PARSER_BROWSER_CHANNEL:-}
     volumes:
       # Shared catalog data (parser writes catalog.json + retailer-icons.json)
       - catalog-data:/app/apps/site/data
@@ -75,10 +73,6 @@ services:
       - product-images:/app/apps/site/public/images
       # Parser's own data (latest.json, history/, raw/, state.json)
       - parser-data:/app/data
-      # Browser sessions (cookies, solved challenges)
-      - parser-sessions:/app/apps/parser/.sessions
-    # Playwright needs --ipc=host for Chromium stability in Docker
-    ipc: host
     networks:
       - canrush-net
 
@@ -87,7 +81,6 @@ volumes:
   catalog-data:
   product-images:
   parser-data:
-  parser-sessions:
 
 networks:
   canrush-net:

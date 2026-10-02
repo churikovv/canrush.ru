@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import axios from 'axios';
 import type { CatalogGroup, Product } from '@canrush/shared';
 import { DEFAULT_USER_AGENT, delay } from './http.js';
+import { writeAtomic } from './atomic-file.js';
 import { saveSiteCatalog } from './storage.js';
 
 // apps/parser/src/images.ts -> apps/site/public/images/products
@@ -40,30 +41,52 @@ async function fileExists(filePath: string): Promise<boolean> {
  * Возвращает локальный путь вида `/images/products/<hash>.jpg` или
  * `undefined`, если скачать не удалось.
  */
-export async function downloadImage(url: string): Promise<string | undefined> {
-  const filename = imageFilename(url);
-  const filePath = localFilePath(filename);
-
-  if (await fileExists(filePath)) {
-    return localUrl(filename);
-  }
-
+const CACHE_DIR = path.resolve(import.meta.dirname, '../../../data/image-cache');
+const inFlight = new Map<string, Promise<string | undefined>>();
+async function cachedImage(url: string): Promise<string | undefined> {
+  const legacy = imageFilename(url);
+  try { if ((await stat(localFilePath(legacy))).size > 0) return localUrl(legacy); } catch { /* Not cached yet. */ }
   try {
-    const response = await axios.get(url, {
-      responseType: 'arraybuffer',
-      timeout: 15_000,
-      headers: {
-        'User-Agent': DEFAULT_USER_AGENT,
-        Accept: 'image/*,*/*;q=0.8',
-      },
+    const entry = JSON.parse(await readFile(path.join(CACHE_DIR, `${legacy}.json`), 'utf8')) as { filename?: string };
+    if (entry.filename && /^[a-f0-9]{64}\.(jpg|png|webp|gif)$/.test(entry.filename) && (await stat(localFilePath(entry.filename))).size > 0) return localUrl(entry.filename);
+  } catch { /* Missing metadata or asset is repaired on the next request. */ }
+  return undefined;
+}
+async function fetchImage(url: string): Promise<string | undefined> {
+  const cached = await cachedImage(url);
+  if (cached) return cached;
+  const cachePath = path.join(CACHE_DIR, `${imageFilename(url)}.json`);
+  try {
+    const entry = JSON.parse(await readFile(cachePath, 'utf8')) as { failedAt?: number };
+    if (entry.failedAt && Date.now() - entry.failedAt < 60 * 60 * 1000) return undefined;
+  } catch { /* First request. */ }
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return undefined;
+    const response = await axios.get<ArrayBuffer>(url, {
+      responseType: 'arraybuffer', timeout: 15_000, maxContentLength: 8 * 1024 * 1024,
+      headers: { 'User-Agent': DEFAULT_USER_AGENT, Accept: 'image/*' },
     });
-    await mkdir(IMAGES_DIR, { recursive: true });
-    await writeFile(filePath, Buffer.from(response.data));
+    const type = String(response.headers['content-type'] ?? '').split(';')[0]!;
+    const extension = ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' } as Record<string, string>)[type];
+    const bytes = Buffer.from(response.data);
+    if (!extension || bytes.length < 100) throw new Error('Invalid image');
+    const filename = `${createHash('sha256').update(bytes).digest('hex')}.${extension}`;
+    if (!await fileExists(localFilePath(filename))) await writeAtomic(localFilePath(filename), bytes);
+    await writeAtomic(cachePath, JSON.stringify({ filename }));
     return localUrl(filename);
-  } catch (err) {
-    console.warn(`[images] не удалось скачать ${url}: ${(err as Error).message}`);
+  } catch {
+    await writeAtomic(cachePath, JSON.stringify({ failedAt: Date.now() }));
+    console.warn('[images] изображение недоступно, повторная попытка не раньше чем через час');
     return undefined;
   }
+}
+export function downloadImage(url: string): Promise<string | undefined> {
+  const pending = inFlight.get(url);
+  if (pending) return pending;
+  const request = fetchImage(url).finally(() => inFlight.delete(url));
+  inFlight.set(url, request);
+  return request;
 }
 
 /** Заменяет remote imageUrl на локальный путь в одном товаре. */
@@ -123,11 +146,12 @@ export async function downloadProductImages(
     const url = uniqueUrls[i]!;
     const isLocal = url.startsWith(LOCAL_URL_PREFIX);
     const filename = isLocal ? url.slice(LOCAL_URL_PREFIX.length) : imageFilename(url);
-    const exists = await fileExists(localFilePath(filename));
+    const cached = isLocal ? (await fileExists(localFilePath(filename)) ? url : undefined) : await cachedImage(url);
+    const exists = Boolean(cached);
     let local: string | undefined;
 
     if (exists) {
-      local = isLocal ? url : localUrl(filename);
+      local = cached;
       skipped++;
     } else if (isLocal) {
       failed++;

@@ -5,7 +5,7 @@ import { CatalogControls } from '@/components/catalog-controls';
 import { CatalogGrid } from '@/components/catalog-grid';
 import { CatalogProductCard } from '@/components/catalog-product-card';
 import { ProfileNavigation } from '@/components/profile-navigation';
-import { loadCatalogGroups } from '@/lib/catalog';
+import { loadCatalogSnapshot } from '@/lib/catalog';
 import {
   filterCatalogGroups,
   flavorName,
@@ -50,7 +50,8 @@ function loadMoreHref(filters: CatalogFilters, limit: number): string {
 }
 
 export default async function CatalogPage({ searchParams }: { searchParams: CatalogSearchParams }) {
-  const [groups, params] = await Promise.all([loadCatalogGroups(), searchParams]);
+  const [snapshot, params] = await Promise.all([loadCatalogSnapshot(), searchParams]);
+  const { groups, city } = snapshot;
   const brands = [...new Set(groups.map((group) => group.brand))].sort((a, b) => a.localeCompare(b, 'ru-RU'));
   const flavorValues = [...new Set(groups.map((group) => group.flavor))];
   const flavors = flavorValues
@@ -74,7 +75,8 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
   return (
     <BrandShell headerAction={<ProfileNavigation active="catalog" />} surfaceClassName="catalog-surface">
       <div className="catalog-layout">
-        <h1 className="sr-only">Каталог энергетических напитков</h1>
+        <h1 className="sr-only">Каталог энергетических напитков · {city.name}</h1>
+        <p className="catalog-city-caption">{city.name}{snapshot.status === 'stale' ? ' · Последние доступные цены' : ' · Предложения магазинов'}</p>
         <CatalogControls
           brands={brands}
           flavors={flavors}
@@ -106,10 +108,10 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
           </CatalogGrid>
         ) : (
           <div id="catalog-results" className="catalog-empty">
-            <h2>{groups.length === 0 ? 'Каталог обновляется' : 'Ничего не найдено'}</h2>
+            <h2>{groups.length === 0 ? `Нет предложений: ${city.name}` : 'Ничего не найдено'}</h2>
             <p>
               {groups.length === 0
-                ? 'Данные появятся после следующего запуска парсера.'
+                ? 'Для этого города пока нет актуальных предложений. Можно выбрать другой город в хедере.'
                 : 'Измените запрос или сбросьте фильтры.'}
             </p>
             {groups.length > 0 ? <Link href="/catalog">Сбросить фильтры</Link> : null}

@@ -5,6 +5,7 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getPool } from '@/db/pool';
+import { prepareProfileImages, ProfileImageError, saveProfileCustomization } from '@/lib/profile-images';
 import { auth } from '@/lib/auth';
 import type { ProfileFieldErrors } from '@/lib/profile-fields';
 import { validateProfileInput } from '@/lib/profile-fields';
@@ -52,13 +53,10 @@ export async function updateProfileAction(
   const previousProfile = await getProfileByUserId(user.id);
 
   try {
-    await getPool().query(
-      `update "user"
-       set "username" = $2, "name" = $3, "telegramChannel" = $4, "updatedAt" = now()
-       where "id" = $1`,
-      [user.id, validation.data.username, validation.data.name, validation.data.telegramChannel],
-    );
+    const images = await prepareProfileImages(formData);
+    await saveProfileCustomization(user.id, validation.data, images);
   } catch (error) {
+    if (error instanceof ProfileImageError) return { message: error.message };
     if (isUniqueViolation(error)) {
       return {
         message: 'Этот юзернейм уже занят.',
@@ -68,7 +66,8 @@ export async function updateProfileAction(
     return { message: 'Не удалось сохранить профиль. Попробуйте ещё раз.' };
   }
 
-  revalidatePath('/profile');
+  revalidatePath('/profile', 'layout');
+  revalidatePath('/catalog', 'layout');
   revalidatePath('/profile/edit');
   revalidatePath(`/profile/${validation.data.username}`);
   if (previousProfile?.username && previousProfile.username !== validation.data.username) {

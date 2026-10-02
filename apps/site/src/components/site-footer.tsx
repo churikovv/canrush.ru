@@ -57,12 +57,12 @@ export function SiteFooter() {
               </div>
               <div className="footer-group footer-socials">
                 <span className="footer-label">Соцсети</span>
-                <div className="footer-social-row">
-                  <span className="footer-social-icon" role="img" aria-label="Telegram">
+                <a className="footer-social-row" href="https://t.me/canrushoff" target="_blank" rel="noopener noreferrer" aria-label="Telegram-канал CanRush (откроется в новой вкладке)">
+                  <span className="footer-social-icon" aria-hidden="true">
                     <Image src="/brand/icons/telegram.svg" width={24} height={24} alt="" />
                   </span>
                   <span className="footer-social-name">Telegram</span>
-                </div>
+                </a>
               </div>
             </div>
 

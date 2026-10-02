@@ -4,6 +4,7 @@ vi.mock('next/headers', () => ({ headers: async () => new Headers() }));
 vi.mock('next/navigation', () => ({ redirect: () => { throw new Error('SIGN_IN_REQUIRED'); } }));
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidate }));
 vi.mock('../src/lib/auth', () => ({ auth: { api: { getSession: mocks.session } } }));
+vi.mock('../src/lib/profile-community', () => ({ getProfileCommunity: vi.fn() }));
 vi.mock('../src/lib/moderation', () => ({ isUserBlocked: mocks.blocked }));
 vi.mock('../src/lib/catalog', () => ({ getCatalogGroup: mocks.product }));
 vi.mock('../src/lib/reviews', () => ({ upsertReview: mocks.save, deleteReview: vi.fn() }));
@@ -17,6 +18,13 @@ beforeEach(() => {
   vi.clearAllMocks(); mocks.session.mockResolvedValue({ user: { id: 'owner' } }); mocks.blocked.mockResolvedValue(false); mocks.product.mockResolvedValue({ brand: 'Burn' }); mocks.save.mockResolvedValue([]);
 });
 describe('review attachment action boundary', () => {
+  it('rejects ratings for unidentified products before saving', async () => {
+    for (const flavor of ['unknown', 'unresolved:abc']) {
+      const data = form(); data.set('flavor', flavor);
+      expect((await submitReviewAction({}, data)).status).toBe('error');
+      expect(mocks.save).not.toHaveBeenCalled();
+    }
+  });
   it('requires a signed-in user before accepting uploads', async () => {
     mocks.session.mockResolvedValue(null);
     await expect(submitReviewAction({}, form())).rejects.toThrow('SIGN_IN_REQUIRED');

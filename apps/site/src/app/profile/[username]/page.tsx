@@ -5,6 +5,7 @@ import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { ProfileView } from '@/components/profile-view';
 import { auth } from '@/lib/auth';
+import { profilePageNumber } from '@/lib/profile-achievements';
 import { getProfileByUsername } from '@/lib/profile';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
+export default async function PublicProfilePage({ params, searchParams }: { params: Promise<{ username: string }>; searchParams: Promise<{ wallPage?: string }> }) {
   const { username } = await params;
   const [profile, session] = await Promise.all([
     getProfileByUsername(username),
@@ -28,7 +29,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-      <ProfileView profile={profile} isOwn={isOwn} favoritesHref={favoritesHref} tierListsHref={tierListsHref} />
+      <ProfileView profile={profile} isOwn={isOwn} viewerId={session?.user.id} wallPage={profilePageNumber((await searchParams).wallPage)} favoritesHref={favoritesHref} tierListsHref={tierListsHref} />
     </BrandShell>
   );
 }

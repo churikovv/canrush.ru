@@ -34,7 +34,7 @@ export default async function AuthErrorPage({ searchParams }: ErrorPageProps) {
   const copy = errorCopy(error);
 
   return (
-    <BrandShell headerAction={<ProfileNavigation />}>
+    <BrandShell headerAction={<ProfileNavigation active="profile" />}>
       <section className="auth-layout compact-layout">
         <p className="section-label">Безопасный вход</p>
         <h1>{copy.title}</h1>

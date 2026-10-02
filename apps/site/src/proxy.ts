@@ -40,7 +40,7 @@ export function proxy(request: NextRequest) {
   response.headers.set('Content-Security-Policy', contentSecurityPolicy);
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(), usb=()');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
@@ -51,6 +51,8 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/admin') ||
     pathname.startsWith('/profile') ||
     pathname.startsWith('/tierlists') ||
+    pathname === '/catalog' ||
+    pathname === '/prices' ||
     pathname.startsWith('/catalog/') ||
     pathname.startsWith('/api/auth')
   ) {
