@@ -86,6 +86,12 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
   assets находятся в `apps/site/public/brand`, PP Object Sans — в
   `apps/site/fonts`, токены — в `DESIGN.md`. Не подменяй логотипы и не добавляй
   runtime-ссылки на временные Figma assets.
+- **Навигация сайта**: `ProfileNavigation` рендерит кнопки хедера (≥960px) и
+  таб бар `SiteTabBar` (<960px), иконки общие (`navigation-icon.tsx`). Таб бар
+  фиксирован снизу и задаёт `--site-tab-bar-offset` на `html` только там, где он
+  есть (юридические страницы и админка без `ProfileNavigation` его не показывают).
+  Новые фиксированные снизу элементы и нижние отступы считай через
+  `calc(var(--site-tab-bar-offset, 0px) + …)`, иначе таб бар их перекроет.
 - **Тесты**: vitest, файлы `apps/parser/test/*.test.ts`. `tsconfig.json` парсера
   включает только `src` — тесты компилируются vitest'ом на лету, не падают в
   `dist`. Не добавляй `test/` в `include` tsconfig (это ломает `rootDir`/`outDir`).

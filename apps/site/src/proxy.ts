@@ -1,6 +1,9 @@
 import { Buffer } from 'node:buffer';
+import { getSessionCookie } from 'better-auth/cookies';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+
+const SIGNED_IN_PAGES = /^\/(?:profile(?:\/(?:edit|favorites|tierlists))?|tierlists\/(?:new|[^/]+\/edit))$/u;
 
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
@@ -29,7 +32,11 @@ export function proxy(request: NextRequest) {
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', contentSecurityPolicy);
 
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  const pathname = request.nextUrl.pathname;
+  const response =
+    SIGNED_IN_PAGES.test(pathname) && !getSessionCookie(request)
+      ? NextResponse.redirect(new URL('/sign-in', request.url))
+      : NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set('Content-Security-Policy', contentSecurityPolicy);
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
@@ -38,7 +45,6 @@ export function proxy(request: NextRequest) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
 
-  const pathname = request.nextUrl.pathname;
   if (
     pathname === '/auth/confirm' ||
     pathname === '/auth/error' ||

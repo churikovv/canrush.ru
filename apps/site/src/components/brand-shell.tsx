@@ -13,7 +13,7 @@ export function BrandShell({ children, headerAction, surfaceClassName }: BrandSh
   return (
     <div className="site-shell">
       <header className="brand-header">
-        <Link className="brand-home" href="/" aria-label="CanRush, на главную">
+        <Link className="brand-home" href="/catalog" aria-label="CanRush, на главную">
           <Image className="brand-mark" src="/brand/logo-mark.svg" width={36} height={30} alt="" priority />
           <Image
             className="brand-wordmark"

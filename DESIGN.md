@@ -33,7 +33,8 @@ Use a 4/8 px rhythm. Mobile gutters are 12 or 24 px, matching Figma. Controls us
 
 ## Components
 
-- Header: blue surface, 36 by 30 px Figma logo mark, simple text actions with accessible labels.
+- Header: blue surface, 36 by 30 px Figma logo mark, simple text actions with accessible labels. Navigation buttons appear from 960 px; below that the tab bar replaces them.
+- Tab bar: below 960 px, a classic iOS bar fixed to the bottom: white surface, 0.5 px top hairline, 50 px items plus the bottom safe area (44 px in short landscape viewports). Tabs, in order: Каталог, Цены, Тирлисты, Избранное, Профиль. Phones stack 24 px filled icons over 12 px labels (11 px below 360 px so every label fits at 320 px); from 640 px and in landscape the icon sits beside a 14 px label and items center at up to 144 px each. Unselected tabs use `--color-muted-strong`; the current tab uses a `--color-brand` icon and a Heavy `--color-brand-deep` label, so color is not the only cue. A tapped tab takes the selected style while navigation is pending. Fixed bottom UI stacks above it through `--site-tab-bar-offset`.
 - Auth panel: one visible email label, helper text, 48 to 56 px input and button, inline validation and one primary action.
 - Primary button: black surface, white text, 16 px radius, clear hover, focus, active, loading and disabled states.
 - Profile banner: blue 342 by 120 proportion on mobile with the exact Figma profile illustration aligned left.
