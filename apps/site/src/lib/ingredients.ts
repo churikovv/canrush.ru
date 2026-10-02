@@ -1,3 +1,4 @@
+import bundledIngredients from '@/content/ingredients.json';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { isPublishedIngredients, type PublishedIngredients } from '@canrush/shared';
@@ -14,7 +15,10 @@ export async function getProductIngredients(brand: string, flavor: string): Prom
   try {
     const raw = await readFile(path.join(process.cwd(), 'data/ingredients.json'), 'utf8');
     return selectIngredients(JSON.parse(raw), brand, flavor);
-  } catch {
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return selectIngredients(bundledIngredients, brand, flavor);
+    }
     // Composition is supplementary: missing or corrupt data must not break the product page.
     return null;
   }
