@@ -25,6 +25,10 @@ describe('ingredient evidence', () => {
     expect(result.warnings).toContain('possibly_truncated');
     expect(result.warnings).toContain('possible_sugar_conflict');
   });
+  it.each(['Red Bull Sugarfree', 'Red Bull Sugar Free', 'Adrenaline Zero Sugar'])('rejects a sugar-containing excerpt for %s', (title) => {
+    expect(extractIngredients('Состав: Газированная вода, сахароза, глюкоза, таурин, кофеин.', title).warnings).toContain('possible_sugar_conflict');
+    expect(extractIngredients('Состав: Вода, таурин, кофеин, сукралоза, краситель сахарный колер.', title).warnings).not.toContain('possible_sugar_conflict');
+  });
   it('preserves upper bounds and original units', () => {
     const text = 'Вода, сахар, таурин, кофеин (не более 30 мг / 100 мл).';
     expect(extractIngredients(`## Состав\n\n${text}\n\n## Отзывы`).ingredients).toBe(text);

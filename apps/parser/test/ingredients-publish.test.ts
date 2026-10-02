@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { publishCandidate, type IngredientBinding } from '../src/ingredients/publish.js';
+import { publishCandidate, publishIngredients, type IngredientBinding } from '../src/ingredients/publish.js';
 import type { IngredientSource } from '../src/ingredients/core.js';
 
 const ingredients = 'Вода, сахар, таурин, кофеин (не более 30 мг/100 мл).';
@@ -9,6 +12,12 @@ const binding: IngredientBinding = { brand: 'Burn', flavor: 'tropical', productT
 const candidate = { url: binding.sourceUrl, sourceId: 'shop', market: 'BY', status: 'needs_review', ingredients, warnings: [], fetchedAt: '2026-09-24T00:00:00Z' };
 
 describe('composition publication boundary', () => {
+  it.each(['unknown', 'unresolved:123'])('never publishes an ambiguous product identity: %s', (flavor) => {
+    expect(publishCandidate({ ...binding, flavor }, candidate, [source])).toBeNull();
+  });
+  it('rechecks sugar conflicts in cached reports that have no warning', () => {
+    expect(publishCandidate({ ...binding, flavor: 'sugarfree', productTitle: 'Burn Zero Sugar 449 мл' }, candidate, [source])).toBeNull();
+  });
   it('keeps market and source attribution, never claims recipe verification', () => {
     expect(publishCandidate(binding, candidate, [source])).toMatchObject({ market: 'BY', sourceName: 'Магазин', status: 'source_reported', ingredients });
   });
@@ -32,4 +41,32 @@ describe('composition publication boundary', () => {
   ])('rejects changed or unsafe evidence: %j', (change) => {
     expect(publishCandidate(binding, { ...candidate, ...change }, [source])).toBeNull();
   });
+});
+
+it('publishes a regional-only product to the Git bundle and preserves it on evidence failure', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'canrush-ingredients-'));
+  const parserRoot = path.join(root, 'apps/parser');
+  const put = async (file: string, value: unknown) => {
+    const target = path.join(root, file);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, JSON.stringify(value));
+  };
+  try {
+    await put('apps/parser/config/ingredient-products.json', [binding]);
+    await put('apps/parser/config/ingredient-sources.json', [source]);
+    await put('apps/site/data/catalog.json', { groups: [{ brand: 'Burn', flavor: 'tropical', variants: [{ volumeMl: 250 }] }] });
+    await put('apps/site/data/regions/saint-petersburg.json', { groups: [{ brand: 'Burn', flavor: 'tropical', variants: [{ volumeMl: 449 }] }] });
+    const evidence = `data/ingredients/runs/${binding.reportId}/report.json`;
+    await put(evidence, { candidates: [candidate] });
+    const result = await publishIngredients(parserRoot, true);
+    expect(result.count).toBe(1);
+    expect(result.file).toBe(path.join(root, 'apps/site/src/content/ingredients.json'));
+    const before = await readFile(result.file, 'utf8');
+    expect(JSON.parse(before).products[0]).toMatchObject({ flavor: 'tropical', volumeMl: 449 });
+    await put(evidence, { candidates: [{ ...candidate, ingredients: 'Изменённый состав' }] });
+    await expect(publishIngredients(parserRoot, true)).rejects.toThrow('Состав не соответствует');
+    expect(await readFile(result.file, 'utf8')).toBe(before);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

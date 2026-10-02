@@ -48,7 +48,8 @@ export function extractIngredients(text: string, productTitle = ''): { ingredien
   if (ingredients.length > 2500) return { ingredients: null, warnings: ['unclear_section_boundary'] };
   const warnings = ['verify_exact_product_and_label'];
   if (/…|\.\.\.|,$/.test(ingredients)) warnings.push('possibly_truncated');
-  if (/без сахара/iu.test(productTitle) && /(?:^|[,;]\s*)сахар(?:[,; ]|$)/iu.test(ingredients)) warnings.push('possible_sugar_conflict');
+  if (/(?:без\s+сахара|sugar[\s-]*free|zero\s+sugar)/iu.test(productTitle)
+    && /(?:^|[,;]\s*)(?:сахар|сахароза|глюкоза|фруктоза)(?:[,;\s]|$)/iu.test(ingredients)) warnings.push('possible_sugar_conflict');
   if (/витамин/iu.test(ingredients) && /\d/.test(ingredients)) warnings.push('verify_nutrient_numbers');
   return { ingredients, warnings };
 }

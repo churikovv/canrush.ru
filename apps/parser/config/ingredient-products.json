@@ -4,7 +4,7 @@
     "flavor": "tropical",
     "productTitle": "Напиток энергетичекий Burn тропический микс, 0.449 л",
     "volumeMl": 449,
-    "reportId": "2026-09-24T05-32-53-006Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://edostavka.by/product/1810707",
     "ingredientsSha256": "03bd576b5871b70663c6bdccd98a193317b4ea34c0b2dc50d0ddeb4c989a8475"
   },
@@ -18,29 +18,11 @@
     "ingredientsSha256": "3d491082cc568062513ebf0bdf0a75bfc472ef9194bfc24a72b515a8c067cc76"
   },
   {
-    "brand": "Lit Energy",
-    "flavor": "raspberry",
-    "productTitle": "Напиток тонизирующий энергетический Lit Energy Malina Crush в жестяной банке 450 мл",
-    "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://www.barista-ltd.ru/magazin/lit-energy-malina-crush-energy-drink-450.html",
-    "ingredientsSha256": "7860543c7ab55396970f4feeeafe24e07e126b2ca8e6cf9286afe1922850d705"
-  },
-  {
     "brand": "Flash Up",
-    "flavor": "banana",
+    "flavor": "blend:banana+feijoa",
     "productTitle": "Энергетик Flash Up Energy Банан-Фейхоа 0,45 л, банка",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://baltika4you.ru/flash-up-energy-banan-feyhoa-banka-0-45",
-    "ingredientsSha256": "4f37d71a13fd2aa66dfd85f044bc13bfbd4e68a879545ab20ddbbb1e0c52eae3"
-  },
-  {
-    "brand": "Flash Up",
-    "flavor": "feijoa",
-    "productTitle": "Энергетик Flash Up Energy Банан-Фейхоа 0,45 л, банка",
-    "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://baltika4you.ru/flash-up-energy-banan-feyhoa-banka-0-45",
     "ingredientsSha256": "4f37d71a13fd2aa66dfd85f044bc13bfbd4e68a879545ab20ddbbb1e0c52eae3"
   },
@@ -49,13 +31,13 @@
     "flavor": "original",
     "productTitle": "Напиток тонизирующий энергетический Drive Me Original в зеленой жестяной банке 449 мл",
     "volumeMl": 449,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://www.barista-ltd.ru/magazin/drive-me-energy-drink-449-green.html",
     "ingredientsSha256": "1e07247486f0b940e8ddd8da9e692fc4b242b2a5e760f7918ddd9c0bb544c0eb"
   },
   {
     "brand": "Lit Energy",
-    "flavor": "strawberry",
+    "flavor": "blend:bubblegum+strawberry",
     "productTitle": "Тонизирующий напиток Strawberry Bubblegum Lit Energy 450мл",
     "volumeMl": 450,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -73,7 +55,7 @@
   },
   {
     "brand": "Burn",
-    "flavor": "apple",
+    "flavor": "blend:apple+kiwi",
     "productTitle": "Энергетический напиток Burn Яблоко-Киви 449мл",
     "volumeMl": 449,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -82,7 +64,7 @@
   },
   {
     "brand": "Burn",
-    "flavor": "citrus",
+    "flavor": "citrus:sugarfree",
     "productTitle": "Энергетический напиток Цитрусовая энергия без сахара Burn 449мл",
     "volumeMl": 449,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -100,25 +82,16 @@
   },
   {
     "brand": "Lit Energy",
-    "flavor": "mango",
+    "flavor": "blend:coconut+mango",
     "productTitle": "Напиток тонизирующий энергетический Lit Energy Mango Coconut в жестяной банке 450 мл",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://www.barista-ltd.ru/magazin/lit-energy-mango-coconut-energy-drink-450.html",
-    "ingredientsSha256": "22092a302d505a8fe45c9519561a38017e0a9b6664e4d19337b488bec661c975"
-  },
-  {
-    "brand": "Lit Energy",
-    "flavor": "coconut",
-    "productTitle": "Напиток тонизирующий энергетический Lit Energy Mango Coconut в жестяной банке 450 мл",
-    "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://www.barista-ltd.ru/magazin/lit-energy-mango-coconut-energy-drink-450.html",
     "ingredientsSha256": "22092a302d505a8fe45c9519561a38017e0a9b6664e4d19337b488bec661c975"
   },
   {
     "brand": "Adrenaline Rush",
-    "flavor": "lime",
+    "flavor": "blend:lime+melon+mint",
     "productTitle": "Энергетический напиток со вкусом дыни лайма и мяты Adrenaline Rush 449мл",
     "volumeMl": 449,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -127,10 +100,10 @@
   },
   {
     "brand": "Flash Up",
-    "flavor": "pineapple",
+    "flavor": "blend:mango+pineapple",
     "productTitle": "Энергетик Flash Up Energy Манго-Ананас 0,45 л, банка",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://baltika4you.ru/flash-up-energy-mango-ananas-banka-0-45",
     "ingredientsSha256": "f72cf0c701e288636395606b19dde1786132164bc16172864bd21f79d1a7507a"
   },
@@ -139,40 +112,22 @@
     "flavor": "tropical",
     "productTitle": "Напиток энергетический Red Bull Tropical Edition, 0.25 л",
     "volumeMl": 250,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://edostavka.by/product/1154500",
     "ingredientsSha256": "f7c463eb8256fde01236fac4d7fae3e88b518e82a1f06cca01f1b370a899f4a9"
   },
   {
     "brand": "Gorilla",
-    "flavor": "coconut",
+    "flavor": "blend:coconut+mango",
     "productTitle": "Энергетический напиток GORILLA Energy Манго Кокос 450 мл ж/б",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://www.barista-ltd.ru/magazin/gorilla-energy-mango-coconut-450ml-can.html",
     "ingredientsSha256": "8e0ae21025a30db4006bcdf52c2bb7711fd34f9f129fdf68a29b1415a392f54e"
-  },
-  {
-    "brand": "Gorilla",
-    "flavor": "mango",
-    "productTitle": "Энергетический напиток GORILLA Energy Манго Кокос 450 мл ж/б",
-    "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://www.barista-ltd.ru/magazin/gorilla-energy-mango-coconut-450ml-can.html",
-    "ingredientsSha256": "8e0ae21025a30db4006bcdf52c2bb7711fd34f9f129fdf68a29b1415a392f54e"
-  },
-  {
-    "brand": "Volt",
-    "flavor": "pomelo",
-    "productTitle": "Энергетический напиток со вкусом помело и мяты Volt Energy 450мл",
-    "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://magnit.ru/product/8000106624-volt_energy_napitok_b_a_energ_pomelo_myat0_45l_zh_b_s_kl_24",
-    "ingredientsSha256": "bdd587adc9a54f097a6fcc8ac46f0d5e95535728ff82b1a68144660c9e75da52"
   },
   {
     "brand": "Volt Energy",
-    "flavor": "pomelo",
+    "flavor": "blend:mint+pomelo",
     "productTitle": "Энергетический напиток со вкусом помело и мяты Volt Energy 450мл",
     "volumeMl": 450,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -184,13 +139,13 @@
     "flavor": "bubblegum",
     "productTitle": "Напиток энергетический Flash Up Energy \"Bubble Gum | Банан-Клубника\", газированный, ж/б, 0,45 л",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://okolo.market/product/napitok-energeticheskiy-flash-up-energy-bubble-gum-so-vkusom-banana-i-klubniki-0-45-l-kh-24-sht/",
     "ingredientsSha256": "9781fefbe9c48016a74d8b589fc0dfc547469e8690d716b9ebe767fc9bd57831"
   },
   {
     "brand": "My Rules",
-    "flavor": "passion_fruit",
+    "flavor": "blend:mango+passion_fruit",
     "productTitle": "Энергетический напиток манго-маракуйя My Rules 450мл",
     "volumeMl": 450,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -199,16 +154,7 @@
   },
   {
     "brand": "Flash Up",
-    "flavor": "mint",
-    "productTitle": "Энергетический напиток Flash Up Energy Мятный Лайм 450мл",
-    "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://magnit.ru/product/1000412965-flash_up_energy_myatnyy_laym_energeticheskiy_napitok_zh_b_0_45l",
-    "ingredientsSha256": "1c5be7cea3443ce1b7f4ea75d0f43182b822128396fc6fd3a279a018ad222104"
-  },
-  {
-    "brand": "Flash Up",
-    "flavor": "lime",
+    "flavor": "blend:lime+mint",
     "productTitle": "Энергетический напиток Flash Up Energy Мятный Лайм 450мл",
     "volumeMl": 450,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -217,16 +163,7 @@
   },
   {
     "brand": "Adrenaline Rush",
-    "flavor": "calamansi",
-    "productTitle": "Энергетический напиток со вкусом юдзу клубники и каламанси Adrenaline Rush 449мл",
-    "volumeMl": 449,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://magnit.ru/product/8000109632-adrenaline_rush_nap_energ_yudzu_klub_kalamansi_0_449l_zh_b",
-    "ingredientsSha256": "9334f7d68c3ac715a49faee817b8fe81644d86f016e670b4510a153a269747f3"
-  },
-  {
-    "brand": "Adrenaline",
-    "flavor": "calamansi",
+    "flavor": "blend:calamansi+strawberry+yuzu",
     "productTitle": "Энергетический напиток со вкусом юдзу клубники и каламанси Adrenaline Rush 449мл",
     "volumeMl": 449,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -253,7 +190,7 @@
   },
   {
     "brand": "Juster",
-    "flavor": "calamansi",
+    "flavor": "blend:calamansi+yuzu",
     "productTitle": "Энергетический напиток юзу-каламанси-каму-каму Juster 450мл",
     "volumeMl": 450,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -265,7 +202,7 @@
     "flavor": "original",
     "productTitle": "Энергетический напиток Barinoff Alligator Original 450 мл в жестяной банке",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://www.barista-ltd.ru/magazin/barinoff-alligator-energy-original-450ml-can.html",
     "ingredientsSha256": "8757053dee45977876c5dc9cade7acf77b796d3098a6e8b187e081d208fe9c7f"
   },
@@ -274,16 +211,16 @@
     "flavor": "coconut",
     "productTitle": "Энергетический напиток Торнадо Tornado Energy Coconut 450 мл жестяная банка",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://www.barista-ltd.ru/magazin/energy-tonic-tornado-energy-coconut-450ml-can.html",
-    "ingredientsSha256": "06419c209a7e0565793cc97906d51aa2cecddd29b27b200d534b152aceb38f6b"
+    "ingredientsSha256": "9063facb00a0f071164f4e45cd2d6af5d7d8f332c40ddddc9e2dd7bdb65f2a68"
   },
   {
     "brand": "Alligator",
-    "flavor": "guava",
+    "flavor": "blend:guava+lime+mint",
     "productTitle": "Энергетический напиток Barinoff Alligator со вкусом Гуава Лайм Мята 450 мл в жестяной банке",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://www.barista-ltd.ru/magazin/barinoff-alligator-energy-guava-lime-mint-450ml-can.html",
     "ingredientsSha256": "bff6897f70b8fb73707ff440cb62d25c83fe7d37cda013d84dd3eb66332030c0"
   },
@@ -292,30 +229,30 @@
     "flavor": "original",
     "productTitle": "Энергетический напиток X-Turbo Focus Energy Оригинальный 450 мл в жестяной банке",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://www.barista-ltd.ru/magazin/chernogolovka-x-turbo-energy-focus-original-450ml-can.html",
-    "ingredientsSha256": "c0fd0797a3dc1b2fa8fe34c6d97e2fc844e625ee050f60cb13d112dd9eb7f496"
+    "ingredientsSha256": "df751ab5331f93731df72687ace594a76a7ba48acfeaa5c9d8057b08ad5a4d50"
   },
   {
     "brand": "X-Turbo",
-    "flavor": "raspberry",
+    "flavor": "blend:berry+raspberry",
     "productTitle": "Энергетический напиток X-Turbo Energy Active Энергия ягод ежевика-малина 450 мл в жестяной банке",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://www.barista-ltd.ru/magazin/chernogolovka-x-turbo-energy-active-450ml-can.html",
-    "ingredientsSha256": "8d47085b0d453cda8558a1a0c7a4fa7d377c229a0191b32380fe290ad1224cb8"
+    "ingredientsSha256": "f052dc031a28ca9f0359a1e2524b6d44abebfd3824b8e7ab43426d30c38671cb"
   },
   {
     "brand": "Tornado",
     "flavor": "original",
     "productTitle": "Напиток энергетический Tornado Energy \"Max | Original\", газированный, безалкогольный, ж/б, 0,45 л",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://okolo.market/product/napitok-energeticheskiy-tornado-max-energy-original-bezalkogolnyy-zh-b-0-45-l/",
     "ingredientsSha256": "8bc309ad38b93da34e449e63539b870570525a22151feb4efc5385417da8f46b"
   },
   {
-    "brand": "Adrenaline",
+    "brand": "Adrenaline Rush",
     "flavor": "berry",
     "productTitle": "Энергетический напиток со вкусом ягод Adrenaline Rush Vitamin Power 449мл",
     "volumeMl": 449,
@@ -325,7 +262,7 @@
   },
   {
     "brand": "Fitness Food Factory",
-    "flavor": "raspberry",
+    "flavor": "blend:mint+raspberry",
     "productTitle": "Напиток энергетический Wk Up Малина мята 450мл",
     "volumeMl": 450,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -334,7 +271,7 @@
   },
   {
     "brand": "Volt Energy",
-    "flavor": "blueberry",
+    "flavor": "blend:blueberry+pomegranate",
     "productTitle": "Энергетический напиток Volt Energy Голубика-Гранат 450мл",
     "volumeMl": 450,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -343,7 +280,7 @@
   },
   {
     "brand": "Volt Energy",
-    "flavor": "lime",
+    "flavor": "blend:lime+mango",
     "productTitle": "Напиток энергетический Volt Energy Манго-лайм 450мл",
     "volumeMl": 450,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -360,26 +297,8 @@
     "ingredientsSha256": "ab21c0538af2b1a97a670d66917dadbddfaf069a36698f71fb08fee8054d7692"
   },
   {
-    "brand": "Volt",
-    "flavor": "blueberry",
-    "productTitle": "Энергетический напиток Volt Energy Голубика-Гранат 450мл",
-    "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://magnit.ru/product/1000507950-volt_energy_napitok_b_a_energ_gaz_golubik_granat_0_45l_zh_b",
-    "ingredientsSha256": "252b1869f9a2b4beec990a56872c25f67e1b0b7558978339d1c0c683cc39ef53"
-  },
-  {
-    "brand": "Volt",
-    "flavor": "grape",
-    "productTitle": "Энергетический напиток Volt Energy Виноград-Гуава 450мл",
-    "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://magnit.ru/product/1000585669-volt_energy_energet_nap_b_a_vinograd_guava_gaz_0_45l_zh_b",
-    "ingredientsSha256": "82d7692bae947b980fc80f869d3790e6bac36c2df57abc5d70ec680c3f01a6a0"
-  },
-  {
     "brand": "Volt Energy",
-    "flavor": "grape",
+    "flavor": "blend:grape+guava",
     "productTitle": "Энергетический напиток Volt Energy Виноград-Гуава 450мл",
     "volumeMl": 450,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -396,29 +315,11 @@
     "ingredientsSha256": "3351b2b8b2d4092aed1261ba043e5c86fa6c10a5ac2118b0cfee229ad40084c0"
   },
   {
-    "brand": "Flesh",
-    "flavor": "bubblegum",
-    "productTitle": "Напиток энергетический Flash Up Energy \"Bubble Gum | Банан-Клубника\", газированный, ж/б, 0,45 л",
-    "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://okolo.market/product/napitok-energeticheskiy-flash-up-energy-bubble-gum-so-vkusom-banana-i-klubniki-0-45-l-kh-24-sht/",
-    "ingredientsSha256": "9781fefbe9c48016a74d8b589fc0dfc547469e8690d716b9ebe767fc9bd57831"
-  },
-  {
-    "brand": "Flesh",
-    "flavor": "feijoa",
-    "productTitle": "Энергетик Flash Up Energy Банан-Фейхоа 0,45 л, банка",
-    "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://baltika4you.ru/flash-up-energy-banan-feyhoa-banka-0-45",
-    "ingredientsSha256": "4f37d71a13fd2aa66dfd85f044bc13bfbd4e68a879545ab20ddbbb1e0c52eae3"
-  },
-  {
     "brand": "Lit Energy",
-    "flavor": "barberry",
+    "flavor": "blend:barberry+cranberry",
     "productTitle": "Напиток тонизирующий энергетический Lit Energy Клюква Барбарис в жестяной банке 450 мл",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://www.barista-ltd.ru/magazin/lit-energy-cranberry-barberry-drink-450.html",
     "ingredientsSha256": "d0945e790816121c75f8c62d4f8d47da5efc55a3a0c136a5f938683f4542106d"
   },
@@ -427,7 +328,7 @@
     "flavor": "original",
     "productTitle": "Энергетик Flash Up Energy 0,47 л, ПЭТ",
     "volumeMl": 470,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://baltika4you.ru/flash-up-energy-pet-0-47",
     "ingredientsSha256": "b761beb9c1639c54e96b4e3c3e9e5c566cc2b715605abf5c97082f263a978680"
   },
@@ -436,22 +337,22 @@
     "flavor": "original",
     "productTitle": "Напиток энергетический Jaguar \"Extra Urban Energy | Оригинальный\", безалкогольный, ж/б, 0,44 л",
     "volumeMl": 440,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://okolo.market/product/napitok-energeticheskiy-jaguar-extra-urban-energy-originalnyy-bezalkogolnyy-zh-b-0-44-l/",
     "ingredientsSha256": "f094b35c3b201517678f34ee82ec454f3617f63e91cd7005d9afb85300fce272"
   },
   {
     "brand": "Alligator",
-    "flavor": "coconut",
+    "flavor": "blend:coconut+mango",
     "productTitle": "Энергетический напиток Barinoff Alligator со вкусом Манго Кокос 450 мл в жестяной банке",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://www.barista-ltd.ru/magazin/barinoff-alligator-energy-mango-kokos-450ml-can.html",
     "ingredientsSha256": "a50d002a24f27373fb1813e245e96dc17407384c793999509897779324762f76"
   },
   {
     "brand": "Juster",
-    "flavor": "raspberry",
+    "flavor": "blend:guava+raspberry",
     "productTitle": "Энергетический напиток гуава-малина-лемонграсс Juster 450мл",
     "volumeMl": 450,
     "reportId": "2026-09-24T05-46-39-282Z",
@@ -459,11 +360,11 @@
     "ingredientsSha256": "646f4d6d38c9f83b6e0cad14b1af0ce76f08531f532a8444a0bcb0679cce97fd"
   },
   {
-    "brand": "Adrenaline",
+    "brand": "Adrenaline Rush",
     "flavor": "lime",
     "productTitle": "Напиток энергетический Adrenaline Rush \"Гуанабана-Лайм\", безалкогольный, ж/б, 0,449 л",
     "volumeMl": 449,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://okolo.market/product/napitok-energeticheskiy-adrenaline-rush-guanabana-laym-gazirovannyy-zh-b-0-449-l/",
     "ingredientsSha256": "e48c68918df1eb85c39aaeb70e6323de439baaf5fa2cfdf77a71d11d9ecf28aa"
   },
@@ -472,7 +373,7 @@
     "flavor": "watermelon",
     "productTitle": "Напиток энергетический Red Bull Red Edition со вкусом арбуза, 0.25 л",
     "volumeMl": 250,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://edostavka.by/product/2095156",
     "ingredientsSha256": "f976c79ec41758ca916b62ae1176412fd2a23bb3f0a432e55f46fb047b6f46a7"
   },
@@ -481,7 +382,7 @@
     "flavor": "tropical",
     "productTitle": "Напиток энергетический Gorilla tropical punch, 0.45 л",
     "volumeMl": 450,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://edostavka.by/product/2195637",
     "ingredientsSha256": "1d23dcf2b6c55dd6a9085a12d012cb0f09503d837189ef48b02b699c8451b559"
   },
@@ -490,7 +391,7 @@
     "flavor": "blueberry",
     "productTitle": "Напиток энергетический Red Bull blue edition, газированный, 0.25 л",
     "volumeMl": 250,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://edostavka.by/product/2177233",
     "ingredientsSha256": "469db0e5aaee80210b9e160bfbf144bc29c90eb539e3647a289e797aae05ea95",
     "status": "unverified",
@@ -501,7 +402,7 @@
     "flavor": "irga",
     "productTitle": "Напиток энергетический Red Bull The Sea blue Edition Ирга 250мл",
     "volumeMl": 250,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://magnit.ru/product/1000585048-red_bull_the_sea_blue_edition_nap_energ_irga_0_25l_zh_b",
     "ingredientsSha256": "83426fb34401ed9ddb1e14cd631c88575671db1b7e73691c5b61bd30b8d1da1d",
     "status": "unverified",
@@ -512,7 +413,7 @@
     "flavor": "peach",
     "productTitle": "Напиток энергетический Red Bull Peach Edition, 0.25 л",
     "volumeMl": 250,
-    "reportId": "2026-09-24T05-46-39-282Z",
+    "reportId": "2026-10-02T21-28-06-748Z",
     "sourceUrl": "https://edostavka.by/product/2245732",
     "ingredientsSha256": "2e1b75a3e330d6114b17cc053b19d9c2450a80a19eec12fe0cb3db4b014abab4",
     "status": "unverified",
@@ -520,13 +421,143 @@
   },
   {
     "brand": "Red Bull",
-    "flavor": "unknown",
-    "productTitle": "Red Bull Energy Drink с сахаром, 355 мл",
+    "flavor": "original",
+    "productTitle": "Напиток энергетический Red Bull Energy Drink, 0.355 л",
     "volumeMl": 355,
-    "reportId": "2026-09-24T05-46-39-282Z",
-    "sourceUrl": "https://edostavka.by/product/896438",
-    "ingredientsSha256": "d1b83c8255098042a60c0c8d930d53420cdded8878f3e9ab894e90f20086921e",
+    "reportId": "2026-10-02T21-26-07-559Z",
+    "sourceUrl": "https://edostavka.by/product/2095158",
+    "ingredientsSha256": "f4ac455c30f6740c5ae5724520f199998c2d3b235de892421c0a7d3539541ad8"
+  },
+  {
+    "brand": "Red Bull",
+    "flavor": "dragonfruit",
+    "productTitle": "Энергетический напиток Green Edition со вкусом драконьего фрукта Red Bull 250мл",
+    "volumeMl": 250,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://magnit.ru/product/8000127361-red_bull_green_edition_energ_nap_drakoniy_frukt_0_25l_zh_b",
+    "ingredientsSha256": "1ff7a9a0fe0d8932c3f4586c5e3021a3f4b37c835d57865a5ff937bccc678e3f",
     "status": "unverified",
-    "reviewNote": "Состав обычного Red Bull с сахаром, 355 мл. Не относится к Sugarfree и другим вкусам, которые также встречаются в этой карточке. Количества компонентов приведены как в источнике: для них не указан размер порции."
+    "reviewNote": "Источник не уточняет, какие красители входят в состав. Перечень пока не сверен с этикеткой."
+  },
+  {
+    "brand": "Burn",
+    "flavor": "original",
+    "productTitle": "Напиток энергетический Burn Оригинальный, 0.449 л",
+    "volumeMl": 449,
+    "reportId": "2026-10-02T21-33-18-346Z",
+    "sourceUrl": "https://edostavka.by/product/1813989",
+    "ingredientsSha256": "d9288816791fa1cc3e544f74e24ca9f0cf3ff7f230ab59993e8486c18287922a"
+  },
+  {
+    "brand": "Adrenaline Rush",
+    "flavor": "sugarfree",
+    "productTitle": "Энергетический напиток Adrenaline Rush Silver Energy Zero Sugar 449мл",
+    "volumeMl": 449,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://magnit.ru/product/1000438044-adrenaline_rush_energ_nap_bez_sakhara_0_449l_zh_b",
+    "ingredientsSha256": "9e76124141ffd48f4b0baa1531f093f84d469bbec225a17419278c6539c8146c"
+  },
+  {
+    "brand": "Adrenaline Rush",
+    "flavor": "game_fuel",
+    "productTitle": "Сильногазированный тонизирующий энергетический напиток Adrenaline Game Fuel в банке 449 мл",
+    "volumeMl": 449,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://www.barista-ltd.ru/magazin/adrenaline-game-fuel-500ml-can.html",
+    "ingredientsSha256": "8e5927d30ac88abd67cffa8cafe598cba95553d2fc1bc60e0507c432cb925ab7"
+  },
+  {
+    "brand": "Gorilla",
+    "flavor": "original",
+    "productTitle": "Напиток энергетический Gorilla 0.45 л",
+    "volumeMl": 450,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://edostavka.by/product/781720",
+    "ingredientsSha256": "41d90ef3c6fb2e607a41f12ca4cd91424e480b3336df7a4892cf8ae7e22605cb",
+    "status": "unverified",
+    "reviewNote": "Источник описывает версию для Беларуси с сахаром. В другом источнике для Original указан иной перечень с подсластителями; состав российской версии требует сверки с этикеткой."
+  },
+  {
+    "brand": "Burn",
+    "flavor": "burn_juicy",
+    "productTitle": "Энергетический напиток Burn Сочная энергия 449мл",
+    "volumeMl": 449,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://magnit.ru/product/1000505393-burn_napitok_energet_sochn_energ_0_449l_zh_b",
+    "ingredientsSha256": "6c3fd9053114b727b75f934001e0558ac7a3443950cd1c9cedb0643ba194c6ea"
+  },
+  {
+    "brand": "Tornado",
+    "flavor": "tornado_black",
+    "productTitle": "Энергетический напиток Tornado Energy Black 450 мл жестяная банка",
+    "volumeMl": 450,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://www.barista-ltd.ru/magazin/energy-tonic-tornado-black-450ml-can.html",
+    "ingredientsSha256": "ab3c8d7d5c0d3c7e6400b19ed2f82d925081b9510a6b60f0fae77a153ba1b743"
+  },
+  {
+    "brand": "Tornado",
+    "flavor": "tornado_storm",
+    "productTitle": "Энергетический напиток Tornado Energy Storm Торнадо Шторм 450 жестяная банка",
+    "volumeMl": 450,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://www.barista-ltd.ru/magazin/energy-tonic-tornado-energy-storm-450ml-can2.html",
+    "ingredientsSha256": "84435e8b7076ba4611a5094e9b9cc286c3665a535e9043d7b65a0fd0e97a14ee",
+    "status": "unverified",
+    "reviewNote": "В источнике не расшифрован витаминный комплекс. Перечень компонентов требует сверки с этикеткой."
+  },
+  {
+    "brand": "Adrenaline Rush",
+    "flavor": "extra",
+    "productTitle": "Напиток энергетический Adrenaline Extra 449мл",
+    "volumeMl": 449,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://magnit.ru/product/1000566916-adrenaline_extra_napitok_energ_gaz_0_449l_zh_b_pepsi",
+    "ingredientsSha256": "c3e0185434d390f5e5e7f647cf660555b47f4718232228f4f918221ab8294a4c"
+  },
+  {
+    "brand": "Lit Energy",
+    "flavor": "raspberry",
+    "productTitle": "Напиток тонизирующий энергетический Lit Energy Malina Crush в жестяной банке 450 мл",
+    "volumeMl": 450,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://www.barista-ltd.ru/magazin/lit-energy-malina-crush-energy-drink-450.html",
+    "ingredientsSha256": "7860543c7ab55396970f4feeeafe24e07e126b2ca8e6cf9286afe1922850d705"
+  },
+  {
+    "brand": "Tornado",
+    "flavor": "tornado_iceberry",
+    "productTitle": "Энергетический напиток Tornado Max Iceberry 450мл",
+    "volumeMl": 450,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://magnit.ru/product/1000582802-tornado_max_napitok_ener_iceberry_b_a_gaz_0_45l_zh_b_sns",
+    "ingredientsSha256": "5528e4633fa9bc578c35e59a66f930255d338419dd1ab7e222934565bb2d2c49"
+  },
+  {
+    "brand": "Tornado",
+    "flavor": "tornado_russian",
+    "productTitle": "Энергетический напиток Tornado Russian 450мл",
+    "volumeMl": 450,
+    "reportId": "2026-10-02T21-28-06-748Z",
+    "sourceUrl": "https://magnit.ru/product/8000114289-tornado_max_napitok_ener_russian_b_a_gaz_0_45l_zh_b",
+    "ingredientsSha256": "59cae9d98562f13aa65765d479218b710ea7b428172f16dcd64aaa9f3bfe4887"
+  },
+  {
+    "brand": "Red Bull",
+    "flavor": "sugarfree",
+    "productTitle": "Напиток энергетический Red Bull без сахара, 0.25 л",
+    "volumeMl": 250,
+    "reportId": "2026-10-02T21-31-40-076Z",
+    "sourceUrl": "https://edostavka.by/product/2095157",
+    "ingredientsSha256": "02e40950822c7d2565e625fc4a6ed03d664aebd8e72a7293abbd829933b8f8db"
+  },
+  {
+    "brand": "Burn",
+    "flavor": "sugarfree",
+    "productTitle": "Напиток энергетический Burn Оригинальный без сахара, 0.449 л",
+    "volumeMl": 449,
+    "reportId": "2026-10-02T21-33-36-325Z",
+    "sourceUrl": "https://edostavka.by/product/2237004",
+    "ingredientsSha256": "3a7775e67281b98dd40bfbaf5d5267cdde5e7608736a63bf0f0fa432ce87180e"
   }
 ]
