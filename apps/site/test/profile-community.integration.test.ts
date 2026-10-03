@@ -82,6 +82,20 @@ describe.sequential('community profile storage', () => {
     await pool.query('delete from session where "userId" = $1', [a]);
     expect(await community.getPresence(a)).toBe('offline');
   });
+  it('awards the Telegram tag and XP once, permits selection, and preserves earned achievements', async () => {
+    await expect(community.setProfileTags(b, ['telegram'])).rejects.toThrow('полученный');
+    await pool.query('update "user" set "telegramChannel" = $2 where id = $1', [b, 'canrushoff']);
+    expect((await community.getProfileCommunity(b)).earned).toContain('telegram');
+    await community.setProfileTags(b, ['telegram']);
+    expect((await community.getProfileCommunity(b)).tags).toEqual(['telegram']);
+    const xp = await pool.query('select points from "profileExperience" where "userId" = $1 and reason = \'achievement\' and "sourceKey" = \'telegram\'', [b]);
+    expect(xp.rows).toEqual([{ points: 20 }]);
+    await pool.query('update "user" set "telegramChannel" = null where id = $1', [b]);
+    expect((await community.getProfileCommunity(b)).earned).toContain('telegram');
+    await pool.query('update "user" set "telegramChannel" = $2 where id = $1', [b, 'another_channel']);
+    await community.getProfileCommunity(b);
+    expect((await pool.query('select points from "profileExperience" where "userId" = $1 and "sourceKey" = \'telegram\'', [b])).rows).toEqual([{ points: 20 }]);
+  });
   it('cascades community data when an account is deleted', async () => {
     await pool.query('delete from "user" where id = $1', [a]);
     expect((await pool.query('select 1 from "userFollow" where "userId" = $1 or "targetId" = $1', [a])).rowCount).toBe(0);

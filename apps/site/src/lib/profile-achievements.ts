@@ -7,6 +7,7 @@ export interface AchievementProgress {
   burn: number;
   adrenaline: number;
   admin: number;
+  telegram: number;
 }
 
 export const PROFILE_ACHIEVEMENTS = [
@@ -22,10 +23,15 @@ export const PROFILE_ACHIEVEMENTS = [
   { key: 'explorer', label: 'Nya ^^', description: 'Оценить напитки 5 брендов', metric: 'brands', goal: 5 },
   { key: 'three', label: ':3', description: 'Оценить 3 напитка', metric: 'reviews', goal: 3 },
   { key: 'kitty', label: 'Котик', description: 'Добавить 5 напитков в избранное', metric: 'favorites', goal: 5 },
+  { key: 'telegram', label: 'Я в телеге', description: 'Указать Telegram в настройках профиля', metric: 'telegram', goal: 1 },
 ] as const satisfies ReadonlyArray<{ key: string; label: string; description: string; metric: keyof AchievementProgress; goal: number }>;
 
 export function eligibleAchievements(progress: AchievementProgress): string[] {
   return PROFILE_ACHIEVEMENTS.filter(item => progress[item.metric] >= item.goal).map(item => item.key);
+}
+
+export function visibleProfileAchievements(viewerIsAdmin: boolean) {
+  return PROFILE_ACHIEVEMENTS.filter(item => item.metric !== 'admin' || viewerIsAdmin);
 }
 
 export function validateProfileTags(value: unknown, earned: string[]): string[] | null {

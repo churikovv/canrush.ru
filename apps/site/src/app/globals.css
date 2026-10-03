@@ -4882,17 +4882,10 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .profile-rating-track { flex: 1; height: 8px; background: #f0f2f5; border-radius: 3px; overflow: hidden; }
 .profile-rating-track > span { display: block; height: 100%; background: #006eff; border-radius: 3px; }
 .profile-rating-distribution > p { margin: 0; font-size: .75rem; color: #59616b; text-align: right; }
-.achievement-list { display: grid; gap: 0; }
-.achievement-option { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #edf0f3; padding: 16px 0; }
-.achievement-option:first-child { padding-top: 0; }
-.achievement-option:last-child { border-bottom: 0; }
-.achievement-option input { width: 20px; height: 20px; margin: 0; accent-color: #006eff; flex-shrink: 0; }
 .achievement-copy { flex: 1; display: grid; gap: 6px; }
 .achievement-copy strong { font-size: .875rem; font-weight: normal; }
 .achievement-copy > span { font-size: .75rem; color: #59616b; line-height: 1.4; }
 .achievement-progress { font-size: .75rem; color: #59616b; white-space: nowrap; }
-.achievement-option.is-earned .achievement-progress { color: #20663a; }
-.achievement-option.is-earned .achievement-copy strong { color: #0058cc; }
 .community-form-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 .community-feedback { font-size: .8125rem; color: #20663a; margin: 8px 0 0; }
 .community-feedback:empty { display: none; }
@@ -5108,3 +5101,35 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .profile-navigation-item svg { width: 20px; height: 20px; flex-shrink: 0; color: currentColor; }
 /* Keep the navigation hit area fixed while its contents animate. */
 .profile-navigation-item { height: 44px; line-height: 20px; }
+
+/* Tag picker: one selected badge, searchable achievement requirements. */
+.tag-picker-trigger { display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%; min-height: 56px; border: 1px solid #c6ccd4; border-radius: 12px; padding: 10px 14px; background: #fff; color: #3e3e3f; font: inherit; font-size: 1rem; text-align: left; cursor: pointer; }
+.tag-picker-trigger > span { min-width: 0; }
+.tag-picker-trigger > svg { flex-shrink: 0; color: #59616b; }
+.tag-picker-trigger:hover { border-color: #59616b; }
+.tag-picker-trigger[aria-expanded="true"], .tag-picker-trigger:focus-visible { border-color: #006eff; outline: 2px solid #006eff; outline-offset: 2px; }
+.tag-picker-trigger:disabled { cursor: wait; opacity: .65; }
+.tag-picker-popover { position: fixed; inset: auto; margin: 0; padding: 12px; box-sizing: border-box; border: 1px solid #d9dde3; border-radius: 16px; background: #fff; color: #3e3e3f; box-shadow: 0 12px 32px #17243b24; overflow: hidden; }
+.tag-picker-popover:popover-open { display: flex; flex-direction: column; }
+.tag-picker-search { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; min-height: 48px; padding: 0 12px; border: 1px solid #c6ccd4; border-radius: 10px; margin-bottom: 8px; color: #59616b; }
+.tag-picker-search:focus-within { outline: 2px solid #006eff; outline-offset: 1px; }
+.tag-picker-search svg { flex-shrink: 0; }
+.tag-picker-search input { min-width: 0; width: 100%; min-height: 46px; border: 0; outline: 0; background: transparent; color: #3e3e3f; font: inherit; font-size: 1rem; }
+.tag-picker-search input::placeholder { color: #59616b; }
+.tag-picker-options { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+.tag-picker-option { display: flex; align-items: center; gap: 12px; padding: 14px 10px; border-radius: 8px; min-height: 56px; }
+label.tag-picker-option:not(.is-locked) { cursor: pointer; }
+label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
+.tag-picker-option.is-selected { background: #edf4ff; }
+.tag-picker-option:focus-within { outline: 2px solid #006eff; outline-offset: -2px; }
+.tag-picker-option input { flex: 0 0 18px; width: 18px; height: 18px; accent-color: #006eff; margin: 0; }
+.tag-picker-option .achievement-copy { min-width: 0; }
+.tag-picker-option .achievement-copy strong { font-size: 1rem; }
+.tag-picker-option .achievement-copy > span { font-size: .8125rem; }
+.tag-picker-option .achievement-progress.is-earned { color: #20663a; }
+.tag-picker-empty { padding: 12px 10px; color: #59616b; font-size: .875rem; line-height: 1.5; }
+@media (max-width: 480px) {
+  .tag-picker-option { gap: 10px; padding: 12px 4px; flex-wrap: wrap; }
+  .tag-picker-option .achievement-copy { flex-basis: calc(100% - 36px); }
+  .tag-picker-option .achievement-progress { margin-left: 28px; }
+}

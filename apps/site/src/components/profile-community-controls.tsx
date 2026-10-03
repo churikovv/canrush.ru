@@ -3,7 +3,7 @@
 import { useActionState, useState, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 import { updateCommunityAction } from '@/app/profile/community-actions';
-import { PROFILE_ACHIEVEMENTS, type AchievementProgress } from '@/lib/profile-achievements';
+export { AchievementPicker } from '@/components/profile-tag-picker';
 
 function Submit({ children, className = '', disabled = false }: { children: ReactNode; className?: string; disabled?: boolean }) {
   const { pending } = useFormStatus();
@@ -25,28 +25,6 @@ export function FollowControl({ targetId, following, mutual }: { targetId: strin
     <Submit className={following ? 'community-button-secondary' : ''}>{following ? 'Отписаться' : mutual ? 'Подписаться в ответ' : 'Подписаться'}</Submit>
     {following && mutual && <span className="community-friend-label">Вы друзья</span>}
     {!following && mutual && <span className="community-muted">Подписан на вас</span>}
-  </CommunityForm>;
-}
-
-export function AchievementPicker({ earned, selected, progress, isOwn }: { earned: string[]; selected: string[]; progress: AchievementProgress; isOwn: boolean }) {
-  const [tag, setTag] = useState(selected[0] ?? '');
-  return <CommunityForm className="achievement-form">
-    <input type="hidden" name="operation" value="tags" />
-    {tag && <input type="hidden" name="tags" value={tag} />}
-    <div className="achievement-list" role={isOwn ? 'radiogroup' : undefined} aria-label={isOwn ? 'Тег в профиле и отзывах' : undefined}>
-      {isOwn && <label className="achievement-option"><input type="radio" name="tag-choice" value="" checked={!tag} onChange={() => setTag('')} /><span className="achievement-copy"><strong>Без тега</strong></span></label>}
-      {PROFILE_ACHIEVEMENTS.map(item => {
-        const unlocked = earned.includes(item.key);
-        const checked = tag === item.key;
-        return <label className={`achievement-option${unlocked ? ' is-earned' : ''}`} key={item.key}>
-          {isOwn && <input type="radio" name="tag-choice" value={item.key} checked={checked} disabled={!unlocked}
-            onChange={() => setTag(item.key)} />}
-          <span className="achievement-copy"><strong>{item.label}</strong><span>{item.description}</span></span>
-          <span className="achievement-progress">{item.key === 'admin' ? (unlocked ? 'Доступен' : 'Только админ') : unlocked ? 'Получен' : `${Math.min(progress[item.metric], item.goal)} / ${item.goal}`}</span>
-        </label>;
-      })}
-    </div>
-    {isOwn && <div className="community-form-footer"><span className="community-muted">{tag ? 'Выбран 1 тег' : 'Тег не выбран'}</span><Submit>Сохранить тег</Submit></div>}
   </CommunityForm>;
 }
 

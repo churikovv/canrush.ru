@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { SignOutButton } from '@/components/sign-out-button';
 import type { ProfileData } from '@/lib/profile';
 import { COMMUNITY_PAGE_SIZE, getConnections, getPresence, getProfileCommunity, getProfileRatings, getProfileWall } from '@/lib/profile-community';
-import { PROFILE_ACHIEVEMENTS } from '@/lib/profile-achievements';
+import { PROFILE_ACHIEVEMENTS, visibleProfileAchievements } from '@/lib/profile-achievements';
 import { AchievementPicker, DeleteWallComment, FollowControl, PresenceSetting, WallComposer } from '@/components/profile-community-controls';
 import { ProfileHeader } from '@/components/profile-header';
 import { ProfilePresence } from '@/components/profile-presence';
@@ -18,6 +18,7 @@ interface ProfileViewProps {
   tierListsHref: string;
   adminHref?: string;
   viewerId?: string;
+  viewerIsAdmin?: boolean;
   wallPage?: number;
 }
 
@@ -26,11 +27,13 @@ function displayName(profile: ProfileData): string {
   return name && !name.includes('@') ? name : profile.username;
 }
 
-export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, wallPage = 1 }: ProfileViewProps) {
+export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
   const [community, ratings, wall, presence, friends] = await Promise.all([
     getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'),
   ]);
   const experience = (await getExperience([profile.username]))[profile.username];
+  const visibleAchievements = visibleProfileAchievements(viewerIsAdmin);
+  const visibleEarned = community.earned.filter(key => visibleAchievements.some(item => item.key === key));
   const base = `/profile/${profile.username}`;
   const telegramHref = profile.telegramChannel ? `https://t.me/${profile.telegramChannel}` : undefined;
   const pages = Math.ceil(wall.count / COMMUNITY_PAGE_SIZE);
@@ -51,7 +54,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         {[{ href: favoritesHref, label: 'Избранное', count: profile.favoriteCount, icon: 'stat-favorites' },
           { href: `${base}/reviews`, label: 'Отзывы', count: profile.reviewCount, icon: 'stat-reviews' },
           { href: tierListsHref, label: 'Тирлисты', count: profile.tierListCount, icon: 'stat-tierlists' },
-          { href: '#achievements', label: 'Достижения', count: community.earned.length, icon: 'profile' }].map(item =>
+          { href: '#achievements', label: 'Достижения', count: visibleEarned.length, icon: 'profile' }].map(item =>
           <Link href={item.href} key={item.label} className="community-shortcut"><Image src={`/brand/icons/${item.icon}.svg`} width={20} height={20} alt="" /><span>{item.label}</span><strong>{item.count}</strong><span className="community-shortcut-arrow" aria-hidden="true">↗</span></Link>)}
       </nav>
 
@@ -70,9 +73,9 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           </section>
 
           <section className="community-panel" id="achievements" aria-labelledby="achievements-title">
-            <div className="community-section-heading"><h2 id="achievements-title">Теги за достижения</h2><span className="community-muted">{community.earned.length} / {PROFILE_ACHIEVEMENTS.length}</span></div>
+            <div className="community-section-heading"><h2 id="achievements-title">Теги за достижения</h2><span className="community-muted">{visibleEarned.length} / {visibleAchievements.length}</span></div>
             {isOwn && <p className="community-section-note">Выберите один тег. Он появится в профиле и рядом с ником в отзывах.</p>}
-            <AchievementPicker key={community.tags.join(',')} earned={community.earned} selected={community.tags} progress={community.progress} isOwn={isOwn} />
+            <AchievementPicker key={community.tags.join(',')} earned={visibleEarned} selected={community.tags} progress={community.progress} isOwn={isOwn} viewerIsAdmin={viewerIsAdmin} />
           </section>
 
           <section className="community-panel" id="wall" aria-labelledby="wall-title">

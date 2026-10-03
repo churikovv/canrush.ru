@@ -31,6 +31,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         profile={profile}
         isOwn
         viewerId={session.user.id}
+        viewerIsAdmin={isAdmin}
         wallPage={profilePageNumber((await searchParams).wallPage)}
         favoritesHref="/profile/favorites"
         tierListsHref="/profile/tierlists"
