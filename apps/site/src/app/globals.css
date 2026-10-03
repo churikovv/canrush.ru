@@ -861,7 +861,7 @@ html[data-cookie-notice="visible"] .brand-footer {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
-  border-bottom: 2px solid transparent;
+  border: 0;
   padding: 10px;
   border-radius: 12px;
   color: #fff;
@@ -882,10 +882,6 @@ html[data-cookie-notice="visible"] .brand-footer {
   .brand-home:hover > img {
     animation: header-link-rise 400ms cubic-bezier(0.45, 0, 0.2, 1) both;
   }
-}
-
-.profile-navigation-item[aria-current="page"] {
-  border-bottom-color: #fff;
 }
 
 .profile-navigation-item:focus-visible {
@@ -5285,3 +5281,6 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
   .notification-panel { top: 72px; right: 12px; }
   .brand-header:has(.notification-bell, .notification-slot) .city-header-button { max-width: min(220px, calc(100vw - 164px)); }
 }
+
+/* The active section stays brighter than hover, including while hovered. */
+.brand-header .profile-navigation-item[aria-current="page"] { background: #ffffff2e; }
