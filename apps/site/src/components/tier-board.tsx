@@ -26,7 +26,7 @@ export function TierBoard({ products, placements, emptyLabel = 'Пока пус�
         return (
           <section className={`tier-board-row tier-board-row-${tier.toLowerCase()}`} key={tier} aria-labelledby={`tier-${tier}`}>
             <h2 className="tier-board-label" id={`tier-${tier}`}>
-              {tier}
+              <span className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span>
             </h2>
             <div className="tier-board-items" role="list">
               {tierItems.length > 0 ? (

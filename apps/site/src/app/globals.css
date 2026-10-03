@@ -2998,6 +2998,31 @@ html[data-cookie-notice="visible"] .brand-footer {
   text-shadow: 1px 1px 0 var(--color-surface);
 }
 
+/* Letter gradients visually matched to Figma 463:419; shared by board and editor. */
+.tier-letter {
+  display: inline-block;
+  color: var(--color-ink);
+  text-shadow: none;
+  -webkit-text-stroke: 2px var(--tier-letter-outline, #242016);
+  paint-order: stroke fill;
+}
+.tier-letter-s { --tier-letter-top: #f6cf69; --tier-letter-bottom: #e56828; --tier-letter-outline: #87532c; }
+.tier-letter-a { --tier-letter-top: #f8ce7b; --tier-letter-bottom: #c27a37; }
+.tier-letter-b { --tier-letter-top: #e9bf61; --tier-letter-bottom: #98631f; }
+.tier-letter-c { --tier-letter-top: #ffffa3; --tier-letter-bottom: #abb34c; }
+.tier-letter-d { --tier-letter-top: #a9e877; --tier-letter-bottom: #397428; }
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .tier-letter {
+    background: linear-gradient(180deg, var(--tier-letter-top) 0%, var(--tier-letter-bottom) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+@media (forced-colors: active) {
+  .tier-letter { background: none; -webkit-text-fill-color: CanvasText; -webkit-text-stroke: 0; }
+}
+
 .tier-board-row-s .tier-board-label,
 .tier-editor-row-s > h2 { background: #ffd8df; }
 .tier-board-row-a .tier-board-label,

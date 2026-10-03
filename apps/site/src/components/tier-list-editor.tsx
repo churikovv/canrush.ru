@@ -364,7 +364,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
       <div className="tier-editor-board" aria-label="Редактор тирлиста">
         {TIER_KEYS.map((tier) => (
           <section className={`tier-editor-row tier-editor-row-${tier.toLowerCase()}`} key={tier} aria-labelledby={`editor-tier-${tier}`}>
-            <h2 id={`editor-tier-${tier}`}>{tier}</h2>
+            <h2 id={`editor-tier-${tier}`}><span className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span></h2>
             <div
               className={`tier-editor-row-items${draggingId ? ' tier-editor-drop-active' : ''}`}
               onDragOver={(event) => event.preventDefault()}
