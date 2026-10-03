@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Suspense, type ReactNode } from 'react';
 import { CityHeader } from '@/components/city-header';
+import { NotificationBell } from '@/components/notification-bell';
 import { SiteFooter } from '@/components/site-footer';
 
 interface BrandShellProps {
@@ -26,7 +27,7 @@ export function BrandShell({ children, headerAction, surfaceClassName }: BrandSh
           />
         </Link>
         <Suspense fallback={<span className="city-header-placeholder">Город</span>}><CityHeader /></Suspense>
-        {headerAction ? <div className="header-action">{headerAction}</div> : null}
+        <div className="header-action">{headerAction}<NotificationBell /></div>
       </header>
       <main className={surfaceClassName ? `main-surface ${surfaceClassName}` : 'main-surface'} id="main-content">
         {children}

@@ -1,0 +1,16 @@
+import { beforeEach, expect, it, vi } from 'vitest';
+const m=vi.hoisted(()=>({session:vi.fn(),query:vi.fn(),list:vi.fn(),read:vi.fn(),sync:vi.fn(),city:vi.fn()}));
+vi.mock('next/headers',()=>({headers:async()=>new Headers()}));
+vi.mock('../src/lib/auth',()=>({auth:{api:{getSession:m.session}}}));
+vi.mock('../src/db/pool',()=>({getPool:()=>({query:m.query})}));
+vi.mock('../src/lib/notifications',()=>({getNotifications:m.list,readNotifications:m.read,syncFavoritePrices:m.sync}));
+vi.mock('../src/lib/location',()=>({selectedCity:async()=>({id:'moscow',name:'Москва'})}));
+vi.mock('../src/lib/catalog-files',()=>({readCityCatalog:async()=>null}));
+vi.mock('../src/app/location/actions',()=>({selectCityAction:m.city}));
+import { notificationAction } from '../src/app/notifications/actions';
+const id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+beforeEach(()=>{vi.clearAllMocks();m.session.mockResolvedValue({user:{id:'owner'}});m.list.mockResolvedValue({items:[],unread:0,hasMore:false});m.query.mockResolvedValue({rowCount:0,rows:[]});});
+it('does not read private data for guests',async()=>{m.session.mockResolvedValue(null);expect(await notificationAction()).toEqual({authenticated:false});expect(m.list).not.toHaveBeenCalled();expect(m.sync).not.toHaveBeenCalled();});
+it('cannot mark a foreign notification or change its city',async()=>{expect((await notificationAction('read',id)).error).toBeTruthy();expect(m.query).toHaveBeenCalledWith(expect.any(String),[id,'owner']);expect(m.read).not.toHaveBeenCalled();expect(m.city).not.toHaveBeenCalled();});
+it('marks only the current user’s notifications and rejects malformed identifiers',async()=>{await notificationAction('read-all');expect(m.read).toHaveBeenCalledWith('owner');expect((await notificationAction('read','invalid')).error).toBeTruthy();});
+it('keeps social notifications available if the price catalog cannot be read',async()=>{m.sync.mockRejectedValue(new Error('catalog unavailable'));expect(await notificationAction()).toMatchObject({authenticated:true,unread:0,priceWarning:expect.any(String)});});

@@ -7,6 +7,9 @@ import { getPool } from '@/db/pool';
 import { auth } from '@/lib/auth';
 import { getProfileCommunity } from '@/lib/profile-community';
 import { getCatalogGroup } from '@/lib/catalog';
+import { selectedCity } from '@/lib/location';
+import { readCityCatalog } from '@/lib/catalog-files';
+import { syncFavoritePrices } from '@/lib/notifications';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 
 export async function toggleFavoriteAction(formData: FormData): Promise<void> {
@@ -43,6 +46,8 @@ export async function toggleFavoriteAction(formData: FormData): Promise<void> {
   }
 
   await getProfileCommunity(session.user.id);
+  // Capture the initial price when adding a favorite; a temporary catalog failure must not undo the favorite.
+  try { const city = await selectedCity(); await syncFavoritePrices(session.user.id,city,await readCityCatalog(city.id)); } catch { /* Retried when notifications are polled. */ }
 
   revalidatePath(`/catalog/${catalogGroupSlug(brand, flavor)}`);
   revalidatePath('/profile');
