@@ -5227,7 +5227,9 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .review-range-control output { position: absolute; top: 0; transform: translateX(-50%); color: var(--color-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
 .review-range-control input { display: block; width: 100%; height: 44px; margin: 0; accent-color: var(--color-brand); cursor: pointer; }
 .review-range-control input:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; border-radius: 8px; }
-.review-range-scale { display: flex; justify-content: space-between; font-size: .75rem; color: var(--color-muted-strong); padding: 0 6px; }
+.review-range-scale { position: relative; height: 25px; margin: 0 12px; font-size: .75rem; color: var(--color-muted-strong); font-variant-numeric: tabular-nums; }
+.review-range-scale span { position: absolute; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; line-height: 1; }
+.review-range-scale span::before { content: ""; width: 1px; height: 5px; background: #b5bac2; }
 .review-edit-fields:disabled .review-range-control input { cursor: default; }
 .review-text-composer { border: 1px solid #c7ccd3; border-radius: 16px; overflow: hidden; background: white; }
 .review-text-composer:focus-within { border-color: var(--color-brand); box-shadow: 0 0 0 2px #006eff20; }

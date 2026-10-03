@@ -30,7 +30,7 @@ function RatingInput({ name, value, label, error, onChange }: { name: string; va
       <output htmlFor={`rating-${name}`} style={{ left: `calc(12px + (100% - 24px) * ${(value - 1) / 9})` }}>{value}</output>
       <input id={`rating-${name}`} type="range" name={name} min={1} max={10} step={1} value={value} onChange={event => onChange(Number(event.target.value))} aria-valuetext={`${value} из 10`} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} />
     </div>
-    <div className="review-range-scale" aria-hidden="true"><span>1</span><span>10</span></div>
+    <div className="review-range-scale" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} style={{ left: `${index / 9 * 100}%` }}>{index + 1}</span>)}</div>
     {error && <p className="field-error" id={`${name}-error`}>{error}</p>}
   </div>;
 }
