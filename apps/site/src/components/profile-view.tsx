@@ -1,3 +1,4 @@
+import { ProfileStatFill } from '@/components/profile-stat-fill';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import { getExperience } from '@/lib/profile-experience';
 import { ProfileExperience } from '@/components/profile-experience';
@@ -67,7 +68,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             {ratings.count ? <div className="profile-rating-summary">
               <div className="profile-rating-average"><strong>{formatScore(ratings.overall)}<span> / 10</span></strong><p>Средняя оценка</p><dl>{([['Дизайн', ratings.design], ['Вкус', ratings.taste]] as const).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{formatScore(value)}</dd></div>)}</dl></div>
               <div className="profile-rating-distribution" role="img" aria-label={`Распределение оценок: ${ratings.histogram.map(row => `${row.score} баллов: ${row.count}`).join(', ')}. Общая оценка отзыва округлена до целого.`}>
-                {ratings.histogram.map(row => <div key={row.score}><span>{row.score} <span aria-hidden="true">★</span></span><span className="profile-rating-track"><span style={{ width: `${row.count / ratings.count * 100}%` }} /></span><span>{row.count}</span></div>)}
+                {ratings.histogram.map((row, index) => <div key={row.score}><span>{row.score} <span aria-hidden="true">★</span></span><span className="profile-rating-track"><ProfileStatFill value={row.count / ratings.count} delay={index * 30} /></span><span>{row.count}</span></div>)}
                 <p>Оценок: {ratings.count}</p>
               </div>
             </div> : <div className="community-empty"><p>Оценок пока нет.</p>{isOwn && <Link href="/catalog">Выбрать напиток и оставить отзыв ↗</Link>}</div>}

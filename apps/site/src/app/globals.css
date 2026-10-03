@@ -5008,10 +5008,8 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .experience-total strong { font-size: 28px; }
 .experience-total strong span { font-size: 14px; }
 .experience-total > span { font-size: 13px; color: #666; }
-.experience-panel progress { display: block; width: 100%; height: 8px; border: 0; border-radius: 4px; overflow: hidden; background: #eef0f3; accent-color: #006eff; }
-.experience-panel progress::-webkit-progress-bar { background: #eef0f3; }
-.experience-panel progress::-webkit-progress-value { background: #006eff; }
-.experience-panel progress::-moz-progress-bar { background: #006eff; }
+.experience-track { width: 100%; height: 8px; border-radius: 4px; overflow: hidden; background: #eef0f3; }
+.profile-stat-fill { display: block; width: 100%; height: 100%; background: #006eff; transform-origin: left center; }
 .experience-panel details { margin-top: 18px; font-size: 13px; color: #666; line-height: 1.6; }
 .experience-panel summary { cursor: pointer; color: #333; }
 .experience-panel ul { padding-left: 20px; }
@@ -5285,7 +5283,7 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 /* The active section stays brighter than hover, including while hovered. */
 .brand-header .profile-navigation-item[aria-current="page"] { background: #ffffff2e; }
 
-.sign-out-control .primary-button { background: #c52b35; color: white; border-color: #c52b35; }
-.sign-out-control .primary-button:hover:not(:disabled) { background: #a51e28; border-color: #a51e28; color: white; }
+.sign-out-control .primary-button { background: transparent; color: #c52b35; border-color: #c52b35; }
+.sign-out-control .primary-button:hover:not(:disabled) { background: transparent; border-color: #a51e28; color: #a51e28; }
 .wall-composer fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .wall-composer .review-photo-previews { margin-top: 12px; }
