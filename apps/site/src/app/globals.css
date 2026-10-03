@@ -3006,7 +3006,7 @@ html[data-cookie-notice="visible"] .brand-footer {
   -webkit-text-stroke: 2px var(--tier-letter-outline, #242016);
   paint-order: stroke fill;
 }
-.tier-letter-s { --tier-letter-top: #f6cf69; --tier-letter-bottom: #e56828; --tier-letter-outline: #87532c; }
+.tier-letter-s { --tier-letter-top: #f6d008; --tier-letter-bottom: #ff0707; --tier-letter-outline: #87532c; }
 .tier-letter-a { --tier-letter-top: #f8ce7b; --tier-letter-bottom: #c27a37; }
 .tier-letter-b { --tier-letter-top: #e9bf61; --tier-letter-bottom: #98631f; }
 .tier-letter-c { --tier-letter-top: #ffffa3; --tier-letter-bottom: #abb34c; }
