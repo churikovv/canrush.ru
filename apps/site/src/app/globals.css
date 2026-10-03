@@ -5270,6 +5270,7 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .review-thread-empty { color: var(--color-muted-strong); }
 
 .header-action { gap: 18px; }
+.notification-slot { display: inline-block; flex: 0 0 44px; width: 44px; height: 44px; }
 .notification-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: white; cursor: pointer; }
 .notification-bell:hover { background: #ffffff18; }
 .notification-bell:focus-visible { outline: 2px solid white; outline-offset: 2px; }
@@ -5300,5 +5301,5 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .notification-panel > .field-error, .notification-panel > .field-help { margin: 12px 20px; }
 @media (max-width: 959px) {
   .notification-panel { top: 72px; right: 12px; }
-  .brand-header:has(.notification-bell) .city-header-button { max-width: min(220px, calc(100vw - 164px)); }
+  .brand-header:has(.notification-bell, .notification-slot) .city-header-button { max-width: min(220px, calc(100vw - 164px)); }
 }

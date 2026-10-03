@@ -1,13 +1,13 @@
 'use client';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { useNotificationIdentity } from '@/components/notification-state';
 import { notificationAction } from '@/app/notifications/actions';
 import type { NotificationItem } from '@/lib/notifications';
 
 export function NotificationBell() {
-  const [authenticated,setAuthenticated] = useState(false);
+  const { identity: { authenticated, unread }, setIdentity } = useNotificationIdentity();
   const [items,setItems] = useState<NotificationItem[]>([]);
-  const [unread,setUnread] = useState(0);
   const [more,setMore] = useState(false);
   const [open,setOpen] = useState(false);
   const [busy,setBusy] = useState(false);
@@ -23,13 +23,13 @@ export function NotificationBell() {
     try {
       const result = await notificationAction(action,id,before);
       if (result.error) { setError(result.error); return false; }
-      if (!result.authenticated) { setAuthenticated(false); setOpen(false); setItems([]); setUnread(0); return false; }
-      setAuthenticated(true); setUnread(result.unread); setMore(result.hasMore); setWarning(result.priceWarning ?? '');
+      if (!result.authenticated) { setIdentity({ authenticated: false, unread: 0 }); setOpen(false); setItems([]); return false; }
+      setIdentity({ authenticated: true, unread: result.unread }); setMore(result.hasMore); setWarning(result.priceWarning ?? '');
       setItems(current => before ? [...current,...result.items.filter(item => !current.some(old => old.id===item.id))] : result.items);
       return true;
     } catch { setError('Нет связи с сервером. Попробуйте ещё раз.'); return false; }
     finally { inFlight.current=false; setBusy(false); }
-  },[]);
+  },[setIdentity]);
   useEffect(() => {
     const initial = window.setTimeout(() => void load(),0);
     const refresh = () => { if(document.visibilityState==='visible' && !panel.current?.open) void load(); };
@@ -43,7 +43,7 @@ export function NotificationBell() {
     dialog?.showModal(); document.body.style.overflow='hidden';
     return () => { dialog?.close(); document.body.style.overflow=previous; button?.focus(); };
   },[open]);
-  if (!authenticated) return null;
+  if (!authenticated) return <span className="notification-slot" aria-hidden="true" />;
   return <>
     <button ref={trigger} type="button" className="notification-bell" aria-label={`Уведомления${unread ? `, непрочитанных: ${unread}` : ''}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpen(true); void load(); }}>
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
