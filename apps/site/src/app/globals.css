@@ -854,7 +854,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 .profile-navigation {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 4px;
 }
 
 .profile-navigation-item {
@@ -862,7 +862,8 @@ html[data-cookie-notice="visible"] .brand-footer {
   min-height: 44px;
   align-items: center;
   border-bottom: 2px solid transparent;
-  padding: 10px 0;
+  padding: 10px;
+  border-radius: 12px;
   color: #fff;
   font-size: 0.9375rem;
   font-weight: 500;
@@ -877,9 +878,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .profile-navigation-item, .brand-home { overflow: hidden; }
-  .profile-navigation-item:hover > svg,
-  .profile-navigation-item:hover > .profile-navigation-label,
+  .brand-home { overflow: hidden; }
   .brand-home:hover > img {
     animation: header-link-rise 400ms cubic-bezier(0.45, 0, 0.2, 1) both;
   }
@@ -891,8 +890,8 @@ html[data-cookie-notice="visible"] .brand-footer {
 
 .profile-navigation-item:focus-visible {
   outline: 2px solid #fff;
-  outline-offset: 5px;
-  border-radius: 2px;
+  outline-offset: 2px;
+  border-radius: 12px;
 }
 
 .site-tab-bar {
@@ -5050,10 +5049,10 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .community-cover-custom { height: auto; aspect-ratio: 4 / 1; }
 
 /* City selection belongs to the header on desktop and above the mobile tab bar. */
-.city-header-button, .city-header-placeholder { display: inline-flex; align-items: center; gap: 7px; color: white; background: transparent; border: 0; min-height: 44px; padding: 8px 0; font: inherit; font-size: 14px; max-width: 220px; margin-right: auto; cursor: pointer; }
+.city-header-button, .city-header-placeholder { display: inline-flex; align-items: center; gap: 7px; color: white; background: transparent; border: 0; min-height: 44px; padding: 8px 10px; border-radius: 12px; font: inherit; font-size: 14px; max-width: 220px; margin-right: auto; cursor: pointer; }
 .city-header-button span:first-of-type { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .city-header-button svg { flex-shrink: 0; }
-.city-header-button:focus-visible { outline: 2px solid white; outline-offset: 4px; border-radius: 4px; }
+.city-header-button:focus-visible { outline: 2px solid white; outline-offset: 2px; border-radius: 12px; }
 .city-dialog { width: min(520px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); border: 0; border-radius: 16px; padding: 24px; color: var(--color-text); background: white; overflow: auto; }
 .city-dialog::backdrop { background: #14182099; }
 .city-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -5249,7 +5248,13 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .header-action { gap: 18px; }
 .notification-slot { display: inline-block; flex: 0 0 44px; width: 44px; height: 44px; }
 .notification-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: white; cursor: pointer; }
-.notification-bell:hover { background: #ffffff18; }
+@media (hover: hover) {
+  .brand-header :is(.profile-navigation-item, .city-header-button, .notification-bell, .admin-back-link):hover {
+    background: #ffffff18;
+    color: white;
+    border-radius: 12px;
+  }
+}
 .notification-bell:focus-visible { outline: 2px solid white; outline-offset: 2px; }
 .notification-count { position: absolute; top: 0; right: -2px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 10px; background: white; color: var(--color-brand-deep); font-size: 10px; font-weight: 700; display: grid; place-items: center; }
 .notification-panel { position: fixed; inset: 76px 24px auto auto; margin: 0; width: min(440px, calc(100vw - 24px)); max-height: calc(100dvh - 100px - var(--site-tab-bar-offset, 0px)); padding: 0; border: 1px solid #dfe3e8; border-radius: 20px; color: var(--color-text); background: white; box-shadow: 0 16px 48px #00000020; overflow: auto; }
