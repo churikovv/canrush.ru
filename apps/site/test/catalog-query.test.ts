@@ -168,3 +168,15 @@ describe('catalog query', () => {
     expect(decodeCatalogGroupSlug('invalid')).toBeNull();
   });
 });
+
+it('sorts ratings before pagination, breaks ties by review count, and puts unrated drinks last', () => {
+  const groups = [group({ brand: 'Unrated', minPrice: 1 }), group({ brand: 'Few' }), group({ brand: 'Many' }), group({ brand: 'Lower' })];
+  const ratings = new Map([
+    ['Few\u0000original', { overall: 5, count: 1 }],
+    ['Many\u0000original', { overall: 5, count: 12 }],
+    ['Lower\u0000original', { overall: 4, count: 50 }],
+  ]);
+  const sorted = filterCatalogGroups(groups, { query: '', brand: '', flavor: '', sort: 'rating' }, ratings);
+  expect(sorted.map(g => g.brand)).toEqual(['Many', 'Few', 'Lower', 'Unrated']);
+  expect(sorted.slice(0, 1)[0]?.brand).toBe('Many');
+});

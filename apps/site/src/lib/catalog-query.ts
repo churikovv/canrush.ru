@@ -2,12 +2,13 @@ import { searchMatches } from './search-match';
 import { Buffer } from 'node:buffer';
 import {
   ENERGY_DRINK_BRAND_ALIASES,
+  isResolvedFlavor,
   type CatalogGroup,
   type FlavorVariant,
   type SourceName,
 } from '@canrush/shared';
 
-export const CATALOG_SORTS = ['deals', 'brand', 'stores', 'price-desc', 'discount'] as const;
+export const CATALOG_SORTS = ['deals', 'brand', 'stores', 'price-desc', 'discount', 'rating'] as const;
 export type CatalogSort = (typeof CATALOG_SORTS)[number];
 
 const SOURCE_NAMES: Record<SourceName, string> = {
@@ -139,7 +140,7 @@ export function isCatalogSort(value: string): value is CatalogSort {
   return CATALOG_SORTS.includes(value as CatalogSort);
 }
 
-export function filterCatalogGroups(groups: CatalogGroup[], filters: CatalogFilters): CatalogGroup[] {
+export function filterCatalogGroups(groups: CatalogGroup[], filters: CatalogFilters, ratings: ReadonlyMap<string, { overall: number; count: number }> = new Map()): CatalogGroup[] {
   const filtered = groups.filter((group) => {
     if (filters.brand && group.brand !== filters.brand) return false;
     if (filters.flavor && group.flavor !== filters.flavor) return false;
@@ -147,6 +148,11 @@ export function filterCatalogGroups(groups: CatalogGroup[], filters: CatalogFilt
   });
 
   return filtered.sort((left, right) => {
+    if (filters.sort === 'rating') {
+      const a = isResolvedFlavor(left.flavor) ? ratings.get(`${left.brand}\u0000${left.flavor}`) : undefined;
+      const b = isResolvedFlavor(right.flavor) ? ratings.get(`${right.brand}\u0000${right.flavor}`) : undefined;
+      return (b?.overall ?? -1) - (a?.overall ?? -1) || (b?.count ?? 0) - (a?.count ?? 0) || left.minPrice - right.minPrice;
+    }
     if (filters.sort === 'discount') {
       const discount = (group: CatalogGroup) => Math.max(0, ...group.variants.map(v => v.oldPrice && v.oldPrice > v.price ? (v.oldPrice - v.price) / v.oldPrice : 0));
       return discount(right) - discount(left) || left.minPrice - right.minPrice;

@@ -20,8 +20,8 @@ export default async function PricesPage() {
     <BrandShell headerAction={<ProfileNavigation active="prices" />} surfaceClassName="price-analytics-surface">
       <div className="price-analytics">
         <header className="price-analytics-heading">
-          <h1>Цены по магазинам</h1>
-          <p className="price-chart-date">{city.name}{status === 'stale' ? ' · Последние доступные цены' : ''}</p>
+          <div className="price-heading-title"><h1>Цены по магазинам</h1><span className="price-heading-city">{city.name}</span></div>
+          {status === 'stale' && <p className="price-chart-date">Последние доступные цены</p>}
           {date && <p className="price-chart-date">Обновлено {date}</p>}
         </header>
         {observations.length ? <RetailerPriceChart key={city.id} observations={observations} /> : <p className="price-chart-empty">Для сравнения пока недостаточно данных. Они появятся после обновления каталога.</p>}

@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     exclude: [
+      'test/admin-dashboard.integration.test.ts',
       'test/profile-experience.integration.test.ts',
       'test/profile-customization.integration.test.ts',
       'test/profile-community.integration.test.ts',

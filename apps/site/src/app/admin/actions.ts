@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { getPool } from '@/db/pool';
 import { requireSiteAdmin, type SiteAdminIdentity } from '@/lib/admin';
 import { normalizeAdminSearch, validateAdminEmail } from '@/lib/admin-fields';
+import { adminTab, adminPage, type AdminTab } from '@/lib/admin-tabs';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 
 type AdminNotice =
@@ -15,17 +16,20 @@ type AdminNotice =
   | 'user-blocked'
   | 'user-unblocked'
   | 'tierlist-deleted'
-  | 'review-deleted';
+  | 'review-deleted'
+  | 'wall-deleted';
 
 type AdminError = 'invalid-email' | 'protected-admin' | 'invalid-target' | 'operation-failed';
 
-function returnQuery(formData: FormData): string {
-  return normalizeAdminSearch(String(formData.get('query') ?? ''));
+function returnQuery(formData: FormData): { search: string; tab: AdminTab; page: number } {
+  return { search: normalizeAdminSearch(String(formData.get('query') ?? '')), tab: adminTab(formData.get('tab')), page: adminPage(formData.get('page')) };
 }
 
-function adminLocation(kind: 'notice' | 'error', value: AdminNotice | AdminError, query: string): string {
+function adminLocation(kind: 'notice' | 'error', value: AdminNotice | AdminError, query: ReturnType<typeof returnQuery>): string {
   const params = new URLSearchParams({ [kind]: value });
-  if (query) params.set('q', query);
+  if (query.search) params.set('q', query.search);
+  params.set('tab', query.tab);
+  if (query.page > 1) params.set('page', String(query.page));
   return `/admin?${params.toString()}`;
 }
 
@@ -225,4 +229,22 @@ export async function deleteAdminReviewAction(formData: FormData): Promise<void>
   revalidatePath('/profile');
   if (deleted) revalidatePath(`/catalog/${catalogGroupSlug(deleted.brand, deleted.flavor)}`);
   redirect(adminLocation('notice', 'review-deleted', query));
+}
+
+export async function deleteAdminWallAction(formData: FormData): Promise<void> {
+  const admin = await requireSiteAdmin();
+  const query = returnQuery(formData);
+  const id = String(formData.get('commentId') ?? '');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(id)) redirect(adminLocation('error', 'invalid-target', query));
+  let deleted: string | null;
+  try {
+    deleted = await auditedMutation(admin, 'delete', 'wall-comment', id, async client => {
+      const result = await client.query('delete from "profileComment" where id=$1 returning id', [id]);
+      return result.rows[0]?.id ?? null;
+    });
+  } catch { redirect(adminLocation('error', 'operation-failed', query)); }
+  if (!deleted) redirect(adminLocation('error', 'invalid-target', query));
+  revalidatePath('/admin');
+  revalidatePath('/profile', 'layout');
+  redirect(adminLocation('notice', 'wall-deleted', query));
 }

@@ -9,6 +9,6 @@ export function validateAdminEmail(value: string): string | null {
   return email;
 }
 
-export function normalizeAdminSearch(value: string | undefined): string {
-  return (value ?? '').trim().slice(0, 80);
+export function normalizeAdminSearch(value: unknown): string {
+  return typeof value === 'string' ? value.trim().slice(0, 80) : '';
 }

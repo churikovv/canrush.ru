@@ -65,10 +65,11 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
     sort: isCatalogSort(requestedSort) ? requestedSort : 'stores',
   };
   const limit = catalogLimit(first(params.limit));
-  const filtered = filterCatalogGroups(groups, filters);
+  const ratingSummaries = filters.sort === 'rating' ? await getReviewSummaries(groups) : undefined;
+  const filtered = filterCatalogGroups(groups, filters, ratingSummaries);
   const visible = filtered.slice(0, limit);
   const nextHref = visible.length < filtered.length ? loadMoreHref(filters, limit + PAGE_SIZE) : undefined;
-  const reviewSummaries = await getReviewSummaries(
+  const reviewSummaries = ratingSummaries ?? await getReviewSummaries(
     visible.map((group) => ({ brand: group.brand, flavor: group.flavor })),
   );
 

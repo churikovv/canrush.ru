@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BrandShell } from '@/components/brand-shell';
 import { AdminDashboard } from '@/components/admin-dashboard';
-import { getAdminDashboardData, requireSiteAdmin } from '@/lib/admin';
+import { requireSiteAdmin } from '@/lib/admin';
+import { getAdminDashboardData } from '@/lib/admin-dashboard-data';
+import { adminTab, adminPage } from '@/lib/admin-tabs';
 import { normalizeAdminSearch } from '@/lib/admin-fields';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +22,7 @@ const NOTICES: Record<string, string> = {
   'user-unblocked': 'Пользователь разблокирован.',
   'tierlist-deleted': 'Тирлист удалён.',
   'review-deleted': 'Отзыв удалён.',
+  'wall-deleted': 'Комментарий стены удалён.',
 };
 
 const ERRORS: Record<string, string> = {
@@ -30,13 +33,14 @@ const ERRORS: Record<string, string> = {
 };
 
 interface AdminPageProps {
-  searchParams: Promise<{ q?: string; notice?: string; error?: string }>;
+  searchParams: Promise<{ q?: string; tab?: string; page?: string; notice?: string; error?: string }>;
 }
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const [admin, params] = await Promise.all([requireSiteAdmin(), searchParams]);
   const query = normalizeAdminSearch(params.q);
-  const data = await getAdminDashboardData(query);
+  const tab = adminTab(params.tab);
+  const data = await getAdminDashboardData(query, tab, adminPage(params.page));
 
   return (
     <BrandShell
@@ -46,6 +50,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <AdminDashboard
         admin={admin}
         data={data}
+        tab={tab}
         query={query}
         notice={params.notice ? NOTICES[params.notice] : undefined}
         error={params.error ? ERRORS[params.error] : undefined}
