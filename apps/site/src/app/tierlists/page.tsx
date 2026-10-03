@@ -48,8 +48,8 @@ export default async function TierListsPage() {
 
         {official.ratedCount === 0 ? (
           <div className="tierlists-rating-note">
-            <strong>Официальный рейтинг заполнится после первых отзывов</strong>
-            <p>Оцените дизайн, вкус и состав на страницах товаров. Для позиции в списке нужны три оценки.</p>
+            <strong>Официальный рейтинг недоступен</strong>
+            <p>Нужно больше позиций с тремя оценками и более</p>
             <Link href="/catalog">Перейти в каталог</Link>
           </div>
         ) : null}
