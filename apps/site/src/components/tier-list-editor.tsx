@@ -1,5 +1,8 @@
 'use client';
 
+import { PriceFilterInput } from '@/components/price-filter-input';
+import { TierScreenshotButton } from '@/components/tier-screenshot-button';
+import { compareTierProducts, type TierProductSort } from '@/lib/tier-product-sort';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useActionState, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react';
@@ -64,7 +67,7 @@ function ActionButtons({ published }: { published: boolean }) {
       </button>
       {!published ? (
         <button className="tier-secondary-action" type="submit" name="intent" value="publish" disabled={pending}>
-          Выложить
+          Опубликовать на сайт
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <path d="M12 16V3m0 0L7 8m5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M5 13v6h14v-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -155,6 +158,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
   const [query, setQuery] = useState('');
   const [brand, setBrand] = useState('');
   const [flavor, setFlavor] = useState('');
+  const [sort, setSort] = useState<TierProductSort>('popular');
   const [availability, setAvailability] = useState<'all' | '4'>('all');
   const [dirty, setDirty] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
@@ -185,7 +189,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
       if (availability === '4' && product.retailerCount < 4) return false;
       if (!normalizedQuery) return true;
       return normalizeSearch(`${product.brand} ${product.flavorLabel}`).includes(normalizedQuery);
-    });
+    }).sort((a, b) => compareTierProducts(a, b, sort));
 
   const placements = TIER_KEYS.flatMap((tier) =>
     columns[tier].flatMap((id, position) => {
@@ -361,7 +365,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
         )}
       </motion.div>
 
-      <div className="tier-editor-board" aria-label="Редактор тирлиста">
+      <div id="tier-capture-board" className="tier-editor-board" aria-label="Редактор тирлиста">
         {TIER_KEYS.map((tier) => (
           <section className={`tier-editor-row tier-editor-row-${tier.toLowerCase()}`} key={tier} aria-labelledby={`editor-tier-${tier}`}>
             <h2 id={`editor-tier-${tier}`}><span className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span></h2>
@@ -378,6 +382,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
 
       <div className="tier-editor-primary-controls">
         <ActionButtons published={initialList?.status === 'published'} />
+        <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" />
         {initialList ? <DeleteTierListButton /> : null}
       </div>
 
@@ -401,27 +406,22 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
               maxLength={80}
             />
           </label>
-          <label>
-            <span>Бренд</span>
-            <select value={brand} onChange={(event) => setBrand(event.currentTarget.value)}>
-              <option value="">Все бренды</option>
-              {brands.map((item) => <option value={item} key={item}>{item}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>Вкус</span>
-            <select value={flavor} onChange={(event) => setFlavor(event.currentTarget.value)}>
-              <option value="">Все вкусы</option>
-              {flavors.map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>Наличие</span>
-            <select value={availability} onChange={(event) => setAvailability(event.currentTarget.value === '4' ? '4' : 'all')}>
-              <option value="all">Все товары</option>
-              <option value="4">В 4+ магазинах</option>
-            </select>
-          </label>
+          <div className="tier-editor-filter-field">
+            <label htmlFor="tier-brand">Бренд</label>
+            <PriceFilterInput id="tier-brand" value={brand} options={brands.map(value => ({ value, label: value }))} allLabel="Все бренды" onChange={setBrand} />
+          </div>
+          <div className="tier-editor-filter-field">
+            <label htmlFor="tier-flavor">Вкус</label>
+            <PriceFilterInput id="tier-flavor" value={flavor} options={flavors} allLabel="Все вкусы" onChange={setFlavor} />
+          </div>
+          <div className="tier-editor-filter-field">
+            <label htmlFor="tier-availability">Наличие</label>
+            <PriceFilterInput id="tier-availability" value={availability === 'all' ? '' : availability} options={[{ value: '4', label: 'В 4+ магазинах' }]} allLabel="Все товары" onChange={value => setAvailability(value === '4' ? '4' : 'all')} />
+          </div>
+          <div className="tier-editor-filter-field">
+            <label htmlFor="tier-sort">Сортировка</label>
+            <PriceFilterInput id="tier-sort" value={sort === 'popular' ? '' : sort} options={[{ value: 'rating', label: 'По рейтингу' }, { value: 'stores', label: 'По наличию в магазинах' }, { value: 'price', label: 'По цене' }]} allLabel="По популярности" onChange={value => setSort((value || 'popular') as TierProductSort)} />
+          </div>
         </div>
 
         <div
@@ -448,6 +448,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
 
       <div className="tier-editor-footer-actions">
         <ActionButtons published={initialList?.status === 'published'} />
+        <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" />
       </div>
       </LayoutGroup>
     </form>

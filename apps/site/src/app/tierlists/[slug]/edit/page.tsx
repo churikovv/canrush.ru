@@ -1,3 +1,4 @@
+import { getReviewSummaries } from '@/lib/reviews';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
@@ -33,7 +34,7 @@ export default async function EditTierListPage({
   const list = await getTierListBySlug(slug);
   if (!list || list.userId !== session.user.id) notFound();
 
-  const catalogProducts = catalogGroupsToTierProducts(groups);
+  const catalogProducts = catalogGroupsToTierProducts(groups, await getReviewSummaries(groups));
   const catalogIds = new Set(catalogProducts.map((product) => product.id));
   const missingProducts = tierListProductsForPlacements(groups, list.items).filter((product) => !catalogIds.has(product.id));
   const products = [...catalogProducts, ...missingProducts].sort(

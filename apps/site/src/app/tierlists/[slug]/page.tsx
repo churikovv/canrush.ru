@@ -1,3 +1,4 @@
+import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Image from 'next/image';
@@ -81,6 +82,7 @@ export default async function TierListPage({ params }: { params: TierListParams 
             </Link>
           )}
           {list.status === 'published' ? <ShareTierListButton title={list.title} /> : null}
+          <TierScreenshotButton boardId="tier-capture-board" title={list.title} />
         </div>
       </div>
     </BrandShell>

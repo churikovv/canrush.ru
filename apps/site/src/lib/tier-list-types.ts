@@ -12,6 +12,7 @@ export interface TierListProduct {
   retailerCount: number;
   reviewCount: number;
   score?: number;
+  price?: number;
 }
 
 export interface TierListPlacement {

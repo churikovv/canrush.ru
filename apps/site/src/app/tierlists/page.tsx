@@ -1,3 +1,4 @@
+import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -60,6 +61,7 @@ export default async function TierListsPage() {
             <Image src="/brand/icons/tierlists.svg" width={22} height={22} alt="" />
           </Link>
           <ShareTierListButton title="Тирлист энергетиков CanRush" />
+          <TierScreenshotButton boardId="tier-capture-board" title="Тирлист энергетиков CanRush" />
         </div>
 
         <section className="tierlists-community" aria-labelledby="community-title">

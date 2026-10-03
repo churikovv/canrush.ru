@@ -5347,3 +5347,29 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 }
 .share-toast button:hover { background: #ffffff20; }
 .share-toast button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+
+.tier-editor-filter-field { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.tier-editor-filter-field > label { font-size: .75rem; color: var(--color-muted-strong); }
+.tier-editor-filter-field .price-filter-input input { padding-right: 42px; }
+.tier-editor-actions, .tierlists-main-actions { flex-wrap: wrap; }
+.tier-screenshot-control { min-width: 0; }
+.tier-screenshot-dialog { width: min(900px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 24px; border: 0; border-radius: 16px; background: white; color: var(--color-ink); overflow: auto; }
+.tier-screenshot-dialog::backdrop { background: #0009; }
+.tier-screenshot-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.tier-screenshot-heading h2 { font-size: 1.25rem; }
+.tier-screenshot-dialog > p { margin: 16px 0; line-height: 1.5; }
+.tier-screenshot-preview { max-height: 55dvh; overflow: auto; border: 1px solid var(--color-control); border-radius: 8px; }
+.tier-screenshot-preview img { display: block; width: 100%; height: auto; }
+.tier-screenshot-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+@media (max-width: 639px) {
+  .tier-screenshot-dialog { padding: 16px; }
+  .tier-screenshot-heading { align-items: flex-start; }
+  .tier-screenshot-control, .tier-screenshot-control > button { width: 100%; }
+}
+.tier-editor-primary-controls { flex-wrap: wrap; }
+@media (min-width: 1024px) {
+  .tier-editor-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .tier-editor-search { grid-column: 1 / -1; }
+}
+
+.tier-screenshot-heading > button { flex-shrink: 0; white-space: nowrap; }

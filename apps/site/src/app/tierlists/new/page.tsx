@@ -1,3 +1,4 @@
+import { getReviewSummaries } from '@/lib/reviews';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -21,7 +22,8 @@ export default async function NewTierListPage() {
   if (!session) redirect('/sign-in');
   await ensureOwnProfile(session.user);
 
-  const products = catalogGroupsToTierProducts(await loadAllCatalogGroups()).sort(
+  const groups = await loadAllCatalogGroups();
+  const products = catalogGroupsToTierProducts(groups, await getReviewSummaries(groups)).sort(
     (left, right) => right.retailerCount - left.retailerCount || left.brand.localeCompare(right.brand, 'ru-RU'),
   );
 

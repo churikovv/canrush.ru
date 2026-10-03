@@ -17,8 +17,7 @@ export function PriceFilterInput({ id, value, options, allLabel, onChange }: {
   const [active, setActive] = useState(-1);
   const input = useRef<HTMLInputElement>(null);
   const selected = options.find(option => option.value === value)?.label ?? '';
-  const matches = options.filter(option => searchMatches(option.label, query));
-  const choices = query.trim() ? matches : [{ value: '', label: allLabel }, ...matches];
+  const choices = [{ value: '', label: allLabel }, ...options].filter(option => searchMatches(option.label, query));
   function choose(option: FilterOption) {
     onChange(option.value);
     setOpen(false);

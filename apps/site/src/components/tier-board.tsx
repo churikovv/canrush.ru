@@ -17,7 +17,7 @@ export function TierBoard({ products, placements, emptyLabel = 'Пока пус�
   const productByKey = new Map(products.map((product) => [itemKey(product.brand, product.flavor), product]));
 
   return (
-    <div className="tier-board" aria-label="Тирлист энергетических напитков">
+    <div id="tier-capture-board" className="tier-board" aria-label="Тирлист энергетических напитков">
       {TIER_KEYS.map((tier) => {
         const tierItems = placements
           .filter((placement) => placement.tier === tier)

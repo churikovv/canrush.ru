@@ -182,6 +182,7 @@ export function catalogGroupsToTierProducts(
       flavorLabel: flavorName(group.flavor),
       imageUrl: group.coverImageUrl,
       retailerCount: catalogRetailerCount(group),
+      price: group.minPrice > 0 ? group.minPrice : undefined,
       reviewCount: summary?.count ?? 0,
       score: summary && summary.count > 0 ? summary.overall : undefined,
     };
