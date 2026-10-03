@@ -21,7 +21,6 @@ export interface ReviewData {
   flavor: string;
   design: number;
   taste: number;
-  composition: number;
   text: string;
   createdAt: Date;
   updatedAt: Date;
@@ -31,18 +30,16 @@ export interface ReviewSummary {
   count: number;
   design: number;
   taste: number;
-  composition: number;
   overall: number;
 }
 
 export interface ReviewInput {
   design: number;
   taste: number;
-  composition: number;
   text: string;
 }
 
-const EMPTY_SUMMARY: ReviewSummary = { count: 0, design: 0, taste: 0, composition: 0, overall: 0 };
+const EMPTY_SUMMARY: ReviewSummary = { count: 0, design: 0, taste: 0, overall: 0 };
 
 interface ReviewRow extends QueryResultRow {
   photos: string[];
@@ -51,7 +48,6 @@ interface ReviewRow extends QueryResultRow {
   flavor: string;
   design: number;
   taste: number;
-  composition: number;
   text: string;
   createdAt: Date;
   updatedAt: Date;
@@ -64,7 +60,7 @@ interface ReviewRow extends QueryResultRow {
 }
 
 const REVIEW_SELECT = `
-  select r."id", r."brand", r."flavor", r."design", r."taste", r."composition", r."text",
+  select r."id", r."brand", r."flavor", r."design", r."taste", r."text",
          r."createdAt", r."updatedAt",
          array(select p."id"::text from "reviewPhoto" p where p."reviewId" = r."id" order by p."position") as photos,
          u."username", u."name", u."telegramChannel",
@@ -93,7 +89,6 @@ function toReview(row: ReviewRow): ReviewData {
     flavor: row.flavor,
     design: Number(row.design),
     taste: Number(row.taste),
-    composition: Number(row.composition),
     text: row.text,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -112,8 +107,7 @@ export async function getReviewSummary(brand: string, flavor: string): Promise<R
   const result = await getPool().query(
     `select count(*)::int as count,
        coalesce(avg("design"), 0)::float8 as design,
-       coalesce(avg("taste"), 0)::float8 as taste,
-       coalesce(avg("composition"), 0)::float8 as composition
+       coalesce(avg("taste"), 0)::float8 as taste
      from "review" where "brand" = $1 and "flavor" = $2`,
     [brand, flavor],
   );
@@ -121,13 +115,11 @@ export async function getReviewSummary(brand: string, flavor: string): Promise<R
   if (!row || row.count === 0) return EMPTY_SUMMARY;
   const design = Number(row.design);
   const taste = Number(row.taste);
-  const composition = Number(row.composition);
   return {
     count: row.count,
     design,
     taste,
-    composition,
-    overall: (design + taste + composition) / 3,
+    overall: (design + taste) / 2,
   };
 }
 
@@ -141,8 +133,7 @@ export async function getReviewSummaries(
     `select "brand", "flavor",
        count(*)::int as count,
        coalesce(avg("design"), 0)::float8 as design,
-       coalesce(avg("taste"), 0)::float8 as taste,
-       coalesce(avg("composition"), 0)::float8 as composition
+       coalesce(avg("taste"), 0)::float8 as taste
      from "review"
      where ("brand", "flavor") in (
        ${products.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`).join(', ')}
@@ -154,13 +145,11 @@ export async function getReviewSummaries(
   for (const row of rows.rows) {
     const design = Number(row.design);
     const taste = Number(row.taste);
-    const composition = Number(row.composition);
     summaries.set(`${row.brand}\u0000${row.flavor}`, {
       count: row.count,
       design,
       taste,
-      composition,
-      overall: (design + taste + composition) / 3,
+      overall: (design + taste) / 2,
     });
   }
   return summaries;
@@ -191,13 +180,13 @@ export async function upsertReview(
   try {
     await client.query('begin');
     const result = await client.query<{ id: string }>(
-      `insert into "review" ("userId", "brand", "flavor", "design", "taste", "composition", "text")
-       values ($1, $2, $3, $4, $5, $6, $7)
+      `insert into "review" ("userId", "brand", "flavor", "design", "taste", "text")
+       values ($1, $2, $3, $4, $5, $6)
        on conflict ("userId", "brand", "flavor")
        do update set "design" = excluded."design", "taste" = excluded."taste",
-         "composition" = excluded."composition", "text" = excluded."text", "updatedAt" = current_timestamp
+         "text" = excluded."text", "updatedAt" = current_timestamp
        returning "id"`,
-      [userId, brand, flavor, input.design, input.taste, input.composition, input.text],
+      [userId, brand, flavor, input.design, input.taste, input.text],
     );
     const reviewId = result.rows[0]!.id;
     if (attachments) {

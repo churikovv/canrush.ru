@@ -18,10 +18,9 @@ interface CatalogReviewFormProps {
   authenticated: boolean;
 }
 
-const CRITERIA: Array<{ name: 'design' | 'taste' | 'composition'; label: string }> = [
+const CRITERIA: Array<{ name: 'design' | 'taste'; label: string }> = [
   { name: 'design', label: 'Дизайн' },
   { name: 'taste', label: 'Вкус' },
-  { name: 'composition', label: 'Состав' },
 ];
 
 function StarInput({
@@ -41,15 +40,15 @@ function StarInput({
     <fieldset className="review-criterion" aria-describedby={error ? `${name}-error` : `${name}-value`}>
       <legend>{label}</legend>
       <output id={`${name}-value`} aria-live="polite">
-        {selected > 0 ? `${selected} из 5` : 'Не оценено'}
+        {selected > 0 ? `${selected} из 10` : 'Не оценено'}
       </output>
       <div className="review-star-input">
-        {[1, 2, 3, 4, 5].map((star) => {
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => {
           const inputId = `${name}-star-${star}`;
           return (
             <span
               key={star}
-              className={star <= selected ? 'review-star-option review-star-option-selected' : 'review-star-option'}
+              className={star === selected ? 'review-star-option review-star-option-selected' : 'review-star-option'}
             >
               <input
                 type="radio"
@@ -60,18 +59,8 @@ function StarInput({
                 onChange={() => setSelected(star)}
                 required
               />
-              <label htmlFor={inputId} aria-label={`${label}: ${star} из 5`}>
-                <svg
-                  width={26}
-                  height={26}
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  aria-hidden="true"
-                >
-                  <path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.3l6.5-.9z" strokeLinejoin="round" />
-                </svg>
+              <label htmlFor={inputId} aria-label={`${label}: ${star} из 10`}>
+                {star}
               </label>
             </span>
           );
@@ -171,6 +160,7 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
 
   return (
     <form className="review-form" action={formAction}>
+      <input type="hidden" name="ratingScale" value="10" />
       <input type="hidden" name="brand" value={brand} />
       <input type="hidden" name="flavor" value={flavor} />
 

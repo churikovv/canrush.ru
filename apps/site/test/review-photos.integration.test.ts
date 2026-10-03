@@ -6,11 +6,11 @@ const databaseUrl = process.env.TEST_DATABASE_URL ?? 'postgresql://localhost:543
 if (new URL(databaseUrl).pathname !== '/canrush_site_test') throw new Error('Only canrush_site_test is allowed');
 const pool = new Pool({ connectionString: databaseUrl, max: 2, allowExitOnIdle: true });
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
-const { upsertReview, getUserReview, deleteReview, getReviewsForUser } = await import('../src/lib/reviews');
+const { upsertReview, getUserReview, deleteReview, getReviewsForUser, getReviewSummary, getReviewSummaries } = await import('../src/lib/reviews');
 const { GET } = await import('../src/app/api/review-photos/[id]/route');
 const userId = `photos-${randomUUID()}`;
 const otherId = `photos-${randomUUID()}`;
-const input = { design: 4, taste: 5, composition: 3, text: 'Photo test' };
+const input = { design: 10, taste: 8, text: 'Photo test' };
 const photo = { data: Buffer.from('test image'), thumbnail: Buffer.from('test thumbnail') };
 afterAll(async () => {
   await pool.query('delete from "user" where "id" = any($1::text[])', [[userId, otherId]]);
@@ -23,6 +23,9 @@ describe.sequential('review photo storage', () => {
     expect(ids).toHaveLength(2);
     const review = await getUserReview(userId, 'Photo test', 'original');
     expect(review?.photos).toEqual(ids);
+    expect(review).toMatchObject({ design: 10, taste: 8 });
+    expect(await getReviewSummary('Photo test', 'original')).toMatchObject({ overall: 9, design: 10, taste: 8 });
+    expect((await getReviewSummaries([{ brand: 'Photo test', flavor: 'original' }])).get('Photo test\u0000original')?.overall).toBe(9);
     const response = await GET(new Request('http://localhost/api/review-photos/test?size=thumbnail'), { params: Promise.resolve({ id: ids[0]! }) });
     expect(response.headers.get('content-type')).toBe('image/webp');
     expect(await response.text()).toBe('test thumbnail');

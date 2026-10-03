@@ -7,7 +7,6 @@ import type { ReviewData } from '@/lib/reviews';
 const CRITERIA = [
   { key: 'design', label: 'Дизайн' },
   { key: 'taste', label: 'Вкус' },
-  { key: 'composition', label: 'Состав' },
 ] as const;
 
 function formatDate(value: Date | string): string {
@@ -28,7 +27,7 @@ export function CatalogReviewItem({ review }: { review: ReviewData }) {
     ? `https://t.me/${review.author.telegramChannel}`
     : undefined;
   const profileHref = `/profile/${review.author.username}`;
-  const overall = (review.design + review.taste + review.composition) / 3;
+  const overall = (review.design + review.taste) / 2;
   const createdAt = new Date(review.createdAt);
 
   return (
@@ -51,7 +50,7 @@ export function CatalogReviewItem({ review }: { review: ReviewData }) {
           </div>
         </div>
 
-        <div className="review-item-overall" role="img" aria-label={`Общая оценка ${overall.toFixed(1)} из 5`}>
+        <div className="review-item-overall" role="img" aria-label={`Общая оценка ${overall.toFixed(1)} из 10`}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.3l6.5-.9z" strokeLinejoin="round" />
           </svg>

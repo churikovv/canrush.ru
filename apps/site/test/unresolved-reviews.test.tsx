@@ -9,7 +9,7 @@ import { flavorName } from '../src/lib/catalog-query';
 it('never offers a review form or pooled rating for unidentified products', () => {
   for (const flavor of ['unknown', 'unresolved:abc']) {
     expect(isResolvedFlavor(flavor)).toBe(false);
-    const html = renderToStaticMarkup(createElement(CatalogProductReviews, { brand: 'Red Bull', flavor, authenticated: true, reviews: [], userReview: null, summary: { count: 1, overall: 5, design: 5, taste: 5, composition: 5 } }));
+    const html = renderToStaticMarkup(createElement(CatalogProductReviews, { brand: 'Red Bull', flavor, authenticated: true, reviews: [], userReview: null, summary: { count: 1, overall: 5, design: 5, taste: 5 } }));
     expect(html).toContain('Вкус этого предложения не подтверждён');
     expect(html).not.toContain('<form'); expect(html).not.toContain('review-summary-score');
   }

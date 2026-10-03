@@ -5,7 +5,7 @@ import { ProfileReviews } from '../src/components/profile-reviews';
 import type { ReviewData } from '../src/lib/reviews';
 const review: ReviewData = {
   id: 'review-1', author: { username: 'reader', name: 'Reader', telegramChannel: null, tag: 'Burner', avatarId: null },
-  brand: 'Burn', flavor: 'original', design: 4, taste: 5, composition: 3,
+  brand: 'Burn', flavor: 'original', design: 4, taste: 5,
   text: 'Отличный вкус', photos: ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'],
   createdAt: new Date('2026-09-24'), updatedAt: new Date('2026-09-24'),
 };

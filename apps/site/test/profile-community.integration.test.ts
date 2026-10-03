@@ -36,8 +36,8 @@ describe.sequential('community profile storage', () => {
     }
     const ratings = await community.getProfileRatings(a);
     expect(ratings.count).toBe(2);
-    expect(ratings.overall).toBe(3);
-    expect(ratings.histogram).toEqual([{ score: 5, count: 1 }, { score: 4, count: 0 }, { score: 3, count: 0 }, { score: 2, count: 0 }, { score: 1, count: 1 }]);
+    expect(ratings.overall).toBe(3.25);
+    expect(ratings.histogram).toEqual(Array.from({ length: 10 }, (_, i) => ({ score: 10 - i, count: [5, 2].includes(10 - i) ? 1 : 0 })));
     await expect(community.setProfileTags(a, ['first-review', 'friend'])).rejects.toThrow();
     await community.setProfileTags(a, ['first-review']);
     expect((await community.getProfileCommunity(a)).tags).toEqual(['first-review']);

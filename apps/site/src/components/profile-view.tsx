@@ -64,8 +64,8 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           <section className="community-panel" aria-labelledby="rating-statistics-title">
             <div className="community-section-heading"><h2 id="rating-statistics-title">Статистика оценок</h2><Link href={`${base}/reviews`}>Все отзывы ↗</Link></div>
             {ratings.count ? <div className="profile-rating-summary">
-              <div className="profile-rating-average"><strong>{formatScore(ratings.overall)}<span> / 5</span></strong><p>Средняя оценка</p><dl>{([['Дизайн', ratings.design], ['Вкус', ratings.taste], ['Состав', ratings.composition]] as const).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{formatScore(value)}</dd></div>)}</dl></div>
-              <div className="profile-rating-distribution" role="img" aria-label={`Распределение оценок: ${ratings.histogram.map(row => `${row.score} звёзд: ${row.count}`).join(', ')}. Общая оценка отзыва округлена до целого.`}>
+              <div className="profile-rating-average"><strong>{formatScore(ratings.overall)}<span> / 10</span></strong><p>Средняя оценка</p><dl>{([['Дизайн', ratings.design], ['Вкус', ratings.taste]] as const).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{formatScore(value)}</dd></div>)}</dl></div>
+              <div className="profile-rating-distribution" role="img" aria-label={`Распределение оценок: ${ratings.histogram.map(row => `${row.score} баллов: ${row.count}`).join(', ')}. Общая оценка отзыва округлена до целого.`}>
                 {ratings.histogram.map(row => <div key={row.score}><span>{row.score} <span aria-hidden="true">★</span></span><span className="profile-rating-track"><span style={{ width: `${row.count / ratings.count * 100}%` }} /></span><span>{row.count}</span></div>)}
                 <p>Оценок: {ratings.count}</p>
               </div>

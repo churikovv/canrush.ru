@@ -51,10 +51,11 @@ export async function submitReviewAction(
   const group = await getCatalogGroup(brand, flavor);
   if (!group) return { status: 'error', message: 'Товар не найден.' };
 
+  if (formData.get('ratingScale') !== '10') return { status: 'error', message: 'Шкала оценок обновилась. Перезагрузите страницу перед сохранением отзыва.' };
+
   const validation = validateReviewInput({
     design: String(formData.get('design') ?? ''),
     taste: String(formData.get('taste') ?? ''),
-    composition: String(formData.get('composition') ?? ''),
     text: String(formData.get('text') ?? ''),
   });
 

@@ -71,14 +71,13 @@ export async function getConnections(userId: string, kind: ConnectionKind, page 
 
 export async function getProfileRatings(userId: string) {
   const [summary, buckets] = await Promise.all([
-    getPool().query<{ count: number; design: number; taste: number; composition: number; overall: number }>(`select count(*)::int as count,
+    getPool().query<{ count: number; design: number; taste: number; overall: number }>(`select count(*)::int as count,
       coalesce(avg(design), 0)::float8 as design, coalesce(avg(taste), 0)::float8 as taste,
-      coalesce(avg(composition), 0)::float8 as composition,
-      coalesce(avg((design + taste + composition)::float8 / 3), 0)::float8 as overall from review where "userId" = $1`, [userId]),
-    getPool().query<{ score: number; count: number }>(`select round((design + taste + composition)::numeric / 3)::int as score, count(*)::int as count
+      coalesce(avg((design + taste)::float8 / 2), 0)::float8 as overall from review where "userId" = $1`, [userId]),
+    getPool().query<{ score: number; count: number }>(`select round((design + taste)::numeric / 2)::int as score, count(*)::int as count
       from review where "userId" = $1 group by score`, [userId]),
   ]);
-  return { ...summary.rows[0]!, histogram: [5, 4, 3, 2, 1].map(score => ({ score, count: buckets.rows.find(row => row.score === score)?.count ?? 0 })) };
+  return { ...summary.rows[0]!, histogram: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(score => ({ score, count: buckets.rows.find(row => row.score === score)?.count ?? 0 })) };
 }
 export type ProfileRatings = Awaited<ReturnType<typeof getProfileRatings>>;
 

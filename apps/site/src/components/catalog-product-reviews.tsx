@@ -13,10 +13,9 @@ interface CatalogProductReviewsProps {
   authenticated: boolean;
 }
 
-const CRITERIA: Array<{ key: keyof Pick<ReviewSummary, 'design' | 'taste' | 'composition'>; label: string }> = [
+const CRITERIA: Array<{ key: keyof Pick<ReviewSummary, 'design' | 'taste'>; label: string }> = [
   { key: 'design', label: 'Дизайн' },
   { key: 'taste', label: 'Вкус' },
-  { key: 'composition', label: 'Состав' },
 ];
 
 function pluralReviews(count: number): string {
@@ -60,9 +59,9 @@ export function CatalogProductReviews({
             </span>
             <div className="review-summary-score">
               <strong>{overall.toFixed(1)}</strong>
-              <span>из 5</span>
+              <span>из 10</span>
             </div>
-            <RatingStars value={overall} size={18} label="Общий рейтинг" />
+            <RatingStars value={overall} size={14} label="Общий рейтинг" />
             <span className="review-summary-count">
               {summary.count} {pluralRatings(summary.count)}
             </span>
@@ -76,7 +75,7 @@ export function CatalogProductReviews({
                   <dt>{label}</dt>
                   <dd>
                     <span className="review-summary-bar" aria-hidden="true">
-                      <span style={{ width: `${(value / 5) * 100}%` }} />
+                      <span style={{ width: `${(value / 10) * 100}%` }} />
                     </span>
                     <strong>{value.toFixed(1)}</strong>
                   </dd>
@@ -89,7 +88,7 @@ export function CatalogProductReviews({
         <div className="review-form-wrapper">
           <div className="review-form-heading">
             <h2>{userReview ? 'Изменить свой отзыв' : 'Оценить напиток'}</h2>
-            <p>Поставьте три оценки и коротко поделитесь впечатлением.</p>
+            <p>Оцените дизайн и вкус по шкале от 1 до 10 и коротко поделитесь впечатлением.</p>
           </div>
           <CatalogReviewForm brand={brand} flavor={flavor} existing={userReview} authenticated={authenticated} />
         </div>

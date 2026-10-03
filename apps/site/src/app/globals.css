@@ -2264,7 +2264,7 @@ html[data-cookie-notice="visible"] .brand-footer {
   gap: 20px;
   padding: 20px;
   background: var(--color-subtle);
-  grid-template-columns: minmax(96px, auto) minmax(132px, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .review-summary-overall {
@@ -2305,6 +2305,8 @@ html[data-cookie-notice="visible"] .brand-footer {
 }
 
 .review-summary-overall .rating-stars {
+  display: grid;
+  grid-template-columns: repeat(5, 14px);
   margin-top: 10px;
   color: var(--color-brand);
 }
@@ -2451,7 +2453,8 @@ html[data-cookie-notice="visible"] .brand-footer {
 }
 
 .review-star-input {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(44px, 1fr));
   order: 2;
   gap: 2px;
   margin-top: 3px;
@@ -2459,6 +2462,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 
 .review-star-option {
   display: inline-flex;
+  min-width: 0;
 }
 
 .review-star-option input {
@@ -2472,6 +2476,8 @@ html[data-cookie-notice="visible"] .brand-footer {
 }
 
 .review-star-option label {
+  width: 100%;
+  border: 1px solid #dfe3e8;
   display: inline-flex;
   min-width: 44px;
   min-height: 44px;
@@ -2484,7 +2490,8 @@ html[data-cookie-notice="visible"] .brand-footer {
 }
 
 .review-star-option-selected label {
-  color: var(--color-brand);
+  background: var(--color-brand);
+  color: white;
 }
 
 .review-star-option label:hover {

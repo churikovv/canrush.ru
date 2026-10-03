@@ -5,11 +5,12 @@ describe('review fields', () => {
   it('парсит корректные оценки', () => {
     expect(parseRating('1')).toBe(1);
     expect(parseRating('5')).toBe(5);
+    expect(parseRating('10')).toBe(10);
   });
 
   it('отклоняет некорректные оценки', () => {
     expect(parseRating('0')).toBeUndefined();
-    expect(parseRating('6')).toBeUndefined();
+    expect(parseRating('11')).toBeUndefined();
     expect(parseRating('abc')).toBeUndefined();
     expect(parseRating('2.5')).toBeUndefined();
   });
@@ -18,13 +19,11 @@ describe('review fields', () => {
     const result = validateReviewInput({
       design: '5',
       taste: '4',
-      composition: '3',
       text: '  Отличный энергетик!  ',
     });
     expect(result.data).toEqual({
       design: 5,
       taste: 4,
-      composition: 3,
       text: 'Отличный энергетик!',
     });
   });
@@ -33,13 +32,11 @@ describe('review fields', () => {
     const result = validateReviewInput({
       design: '',
       taste: '',
-      composition: '',
       text: '',
     });
     expect(result.errors).toMatchObject({
       design: expect.any(String),
       taste: expect.any(String),
-      composition: expect.any(String),
       text: expect.any(String),
     });
   });
@@ -48,7 +45,6 @@ describe('review fields', () => {
     const result = validateReviewInput({
       design: '5',
       taste: '5',
-      composition: '5',
       text: 'а'.repeat(1001),
     });
     expect(result.errors?.text).toBeTruthy();
@@ -58,7 +54,6 @@ describe('review fields', () => {
     const result = validateReviewInput({
       design: '0',
       taste: '5',
-      composition: '5',
       text: 'Текст отзыва',
     });
     expect(result.errors?.design).toBeTruthy();

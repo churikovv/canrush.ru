@@ -11,13 +11,18 @@ vi.mock('../src/lib/reviews', () => ({ upsertReview: mocks.save, deleteReview: v
 import { submitReviewAction } from '../src/app/catalog/review-actions';
 function form() {
   const data = new FormData();
-  for (const [key, value] of Object.entries({ brand: 'Burn', flavor: 'original', design: '4', taste: '4', composition: '4', text: 'Мне понравился этот напиток' })) data.set(key, value);
+  for (const [key, value] of Object.entries({ brand: 'Burn', flavor: 'original', design: '4', taste: '4', ratingScale: '10', text: 'Мне понравился этот напиток' })) data.set(key, value);
   return data;
 }
 beforeEach(() => {
   vi.clearAllMocks(); mocks.session.mockResolvedValue({ user: { id: 'owner' } }); mocks.blocked.mockResolvedValue(false); mocks.product.mockResolvedValue({ brand: 'Burn' }); mocks.save.mockResolvedValue([]);
 });
 describe('review attachment action boundary', () => {
+  it('rejects stale five-point forms without overwriting a migrated review', async () => {
+    const data = form(); data.delete('ratingScale');
+    expect((await submitReviewAction({}, data)).message).toContain('Перезагрузите');
+    expect(mocks.save).not.toHaveBeenCalled();
+  });
   it('rejects ratings for unidentified products before saving', async () => {
     for (const flavor of ['unknown', 'unresolved:abc']) {
       const data = form(); data.set('flavor', flavor);

@@ -21,7 +21,7 @@ function Star({ filled, size }: { filled: boolean; size: number }) {
   );
 }
 
-export function RatingStars({ value, max = 5, size = 16, label }: RatingStarsProps) {
+export function RatingStars({ value, max = 10, size = 16, label }: RatingStarsProps) {
   const rounded = Math.round(value);
   const stars = Array.from({ length: max }, (_, i) => i < rounded);
 

@@ -53,7 +53,7 @@ export function CatalogProductCard({ group, eager, summary }: CatalogProductCard
         <div className="catalog-card-meta">
           <div
             className="catalog-card-rating"
-            aria-label={isResolvedFlavor(group.flavor) ? `Рейтинг ${ratingValue.toFixed(1)} из 5` : 'Вкус не подтверждён, рейтинг недоступен'}
+            aria-label={isResolvedFlavor(group.flavor) ? `Рейтинг ${ratingValue.toFixed(1)} из 10` : 'Вкус не подтверждён, рейтинг недоступен'}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.3l6.5-.9z" strokeLinejoin="round" />
