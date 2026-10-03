@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
 import { toggleFavoriteAction } from '@/app/catalog/actions';
@@ -23,7 +22,7 @@ function SubmitButton({ favorite }: { favorite: boolean }) {
       aria-label={favorite ? 'Удалить из избранного' : 'Добавить в избранное'}
     >
       <span>{pending ? 'Сохраняем…' : favorite ? 'В избранном' : 'Избранное'}</span>
-      <Image src="/brand/icons/catalog-heart.svg" width={24} height={24} alt="" />
+      <span className="catalog-favorite-icon" aria-hidden="true" />
     </button>
   );
 }
@@ -33,7 +32,7 @@ export function CatalogFavoriteButton({ brand, flavor, favorite, authenticated }
     return (
       <Link className="catalog-favorite-button" href="/sign-in" aria-label="Войти, чтобы добавить в избранное">
         <span>Избранное</span>
-        <Image src="/brand/icons/catalog-heart.svg" width={24} height={24} alt="" />
+        <span className="catalog-favorite-icon" aria-hidden="true" />
       </Link>
     );
   }

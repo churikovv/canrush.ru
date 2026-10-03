@@ -2027,7 +2027,10 @@ html[data-cookie-notice="visible"] .brand-footer {
   opacity: 0.55;
 }
 
-.catalog-favorite-button img {
+.catalog-favorite-icon {
+  background: currentColor;
+  mask: url("/brand/icons/catalog-heart.svg") center / contain no-repeat;
+  -webkit-mask: url("/brand/icons/catalog-heart.svg") center / contain no-repeat;
   width: 20px;
   height: 20px;
   flex-shrink: 0;
