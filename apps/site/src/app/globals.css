@@ -5312,3 +5312,38 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .sign-out-control .primary-button:hover:not(:disabled) { background: transparent; border-color: #a51e28; color: #a51e28; }
 .wall-composer fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .wall-composer .review-photo-previews { margin-top: 12px; }
+
+.share-toast {
+  position: fixed;
+  z-index: 1100;
+  bottom: calc(var(--site-tab-bar-offset, 0px) + 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 12px 12px 12px 18px;
+  border-radius: 12px;
+  background: #202429;
+  color: white;
+  font-size: .9375rem;
+  line-height: 1.4;
+}
+.share-toast-error { background: #8e2430; }
+.share-toast button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.share-toast button:hover { background: #ffffff20; }
+.share-toast button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
