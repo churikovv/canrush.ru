@@ -2199,42 +2199,19 @@ html[data-cookie-notice="visible"] .brand-footer {
   line-height: 1.5;
 }
 
-/* Source-attributed composition, kept separate from price offers. */
-.catalog-ingredients-disclaimer {
-  display: grid;
-  gap: 4px;
-  max-width: 72ch;
-  color: var(--color-text);
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.catalog-ingredients-disclaimer p {
-  margin: 0;
-}
-
-.catalog-ingredients-status {
-  font-weight: 800;
-  color: var(--color-ink);
+/* Ingredient card follows the product's existing rounded panels. */
+.catalog-ingredients-card {
+  padding: 20px;
+  border: 1px solid var(--color-control);
+  border-radius: 16px;
+  background: var(--color-surface);
 }
 
 .catalog-ingredients-text {
-  max-width: 80ch;
+  max-width: 72ch;
   margin: 0;
   line-height: 1.65;
   overflow-wrap: anywhere;
-}
-
-.catalog-ingredients-version,
-.catalog-ingredients-source {
-  margin: 0;
-  color: var(--color-muted-strong);
-  font-size: 0.875rem;
-}
-
-.catalog-ingredients-source a {
-  color: var(--color-text);
-  text-underline-offset: 3px;
 }
 
 /* Reviews */

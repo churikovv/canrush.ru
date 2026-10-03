@@ -21,22 +21,19 @@ describe('site compositions', () => {
       expect(selectIngredients({ version: 1, products: [{ ...record, ...change }] }, 'Burn', 'tropical')).toBeNull();
     }
   });
-  it('renders source, date, market caveat and original caffeine upper bound', () => {
+  it('renders the ingredients card and label reminder without source metadata', () => {
     const html = renderToStaticMarkup(createElement(CatalogProductIngredients, { data: record }));
-    expect(html).toContain('Версия для рынка Беларуси');
-    expect(html).toContain('Рецептура российской версии может отличаться');
+    expect(html).toContain('catalog-ingredients-card');
     expect(html).toContain('не более 30 мг/100 мл');
-    expect(html).toContain('https://edostavka.by/product/1810707');
-    expect(html).toContain('2026');
-    expect(html).toContain('Состав не подтверждён');
-    expect(html).toContain('пока не сверены с этикеткой');
+    expect(html).toContain('Сверяйте состав с этикеткой вашей банки.');
+    for (const text of [record.sourceUrl, record.sourceName, record.productTitle, 'не подтверждён', 'Пищевая ценность', 'Беларуси']) expect(html).not.toContain(text);
   });
-  it('shows preliminary ingredients with a required explanation before the source text', () => {
+  it('keeps preliminary record validation without displaying internal notes', () => {
     const preliminary: PublishedIngredients = { ...record, status: 'unverified', reviewNote: 'В источнике указан только общий перечень компонентов.' };
     expect(selectIngredients({ version: 1, products: [preliminary] }, 'Burn', 'tropical')).toEqual(preliminary);
     const html = renderToStaticMarkup(createElement(CatalogProductIngredients, { data: preliminary }));
-    expect(html).toContain(preliminary.reviewNote);
-    expect(html.indexOf('Состав не подтверждён')).toBeLessThan(html.indexOf('Вода, сахар'));
+    expect(html).toContain(record.ingredients);
+    expect(html).not.toContain(preliminary.reviewNote);
     for (const reviewNote of [undefined, '', ' ', 42]) {
       expect(selectIngredients({ version: 1, products: [{ ...preliminary, reviewNote }] }, 'Burn', 'tropical')).toBeNull();
     }
