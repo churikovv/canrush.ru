@@ -1,3 +1,4 @@
+import type { PreparedReviewPhoto } from '@/lib/review-photos';
 import { getPool } from '@/db/pool';
 import { PROFILE_ACHIEVEMENTS, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
 
@@ -84,7 +85,7 @@ export type ProfileRatings = Awaited<ReturnType<typeof getProfileRatings>>;
 export async function getProfileWall(profileId: string, page = 1) {
   const [count, comments] = await Promise.all([
     getPool().query<{ count: number }>('select count(*)::int as count from "profileComment" where "profileId" = $1', [profileId]),
-    getPool().query<{ id: string; userId: string; text: string; createdAt: Date; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number }>(`select c.id, c."userId", c.text, c."createdAt", u.username, u.name,
+    getPool().query<{ id: string; userId: string; text: string; createdAt: Date; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; photos: string[] }>(`select c.id, c."userId", c.text, c."createdAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, u.username, u.name,
       (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
       coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
       case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
@@ -95,7 +96,8 @@ export async function getProfileWall(profileId: string, page = 1) {
   return { count: count.rows[0]?.count ?? 0, comments: comments.rows };
 }
 
-export async function addProfileComment(userId: string, profileId: string, input: unknown) {
+export async function addProfileComment(userId: string, profileId: string, input: unknown, photos: PreparedReviewPhoto[] = []) {
+  if (photos.length > 5) throw new CommunityError('Можно добавить не более 5 фотографий.');
   const text = validateWallText(input);
   if (!text) throw new CommunityError('Напишите от 1 до 1000 символов.');
   const client = await getPool().connect();
@@ -104,6 +106,9 @@ export async function addProfileComment(userId: string, profileId: string, input
     const allowed = await client.query(`update "user" set "lastWallPostAt" = now() where id = $1 and ("lastWallPostAt" is null or "lastWallPostAt" < now() - interval '30 seconds') returning id`, [userId]);
     if (!allowed.rowCount) throw new CommunityError('Следующий комментарий можно отправить через 30 секунд.');
     const result = await client.query<{ id: string }>('insert into "profileComment" ("profileId", "userId", text) values ($1, $2, $3) returning id', [profileId, userId, text]);
+    for (const [position, photo] of photos.entries()) {
+      await client.query('insert into "wallPhoto" ("commentId", position, data, thumbnail) values ($1, $2, $3, $4)', [result.rows[0]!.id, position, photo.data, photo.thumbnail]);
+    }
     await client.query('commit');
     return result.rows[0]!.id;
   } catch (error) { await client.query('rollback'); throw error; }

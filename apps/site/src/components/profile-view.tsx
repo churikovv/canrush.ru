@@ -1,3 +1,4 @@
+import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import { getExperience } from '@/lib/profile-experience';
 import { ProfileExperience } from '@/components/profile-experience';
 import { profileTagLabel } from '@/lib/profile-achievements';
@@ -83,7 +84,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             {viewerId ? <WallComposer targetId={profile.id} /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
             {wall.comments.length ? <div className="wall-comments">{wall.comments.map(comment => <article key={comment.id} className="wall-comment">
               <div className="wall-comment-heading"><span className="wall-avatar">{comment.avatarId ? <Image src={`/api/profile-images/${comment.avatarId}`} width={36} height={36} unoptimized alt="" /> : (comment.username ?? comment.name).slice(0, 1).toUpperCase()}</span><Link href={comment.username ? `/profile/${comment.username}` : '#wall'} className="wall-author">@{comment.username ?? 'пользователь'}</Link>{profileTagLabel(comment.tag) && <span className="profile-tag">{profileTagLabel(comment.tag)}</span>}{comment.username && <ProfileExperience username={comment.username} initial={{ xp: comment.xp, rank: null }} />}<time dateTime={comment.createdAt.toISOString()}>{new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' }).format(comment.createdAt)}</time></div>
-              <p>{comment.text}</p>
+              <p>{comment.text}</p><ReviewPhotoGallery photos={comment.photos} source="wall-photos" />
               {(isOwn || viewerId === comment.userId) && <DeleteWallComment id={comment.id} />}
             </article>)}</div> : <p className="community-empty">Здесь пока тихо. Оставьте первый комментарий.</p>}
             {pages > 1 && <nav className="community-pagination" aria-label="Страницы стены">{wallPage > 1 ? <Link href={`${base}?wallPage=${wallPage - 1}#wall`}>← Назад</Link> : <span />}<span>{wallPage} / {pages}</span>{wallPage < pages ? <Link href={`${base}?wallPage=${wallPage + 1}#wall`}>Далее →</Link> : <span />}</nav>}

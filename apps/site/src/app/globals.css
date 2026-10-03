@@ -4886,7 +4886,7 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .presence-setting { margin-top: 16px; padding-top: 16px; border-top: 1px solid #edf0f3; }
 .presence-setting > span { display: block; }
 .community-admin { display: flex; align-items: center; min-height: 44px; color: #0058cc; font-size: .875rem; }
-.community-sidebar .sign-out-control .primary-button { background: white; color: #3e3e3f; border: 1px solid #dfe3e8; border-radius: 8px; min-height: 44px; font-size: .875rem; }
+.community-sidebar .sign-out-control .primary-button { border-radius: 8px; min-height: 44px; font-size: .875rem; }
 .wall-composer textarea { width: 100%; resize: vertical; min-height: 96px; max-height: 400px; border: 1px solid #c6ccd4; border-radius: 8px; padding: 12px; font: inherit; font-size: 1rem; color: #3e3e3f; background: white; }
 .wall-composer textarea::placeholder { color: #59616b; }
 .wall-comments { margin-top: 20px; }
@@ -5284,3 +5284,8 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 
 /* The active section stays brighter than hover, including while hovered. */
 .brand-header .profile-navigation-item[aria-current="page"] { background: #ffffff2e; }
+
+.sign-out-control .primary-button { background: #c52b35; color: white; border-color: #c52b35; }
+.sign-out-control .primary-button:hover:not(:disabled) { background: #a51e28; border-color: #a51e28; color: white; }
+.wall-composer fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.wall-composer .review-photo-previews { margin-top: 12px; }

@@ -59,6 +59,18 @@ describe.sequential('community profile storage', () => {
     await community.deleteProfileComment(c, own);
     await expect(community.addProfileComment(b, a, '   ')).rejects.toThrow('1000');
   });
+  it('stores wall photos atomically and removes them with the post', async () => {
+    await pool.query('update "user" set "lastWallPostAt"=null where id=$1', [b]);
+    await expect(community.addProfileComment(b, a, 'invalid photo', [{ data: Buffer.alloc(0), thumbnail: Buffer.from('x') }])).rejects.toThrow();
+    expect((await pool.query('select "lastWallPostAt" from "user" where id=$1', [b])).rows[0].lastWallPostAt).toBeNull();
+    const id = await community.addProfileComment(b, a, 'with photo', [{ data: Buffer.from('photo'), thumbnail: Buffer.from('thumb') }]);
+    const wall = await community.getProfileWall(a);
+    const photos = wall.comments.find(comment => comment.id === id)!.photos;
+    expect(photos).toHaveLength(1);
+    await expect(community.deleteProfileComment(c, id)).rejects.toThrow();
+    await community.deleteProfileComment(a, id);
+    expect((await pool.query('select id from "wallPhoto" where id=$1', [photos[0]])).rowCount).toBe(0);
+  });
   it('blocks public contributions by moderated users at the database boundary', async () => {
     await pool.query('insert into "userBlock" ("userId") values ($1)', [c]);
     await expect(community.setFollowing(c, a, true)).rejects.toMatchObject({ code: '42501' });

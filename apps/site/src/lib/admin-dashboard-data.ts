@@ -5,6 +5,7 @@ import type { AdminEntry, AdminUserEntry, AdminTierListEntry, AdminReviewEntry }
 
 export const ADMIN_PAGE_SIZE = 25;
 export interface AdminWallEntry {
+  photos: string[];
   id: string; text: string; createdAt: Date; authorName: string; authorEmail: string;
   authorUsername: string | null; profileUsername: string | null;
 }
@@ -73,7 +74,7 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
   if (tab === 'tierlists') result.tierLists = (await db.query<AdminTierListEntry>(`select t.id,t.slug,t.title,t.status,t."updatedAt",t."userId",u.name as "authorName",u.email as "authorEmail",
     (select count(*)::int from "tierListItem" where "tierListId"=t.id) as "itemCount" ${from} order by t."updatedAt" desc,t.id ${pagination}`,params)).rows;
   if (tab === 'reviews') result.reviews = (await db.query<AdminReviewEntry>(`select r.id,r.brand,r.flavor,r.text,r."createdAt",r."userId",u.name as "authorName",u.email as "authorEmail",(r.design+r.taste)::float8/2 as score ${from} order by r."createdAt" desc,r.id ${pagination}`,params)).rows;
-  if (tab === 'wall') result.wall = (await db.query<AdminWallEntry>(`select c.id,c.text,c."createdAt",u.name as "authorName",u.email as "authorEmail",u.username as "authorUsername",p.username as "profileUsername" ${from} order by c."createdAt" desc,c.id ${pagination}`,params)).rows;
+  if (tab === 'wall') result.wall = (await db.query<AdminWallEntry>(`select c.id,c.text,c."createdAt",coalesce((select array_agg(wp.id::text order by wp.position) from "wallPhoto" wp where wp."commentId"=c.id),'{}'::text[]) as photos,u.name as "authorName",u.email as "authorEmail",u.username as "authorUsername",p.username as "profileUsername" ${from} order by c."createdAt" desc,c.id ${pagination}`,params)).rows;
   if (tab === 'comments') result.comments = (await db.query<AdminReviewCommentEntry>(`select c.id,c."reviewId",c.text,c."createdAt",u.name as "authorName",u.email as "authorEmail",r.brand,r.flavor ${from} order by c."createdAt" desc,c.id ${pagination}`,params)).rows;
   if (tab === 'admins') result.admins = (await db.query<AdminEntry>(`select sa.email,sa."isOwner",sa."createdAt",u.name as "addedByName" ${from} order by sa."isOwner" desc,sa."createdAt",sa.email ${pagination}`,params)).rows;
   return result;

@@ -1,5 +1,6 @@
 'use server';
 
+import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
@@ -25,10 +26,11 @@ export async function updateCommunityAction(_state: CommunityActionState, form: 
       case 'tags':
         await setProfileTags(userId, form.getAll('tags'));
         break;
-      case 'comment':
+      case 'comment': {
         await ensureOwnProfile(session.user);
-        await addProfileComment(userId, String(form.get('targetId') ?? ''), form.get('text'));
+        await addProfileComment(userId, String(form.get('targetId') ?? ''), form.get('text'), (await prepareReviewPhotos(form)).photos);
         break;
+      }
       case 'delete-comment':
         await deleteProfileComment(userId, String(form.get('commentId') ?? ''));
         break;
@@ -41,7 +43,7 @@ export async function updateCommunityAction(_state: CommunityActionState, form: 
     if (operation === 'tags') revalidatePath('/catalog', 'layout');
     return { success: operation === 'comment' ? 'Комментарий опубликован.' : operation === 'delete-comment' ? 'Комментарий удалён.' : 'Сохранено.' };
   } catch (error) {
-    return { error: error instanceof CommunityError ? error.message : 'Не удалось сохранить изменения. Попробуйте ещё раз.' };
+    return { error: error instanceof CommunityError || error instanceof ReviewPhotoError ? error.message : 'Не удалось сохранить изменения. Попробуйте ещё раз.' };
   }
 }
 

@@ -16,7 +16,7 @@ it('rejects anonymous mutations', async () => {
 });
 it('uses only the authenticated actor for follows, comments and presence', async () => {
   await updateCommunityAction({}, form('follow')); expect(mocks.follow).toHaveBeenCalledWith('authenticated', 'target', true);
-  await updateCommunityAction({}, form('comment')); expect(mocks.comment).toHaveBeenCalledWith('authenticated', 'target', 'hello');
+  await updateCommunityAction({}, form('comment')); expect(mocks.comment).toHaveBeenCalledWith('authenticated', 'target', 'hello', []);
   await heartbeatAction(); expect(mocks.touch).toHaveBeenCalledWith('authenticated');
 });
 it('blocks publishing for moderated users but permits unfollowing', async () => {
@@ -24,4 +24,10 @@ it('blocks publishing for moderated users but permits unfollowing', async () => 
   expect((await updateCommunityAction({}, form('comment'))).error).toContain('ограничены');
   expect(mocks.comment).not.toHaveBeenCalled();
   await updateCommunityAction({}, form('unfollow')); expect(mocks.follow).toHaveBeenCalledWith('authenticated', 'target', false);
+});
+
+it('rejects malformed wall attachments without publishing', async () => {
+  const data = form('comment'); data.append('photos', 'not a file');
+  expect((await updateCommunityAction({}, data)).error).toContain('фотографии');
+  expect(mocks.comment).not.toHaveBeenCalled();
 });
