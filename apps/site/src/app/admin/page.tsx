@@ -22,6 +22,7 @@ const NOTICES: Record<string, string> = {
   'user-unblocked': 'Пользователь разблокирован.',
   'tierlist-deleted': 'Тирлист удалён.',
   'review-deleted': 'Отзыв удалён.',
+  'comment-deleted': 'Комментарий к отзыву удалён.',
   'wall-deleted': 'Комментарий стены удалён.',
 };
 

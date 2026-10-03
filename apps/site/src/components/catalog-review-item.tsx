@@ -1,3 +1,4 @@
+import { ReviewDiscussion } from '@/components/review-discussion';
 import { ProfileExperience } from '@/components/profile-experience';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -23,15 +24,12 @@ function authorInitial(review: ReviewData): string {
 }
 
 export function CatalogReviewItem({ review }: { review: ReviewData }) {
-  const telegramHref = review.author.telegramChannel
-    ? `https://t.me/${review.author.telegramChannel}`
-    : undefined;
   const profileHref = `/profile/${review.author.username}`;
   const overall = (review.design + review.taste) / 2;
   const createdAt = new Date(review.createdAt);
 
   return (
-    <article className="review-item">
+    <article className="review-item" id={`review-${review.id}`}>
       <header className="review-item-header">
         <div className="review-item-identity">
           <span className="review-item-avatar" aria-hidden="true">
@@ -75,23 +73,7 @@ export function CatalogReviewItem({ review }: { review: ReviewData }) {
       <p className="review-item-text">{review.text}</p>
       <ReviewPhotoGallery photos={review.photos} />
 
-      {telegramHref ? (
-        <footer className="review-item-footer">
-          <span>Канал автора</span>
-          <Link
-            className="review-item-channel"
-            href={telegramHref}
-            target="_blank"
-            rel="noreferrer sponsored"
-            aria-label={`Открыть Telegram-канал ${review.author.telegramChannel}`}
-          >
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71l-4.14-3.05-1.99 1.94c-.23.23-.42.42-.83.42z" />
-            </svg>
-            <span>@{review.author.telegramChannel}</span>
-          </Link>
-        </footer>
-      ) : null}
+      <ReviewDiscussion reviewId={review.id} initial={review.interaction} />
     </article>
   );
 }

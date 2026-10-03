@@ -1,3 +1,4 @@
+import { getReviewInteractions, type ReviewInteraction } from './review-discussions';
 import type { QueryResultRow } from 'pg';
 import type { PreparedReviewPhoto } from './review-photos';
 import { MAX_REVIEW_PHOTOS, PHOTO_ID_PATTERN } from './review-photo-limits';
@@ -14,6 +15,7 @@ export interface ReviewAuthor {
 }
 
 export interface ReviewData {
+  interaction?: ReviewInteraction;
   id: string;
   author: ReviewAuthor;
   photos: string[];
@@ -95,12 +97,13 @@ function toReview(row: ReviewRow): ReviewData {
   };
 }
 
-export async function getReviewsForProduct(brand: string, flavor: string): Promise<ReviewData[]> {
+export async function getReviewsForProduct(brand: string, flavor: string, viewer: string | null = null): Promise<ReviewData[]> {
   const result = await getPool().query<ReviewRow>(
     `${REVIEW_SELECT} where r."brand" = $1 and r."flavor" = $2 order by r."createdAt" desc`,
     [brand, flavor],
   );
-  return result.rows.map(toReview);
+  const interactions = await getReviewInteractions(result.rows.map(row => row.id), viewer);
+  return result.rows.map(row => ({ ...toReview(row), interaction: interactions.get(row.id) }));
 }
 
 export async function getReviewSummary(brand: string, flavor: string): Promise<ReviewSummary> {
@@ -226,11 +229,12 @@ export async function deleteReview(userId: string, brand: string, flavor: string
 
 export const PROFILE_REVIEWS_PAGE_SIZE = 20;
 
-export async function getReviewsForUser(userId: string, page = 1): Promise<ReviewData[]> {
+export async function getReviewsForUser(userId: string, page = 1, viewer: string | null = null): Promise<ReviewData[]> {
   const safePage = Number.isSafeInteger(page) && page > 0 ? page : 1;
   const result = await getPool().query<ReviewRow>(
     `${REVIEW_SELECT} where r."userId" = $1 order by r."createdAt" desc, r."id" desc limit $2 offset $3`,
     [userId, PROFILE_REVIEWS_PAGE_SIZE, (safePage - 1) * PROFILE_REVIEWS_PAGE_SIZE],
   );
-  return result.rows.map(toReview);
+  const interactions = await getReviewInteractions(result.rows.map(row => row.id), viewer);
+  return result.rows.map(row => ({ ...toReview(row), interaction: interactions.get(row.id) }));
 }

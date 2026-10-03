@@ -1,0 +1,54 @@
+import { randomUUID } from 'node:crypto';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
+import { Pool } from 'pg';
+const url = process.env.TEST_DATABASE_URL ?? 'postgresql://localhost:5432/canrush_site_test';
+if(new URL(url).pathname !== '/canrush_site_test') throw new Error('Test DB only');
+const pool = new Pool({ connectionString: url, max: 4 });
+vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
+const api = await import('../src/lib/review-discussions');
+const { getAdminDashboardData } = await import('../src/lib/admin-dashboard-data');
+const users = [randomUUID(),randomUUID(),randomUUID()];
+const [owner,reader,other] = users as [string,string,string];
+let review: string;
+beforeAll(async () => {
+  for(const id of users) await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt")values($1,'Discussion test',$2,true,now(),now())`,[id,id+'@example.com']);
+  review=(await pool.query(`insert into review("userId",brand,flavor,design,taste,text)values($1,'Test','original',8,10,'Review')returning id`,[owner])).rows[0].id;
+});
+afterAll(async () => { await pool.query('delete from "user" where id=any($1::text[])',[users]); await pool.end(); });
+it('keeps one vote per person, switches or removes it, forbids self votes and invalid values',async()=>{
+  await Promise.all([api.setReviewReaction(reader,review,1),api.setReviewReaction(reader,review,1)]);
+  expect((await api.getReviewInteractions([review],reader)).get(review)).toMatchObject({likes:1,dislikes:0,vote:1});
+  await api.setReviewReaction(reader,review,-1);
+  expect((await api.getReviewInteractions([review],reader)).get(review)).toMatchObject({likes:0,dislikes:1,vote:-1});
+  await api.setReviewReaction(reader,review,0);
+  expect((await api.getReviewInteractions([review])).get(review)).toMatchObject({likes:0,dislikes:0,vote:0,authenticated:false});
+  await expect(api.setReviewReaction(owner,review,1)).rejects.toThrow();
+  await expect(api.setReviewReaction(reader,review,2)).rejects.toThrow();
+});
+it('limits concurrent comments, protects author deletion, and exposes them in admin search',async()=>{
+  const attempts=await Promise.allSettled([api.addReviewComment(reader,review,'Comment '+reader),api.addReviewComment(reader,review,'Comment '+reader)]);
+  expect(attempts.filter(x=>x.status==='fulfilled')).toHaveLength(1);
+  const thread=await api.getReviewComments(review,reader);
+  expect(thread.items).toHaveLength(1); expect(thread.items[0]?.canDelete).toBe(true);
+  expect((await api.getReviewComments(review,other)).items[0]?.canDelete).toBe(false);
+  expect((await getAdminDashboardData(reader,'comments')).total).toBe(1);
+  await expect(api.deleteReviewComment(other,review,thread.items[0]!.id)).rejects.toThrow();
+  await expect(api.addReviewComment(other,review,' '.repeat(5))).rejects.toThrow();
+  await expect(api.addReviewComment(other,review,'a'.repeat(1001))).rejects.toThrow();
+  await api.deleteReviewComment(reader,review,thread.items[0]!.id);
+  await expect(api.addReviewComment(reader,review,'Cannot bypass cooldown by deleting')).rejects.toThrow('30 секунд');
+});
+it('paginates comments without duplicate rows and cascades when a review is removed',async()=>{
+  for(let i=0;i<23;i++)await pool.query('insert into "reviewComment"("reviewId","userId",text)values($1,$2,$3)',[review,other,'Comment '+i]);
+  const first=await api.getReviewComments(review,reader);
+  const second=await api.getReviewComments(review,reader,first.items.at(-1)!.id);
+  expect(first.items).toHaveLength(20);expect(first.hasMore).toBe(true);expect(second.items).toHaveLength(3);expect(second.hasMore).toBe(false);
+  expect(new Set([...first.items,...second.items].map(x=>x.id)).size).toBe(23);
+  await pool.query('insert into "userBlock"("userId")values($1)',[other]);
+  await expect(api.addReviewComment(other,review,'Blocked')).rejects.toMatchObject({code:'42501'});
+  await expect(api.setReviewReaction(other,review,1)).rejects.toMatchObject({code:'42501'});
+  await api.setReviewReaction(reader,review,1);
+  await pool.query('delete from review where id=$1',[review]);
+  expect((await pool.query('select id from "reviewComment" where "reviewId"=$1',[review])).rowCount).toBe(0);
+  expect((await pool.query('select value from "reviewReaction" where "reviewId"=$1',[review])).rowCount).toBe(0);
+});

@@ -1,3 +1,5 @@
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
@@ -22,7 +24,8 @@ export default async function ProfileReviewsPage({ params, searchParams }: {
   const pages = Math.max(1, Math.ceil(profile.reviewCount / PROFILE_REVIEWS_PAGE_SIZE));
   const requested = typeof query.page === 'string' ? Number(query.page) : 1;
   const page = Number.isSafeInteger(requested) && requested > 0 ? Math.min(requested, pages) : 1;
-  const reviews = await getReviewsForUser(profile.id, page);
+  const session = await auth.api.getSession({ headers: await headers() });
+  const reviews = await getReviewsForUser(profile.id, page, session?.user.id ?? null);
   const ownerName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
 
   return (

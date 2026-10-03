@@ -87,7 +87,7 @@ export function CatalogProductReviews({
 
         <div className="review-form-wrapper">
           <div className="review-form-heading">
-            <h2>{userReview ? 'Изменить свой отзыв' : 'Оценить напиток'}</h2>
+            <h2>{userReview ? 'Ваш отзыв' : 'Оценить напиток'}</h2>
             <p>Оцените дизайн и вкус по шкале от 1 до 10 и коротко поделитесь впечатлением.</p>
           </div>
           <CatalogReviewForm brand={brand} flavor={flavor} existing={userReview} authenticated={authenticated} />

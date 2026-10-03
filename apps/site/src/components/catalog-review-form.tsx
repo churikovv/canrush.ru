@@ -23,56 +23,16 @@ const CRITERIA: Array<{ name: 'design' | 'taste'; label: string }> = [
   { name: 'taste', label: 'Вкус' },
 ];
 
-function StarInput({
-  name,
-  value,
-  label,
-  error,
-}: {
-  name: string;
-  value: number;
-  label: string;
-  error?: string;
-}) {
-  const [selected, setSelected] = useState(value);
-
-  return (
-    <fieldset className="review-criterion" aria-describedby={error ? `${name}-error` : `${name}-value`}>
-      <legend>{label}</legend>
-      <output id={`${name}-value`} aria-live="polite">
-        {selected > 0 ? `${selected} из 10` : 'Не оценено'}
-      </output>
-      <div className="review-star-input">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => {
-          const inputId = `${name}-star-${star}`;
-          return (
-            <span
-              key={star}
-              className={star === selected ? 'review-star-option review-star-option-selected' : 'review-star-option'}
-            >
-              <input
-                type="radio"
-                id={inputId}
-                name={name}
-                value={star}
-                checked={selected === star}
-                onChange={() => setSelected(star)}
-                required
-              />
-              <label htmlFor={inputId} aria-label={`${label}: ${star} из 10`}>
-                {star}
-              </label>
-            </span>
-          );
-        })}
-      </div>
-      {error ? (
-        <p className="field-error" id={`${name}-error`}>
-          {error}
-        </p>
-      ) : null}
-    </fieldset>
-  );
+function RatingInput({ name, value, label, error, onChange }: { name: string; value: number; label: string; error?: string; onChange: (value: number) => void }) {
+  return <div className="review-criterion">
+    <label htmlFor={`rating-${name}`}>{label}</label>
+    <div className="review-range-control">
+      <output htmlFor={`rating-${name}`} style={{ left: `calc(12px + (100% - 24px) * ${(value - 1) / 9})` }}>{value}</output>
+      <input id={`rating-${name}`} type="range" name={name} min={1} max={10} step={1} value={value} onChange={event => onChange(Number(event.target.value))} aria-valuetext={`${value} из 10`} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} />
+    </div>
+    <div className="review-range-scale" aria-hidden="true"><span>1</span><span>10</span></div>
+    {error && <p className="field-error" id={`${name}-error`}>{error}</p>}
+  </div>;
 }
 
 function SubmitButton({ editing }: { editing: boolean }) {
@@ -103,6 +63,10 @@ function DeleteButton() {
 }
 
 export function CatalogReviewForm({ brand, flavor, existing, authenticated }: CatalogReviewFormProps) {
+  const [editing, setEditing] = useState(!existing);
+  const [hasReview, setHasReview] = useState(Boolean(existing));
+  const [ratings, setRatings] = useState({ design: existing?.design ?? 5, taste: existing?.taste ?? 5 });
+  const saved = useRef({ text: existing?.text ?? '', design: existing?.design ?? 5, taste: existing?.taste ?? 5, photos: existing?.photos ?? [] });
   const [files, setFiles] = useState<Array<{ file: File; url: string }>>([]);
   const [retained, setRetained] = useState(existing?.photos ?? []);
   const [photoError, setPhotoError] = useState('');
@@ -119,6 +83,9 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
         setFiles([]);
         setRetained(result.photos ?? []);
         setPhotoError('');
+        saved.current = { text: String(data.get('text') ?? ''), design: Number(data.get('design')), taste: Number(data.get('taste')), photos: result.photos ?? [] };
+        setHasReview(true);
+        setEditing(false);
       }
       return result;
     } catch {
@@ -175,13 +142,14 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
         </div>
       ) : null}
 
-      <fieldset className="review-edit-fields" disabled={pending}>
+      <fieldset className="review-edit-fields" disabled={pending || !editing}>
       <div className="review-criteria">
         {CRITERIA.map(({ name, label }) => (
-          <StarInput
+          <RatingInput
             key={name}
             name={name}
-            value={existing ? existing[name] : 0}
+            value={ratings[name]}
+            onChange={value => setRatings(current => ({ ...current, [name]: value }))}
             label={label}
             error={state.fieldErrors?.[name]}
           />
@@ -193,6 +161,7 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
           <label htmlFor="review-text">Ваш отзыв</label>
           <span aria-live="polite">{textLength} / 1000</span>
         </div>
+        <div className="review-text-composer">
         <textarea
           id="review-text"
           name="text"
@@ -205,6 +174,14 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
           onChange={(event) => setText(event.currentTarget.value)}
           required
         />
+        <div className="review-composer-toolbar">        <span className="review-photo-picker review-photo-icon" title="Добавить фотографии">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/></svg>
+          <input id="review-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-label="Добавить фотографии"
+            aria-describedby="review-photos-help" disabled={retained.length + files.length >= MAX_REVIEW_PHOTOS}
+            onChange={event => { choosePhotos(event.currentTarget.files); event.currentTarget.value = ''; }} />
+        </span>
+<span>{retained.length + files.length} / 5 фото</span></div>
+        </div>
         <p className="field-help" id="review-text-help">
           Без спойлеров о промоакциях и ценах, они быстро меняются.
         </p>
@@ -216,14 +193,7 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
       </div>
 
       <div className="review-photo-editor">
-        <label htmlFor="review-photos">Фотографии · {retained.length + files.length} / 5</label>
         <p id="review-photos-help" className="field-help">До 5 фотографий в формате JPG, PNG или WebP, до 5 МБ каждая.</p>
-        <span className="review-photo-picker">
-          <span aria-hidden="true">{retained.length + files.length >= MAX_REVIEW_PHOTOS ? 'Добавлено 5 фото' : 'Добавить фото'}</span>
-          <input id="review-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-label="Добавить фотографии"
-            aria-describedby="review-photos-help" disabled={retained.length + files.length >= MAX_REVIEW_PHOTOS}
-            onChange={event => { choosePhotos(event.currentTarget.files); event.currentTarget.value = ''; }} />
-        </span>
         {photoError ? <p role="alert" className="field-error">{photoError}</p> : null}
         <div className="review-photo-previews">
           {retained.map((id, index) => <div key={id} className="review-photo-preview">
@@ -240,18 +210,12 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
       </div>
       </fieldset>
 
-      <p className="review-channel-note">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71l-4.14-3.05-1.99 1.94c-.23.23-.42.42-.83.42z" />
-        </svg>
-        <span>
-          Telegram-канал берём из профиля. <Link href="/profile/edit">Настроить канал</Link>
-        </span>
-      </p>
-
       <div className="review-form-actions">
-        <SubmitButton editing={Boolean(existing)} />
-        {existing ? <DeleteButton /> : null}
+        {editing ? <><SubmitButton editing={hasReview} />{hasReview && <button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => {
+          setText(saved.current.text); setRatings({ design: saved.current.design, taste: saved.current.taste }); setRetained(saved.current.photos);
+          previews.current.forEach(url => URL.revokeObjectURL(url)); previews.current.clear(); setFiles([]); setPhotoError(''); setEditing(false);
+        }}>Отмена</button>}</> : <button className="primary-button" type="button" onClick={() => setEditing(true)}>Редактировать отзыв</button>}
+        {hasReview && editing ? <DeleteButton /> : null}
       </div>
     </form>
   );

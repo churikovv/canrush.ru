@@ -17,7 +17,8 @@ type AdminNotice =
   | 'user-unblocked'
   | 'tierlist-deleted'
   | 'review-deleted'
-  | 'wall-deleted';
+  | 'wall-deleted'
+  | 'comment-deleted';
 
 type AdminError = 'invalid-email' | 'protected-admin' | 'invalid-target' | 'operation-failed';
 
@@ -247,4 +248,21 @@ export async function deleteAdminWallAction(formData: FormData): Promise<void> {
   revalidatePath('/admin');
   revalidatePath('/profile', 'layout');
   redirect(adminLocation('notice', 'wall-deleted', query));
+}
+
+export async function deleteAdminCommentAction(formData: FormData): Promise<void> {
+  const admin = await requireSiteAdmin();
+  const query = returnQuery(formData);
+  const id = String(formData.get('commentId') ?? '');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(id)) redirect(adminLocation('error', 'invalid-target', query));
+  let deleted: string | null;
+  try {
+    deleted = await auditedMutation(admin, 'delete', 'review-comment', id, async client => {
+      const result = await client.query('delete from "reviewComment" where id=$1 returning id', [id]);
+      return result.rows[0]?.id ?? null;
+    });
+  } catch { redirect(adminLocation('error', 'operation-failed', query)); }
+  if (!deleted) redirect(adminLocation('error', 'invalid-target', query));
+  revalidatePath('/admin'); revalidatePath('/catalog', 'layout'); revalidatePath('/profile', 'layout');
+  redirect(adminLocation('notice', 'comment-deleted', query));
 }

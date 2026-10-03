@@ -3,6 +3,7 @@ export const ADMIN_TABS = [
   { key: 'users', label: 'Участники' },
   { key: 'tierlists', label: 'Тирлисты' },
   { key: 'reviews', label: 'Отзывы' },
+  { key: 'comments', label: 'Комментарии' },
   { key: 'wall', label: 'Стена' },
   { key: 'admins', label: 'Администраторы' },
 ] as const;

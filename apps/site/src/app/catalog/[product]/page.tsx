@@ -58,7 +58,7 @@ export default async function CatalogProductPage({
 
   const [favorite, reviews, summary, userReview, ingredients] = await Promise.all([
     session ? isFavorite(session.user.id, group.brand, group.flavor) : Promise.resolve(false),
-    getReviewsForProduct(group.brand, group.flavor),
+    getReviewsForProduct(group.brand, group.flavor, session?.user.id ?? null),
     getReviewSummary(group.brand, group.flavor),
     session ? getUserReview(session.user.id, group.brand, group.flavor) : Promise.resolve(null),
     getProductIngredients(group.brand, group.flavor),

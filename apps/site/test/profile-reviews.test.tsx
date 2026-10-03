@@ -1,6 +1,7 @@
+vi.mock('../src/app/catalog/discussion-actions', () => ({ reviewDiscussionAction: vi.fn() }));
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ProfileReviews } from '../src/components/profile-reviews';
 import type { ReviewData } from '../src/lib/reviews';
 const review: ReviewData = {
