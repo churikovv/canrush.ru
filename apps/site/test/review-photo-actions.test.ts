@@ -11,7 +11,7 @@ vi.mock('../src/lib/reviews', () => ({ upsertReview: mocks.save, deleteReview: v
 import { submitReviewAction } from '../src/app/catalog/review-actions';
 function form() {
   const data = new FormData();
-  for (const [key, value] of Object.entries({ brand: 'Burn', flavor: 'original', design: '4', taste: '4', ratingScale: '10', text: 'Мне понравился этот напиток' })) data.set(key, value);
+  for (const [key, value] of Object.entries({ brand: 'Burn', flavor: 'original', design: '4', taste: '4', ratingScale: '10', text: 'Мне понравился этот напиток, особенно вкус' })) data.set(key, value);
   return data;
 }
 beforeEach(() => {

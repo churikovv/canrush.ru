@@ -1,3 +1,15 @@
+export const MIN_REVIEW_LENGTH = 30;
+export const DETAILED_REVIEW_LENGTH = 150;
+export function normalizeReviewText(text: string): string {
+  return text.replace(/[\u200B-\u200D\uFEFF]/gu, '').trim().replace(/\s+/gu, ' ');
+}
+export function reviewTextGuidance(value: string) {
+  const length = normalizeReviewText(value).length;
+  if (length < MIN_REVIEW_LENGTH) return { level: 'short', message: `Поделитесь ещё впечатлениями — нужно минимум ${MIN_REVIEW_LENGTH} символов.` } as const;
+  if (length < DETAILED_REVIEW_LENGTH) return { level: 'enough', message: 'Отзыв уже можно опубликовать. Дополните его впечатлениями о вкусе, дизайне или составе.' } as const;
+  return { level: 'detailed', message: 'Хороший, подробный отзыв — он поможет другим людям с выбором.' } as const;
+}
+
 export type ReviewField = 'design' | 'taste' | 'text';
 
 export interface ReviewInputData {
@@ -40,9 +52,11 @@ export function validateReviewInput(values: {
     }
   }
 
-  const text = values.text.trim().replace(/\s+/gu, ' ');
+  const text = normalizeReviewText(values.text);
   if (!text) {
     errors.text = 'Напишите отзыв.';
+  } else if (text.length < MIN_REVIEW_LENGTH) {
+    errors.text = `Поделитесь ещё впечатлениями — нужно минимум ${MIN_REVIEW_LENGTH} символов.`;
   } else if (text.length > 1000) {
     errors.text = 'Отзыв должен быть не длиннее 1000 символов.';
   } else {

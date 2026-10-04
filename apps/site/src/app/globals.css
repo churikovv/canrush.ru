@@ -5385,3 +5385,8 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
   .review-reactions button { min-width: 0; padding-inline: 8px; }
   .review-comments-label { display: none; }
 }
+
+.review-text-guidance { line-height: 1.5; }
+.review-text-guidance-short { color: #b42332; }
+.review-text-guidance-enough { color: #876000; }
+.review-text-guidance-detailed { color: #237340; }

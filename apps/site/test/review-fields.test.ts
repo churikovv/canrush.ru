@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseRating, validateReviewInput } from '../src/lib/review-fields.js';
+import { parseRating, validateReviewInput, reviewTextGuidance } from '../src/lib/review-fields.js';
 
 describe('review fields', () => {
   it('парсит корректные оценки', () => {
@@ -19,12 +19,12 @@ describe('review fields', () => {
     const result = validateReviewInput({
       design: '5',
       taste: '4',
-      text: '  Отличный энергетик!  ',
+      text: '  Отличный энергетик, приятный вкус и дизайн!  ',
     });
     expect(result.data).toEqual({
       design: 5,
       taste: 4,
-      text: 'Отличный энергетик!',
+      text: 'Отличный энергетик, приятный вкус и дизайн!',
     });
   });
 
@@ -58,4 +58,16 @@ describe('review fields', () => {
     });
     expect(result.errors?.design).toBeTruthy();
   });
+});
+
+it('requires 30 normalized characters and gives consistent guidance at boundaries', () => {
+  for (const text of ['а'.repeat(29), 'вкусно' + ' '.repeat(100), 'а'.repeat(29) + '\u200b'.repeat(100)]) {
+    expect(validateReviewInput({ design: '8', taste: '9', text }).errors?.text).toBeTruthy();
+    expect(reviewTextGuidance(text).level).toBe('short');
+  }
+  for (const length of [30, 149, 150, 1000]) {
+    const text = 'а'.repeat(length);
+    expect(validateReviewInput({ design: '8', taste: '9', text }).data?.text).toBe(text);
+    expect(reviewTextGuidance(text).level).toBe(length < 150 ? 'enough' : 'detailed');
+  }
 });

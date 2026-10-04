@@ -1,5 +1,6 @@
 'use client';
 
+import { MIN_REVIEW_LENGTH, normalizeReviewText, reviewTextGuidance } from '@/lib/review-fields';
 import Link from 'next/link';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -35,10 +36,10 @@ function RatingInput({ name, value, label, error, onChange }: { name: string; va
   </div>;
 }
 
-function SubmitButton({ editing }: { editing: boolean }) {
+function SubmitButton({ editing, tooShort }: { editing: boolean; tooShort: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button className="primary-button review-submit-button" type="submit" disabled={pending}>
+    <button className="primary-button review-submit-button" type="submit" disabled={pending || tooShort}>
       {pending ? 'Сохраняем…' : editing ? 'Сохранить отзыв' : 'Опубликовать отзыв'}
     </button>
   );
@@ -109,6 +110,7 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
   }
   const errorSummaryRef = useRef<HTMLDivElement>(null);
   const textLength = text.length;
+  const guidance = reviewTextGuidance(text);
 
   useEffect(() => {
     if (state.status === 'error') errorSummaryRef.current?.focus();
@@ -170,7 +172,7 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
           rows={4}
           placeholder="Что понравилось или не понравилось?"
           aria-invalid={Boolean(state.fieldErrors?.text)}
-          aria-describedby={state.fieldErrors?.text ? 'review-text-error' : 'review-text-help'}
+          aria-describedby={state.fieldErrors?.text ? 'review-text-help review-text-error' : 'review-text-help'}
           onChange={(event) => setText(event.currentTarget.value)}
           required
         />
@@ -182,8 +184,8 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
         </span>
 <span>{retained.length + files.length} / 5 фото</span></div>
         </div>
-        <p className="field-help" id="review-text-help">
-          Без спойлеров о промоакциях и ценах, они быстро меняются.
+        <p className={`field-help review-text-guidance review-text-guidance-${guidance.level}`} id="review-text-help" role="status" aria-live="polite">
+          {guidance.message}
         </p>
         {state.fieldErrors?.text ? (
           <p className="field-error" id="review-text-error">
@@ -211,7 +213,7 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
       </fieldset>
 
       <div className="review-form-actions">
-        {editing ? <><SubmitButton editing={hasReview} />{hasReview && <button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => {
+        {editing ? <><SubmitButton editing={hasReview} tooShort={normalizeReviewText(text).length < MIN_REVIEW_LENGTH} />{hasReview && <button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => {
           setText(saved.current.text); setRatings({ design: saved.current.design, taste: saved.current.taste }); setRetained(saved.current.photos);
           previews.current.forEach(url => URL.revokeObjectURL(url)); previews.current.clear(); setFiles([]); setPhotoError(''); setEditing(false);
         }}>Отмена</button>}</> : <button className="primary-button" type="button" onClick={() => setEditing(true)}>Редактировать отзыв</button>}
