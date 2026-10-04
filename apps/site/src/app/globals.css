@@ -4785,7 +4785,7 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .price-analytics-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
 .price-analytics-heading h1 { font-size: 2rem; line-height: 1.2; margin: 0; text-wrap: balance; }
 .price-chart-date { margin: 0; color: #596060; font-size: .8125rem; }
-.price-chart-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 32px; }
+.price-chart-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-bottom: 32px; }
 .price-filter-step { padding: 20px; border: 1px solid #dfe2e6; border-radius: 12px; }
 .price-step-heading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
 .price-step-heading > span { display: grid; place-items: center; flex: 0 0 28px; height: 28px; border-radius: 50%; background: #edf4ff; color: #0058cc; font-size: .875rem; }
@@ -5459,3 +5459,7 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .achievement-cards p { line-height: 1.5; }
 @media (max-width: 959px) { .profile-owner-actions > a { width: 100%; justify-content: center; } }
 @media (max-width: 639px) { .achievement-cards { grid-template-columns: minmax(0, 1fr); } }
+
+.price-retailer-name { display: flex; align-items: center; gap: 12px; }
+.price-retailer-name .retailer-badge { flex-shrink: 0; }
+.price-retailer-name > span:last-child { min-width: 0; overflow-wrap: anywhere; }

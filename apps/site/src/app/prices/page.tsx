@@ -1,3 +1,4 @@
+import { RetailerBadge } from '@/components/retailer-badge';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { RetailerPriceChart } from '@/components/retailer-price-chart';
@@ -8,7 +9,7 @@ import { seoMetadata } from '@/lib/seo';
 export const dynamic = 'force-dynamic';
 export const metadata = seoMetadata({
   title: 'Цены по магазинам',
-  description: 'Средняя и медианная цена энергетиков по магазинам с фильтрами бренда и объёма.',
+  description: 'Средняя и медианная цена энергетиков по магазинам с фильтром по бренду.',
   path: '/prices',
 });
 
@@ -24,7 +25,7 @@ export default async function PricesPage() {
           {status === 'stale' && <p className="price-chart-date">Последние доступные цены</p>}
           {date && <p className="price-chart-date">Обновлено {date}</p>}
         </header>
-        {observations.length ? <RetailerPriceChart key={city.id} observations={observations} /> : <p className="price-chart-empty">Для сравнения пока недостаточно данных. Они появятся после обновления каталога.</p>}
+        {observations.length ? <RetailerPriceChart key={city.id} observations={observations} retailerBadges={Object.fromEntries([...new Set(observations.map(row => row.retailer))].map(name => [name, <RetailerBadge key={name} name={name} decorative />]))} /> : <p className="price-chart-empty">Для сравнения пока недостаточно данных. Они появятся после обновления каталога.</p>}
       </div>
     </BrandShell>
   );

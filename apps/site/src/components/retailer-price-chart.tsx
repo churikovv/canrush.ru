@@ -1,20 +1,18 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { PriceFilterInput } from '@/components/price-filter-input';
 import { compareRetailerPrices, type PriceObservation, type PriceSort } from '@/lib/price-statistics';
 
 const money = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 
-export function RetailerPriceChart({ observations }: { observations: PriceObservation[] }) {
+export function RetailerPriceChart({ observations, retailerBadges }: { observations: PriceObservation[]; retailerBadges: Record<string, ReactNode> }) {
   const [brand, setBrand] = useState('');
-  const [volume, setVolume] = useState('');
   const [sort, setSort] = useState<PriceSort>('median');
   const [direction, setDirection] = useState<'asc' | 'desc'>('asc');
   const brands = useMemo(() => [...new Set(observations.map(row => row.brand))].sort((a, b) => a.localeCompare(b, 'ru')), [observations]);
-  const volumes = useMemo(() => [...new Set(observations.filter(row => !brand || row.brand === brand).map(row => row.volumeMl))].sort((a, b) => a - b), [observations, brand]);
-  const { rows, count, average } = useMemo(() => compareRetailerPrices(observations, brand, volume ? Number(volume) : undefined, sort, direction), [observations, brand, volume, sort, direction]);
-  function reset() { setBrand(''); setVolume(''); setSort('median'); setDirection('asc'); }
+  const { rows, count, average } = useMemo(() => compareRetailerPrices(observations, brand, undefined, sort, direction), [observations, brand, sort, direction]);
+  function reset() { setBrand(''); setSort('median'); setDirection('asc'); }
 
   function changeSort(key: PriceSort) {
     setDirection(sort === key ? (direction === 'asc' ? 'desc' : 'asc') : key === 'count' ? 'desc' : 'asc');
@@ -32,19 +30,16 @@ export function RetailerPriceChart({ observations }: { observations: PriceObserv
     <div className="price-comparison">
       <div className="price-chart-controls">
         <section className="price-filter-step" aria-labelledby="price-brand-label">
-          <div className="price-step-heading"><span aria-hidden="true">1</span><div><label id="price-brand-label" htmlFor="price-brand">Бренды</label><p>Выберите бренд для сравнения.</p></div></div>
-          <PriceFilterInput id="price-brand" value={brand} allLabel="Все бренды" options={brands.map(value => ({ value, label: value }))} onChange={value => { setBrand(value); setVolume(''); }} />
+          <div className="price-step-heading"><div><label id="price-brand-label" htmlFor="price-brand">Бренды</label><p>Выберите бренд для сравнения.</p></div></div>
+          <PriceFilterInput id="price-brand" value={brand} allLabel="Все бренды" options={brands.map(value => ({ value, label: value }))} onChange={value => { setBrand(value); }} />
         </section>
-        <section className="price-filter-step" aria-labelledby="price-volume-label">
-          <div className="price-step-heading"><span aria-hidden="true">2</span><div><label id="price-volume-label" htmlFor="price-volume">Объём</label><p>Уточните размер банки.</p></div></div>
-          <PriceFilterInput key={brand} id="price-volume" value={volume} allLabel="Все объёмы" options={volumes.map(value => ({ value: String(value), label: `${value} мл` }))} onChange={setVolume} />
-        </section>
+
       </div>
       <section className="price-results" aria-labelledby="price-results-title">
         <div className="price-chart-summary">
           <div><h2 id="price-results-title">Магазины <span>₽ / 100 мл</span></h2><p aria-live="polite">Магазины: {rows.length} · Позиции: {count}</p></div>
           <div className="price-results-actions">
-            {(brand || volume || sort !== 'median' || direction !== 'asc') && <button type="button" className="price-reset" onClick={reset}>Сбросить</button>}
+            {(brand || sort !== 'median' || direction !== 'asc') && <button type="button" className="price-reset" onClick={reset}>Сбросить</button>}
             <label className="price-sort">Сортировка<select value={`${sort}:${direction}`} onChange={event => {
               const [key, order] = event.target.value.split(':');
               setSort(key as PriceSort); setDirection(order as 'asc' | 'desc');
@@ -59,7 +54,7 @@ export function RetailerPriceChart({ observations }: { observations: PriceObserv
               <thead><tr>{sortHeader('retailer', 'Магазин')}{sortHeader('median', 'Медианная цена')}{sortHeader('count', 'Позиций')}{sortHeader('deviation', `К средней ${money.format(average)} ₽`)}</tr></thead>
               <tbody>{rows.map(row => (
                 <tr key={row.retailer}>
-                  <th scope="row">{row.retailer}</th>
+                  <th scope="row"><span className="price-retailer-name">{retailerBadges[row.retailer]}<span>{row.retailer}</span></span></th>
                   <td className="price-median"><strong>{money.format(row.median)} ₽</strong></td>
                   <td className="price-count"><span className="price-mobile-label">Позиций: </span>{row.count}</td>
                   <td><span className={`price-status price-status--${row.deviation < 0 ? 'below' : row.deviation > 0 ? 'above' : 'equal'}`}>
