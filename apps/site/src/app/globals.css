@@ -5467,7 +5467,7 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .price-heading-meta { display: flex; flex-direction: column; gap: 4px; margin-left: auto; text-align: right; line-height: 1.5; }
 @media (max-width: 959px) { .price-heading-meta { flex-basis: 100%; margin-left: 0; text-align: left; } }
 
-.home-layout { width: 100%; min-width: 0; display: grid; gap: 48px; }
+.home-layout { width: 100%; max-width: 1180px; margin: 0 auto; min-width: 0; display: grid; gap: 48px; }
 .home-heading, .home-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .home-heading h1 { margin: 0; font-size: 2rem; }
 .home-heading p { margin: 12px 0 0; color: #59616b; line-height: 1.5; }
@@ -5477,7 +5477,6 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .home-section-heading > a { color: #0058cc; min-height: 44px; display: inline-flex; align-items: center; }
 .home-drink-strip { display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 2px 20px; }
 .home-drink-item { flex: 0 0 220px; min-width: 0; scroll-snap-align: start; }
-.home-discussion-count { color: #59616b; font-size: .875rem; margin: 12px 0 0; }
 @media (max-width: 639px) {
   .home-layout { gap: 32px; }
   .home-heading h1 { font-size: 1.75rem; }
