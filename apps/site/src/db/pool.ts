@@ -22,6 +22,7 @@ export function getPool(): Pool {
   if (existing) return existing;
 
   const databasePool = createPool();
-  if (process.env.NODE_ENV !== 'production') globalForDatabase.canrushDatabasePool = databasePool;
+  // Reuse the bounded pool in production too: creating one per call exhausts PostgreSQL connections.
+  globalForDatabase.canrushDatabasePool = databasePool;
   return databasePool;
 }
