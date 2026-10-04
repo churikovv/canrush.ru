@@ -5485,3 +5485,16 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
   .home-drink-strip { gap: 16px; }
   .home-drink-item { flex-basis: min(68vw, 220px); }
 }
+
+.home-store-list { list-style: none; padding: 0; margin: 20px 0 0; border: 1px solid #dfe3e8; border-radius: 16px; overflow: hidden; }
+.home-store-list li + li { border-top: 1px solid #dfe3e8; }
+.home-store-list a { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 24px; align-items: center; padding: 20px; color: inherit; text-decoration: none; }
+.home-store-list a:hover { background: #f3f5f5; }
+.home-store-list small { font-weight: normal; color: #59616b; }
+.home-tier-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.home-tier-cards .tier-letter { font-size: 2rem; font-weight: 800; }
+@media (max-width: 639px) {
+  .home-store-list a { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 16px; }
+  .home-store-list .price-retailer-name { grid-column: 1 / -1; }
+  .home-tier-cards { grid-template-columns: minmax(0, 1fr); }
+}
