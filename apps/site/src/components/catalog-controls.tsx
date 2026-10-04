@@ -146,12 +146,11 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort }:
           onChange={(event) => event.currentTarget.form?.requestSubmit()}
           aria-label="Сортировка каталога"
         >
-          <option value="deals">Самые дешевые</option>
-          <option value="discount">Большая скидка</option>
+          <option value="deals">По стоимости</option>
+          <option value="discount">По скидке</option>
           <option value="rating">По рейтингу</option>
           <option value="brand">По бренду</option>
-          <option value="stores">Кол-во магазинов</option>
-          <option value="price-desc">Сначала дорогие</option>
+          <option value="stores">По наличию</option>
         </select>
         <Image src="/brand/icons/chevron-down.svg" width={16} height={16} alt="" />
       </label>
