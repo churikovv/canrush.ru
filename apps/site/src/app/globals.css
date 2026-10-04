@@ -2998,7 +2998,7 @@ html[data-cookie-notice="visible"] .brand-footer {
   text-shadow: 1px 1px 0 var(--color-surface);
 }
 
-/* Letter gradients visually matched to Figma 463:419; shared by board and editor. */
+/* Game8-inspired metallic rank palette; D extends it with neutral silver. */
 .tier-letter {
   display: inline-block;
   color: var(--color-ink);
@@ -3006,14 +3006,14 @@ html[data-cookie-notice="visible"] .brand-footer {
   -webkit-text-stroke: 2px var(--tier-letter-outline, #242016);
   paint-order: stroke fill;
 }
-.tier-letter-s { --tier-letter-top: #f6d008; --tier-letter-bottom: #ff0707; --tier-letter-outline: #87532c; }
-.tier-letter-a { --tier-letter-top: #f8ce7b; --tier-letter-bottom: #c27a37; }
-.tier-letter-b { --tier-letter-top: #e9bf61; --tier-letter-bottom: #98631f; }
-.tier-letter-c { --tier-letter-top: #ffffa3; --tier-letter-bottom: #abb34c; }
-.tier-letter-d { --tier-letter-top: #a9e877; --tier-letter-bottom: #397428; }
+.tier-letter-s { --tier-letter-top: #a58a30; --tier-letter-middle: #fffbd0; --tier-letter-bottom: #b59a43; --tier-letter-outline: #51451f; }
+.tier-letter-a { --tier-letter-top: #438c43; --tier-letter-middle: #d5ffc5; --tier-letter-bottom: #4c9a4b; --tier-letter-outline: #244a28; }
+.tier-letter-b { --tier-letter-top: #438cae; --tier-letter-middle: #e0f8ff; --tier-letter-bottom: #5598c1; --tier-letter-outline: #253f58; }
+.tier-letter-c { --tier-letter-top: #51449b; --tier-letter-middle: #e2dfff; --tier-letter-bottom: #6251b0; --tier-letter-outline: #2c2454; }
+.tier-letter-d { --tier-letter-top: #777e89; --tier-letter-middle: #f2f4f7; --tier-letter-bottom: #8a929e; --tier-letter-outline: #424852; }
 @supports (background-clip: text) or (-webkit-background-clip: text) {
   .tier-letter {
-    background: linear-gradient(180deg, var(--tier-letter-top) 0%, var(--tier-letter-bottom) 100%);
+    background: linear-gradient(180deg, var(--tier-letter-top) 0%, var(--tier-letter-middle) 48%, var(--tier-letter-bottom) 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -3023,16 +3023,8 @@ html[data-cookie-notice="visible"] .brand-footer {
   .tier-letter { background: none; -webkit-text-fill-color: CanvasText; -webkit-text-stroke: 0; }
 }
 
-.tier-board-row-s .tier-board-label,
-.tier-editor-row-s > h2 { background: #ffd8df; }
-.tier-board-row-a .tier-board-label,
-.tier-editor-row-a > h2 { background: #ffe5cd; }
-.tier-board-row-b .tier-board-label,
-.tier-editor-row-b > h2 { background: #fff0bd; }
-.tier-board-row-c .tier-board-label,
-.tier-editor-row-c > h2 { background: #fffac8; }
-.tier-board-row-d .tier-board-label,
-.tier-editor-row-d > h2 { background: #dff7c9; }
+.tier-board-label,
+.tier-editor-row > h2 { background: #fff; }
 
 .tier-board-items,
 .tier-editor-row-items {

@@ -33,6 +33,7 @@ export async function renderTierScreenshot(board: HTMLElement, title: string): P
     const size = Number.parseFloat(style.fontSize);
     const gradient = ctx.createLinearGradient(0, box.y + box.height / 2 - size / 2, 0, box.y + box.height / 2 + size / 2);
     gradient.addColorStop(0, style.getPropertyValue('--tier-letter-top').trim());
+    gradient.addColorStop(0.48, style.getPropertyValue('--tier-letter-middle').trim());
     gradient.addColorStop(1, style.getPropertyValue('--tier-letter-bottom').trim());
     ctx.font = `${style.fontWeight} ${size}px ${style.fontFamily}`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
