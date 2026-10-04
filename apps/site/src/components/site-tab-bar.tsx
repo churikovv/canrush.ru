@@ -10,6 +10,7 @@ interface Tab {
 }
 
 const TABS: readonly Tab[] = [
+  { section: 'home', href: '/', label: 'Главная' },
   { section: 'catalog', href: '/catalog', label: 'Каталог' },
   { section: 'prices', href: '/prices', label: 'Цены', accessibleLabel: 'Цены по магазинам' },
   { section: 'tierlists', href: '/tierlists', label: 'Тирлисты' },

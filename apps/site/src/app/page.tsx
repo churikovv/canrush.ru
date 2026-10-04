@@ -39,7 +39,7 @@ export default async function HomePage() {
   const allGroups = await loadAllCatalogGroups();
   const [official, tierlists] = await Promise.all([buildOfficialTierList(allGroups), getCommunityTierLists(3)]);
   const tierProducts = tierListProductsForPlacements(allGroups, tierlists.flatMap(list => list.preview));
-  return <BrandShell headerAction={<ProfileNavigation />} surfaceClassName="catalog-surface">
+  return <BrandShell headerAction={<ProfileNavigation active="home" />} surfaceClassName="catalog-surface">
     <div className="home-layout">
       <header className="home-heading"><div><h1>Открывайте энергетики</h1><p>Отзывы сообщества и предложения магазинов · {city.name}</p></div><Link className="community-button community-button-secondary" href="/catalog">В каталог ↗</Link></header>
       {[{ id: 'best', title: 'Самые лучшие энергетики', href: '/catalog?sort=rating', items: best }, { id: 'discussed', title: 'Самые комментируемые', href: '/catalog?sort=comments', items: popular }].map(section => <section key={section.id} aria-labelledby={`home-${section.id}`} className="home-section">
