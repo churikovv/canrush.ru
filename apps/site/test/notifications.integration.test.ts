@@ -60,3 +60,14 @@ it('paginates by cursor without duplicates and does not expose another recipient
  expect(first.hasMore).toBe(true);expect(first.items).toHaveLength(20);expect(new Set([...first.items,...second.items].map(x=>x.id)).size).toBe(first.items.length+second.items.length);
  expect((await api.getNotifications(actor,first.items.at(-1)!.id)).items).toHaveLength(0);
 });
+
+it('honors each recipient notification preference and restores delivery when enabled', async () => {
+  for (const kind of ['follow', 'like', 'review-comment', 'wall-comment', 'price']) {
+    await pool.query('insert into "notificationPreference"("userId",kind,enabled) values($1,$2,false)', [owner, kind]);
+    const insert = (user: string) => pool.query('insert into notification("userId",kind,"eventKey") values($1,$2,$3) returning id', [user, kind, randomUUID()]);
+    expect((await insert(owner)).rowCount).toBe(0);
+    expect((await insert(actor)).rowCount).toBe(1);
+    await pool.query('update "notificationPreference" set enabled=true where "userId"=$1 and kind=$2', [owner, kind]);
+    expect((await insert(owner)).rowCount).toBe(1);
+  }
+});
