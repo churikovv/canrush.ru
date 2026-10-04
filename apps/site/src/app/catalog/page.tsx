@@ -12,7 +12,7 @@ import {
   isCatalogSort,
   type CatalogFilters,
 } from '@/lib/catalog-query';
-import { getReviewSummaries } from '@/lib/reviews';
+import { getReviewSummaries, getDiscussionCounts } from '@/lib/reviews';
 import { seoMetadata } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
@@ -66,7 +66,8 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
   };
   const limit = catalogLimit(first(params.limit));
   const ratingSummaries = filters.sort === 'rating' ? await getReviewSummaries(groups) : undefined;
-  const filtered = filterCatalogGroups(groups, filters, ratingSummaries);
+  const discussions = filters.sort === 'comments' ? await getDiscussionCounts() : undefined;
+  const filtered = filterCatalogGroups(groups, filters, ratingSummaries, discussions);
   const visible = filtered.slice(0, limit);
   const nextHref = visible.length < filtered.length ? loadMoreHref(filters, limit + PAGE_SIZE) : undefined;
   const reviewSummaries = ratingSummaries ?? await getReviewSummaries(

@@ -149,6 +149,7 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort }:
           <option value="deals">По стоимости</option>
           <option value="discount">По скидке</option>
           <option value="rating">По рейтингу</option>
+          <option value="comments">По обсуждаемости</option>
           <option value="brand">По бренду</option>
           <option value="stores">По наличию</option>
         </select>

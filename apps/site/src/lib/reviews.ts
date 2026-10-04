@@ -238,3 +238,11 @@ export async function getReviewsForUser(userId: string, page = 1, viewer: string
   const interactions = await getReviewInteractions(result.rows.map(row => row.id), viewer);
   return result.rows.map(row => ({ ...toReview(row), interaction: interactions.get(row.id) }));
 }
+
+export async function getDiscussionCounts(): Promise<Map<string, number>> {
+  const { rows } = await getPool().query(`select r.brand, r.flavor,
+    (count(distinct r.id) + count(c.id))::int as count
+    from review r left join "reviewComment" c on c."reviewId"=r.id
+    group by r.brand,r.flavor`);
+  return new Map(rows.map(row => [`${row.brand}\u0000${row.flavor}`, Number(row.count)]));
+}

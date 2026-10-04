@@ -180,3 +180,9 @@ it('sorts ratings before pagination, breaks ties by review count, and puts unrat
   expect(sorted.map(g => g.brand)).toEqual(['Many', 'Few', 'Lower', 'Unrated']);
   expect(sorted.slice(0, 1)[0]?.brand).toBe('Many');
 });
+
+it('sorts discussion counts descending with unreviewed drinks last', () => {
+  const groups = [group({ brand: 'Burn' }), group({ brand: 'Red Bull' }), group({ brand: 'Gorilla' })];
+  const counts = new Map([['Burn\u0000original', 2], ['Red Bull\u0000original', 9]]);
+  expect(filterCatalogGroups(groups, { query: '', brand: '', flavor: '', sort: 'comments' }, new Map(), counts).map(item => item.brand)).toEqual(['Red Bull', 'Burn', 'Gorilla']);
+});

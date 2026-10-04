@@ -8,7 +8,7 @@ import {
   type SourceName,
 } from '@canrush/shared';
 
-export const CATALOG_SORTS = ['deals', 'brand', 'stores', 'price-desc', 'discount', 'rating'] as const;
+export const CATALOG_SORTS = ['deals', 'brand', 'stores', 'price-desc', 'discount', 'rating', 'comments'] as const;
 export type CatalogSort = (typeof CATALOG_SORTS)[number];
 
 const SOURCE_NAMES: Record<SourceName, string> = {
@@ -140,7 +140,7 @@ export function isCatalogSort(value: string): value is CatalogSort {
   return CATALOG_SORTS.includes(value as CatalogSort);
 }
 
-export function filterCatalogGroups(groups: CatalogGroup[], filters: CatalogFilters, ratings: ReadonlyMap<string, { overall: number; count: number }> = new Map()): CatalogGroup[] {
+export function filterCatalogGroups(groups: CatalogGroup[], filters: CatalogFilters, ratings: ReadonlyMap<string, { overall: number; count: number }> = new Map(), discussions: ReadonlyMap<string, number> = new Map()): CatalogGroup[] {
   const filtered = groups.filter((group) => {
     if (filters.brand && group.brand !== filters.brand) return false;
     if (filters.flavor && group.flavor !== filters.flavor) return false;
@@ -148,6 +148,10 @@ export function filterCatalogGroups(groups: CatalogGroup[], filters: CatalogFilt
   });
 
   return filtered.sort((left, right) => {
+    if (filters.sort === 'comments') {
+      const difference = (discussions.get(`${right.brand}\u0000${right.flavor}`) ?? 0) - (discussions.get(`${left.brand}\u0000${left.flavor}`) ?? 0);
+      if (difference) return difference;
+    }
     if (filters.sort === 'rating') {
       const a = isResolvedFlavor(left.flavor) ? ratings.get(`${left.brand}\u0000${left.flavor}`) : undefined;
       const b = isResolvedFlavor(right.flavor) ? ratings.get(`${right.brand}\u0000${right.flavor}`) : undefined;
