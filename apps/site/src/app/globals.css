@@ -5463,3 +5463,6 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .price-retailer-name { display: flex; align-items: center; gap: 12px; }
 .price-retailer-name .retailer-badge { flex-shrink: 0; }
 .price-retailer-name > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+
+.price-heading-meta { display: flex; flex-direction: column; gap: 4px; margin-left: auto; text-align: right; line-height: 1.5; }
+@media (max-width: 959px) { .price-heading-meta { flex-basis: 100%; margin-left: 0; text-align: left; } }

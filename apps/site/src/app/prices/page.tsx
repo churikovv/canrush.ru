@@ -22,8 +22,10 @@ export default async function PricesPage() {
       <div className="price-analytics">
         <header className="price-analytics-heading">
           <div className="price-heading-title"><h1>Цены по магазинам</h1><span className="price-heading-city">{city.name}</span></div>
+          {(status === 'stale' || date) && <div className="price-heading-meta">
           {status === 'stale' && <p className="price-chart-date">Последние доступные цены</p>}
           {date && <p className="price-chart-date">Обновлено {date}</p>}
+          </div>}
         </header>
         {observations.length ? <RetailerPriceChart key={city.id} observations={observations} retailerBadges={Object.fromEntries([...new Set(observations.map(row => row.retailer))].map(name => [name, <RetailerBadge key={name} name={name} decorative />]))} /> : <p className="price-chart-empty">Для сравнения пока недостаточно данных. Они появятся после обновления каталога.</p>}
       </div>
