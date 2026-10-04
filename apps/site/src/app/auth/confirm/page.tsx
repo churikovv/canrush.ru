@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { isMagicLinkToken } from '@/lib/magic-link-url';
-import { confirmMagicLink } from './actions';
+import { MagicLinkAutoConfirm } from '@/components/magic-link-auto-confirm';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,19 +26,14 @@ export default async function ConfirmPage({ searchParams }: ConfirmPageProps) {
     <BrandShell headerAction={<ProfileNavigation active="profile" />}>
       <section className="auth-layout compact-layout">
         <p className="section-label">Проверка ссылки</p>
-        <h1>{validToken ? 'Подтвердите вход' : 'Ссылка не подходит'}</h1>
+        <h1>{validToken ? 'Входим в профиль…' : 'Ссылка не подходит'}</h1>
         <p>
           {validToken
-            ? 'Нажмите кнопку, чтобы завершить вход. До этого момента одноразовая ссылка не используется.'
+            ? 'Ссылка проверяется. Через мгновение откроется ваш профиль.'
             : 'Ссылка повреждена или скопирована не полностью. Запросите новое письмо.'}
         </p>
         {validToken ? (
-          <form action={confirmMagicLink}>
-            <input type="hidden" name="token" value={token} />
-            <button className="primary-button" type="submit">
-              Войти в CanRush
-            </button>
-          </form>
+          <MagicLinkAutoConfirm token={token!} />
         ) : (
           <Link className="primary-link" href="/sign-in">
             Запросить новую ссылку

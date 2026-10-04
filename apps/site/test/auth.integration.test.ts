@@ -108,8 +108,8 @@ describe.sequential('Magic Link authentication', () => {
     expect(stored.identifier).not.toBe(sent.token);
     expect(stored.identifier).not.toContain(sent.token);
     const expiresIn = new Date(stored.expiresAt).getTime() - Date.now();
-    expect(expiresIn).toBeGreaterThan(4 * 60 * 1_000);
-    expect(expiresIn).toBeLessThanOrEqual(5 * 60 * 1_000);
+    expect(expiresIn).toBeGreaterThan(14 * 60 * 1_000);
+    expect(expiresIn).toBeLessThanOrEqual(15 * 60 * 1_000);
 
     const verificationResponse = await auth.api.magicLinkVerify({
       query: {

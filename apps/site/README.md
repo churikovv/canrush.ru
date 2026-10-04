@@ -95,11 +95,11 @@ npm -w apps/site run test:auth
 
 ## Реализованные меры безопасности
 
-- токен Better Auth живёт 5 минут, хранится как хэш и атомарно погашается один раз;
+- токен Better Auth живёт 15 минут, хранится как хэш и атомарно погашается один раз;
 - email/password и социальные providers отключены;
 - запрос письма проверяет trusted origin и ограничивается по IP и HMAC нормализованного email;
 - callback URL фиксированы, Host header не используется при создании ссылки;
-- interstitial требует явный POST, поэтому GET-сканер почты не расходует токен;
+- страница входа автоматически отправляет POST после загрузки JavaScript, поэтому GET-сканер почты не расходует токен;
 - session cookie серверная, HttpOnly, SameSite=Lax и Secure на HTTPS;
 - CSP с nonce, запрет iframe/object, no-store и no-referrer на чувствительных маршрутах;
 - SMTP использует port 465, TLS >= 1.2, проверку сертификата и фиксированный From;

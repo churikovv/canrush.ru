@@ -67,9 +67,9 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
 - **Данные каталога сайта**: `saveLatest` синхронизирует группы в игнорируемый
   `apps/site/data/catalog.json`. После парсинга запускай `npm -w apps/parser run
   download-images`, чтобы локализовать изображения и обновить этот срез.
-- **Magic Link invariants**: токен живёт 5 минут, хранится как хэш и погашается
+- **Magic Link invariants**: токен живёт 15 минут, хранится как хэш и погашается
   один раз. Email-ссылка ведёт на GET interstitial, а вход выполняется только
-  явным POST через Server Action. Action вызывает встроенный `magicLinkVerify`
+  автоматическим POST через Server Action. Action вызывает встроенный `magicLinkVerify`
   и переносит его `Set-Cookie` через Next `cookies()`; не редиректь Action на
   внутренний verifier, иначе Next RSC потеряет cookie. Не возвращай verifier в
   письмо, не делай callback URL пользовательским и не отключай origin checks.

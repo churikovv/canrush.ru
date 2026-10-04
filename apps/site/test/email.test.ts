@@ -8,7 +8,7 @@ describe('magic link email', () => {
 
     expect(email.subject).toBe('Вход в CanRush');
     expect(email.text).toContain(link);
-    expect(email.text).toContain('5 минут');
+    expect(email.text).toContain('15 минут');
     expect(email.html).toContain('token=AbCd&amp;next=/profile');
     expect(email.html).not.toMatch(/<img|tracking|pixel/i);
   });

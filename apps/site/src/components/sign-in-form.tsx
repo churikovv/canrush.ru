@@ -45,7 +45,7 @@ export function SignInForm() {
       <section className="auth-status" aria-live="polite">
         <span className="status-dot" aria-hidden="true" />
         <h2>Письмо отправлено</h2>
-        <p>Откройте письмо от CanRush и подтвердите вход. Ссылка действует 5 минут.</p>
+        <p>Перейдите по ссылке из письма CanRush — профиль откроется автоматически. Ссылка действует 15 минут.</p>
         <button className="secondary-button" type="button" onClick={() => setFormState('idle')}>
           Отправить ссылку ещё раз
         </button>

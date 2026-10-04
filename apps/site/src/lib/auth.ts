@@ -149,7 +149,7 @@ export function createAuth(options: CreateAuthOptions = {}) {
     plugins: [
       magicLink({
         disableSignUp: false,
-        expiresIn: 5 * 60,
+        expiresIn: 15 * 60,
         rateLimit: {
           window: 60,
           max: 5,
