@@ -4993,6 +4993,7 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
   .community-panel { padding: 20px; }
   .community-identity { flex-wrap: wrap; gap: 12px; padding-left: 12px; padding-right: 12px; }
   .community-hero-actions { flex-basis: 100%; padding-top: 0; }
+  .profile-edit-action { width: 100%; justify-content: center; }
   .community-shortcut { padding: 16px; }
   .profile-rating-summary { grid-template-columns: 1fr; gap: 24px; }
 }

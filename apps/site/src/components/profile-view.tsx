@@ -48,7 +48,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         bannerSrc={profile.bannerId ? `/api/profile-images/${profile.bannerId}` : null}
         status={<ProfilePresence userId={profile.id} initial={presence} />}
         tags={<div className="profile-tags"><ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} />{community.tags.map(tag => <a key={tag} href="#achievements" className="profile-tag">{PROFILE_ACHIEVEMENTS.find(item => item.key === tag)?.label}</a>)}</div>}
-        actions={isOwn ? <Link href="/profile/edit" className="community-button community-button-secondary">Редактировать профиль</Link>
+        actions={isOwn ? <Link href="/profile/edit" className="community-button community-button-secondary profile-edit-action">Редактировать профиль</Link>
           : viewerId ? <FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
           : <Link className="community-button" href="/sign-in">Войти и подписаться</Link>} />
 
