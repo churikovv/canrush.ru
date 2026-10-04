@@ -5373,3 +5373,15 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 }
 
 .tier-screenshot-heading > button { flex-shrink: 0; white-space: nowrap; }
+
+.review-author-channel { display: flex; flex-wrap: wrap; align-items: center; gap: 0 12px; padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px solid var(--color-control); }
+.review-author-channel > span { color: var(--color-muted-strong); font-size: .75rem; }
+.review-author-channel .review-item-channel { min-width: 0; max-width: 100%; }
+.review-author-channel .review-item-channel img { flex-shrink: 0; }
+.review-author-channel .review-item-channel span { overflow-wrap: anywhere; }
+.review-reactions button svg { flex-shrink: 0; }
+@media (max-width: 420px) {
+  .review-reactions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .review-reactions button { min-width: 0; padding-inline: 8px; }
+  .review-comments-label { display: none; }
+}
