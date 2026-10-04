@@ -4665,7 +4665,28 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
   }
 
   .review-summary {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr 1fr;
+    align-items: stretch;
+    gap: 28px;
+    padding: 32px;
+  }
+
+  .review-summary-overall {
+    justify-content: center;
+    padding-right: 0;
+    padding-bottom: 28px;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-control);
+  }
+
+  .review-summary-criteria {
     align-content: center;
+    gap: 24px;
+  }
+
+  .review-summary-overall .rating-stars {
+    grid-template-columns: repeat(10, 14px);
   }
 
   .review-form-wrapper {
