@@ -8,7 +8,7 @@ import type { ReviewCommentData, ReviewInteraction } from '@/lib/review-discussi
 function Thumb({ down = false }: { down?: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={down ? { transform: 'rotate(180deg)' } : undefined}><path d="M7 10v11H3V10h4Zm0 0 5-8c3 0 3 3 2 7h5a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7" /></svg>;
 }
-export function ReviewDiscussion({ reviewId, initial }: { reviewId: string; initial?: ReviewInteraction }) {
+export function ReviewDiscussion({ reviewId, initial, telegramChannel }: { reviewId: string; initial?: ReviewInteraction; telegramChannel?: string | null }) {
   const [stats,setStats] = useState(initial ?? { likes: 0, dislikes: 0, comments: 0, vote: 0, authenticated: false });
   const [open,setOpen] = useState(false);
   const [loaded,setLoaded] = useState(false);
@@ -33,6 +33,9 @@ export function ReviewDiscussion({ reviewId, initial }: { reviewId: string; init
   }
   return <footer className="review-discussion">
     <div className="review-reactions">
+      {telegramChannel && <a className="review-item-channel" href={`https://t.me/${telegramChannel}`} target="_blank" rel="noopener noreferrer" aria-label={`Telegram-канал автора @${telegramChannel} (откроется в новой вкладке)`}>
+        <Image src="/brand/icons/telegram.svg" width={18} height={18} alt="" /><span>@{telegramChannel}</span>
+      </a>}
       <button type="button" disabled={pending} aria-label="Нравится отзыв" aria-pressed={stats.vote===1} onClick={() => run('vote',stats.vote===1 ? 0 : 1)}><Thumb /><span>{stats.likes}</span></button>
       <button type="button" disabled={pending} aria-label="Не нравится отзыв" aria-pressed={stats.vote===-1} onClick={() => run('vote',stats.vote===-1 ? 0 : -1)}><Thumb down /><span>{stats.dislikes}</span></button>
       <button type="button" className="review-comments-toggle" aria-expanded={open} aria-controls={regionId} onClick={() => { setOpen(!open); if (!open && !loaded) run('read'); }}>

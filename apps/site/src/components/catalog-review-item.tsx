@@ -73,7 +73,7 @@ export function CatalogReviewItem({ review }: { review: ReviewData }) {
       <p className="review-item-text">{review.text}</p>
       <ReviewPhotoGallery photos={review.photos} />
 
-      <ReviewDiscussion reviewId={review.id} initial={review.interaction} />
+      <ReviewDiscussion reviewId={review.id} initial={review.interaction} telegramChannel={review.author.telegramChannel} />
     </article>
   );
 }
