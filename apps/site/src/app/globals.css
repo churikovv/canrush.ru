@@ -5498,3 +5498,23 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
   .home-store-list .price-retailer-name { grid-column: 1 / -1; }
   .home-tier-cards { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Match the mobile prices page: 32 + 28 top, 24 + 16 side padding. */
+@media (max-width: 639px) {
+  .main-surface.home-surface,
+  .main-surface.tierlists-surface:not(:has(.tier-editor)) {
+    padding-top: 60px;
+    padding-inline: 40px;
+  }
+  .home-heading h1,
+  .tierlists-hero h1,
+  .tier-list-public-heading h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: normal;
+  }
+  .tierlists-hero > div > .tierlists-kicker { display: none; }
+  .home-section-heading { flex-wrap: nowrap; align-items: flex-start; }
+  .home-section-heading h2 { min-width: 0; }
+  .home-section-heading > a { flex-shrink: 0; min-height: 0; line-height: 1.5; }
+}
