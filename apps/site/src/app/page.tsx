@@ -43,19 +43,19 @@ export default async function HomePage() {
     <div className="home-layout">
       <header className="home-heading"><div><h1>Открывайте энергетики</h1><p>Отзывы сообщества и предложения магазинов · {city.name}</p></div><Link className="community-button community-button-secondary" href="/catalog">В каталог ↗</Link></header>
       {[{ id: 'best', title: 'Самые лучшие энергетики', href: '/catalog?sort=rating', items: best }, { id: 'discussed', title: 'Самые комментируемые', href: '/catalog?sort=comments', items: popular }].map(section => <section key={section.id} aria-labelledby={`home-${section.id}`} className="home-section">
-        <div className="home-section-heading"><h2 id={`home-${section.id}`}>{section.title}</h2><Link href={section.href}>Посмотреть все ↗</Link></div>
+        <div className="home-section-heading"><h2 id={`home-${section.id}`}>{section.title}</h2><Link href={section.href}>Все</Link></div>
         {section.items.length ? <div className="home-drink-strip" role="region" aria-label={section.title} tabIndex={0}>{section.items.map(group => <div key={`${group.brand}:${group.flavor}`} className="home-drink-item"><CatalogProductCard group={group} eager={section.id === 'best'} summary={summaries.get(`${group.brand}\u0000${group.flavor}`)} /></div>)}</div> : <p className="community-empty">Здесь появятся напитки с отзывами. <Link href="/catalog">Выберите напиток и поделитесь впечатлениями.</Link></p>}
       </section>)}
       <section className="home-section" aria-labelledby="home-stores">
-        <div className="home-section-heading"><h2 id="home-stores">Топ дешёвых магазинов</h2><Link href="/prices">Посмотреть все ↗</Link></div>
+        <div className="home-section-heading"><h2 id="home-stores">Топ дешёвых магазинов</h2><Link href="/prices">Все</Link></div>
         <p className="community-section-note">Низкая медианная цена за 100 мл среди магазинов с широким ассортиментом — от {minimumPositions} позиций.</p>
         {stores.length ? <ol className="home-store-list">{stores.map(store => <li key={store.retailer}><Link href="/prices"><span className="price-retailer-name"><RetailerBadge name={store.retailer} decorative /><span>{store.retailer}</span></span><span className="community-muted">Позиций: {store.count}</span><strong>{new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(store.median)} ₽ <small>/ 100 мл</small></strong></Link></li>)}</ol> : <p className="community-empty">Пока недостаточно цен для сравнения магазинов с широким ассортиментом.</p>}
       </section>
       <section className="home-section" aria-labelledby="home-tierlists">
-        <div className="home-section-heading"><h2 id="home-tierlists">Тирлисты</h2><Link href="/tierlists">Посмотреть все ↗</Link></div>
+        <div className="home-section-heading"><h2 id="home-tierlists">Тирлисты</h2><Link href="/tierlists">Все</Link></div>
         <div className="home-tier-cards"><article className="tier-list-card"><Link href="/tierlists" className="tier-list-card-preview" aria-label="Открыть официальный тирлист">{['S','A','B','C','D'].map(tier => <span key={tier} className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span>)}</Link><div className="tier-list-card-copy"><h3><Link href="/tierlists">Официальный рейтинг CanRush</Link></h3><p>{official.ratedCount ? `Напитков с оценками: ${official.ratedCount}` : 'Нужно больше позиций с тремя оценками и более'}</p></div></article>{tierlists.map(list => <TierListCard key={list.id} list={list} products={tierProducts} />)}</div>
       </section>
-      <section className="home-section" aria-labelledby="home-users"><div className="home-section-heading"><h2 id="home-users">Рейтинг пользователей</h2><Link href="/leaderboard">Посмотреть все ↗</Link></div>
+      <section className="home-section" aria-labelledby="home-users"><div className="home-section-heading"><h2 id="home-users">Рейтинг пользователей</h2><Link href="/leaderboard">Все</Link></div>
         <ol className="experience-leaderboard">{users.slice(0, 5).map(user => <li key={user.username}><Link href={`/profile/${user.username}`}><span className="leaderboard-rank">{user.rank}</span><span className="wall-avatar">{user.avatarId ? <Image src={`/api/profile-images/${user.avatarId}`} width={40} height={40} unoptimized alt="" /> : user.username[0]?.toUpperCase()}</span><span className="leaderboard-name">@{user.username}<small>Уровень {experienceLevel(user.xp).level}</small></span><strong>{user.xp.toLocaleString('ru-RU')} XP</strong></Link></li>)}</ol>
         {!users.length && <p className="community-empty">Оставьте первый отзыв, чтобы попасть в рейтинг.</p>}
       </section>
