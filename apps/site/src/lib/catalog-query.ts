@@ -1,3 +1,4 @@
+import { productSlug, registeredProductIdentity } from './catalog/product-slugs';
 import { searchMatches } from './search-match';
 import { Buffer } from 'node:buffer';
 import {
@@ -173,11 +174,13 @@ export function filterCatalogGroups(groups: CatalogGroup[], filters: CatalogFilt
 }
 
 export function catalogGroupSlug(brand: string, flavor: string): string {
-  return Buffer.from(JSON.stringify([brand, flavor]), 'utf-8').toString('base64url');
+  return productSlug(brand, flavor);
 }
 
 export function decodeCatalogGroupSlug(slug: string): { brand: string; flavor: string } | null {
   if (!slug || slug.length > 512) return null;
+  const registered = registeredProductIdentity(slug);
+  if (registered) return registered;
   try {
     const parsed: unknown = JSON.parse(Buffer.from(slug, 'base64url').toString('utf-8'));
     if (!Array.isArray(parsed) || parsed.length !== 2) return null;

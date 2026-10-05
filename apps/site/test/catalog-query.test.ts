@@ -186,3 +186,13 @@ it('sorts discussion counts descending with unreviewed drinks last', () => {
   const counts = new Map([['Burn\u0000original', 2], ['Red Bull\u0000original', 9]]);
   expect(filterCatalogGroups(groups, { query: '', brand: '', flavor: '', sort: 'comments' }, new Map(), counts).map(item => item.brand)).toEqual(['Red Bull', 'Burn', 'Gorilla']);
 });
+
+it('uses readable, stable canonical URLs and accepts historical encoded links', () => {
+  expect(catalogGroupSlug('Burn', 'blend:mango+peach:sugarfree')).toBe('burn-mango-peach-zero');
+  expect(catalogGroupSlug('Burn', 'peach:sugarfree')).toBe('burn-mango-peach-zero');
+  const legacy = Buffer.from(JSON.stringify(['Burn', 'peach:sugarfree'])).toString('base64url');
+  expect(decodeCatalogGroupSlug(legacy)).toEqual({ brand: 'Burn', flavor: 'peach:sugarfree' });
+  expect(decodeCatalogGroupSlug('burn-mango-peach-zero')).toEqual({ brand: 'Burn', flavor: 'blend:mango+peach:sugarfree' });
+  expect(catalogGroupSlug('New Brand', 'mango')).toMatch(/^new-brand-mango-[a-z0-9]+$/);
+  expect(catalogGroupSlug('New Brand', 'mango')).not.toBe(catalogGroupSlug('New-Brand', 'mango'));
+});

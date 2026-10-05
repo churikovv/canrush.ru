@@ -1,3 +1,4 @@
+import { catalogGroupSlug, decodeCatalogGroupSlug } from '@/lib/catalog-query';
 import { Buffer } from 'node:buffer';
 import { getSessionCookie } from 'better-auth/cookies';
 import type { NextRequest } from 'next/server';
@@ -33,7 +34,12 @@ export function proxy(request: NextRequest) {
   requestHeaders.set('Content-Security-Policy', contentSecurityPolicy);
 
   const pathname = request.nextUrl.pathname;
-  const response =
+  const productSegment = /^\/catalog\/([^/]+)$/.exec(pathname)?.[1];
+  const identity = productSegment ? decodeCatalogGroupSlug(productSegment) : null;
+  const canonical = identity ? catalogGroupSlug(identity.brand, identity.flavor) : null;
+  const productRedirect = canonical && canonical !== productSegment ? request.nextUrl.clone() : null;
+  if (productRedirect) productRedirect.pathname = `/catalog/${canonical}`;
+  const response = productRedirect ? NextResponse.redirect(productRedirect, 301) :
     SIGNED_IN_PAGES.test(pathname) && !getSessionCookie(request)
       ? NextResponse.redirect(new URL('/sign-in', request.url))
       : NextResponse.next({ request: { headers: requestHeaders } });
