@@ -83,5 +83,9 @@ export function mergeCatalogAliases(groups: CatalogGroup[]): CatalogGroup[] {
 export async function readTierPickerGroups(): Promise<CatalogGroup[]> {
   const files = await Promise.all(CITIES.map(city => readCityCatalog(city.id)));
   return mergeCatalogAliases(files.flatMap(file => file?.groups ?? []))
-    .filter(group => isResolvedFlavor(group.flavor) && group.variants.length > 0);
+    .filter(group => {
+      const brand = group.brand.trim();
+      return brand.length > 0 && brand.toLowerCase() !== 'unknown'
+        && isResolvedFlavor(group.flavor) && group.variants.length > 0;
+    });
 }

@@ -66,3 +66,12 @@ it('merges confirmed Burn aliases in the picker and does not guess from identica
   put('regions/kazan.json', { cityId: 'kazan', groups: [group(129, 'blend:mango+peach:sugarfree'), group(130, 'peach')] });
   expect((await readTierPickerGroups()).map(item => item.flavor)).toEqual(['blend:mango+peach:sugarfree', 'peach']);
 });
+
+it('excludes unrecognized brands even with recognized flavors from the tier picker', async () => {
+  const { readTierPickerGroups } = await import('../src/lib/catalog-files');
+  const groups = ['Unknown', ' unknown ', '', 'Burn'].map(brand => ({ ...group(100, 'cherry'), brand }));
+  put('regions/moscow.json', { cityId: 'moscow', groups });
+  expect((await readTierPickerGroups()).map(item => item.brand)).toEqual(['Burn']);
+  // Existing placements can still resolve through the full catalog.
+  expect((await readAllCatalogGroups()).some(item => item.brand === 'Unknown')).toBe(true);
+});
