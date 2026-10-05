@@ -6,7 +6,7 @@ import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { TierListEditor } from '@/components/tier-list-editor';
 import { auth } from '@/lib/auth';
-import { loadAllCatalogGroups } from '@/lib/catalog';
+import { loadAllCatalogGroups, loadTierPickerGroups } from '@/lib/catalog';
 import {
   catalogGroupsToTierProducts,
   getTierListBySlug,
@@ -30,11 +30,11 @@ export default async function EditTierListPage({
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect('/sign-in');
 
-  const [{ slug }, query, groups] = await Promise.all([params, searchParams, loadAllCatalogGroups()]);
+  const [{ slug }, query, groups, pickerGroups] = await Promise.all([params, searchParams, loadAllCatalogGroups(), loadTierPickerGroups()]);
   const list = await getTierListBySlug(slug);
   if (!list || list.userId !== session.user.id) notFound();
 
-  const catalogProducts = catalogGroupsToTierProducts(groups, await getReviewSummaries(groups));
+  const catalogProducts = catalogGroupsToTierProducts(pickerGroups, await getReviewSummaries(pickerGroups));
   const catalogIds = new Set(catalogProducts.map((product) => product.id));
   const missingProducts = tierListProductsForPlacements(groups, list.items).filter((product) => !catalogIds.has(product.id));
   const products = [...catalogProducts, ...missingProducts].sort(

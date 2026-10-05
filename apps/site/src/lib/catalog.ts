@@ -1,7 +1,7 @@
 import { isResolvedFlavor } from '@canrush/shared';
 import { cache } from 'react';
 import { selectedCity } from '@/lib/location';
-import { activeOffers, readCityCatalog, readAllCatalogGroups } from '@/lib/catalog-files';
+import { activeOffers, readCityCatalog, readAllCatalogGroups, readTierPickerGroups } from '@/lib/catalog-files';
 import type { CatalogGroup, FlavorVariant } from '@canrush/shared';
 import type { QueryResultRow } from 'pg';
 import { getPool } from '@/db/pool';
@@ -22,6 +22,7 @@ export const loadCatalogSnapshot = cache(async () => {
 });
 export async function loadCatalogGroups(): Promise<CatalogGroup[]> { return (await loadCatalogSnapshot()).groups; }
 export const loadAllCatalogGroups = cache(readAllCatalogGroups);
+export const loadTierPickerGroups = cache(readTierPickerGroups);
 
 function groupKey(brand: string, flavor: string): string {
   return `${brand}\u0000${flavor}`;

@@ -48,3 +48,21 @@ it('restores archived identities without reviving old prices or replacing curren
   expect(all.find(item => item.flavor === 'original')).toMatchObject({ minPrice: 120, coverImageUrl: '/images/products/original.jpg' });
   expect((await readCityCatalog('moscow'))?.groups).toHaveLength(1);
 });
+
+it('keeps archived and unresolved cards for saved lists but excludes them from the picker', async () => {
+  const { readTierPickerGroups } = await import('../src/lib/catalog-files');
+  put('regions/moscow.json', { cityId: 'moscow', groups: [group(99), group(100, 'unknown'), group(101, 'unresolved:old')] });
+  put('regions/kazan.json', { cityId: 'kazan', groups: [group(129), group(130, 'kiwi')] });
+  put('product-registry.json', { groups: [group(55, 'apple')] });
+  const picker = await readTierPickerGroups();
+  expect(picker.map(item => item.flavor)).toEqual(['original', 'kiwi']);
+  expect((await readAllCatalogGroups()).map(item => item.flavor)).toContain('apple');
+  expect((await readAllCatalogGroups()).map(item => item.flavor)).toContain('unresolved:old');
+});
+
+it('merges confirmed Burn aliases in the picker and does not guess from identical photos', async () => {
+  const { readTierPickerGroups } = await import('../src/lib/catalog-files');
+  put('regions/moscow.json', { cityId: 'moscow', groups: [group(99, 'peach:sugarfree'), group(100, 'blend:mango+peach')] });
+  put('regions/kazan.json', { cityId: 'kazan', groups: [group(129, 'blend:mango+peach:sugarfree'), group(130, 'peach')] });
+  expect((await readTierPickerGroups()).map(item => item.flavor)).toEqual(['blend:mango+peach:sugarfree', 'peach']);
+});

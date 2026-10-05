@@ -1,6 +1,6 @@
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { CITIES, DEFAULT_CITY, canonicalProductFlavor, type CatalogGroup, type CityId } from '@canrush/shared';
+import { CITIES, DEFAULT_CITY, canonicalProductFlavor, isResolvedFlavor, type CatalogGroup, type CityId } from '@canrush/shared';
 export interface CatalogFile { groups?: CatalogGroup[]; generatedAt?: string | null; cityId?: CityId; status?: 'ok' | 'stale' | 'unavailable' }
 const cache = new Map<string, { stamp: string; data: CatalogFile }>();
 const pending = new Map<string, Promise<CatalogFile | null>>();
@@ -77,4 +77,11 @@ export function mergeCatalogAliases(groups: CatalogGroup[]): CatalogGroup[] {
     });
   }
   return [...merged.values()];
+}
+
+/** Picker uses current regional identities; archive is only for existing placements. */
+export async function readTierPickerGroups(): Promise<CatalogGroup[]> {
+  const files = await Promise.all(CITIES.map(city => readCityCatalog(city.id)));
+  return mergeCatalogAliases(files.flatMap(file => file?.groups ?? []))
+    .filter(group => isResolvedFlavor(group.flavor) && group.variants.length > 0);
 }
