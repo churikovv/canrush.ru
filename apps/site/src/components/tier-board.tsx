@@ -20,7 +20,7 @@ export function TierBoard({ products, placements, emptyLabel = 'Пока пус�
     <div id="tier-capture-board" className="tier-board" aria-label="Тирлист энергетических напитков">
       {TIER_KEYS.map((tier) => {
         const tierItems = placements
-          .filter((placement) => placement.tier === tier)
+          .filter((placement) => placement.tier === tier && productByKey.has(itemKey(placement.brand, placement.flavor)))
           .sort((left, right) => left.position - right.position);
 
         return (

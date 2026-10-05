@@ -231,15 +231,8 @@ export function tierListProductsForPlacements(
   placements: TierListPlacement[],
 ): TierListProduct[] {
   const byKey = new Map(catalogGroupsToTierProducts(groups).map((product) => [productKey(product.brand, product.flavor), product]));
-  return placements.map((placement) => {
+  return placements.flatMap((placement) => {
     const product = byKey.get(productKey(placement.brand, placement.flavor));
-    return product ?? {
-      id: catalogGroupSlug(placement.brand, placement.flavor),
-      brand: placement.brand,
-      flavor: placement.flavor,
-      flavorLabel: flavorName(placement.flavor),
-      retailerCount: 0,
-      reviewCount: 0,
-    };
+    return product ? [product] : [];
   });
 }

@@ -5518,3 +5518,10 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
   .home-section-heading h2 { min-width: 0; }
   .home-section-heading > a { flex-shrink: 0; min-height: 0; line-height: 1.5; }
 }
+
+.not-found-page { max-width: 620px; margin: 48px auto; }
+.not-found-code { display: block; color: var(--color-brand); font-size: 5rem; font-weight: 800; line-height: 1; }
+.not-found-page h1 { margin: 24px 0 16px; font-size: 2rem; line-height: 1.2; }
+.not-found-page p { color: var(--color-muted-strong); line-height: 1.6; }
+.not-found-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+@media (max-width: 639px) { .not-found-page { margin: 24px auto; } .not-found-actions > a { width: 100%; justify-content: center; } }
