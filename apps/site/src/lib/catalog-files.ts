@@ -1,6 +1,6 @@
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { CITIES, DEFAULT_CITY, canonicalProductFlavor, isResolvedFlavor, type CatalogGroup, type CityId } from '@canrush/shared';
+import { CITIES, DEFAULT_CITY, canonicalProductFlavor, isResolvedFlavor, isExcludedEnergyBrand, type CatalogGroup, type CityId } from '@canrush/shared';
 export interface CatalogFile { groups?: CatalogGroup[]; generatedAt?: string | null; cityId?: CityId; status?: 'ok' | 'stale' | 'unavailable' }
 const cache = new Map<string, { stamp: string; data: CatalogFile }>();
 const pending = new Map<string, Promise<CatalogFile | null>>();
@@ -22,6 +22,7 @@ export async function readCatalogFile(relative: string): Promise<CatalogFile | n
 }
 export function activeOffers(groups: CatalogGroup[], now = Date.now()): CatalogGroup[] {
   return groups.flatMap(group => {
+    if (isExcludedEnergyBrand(group.brand)) return [];
     const variants = group.variants.filter(offer => offer.price > 0 && Number.isFinite(offer.price) && (!offer.promoEndsAt || Date.parse(offer.promoEndsAt) > now));
     return variants.length ? [{ ...group, variants, minPrice: Math.min(...variants.map(offer => offer.price)) }] : [];
   });
@@ -85,7 +86,7 @@ export async function readTierPickerGroups(): Promise<CatalogGroup[]> {
   return mergeCatalogAliases(files.flatMap(file => file?.groups ?? []))
     .filter(group => {
       const brand = group.brand.trim();
-      return brand.length > 0 && brand.toLowerCase() !== 'unknown'
+      return brand.length > 0 && brand.toLowerCase() !== 'unknown' && !isExcludedEnergyBrand(brand)
         && isResolvedFlavor(group.flavor) && group.variants.length > 0;
     });
 }

@@ -8,3 +8,9 @@ export function canonicalProductFlavor(brand: string | undefined, flavor: string
   return brand === 'Burn' && (flavor === 'blend:mango+peach' || flavor === 'peach:sugarfree')
     ? 'blend:mango+peach:sugarfree' : flavor;
 }
+
+/** Known non-energy labels supplied incorrectly by the source. Extend after review. */
+const EXCLUDED_ENERGY_BRANDS = new Set(['pepsi', 'пепси']);
+export function isExcludedEnergyBrand(brand: string | undefined): boolean {
+  return EXCLUDED_ENERGY_BRANDS.has((brand ?? '').trim().toLowerCase());
+}

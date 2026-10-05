@@ -265,3 +265,13 @@ describe('expired offer filtering', () => {
     expect(result[0]?.sourceId).toBe('meta-no-end');
   });
 });
+
+it('rejects Pepsi labels from source metadata and product titles even with energy keywords', () => {
+  const items = [
+    { uuid: 'wrong-brand', title: 'Энергетик Манго 330 мл', brandUuid: 'pepsi' },
+    { uuid: 'soda', title: 'Pepsi энергетический напиток 330 мл' },
+    { uuid: 'valid', title: 'Энергетический напиток Burn 449 мл' },
+  ].map(item => ({ ...item, itemType: 'meta_offer' as const, partner: { name: 'Магазин' }, priceData: { new: { type: 'value' as const, value: 9900 } } }));
+  const result = mapEdadealResponse({ items }, { brands: BRANDS, keywords: ['энергетик'] }, MOSCOW, FETCHED_AT, new Map([['pepsi', 'Pepsi']]));
+  expect(result.map(product => product.sourceId)).toEqual(['valid']);
+});

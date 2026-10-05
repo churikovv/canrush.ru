@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { isAxiosError } from 'axios';
-import { CITIES } from '@canrush/shared';
+import { CITIES, isExcludedEnergyBrand } from '@canrush/shared';
 import type { BrandAliases, Product, SourceAdapter, SourceQueryConfig } from '@canrush/shared';
 import { SourceBlockedError, StrategyNotApplicableError } from '../fetch/errors.js';
 import { runStrategies, type StrategyDefinition } from '../fetch/strategy.js';
@@ -140,6 +140,7 @@ function matchesCategory(
   aliases: BrandAliases,
   apiBrand: string | undefined,
 ): boolean {
+  if (isExcludedEnergyBrand(apiBrand) || /(?:^|[^a-zа-яё])(?:pepsi|пепси)(?=$|[^a-zа-яё])/iu.test(name)) return false;
   const lower = name.toLowerCase();
   const explicitEnergy =
     keywords.some((keyword) => lower.includes(keyword.toLowerCase())) ||

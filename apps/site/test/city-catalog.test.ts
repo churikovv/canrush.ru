@@ -75,3 +75,12 @@ it('excludes unrecognized brands even with recognized flavors from the tier pick
   // Existing placements can still resolve through the full catalog.
   expect((await readAllCatalogGroups()).some(item => item.brand === 'Unknown')).toBe(true);
 });
+
+it('excludes previously cached Pepsi from the catalog and picker without deleting history', async () => {
+  const { readTierPickerGroups } = await import('../src/lib/catalog-files');
+  const soda = { ...group(100, 'mango'), brand: 'Pepsi' };
+  put('regions/moscow.json', { cityId: 'moscow', groups: [soda, group(100)] });
+  expect(activeOffers([soda, group(100)]).map(item => item.brand)).toEqual(['Burn']);
+  expect((await readTierPickerGroups()).map(item => item.brand)).toEqual(['Burn']);
+  expect((await readAllCatalogGroups()).some(item => item.brand === 'Pepsi')).toBe(true);
+});
