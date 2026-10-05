@@ -19,3 +19,10 @@ it('does not conflate other brands or ordinary peach with sugarfree', () => {
   expect(canonicalProductFlavor('Monster', 'blend:mango+peach')).toBe('blend:mango+peach');
   expect(canonicalProductFlavor('Burn', 'peach')).toBe('peach');
 });
+
+it('consolidates Vulkan edition descriptions while keeping original and zero separate', () => {
+  const flavors = ['tropical', 'blend:mango+passion_fruit', 'blend:mango+passion_fruit+tropical', 'citrus', 'blend:citrus+pineapple', 'berry', 'blend:berry+pomegranate+raspberry', 'original', 'sugarfree'];
+  const groups = flavors.map(flavor => ({ brand: 'Vulkan', flavor, variants: [], minPrice: 0 }));
+  expect(mergeCatalogAliases(groups).map(group => group.flavor)).toEqual(['tropical', 'citrus', 'berry', 'original', 'sugarfree']);
+  expect(canonicalProductFlavor('Other', 'blend:citrus+pineapple')).toBe('blend:citrus+pineapple');
+});

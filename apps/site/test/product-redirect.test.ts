@@ -1,3 +1,4 @@
+import { canonicalProductFlavor } from '@canrush/shared';
 import { expect, it } from 'vitest';
 import { NextRequest } from 'next/server';
 import { proxy } from '../src/proxy';
@@ -18,7 +19,14 @@ it('all reserved slugs are unique and resolve to their original identities', () 
   for (const [key, slug] of entries) {
     const [brand, flavor] = JSON.parse(key) as [string, string];
     expect(slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-    expect(catalogGroupSlug(brand, flavor)).toBe(slug);
+    const canonicalKey = JSON.stringify([brand, canonicalProductFlavor(brand, flavor)]);
+    expect(catalogGroupSlug(brand, flavor)).toBe((registry as Record<string, string>)[canonicalKey]);
     expect(decodeCatalogGroupSlug(slug)).toEqual({ brand, flavor });
   }
+});
+
+it('redirects already published readable Vulkan aliases to the edition URL', () => {
+  const response = proxy(new NextRequest('https://canrush.ru/catalog/vulkan-citrus-pineapple?tab=reviews'));
+  expect(response.status).toBe(301);
+  expect(response.headers.get('location')).toBe('https://canrush.ru/catalog/vulkan-citrus?tab=reviews');
 });

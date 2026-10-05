@@ -2,7 +2,7 @@ import { canonicalProductFlavor } from '@canrush/shared';
 import { namedProductFlavor, isPlainOriginal } from './product-lines.js';
 import type { BrandAliases, FlavorAliases, Product, SourceName } from '@canrush/shared';
 
-export const NORMALIZATION_VERSION = 9;
+export const NORMALIZATION_VERSION = 10;
 
 export interface RawProductInput {
   sourceId: string;

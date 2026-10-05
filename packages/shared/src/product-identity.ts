@@ -5,6 +5,15 @@ export function isResolvedFlavor(flavor: string): boolean {
 
 /** Verified Burn Zero Sugar Peach Mango aliases: retailer titles omit mango or zero. */
 export function canonicalProductFlavor(brand: string | undefined, flavor: string): string {
+  if (brand === 'Vulkan') {
+    const aliases: Record<string, string> = {
+      'blend:mango+passion_fruit': 'tropical',
+      'blend:mango+passion_fruit+tropical': 'tropical',
+      'blend:citrus+pineapple': 'citrus',
+      'blend:berry+pomegranate+raspberry': 'berry',
+    };
+    return aliases[flavor] ?? flavor;
+  }
   return brand === 'Burn' && (flavor === 'blend:mango+peach' || flavor === 'peach:sugarfree')
     ? 'blend:mango+peach:sugarfree' : flavor;
 }
