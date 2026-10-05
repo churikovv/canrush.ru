@@ -12,7 +12,8 @@
     "download-icons": "tsx src/index.ts download-icons",
     "test": "vitest run",
     "ingredients": "tsx src/ingredients/cli.ts",
-    "ingredients:publish": "tsx src/ingredients/publish-cli.ts"
+    "ingredients:publish": "tsx src/ingredients/publish-cli.ts",
+    "registry:restore": "tsx src/restore-product-registry.ts"
   },
   "dependencies": {
     "@canrush/shared": "*",

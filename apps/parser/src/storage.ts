@@ -1,3 +1,4 @@
+import { archiveProducts } from './product-registry.js';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -165,6 +166,10 @@ export async function saveRawSnapshot(result: AdapterRunResult): Promise<string>
 }
 
 export async function saveSiteCatalog(groups: CatalogGroup[], generatedAt: string = new Date().toISOString()): Promise<string> {
+  let previous: CatalogGroup[] = [];
+  try { previous = (JSON.parse(await readFile(SITE_CATALOG_PATH, 'utf8')) as { groups?: CatalogGroup[] }).groups ?? []; }
+  catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+  await archiveProducts([...previous, ...groups]);
   await writeJson(SITE_CATALOG_PATH, {
     generatedAt,
     count: groups.length,

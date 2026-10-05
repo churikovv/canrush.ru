@@ -39,3 +39,12 @@ describe('city-specific assortment', () => {
     expect(activeOffers([data], Date.parse('2026-10-02'))).toEqual([]);
   });
 });
+
+it('restores archived identities without reviving old prices or replacing current offers', async () => {
+  put('product-registry.json', { groups: [{ ...group(55, 'apple'), coverImageUrl: '/images/products/apple.jpg' }, { ...group(50), coverImageUrl: '/images/products/original.jpg' }] });
+  put('regions/moscow.json', { cityId: 'moscow', groups: [group(120)] });
+  const all = await readAllCatalogGroups();
+  expect(all.find(item => item.flavor === 'apple')).toMatchObject({ minPrice: 0, variants: [], coverImageUrl: '/images/products/apple.jpg' });
+  expect(all.find(item => item.flavor === 'original')).toMatchObject({ minPrice: 120, coverImageUrl: '/images/products/original.jpg' });
+  expect((await readCityCatalog('moscow'))?.groups).toHaveLength(1);
+});

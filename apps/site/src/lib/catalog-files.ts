@@ -50,5 +50,12 @@ export async function readAllCatalogGroups(): Promise<CatalogGroup[]> {
     if (!previous) groups.set(key, group);
     else if (!previous.coverImageUrl && group.coverImageUrl) groups.set(key, { ...previous, coverImageUrl: group.coverImageUrl });
   }
+  const archive = await readCatalogFile('product-registry.json');
+  for (const group of archive?.groups ?? []) {
+    const key = JSON.stringify([group.brand, group.flavor]);
+    const current = groups.get(key);
+    if (!current) groups.set(key, { ...group, variants: [], minPrice: 0 });
+    else if (!current.coverImageUrl && group.coverImageUrl) groups.set(key, { ...current, coverImageUrl: group.coverImageUrl });
+  }
   return [...groups.values()];
 }

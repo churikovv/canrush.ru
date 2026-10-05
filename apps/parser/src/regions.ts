@@ -1,3 +1,4 @@
+import { archiveProducts } from './product-registry.js';
 import { NORMALIZATION_VERSION } from './normalize.js';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -35,6 +36,8 @@ export async function loadSnapshot(cityId: CityId): Promise<RegionSnapshot | nul
 }
 export async function saveSnapshot(snapshot: RegionSnapshot) {
   const { products, ...catalog } = snapshot;
+  const previous = await loadSnapshot(snapshot.cityId);
+  await archiveProducts([...(previous?.groups ?? []), ...snapshot.groups]);
   await writeAtomic(path.join(DATA_DIR, 'regions', snapshot.cityId, 'latest.json'), JSON.stringify(snapshot));
   await writeAtomic(path.join(SITE_REGIONS, `${snapshot.cityId}.json`), JSON.stringify({ ...catalog, count: catalog.groups.length }));
   // Product history is partitioned by city; a retry on the same day replaces only that city's snapshot.

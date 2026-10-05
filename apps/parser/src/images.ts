@@ -43,7 +43,7 @@ async function fileExists(filePath: string): Promise<boolean> {
  */
 const CACHE_DIR = path.resolve(import.meta.dirname, '../../../data/image-cache');
 const inFlight = new Map<string, Promise<string | undefined>>();
-async function cachedImage(url: string): Promise<string | undefined> {
+export async function cachedImage(url: string): Promise<string | undefined> {
   const legacy = imageFilename(url);
   try { if ((await stat(localFilePath(legacy))).size > 0) return localUrl(legacy); } catch { /* Not cached yet. */ }
   try {
