@@ -13,7 +13,7 @@
   --color-danger-soft: #fff1f0;
   --color-success: #146c43;
   --color-success-soft: #eaf7f0;
-  --color-focus: #ffcc00;
+  --color-focus: var(--color-brand);
   --font-sans: var(--font-object-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   --motion-fast: 160ms;
   --site-tab-bar-height: 50px;
