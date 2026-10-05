@@ -1,6 +1,6 @@
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { CITIES, DEFAULT_CITY, type CatalogGroup, type CityId } from '@canrush/shared';
+import { CITIES, DEFAULT_CITY, canonicalProductFlavor, type CatalogGroup, type CityId } from '@canrush/shared';
 export interface CatalogFile { groups?: CatalogGroup[]; generatedAt?: string | null; cityId?: CityId; status?: 'ok' | 'stale' | 'unavailable' }
 const cache = new Map<string, { stamp: string; data: CatalogFile }>();
 const pending = new Map<string, Promise<CatalogFile | null>>();
@@ -14,6 +14,7 @@ export async function readCatalogFile(relative: string): Promise<CatalogFile | n
       const stamp = `${metadata.ino}:${metadata.mtimeMs}:${metadata.size}`;
       if (cache.get(filename)?.stamp === stamp) return cache.get(filename)!.data;
       const data = JSON.parse(await readFile(filename, 'utf8')) as CatalogFile;
+      if (data.groups) data.groups = mergeCatalogAliases(data.groups);
       cache.set(filename, { stamp, data }); return data;
     } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; cache.delete(filename); return null; }
   })().finally(() => pending.delete(filename));
@@ -58,4 +59,22 @@ export async function readAllCatalogGroups(): Promise<CatalogGroup[]> {
     else if (!current.coverImageUrl && group.coverImageUrl) groups.set(key, { ...current, coverImageUrl: group.coverImageUrl });
   }
   return [...groups.values()];
+}
+
+/** Merge only verified aliases within a single city snapshot; never mix regional offers. */
+export function mergeCatalogAliases(groups: CatalogGroup[]): CatalogGroup[] {
+  const merged = new Map<string, CatalogGroup>();
+  for (const group of groups) {
+    const flavor = canonicalProductFlavor(group.brand, group.flavor);
+    const key = JSON.stringify([group.brand, flavor]);
+    const previous = merged.get(key);
+    const variants = [...(previous?.variants ?? []), ...group.variants];
+    const unique = [...new Map(variants.map(offer => [JSON.stringify([offer.source, offer.retailer, offer.volumeMl, offer.url]), offer])).values()];
+    merged.set(key, {
+      ...group, flavor, variants: unique,
+      coverImageUrl: previous?.coverImageUrl || group.coverImageUrl,
+      minPrice: unique.length ? Math.min(...unique.map(offer => offer.price)) : 0,
+    });
+  }
+  return [...merged.values()];
 }

@@ -191,3 +191,12 @@ describe('dedupeProducts', () => {
     expect(result[0]?.price).toBe(120);
   });
 });
+
+it('normalizes verified Burn Peach Zero and omitted zero aliases', () => {
+  const config = loadProductsConfig();
+  for (const name of ['Burn Peach Zero 449мл', 'Burn Персик-манго 449мл', 'Burn Zero Персик манго без сахара 449мл']) {
+    const product = normalizeProduct('edadeal', { sourceId: 'burn', name, price: 100, url: 'https://example.com/burn' },
+      config.brands, '2026-10-05', config.brandAliases, config.flavors, config.flavorAliases);
+    expect(product.flavor).toBe('blend:mango+peach:sugarfree');
+  }
+});

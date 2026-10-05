@@ -1,7 +1,8 @@
+import { canonicalProductFlavor } from '@canrush/shared';
 import { namedProductFlavor, isPlainOriginal } from './product-lines.js';
 import type { BrandAliases, FlavorAliases, Product, SourceName } from '@canrush/shared';
 
-export const NORMALIZATION_VERSION = 8;
+export const NORMALIZATION_VERSION = 9;
 
 export interface RawProductInput {
   sourceId: string;
@@ -137,6 +138,7 @@ export function normalizeProduct(
   flavor = namedProductFlavor(brand, name) ?? flavor;
   if (!flavor && knownFlavors.includes('original') && isPlainOriginal(brand, name)) flavor = 'original';
   if (sugarfree && flavor && !flavor.startsWith('monster_ultra_') && flavor !== 'monster_absolute_zero' && !flavor.endsWith(':sugarfree') && flavor !== 'sugarfree') flavor = flavor === 'original' ? 'sugarfree' : `${flavor}:sugarfree`;
+  if (flavor) flavor = canonicalProductFlavor(brand, flavor);
   return {
     source,
     sourceId: raw.sourceId,

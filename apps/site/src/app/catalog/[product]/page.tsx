@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { notFound } from 'next/navigation';
+import { canonicalProductFlavor } from '@canrush/shared';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
 import { CatalogProductDetail } from '@/components/catalog-product-detail';
 import type { ProductTab } from '@/components/catalog-product-tabs';
@@ -8,7 +9,7 @@ import { ProfileNavigation } from '@/components/profile-navigation';
 import { getProductIngredients } from '@/lib/ingredients';
 import { auth } from '@/lib/auth';
 import { getCatalogGroup, isFavorite } from '@/lib/catalog';
-import { catalogRetailerCount, decodeCatalogGroupSlug, flavorName } from '@/lib/catalog-query';
+import { catalogGroupSlug, catalogRetailerCount, decodeCatalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { getReviewSummary, getReviewsForProduct, getUserReview } from '@/lib/reviews';
 import { seoMetadata } from '@/lib/seo';
 
@@ -21,7 +22,7 @@ async function productFromParams(params: ProductParams) {
   const { product } = await params;
   const decoded = decodeCatalogGroupSlug(product);
   if (!decoded) return null;
-  return getCatalogGroup(decoded.brand, decoded.flavor);
+  return getCatalogGroup(decoded.brand, canonicalProductFlavor(decoded.brand, decoded.flavor));
 }
 
 function resolveTab(value: string | undefined): ProductTab {
@@ -48,6 +49,10 @@ export default async function CatalogProductPage({
   searchParams: ProductSearchParams;
 }) {
   const { tab } = await searchParams;
+  const decoded = decodeCatalogGroupSlug((await params).product);
+  if (decoded && canonicalProductFlavor(decoded.brand, decoded.flavor) !== decoded.flavor) {
+    permanentRedirect(`/catalog/${catalogGroupSlug(decoded.brand, canonicalProductFlavor(decoded.brand, decoded.flavor))}${tab === 'reviews' ? '?tab=reviews' : ''}`);
+  }
   const activeTab = resolveTab(tab);
 
   const [group, session] = await Promise.all([
