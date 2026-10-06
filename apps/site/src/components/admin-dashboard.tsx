@@ -1,7 +1,8 @@
+import { REPORT_REASONS } from '@/lib/profile-report-fields';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { addAdminAction, blockUserAction, deleteAdminReviewAction, deleteAdminTierListAction, deleteAdminWallAction, deleteAdminCommentAction, removeAdminAction, unblockUserAction } from '@/app/admin/actions';
+import { reviewProfileReportAction, addAdminAction, blockUserAction, deleteAdminReviewAction, deleteAdminTierListAction, deleteAdminWallAction, deleteAdminCommentAction, removeAdminAction, unblockUserAction } from '@/app/admin/actions';
 import { AdminActionButton } from '@/components/admin-action-button';
 import type { SiteAdminIdentity } from '@/lib/admin';
 import { ADMIN_PAGE_SIZE, type AdminDashboardData } from '@/lib/admin-dashboard-data';
@@ -63,6 +64,13 @@ export function AdminDashboard({ admin, data, query, tab, notice, error }: Props
       </form>
       {tab === 'admins' && <form className="admin-invite-form" action={addAdminAction}><label htmlFor="admin-email">Добавить администратора</label><div><input id="admin-email" name="email" type="email" required autoComplete="email" maxLength={320} placeholder="name@example.com" />{context}<AdminActionButton pendingLabel="Добавляем…" variant="primary">Добавить</AdminActionButton></div></form>}
       {data.total === 0 ? <div className="admin-empty-result"><strong>{query ? 'Ничего не найдено' : 'Здесь пока пусто'}</strong><span>{query ? 'Измените запрос или сбросьте поиск.' : 'Записи появятся после действий пользователей.'}</span></div> : <>
+        {tab === 'reports' && <DataTable label="Жалобы на профили" columns={['Профиль', 'Автор жалобы', 'Причина', 'Комментарий', 'Дата', 'Статус', 'Действия']}>{data.reports.map(report => <tr key={report.id}>
+          <td>{report.targetUsername ? <Link href={`/profile/${report.targetUsername}`}>@{report.targetUsername}</Link> : report.targetName}</td>
+          <td>{report.authorUsername ? <Link href={`/profile/${report.authorUsername}`}>@{report.authorUsername}</Link> : report.authorName}</td>
+          <td>{REPORT_REASONS[report.reason]}</td><td><RecordText text={report.comment} /></td><td>{formatDate(report.createdAt)}</td>
+          <td><span className="admin-status">{report.status === 'open' ? 'Новая' : report.status === 'resolved' ? 'Рассмотрена' : 'Отклонена'}</span></td>
+          <td>{report.status === 'open' && <form action={reviewProfileReportAction}>{context}<input type="hidden" name="reportId" value={report.id} /><AdminActionButton name="status" value="resolved" pendingLabel="Сохраняем…">Рассмотрена</AdminActionButton><AdminActionButton name="status" value="dismissed" pendingLabel="Сохраняем…">Отклонить</AdminActionButton></form>}</td>
+        </tr>)}</DataTable>}
         {tab === 'users' && <DataTable label="Участники" columns={['Участник', 'Отзывы', 'Тирлисты', 'Регистрация', 'Статус', 'Действия']}>{data.users.map(user => <tr key={user.id}>
           <td><div className="admin-table-identity">{user.username ? <Link href={`/profile/${user.username}`}>{user.name || `@${user.username}`}</Link> : <strong>{user.name || 'Без имени'}</strong>}<span>{user.email}</span>{user.username && <span>@{user.username}</span>}</div></td><td>{user.reviewCount}</td><td>{user.tierListCount}</td><td>{formatDate(user.createdAt)}</td>
           <td><span className={`admin-status ${user.isAdmin ? 'admin-status-admin' : user.blockedAt ? 'admin-status-blocked' : 'admin-status-active'}`}>{user.isAdmin ? 'Администратор' : user.blockedAt ? 'Заблокирован' : 'Активен'}</span></td>

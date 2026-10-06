@@ -5,6 +5,7 @@ export const ADMIN_TABS = [
   { key: 'reviews', label: 'Отзывы' },
   { key: 'comments', label: 'Комментарии' },
   { key: 'wall', label: 'Стена' },
+  { key: 'reports', label: 'Жалобы' },
   { key: 'admins', label: 'Администраторы' },
 ] as const;
 export type AdminTab = typeof ADMIN_TABS[number]['key'];

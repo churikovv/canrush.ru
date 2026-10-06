@@ -35,3 +35,15 @@ it('guards review comment moderation before accessing the database', async () =>
   await expect(deleteAdminCommentAction(form())).rejects.toThrow('not-admin');
   expect(mocks.connect).not.toHaveBeenCalled();
 });
+
+it('protects report moderation and records its audit transaction', async () => {
+  const { reviewProfileReportAction } = await import('../src/app/admin/actions');
+  const data = form(); data.set('reportId', id); data.set('status','resolved'); data.set('tab','reports');
+  mocks.requireAdmin.mockRejectedValueOnce(new Error('not-admin'));
+  await expect(reviewProfileReportAction(data)).rejects.toThrow('not-admin');
+  expect(mocks.connect).not.toHaveBeenCalled();
+  mocks.query.mockImplementation(async (sql: string) => ({ rows: sql.startsWith('update') ? [{ id }] : [] }));
+  await expect(reviewProfileReportAction(data)).rejects.toThrow('notice=report-reviewed');
+  expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('adminAuditLog'), ['admin@example.com','resolved','profile-report',id]);
+  expect(mocks.query).toHaveBeenCalledWith('commit');
+});

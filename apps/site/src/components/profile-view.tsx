@@ -1,3 +1,4 @@
+import { ProfileReportForm } from '@/components/profile-report-form';
 import { ProfileStatFill } from '@/components/profile-stat-fill';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import { getExperience } from '@/lib/profile-experience';
@@ -104,6 +105,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             {isOwn && <PresenceSetting key={String(community.showOnline)} visible={community.showOnline} />}
             {adminHref && <Link className="community-admin" href={adminHref}>Администрирование ↗</Link>}
           </section>
+          {!isOwn && viewerId && <ProfileReportForm targetId={profile.id} />}
           {isOwn && <SignOutButton />}
         </aside>
       </div>

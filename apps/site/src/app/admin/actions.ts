@@ -10,6 +10,7 @@ import { adminTab, adminPage, type AdminTab } from '@/lib/admin-tabs';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 
 type AdminNotice =
+  | 'report-reviewed'
   | 'admin-added'
   | 'admin-exists'
   | 'admin-removed'
@@ -265,4 +266,22 @@ export async function deleteAdminCommentAction(formData: FormData): Promise<void
   if (!deleted) redirect(adminLocation('error', 'invalid-target', query));
   revalidatePath('/admin'); revalidatePath('/catalog', 'layout'); revalidatePath('/profile', 'layout');
   redirect(adminLocation('notice', 'comment-deleted', query));
+}
+
+export async function reviewProfileReportAction(formData: FormData): Promise<void> {
+  const admin = await requireSiteAdmin();
+  const query = returnQuery(formData);
+  const id = String(formData.get('reportId') ?? '');
+  const status = String(formData.get('status') ?? '');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) || !['resolved','dismissed'].includes(status)) redirect(adminLocation('error','invalid-target',query));
+  let updated;
+  try {
+    updated = await auditedMutation(admin, status, 'profile-report', id, async client => {
+      const result = await client.query('update "profileReport" set status=$2,"reviewedAt"=now(),"reviewedBy"=$3 where id=$1 and status=\'open\' returning id', [id,status,admin.userId]);
+      return result.rows[0] ?? null;
+    });
+  } catch { redirect(adminLocation('error','operation-failed',query)); }
+  if (!updated) redirect(adminLocation('error','invalid-target',query));
+  revalidatePath('/admin');
+  redirect(adminLocation('notice','report-reviewed',query));
 }

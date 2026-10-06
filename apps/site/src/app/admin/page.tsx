@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 };
 
 const NOTICES: Record<string, string> = {
+  'report-reviewed': 'Статус жалобы обновлён.',
   'admin-added': 'Администратор добавлен.',
   'admin-exists': 'Этот email уже есть в списке администраторов.',
   'admin-removed': 'Доступ администратора удалён.',

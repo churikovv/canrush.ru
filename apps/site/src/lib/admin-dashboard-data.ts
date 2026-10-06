@@ -1,3 +1,4 @@
+import type { ReportReason } from '@/lib/profile-report-fields';
 import { getPool } from '@/db/pool';
 import { normalizeAdminSearch } from '@/lib/admin-fields';
 import { adminPage, type AdminTab } from '@/lib/admin-tabs';
@@ -15,7 +16,9 @@ export interface AdminMetrics {
   newUsers: number; newReviews: number; newWall: number; newTierLists: number;
   published: number; drafts: number; blocked: number; averageRating: number | null;
 }
+export interface AdminReportEntry { id: string; reason: ReportReason; comment: string; status: 'open' | 'resolved' | 'dismissed'; createdAt: Date; authorName: string; authorUsername: string | null; targetName: string; targetUsername: string | null }
 export interface AdminDashboardData {
+  reports: AdminReportEntry[];
   comments: AdminReviewCommentEntry[];
   users: AdminUserEntry[]; tierLists: AdminTierListEntry[]; reviews: AdminReviewEntry[];
   admins: AdminEntry[]; wall: AdminWallEntry[]; total: number; page: number;
@@ -24,7 +27,7 @@ export interface AdminDashboardData {
 
 export async function getAdminDashboardData(search: string, tab: AdminTab, requestedPage = 1): Promise<AdminDashboardData> {
   const db = getPool();
-  const result: AdminDashboardData = { comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [] };
+  const result: AdminDashboardData = { reports: [], comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [] };
   if (tab === 'analytics') {
     const [metrics, registrations] = await Promise.all([
       db.query<AdminMetrics>(`select
@@ -55,6 +58,7 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
   const query = normalizeAdminSearch(search);
   const pattern = query ? `%${query}%` : null;
   const fragments = {
+    reports: `from "profileReport" r join "user" u on u.id=r."userId" join "user" p on p.id=r."targetId" where ($1::text is null or r.comment ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1 or p.name ilike $1 or p.email ilike $1 or coalesce(p.username,'') ilike $1)`,
     comments: `from "reviewComment" c join "user" u on u.id=c."userId" join review r on r.id=c."reviewId" where ($1::text is null or c.text ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1 or r.brand ilike $1)`,
     users: `from "user" u left join "userBlock" ub on ub."userId"=u.id left join "siteAdmin" sa on sa.email=lower(u.email)
       where ($1::text is null or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1)`,
@@ -68,6 +72,7 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
   result.page = Math.min(adminPage(requestedPage), Math.max(1, Math.ceil(result.total / ADMIN_PAGE_SIZE)));
   const params = [pattern, ADMIN_PAGE_SIZE, (result.page - 1) * ADMIN_PAGE_SIZE];
   const pagination = 'limit $2 offset $3';
+  if (tab === 'reports') result.reports = (await db.query<AdminReportEntry>(`select r.id,r.reason,r.comment,r.status,r."createdAt",u.name as "authorName",u.username as "authorUsername",p.name as "targetName",p.username as "targetUsername" ${from} order by (r.status='open') desc,r."createdAt" desc,r.id ${pagination}`,params)).rows;
   if (tab === 'users') result.users = (await db.query<AdminUserEntry>(`select u.id,u.name,u.email,u.username,u."createdAt", ub."createdAt" as "blockedAt",(sa.email is not null) as "isAdmin",
     (select count(*)::int from review where "userId"=u.id) as "reviewCount",
     (select count(*)::int from "tierList" where "userId"=u.id) as "tierListCount" ${from} order by u."createdAt" desc,u.id ${pagination}`,params)).rows;

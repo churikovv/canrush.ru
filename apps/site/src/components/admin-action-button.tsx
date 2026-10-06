@@ -4,6 +4,8 @@ import type { MouseEvent, ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 
 interface AdminActionButtonProps {
+  name?: string;
+  value?: string;
   children: ReactNode;
   pendingLabel: string;
   confirmMessage?: string;
@@ -11,6 +13,7 @@ interface AdminActionButtonProps {
 }
 
 export function AdminActionButton({
+  name, value,
   children,
   pendingLabel,
   confirmMessage,
@@ -26,6 +29,8 @@ export function AdminActionButton({
     <button
       className={`admin-action-button admin-action-button-${variant}`}
       type="submit"
+      name={name}
+      value={value}
       disabled={pending}
       onClick={confirmAction}
     >
