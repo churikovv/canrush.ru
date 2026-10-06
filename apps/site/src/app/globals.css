@@ -5663,7 +5663,6 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 @media (max-width: 639px) { .not-found-page { margin: 24px auto; } .not-found-actions > a { width: 100%; justify-content: center; } }
 
 .profile-report { padding: 1rem 0; border-top: 1px solid #dce0e5; }
-.profile-report summary { cursor: pointer; color: #565e69; }
 .profile-report form { display: grid; gap: .75rem; padding-top: 1rem; }
 .profile-report label { font-weight: 600; }
 .profile-report select, .profile-report textarea { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid #c8ced6; border-radius: 12px; padding: .75rem; background: white; color: #333; font: inherit; }

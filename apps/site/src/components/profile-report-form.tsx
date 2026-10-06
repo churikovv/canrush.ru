@@ -1,13 +1,15 @@
 'use client';
-import { useActionState, useId } from 'react';
+import { useActionState, useId, useState } from 'react';
 import { reportProfileAction } from '@/app/profile/report-actions';
 import { REPORT_REASONS } from '@/lib/profile-report-fields';
 
 export function ProfileReportForm({ targetId }: { targetId: string }) {
   const [state, action, pending] = useActionState(reportProfileAction, {});
   const id = useId();
-  return <details className="profile-report">
-    <summary>Пожаловаться на профиль</summary>
+  const [open, setOpen] = useState(false);
+  return <div className="profile-report">
+    <button type="button" className="community-button community-button-secondary" aria-expanded={open} aria-controls={id + '-panel'} onClick={() => setOpen(value => !value)}>{open ? 'Закрыть форму жалобы' : 'Пожаловаться на профиль'}</button>
+    <div id={id + '-panel'} hidden={!open}>
     {state.success ? <p role="status">{state.success}</p> : <form action={action}>
       <input type="hidden" name="targetId" value={targetId} />
       <label htmlFor={id + '-reason'}>Причина жалобы</label>
@@ -21,5 +23,6 @@ export function ProfileReportForm({ targetId }: { targetId: string }) {
       {state.error && <p className="field-error" role="alert">{state.error}</p>}
       <button type="submit" className="community-button community-button-secondary" disabled={pending}>{pending ? 'Отправляем…' : 'Отправить жалобу'}</button>
     </form>}
-  </details>;
+    </div>
+  </div>;
 }
