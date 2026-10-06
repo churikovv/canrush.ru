@@ -1,4 +1,4 @@
-export const COOKIE_CONSENT_KEY = 'canrush.cookie-consent.v2';
+export const COOKIE_CONSENT_KEY = 'canrush.cookie-consent.v3';
 export const COOKIE_CONSENT_EVENT = 'canrush:cookie-consent';
 
 export function hasCookieConsent(): boolean {

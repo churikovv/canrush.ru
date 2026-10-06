@@ -1,3 +1,4 @@
+import { AdminCampaigns } from '@/components/admin-campaigns';
 import type { Metadata } from 'next';
 import Link from '@/components/navigation-progress';
 import { BrandShell } from '@/components/brand-shell';
@@ -35,7 +36,7 @@ const ERRORS: Record<string, string> = {
 };
 
 interface AdminPageProps {
-  searchParams: Promise<{ q?: string; tab?: string; page?: string; notice?: string; error?: string }>;
+  searchParams: Promise<{ q?: string; tab?: string; page?: string; notice?: string; error?: string; days?: string }>;
 }
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
@@ -50,6 +51,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       surfaceClassName="admin-surface"
     >
       <AdminDashboard
+        campaignPanel={tab === 'campaigns' ? <AdminCampaigns days={[0,7,30,90].includes(Number(params.days)) ? Number(params.days) : 30} page={adminPage(params.page)} /> : undefined}
         admin={admin}
         data={data}
         tab={tab}

@@ -9,7 +9,7 @@ import { ADMIN_PAGE_SIZE, type AdminDashboardData } from '@/lib/admin-dashboard-
 import { ADMIN_TABS, adminHref, type AdminTab } from '@/lib/admin-tabs';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 
-interface Props { admin: SiteAdminIdentity; data: AdminDashboardData; query: string; tab: AdminTab; notice?: string; error?: string }
+interface Props { admin: SiteAdminIdentity; data: AdminDashboardData; query: string; tab: AdminTab; notice?: string; error?: string; campaignPanel?: ReactNode }
 const formatDate = (value: Date) => new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Europe/Moscow' }).format(value);
 const number = (value: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(value);
 function RecordText({ text }: { text: string }) {
@@ -19,7 +19,7 @@ function DataTable({ columns, children, label }: { columns: string[]; children: 
   return <div className="admin-table-scroll" tabIndex={0} role="region" aria-label={label}><table className="admin-table"><thead><tr>{columns.map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead><tbody>{children}</tbody></table></div>;
 }
 
-export function AdminDashboard({ admin, data, query, tab, notice, error }: Props) {
+export function AdminDashboard({ admin, data, query, tab, notice, error, campaignPanel }: Props) {
   const label = ADMIN_TABS.find(item => item.key === tab)!.label;
   const pages = Math.max(1, Math.ceil(data.total / ADMIN_PAGE_SIZE));
   const context = <><input type="hidden" name="query" value={query} /><input type="hidden" name="tab" value={tab} /><input type="hidden" name="page" value={data.page} /></>;
@@ -56,7 +56,8 @@ export function AdminDashboard({ admin, data, query, tab, notice, error }: Props
         </dl></section>
       </div>
     </>}
-    {tab !== 'analytics' && <section className="admin-data-panel" aria-labelledby="admin-current-title">
+    {tab === 'campaigns' && campaignPanel}
+    {tab !== 'analytics' && tab !== 'campaigns' && <section className="admin-data-panel" aria-labelledby="admin-current-title">
       <div className="admin-panel-heading"><h2 id="admin-current-title">{label} <span>{number(data.total)}</span></h2><span>{query ? 'По результатам поиска' : 'Все записи'}</span></div>
       <form key={`${tab}:${query}`} className="admin-table-search" method="get" role="search"><input type="hidden" name="tab" value={tab} />
         <label htmlFor="admin-search-input" className="sr-only">Поиск в разделе «{label}»</label><input id="admin-search-input" name="q" type="search" defaultValue={query} maxLength={80} placeholder={tab === 'admins' ? 'Найти по email' : 'Имя, email или содержимое'} />

@@ -1,5 +1,6 @@
 export const ADMIN_TABS = [
   { key: 'analytics', label: 'Аналитика' },
+  { key: 'campaigns', label: 'Рекламные кампании' },
   { key: 'users', label: 'Участники' },
   { key: 'tierlists', label: 'Тирлисты' },
   { key: 'reviews', label: 'Отзывы' },

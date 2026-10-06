@@ -1,3 +1,4 @@
+import { CampaignTracker } from '@/components/campaign-tracker';
 import { NavigationProgressProvider } from '@/components/navigation-progress';
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
@@ -87,6 +88,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           <ActivityHeartbeat />
           <Suspense fallback={null}>
             <YandexMetrika />
+            <CampaignTracker />
           </Suspense>
         </SiteMotionProvider>
       </body>

@@ -30,6 +30,7 @@ export interface AdminDashboardData {
 export async function getAdminDashboardData(search: string, tab: AdminTab, requestedPage = 1): Promise<AdminDashboardData> {
   const db = getPool();
   const result: AdminDashboardData = { market: [], reports: [], comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [] };
+  if (tab === 'campaigns') return result;
   if (tab === 'analytics') {
     const [metrics, registrations] = await Promise.all([
       db.query<AdminMetrics>(`select

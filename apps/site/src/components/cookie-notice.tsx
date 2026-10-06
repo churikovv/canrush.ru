@@ -59,7 +59,7 @@ export function CookieNotice() {
       <div className="cookie-notice-copy">
         <h2 id="cookie-notice-title">Cookie на CanRush</h2>
         <p>
-          Мы используем необходимые cookie для входа и, с вашего согласия, Яндекс Метрику для
+          Мы используем необходимые cookie для входа и, с вашего согласия, аналитику рекламных переходов и Яндекс Метрику для
           статистики и улучшения сайта. <Link href="/privacy#cookies">Подробнее в Политике</Link>.
         </p>
       </div>

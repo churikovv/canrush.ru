@@ -1,3 +1,4 @@
+import { attributeRegistration } from '@/lib/campaigns';
 import { betterAuth } from 'better-auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { magicLink } from 'better-auth/plugins';
@@ -130,6 +131,10 @@ export function createAuth(options: CreateAuthOptions = {}) {
     emailAndPassword: {
       enabled: false,
     },
+    databaseHooks: { user: { create: { after: async (user, context) => {
+      // Analytics must never prevent account creation. Existing-user sign-ins do not call this hook.
+      try { await attributeRegistration(user.id, user.createdAt, context?.headers?.get('cookie') ?? null, options.database ?? getPool()); } catch { console.warn('Campaign registration attribution unavailable'); }
+    } } } },
     session: {
       expiresIn: 60 * 60 * 24 * 7,
       updateAge: 60 * 60 * 24,

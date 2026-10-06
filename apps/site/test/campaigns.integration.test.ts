@@ -1,0 +1,58 @@
+import { randomUUID } from 'node:crypto';
+import { afterAll, expect, it, vi } from 'vitest';
+import { Pool } from 'pg';
+const url=process.env.TEST_DATABASE_URL??'postgresql://localhost:5432/canrush_site_test';
+if(new URL(url).pathname!=='/canrush_site_test') throw new Error('Test DB only');
+process.env.DATABASE_URL=url;
+process.env.BETTER_AUTH_URL='http://localhost:3000';
+process.env.BETTER_AUTH_SECRET='campaign-integration-test-secret-at-least-32';
+const pool=new Pool({connectionString:url,max:3});
+vi.mock('../src/db/pool',()=>({getPool:()=>pool}));
+const api=await import('../src/lib/campaigns');
+const {createAuth}=await import('../src/lib/auth');
+const {buildMagicLinkVerificationPath}=await import('../src/lib/magic-link-url');
+const campaigns:string[]=[];const users:string[]=[];
+const visitor=randomUUID();
+const input={name:'test',path:'/catalog',source:'test',medium:'test',campaign:'test',content:'',term:''};
+afterAll(async()=>{await pool.query('delete from "user" where id=any($1::text[])',[users]);await pool.query('delete from "adCampaign" where id=any($1::uuid[])',[campaigns]);await pool.end();});
+it('deduplicates concurrent visits and signs browser identifiers',async()=>{
+ const id=await api.createCampaign(input);campaigns.push(id);
+ await Promise.all(Array.from({length:5},()=>api.recordCampaignVisit(id,visitor)));
+ expect((await pool.query('select count(*)::int n from "adVisit" where "campaignId"=$1',[id])).rows[0].n).toBe(1);
+ expect(api.readVisitor(api.visitorCookie(visitor))).toBe(visitor);
+ expect(api.readVisitor(api.visitorCookie(visitor).slice(0,-1)+'z')).toBeNull();
+ expect(await api.recordCampaignVisit(randomUUID(),visitor)).toBe(false);
+});
+it('attributes actual new Magic Link accounts to first touch and not existing-user logins',async()=>{
+ const second=await api.createCampaign(input);campaigns.push(second);await api.recordCampaignVisit(second,visitor);
+ const email=`campaign-${randomUUID()}@example.com`;let token='';
+ const auth=createAuth({database:pool,sendMagicLink:async(_email,value)=>{token=value;}});
+ const request=()=>new Request('http://localhost:3000/api/auth/sign-in/magic-link',{method:'POST',headers:{origin:'http://localhost:3000','sec-fetch-site':'same-origin','content-type':'application/json','x-forwarded-for':'203.0.113.45'},body:JSON.stringify({email,callbackURL:'/profile'})});
+ expect((await auth.handler(request())).status).toBe(200);
+ const verify=()=>new Request(`http://localhost:3000${buildMagicLinkVerificationPath(token)}`,{headers:{cookie:`canrush_campaign_visitor=${api.visitorCookie(visitor)}`}});
+ expect((await auth.handler(verify())).status).toBe(302);
+ const user=(await pool.query('select id from "user" where email=$1',[email])).rows[0];users.push(user.id);
+ const attribution=(await pool.query('select v."campaignId" from "adRegistration" a join "adVisit" v on v.id=a."visitId" where a."userId"=$1',[user.id])).rows;
+ expect(attribution).toEqual([{campaignId:campaigns[0]}]);
+ expect((await auth.handler(request())).status).toBe(200);await auth.handler(verify());
+ expect((await pool.query('select count(*)::int n from "adRegistration" where "userId"=$1',[user.id])).rows[0].n).toBe(1);
+ const stats=(await api.campaignStats(30)).items.find(c=>c.id===campaigns[0]);expect(stats?.registrations).toBe(1);expect(stats?.converted).toBe(1);
+});
+it('excludes expired and future touches and rejects forged cookies',async()=>{
+ const id=await api.createCampaign(input);campaigns.push(id);const person=randomUUID();await api.recordCampaignVisit(id,person);
+ await pool.query('update "adVisit" set "createdAt"=now()-interval \'31 days\' where "campaignId"=$1',[id]);
+ const uid=randomUUID();users.push(uid);await pool.query('insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt") values($1,\'Test\',$2,true,now(),now())',[uid,uid+'@example.com']);
+ await api.attributeRegistration(uid,new Date(),`canrush_campaign_visitor=${api.visitorCookie(person)}`,pool);
+ expect((await pool.query('select * from "adRegistration" where "userId"=$1',[uid])).rows).toHaveLength(0);
+ await pool.query('update "adVisit" set "createdAt"=now()+interval \'1 day\' where "campaignId"=$1',[id]);
+ await api.attributeRegistration(uid,new Date(),`canrush_campaign_visitor=${api.visitorCookie(person)}`,pool);
+ expect((await pool.query('select * from "adRegistration" where "userId"=$1',[uid])).rows).toHaveLength(0);
+});
+it('rejects cross-origin and malformed tracking requests before writing data',async()=>{
+ const {NextRequest}=await import('next/server');const {POST}=await import('../src/app/api/campaign-visit/route');
+ expect((await POST(new NextRequest(`http://localhost:3000/api/campaign-visit?id=${campaigns[0]}`,{method:'POST',headers:{origin:'https://example.com'}}))).status).toBe(403);
+ expect((await POST(new NextRequest('http://localhost:3000/api/campaign-visit?id=broken',{method:'POST',headers:{origin:'http://localhost:3000'}}))).status).toBe(400);
+ const before=(await pool.query('select count(*)::int n from "adVisit" where "campaignId"=$1',[campaigns[0]])).rows[0].n;
+ expect((await POST(new NextRequest(`http://localhost:3000/api/campaign-visit?id=${campaigns[0]}`,{method:'POST',headers:{origin:'http://localhost:3000','user-agent':'PreviewBot'}}))).status).toBe(204);
+ expect((await pool.query('select count(*)::int n from "adVisit" where "campaignId"=$1',[campaigns[0]])).rows[0].n).toBe(before);
+});
