@@ -1,11 +1,11 @@
 'use client';
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 export interface Crop { left: number; top: number; width: number; height: number }
-export interface CropSource { kind: 'avatar' | 'banner'; file: File; src: string; width: number; height: number }
+export interface CropSource { kind: 'avatar' | 'banner' | 'market'; file: File; src: string; width: number; height: number }
 export function ProfileImageCrop({ source, initial, onCancel, onConfirm }: { source: CropSource; initial?: Crop; onCancel: () => void; onConfirm: (crop: Crop, preview: string) => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const ratio = source.kind === 'avatar' ? 1 : 4;
+  const ratio = source.kind === 'banner' ? 4 : 1;
   const [zoom, setZoom] = useState(initial ? Math.min(source.width, source.height * ratio) / initial.width : 1);
   const [x, setX] = useState(initial && source.width !== initial.width ? initial.left / (source.width - initial.width) * 100 : 50);
   const [y, setY] = useState(initial && source.height !== initial.height ? initial.top / (source.height - initial.height) * 100 : 50);
@@ -40,7 +40,7 @@ export function ProfileImageCrop({ source, initial, onCancel, onConfirm }: { sou
     setY(Math.max(0, Math.min(100, drag.current.positionY - (event.clientY - drag.current.y) * scale / Math.max(1, source.height - height) * 100)));
   }
   return <dialog ref={dialog} className="profile-crop-dialog" onCancel={event => { event.preventDefault(); onCancel(); }} aria-labelledby="crop-title">
-    <h2 id="crop-title">{source.kind === 'avatar' ? 'Миниатюра аватара' : 'Область баннера'}</h2><p>Перетащите фото или настройте положение ползунками.</p>
+    <h2 id="crop-title">{source.kind === 'market' ? 'Обрезка фотографии' : source.kind === 'avatar' ? 'Миниатюра аватара' : 'Область баннера'}</h2><p>Перетащите фото или настройте положение ползунками.</p>
     <canvas ref={canvas} width={800} height={800 / ratio} className={`profile-crop-preview crop-${source.kind}`} aria-label="Предпросмотр выбранной области" onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); drag.current = { x: event.clientX, y: event.clientY, positionX: x, positionY: y }; }} onPointerMove={move} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }} />
     <label>Масштаб<input type="range" min="1" max="4" step="0.01" value={zoom} onChange={event => setZoom(Number(event.target.value))} /></label>
     <label>По горизонтали<input type="range" min="0" max="100" value={x} onChange={event => setX(Number(event.target.value))} disabled={width === source.width} /></label>

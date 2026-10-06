@@ -10,7 +10,8 @@ import { ProfileHeader } from '@/components/profile-header';
 import type { ProfileData } from '@/lib/profile';
 
 type ImageKind = 'avatar' | 'banner';
-type ImageSelection = { file?: File; preview?: string; remove?: boolean; crop?: Crop; source?: CropSource };
+type ProfileCropSource = CropSource & { kind: ImageKind };
+type ImageSelection = { file?: File; preview?: string; remove?: boolean; crop?: Crop; source?: ProfileCropSource };
 
 function ApplyButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
@@ -30,7 +31,7 @@ export function ProfileEditForm({ profile }: { profile: ProfileData }) {
   const [username, setUsername] = useState(profile.username);
   const [channel, setChannel] = useState(profile.telegramChannel ? `t.me/${profile.telegramChannel}` : '');
   const [images, setImages] = useState<Partial<Record<ImageKind, ImageSelection>>>({});
-  const [cropSource, setCropSource] = useState<CropSource | null>(null);
+  const [cropSource, setCropSource] = useState<ProfileCropSource | null>(null);
   const [dragging, setDragging] = useState<ImageKind | null>(null);
   const [imageError, setImageError] = useState('');
   const [decoding, setDecoding] = useState({ avatar: false, banner: false });

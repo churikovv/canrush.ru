@@ -13,18 +13,18 @@ function links(html: string) {
 }
 
 describe('site tab bar', () => {
-  it('lists every top-level section with home first and profile last', () => {
+  it('lists six sections with market and messages instead of home', () => {
     const html = renderToStaticMarkup(createElement(SiteTabBar));
-    expect(links(html).map(({ href }) => href)).toEqual(['/', '/catalog', '/prices', '/tierlists', '/profile']);
-    for (const label of ['Главная', 'Каталог', 'Цены', 'Тирлисты', 'Профиль']) expect(html).toContain(`>${label}</span>`);
+    expect(links(html).map(({ href }) => href)).toEqual(['/catalog', '/prices', '/tierlists', '/market', '/messages', '/profile']);
+    for (const label of ['Каталог', 'Цены', 'Тирлисты', 'Маркет', 'Сообщения', 'Профиль']) expect(html).toContain(`>${label}</span>`);
     expect(links(html).find(({ href }) => href === '/prices')?.label).toBe('Цены по магазинам');
     expect(html).not.toContain('aria-current');
     expect(html).not.toContain('/profile/favorites');
   });
 
-  it('marks home as active on the homepage', () => {
+  it('does not mark an unrelated tab on the homepage', () => {
     const html = renderToStaticMarkup(createElement(SiteTabBar, { active: 'home' }));
-    expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/']);
+    expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual([]);
   });
 
   it('marks only the active section as the current page', () => {

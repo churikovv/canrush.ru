@@ -12,7 +12,7 @@ export async function prepareReviewPhotos(formData: FormData) {
   }
   if (entries.some(entry => typeof entry === 'string')) throw new ReviewPhotoError('Некорректные фотографии.');
   const files = (entries as File[]).filter(file => file.size > 0);
-  if (files.length + retained.length > MAX_REVIEW_PHOTOS) throw new ReviewPhotoError('К отзыву можно добавить не более 5 фотографий.');
+  if (files.length + retained.length > MAX_REVIEW_PHOTOS) throw new ReviewPhotoError('Можно добавить не более 5 фотографий.');
   if (files.some(file => file.size > MAX_REVIEW_PHOTO_BYTES)) throw new ReviewPhotoError('Каждая фотография должна быть не больше 5 МБ.');
   if (files.some(file => !REVIEW_PHOTO_TYPES.includes(file.type))) throw new ReviewPhotoError('Выберите фотографии в формате JPG, PNG или WebP.');
   const photos: PreparedReviewPhoto[] = [];
