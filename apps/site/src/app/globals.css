@@ -23,7 +23,7 @@
   box-sizing: border-box;
 }
 
-.site-loading { min-height: 100svh; background: var(--color-brand); color: var(--color-surface); display: grid; grid-template-rows: auto 1fr auto; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); }
+.site-loading { animation: canrush-loading-reveal 350ms step-end both; min-height: 100svh; background: var(--color-brand); color: var(--color-surface); display: grid; grid-template-rows: auto 1fr auto; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); }
 .site-loading-top { display: flex; justify-content: space-between; gap: 24px; font-size: .875rem; }
 .site-loading-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; padding: 40px 0; }
 .site-loading-grid { display: block; width: min(32vw, 160px); height: auto; overflow: visible; fill: currentColor; }
@@ -5670,3 +5670,10 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .profile-report textarea { resize: vertical; }
 .profile-report p { margin: .5rem 0; overflow-wrap: anywhere; }
 .profile-report button { width: 100%; }
+
+
+/* Fast navigation never reveals the loader; the page itself is not delayed. */
+@keyframes canrush-loading-reveal {
+  from { visibility: hidden; opacity: 0; }
+  to { visibility: visible; opacity: 1; }
+}
