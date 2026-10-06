@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { useFormStatus } from 'react-dom';
 import { toggleFavoriteAction } from '@/app/catalog/actions';
 

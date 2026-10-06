@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import type { TierListProduct, TierListSummary } from '@/lib/tier-list-types';
 
 interface TierListCardProps {

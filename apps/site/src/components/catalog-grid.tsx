@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useRef, useTransition } from 'react';
 

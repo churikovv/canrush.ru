@@ -1,7 +1,7 @@
 'use client';
 
 import { MIN_REVIEW_LENGTH, normalizeReviewText, reviewTextGuidance } from '@/lib/review-fields';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import {

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { NavigationIcon, type NavigationSection } from '@/components/navigation-icon';
 import { SiteTabBarLabel } from '@/components/site-tab-bar-label';
 

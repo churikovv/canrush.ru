@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { BrandShell } from '@/components/brand-shell';
 import { LegalDocument, type LegalSection } from '@/components/legal-document';
 import { LEGAL_DETAILS } from '@/lib/legal';

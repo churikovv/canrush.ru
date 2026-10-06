@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { CatalogReviewItem } from '@/components/catalog-review-item';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import type { ReviewData } from '@/lib/reviews';

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { TierListCard } from '@/components/tier-list-card';
 import type { TierListProduct, TierListSummary } from '@/lib/tier-list-types';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { COOKIE_CONSENT_EVENT, COOKIE_CONSENT_KEY, hasCookieConsent } from '@/lib/cookie-consent';

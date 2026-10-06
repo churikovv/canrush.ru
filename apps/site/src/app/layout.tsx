@@ -1,3 +1,4 @@
+import { NavigationProgressProvider } from '@/components/navigation-progress';
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { Suspense, type ReactNode } from 'react';
@@ -81,7 +82,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           <a className="skip-link" href="#main-content">
             Перейти к содержанию
           </a>
-          <NotificationStateProvider>{children}</NotificationStateProvider>
+          <NavigationProgressProvider><NotificationStateProvider>{children}</NotificationStateProvider></NavigationProgressProvider>
           <CookieNotice />
           <ActivityHeartbeat />
           <Suspense fallback={null}>

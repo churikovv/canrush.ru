@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 import { TIER_KEYS, type TierListPlacement, type TierListProduct } from '@/lib/tier-list-types';
 

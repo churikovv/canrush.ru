@@ -1,6 +1,6 @@
 'use client';
 import { useState, useTransition } from 'react';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { useRouter } from 'next/navigation';
 import { listingAction } from '@/app/market/actions';
 import { formatPrice } from '@/lib/market-fields';

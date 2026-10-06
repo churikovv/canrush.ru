@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import Image from 'next/image';
 import { useId, useState, useTransition } from 'react';
 import { reviewDiscussionAction } from '@/app/catalog/discussion-actions';

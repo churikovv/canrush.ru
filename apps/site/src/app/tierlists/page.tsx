@@ -1,7 +1,7 @@
 import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { ShareTierListButton } from '@/components/share-tier-list-button';

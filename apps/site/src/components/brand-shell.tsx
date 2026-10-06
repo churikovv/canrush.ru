@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { Suspense, type ReactNode } from 'react';
 import { CityHeader } from '@/components/city-header';
 import { NotificationBell } from '@/components/notification-bell';

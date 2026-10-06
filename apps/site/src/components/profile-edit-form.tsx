@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { deleteAccountAction, updateProfileAction, type ProfileFormState } from '@/app/profile/actions';

@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { isResolvedFlavor, type CatalogGroup } from '@canrush/shared';
 import { RetailerBadge } from '@/components/retailer-badge';
 import { cheapestVariant } from '@/lib/catalog';

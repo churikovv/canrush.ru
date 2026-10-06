@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { auth } from '@/lib/auth';
 import { getPool } from '@/db/pool';
 import { BrandShell } from '@/components/brand-shell';

@@ -1,6 +1,6 @@
 import { REPORT_REASONS } from '@/lib/profile-report-fields';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import type { ReactNode } from 'react';
 import { reviewProfileReportAction, addAdminAction, blockUserAction, deleteAdminReviewAction, deleteAdminTierListAction, deleteAdminWallAction, deleteAdminCommentAction, removeAdminAction, unblockUserAction } from '@/app/admin/actions';
 import { AdminActionButton } from '@/components/admin-action-button';

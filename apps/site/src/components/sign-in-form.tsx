@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useState, type FormEvent } from 'react';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { authClient } from '@/lib/auth-client';
 
 type FormState = 'idle' | 'sending' | 'sent';

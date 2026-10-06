@@ -3,7 +3,7 @@ import { TierListCard } from '@/components/tier-list-card';
 import { buildOfficialTierList, getCommunityTierLists, tierListProductsForPlacements } from '@/lib/tier-lists';
 import { preparePriceObservations, retailerPriceStatistics } from '@/lib/price-statistics';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { isResolvedFlavor, type CatalogGroup } from '@canrush/shared';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';

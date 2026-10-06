@@ -5,7 +5,7 @@ import { getExperience } from '@/lib/profile-experience';
 import { ProfileExperience } from '@/components/profile-experience';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { SignOutButton } from '@/components/sign-out-button';
 import type { ProfileData } from '@/lib/profile';
 import { COMMUNITY_PAGE_SIZE, getConnections, getPresence, getProfileCommunity, getProfileRatings, getProfileWall } from '@/lib/profile-community';

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import type { MarketMessage, MarketOrder } from '@/lib/market';
 import { ORDER_STATUS, DELIVERY, formatPrice, type OrderStatus } from '@/lib/market-fields';
 import { loadMessagesAction, orderStatusAction, readMessagesAction, sendMessageAction } from '@/app/market/actions';

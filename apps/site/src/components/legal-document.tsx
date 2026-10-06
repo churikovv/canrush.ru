@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import type { ReactNode } from 'react';
 
 export interface LegalSection {

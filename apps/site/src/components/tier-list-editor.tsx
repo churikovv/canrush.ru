@@ -4,7 +4,7 @@ import { PriceFilterInput } from '@/components/price-filter-input';
 import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import { compareTierProducts, type TierProductSort } from '@/lib/tier-product-sort';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { useActionState, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react';
 import { useFormStatus } from 'react-dom';
 import { LayoutGroup, motion } from 'motion/react';

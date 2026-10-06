@@ -1,7 +1,7 @@
 import { ReviewDiscussion } from '@/components/review-discussion';
 import { ProfileExperience } from '@/components/profile-experience';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import type { ReviewData } from '@/lib/reviews';
 

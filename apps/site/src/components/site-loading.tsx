@@ -1,8 +1,8 @@
 import type { CSSProperties } from 'react';
 import { LOADING_BLOCK_COUNT, LOADING_CYCLE_MS, LOADING_GLYPHS, LOADING_WORD, loadingBlockPosition } from '@/lib/loading-word';
 
-export function SiteLoading() {
-  return <main className="site-loading" id="main-content" aria-busy="true" aria-label="Загрузка Canrush">
+export function SiteLoading({ embedded = false }: { embedded?: boolean }) {
+  return <main className="site-loading" id={embedded ? undefined : "main-content"} aria-busy="true" aria-label="Загрузка Canrush">
     <div className="site-loading-top" aria-hidden="true"><span>{LOADING_WORD}</span><span>Загрузка</span></div>
     <div className="site-loading-center">
       <svg className="site-loading-grid" viewBox="0 0 160 224" aria-hidden="true" style={{ '--loading-cycle': `${LOADING_CYCLE_MS}ms` } as CSSProperties}>

@@ -1,6 +1,6 @@
 'use client';
 import { ProfileStatFill } from '@/components/profile-stat-fill';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { useEffect, useState } from 'react';
 import { experienceLevel, type Experience } from '@/lib/experience-level';
 

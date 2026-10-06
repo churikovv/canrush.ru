@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { BrandShell } from '@/components/brand-shell';
 import { CatalogControls } from '@/components/catalog-controls';
 import { CatalogGrid } from '@/components/catalog-grid';

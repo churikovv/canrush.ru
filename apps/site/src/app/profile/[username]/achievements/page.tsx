@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { auth } from '@/lib/auth';
 import { isSiteAdminEmail } from '@/lib/admin';
 import { getProfileByUsername } from '@/lib/profile';

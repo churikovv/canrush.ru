@@ -2,7 +2,7 @@
 
 import { PriceFilterInput } from '@/components/price-filter-input';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from '@/components/navigation-progress';
 import { useRouter } from 'next/navigation';
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState, useTransition } from 'react';
 
