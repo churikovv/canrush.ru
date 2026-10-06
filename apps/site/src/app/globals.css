@@ -5677,3 +5677,10 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 
 .market-gallery-open { display: block; width: 100%; padding: 0; border: 0; border-radius: 16px; background: var(--color-subtle); cursor: zoom-in; overflow: hidden; }
 .city-header-button .city-header-chevron { width: 16px; height: 16px; flex: 0 0 16px; }
+
+.profile-listing-previews { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.profile-listing-preview { min-width: 0; color: inherit; overflow-wrap: anywhere; }
+.profile-listing-preview h3 { font-size: 1rem; margin: 12px 0 8px; }
+.profile-listing-preview p { color: #59616b; font-size: .875rem; margin: 8px 0 0; }
+.profile-listing-preview:hover h3 { color: var(--color-primary, #006fff); }
+@media (max-width: 359px) { .profile-listing-previews { grid-template-columns: 1fr; } }

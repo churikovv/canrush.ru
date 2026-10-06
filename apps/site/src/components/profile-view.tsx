@@ -1,3 +1,5 @@
+import { getListings } from '@/lib/market';
+import { formatPrice } from '@/lib/market-fields';
 import { ProfileReportForm } from '@/components/profile-report-form';
 import { ProfileStatFill } from '@/components/profile-stat-fill';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
@@ -31,8 +33,8 @@ function displayName(profile: { name: string; username: string | null }): string
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, friends] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'),
+  const [community, ratings, wall, presence, friends, listings] = await Promise.all([
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username),
   ]);
   const experience = (await getExperience([profile.username]))[profile.username];
   const visibleAchievements = visibleProfileAchievements(viewerIsAdmin);
@@ -52,8 +54,6 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         actions={isOwn ? <div className="profile-owner-actions"><Link href="/profile/edit" className="community-button community-button-secondary profile-edit-action">Редактировать профиль</Link><Link href="/profile/settings" className="community-button community-button-secondary">Настройки</Link></div>
           : viewerId ? <FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
           : <Link className="community-button" href="/sign-in">Войти и подписаться</Link>} />
-
-      <div className="profile-owner-actions"><Link href={isOwn ? '/market?mine=1' : `/market?seller=${encodeURIComponent(profile.username)}`} className="community-button community-button-secondary">{isOwn ? 'Мои объявления' : 'Объявления пользователя'}</Link></div>
 
       <nav className="community-shortcuts" aria-label="Активность пользователя">
         {[{ href: favoritesHref, label: 'Избранное', count: profile.favoriteCount, icon: 'stat-favorites' },
@@ -75,6 +75,14 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
                 <p>Оценок: {ratings.count}</p>
               </div>
             </div> : <div className="community-empty"><p>Оценок пока нет.</p>{isOwn && <Link href="/catalog">Выбрать напиток и оставить отзыв ↗</Link>}</div>}
+          </section>
+
+          <section className="community-panel" aria-labelledby="profile-listings-title">
+            <div className="community-section-heading"><h2 id="profile-listings-title">Объявления</h2><Link href={isOwn ? '/market?mine=1' : `/market?seller=${encodeURIComponent(profile.username)}`}>Все ↗</Link></div>
+            {listings.items.length ? <div className="profile-listing-previews">{listings.items.slice(0, 2).map(listing => <Link className="profile-listing-preview" key={listing.id} href={`/market/${listing.id}`}>
+              <div className="market-card-image">{listing.photos[0] ? <Image src={`/api/market-photos/${listing.photos[0]}?size=thumbnail`} alt={listing.title} width={320} height={320} unoptimized /> : <span>Нет фото</span>}</div>
+              <h3>{listing.title}</h3><strong>{formatPrice(listing.price)} / шт.</strong><p>{listing.city}{listing.closed ? ' · В архиве' : ''}</p>
+            </Link>)}</div> : <div className="community-empty"><p>{isOwn ? 'Вы пока не создавали объявлений.' : 'Пользователь пока не создавал объявлений.'}</p>{isOwn && <Link href="/market/new">Создать объявление ↗</Link>}</div>}
           </section>
 
           {isOwn && <section className="community-panel" id="achievements" aria-labelledby="achievements-title">
