@@ -5677,3 +5677,9 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
   from { visibility: hidden; opacity: 0; }
   to { visibility: visible; opacity: 1; }
 }
+
+/* The delayed fallback must not expose the dark footer/overscroll canvas. */
+html:has(.site-loading),
+body:has(.site-loading) {
+  background: var(--color-surface);
+}
