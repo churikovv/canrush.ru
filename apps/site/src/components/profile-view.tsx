@@ -25,9 +25,9 @@ interface ProfileViewProps {
   wallPage?: number;
 }
 
-function displayName(profile: ProfileData): string {
+function displayName(profile: { name: string; username: string | null }): string {
   const name = profile.name.trim();
-  return name && !name.includes('@') ? name : profile.username;
+  return name && !name.includes('@') ? name : profile.username || 'Участник';
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
@@ -85,7 +85,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             <div className="community-section-heading"><h2 id="wall-title">Стена <span>{wall.count}</span></h2></div>
             {viewerId ? <WallComposer targetId={profile.id} /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
             {wall.comments.length ? <div className="wall-comments">{wall.comments.map(comment => <article key={comment.id} className="wall-comment">
-              <div className="wall-comment-heading"><span className="wall-avatar">{comment.avatarId ? <Image src={`/api/profile-images/${comment.avatarId}`} width={36} height={36} unoptimized alt="" /> : (comment.username ?? comment.name).slice(0, 1).toUpperCase()}</span><Link href={comment.username ? `/profile/${comment.username}` : '#wall'} className="wall-author">@{comment.username ?? 'пользователь'}</Link>{profileTagLabel(comment.tag) && <span className="profile-tag">{profileTagLabel(comment.tag)}</span>}{comment.username && <ProfileExperience username={comment.username} initial={{ xp: comment.xp, rank: null }} />}<time dateTime={comment.createdAt.toISOString()}>{new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' }).format(comment.createdAt)}</time></div>
+              <div className="wall-comment-heading"><span className="wall-avatar">{comment.avatarId ? <Image src={`/api/profile-images/${comment.avatarId}`} width={36} height={36} unoptimized alt="" /> : (comment.username ?? comment.name).slice(0, 1).toUpperCase()}</span><Link href={comment.username ? `/profile/${comment.username}` : '#wall'} className="wall-author"><strong>{displayName(comment)}</strong>{comment.username && <span> @{comment.username}</span>}</Link>{profileTagLabel(comment.tag) && <span className="profile-tag">{profileTagLabel(comment.tag)}</span>}{comment.username && <ProfileExperience username={comment.username} initial={{ xp: comment.xp, rank: null }} />}<time dateTime={comment.createdAt.toISOString()}>{new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' }).format(comment.createdAt)}</time></div>
               <p>{comment.text}</p><ReviewPhotoGallery photos={comment.photos} source="wall-photos" />
               {(isOwn || viewerId === comment.userId) && <DeleteWallComment id={comment.id} />}
             </article>)}</div> : <div className="wall-empty-card"><strong>Здесь пока тихо</strong><p>Оставьте первый комментарий.</p></div>}
