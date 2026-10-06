@@ -53,6 +53,8 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           : viewerId ? <FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
           : <Link className="community-button" href="/sign-in">Войти и подписаться</Link>} />
 
+      <div className="profile-owner-actions"><Link href={isOwn ? '/market?mine=1' : `/market?seller=${encodeURIComponent(profile.username)}`} className="community-button community-button-secondary">{isOwn ? 'Мои объявления' : 'Объявления пользователя'}</Link></div>
+
       <nav className="community-shortcuts" aria-label="Активность пользователя">
         {[{ href: favoritesHref, label: 'Избранное', count: profile.favoriteCount, icon: 'stat-favorites' },
           { href: `${base}/reviews`, label: 'Отзывы', count: profile.reviewCount, icon: 'stat-reviews' },

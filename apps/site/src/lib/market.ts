@@ -37,10 +37,10 @@ export async function createListing(userId: string, input: ListingInput, photos:
 const listingSelect = `select l.*,case when trim(u.name)<>'' and u.name not like '%@%' then u.name else coalesce(u.username,'Участник') end as "sellerName",u.username,
   array(select p.id::text from "marketPhoto" p where p."listingId"=l.id order by position) as photos
   from "marketListing" l join "user" u on u.id=l."sellerId"`;
-export async function getListings(page = 1, mine?: string, archive = false) {
-  const { rows } = await getPool().query(`${listingSelect} where l."deletedAt" is null and (not $3::boolean or l.closed) and
+export async function getListings(page = 1, mine?: string, archive = false, seller?: string) {
+  const { rows } = await getPool().query(`${listingSelect} where l."deletedAt" is null and ($4::text is null or u.username=$4) and (not $3::boolean or l.closed) and
     ($1::text is not null and l."sellerId"=$1 or $1::text is null and not l.closed and not exists(select 1 from "userBlock" where "userId"=l."sellerId"))
-    order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24, Boolean(mine && archive)]);
+    order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24, Boolean(mine && archive), seller ?? null]);
   return { items: rows.slice(0, 24).map(row => ({ ...row, createdAt: row.createdAt.toISOString() }) as Listing), hasMore: rows.length > 24 };
 }
 export async function getListing(id: string, viewer?: string, admin = false) {
