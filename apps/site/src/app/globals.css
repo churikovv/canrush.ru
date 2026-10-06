@@ -5107,8 +5107,11 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .wall-comments { margin-top: 20px; }
 .wall-comment { border-top: 1px solid #edf0f3; padding: 20px 0; }
 .wall-comment:last-child { padding-bottom: 0; }
-.wall-comment-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 16px; }
-.wall-author { font-size: .875rem; color: #0058cc; overflow-wrap: anywhere; min-height: 24px; }
+.wall-comment-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+.wall-author { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%; font-size: .875rem; color: #3e3e3f; overflow-wrap: anywhere; min-height: 24px; }
+.wall-author strong { font-size: 1rem; }
+.wall-author > span { color: #59616b; }
+.wall-author:hover strong { color: #0058cc; }
 .wall-comment time { font-size: .75rem; color: #59616b; }
 .wall-comment > p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .875rem; line-height: 1.6; margin: 10px 0 0; }
 .wall-delete .community-button { font-size: .75rem; }
