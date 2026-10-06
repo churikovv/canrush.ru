@@ -104,3 +104,25 @@ it('blocks publication and messages, hides listings by blocked sellers', async (
   expect(await api.getListing(listing)).toBeNull();
   expect(await api.getListing(listing, seller)).not.toBeNull();
 });
+
+it('removes only owned archived listings while preserving orders and admin review access', async () => {
+  await pool.query('delete from "userBlock" where "userId"=$1',[seller]);
+  await expect(api.deleteArchivedListing(buyer, listing)).rejects.toThrow();
+  const active = await pool.query('insert into "marketListing" ("sellerId",title,description,city,price,delivery,quantity) values ($1,\'Active\',\'Description\',\'Москва\',100,ARRAY[\'pickup\'],1) returning id',[seller]);
+  await expect(api.deleteArchivedListing(seller, active.rows[0].id)).rejects.toThrow();
+  const photoId = (await api.getListing(listing))!.photos[0]!;
+  await api.deleteArchivedListing(seller, listing);
+  expect(await api.getListing(listing, seller)).toBeNull();
+  expect((await api.getListings(1,seller,true)).items.some(item=>item.id===listing)).toBe(false);
+  expect(await api.getOrder(buyer,order)).not.toBeNull();
+  expect((await api.getMessages(buyer,order)).items.length).toBeGreaterThan(0);
+  expect(await api.getMarketPhoto(photoId,null,false)).toBeUndefined();
+  expect(await api.getListing(listing,stranger,true)).not.toBeNull();
+  await pool.query('insert into "siteAdmin"(email) values ($1)',[stranger+'@example.com']);
+  try {
+    expect(await api.getMarketPhoto(photoId,stranger,false)).toEqual(photo.data);
+    const { getAdminDashboardData } = await import('../src/lib/admin-dashboard-data');
+    expect((await getAdminDashboardData(stranger+'@example.com','market')).market).toEqual([]);
+    expect((await getAdminDashboardData(seller+'@example.com','market')).market.some(item=>item.id===listing && item.deletedAt)).toBe(true);
+  } finally { await pool.query('delete from "siteAdmin" where email=$1',[stranger+'@example.com']); }
+});

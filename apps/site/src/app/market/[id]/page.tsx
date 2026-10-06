@@ -1,3 +1,4 @@
+import { isSiteAdminEmail } from '@/lib/admin';
 import type { Metadata } from 'next';
 import Link from '@/components/navigation-progress';
 import { headers } from 'next/headers';
@@ -16,7 +17,8 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   if (!PHOTO_ID_PATTERN.test(id)) notFound();
   const session = await auth.api.getSession({ headers: await headers() });
-  const listing = await getListing(id, session?.user.id);
+  const viewerIsAdmin = session ? await isSiteAdminEmail(session.user.email) : false;
+  const listing = await getListing(id, session?.user.id, viewerIsAdmin);
   if (!listing) notFound();
   const activeOrderId = session ? await getActiveOrderId(session.user.id, id) : undefined;
   return <BrandShell headerAction={<ProfileNavigation active="market" />}><div className="market-layout">

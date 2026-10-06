@@ -37,15 +37,15 @@ export async function createListing(userId: string, input: ListingInput, photos:
 const listingSelect = `select l.*,case when trim(u.name)<>'' and u.name not like '%@%' then u.name else coalesce(u.username,'Участник') end as "sellerName",u.username,
   array(select p.id::text from "marketPhoto" p where p."listingId"=l.id order by position) as photos
   from "marketListing" l join "user" u on u.id=l."sellerId"`;
-export async function getListings(page = 1, mine?: string) {
-  const { rows } = await getPool().query(`${listingSelect} where
+export async function getListings(page = 1, mine?: string, archive = false) {
+  const { rows } = await getPool().query(`${listingSelect} where l."deletedAt" is null and (not $3::boolean or l.closed) and
     ($1::text is not null and l."sellerId"=$1 or $1::text is null and not l.closed and not exists(select 1 from "userBlock" where "userId"=l."sellerId"))
-    order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24]);
+    order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24, Boolean(mine && archive)]);
   return { items: rows.slice(0, 24).map(row => ({ ...row, createdAt: row.createdAt.toISOString() }) as Listing), hasMore: rows.length > 24 };
 }
-export async function getListing(id: string, viewer?: string) {
+export async function getListing(id: string, viewer?: string, admin = false) {
   marketId(id);
-  const { rows } = await getPool().query(`${listingSelect} where l.id=$1 and (l."sellerId"=$2 or not exists(select 1 from "userBlock" where "userId"=l."sellerId"))`, [id, viewer ?? null]);
+  const { rows } = await getPool().query(`${listingSelect} where l.id=$1 and ($3::boolean or (l."deletedAt" is null and (l."sellerId"=$2 or not exists(select 1 from "userBlock" where "userId"=l."sellerId"))))`, [id, viewer ?? null, admin]);
   return rows[0] ? { ...rows[0], createdAt: rows[0].createdAt.toISOString() } as Listing : null;
 }
 export async function getActiveOrderId(userId: string, listingId: string): Promise<string | undefined> {
@@ -69,7 +69,7 @@ export async function startOrder(userId: string, listingId: string, requestedQua
     if (listing.sellerId === userId) throw new MarketError('Нельзя заказать своё объявление.');
     const existing = await db.query(`select id from "marketOrder" where "listingId"=$1 and "buyerId"=$2 and status in ('new','confirmed')`, [listingId, userId]);
     if (existing.rows[0]) return existing.rows[0].id as string;
-    if (listing.closed || (await db.query('select 1 from "userBlock" where "userId"=$1', [listing.sellerId])).rowCount) throw new MarketError('Объявление больше недоступно.');
+    if (listing.deletedAt || listing.closed || (await db.query('select 1 from "userBlock" where "userId"=$1', [listing.sellerId])).rowCount) throw new MarketError('Объявление больше недоступно.');
     if (listing.quantity < quantity) throw new MarketError(`Недостаточно товара. Доступно ${listing.quantity} шт.`);
     await cooldown(db, userId, 'lastMarketOrderAt', 10);
     await db.query('update "marketListing" set quantity=quantity-$2 where id=$1', [listingId, quantity]);
@@ -140,6 +140,12 @@ export async function getMarketPhoto(id: string, userId: string | null, thumbnai
     left join "marketMessage" m on m.id=p."messageId"
     left join "marketOrder" o on o.id=m."orderId"
     left join "marketListing" ol on ol.id=o."listingId"
-    where p.id=$1 and ((l.id is not null and not exists(select 1 from "userBlock" where "userId"=l."sellerId")) or l."sellerId"=$2 or o."buyerId"=$2 or ol."sellerId"=$2)`, [id, userId]);
+    where p.id=$1 and ((l.id is not null and l."deletedAt" is null and not exists(select 1 from "userBlock" where "userId"=l."sellerId")) or l."sellerId"=$2 or o."buyerId"=$2 or ol."sellerId"=$2 or (l.id is not null and exists(select 1 from "user" au join "siteAdmin" sa on sa.email=lower(au.email) where au.id=$2)))`, [id, userId]);
   return rows[0]?.data;
+}
+
+export async function deleteArchivedListing(userId: string, id: string) {
+  marketId(id);
+  const result = await getPool().query('update "marketListing" set "deletedAt"=now() where id=$1 and "sellerId"=$2 and closed and "deletedAt" is null returning id', [id,userId]);
+  if (!result.rowCount) throw new MarketError('Можно удалить только своё закрытое объявление.');
 }

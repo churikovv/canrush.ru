@@ -6,7 +6,7 @@ import { auth } from '@/lib/auth';
 import { isUserBlocked } from '@/lib/moderation';
 import { ensureOwnProfile } from '@/lib/profile';
 import { MarketError, parseListing, type OrderStatus } from '@/lib/market-fields';
-import { createListing, closeListing, startOrder, changeOrderStatus, sendMarketMessage, getOrder, getMessages, markMessagesRead } from '@/lib/market';
+import { createListing, closeListing, deleteArchivedListing, startOrder, changeOrderStatus, sendMarketMessage, getOrder, getMessages, markMessagesRead } from '@/lib/market';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 
 export interface MarketActionState { error?: string; id?: string; success?: boolean }
@@ -29,7 +29,7 @@ export async function createListingAction(form: FormData): Promise<MarketActionS
     revalidatePath('/market'); return { id };
   } catch (error) { return failure(error); }
 }
-export async function listingAction(id: string, operation: 'order' | 'close', quantity = 1): Promise<MarketActionState> {
+export async function listingAction(id: string, operation: 'order' | 'close' | 'delete', quantity = 1): Promise<MarketActionState> {
   try {
     const user = await currentUser();
     if (operation === 'order') {
@@ -37,6 +37,7 @@ export async function listingAction(id: string, operation: 'order' | 'close', qu
       const orderId = await startOrder(user.id, id, quantity);
       revalidatePath('/market', 'layout'); revalidatePath('/messages'); return { id: orderId };
     }
+    if (operation === 'delete') { await deleteArchivedListing(user.id, id); revalidatePath('/market', 'layout'); return { success: true }; }
     if (operation !== 'close') throw new MarketError('Неизвестное действие.');
     await closeListing(user.id, id); revalidatePath('/market', 'layout'); return { success: true };
   } catch (error) { return failure(error); }

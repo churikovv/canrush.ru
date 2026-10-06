@@ -14,6 +14,17 @@ export function MarketListingControls({ id, own, closed, authenticated, availabl
   const count = Number(quantity);
   const valid = /^\d+$/.test(quantity) && Number.isSafeInteger(count) && count >= 1 && count <= available;
   if (activeOrderId) return <Link className="community-button" href={`/messages/${activeOrderId}`}>Открыть заказ</Link>;
+  if (closed && own) return <div className="market-listing-controls"><span className="market-status">Объявление закрыто</span>
+    <button className="community-button community-button-secondary" disabled={pending} onClick={() => {
+      if (!confirm) { setConfirm(true); return; }
+      startTransition(async () => {
+        try { const result = await listingAction(id, 'delete'); if (result.error) setError(result.error); else { router.push('/market?mine=1'); router.refresh(); } }
+        catch { setError('Не удалось удалить объявление. Попробуйте ещё раз.'); }
+      });
+    }}>{pending ? 'Удаляем…' : confirm ? 'Подтвердить удаление' : 'Удалить объявление'}</button>
+    {confirm && <><p className="market-note">Объявление исчезнет из маркета. Заказы и переписка сохранятся.</p><button className="market-text-button" disabled={pending} onClick={() => setConfirm(false)}>Отмена</button></>}
+    {error && <p role="alert" className="market-error">{error}</p>}
+  </div>;
   if (closed) return <span className="market-status">Объявление закрыто</span>;
   if (!own && available === 0) return <span className="market-status">Нет в наличии</span>;
   if (!authenticated) return <Link href="/sign-in" className="community-button">Войти и заказать</Link>;

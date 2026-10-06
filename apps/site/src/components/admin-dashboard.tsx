@@ -64,6 +64,12 @@ export function AdminDashboard({ admin, data, query, tab, notice, error }: Props
       </form>
       {tab === 'admins' && <form className="admin-invite-form" action={addAdminAction}><label htmlFor="admin-email">Добавить администратора</label><div><input id="admin-email" name="email" type="email" required autoComplete="email" maxLength={320} placeholder="name@example.com" />{context}<AdminActionButton pendingLabel="Добавляем…" variant="primary">Добавить</AdminActionButton></div></form>}
       {data.total === 0 ? <div className="admin-empty-result"><strong>{query ? 'Ничего не найдено' : 'Здесь пока пусто'}</strong><span>{query ? 'Измените запрос или сбросьте поиск.' : 'Записи появятся после действий пользователей.'}</span></div> : <>
+        {tab === 'market' && <DataTable label="Объявления маркета" columns={['Объявление', 'Продавец', 'Дата', 'Статус', 'Действия']}>{data.market.map(listing => <tr key={listing.id}>
+          <td><Link href={`/market/${listing.id}`}>{listing.title}</Link></td>
+          <td><div className="admin-table-identity">{listing.username ? <Link href={`/profile/${listing.username}`}>{listing.sellerName}</Link> : <strong>{listing.sellerName}</strong>}<span>{listing.sellerEmail}</span></div></td>
+          <td>{formatDate(listing.createdAt)}</td><td>{listing.deletedAt ? 'Удалено владельцем' : listing.closed ? 'В архиве' : 'Опубликовано'}{listing.blockedAt && <div className="admin-status admin-status-blocked">Продавец заблокирован</div>}</td>
+          <td>{listing.isAdmin ? <span className="admin-table-muted">Администратор защищён</span> : <form action={listing.blockedAt ? unblockUserAction : blockUserAction}>{context}<input type="hidden" name="userId" value={listing.sellerId} /><AdminActionButton pendingLabel="Сохраняем…" variant={listing.blockedAt ? 'secondary' : 'danger'} confirmMessage={listing.blockedAt ? undefined : `Заблокировать пользователя ${listing.sellerEmail}?`}>{listing.blockedAt ? 'Разблокировать' : 'Заблокировать пользователя'}</AdminActionButton></form>}</td>
+        </tr>)}</DataTable>}
         {tab === 'reports' && <DataTable label="Жалобы на профили" columns={['Профиль', 'Автор жалобы', 'Причина', 'Комментарий', 'Дата', 'Статус', 'Действия']}>{data.reports.map(report => <tr key={report.id}>
           <td>{report.targetUsername ? <Link href={`/profile/${report.targetUsername}`}>@{report.targetUsername}</Link> : report.targetName}</td>
           <td>{report.authorUsername ? <Link href={`/profile/${report.authorUsername}`}>@{report.authorUsername}</Link> : report.authorName}</td>

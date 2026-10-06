@@ -11,7 +11,8 @@ function zoom(view: View, factor: number, anchor = { x: 0, y: 0 }): View {
   return { scale, x: anchor.x - (anchor.x - view.x) * ratio, y: anchor.y - (anchor.y - view.y) * ratio };
 }
 
-function PhotoCanvas({ id, label, source }: { id: string; label: string; source: string }) {
+function PhotoCanvas({ id, label, source, onSwipe }: { id: string; label: string; source: string; onSwipe: (direction: number) => void }) {
+  const swipe = useRef<{ x: number; y: number } | null>(null);
   const [view, setView] = useState(INITIAL_VIEW);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -56,10 +57,14 @@ function PhotoCanvas({ id, label, source }: { id: string; label: string; source:
         <button type="button" aria-label="Увеличить" disabled={view.scale === 5 || !loaded} onClick={() => setView(current => zoom(current, 1.5))}>+</button>
       </div>
       <div className="review-photo-stage" ref={stage}
-        onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY }); }}
+        onPointerDown={event => { swipe.current = pointers.current.size === 0 && view.scale === 1 ? { x: event.clientX, y: event.clientY } : null; event.currentTarget.setPointerCapture(event.pointerId); pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY }); }}
         onPointerMove={move}
-        onPointerUp={event => pointers.current.delete(event.pointerId)}
-        onPointerCancel={event => pointers.current.delete(event.pointerId)}
+        onPointerUp={event => {
+          const start = swipe.current;
+          if (start && view.scale === 1 && Math.abs(event.clientX - start.x) > 60 && Math.abs(event.clientX - start.x) > Math.abs(event.clientY - start.y) * 1.5) onSwipe(event.clientX < start.x ? 1 : -1);
+          swipe.current = null; pointers.current.delete(event.pointerId);
+        }}
+        onPointerCancel={event => { swipe.current = null; pointers.current.delete(event.pointerId); }}
         onLostPointerCapture={event => pointers.current.delete(event.pointerId)}
         onDoubleClick={() => setView(current => current.scale > 1 ? INITIAL_VIEW : zoom(current, 2))}>
         {!loaded && !failed ? <p className="review-photo-load" role="status">Загружаем фотографию…</p> : null}
@@ -73,7 +78,7 @@ function PhotoCanvas({ id, label, source }: { id: string; label: string; source:
   );
 }
 
-function PhotoViewer({ photos, initialIndex, onClose, source }: { photos: string[]; initialIndex: number; onClose: () => void; source: string }) {
+export function PhotoViewer({ photos, initialIndex, onClose, source }: { photos: string[]; initialIndex: number; onClose: () => void; source: string }) {
   const [index, setIndex] = useState(initialIndex);
   const dialog = useRef<HTMLDialogElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -96,10 +101,10 @@ function PhotoViewer({ photos, initialIndex, onClose, source }: { photos: string
         <span aria-live="polite">Фото {index + 1} из {photos.length}</span>
         <button type="button" ref={closeButton} onClick={onClose} aria-label="Закрыть фотографии">Закрыть ×</button>
       </div>
-      <PhotoCanvas source={source} key={photos[index]} id={photos[index]!} label={`Фотография публикации ${index + 1} из ${photos.length}`} />
+      <PhotoCanvas onSwipe={direction => setIndex(current => Math.max(0, Math.min(photos.length - 1, current + direction)))} source={source} key={photos[index]} id={photos[index]!} label={`Фотография публикации ${index + 1} из ${photos.length}`} />
       <div className="review-photo-navigation">
         <button type="button" disabled={index === 0} onClick={() => setIndex(index - 1)} aria-label="Предыдущая фотография">←</button>
-        <p>Увеличивайте двумя пальцами или кнопками. Увеличенное фото можно перемещать.</p>
+        <p>Листайте свайпом или стрелками. Увеличивайте двумя пальцами или кнопками. Увеличенное фото можно перемещать.</p>
         <button type="button" disabled={index === photos.length - 1} onClick={() => setIndex(index + 1)} aria-label="Следующая фотография">→</button>
       </div>
     </dialog>

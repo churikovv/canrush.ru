@@ -17,7 +17,9 @@ export interface AdminMetrics {
   published: number; drafts: number; blocked: number; averageRating: number | null;
 }
 export interface AdminReportEntry { id: string; reason: ReportReason; comment: string; status: 'open' | 'resolved' | 'dismissed'; createdAt: Date; authorName: string; authorUsername: string | null; targetName: string; targetUsername: string | null }
+export interface AdminMarketEntry { id: string; title: string; sellerId: string; sellerName: string; sellerEmail: string; username: string | null; closed: boolean; deletedAt: Date | null; blockedAt: Date | null; isAdmin: boolean; createdAt: Date }
 export interface AdminDashboardData {
+  market: AdminMarketEntry[];
   reports: AdminReportEntry[];
   comments: AdminReviewCommentEntry[];
   users: AdminUserEntry[]; tierLists: AdminTierListEntry[]; reviews: AdminReviewEntry[];
@@ -27,7 +29,7 @@ export interface AdminDashboardData {
 
 export async function getAdminDashboardData(search: string, tab: AdminTab, requestedPage = 1): Promise<AdminDashboardData> {
   const db = getPool();
-  const result: AdminDashboardData = { reports: [], comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [] };
+  const result: AdminDashboardData = { market: [], reports: [], comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [] };
   if (tab === 'analytics') {
     const [metrics, registrations] = await Promise.all([
       db.query<AdminMetrics>(`select
@@ -58,6 +60,7 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
   const query = normalizeAdminSearch(search);
   const pattern = query ? `%${query}%` : null;
   const fragments = {
+    market: `from "marketListing" l join "user" u on u.id=l."sellerId" left join "userBlock" b on b."userId"=u.id left join "siteAdmin" sa on sa.email=lower(u.email) where ($1::text is null or l.title ilike $1 or l.description ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1)`,
     reports: `from "profileReport" r join "user" u on u.id=r."userId" join "user" p on p.id=r."targetId" where ($1::text is null or r.comment ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1 or p.name ilike $1 or p.email ilike $1 or coalesce(p.username,'') ilike $1)`,
     comments: `from "reviewComment" c join "user" u on u.id=c."userId" join review r on r.id=c."reviewId" where ($1::text is null or c.text ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1 or r.brand ilike $1)`,
     users: `from "user" u left join "userBlock" ub on ub."userId"=u.id left join "siteAdmin" sa on sa.email=lower(u.email)
@@ -72,6 +75,7 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
   result.page = Math.min(adminPage(requestedPage), Math.max(1, Math.ceil(result.total / ADMIN_PAGE_SIZE)));
   const params = [pattern, ADMIN_PAGE_SIZE, (result.page - 1) * ADMIN_PAGE_SIZE];
   const pagination = 'limit $2 offset $3';
+  if (tab === 'market') result.market = (await db.query<AdminMarketEntry>(`select l.id,l.title,l."sellerId",l.closed,l."deletedAt",l."createdAt",u.name as "sellerName",u.email as "sellerEmail",u.username,b."createdAt" as "blockedAt",(sa.email is not null) as "isAdmin" ${from} order by l."createdAt" desc,l.id ${pagination}`,params)).rows;
   if (tab === 'reports') result.reports = (await db.query<AdminReportEntry>(`select r.id,r.reason,r.comment,r.status,r."createdAt",u.name as "authorName",u.username as "authorUsername",p.name as "targetName",p.username as "targetUsername" ${from} order by (r.status='open') desc,r."createdAt" desc,r.id ${pagination}`,params)).rows;
   if (tab === 'users') result.users = (await db.query<AdminUserEntry>(`select u.id,u.name,u.email,u.username,u."createdAt", ub."createdAt" as "blockedAt",(sa.email is not null) as "isAdmin",
     (select count(*)::int from review where "userId"=u.id) as "reviewCount",
