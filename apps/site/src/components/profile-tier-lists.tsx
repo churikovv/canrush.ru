@@ -1,3 +1,4 @@
+import { ProfileBackButton } from '@/components/profile-back-button';
 import Link from '@/components/navigation-progress';
 import { TierListCard } from '@/components/tier-list-card';
 import type { TierListProduct, TierListSummary } from '@/lib/tier-list-types';
@@ -8,11 +9,13 @@ interface ProfileTierListsProps {
   ownerName: string;
   isOwn: boolean;
   notice?: string;
+  profileHref?: string;
 }
 
-export function ProfileTierLists({ lists, products, ownerName, isOwn, notice }: ProfileTierListsProps) {
+export function ProfileTierLists({ lists, products, ownerName, isOwn, notice, profileHref }: ProfileTierListsProps) {
   return (
     <div className={`profile-tierlists-layout${isOwn ? ' ym-hide-content' : ''}`}>
+      <ProfileBackButton href={profileHref} />
       <header className="profile-tierlists-heading">
         <div>
           <p>{isOwn ? 'Ваши списки' : `Автор: ${ownerName}`}</p>

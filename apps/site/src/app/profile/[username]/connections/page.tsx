@@ -1,3 +1,4 @@
+import { ProfileBackButton } from '@/components/profile-back-button';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
@@ -27,7 +28,7 @@ export default async function ConnectionsPage({ params, searchParams }: {
   const pages = Math.ceil(data.count / COMMUNITY_PAGE_SIZE);
   return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
     <div className="community-profile community-directory">
-      <Link href={base}>← @{profile.username}</Link>
+      <ProfileBackButton href={base} />
       <h1>{labels[kind]} <span className="community-muted">{data.count}</span></h1>
       <nav className="community-tabs" aria-label="Связи пользователя">{Object.entries(labels).map(([key, label]) => <Link href={`${base}/connections?type=${key}`} key={key} aria-current={key === kind ? 'page' : undefined}>{label}</Link>)}</nav>
       {data.users.length ? <div className="community-user-list">{data.users.map(user => <Link href={`/profile/${user.username}`} key={user.username}><span className="community-user-avatar" aria-hidden="true">{user.avatarId ? <Image src={`/api/profile-images/${user.avatarId}`} width={44} height={44} unoptimized alt="" /> : user.username.slice(0, 1).toUpperCase()}</span><span><strong>{user.name && !user.name.includes('@') ? user.name : user.username}</strong><span>@{user.username}</span></span><span aria-hidden="true">→</span></Link>)}</div> : <p className="community-empty">{kind === 'friends' ? 'Друзья появятся после взаимной подписки.' : 'В этом списке пока никого нет.'}</p>}

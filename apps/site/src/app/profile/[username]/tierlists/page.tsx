@@ -30,7 +30,7 @@ export default async function PublicTierListsPage({ params }: { params: Promise<
     const ownerName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
     return (
       <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-        <ProfileTierLists lists={lists} products={products} ownerName={ownerName} isOwn={false} />
+        <ProfileTierLists profileHref={`/profile/${profile.username}`} lists={lists} products={products} ownerName={ownerName} isOwn={false} />
       </BrandShell>
     );
   }
@@ -40,7 +40,7 @@ export default async function PublicTierListsPage({ params }: { params: Promise<
   const ownerName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-      <ProfileTierLists lists={lists} products={products} ownerName={ownerName} isOwn={false} />
+      <ProfileTierLists profileHref={`/profile/${profile.username}`} lists={lists} products={products} ownerName={ownerName} isOwn={false} />
     </BrandShell>
   );
 }

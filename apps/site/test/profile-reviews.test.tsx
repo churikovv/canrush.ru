@@ -1,3 +1,4 @@
+vi.mock('../src/app/catalog/review-actions', () => ({ deleteReviewAction: vi.fn() }));
 vi.mock('../src/app/catalog/discussion-actions', () => ({ reviewDiscussionAction: vi.fn() }));
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -10,7 +11,7 @@ const review: ReviewData = {
   text: 'Отличный вкус', photos: ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'],
   createdAt: new Date('2026-09-24'), updatedAt: new Date('2026-09-24'),
 };
-const base = { username: 'reader', ownerName: 'Reader', count: 1, page: 1, pages: 1 };
+const base = { isOwn: false, images: { 'review-1': '/brand/products/adrenaline-rush-original.jpg' }, username: 'reader', ownerName: 'Reader', count: 1, page: 1, pages: 1 };
 describe('profile review list', () => {
   it('shows public review content and photos, with links back to author and product reviews', () => {
     const html = renderToStaticMarkup(createElement(ProfileReviews, { ...base, reviews: [review] }));
@@ -21,6 +22,12 @@ describe('profile review list', () => {
     expect(html).toContain('?tab=reviews');
     expect(html).toContain('Открыть фотографию 1 из 1');
     expect(html).not.toContain('Удалить отзыв');
+  });
+  it('shows product images and owner removal controls', () => {
+    const html = renderToStaticMarkup(createElement(ProfileReviews, { ...base, isOwn: true, reviews: [review] }));
+    expect(html).toContain('adrenaline-rush-original.jpg');
+    expect(html).toContain('Удалить отзыв');
+    expect(html).toContain('href="/profile"');
   });
   it('shows an empty state instead of an empty feed', () => {
     const html = renderToStaticMarkup(createElement(ProfileReviews, { ...base, count: 0, reviews: [] }));

@@ -93,5 +93,5 @@ export async function deleteReviewAction(formData: FormData): Promise<void> {
   const slug = catalogGroupSlug(brand, flavor);
   revalidatePath(`/catalog/${slug}`);
   revalidatePath('/catalog');
-  revalidatePath('/profile');
+  revalidatePath('/profile', 'layout');
 }

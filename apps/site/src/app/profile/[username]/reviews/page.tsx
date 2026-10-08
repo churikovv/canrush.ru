@@ -1,3 +1,4 @@
+import { loadAllCatalogGroups } from '@/lib/catalog';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import type { Metadata } from 'next';
@@ -26,11 +27,17 @@ export default async function ProfileReviewsPage({ params, searchParams }: {
   const page = Number.isSafeInteger(requested) && requested > 0 ? Math.min(requested, pages) : 1;
   const session = await auth.api.getSession({ headers: await headers() });
   const reviews = await getReviewsForUser(profile.id, page, session?.user.id ?? null);
+  const groups = await loadAllCatalogGroups();
+  const covers = new Map(groups.map(group => [JSON.stringify([group.brand, group.flavor]), group.coverImageUrl]));
+  const images = Object.fromEntries(reviews.flatMap(review => {
+    const image = covers.get(JSON.stringify([review.brand, review.flavor]));
+    return image ? [[review.id, image]] : [];
+  }));
   const ownerName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
 
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-      <ProfileReviews reviews={reviews} username={profile.username} ownerName={ownerName} count={profile.reviewCount} page={page} pages={pages} />
+      <ProfileReviews images={images} isOwn={session?.user.id === profile.id} reviews={reviews} username={profile.username} ownerName={ownerName} count={profile.reviewCount} page={page} pages={pages} />
     </BrandShell>
   );
 }

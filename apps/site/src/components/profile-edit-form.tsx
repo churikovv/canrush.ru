@@ -1,4 +1,5 @@
 'use client';
+import { ProfileBackButton } from '@/components/profile-back-button';
 
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
@@ -101,6 +102,7 @@ export function ProfileEditForm({ profile }: { profile: ProfileData }) {
     </label>;
   }
   return <div className="community-profile profile-editor ym-hide-content">
+    <ProfileBackButton />
     <form className="profile-customization-form" action={formAction}>
       <ProfileHeader name={name.trim() || initialName} username={username.replace(/^@+/, '') || profile.username} createdAt={profile.createdAt}
         avatarSrc={imageSource('avatar')} bannerSrc={imageSource('banner')} avatarControl={imageControl('avatar')} bannerControl={imageControl('banner')}
