@@ -137,3 +137,10 @@ it('combines brand, city and delivery filters and includes nationwide listings',
  expect((await api.getListings(1,buyer,true,undefined,{brand})).items.map(row=>row.id)).toEqual([ids[0]]);
  expect((await api.getMarketFilterOptions()).brands).toContain(brand);
 });
+it('reopens only owned available listings without resetting stock or reviving deleted listings',async()=>{
+ const id=randomUUID();await pool.query(`insert into "marketListing"(id,"sellerId",title,description,city,price,delivery,quantity,closed) values($1,$2,'Reopen','Test','Москва',100,array['pickup'],3,true)`,[id,buyer]);
+ await expect(api.reopenListing(stranger,id)).rejects.toThrow();await api.reopenListing(buyer,id);
+ expect(await api.getListing(id)).toMatchObject({closed:false,quantity:3});
+ await pool.query('update "marketListing" set closed=true,quantity=0 where id=$1',[id]);await expect(api.reopenListing(buyer,id)).rejects.toThrow();
+ await pool.query('update "marketListing" set quantity=3,"deletedAt"=now() where id=$1',[id]);await expect(api.reopenListing(buyer,id)).rejects.toThrow();
+});

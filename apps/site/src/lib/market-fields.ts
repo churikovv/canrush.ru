@@ -1,4 +1,4 @@
-export const DELIVERY = { yandex: 'Яндекс', avito: 'Авито', cdek: 'Сдек', post: 'Почта России', x5: 'X5 Post', pickup: 'Самовывоз' } as const;
+export const DELIVERY = { yandex: 'Яндекс', avito: 'Авито', cdek: 'Сдэк', post: 'Почта России', x5: 'X5 Post', pickup: 'Самовывоз' } as const;
 export type Delivery = keyof typeof DELIVERY;
 export type OrderStatus = 'new' | 'confirmed' | 'completed' | 'cancelled';
 export const ORDER_STATUS: Record<OrderStatus, string> = { new: 'Новый', confirmed: 'Подтверждён', completed: 'Завершён', cancelled: 'Отменён' };

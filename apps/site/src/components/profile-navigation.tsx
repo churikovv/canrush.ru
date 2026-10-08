@@ -41,8 +41,8 @@ export function ProfileNavigation({ active }: ProfileNavigationProps) {
         <Link className="profile-navigation-item" href="/market" aria-label="Маркет" aria-current={active === 'market' ? 'page' : undefined}>
           <NavigationIcon section="market" /><span className="profile-navigation-label">Маркет</span>
         </Link>
-        <Link className="profile-navigation-item" href="/messages" aria-label="Сообщения" aria-current={active === 'messages' ? 'page' : undefined}>
-          <NavigationIcon section="messages" /><span className="profile-navigation-label">Сообщения</span>
+        <Link className="profile-navigation-item" href="/messages" aria-label="Заказы" aria-current={active === 'messages' ? 'page' : undefined}>
+          <NavigationIcon section="messages" /><span className="profile-navigation-label">Заказы</span>
         </Link>
         <Link
           className="profile-navigation-item"

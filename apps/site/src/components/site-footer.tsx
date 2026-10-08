@@ -71,6 +71,7 @@ export function SiteFooter() {
               <div className="footer-service-links">
                 <Link href="/tierlists">Тирлисты</Link>
                 <Link href="/catalog">Каталог</Link>
+                <Link href="/market">Маркет</Link>
                 <Link href="/prices">Цены по магазинам</Link>
                 <Link href="/terms">Пользовательское соглашение</Link>
                 <Link href="/privacy">Политика обработки данных</Link>

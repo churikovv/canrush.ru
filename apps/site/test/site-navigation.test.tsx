@@ -16,7 +16,7 @@ describe('site tab bar', () => {
   it('lists six sections with market and messages instead of home', () => {
     const html = renderToStaticMarkup(createElement(SiteTabBar));
     expect(links(html).map(({ href }) => href)).toEqual(['/catalog', '/prices', '/tierlists', '/market', '/messages', '/profile']);
-    for (const label of ['Каталог', 'Цены', 'Тирлисты', 'Маркет', 'Сообщения', 'Профиль']) expect(html).toContain(`>${label}</span>`);
+    for (const label of ['Каталог', 'Цены', 'Тирлисты', 'Маркет', 'Заказы', 'Профиль']) expect(html).toContain(`>${label}</span>`);
     expect(links(html).find(({ href }) => href === '/prices')?.label).toBe('Цены по магазинам');
     expect(html).not.toContain('aria-current');
     expect(html).not.toContain('/profile/favorites');

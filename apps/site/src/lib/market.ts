@@ -58,6 +58,14 @@ export async function closeListing(userId: string, id: string) {
   const result = await getPool().query('update "marketListing" set closed=true where id=$1 and "sellerId"=$2 returning id', [id, userId]);
   if (!result.rowCount) throw new MarketError('Объявление не найдено или у вас нет доступа.');
 }
+export async function reopenListing(userId: string, id: string) {
+  marketId(id);
+  return transaction(async db => {
+    await allowed(db, userId);
+    const result = await db.query('update "marketListing" set closed=false where id=$1 and "sellerId"=$2 and "deletedAt" is null and quantity>0 returning id', [id,userId]);
+    if (!result.rowCount) throw new MarketError('Повторная публикация доступна только для своего неудалённого объявления с остатком товара.');
+  });
+}
 export async function startOrder(userId: string, listingId: string, requestedQuantity = 1) {
   marketId(listingId);
   const quantity = parseQuantity(requestedQuantity);

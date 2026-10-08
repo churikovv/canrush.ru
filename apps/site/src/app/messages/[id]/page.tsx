@@ -20,6 +20,6 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   if (!order) notFound();
   const [messages, blocked] = await Promise.all([getMessages(session.user.id, id), isUserBlocked(session.user.id)]);
   return <BrandShell headerAction={<ProfileNavigation active="messages" />}><div className="market-layout market-chat-layout">
-    <Link className="market-back" href="/messages">← Все сообщения</Link><MarketChat key={id} initialOrder={order} initialMessages={messages.items} initialHasMore={messages.hasMore} userId={session.user.id} blocked={blocked} />
+    <Link className="market-back" href="/messages">← Все заказы</Link><MarketChat key={id} initialOrder={order} initialMessages={messages.items} initialHasMore={messages.hasMore} userId={session.user.id} blocked={blocked} />
   </div></BrandShell>;
 }

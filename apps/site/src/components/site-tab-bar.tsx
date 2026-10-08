@@ -14,7 +14,7 @@ const TABS: readonly Tab[] = [
   { section: 'prices', href: '/prices', label: 'Цены', accessibleLabel: 'Цены по магазинам' },
   { section: 'tierlists', href: '/tierlists', label: 'Тирлисты' },
   { section: 'market', href: '/market', label: 'Маркет' },
-  { section: 'messages', href: '/messages', label: 'Сообщения' },
+  { section: 'messages', href: '/messages', label: 'Заказы' },
   { section: 'profile', href: '/profile', label: 'Профиль' },
 ];
 

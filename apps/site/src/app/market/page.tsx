@@ -18,16 +18,15 @@ export default async function MarketPage({ searchParams }: { searchParams: Promi
   const session = await auth.api.getSession({ headers: await headers() });
   const seller = typeof query.seller === 'string' ? query.seller.trim().slice(0, 64) : '';
   const mine = !seller && query.mine === '1' && Boolean(session);
-  const archive = mine && query.archive === '1';
   const filters = { brand: typeof query.brand === 'string' ? query.brand.trim().slice(0,100) : '', city: typeof query.city === 'string' ? query.city.trim().slice(0,100) : '', delivery: typeof query.delivery === 'string' && Object.hasOwn(DELIVERY,query.delivery) ? query.delivery : '' };
-  const [{ items, hasMore }, filterOptions] = await Promise.all([getListings(page, mine ? session?.user.id : undefined, archive, seller || undefined, filters), getMarketFilterOptions()]);
-  const suffix = seller ? `&seller=${encodeURIComponent(seller)}` : mine ? `&mine=1${archive ? '&archive=1' : ''}` : '';
+  const [{ items, hasMore }, filterOptions] = await Promise.all([getListings(page, mine ? session?.user.id : undefined, false, seller || undefined, filters), getMarketFilterOptions()]);
+  const suffix = seller ? `&seller=${encodeURIComponent(seller)}` : mine ? '&mine=1' : '';
   const filterSuffix = '&' + new URLSearchParams(filters).toString();
-  const scope: Record<string,string> = seller ? {seller} : mine ? {mine:'1',...(archive?{archive:'1'}:{})} : {};
+  const scope: Record<string,string> = seller ? {seller} : mine ? {mine:'1'} : {};
   const filtered = Boolean(filters.brand || filters.city || filters.delivery);
   return <BrandShell headerAction={<ProfileNavigation active="market" />}><div className="market-layout">
     <header className="market-heading"><div><h1>{seller ? `Объявления @${seller}` : 'Маркет'}</h1>{seller ? <p><Link href={`/profile/${encodeURIComponent(seller)}`}>Вернуться в профиль</Link></p> : <p>Энергетики от участников CanRush</p>}</div><Link className="community-button" href="/market/new">Создать объявление</Link></header>
-    <nav className="market-filters" aria-label="Объявления"><Link href="/market" aria-current={!mine && !seller ? 'page' : undefined}>Все объявления</Link>{session && <Link href="/market?mine=1" aria-current={mine && !archive ? 'page' : undefined}>Мои объявления</Link>}{session && <Link href="/market?mine=1&archive=1" aria-current={archive ? 'page' : undefined}>Архив</Link>}</nav>
+    <nav className="market-filters" aria-label="Объявления"><Link href="/market" aria-current={!mine && !seller ? 'page' : undefined}>Все объявления</Link>{session && <Link href="/market?mine=1" aria-current={mine ? 'page' : undefined}>Мои объявления</Link>}</nav>
     <MarketFilters key={JSON.stringify([filters,scope])} brands={filterOptions.brands} cities={filterOptions.cities} initial={filters} scope={scope}/>
     {items.length ? <div className="market-grid">{items.map(listing => <article className="market-card" key={listing.id}>
       <Link href={`/market/${listing.id}`} className="market-card-link">
