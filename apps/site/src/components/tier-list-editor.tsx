@@ -5,7 +5,7 @@ import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import { compareTierProducts, type TierProductSort } from '@/lib/tier-product-sort';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
-import { useActionState, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react';
+import { Fragment, useActionState, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react';
 import { useFormStatus } from 'react-dom';
 import { LayoutGroup, motion } from 'motion/react';
 import { deleteTierListAction, saveTierListAction, type TierListFormState } from '@/app/tierlists/actions';
@@ -154,6 +154,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
   const [state, formAction] = useActionState<TierListFormState, FormData>(saveTierListAction, {});
   const [columns, setColumns] = useState<EditorColumns>(() => initialColumns(products, initialList?.items ?? []));
   const [tiers, setTiers] = useState<TierKey[]>(() => [...(initialList?.tiers ?? TIER_KEYS)]);
+  const [activeSection, setActiveSection] = useState<TierKey>();
   const [sectionNotice, setSectionNotice] = useState('');
   const [selectedId, setSelectedId] = useState<string>();
   const [draggingId, setDraggingId] = useState<string>();
@@ -236,7 +237,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
   function removeSection(tier: TierKey) {
     if (tiers.length === 1) return;
     setColumns(current => ({ ...current, [tier]: [], pool: [...current.pool, ...current[tier]] }));
-    setTiers(current => current.filter(item => item !== tier)); setDirty(true);
+    setTiers(current => current.filter(item => item !== tier)); setActiveSection(undefined); setDirty(true);
     setSectionNotice(`Секция ${tier} удалена. Напитки возвращены в общий список.`);
   }
 
@@ -264,7 +265,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
         product={product}
         compact={compact}
         selected={selectedId === id}
-        onSelect={() => setSelectedId((current) => (current === id ? undefined : id))}
+        onSelect={() => { setSelectedId((current) => (current === id ? undefined : id)); setActiveSection(undefined); }}
         onDragStart={(event) => {
           event.dataTransfer.effectAllowed = 'move';
           event.dataTransfer.setData('text/plain', id);
@@ -379,26 +380,15 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
           </>
       </motion.div>}
 
-      <details className="tier-section-settings">
-        <summary>Настроить секции</summary>
-        {state.fieldErrors?.tiers && <p className="field-error" role="alert">{state.fieldErrors.tiers}</p>}
-        <p>Меняйте порядок секций вместе с напитками. При удалении секции напитки вернутся в общий список.</p>
-        <ol>{tiers.map((tier, index) => <li key={tier}>
-          <span className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span>
-          <div>
-            <button type="button" className="community-button community-button-secondary" aria-label={`Секцию ${tier} выше`} disabled={index === 0} onClick={() => moveSection(tier, -1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 14 6-6 6 6"/></svg></button>
-            <button type="button" className="community-button community-button-secondary" aria-label={`Секцию ${tier} ниже`} disabled={index === tiers.length - 1} onClick={() => moveSection(tier, 1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 10 6 6 6-6"/></svg></button>
-            <button type="button" className="community-button community-button-secondary" aria-label={`Удалить секцию ${tier}`} disabled={tiers.length === 1} onClick={() => removeSection(tier)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg></button>
-          </div>
-        </li>)}</ol>
-        {TIER_KEYS.some(tier => !tiers.includes(tier)) && <div className="tier-section-add">{TIER_KEYS.filter(tier => !tiers.includes(tier)).map(tier => <button key={tier} type="button" className="community-button community-button-secondary" onClick={() => { setTiers(current => [...current, tier]); setDirty(true); setSectionNotice(`Секция ${tier} добавлена.`); }}>Добавить {tier}</button>)}</div>}
-        <p role="status">{sectionNotice}</p>
-      </details>
+      <p className="tier-section-hint">Нажмите на букву секции, чтобы переместить или удалить её.</p>
+      {state.fieldErrors?.tiers && <p className="field-error" role="alert">{state.fieldErrors.tiers}</p>}
+      <p className="sr-only" role="status">{sectionNotice}</p>
 
       <div id="tier-capture-board" className="tier-editor-board" aria-label="Редактор тирлиста">
-        {tiers.map((tier) => (
+        {tiers.map((tier, index) => (
+          <Fragment key={tier}>
           <section className={`tier-editor-row tier-editor-row-${tier.toLowerCase()}`} key={tier} aria-labelledby={`editor-tier-${tier}`}>
-            <h2 id={`editor-tier-${tier}`}><span className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span></h2>
+            <h2 id={`editor-tier-${tier}`}><button type="button" className="tier-section-trigger" aria-label={`Настроить секцию ${tier}`} aria-expanded={activeSection === tier} aria-controls={`tier-controls-${tier}`} onClick={() => { setActiveSection(current => current === tier ? undefined : tier); setSelectedId(undefined); }}><span className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span></button></h2>
             <div
               className={`tier-editor-row-items${draggingId ? ' tier-editor-drop-active' : ''}`}
               onDragOver={(event) => event.preventDefault()}
@@ -407,8 +397,20 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
               {columns[tier].length > 0 ? columns[tier].map((id, index) => renderProduct(id, tier, index, true)) : <span>Переместите сюда</span>}
             </div>
           </section>
+          {activeSection === tier && <div id={`tier-controls-${tier}`} className="tier-section-toolbar" role="group" aria-label={`Управление секцией ${tier}`} onKeyDown={event => { if (event.key === 'Escape') { setActiveSection(undefined); document.querySelector<HTMLButtonElement>(`#editor-tier-${tier} button`)?.focus(); } }}>
+            <span>Секция {tier}</span>
+            <div>
+            <button type="button" className="community-button community-button-secondary" title="Переместить выше" aria-label={`Секцию ${tier} выше`} disabled={index === 0} onClick={() => moveSection(tier, -1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 14 6-6 6 6"/></svg></button>
+            <button type="button" className="community-button community-button-secondary" title="Переместить ниже" aria-label={`Секцию ${tier} ниже`} disabled={index === tiers.length - 1} onClick={() => moveSection(tier, 1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 10 6 6 6-6"/></svg></button>
+            <button type="button" className="community-button community-button-secondary" title="Удалить секцию — напитки вернутся в общий список" aria-label={`Удалить секцию ${tier}`} disabled={tiers.length === 1} onClick={() => removeSection(tier)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg></button>
+
+              <button type="button" className="community-button community-button-secondary" aria-label="Закрыть управление секцией" onClick={() => { setActiveSection(undefined); document.querySelector<HTMLButtonElement>(`#editor-tier-${tier} button`)?.focus(); }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
+            </div>
+          </div>}
+          </Fragment>
         ))}
       </div>
+      {TIER_KEYS.some(tier => !tiers.includes(tier)) && <div className="tier-section-add">{TIER_KEYS.filter(tier => !tiers.includes(tier)).map(tier => <button key={tier} type="button" className="community-button community-button-secondary" onClick={() => { setTiers(current => [...current, tier]); setActiveSection(tier); setSelectedId(undefined); setDirty(true); setSectionNotice(`Секция ${tier} добавлена.`); }}>+ Добавить {tier}</button>)}</div>}
 
       <div className="tier-editor-primary-controls">
         <ActionButtons published={initialList?.status === 'published'} />
