@@ -61,7 +61,7 @@ export default async function TierListsPage() {
             <Image src="/brand/icons/tierlists.svg" width={22} height={22} alt="" />
           </Link>
           <ShareTierListButton title="Тирлист энергетиков CanRush" />
-          <TierScreenshotButton boardId="tier-capture-board" title="Тирлист энергетиков CanRush" />
+          <TierScreenshotButton boardId="tier-capture-board" title="Тирлист энергетиков CanRush" official />
         </div>
 
         <section className="tierlists-community" aria-labelledby="community-title">

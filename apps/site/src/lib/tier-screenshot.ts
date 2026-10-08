@@ -1,13 +1,13 @@
 import { tierExportLayout } from './tier-export-layout';
 
 /** Render only the current board, excluding editor controls and selection outlines. */
-export async function renderTierScreenshot(board: HTMLElement, title: string, telegramChannel?: string | null, authorUsername?: string): Promise<Blob> {
+export async function renderTierScreenshot(board: HTMLElement, title: string, telegramChannel?: string | null, authorUsername?: string, official = false): Promise<Blob> {
   await document.fonts.ready;
   const boardRows = [...board.querySelectorAll<HTMLElement>('.tier-board-row, .tier-editor-row')];
   const layout = tierExportLayout(boardRows.map(row => row.querySelectorAll('.tier-board-product, .tier-editor-product').length));
   const channel = telegramChannel?.trim();
   const username = authorUsername?.trim();
-  const authorCaption = channel ? `t.me/${channel}` : username ? `@${username} · Canrush` : '';
+  const authorCaption = official ? 'canrush.ru' : channel ? `t.me/${channel}` : username ? `@${username} · Canrush` : '';
   const padding = 20, headerExtra = authorCaption ? 48 : 24;
   const width = layout.width + padding * 2, height = layout.height + headerExtra;
   const scale = Math.min(2, 16384 / Math.max(width, height), Math.sqrt(16_000_000 / (width * height)));
