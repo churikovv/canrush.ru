@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     exclude: [
+      'test/tier-sections.integration.test.ts',
       'test/campaigns.integration.test.ts',
       'test/market.integration.test.ts',
       'test/profile-reports.integration.test.ts', 'test/burn-alias-migration.integration.test.ts', 'test/vulkan-alias-migration.integration.test.ts',

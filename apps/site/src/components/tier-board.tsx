@@ -1,24 +1,25 @@
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { catalogGroupSlug } from '@/lib/catalog-query';
-import { TIER_KEYS, type TierListPlacement, type TierListProduct } from '@/lib/tier-list-types';
+import { TIER_KEYS, type TierKey, type TierListPlacement, type TierListProduct } from '@/lib/tier-list-types';
 
 interface TierBoardProps {
   products: TierListProduct[];
   placements: TierListPlacement[];
   emptyLabel?: string;
+  tiers?: readonly TierKey[];
 }
 
 function itemKey(brand: string, flavor: string): string {
   return `${brand}\u0000${flavor}`;
 }
 
-export function TierBoard({ products, placements, emptyLabel = 'Пока пусто' }: TierBoardProps) {
+export function TierBoard({ products, placements, emptyLabel = 'Пока пусто', tiers = TIER_KEYS }: TierBoardProps) {
   const productByKey = new Map(products.map((product) => [itemKey(product.brand, product.flavor), product]));
 
   return (
     <div id="tier-capture-board" className="tier-board" aria-label="Тирлист энергетических напитков">
-      {TIER_KEYS.map((tier) => {
+      {tiers.map((tier) => {
         const tierItems = placements
           .filter((placement) => placement.tier === tier && productByKey.has(itemKey(placement.brand, placement.flavor)))
           .sort((left, right) => left.position - right.position);

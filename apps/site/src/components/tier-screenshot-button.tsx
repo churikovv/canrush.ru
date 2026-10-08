@@ -55,7 +55,7 @@ export function TierScreenshotButton({ boardId, title, titleInputId }: { boardId
     finally { setPending(false); }
   }
   return <div className="tier-screenshot-control">
-    <button type="button" className="tier-secondary-action" disabled={pending} onClick={capture}>{pending ? 'Создаём скриншот…' : 'Сделать скриншот'}</button>
+    <button type="button" className="tier-secondary-action" disabled={pending} onClick={capture}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M8 5 10 3h4l2 2h4v15H4V5z" strokeLinejoin="round"/><circle cx="12" cy="12" r="4"/></svg>{pending ? 'Создаём скриншот…' : 'Сделать скриншот'}</button>
     {error && <p className="field-error" role="alert">{error}</p>}
     {preview && <Preview {...preview} onClose={() => { URL.revokeObjectURL(preview.url); previewUrl.current = null; setPreview(null); }} />}
   </div>;

@@ -32,6 +32,7 @@ export async function renderTierScreenshot(board: HTMLElement, title: string): P
     ctx.fillRect(box.x, box.y, box.width, box.height);
     ctx.strokeStyle = '#dfe3e8'; ctx.lineWidth = 1;
     ctx.strokeRect(rowBox.x, rowBox.y, rowBox.width, rowBox.height);
+    ctx.strokeRect(box.x, box.y, box.width, box.height);
     const size = 32;
     const gradient = ctx.createLinearGradient(0, box.y + box.height / 2 - size / 2, 0, box.y + box.height / 2 + size / 2);
     gradient.addColorStop(0, style.getPropertyValue('--tier-letter-top').trim());
@@ -54,7 +55,8 @@ export async function renderTierScreenshot(board: HTMLElement, title: string): P
             clearTimeout(timeout);
             const factor = Math.min(imageBox.width / image.naturalWidth, imageBox.height / image.naturalHeight);
             const w = image.naturalWidth * factor, h = image.naturalHeight * factor;
-            ctx.drawImage(image, imageBox.x + (imageBox.width - w) / 2, imageBox.y + (imageBox.height - h) / 2, w, h); resolve();
+            ctx.save(); ctx.beginPath(); ctx.roundRect(imageBox.x, imageBox.y, imageBox.width, imageBox.height, 8); ctx.clip();
+            ctx.drawImage(image, imageBox.x + (imageBox.width - w) / 2, imageBox.y + (imageBox.height - h) / 2, w, h); ctx.restore(); resolve();
           };
           image.onerror = () => { clearTimeout(timeout); reject(new Error('Не удалось загрузить фотографию напитка. Попробуйте ещё раз.')); };
           image.src = src;

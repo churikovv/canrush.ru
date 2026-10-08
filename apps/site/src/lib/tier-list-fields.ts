@@ -1,13 +1,15 @@
-import { TIER_KEYS, type TierListPlacement } from '@/lib/tier-list-types';
+import { TIER_KEYS, type TierKey, type TierListPlacement } from '@/lib/tier-list-types';
 
 export interface TierListFieldErrors {
   title?: string;
   items?: string;
+  tiers?: string;
 }
 
 export interface TierListInput {
   title: string;
   items: TierListPlacement[];
+  tiers: TierKey[];
 }
 
 const TIERS = new Set<string>(TIER_KEYS);
@@ -57,17 +59,29 @@ export function parseTierListItems(value: string): TierListPlacement[] | null {
   }
 }
 
-export function validateTierListInput(values: { title: string; items: string }):
+export function parseTierListSections(value: string): TierKey[] | null {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed) || parsed.length < 1 || parsed.length > TIER_KEYS.length ||
+        parsed.some(tier => typeof tier !== 'string' || !TIERS.has(tier)) || new Set(parsed).size !== parsed.length) return null;
+    return parsed as TierKey[];
+  } catch { return null; }
+}
+
+export function validateTierListInput(values: { title: string; items: string; tiers?: string }):
   | { data: TierListInput; errors?: never }
   | { data?: never; errors: TierListFieldErrors } {
   const title = normalizeTitle(values.title);
   const items = parseTierListItems(values.items);
+  const tiers = values.tiers === undefined ? [...TIER_KEYS] : parseTierListSections(values.tiers);
   const errors: TierListFieldErrors = {};
 
   if (!title) errors.title = 'Введите название тирлиста.';
   else if (title.length > 80) errors.title = 'Название должно быть короче 80 символов.';
 
+  if (!tiers) errors.tiers = 'Выберите от одной до шести разных секций.';
+  if (items && tiers && items.some(item => !tiers.includes(item.tier))) errors.items = 'Восстановите секцию или переместите из неё напитки.';
   if (!items) errors.items = 'Не удалось прочитать расположение товаров.';
 
-  return Object.keys(errors).length > 0 ? { errors } : { data: { title, items: items ?? [] } };
+  return Object.keys(errors).length > 0 ? { errors } : { data: { title, items: items ?? [], tiers: tiers ?? [] } };
 }

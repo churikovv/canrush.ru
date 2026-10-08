@@ -1,4 +1,4 @@
-export const TIER_KEYS = ['S', 'A', 'B', 'C', 'D'] as const;
+export const TIER_KEYS = ['SS', 'S', 'A', 'B', 'C', 'D'] as const;
 
 export type TierKey = (typeof TIER_KEYS)[number];
 export type TierListStatus = 'draft' | 'published';
@@ -38,6 +38,7 @@ export interface TierListData {
   createdAt: Date;
   updatedAt: Date;
   publishedAt: Date | null;
+  tiers: TierKey[];
   items: TierListPlacement[];
 }
 

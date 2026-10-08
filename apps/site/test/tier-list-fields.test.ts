@@ -14,6 +14,7 @@ describe('tier list fields', () => {
     expect(result).toEqual({
       data: {
         title: 'Мои любимые',
+        tiers: ['SS', 'S', 'A', 'B', 'C', 'D'],
         items: [
           { brand: 'Volt Energy', flavor: 'original', tier: 'S', position: 0 },
           { brand: 'Burn', flavor: 'apple', tier: 'A', position: 0 },
@@ -24,7 +25,7 @@ describe('tier list fields', () => {
 
   it('разрешает сохранить пустой черновик', () => {
     expect(validateTierListInput({ title: 'Черновик', items: '[]' })).toEqual({
-      data: { title: 'Черновик', items: [] },
+      data: { title: 'Черновик', items: [], tiers: ['SS', 'S', 'A', 'B', 'C', 'D'] },
     });
   });
 
@@ -45,4 +46,13 @@ describe('tier list fields', () => {
       items: expect.any(String),
     });
   });
+});
+
+it('preserves custom section order including SS and rejects removed or duplicate sections', () => {
+  const items = JSON.stringify([{ brand: 'Burn', flavor: 'original', tier: 'SS', position: 0 }]);
+  expect(validateTierListInput({ title: 'Custom', items, tiers: '["B","SS"]' }).data?.tiers).toEqual(['B', 'SS']);
+  expect(validateTierListInput({ title: 'Custom', items, tiers: '["B"]' }).errors?.items).toBeTruthy();
+  for (const tiers of ['[]', '["S","S"]', '["X"]', 'null', '{']) {
+    expect(validateTierListInput({ title: 'Custom', items: '[]', tiers }).errors?.tiers).toBeTruthy();
+  }
 });

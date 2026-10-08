@@ -57,6 +57,7 @@ export async function saveTierListAction(
   const validation = validateTierListInput({
     title: String(formData.get('title') ?? ''),
     items: String(formData.get('items') ?? ''),
+    tiers: String(formData.get('tiers') ?? JSON.stringify(TIER_KEYS)),
   });
 
   if (validation.errors) {
@@ -95,22 +96,23 @@ export async function saveTierListAction(
         `update "tierList"
          set "title" = $3,
              "status" = $4,
+             "tiers" = $5,
              "updatedAt" = current_timestamp,
              "publishedAt" = case
                when $4 = 'published' then coalesce("publishedAt", current_timestamp)
                else "publishedAt"
              end
          where "id" = $1 and "userId" = $2`,
-        [tierListId, user.id, validation.data.title, status],
+        [tierListId, user.id, validation.data.title, status, validation.data.tiers],
       );
       if (updated.rowCount !== 1) throw new Error('Tier list ownership changed');
       await client.query('delete from "tierListItem" where "tierListId" = $1', [tierListId]);
     } else {
       const inserted = await client.query<{ id: string }>(
-        `insert into "tierList" ("userId", "slug", "title", "status", "publishedAt")
-         values ($1, $2, $3, $4, case when $4 = 'published' then current_timestamp else null end)
+        `insert into "tierList" ("userId", "slug", "title", "status", "tiers", "publishedAt")
+         values ($1, $2, $3, $4, $5, case when $4 = 'published' then current_timestamp else null end)
          returning "id"`,
-        [user.id, slug, validation.data.title, status],
+        [user.id, slug, validation.data.title, status, validation.data.tiers],
       );
       tierListId = inserted.rows[0]?.id;
       if (!tierListId) throw new Error('Tier list was not created');

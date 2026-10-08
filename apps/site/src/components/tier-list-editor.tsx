@@ -22,7 +22,7 @@ type EditorColumns = Record<EditorLane, string[]>;
 
 interface TierListEditorProps {
   products: TierListProduct[];
-  initialList?: Pick<TierListData, 'slug' | 'title' | 'status' | 'items'>;
+  initialList?: Pick<TierListData, 'slug' | 'title' | 'status' | 'items' | 'tiers'>;
   saved?: boolean;
 }
 
@@ -33,7 +33,7 @@ function productKey(brand: string, flavor: string): string {
 function initialColumns(products: TierListProduct[], placements: TierListPlacement[]): EditorColumns {
   const idByProduct = new Map(products.map((product) => [productKey(product.brand, product.flavor), product.id]));
   const assigned = new Set<string>();
-  const columns: EditorColumns = { S: [], A: [], B: [], C: [], D: [], pool: [] };
+  const columns: EditorColumns = { SS: [], S: [], A: [], B: [], C: [], D: [], pool: [] };
 
   for (const tier of TIER_KEYS) {
     for (const placement of placements
@@ -153,6 +153,8 @@ function ProductButton({ product, selected, compact, onSelect, onDragStart, onDr
 export function TierListEditor({ products, initialList, saved = false }: TierListEditorProps) {
   const [state, formAction] = useActionState<TierListFormState, FormData>(saveTierListAction, {});
   const [columns, setColumns] = useState<EditorColumns>(() => initialColumns(products, initialList?.items ?? []));
+  const [tiers, setTiers] = useState<TierKey[]>(() => [...(initialList?.tiers ?? TIER_KEYS)]);
+  const [sectionNotice, setSectionNotice] = useState('');
   const [selectedId, setSelectedId] = useState<string>();
   const [draggingId, setDraggingId] = useState<string>();
   const [query, setQuery] = useState('');
@@ -191,7 +193,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
       return normalizeSearch(`${product.brand} ${product.flavorLabel}`).includes(normalizedQuery);
     }).sort((a, b) => compareTierProducts(a, b, sort));
 
-  const placements = TIER_KEYS.flatMap((tier) =>
+  const placements = tiers.flatMap((tier) =>
     columns[tier].flatMap((id, position) => {
       const product = productById.get(id);
       return product ? [{ brand: product.brand, flavor: product.flavor, tier, position }] : [];
@@ -221,6 +223,21 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
     });
     setSelectedId(id);
     setDirty(true);
+  }
+
+  function moveSection(tier: TierKey, offset: number) {
+    const index = tiers.indexOf(tier), target = index + offset;
+    if (target < 0 || target >= tiers.length) return;
+    const next = [...tiers]; next.splice(index, 1); next.splice(target, 0, tier);
+    setTiers(next); setDirty(true);
+    setSectionNotice(`Секция ${tier} перемещена на позицию ${target + 1}.`);
+  }
+
+  function removeSection(tier: TierKey) {
+    if (tiers.length === 1) return;
+    setColumns(current => ({ ...current, [tier]: [], pool: [...current.pool, ...current[tier]] }));
+    setTiers(current => current.filter(item => item !== tier)); setDirty(true);
+    setSectionNotice(`Секция ${tier} удалена. Напитки возвращены в общий список.`);
   }
 
   function reorderSelected(offset: -1 | 1) {
@@ -263,6 +280,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
     <form className="tier-editor" action={formAction}>
       <LayoutGroup id="tier-list-editor">
         <input type="hidden" name="slug" value={initialList?.slug ?? ''} />
+        <input type="hidden" name="tiers" value={JSON.stringify(tiers)} />
         <input type="hidden" name="items" value={JSON.stringify(placements)} />
 
       <div className="tier-editor-title-field">
@@ -293,20 +311,19 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
         {dirty ? 'Есть несохранённые изменения' : saved ? 'Изменения сохранены' : 'Выберите энергетик или перетащите его в ряд'}
       </div>
 
-      <motion.div
+      {selectedProduct && <motion.div
         className={`tier-editor-command${selectedLane && selectedLane !== 'pool' ? ' tier-editor-command-ordered' : ''}`}
         aria-live="polite"
         layoutRoot
         initial={false}
       >
-        {selectedProduct ? (
           <>
             <p>
               <strong>{selectedProduct.brand}</strong>
               <span>{selectedProduct.flavorLabel}</span>
             </p>
             <div className="tier-editor-command-buttons" role="group" aria-label="Переместить выбранный товар">
-              {TIER_KEYS.map((tier) => (
+              {tiers.map((tier) => (
                 <button
                   type="button"
                   key={tier}
@@ -315,7 +332,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
                   disabled={selectedLane === tier}
                   onClick={() => moveProduct(selectedProduct.id, tier)}
                 >
-                  {tier}
+                  <span className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span>
                 </button>
               ))}
               <button
@@ -360,13 +377,26 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
               ) : null}
             </div>
           </>
-        ) : (
-          <p>Нажмите на энергетик, затем выберите S, A, B, C или D. На компьютере карточки можно перетаскивать.</p>
-        )}
-      </motion.div>
+      </motion.div>}
+
+      <details className="tier-section-settings">
+        <summary>Настроить секции</summary>
+        {state.fieldErrors?.tiers && <p className="field-error" role="alert">{state.fieldErrors.tiers}</p>}
+        <p>Меняйте порядок секций вместе с напитками. При удалении секции напитки вернутся в общий список.</p>
+        <ol>{tiers.map((tier, index) => <li key={tier}>
+          <span className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span>
+          <div>
+            <button type="button" className="community-button community-button-secondary" aria-label={`Секцию ${tier} выше`} disabled={index === 0} onClick={() => moveSection(tier, -1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 14 6-6 6 6"/></svg></button>
+            <button type="button" className="community-button community-button-secondary" aria-label={`Секцию ${tier} ниже`} disabled={index === tiers.length - 1} onClick={() => moveSection(tier, 1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 10 6 6 6-6"/></svg></button>
+            <button type="button" className="community-button community-button-secondary" aria-label={`Удалить секцию ${tier}`} disabled={tiers.length === 1} onClick={() => removeSection(tier)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg></button>
+          </div>
+        </li>)}</ol>
+        {TIER_KEYS.some(tier => !tiers.includes(tier)) && <div className="tier-section-add">{TIER_KEYS.filter(tier => !tiers.includes(tier)).map(tier => <button key={tier} type="button" className="community-button community-button-secondary" onClick={() => { setTiers(current => [...current, tier]); setDirty(true); setSectionNotice(`Секция ${tier} добавлена.`); }}>Добавить {tier}</button>)}</div>}
+        <p role="status">{sectionNotice}</p>
+      </details>
 
       <div id="tier-capture-board" className="tier-editor-board" aria-label="Редактор тирлиста">
-        {TIER_KEYS.map((tier) => (
+        {tiers.map((tier) => (
           <section className={`tier-editor-row tier-editor-row-${tier.toLowerCase()}`} key={tier} aria-labelledby={`editor-tier-${tier}`}>
             <h2 id={`editor-tier-${tier}`}><span className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span></h2>
             <div

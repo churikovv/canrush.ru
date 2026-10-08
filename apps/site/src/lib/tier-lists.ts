@@ -22,6 +22,7 @@ interface TierListRow extends QueryResultRow {
   slug: string;
   title: string;
   status: TierListStatus;
+  tiers: TierKey[];
   createdAt: Date;
   updatedAt: Date;
   publishedAt: Date | null;
@@ -48,7 +49,7 @@ export interface PublishedTierListSitemapEntry extends QueryResultRow {
 }
 
 const TIER_LIST_SELECT = `
-  select tl."id", tl."userId", tl."slug", tl."title", tl."status",
+  select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers",
          tl."createdAt", tl."updatedAt", tl."publishedAt",
          u."username", u."name", u."telegramChannel"
   from "tierList" tl
@@ -75,6 +76,7 @@ function toTierList(row: TierListRow, items: TierListPlacement[]): TierListData 
     slug: row.slug,
     title: row.title,
     status: row.status,
+    tiers: row.tiers,
     author: {
       username: row.username,
       name: row.name,
@@ -120,7 +122,7 @@ export async function getTierListBySlug(slug: string): Promise<TierListData | nu
 
 async function getTierListSummaries(where: string, values: unknown[], limit: number): Promise<TierListSummary[]> {
   const result = await getPool().query<TierListSummaryRow>(
-    `select tl."id", tl."userId", tl."slug", tl."title", tl."status",
+    `select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers",
             tl."createdAt", tl."updatedAt", tl."publishedAt",
             u."username", u."name", u."telegramChannel",
             count(tli."tierListId")::int as "itemCount"
@@ -138,7 +140,7 @@ async function getTierListSummaries(where: string, values: unknown[], limit: num
   return result.rows.map((row) => ({
     ...toTierList(row, []),
     itemCount: Number(row.itemCount),
-    preview: (itemsByList.get(row.id) ?? []).slice(0, 8),
+    preview: (itemsByList.get(row.id) ?? []).sort((a, b) => row.tiers.indexOf(a.tier) - row.tiers.indexOf(b.tier) || a.position - b.position).slice(0, 8),
   }));
 }
 
@@ -189,11 +191,12 @@ export function catalogGroupsToTierProducts(
   });
 }
 
-function tierForScore(score: number): TierKey {
-  if (score >= 4.5) return 'S';
-  if (score >= 4) return 'A';
-  if (score >= 3.5) return 'B';
-  if (score >= 3) return 'C';
+export function tierForScore(score: number): TierKey {
+  if (score >= 9.5) return 'SS';
+  if (score >= 9) return 'S';
+  if (score >= 8) return 'A';
+  if (score >= 7) return 'B';
+  if (score >= 6) return 'C';
   return 'D';
 }
 

@@ -67,7 +67,7 @@ export default async function TierListPage({ params }: { params: TierListParams 
           ) : null}
         </header>
 
-        <TierBoard products={products} placements={list.items} />
+        <TierBoard products={products} placements={list.items} tiers={list.tiers} />
 
         <div className="tierlists-main-actions">
           {isOwn ? (
