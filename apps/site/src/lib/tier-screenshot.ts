@@ -55,7 +55,7 @@ export async function renderTierScreenshot(board: HTMLElement, title: string): P
             clearTimeout(timeout);
             const factor = Math.min(imageBox.width / image.naturalWidth, imageBox.height / image.naturalHeight);
             const w = image.naturalWidth * factor, h = image.naturalHeight * factor;
-            ctx.save(); ctx.beginPath(); ctx.roundRect(imageBox.x, imageBox.y, imageBox.width, imageBox.height, 16); ctx.clip();
+            ctx.save(); ctx.beginPath(); ctx.roundRect(imageBox.x, imageBox.y, imageBox.width, imageBox.height, 6); ctx.clip();
             ctx.drawImage(image, imageBox.x + (imageBox.width - w) / 2, imageBox.y + (imageBox.height - h) / 2, w, h); ctx.restore(); resolve();
           };
           image.onerror = () => { clearTimeout(timeout); reject(new Error('Не удалось загрузить фотографию напитка. Попробуйте ещё раз.')); };

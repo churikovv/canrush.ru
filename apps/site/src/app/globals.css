@@ -5728,7 +5728,7 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 /* Shared rank treatment in the board and the selection controls. */
 .tier-letter-ss { --tier-letter-top: #a94e20; --tier-letter-middle: #fff0d1; --tier-letter-bottom: #d5813d; --tier-letter-outline: #502610; }
 .tier-board-label, .tier-editor-row > h2 { border-right: 1px solid var(--color-control); }
-.tier-board-product, .tier-board-product img, .tier-editor-product-image, .tier-editor-product-image img, .tier-editor-product-compact, .tier-list-card-preview img { border-radius: 16px; }
+.tier-board-product, .tier-board-product img, .tier-editor-product-image, .tier-editor-product-image img, .tier-editor-product-compact, .tier-list-card-preview img { border-radius: 6px; }
 .tier-editor-product-image { overflow: hidden; }
 .tier-primary-action, .tier-secondary-action, .tier-delete-action { min-height: 44px; padding: 10px 16px; border-width: 1px; border-radius: 8px; font: inherit; font-size: .875rem; cursor: pointer; }
 .tier-primary-action { border-color: #000; background: #000; color: #fff; }
