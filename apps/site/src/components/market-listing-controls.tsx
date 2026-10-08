@@ -14,7 +14,7 @@ export function MarketListingControls({ id, own, closed, authenticated, availabl
   const count = Number(quantity);
   const valid = /^\d+$/.test(quantity) && Number.isSafeInteger(count) && count >= 1 && count <= available;
   if (activeOrderId) return <Link className="community-button" href={`/messages/${activeOrderId}`}>Открыть заказ</Link>;
-  if (closed && own) return <div className="market-listing-controls"><span className="market-status">Объявление в архиве</span>
+  if (closed && own) return <div className="market-listing-controls market-archive-controls"><span className="market-status">Объявление в архиве</span>
     <button className="community-button" disabled={pending || available < 1} onClick={() => {
       setError(''); startTransition(async () => {
         try { const result = await listingAction(id, 'reopen'); if (result.error) setError(result.error); else { setConfirm(false); router.refresh(); } }
@@ -22,6 +22,7 @@ export function MarketListingControls({ id, own, closed, authenticated, availabl
       });
     }}>Опубликовать снова</button>
     {available < 1 && <p className="market-note">Нет свободного остатка для повторной публикации.</p>}
+    <div className="market-listing-delete-section">
     <button className="community-button community-button-secondary" disabled={pending} onClick={() => {
       if (!confirm) { setConfirm(true); return; }
       startTransition(async () => {
@@ -30,6 +31,7 @@ export function MarketListingControls({ id, own, closed, authenticated, availabl
       });
     }}>{pending ? 'Подождите…' : confirm ? 'Подтвердить удаление' : 'Удалить объявление'}</button>
     {confirm && <><p className="market-note">Объявление исчезнет из маркета. Заказы и переписка сохранятся.</p><button className="market-text-button" disabled={pending} onClick={() => setConfirm(false)}>Отмена</button></>}
+    </div>
     {error && <p role="alert" className="market-error">{error}</p>}
   </div>;
   if (closed) return <span className="market-status">Объявление закрыто</span>;
