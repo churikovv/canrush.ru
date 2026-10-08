@@ -44,3 +44,14 @@ it('filters mixed Burn offers from existing snapshots instead of attaching their
   expect(group?.variants).toHaveLength(1);
   expect(group?.minPrice).toBe(101);
 });
+
+it('deduplicates inherently sugar-free Monster editions, preserving distinct regular and zero products', () => {
+  for (const edition of ['monster_full_throttle', 'monster_ultra_white', 'monster_ultra_paradise', 'monster_absolute_zero']) {
+    const groups = [edition, `${edition}:sugarfree`].map(flavor => ({ brand: 'Monster', flavor, variants: [], minPrice: 0 }));
+    expect(mergeCatalogAliases(groups).map(group => group.flavor)).toEqual([edition]);
+  }
+  for (const edition of ['monster_vr46', 'monster_the_doctor', 'monster_mango_loco', 'strawberry', 'original']) {
+    expect(canonicalProductFlavor('Monster', `${edition}:sugarfree`)).toBe(`${edition}:sugarfree`);
+  }
+  expect(canonicalProductFlavor('Other', 'monster_full_throttle:sugarfree')).toBe('monster_full_throttle:sugarfree');
+});

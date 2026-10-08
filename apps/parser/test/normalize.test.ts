@@ -213,3 +213,11 @@ it('does not publish a multi-edition Burn flyer as a single juicy zero product',
   const products = names.map((name, i) => normalizeProduct('edadeal', { sourceId: String(i), name, price: 100, url: 'https://example.com/' + i }, config.brands, '2026-10-08', config.brandAliases, config.flavors, config.flavorAliases));
   expect(groupByFlavor(products).map(g => g.flavor)).toEqual(['burn_juicy', 'blend:mango+peach:sugarfree']);
 });
+
+it('groups Full Throttle with or without sugar-free wording as one Monster edition', () => {
+  const config = loadProductsConfig();
+  for (const name of ['Monster Energy Full Throttle 500 мл', 'Monster Energy Full Throttle Zero 0,5 л', 'Монстр Full Throtle Zero 0.5 л', 'Monster Full Throttle без сахара 500 мл']) {
+    const product = normalizeProduct('edadeal', { sourceId: 'monster', name, price: 100, url: 'https://example.com/monster' }, config.brands, '2026-10-08', config.brandAliases, config.flavors, config.flavorAliases);
+    expect(product.flavor).toBe('monster_full_throttle');
+  }
+});

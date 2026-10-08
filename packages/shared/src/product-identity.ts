@@ -5,6 +5,11 @@ export function isResolvedFlavor(flavor: string): boolean {
 
 /** Verified aliases for retailer titles that omit part of a product name. */
 export function canonicalProductFlavor(brand: string | undefined, flavor: string): string {
+  if (brand === 'Monster' && flavor.endsWith(':sugarfree')) {
+    const edition = flavor.slice(0, -':sugarfree'.length);
+    // These editions are inherently zero-sugar; VR46, Original and juice lines are not.
+    if (edition.startsWith('monster_ultra_') || edition === 'monster_absolute_zero' || edition === 'monster_full_throttle') return edition;
+  }
   if (brand === 'Volt Energy' && flavor === 'blueberry') return 'blend:blueberry+pomegranate';
   if (brand === 'Vulkan') {
     const aliases: Record<string, string> = {
