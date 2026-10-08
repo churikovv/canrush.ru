@@ -1,7 +1,7 @@
 import { catalogCover } from './catalog-covers';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { CITIES, DEFAULT_CITY, canonicalProductFlavor, isResolvedFlavor, isExcludedEnergyBrand, type CatalogGroup, type CityId } from '@canrush/shared';
+import { CITIES, DEFAULT_CITY, canonicalProductFlavor, isMixedBurnOffer, isResolvedFlavor, isExcludedEnergyBrand, type CatalogGroup, type CityId } from '@canrush/shared';
 export interface CatalogFile { groups?: CatalogGroup[]; generatedAt?: string | null; cityId?: CityId; status?: 'ok' | 'stale' | 'unavailable' }
 const cache = new Map<string, { stamp: string; data: CatalogFile }>();
 const pending = new Map<string, Promise<CatalogFile | null>>();
@@ -67,10 +67,18 @@ export async function readAllCatalogGroups(): Promise<CatalogGroup[]> {
 export function mergeCatalogAliases(groups: CatalogGroup[]): CatalogGroup[] {
   const merged = new Map<string, CatalogGroup>();
   for (const group of groups) {
+    // Historical Burn "juicy zero" was created from multi-edition flyers, not a product.
+    // Exclude the archived identity as well, so it cannot reappear in tierlists.
+    if (group.brand === 'Burn' && group.flavor === 'burn_juicy:sugarfree') continue;
+    const offers = group.variants.filter(offer => {
+      try { return !isMixedBurnOffer(group.brand, new URL(offer.url).searchParams.get('text') ?? ''); }
+      catch { return true; }
+    });
+    if (group.variants.length > 0 && offers.length === 0) continue;
     const flavor = canonicalProductFlavor(group.brand, group.flavor);
     const key = JSON.stringify([group.brand, flavor]);
     const previous = merged.get(key);
-    const variants = [...(previous?.variants ?? []), ...group.variants];
+    const variants = [...(previous?.variants ?? []), ...offers];
     const unique = [...new Map(variants.map(offer => [JSON.stringify([offer.source, offer.retailer, offer.volumeMl, offer.url]), offer])).values()];
     merged.set(key, {
       ...group, flavor, variants: unique,

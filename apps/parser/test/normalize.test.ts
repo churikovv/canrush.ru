@@ -200,3 +200,16 @@ it('normalizes verified Burn Peach Zero and omitted zero aliases', () => {
     expect(product.flavor).toBe('blend:mango+peach:sugarfree');
   }
 });
+
+it('normalizes shortened Volt blueberry as blueberry-pomegranate', () => {
+  const config = loadProductsConfig();
+  const product = normalizeProduct('edadeal', { sourceId: 'volt', name: 'Энергетический напиток Вольт голубика 0.45 л ж б', price: 95, url: 'https://example.com/volt' }, config.brands, '2026-10-08', config.brandAliases, config.flavors, config.flavorAliases);
+  expect(product.flavor).toBe('blend:blueberry+pomegranate');
+});
+it('does not publish a multi-edition Burn flyer as a single juicy zero product', async () => {
+  const { groupByFlavor } = await import('../src/storage.js');
+  const config = loadProductsConfig();
+  const names = ['Напиток энергетический Бёрн 449мл Оригинальный; Тропический Микс; Сочная Энергия; Яблоко/Киви; Гуава; Без сахара Персик/Манго', 'Burn Сочная энергия 449мл', 'Burn Zero Персик манго без сахара 449мл'];
+  const products = names.map((name, i) => normalizeProduct('edadeal', { sourceId: String(i), name, price: 100, url: 'https://example.com/' + i }, config.brands, '2026-10-08', config.brandAliases, config.flavors, config.flavorAliases));
+  expect(groupByFlavor(products).map(g => g.flavor)).toEqual(['burn_juicy', 'blend:mango+peach:sugarfree']);
+});

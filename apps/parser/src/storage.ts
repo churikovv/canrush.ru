@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { AdapterRunResult, CatalogGroup, FlavorVariant, Product } from '@canrush/shared';
+import { isMixedBurnOffer } from '@canrush/shared';
 import { dedupeProducts } from './normalize.js';
 
 // apps/parser/src/storage.ts -> repo root /data
@@ -75,6 +76,7 @@ export function groupByFlavor(products: Product[]): CatalogGroup[] {
   const groups = new Map<string, CatalogGroup>();
 
   for (const product of products) {
+    if (isMixedBurnOffer(product.brand, product.name)) continue;
     const brand = product.brand ?? 'Unknown';
     const flavor = product.flavor && product.flavor !== 'unknown' ? product.flavor : `unresolved:${createHash('sha256').update(JSON.stringify([product.source, product.sourceId, product.name])).digest('hex').slice(0, 24)}`;
     const key = JSON.stringify([brand, flavor]);

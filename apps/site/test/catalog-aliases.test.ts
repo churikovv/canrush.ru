@@ -26,3 +26,21 @@ it('consolidates Vulkan edition descriptions while keeping original and zero sep
   expect(mergeCatalogAliases(groups).map(group => group.flavor)).toEqual(['tropical', 'citrus', 'berry', 'original', 'sugarfree']);
   expect(canonicalProductFlavor('Other', 'blend:citrus+pineapple')).toBe('blend:citrus+pineapple');
 });
+
+it('merges the shortened Volt blueberry identity and preserves both stores', () => {
+  const groups = ['blueberry', 'blend:blueberry+pomegranate'].map((flavor, i) => ({ brand: 'Volt Energy', flavor, minPrice: 90 + i, variants: [{ source: 'edadeal' as const, retailer: `Store ${i}`, price: 90 + i, url: `https://example.com/${i}`, fetchedAt: '2026-10-08' }] }));
+  expect(mergeCatalogAliases(groups)).toMatchObject([{ flavor: 'blend:blueberry+pomegranate', variants: [{ retailer: 'Store 0' }, { retailer: 'Store 1' }] }]);
+  expect(canonicalProductFlavor('Other', 'blueberry')).toBe('blueberry');
+  expect(canonicalProductFlavor('Volt Energy', 'blueberry:sugarfree')).toBe('blueberry:sugarfree');
+});
+it('excludes historical Burn flyer identity including archive entries without affecting real zero flavors', () => {
+  const groups = ['burn_juicy', 'burn_juicy:sugarfree', 'blend:mango+peach:sugarfree'].map(flavor => ({ brand: 'Burn', flavor, minPrice: 0, variants: [] }));
+  expect(mergeCatalogAliases(groups).map(g => g.flavor)).toEqual(['burn_juicy', 'blend:mango+peach:sugarfree']);
+});
+it('filters mixed Burn offers from existing snapshots instead of attaching their price to a real flavor', () => {
+  const mixed = 'Напиток Бёрн Оригинальный; Сочная Энергия; Без сахара Персик/Манго';
+  const variants = [mixed, 'Burn Сочная энергия 449мл'].map((text, i) => ({ source: 'edadeal' as const, price: 100 + i, url: 'https://edadeal.ru/moskva/search?text=' + encodeURIComponent(text), fetchedAt: '2026-10-08' }));
+  const [group] = mergeCatalogAliases([{ brand: 'Burn', flavor: 'burn_juicy', variants, minPrice: 100 }]);
+  expect(group?.variants).toHaveLength(1);
+  expect(group?.minPrice).toBe(101);
+});
