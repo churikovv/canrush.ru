@@ -1,3 +1,4 @@
+import { loadAllCatalogGroups } from '@/lib/catalog';
 import type { Metadata } from 'next';
 import Link from '@/components/navigation-progress';
 import { headers } from 'next/headers';
@@ -12,9 +13,10 @@ export const metadata: Metadata = { title: 'Создать объявление'
 export default async function NewListingPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect('/sign-in');
+  const brands = [...new Set((await loadAllCatalogGroups()).map(group=>group.brand).filter(brand=>brand && brand.toLowerCase()!=='unknown'))].sort((a,b)=>a.localeCompare(b,'ru'));
   const blocked = await isUserBlocked(session.user.id);
   return <BrandShell headerAction={<ProfileNavigation active="market" />}><div className="market-layout market-editor-layout">
     <Link className="market-back" href="/market">← Маркет</Link><header className="market-heading"><h1>Новое объявление</h1></header>
-    {blocked ? <p role="alert">Публикация объявлений для этого аккаунта ограничена.</p> : <MarketListingForm />}
+    {blocked ? <p role="alert">Публикация объявлений для этого аккаунта ограничена.</p> : <MarketListingForm brands={brands} />}
   </div></BrandShell>;
 }

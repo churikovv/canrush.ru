@@ -19,15 +19,19 @@ export function parseListing(form: FormData) {
     if (typeof value !== 'string' || !value.trim() || value.trim().length > max) throw new MarketError(`Заполните ${key === 'title' ? 'название (до 120 символов)' : key === 'city' ? 'город (до 100 символов)' : 'описание (до 5000 символов)'}.`);
     return value.trim();
   };
-  const title = text('title', 120), description = text('description', 5000), city = text('city', 100);
+  const anyCity = form.get('anyCity') === 'on';
+  const title = text('title', 120), description = text('description', 5000), city = anyCity ? 'Любой город' : text('city', 100);
+  const brand = typeof form.get('brand') === 'string' ? String(form.get('brand')).trim() : '';
+  if (!brand || brand.length > 100) throw new MarketError('Выберите бренд.');
   const raw = String(form.get('price') ?? '').trim().replace(',', '.');
   const price = Math.round(Number(raw) * 100);
   if (!/^\d{1,8}(\.\d{1,2})?$/.test(raw) || !Number.isSafeInteger(price) || price < 1 || price > 1_000_000_000) throw new MarketError('Укажите цену от 0,01 до 10 000 000 ₽, не более двух знаков после запятой.');
   const delivery = [...new Set(form.getAll('delivery'))];
   if (!delivery.length || delivery.some(value => typeof value !== 'string' || !Object.hasOwn(DELIVERY, value))) throw new MarketError('Выберите хотя бы один способ доставки.');
-  return { title, description, city, price, quantity: parseQuantity(form.get('quantity')), delivery: delivery as Delivery[] };
+  return { title, description, city, brand, anyCity, price, quantity: parseQuantity(form.get('quantity')), delivery: delivery as Delivery[] };
 }
-export type ListingInput = ReturnType<typeof parseListing>;
+export type ListingInput = Omit<ReturnType<typeof parseListing>, 'brand' | 'anyCity'> & { brand?: string | null; anyCity?: boolean };
+export interface MarketFilters { brand?: string; city?: string; delivery?: string }
 export function canTransitionOrder(from: OrderStatus, to: OrderStatus, role: 'buyer' | 'seller') {
   return ((from === 'new' || from === 'confirmed') && to === 'cancelled')
     || (from === 'new' && to === 'confirmed' && role === 'seller')

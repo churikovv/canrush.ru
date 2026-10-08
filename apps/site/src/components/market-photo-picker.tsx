@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ProfileImageCrop, type Crop, type CropSource } from '@/components/profile-image-crop';
 
 interface Photo { id: string; file: File; original: File; src: string; preview: string; width: number; height: number; crop?: Crop }
-export function MarketPhotoPicker({ onChange, onBusyChange, disabled = false, crop = true }: { onChange: (files: File[]) => void; onBusyChange?: (busy: boolean) => void; disabled?: boolean; crop?: boolean }) {
+export function MarketPhotoPicker({ onChange, onBusyChange, disabled = false, crop = true, compact = false }: { onChange: (files: File[]) => void; onBusyChange?: (busy: boolean) => void; disabled?: boolean; crop?: boolean; compact?: boolean }) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -46,12 +46,12 @@ export function MarketPhotoPicker({ onChange, onBusyChange, disabled = false, cr
   }
   const selected = photos.find(photo => photo.id === editing);
   return <div className="market-photo-picker">
-    <div className="market-dropzone" onDragOver={event => { event.preventDefault(); }} onDrop={event => { event.preventDefault(); if (!drag.current) void add(Array.from(event.dataTransfer.files)); }}>
-      <strong>Фотографии · {photos.length}/5</strong>
-      <p>{crop ? 'Первое фото станет обложкой. Перетащите фотографии, чтобы изменить порядок.' : 'Добавьте фотографии к сообщению.'}</p>
-      <button type="button" className="community-button community-button-secondary" disabled={disabled || busy || photos.length === 5} onClick={() => input.current?.click()}>{busy ? 'Читаем фото…' : 'Добавить фотографии'}</button>
+    <div className={`market-dropzone${compact ? ' market-dropzone-compact' : ''}`} onDragOver={event => { event.preventDefault(); }} onDrop={event => { event.preventDefault(); if (!drag.current) void add(Array.from(event.dataTransfer.files)); }}>
+      {!compact && <strong>Фотографии · {photos.length}/5</strong>}
+      {!compact && <p>{crop ? 'Первое фото станет обложкой. Перетащите фотографии, чтобы изменить порядок.' : 'Добавьте фотографии к сообщению.'}</p>}
+      <button type="button" aria-label="Добавить фотографии" title="Добавить фотографии или перетащить сюда — до 5 фото" className="community-button community-button-secondary" disabled={disabled || busy || photos.length === 5} onClick={() => input.current?.click()}>{compact ? <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m3 17 5-5 4 4 3-3 6 6M15 6v6M12 9h6"/><circle cx="8" cy="8" r="1"/></svg> : busy ? 'Читаем фото…' : 'Добавить фотографии'}</button>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={event => { void add(Array.from(event.target.files ?? [])); event.target.value = ''; }} />
-      <small>Или перетащите сюда. JPG, PNG, WebP, до 5 МБ каждое.</small>
+      {!compact && <small>Или перетащите сюда. JPG, PNG, WebP, до 5 МБ каждое.</small>}
     </div>
     {photos.length > 0 && <ol className="market-photo-previews">{photos.map((photo, index) => <li key={photo.id} draggable={!disabled && !busy} onDragStart={() => { drag.current = photo.id; }} onDragEnd={() => { drag.current = null; }} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); event.stopPropagation(); if (drag.current) move(drag.current, index); drag.current = null; }}>
       <Image src={photo.preview} alt={`Фотография ${index + 1}${index === 0 ? ', обложка' : ''}`} width={160} height={160} unoptimized />

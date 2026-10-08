@@ -3,7 +3,7 @@ import { parseListing, canTransitionOrder } from '@/lib/market-fields';
 
 function form() {
   const value = new FormData();
-  for (const [key, text] of Object.entries({ title: 'Monster Japan', description: 'Набор из трёх банок', city: 'Москва', price: '1200,50', quantity: '6', delivery: 'pickup' })) value.append(key, text);
+  for (const [key, text] of Object.entries({ title: 'Monster Japan', brand: 'Monster', description: 'Набор из трёх банок', city: 'Москва', price: '1200,50', quantity: '6', delivery: 'pickup' })) value.append(key, text);
   return value;
 }
 describe('market validation', () => {
@@ -30,4 +30,10 @@ describe('market validation', () => {
     expect(canTransitionOrder('completed', 'cancelled', 'buyer')).toBe(false);
     expect(canTransitionOrder('cancelled', 'confirmed', 'seller')).toBe(false);
   });
+});
+
+it('validates brand and allows any city without a city input',()=>{
+ const data=form();data.delete('brand');expect(()=>parseListing(data)).toThrow('бренд');
+ data.set('brand','Monster');data.delete('city');expect(()=>parseListing(data)).toThrow();
+ data.set('anyCity','on');expect(parseListing(data)).toMatchObject({brand:'Monster',anyCity:true,city:'Любой город'});
 });

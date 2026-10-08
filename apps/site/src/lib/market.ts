@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg';
 import { getPool } from '@/db/pool';
-import { MarketError, marketId, canTransitionOrder, parseQuantity, type Delivery, type ListingInput, type OrderStatus } from './market-fields';
+import { MarketError, marketId, canTransitionOrder, parseQuantity, type MarketFilters, type Delivery, type ListingInput, type OrderStatus } from './market-fields';
 import type { PreparedReviewPhoto } from './review-photos';
 
 export interface Listing extends ListingInput { id: string; sellerId: string; sellerName: string; username: string | null; closed: boolean; createdAt: string; photos: string[] }
@@ -30,17 +30,17 @@ export async function createListing(userId: string, input: ListingInput, photos:
   return transaction(async db => {
     await allowed(db, userId); await cooldown(db, userId, 'lastMarketListingAt', 60);
     const quantity = parseQuantity(input.quantity);
-    const { rows } = await db.query('insert into "marketListing"("sellerId",title,description,city,price,delivery,quantity) values($1,$2,$3,$4,$5,$6,$7) returning id', [userId, input.title, input.description, input.city, input.price, input.delivery, quantity]);
+    const { rows } = await db.query('insert into "marketListing"("sellerId",title,description,city,price,delivery,quantity,brand,"anyCity") values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id', [userId, input.title, input.description, input.city, input.price, input.delivery, quantity, input.brand ?? null, input.anyCity ?? false]);
     const id = rows[0].id as string; await savePhotos(db, 'listingId', id, photos); return id;
   });
 }
 const listingSelect = `select l.*,case when trim(u.name)<>'' and u.name not like '%@%' then u.name else coalesce(u.username,'Участник') end as "sellerName",u.username,
   array(select p.id::text from "marketPhoto" p where p."listingId"=l.id order by position) as photos
   from "marketListing" l join "user" u on u.id=l."sellerId"`;
-export async function getListings(page = 1, mine?: string, archive = false, seller?: string) {
-  const { rows } = await getPool().query(`${listingSelect} where l."deletedAt" is null and ($4::text is null or u.username=$4) and (not $3::boolean or l.closed) and
+export async function getListings(page = 1, mine?: string, archive = false, seller?: string, filters: MarketFilters = {}) {
+  const { rows } = await getPool().query(`${listingSelect} where l."deletedAt" is null and ($5::text is null or lower(l.brand)=lower($5)) and ($6::text is null or l."anyCity" or lower(l.city)=lower($6)) and ($7::text is null or $7=any(l.delivery)) and ($4::text is null or u.username=$4) and (not $3::boolean or l.closed) and
     ($1::text is not null and l."sellerId"=$1 or $1::text is null and not l.closed and not exists(select 1 from "userBlock" where "userId"=l."sellerId"))
-    order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24, Boolean(mine && archive), seller ?? null]);
+    order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24, Boolean(mine && archive), seller ?? null, filters.brand || null, filters.city || null, filters.delivery || null]);
   return { items: rows.slice(0, 24).map(row => ({ ...row, createdAt: row.createdAt.toISOString() }) as Listing), hasMore: rows.length > 24 };
 }
 export async function getListing(id: string, viewer?: string, admin = false) {
@@ -148,4 +148,9 @@ export async function deleteArchivedListing(userId: string, id: string) {
   marketId(id);
   const result = await getPool().query('update "marketListing" set "deletedAt"=now() where id=$1 and "sellerId"=$2 and closed and "deletedAt" is null returning id', [id,userId]);
   if (!result.rowCount) throw new MarketError('Можно удалить только своё закрытое объявление.');
+}
+
+export async function getMarketFilterOptions() {
+  const { rows } = await getPool().query<{brand:string|null;city:string;anyCity:boolean}>(`select distinct brand,city,"anyCity" from "marketListing" l where not closed and "deletedAt" is null and not exists(select 1 from "userBlock" b where b."userId"=l."sellerId")`);
+  return { brands: [...new Set(rows.flatMap(row=>row.brand?[row.brand]:[]))].sort((a,b)=>a.localeCompare(b,'ru')), cities: [...new Set(rows.filter(row=>!row.anyCity).map(row=>row.city))].sort((a,b)=>a.localeCompare(b,'ru')) };
 }

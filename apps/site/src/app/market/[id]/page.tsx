@@ -28,7 +28,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
       <p className="market-stock">В наличии: {listing.quantity} шт.</p>
       <MarketListingControls id={id} own={listing.sellerId === session?.user.id} closed={listing.closed} authenticated={Boolean(session)} available={listing.quantity} unitPrice={listing.price} activeOrderId={activeOrderId} />
       <p className="market-note">Кнопка «Заказать» резервирует выбранное количество и открывает переписку. Оплата и доставка происходят вне CanRush.</p>
-      <dl className="market-parameters"><div><dt>Продавец</dt><dd>{listing.username ? <Link href={`/profile/${listing.username}`}>{listing.sellerName}</Link> : listing.sellerName}</dd></div><div><dt>Город</dt><dd>{listing.city}</dd></div><div><dt>Доставка</dt><dd>{listing.delivery.map(key => DELIVERY[key]).join(', ')}</dd></div></dl>
+      <dl className="market-parameters">{listing.brand && <div><dt>Бренд</dt><dd>{listing.brand}</dd></div>}<div><dt>Продавец</dt><dd>{listing.username ? <Link href={`/profile/${listing.username}`}>{listing.sellerName}</Link> : listing.sellerName}</dd></div><div><dt>Город</dt><dd>{listing.city}</dd></div><div><dt>Доставка</dt><dd>{listing.delivery.map(key => DELIVERY[key]).join(', ')}</dd></div></dl>
       <h2>Описание</h2><p className="market-full-description">{listing.description}</p>
     </section></div>
   </div></BrandShell>;

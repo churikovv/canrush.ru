@@ -8,7 +8,7 @@ vi.mock('../src/lib/moderation', () => ({ isUserBlocked: mocks.blocked }));
 vi.mock('../src/lib/market', () => ({ createListing: mocks.create, closeListing: mocks.close, startOrder: mocks.start, changeOrderStatus: mocks.status, sendMarketMessage: mocks.send, getOrder: mocks.order, getMessages: mocks.messages, markMessagesRead: mocks.read }));
 vi.mock('../src/lib/review-photos', () => ({ prepareReviewPhotos: mocks.photos, ReviewPhotoError: class extends Error {} }));
 import { createListingAction, listingAction, orderStatusAction, sendMessageAction, loadMessagesAction, readMessagesAction } from '../src/app/market/actions';
-const form = () => { const data = new FormData(); for (const [key, value] of Object.entries({ title: 'Test', description: 'Test', city: 'Москва', price: '100', quantity: '6', delivery: 'pickup', text: 'Hello', userId: 'spoofed' })) data.set(key, value); return data; };
+const form = () => { const data = new FormData(); for (const [key, value] of Object.entries({ brand: 'Monster', title: 'Test', description: 'Test', city: 'Москва', price: '100', quantity: '6', delivery: 'pickup', text: 'Hello', userId: 'spoofed' })) data.set(key, value); return data; };
 beforeEach(() => {
   vi.clearAllMocks(); mocks.session.mockResolvedValue({ user: { id: 'authenticated' } }); mocks.blocked.mockResolvedValue(false);
   mocks.photos.mockResolvedValue({ photos: [], retained: [] }); mocks.order.mockResolvedValue({ id: 'order' });
