@@ -221,3 +221,27 @@ it('groups Full Throttle with or without sugar-free wording as one Monster editi
     expect(product.flavor).toBe('monster_full_throttle');
   }
 });
+
+it('recognizes localized Monster editions and groups equivalent retailer spellings', async () => {
+  const { groupByFlavor } = await import('../src/storage.js');
+  const config = loadProductsConfig();
+  const editions = [
+    ['monster_ultra_rosa', ['Monster Ultra Rosa', 'Monster Ультра Роза', 'Монстр Ультра Роса без сахара']],
+    ['monster_bad_apple', ['Monster Bad Apple', 'Monster Бэд Эппл', 'Monster Бед Эпл']],
+    ['monster_ultra_white', ['Monster Ultra White', 'Monster Zero Ultra', 'Monster Зеро Ультра']],
+    ['monster_ultra_peachy_keen', ['Monster Ultra Peachy Keen', 'Monster Ультра Пичи Кин', 'Monster Ultra Peachy Keen Zero Sugar']],
+  ] as const;
+  for (const [flavor, names] of editions) {
+    const products = names.map((name, i) => normalizeProduct('edadeal', { sourceId: String(i), name: `${name} 500 мл`, price: 100, url: `https://example.com/${i}` }, config.brands, '2026-10-08', config.brandAliases, config.flavors, config.flavorAliases));
+    expect(products.map(product => product.flavor)).toEqual(names.map(() => flavor));
+    expect(groupByFlavor(products)).toHaveLength(1);
+  }
+});
+
+it('does not treat every zero-sugar Monster as Ultra White', async () => {
+  const { monsterFlavor } = await import('../src/monster-lines.js');
+  expect(monsterFlavor('monster zero ultra peachy keen 500 мл')).toBe('monster_ultra_peachy_keen');
+  expect(monsterFlavor('monster zero ultra rosa 500 мл')).toBe('monster_ultra_rosa');
+  expect(monsterFlavor('monster zero sugar 500 мл')).toBeUndefined();
+  expect(monsterFlavor('monster zero ultra unknown edition 500 мл')).toBeUndefined();
+});
