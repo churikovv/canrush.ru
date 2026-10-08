@@ -5773,3 +5773,15 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
   .tier-editor-rank-buttons { grid-template-columns: repeat(min(3, var(--tier-count)), minmax(0, 1fr)); }
   .tier-editor { --tier-editor-command-clearance: 236px; }
 }
+
+.tier-editor-heading { gap: 20px; margin-bottom: 12px; }
+.tier-editor-heading h1 { line-height: 1.12; }
+.tier-editor-heading > p:last-child { max-width: 58ch; line-height: 1.6; }
+.tier-editor-save-group { display: flex; flex-direction: column; gap: 10px; }
+.tier-editor-save-status { display: flex; align-items: center; gap: 8px; margin: 0; font-size: .875rem; color: var(--color-muted-strong); }
+.tier-editor-save-status.is-dirty { color: var(--color-ink); font-weight: 700; }
+.tier-editor-save-status.is-dirty::before { content: ''; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--color-brand); }
+.tier-editor-primary-controls { align-items: stretch; }
+.tier-primary-action svg, .tier-secondary-action svg, .tier-delete-action svg { stroke-linecap: round; stroke-linejoin: round; }
+@media (min-width: 640px) { .tier-editor-primary-controls { align-items: flex-end; } }
+@media (max-width: 639px) { .tier-editor-heading { gap: 16px; margin-bottom: 8px; } }

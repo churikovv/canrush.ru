@@ -54,15 +54,17 @@ function normalizeSearch(value: string): string {
   return value.toLocaleLowerCase('ru-RU').replace(/ё/gu, 'е').trim();
 }
 
-function ActionButtons({ published }: { published: boolean }) {
+function ActionButtons({ published, dirty, saved }: { published: boolean; dirty: boolean; saved: boolean }) {
   const { pending } = useFormStatus();
   return (
+    <div className="tier-editor-save-group">
+      {(dirty || saved || pending) && <p className={`tier-editor-save-status${dirty ? ' is-dirty' : ''}`}>{pending ? 'Сохраняем изменения…' : dirty ? 'Есть несохранённые изменения' : 'Изменения сохранены'}</p>}
     <div className="tier-editor-actions">
       <button className="tier-primary-action" type="submit" name="intent" value="save" disabled={pending}>
         {pending ? 'Сохраняем…' : published ? 'Сохранить изменения' : 'Сохранить'}
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <path d="M5 4h12l2 2v14H5z" strokeLinejoin="round" />
-          <path d="M8 4v6h8V4M8 20v-6h8v6" strokeLinejoin="round" />
+          <path d="M6 3h10l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" strokeLinejoin="round" />
+          <path d="M8 3v5a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3M8 21v-6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6" strokeLinejoin="round" />
         </svg>
       </button>
       {!published ? (
@@ -70,10 +72,11 @@ function ActionButtons({ published }: { published: boolean }) {
           Опубликовать на сайт
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <path d="M12 16V3m0 0L7 8m5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M5 13v6h14v-6" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       ) : null}
+    </div>
     </div>
   );
 }
@@ -308,7 +311,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
         </div>
       ) : null}
 
-      <div className="tier-editor-state" role="status">
+      <div className="sr-only" role="status">
         {dirty ? 'Есть несохранённые изменения' : saved ? 'Изменения сохранены' : 'Выберите энергетик или перетащите его в ряд'}
       </div>
 
@@ -415,7 +418,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
       {TIER_KEYS.some(tier => !tiers.includes(tier)) && <div className="tier-section-add">{TIER_KEYS.filter(tier => !tiers.includes(tier)).map(tier => <button key={tier} type="button" className="community-button community-button-secondary" onClick={() => { setTiers(current => [...current, tier]); setActiveSection(tier); setSelectedId(undefined); setDirty(true); setSectionNotice(`Секция ${tier} добавлена.`); }}>+ Добавить {tier}</button>)}</div>}
 
       <div className="tier-editor-primary-controls">
-        <ActionButtons published={initialList?.status === 'published'} />
+        <ActionButtons published={initialList?.status === 'published'} dirty={dirty} saved={saved} />
         <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" />
         {initialList ? <DeleteTierListButton /> : null}
       </div>
@@ -481,7 +484,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
       </section>
 
       <div className="tier-editor-footer-actions">
-        <ActionButtons published={initialList?.status === 'published'} />
+        <ActionButtons published={initialList?.status === 'published'} dirty={dirty} saved={saved} />
         <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" />
       </div>
       </LayoutGroup>
