@@ -25,7 +25,7 @@ export default async function ProfileFavoritesPage() {
 
   return (
     <BrandShell headerAction={<ProfileNavigation active="favorites" />} surfaceClassName="profile-surface">
-      <ProfileFavorites groups={favorites} ownerName={ownerName} isOwn />
+      <ProfileFavorites groups={favorites} ownerName={ownerName} ownerUsername={profile.username} isOwn />
     </BrandShell>
   );
 }

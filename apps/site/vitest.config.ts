@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     exclude: [
+      'test/favorite-removal.integration.test.ts',
       'test/tier-sections.integration.test.ts',
       'test/campaigns.integration.test.ts',
       'test/market.integration.test.ts',

@@ -28,7 +28,7 @@ export default async function PublicFavoritesPage({ params }: { params: Promise<
 
   return (
     <BrandShell headerAction={<ProfileNavigation active="favorites" />} surfaceClassName="profile-surface">
-      <ProfileFavorites groups={favorites} ownerName={ownerName} isOwn={session?.user.id === profile.id} />
+      <ProfileFavorites groups={favorites} ownerName={ownerName} ownerUsername={profile.username} isOwn={session?.user.id === profile.id} />
     </BrandShell>
   );
 }
