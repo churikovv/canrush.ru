@@ -5,7 +5,7 @@ import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import { compareTierProducts, type TierProductSort } from '@/lib/tier-product-sort';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
-import { Fragment, useActionState, useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react';
+import { Fragment, useActionState, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type MouseEvent } from 'react';
 import { useFormStatus } from 'react-dom';
 import { LayoutGroup, motion } from 'motion/react';
 import { deleteTierListAction, saveTierListAction, type TierListFormState } from '@/app/tierlists/actions';
@@ -324,6 +324,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
               <span>{selectedProduct.flavorLabel}</span>
             </p>
             <div className="tier-editor-command-buttons" role="group" aria-label="Переместить выбранный товар">
+              <div className="tier-editor-rank-buttons" style={{ '--tier-count': tiers.length } as CSSProperties}>
               {tiers.map((tier) => (
                 <button
                   type="button"
@@ -336,6 +337,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
                   <span className={`tier-letter tier-letter-${tier.toLowerCase()}`}>{tier}</span>
                 </button>
               ))}
+              </div>
               <button
                 className="tier-editor-remove-button"
                 type="button"

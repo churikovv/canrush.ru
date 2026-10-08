@@ -5753,3 +5753,23 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .tier-section-toolbar + .tier-editor-row { border-top: 1px solid var(--color-control); }
 .tier-section-toolbar > div, .tier-section-add { display: flex; flex-wrap: wrap; gap: 8px; }
 .tier-section-toolbar button { width: 44px; padding: 8px; }
+
+.tier-editor-rank-buttons { display: contents; }
+@media (max-width: 959px) {
+  .tier-editor-command { flex-direction: column; align-items: stretch; }
+  .tier-editor-command > p { min-height: 48px; justify-content: center; padding-right: 52px; }
+  .tier-editor-command-ordered > p { padding-right: 156px; }
+  .tier-editor-command-buttons { width: 100%; }
+  .tier-editor-rank-buttons { display: grid; width: 100%; grid-template-columns: repeat(var(--tier-count), minmax(0, 1fr)); gap: 8px; }
+  .tier-editor-rank-buttons button { width: 100%; min-width: 0; min-height: 56px; padding: 10px; }
+  .tier-editor-rank-buttons .tier-letter { font-size: 1.5rem; }
+  .tier-editor-command-buttons .tier-editor-remove-button { position: absolute; top: 14px; right: 14px; width: 48px; height: 48px; }
+  .tier-editor-command-buttons .tier-editor-order-button { position: absolute; top: 14px; width: 48px; height: 48px; }
+  .tier-editor-command-buttons .tier-editor-order-previous { right: 118px; }
+  .tier-editor-command-buttons .tier-editor-order-next { right: 66px; }
+  .tier-editor { --tier-editor-command-clearance: 172px; }
+}
+@media (max-width: 639px) {
+  .tier-editor-rank-buttons { grid-template-columns: repeat(min(3, var(--tier-count)), minmax(0, 1fr)); }
+  .tier-editor { --tier-editor-command-clearance: 236px; }
+}
