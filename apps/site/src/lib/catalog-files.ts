@@ -1,3 +1,4 @@
+import { catalogCover } from './catalog-covers';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { CITIES, DEFAULT_CITY, canonicalProductFlavor, isResolvedFlavor, isExcludedEnergyBrand, type CatalogGroup, type CityId } from '@canrush/shared';
@@ -73,7 +74,7 @@ export function mergeCatalogAliases(groups: CatalogGroup[]): CatalogGroup[] {
     const unique = [...new Map(variants.map(offer => [JSON.stringify([offer.source, offer.retailer, offer.volumeMl, offer.url]), offer])).values()];
     merged.set(key, {
       ...group, flavor, variants: unique,
-      coverImageUrl: previous?.coverImageUrl || group.coverImageUrl,
+      coverImageUrl: catalogCover(group.brand, flavor, previous?.coverImageUrl || group.coverImageUrl),
       minPrice: unique.length ? Math.min(...unique.map(offer => offer.price)) : 0,
     });
   }
