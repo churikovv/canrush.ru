@@ -33,7 +33,7 @@ it('preserves legacy defaults, reads reordered and empty sections, and accepts S
   expect(summary.preview.map(item => item.tier)).toEqual(['B','SS']);
 });
 it('uses ten-point thresholds for the official rating', () => {
-  expect([10, 9.5, 9.49, 8.99, 7.99, 6.99, 5.99].map(tierForScore)).toEqual(['SS','SS','S','A','B','C','D']);
+  expect([10, 9, 8.99, 8, 7.99, 7, 6.99, 6, 5.99, 5, 4.99, 0].map(tierForScore)).toEqual(['SS','SS','S','S','A','A','B','B','C','C','D','D']);
 });
 
 it('saves custom sections through the action and rejects placements in removed sections', async () => {

@@ -192,11 +192,11 @@ export function catalogGroupsToTierProducts(
 }
 
 export function tierForScore(score: number): TierKey {
-  if (score >= 9.5) return 'SS';
-  if (score >= 9) return 'S';
-  if (score >= 8) return 'A';
-  if (score >= 7) return 'B';
-  if (score >= 6) return 'C';
+  if (score >= 9) return 'SS';
+  if (score >= 8) return 'S';
+  if (score >= 7) return 'A';
+  if (score >= 6) return 'B';
+  if (score >= 5) return 'C';
   return 'D';
 }
 
