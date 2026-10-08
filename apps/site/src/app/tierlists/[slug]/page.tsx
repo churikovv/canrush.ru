@@ -82,7 +82,7 @@ export default async function TierListPage({ params }: { params: TierListParams 
             </Link>
           )}
           {list.status === 'published' ? <ShareTierListButton title={list.title} /> : null}
-          <TierScreenshotButton boardId="tier-capture-board" title={list.title} />
+          <TierScreenshotButton boardId="tier-capture-board" title={list.title} telegramChannel={list.author.telegramChannel} />
         </div>
       </div>
     </BrandShell>

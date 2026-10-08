@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default async function NewTierListPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect('/sign-in');
-  await ensureOwnProfile(session.user);
+  const profile = await ensureOwnProfile(session.user);
 
   const groups = await loadTierPickerGroups();
   const products = catalogGroupsToTierProducts(groups, await getReviewSummaries(groups)).sort(
@@ -35,7 +35,7 @@ export default async function NewTierListPage() {
           <h1>Создайте свой тирлист</h1>
           <p>Выберите энергетик, назначьте ему категорию и сохраните список. Опубликовать его можно сразу или позже.</p>
         </header>
-        <TierListEditor products={products} />
+        <TierListEditor products={products} telegramChannel={profile.telegramChannel} />
       </div>
     </BrandShell>
   );

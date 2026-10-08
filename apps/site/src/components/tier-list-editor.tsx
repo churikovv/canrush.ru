@@ -24,6 +24,7 @@ interface TierListEditorProps {
   products: TierListProduct[];
   initialList?: Pick<TierListData, 'slug' | 'title' | 'status' | 'items' | 'tiers'>;
   saved?: boolean;
+  telegramChannel?: string | null;
 }
 
 function productKey(brand: string, flavor: string): string {
@@ -153,7 +154,7 @@ function ProductButton({ product, selected, compact, onSelect, onDragStart, onDr
   );
 }
 
-export function TierListEditor({ products, initialList, saved = false }: TierListEditorProps) {
+export function TierListEditor({ products, initialList, saved = false, telegramChannel }: TierListEditorProps) {
   const [state, formAction] = useActionState<TierListFormState, FormData>(saveTierListAction, {});
   const [columns, setColumns] = useState<EditorColumns>(() => initialColumns(products, initialList?.items ?? []));
   const [tiers, setTiers] = useState<TierKey[]>(() => [...(initialList?.tiers ?? TIER_KEYS)]);
@@ -419,7 +420,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
 
       <div className="tier-editor-primary-controls">
         <ActionButtons published={initialList?.status === 'published'} dirty={dirty} saved={saved} />
-        <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" />
+        <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" telegramChannel={telegramChannel} />
         {initialList ? <DeleteTierListButton /> : null}
       </div>
 
@@ -485,7 +486,7 @@ export function TierListEditor({ products, initialList, saved = false }: TierLis
 
       <div className="tier-editor-footer-actions">
         <ActionButtons published={initialList?.status === 'published'} dirty={dirty} saved={saved} />
-        <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" />
+        <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" telegramChannel={telegramChannel} />
       </div>
       </LayoutGroup>
     </form>
