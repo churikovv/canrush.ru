@@ -5785,3 +5785,9 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .tier-primary-action svg, .tier-secondary-action svg, .tier-delete-action svg { stroke-linecap: round; stroke-linejoin: round; }
 @media (min-width: 640px) { .tier-editor-primary-controls { align-items: flex-end; } }
 @media (max-width: 639px) { .tier-editor-heading { gap: 16px; margin-bottom: 8px; } }
+
+.tier-screenshot-heading { align-items: flex-start; margin-bottom: 20px; }
+.tier-screenshot-heading h2 { margin: 0; line-height: 1.3; }
+.tier-screenshot-heading p { margin: 8px 0 0; color: var(--color-muted-strong); line-height: 1.5; font-size: .875rem; }
+.tier-screenshot-close { width: 44px; height: 44px; padding: 8px; }
+.tier-screenshot-toast { z-index: 1; bottom: max(24px, env(safe-area-inset-bottom)); }
