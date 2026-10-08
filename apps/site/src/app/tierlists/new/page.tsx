@@ -35,7 +35,7 @@ export default async function NewTierListPage() {
           <h1>Создайте свой тирлист</h1>
           <p>Выберите энергетик, назначьте ему категорию и сохраните список. Опубликовать его можно сразу или позже.</p>
         </header>
-        <TierListEditor products={products} telegramChannel={profile.telegramChannel} />
+        <TierListEditor products={products} telegramChannel={profile.telegramChannel} authorUsername={profile.username} />
       </div>
     </BrandShell>
   );

@@ -1,12 +1,14 @@
 import { tierExportLayout } from './tier-export-layout';
 
 /** Render only the current board, excluding editor controls and selection outlines. */
-export async function renderTierScreenshot(board: HTMLElement, title: string, telegramChannel?: string | null): Promise<Blob> {
+export async function renderTierScreenshot(board: HTMLElement, title: string, telegramChannel?: string | null, authorUsername?: string): Promise<Blob> {
   await document.fonts.ready;
   const boardRows = [...board.querySelectorAll<HTMLElement>('.tier-board-row, .tier-editor-row')];
   const layout = tierExportLayout(boardRows.map(row => row.querySelectorAll('.tier-board-product, .tier-editor-product').length));
   const channel = telegramChannel?.trim();
-  const padding = 20, headerExtra = channel ? 48 : 24;
+  const username = authorUsername?.trim();
+  const authorCaption = channel ? `t.me/${channel}` : username ? `@${username} · Canrush` : '';
+  const padding = 20, headerExtra = authorCaption ? 48 : 24;
   const width = layout.width + padding * 2, height = layout.height + headerExtra;
   const scale = Math.min(2, 16384 / Math.max(width, height), Math.sqrt(16_000_000 / (width * height)));
   const canvas = document.createElement('canvas');
@@ -22,9 +24,9 @@ export async function renderTierScreenshot(board: HTMLElement, title: string, te
   while (ctx.measureText(caption).width > width - padding * 2 - 72 && caption.length > 1) caption = caption.slice(0, -2) + '…';
   ctx.textBaseline = 'middle';
   ctx.fillText(caption, padding, 44);
-  if (channel) {
+  if (authorCaption) {
     ctx.font = `400 16px ${family}`;
-    ctx.fillText(`t.me/${channel}`, padding, 72);
+    ctx.fillText(authorCaption, padding, 72);
   }
   const logo = await new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();

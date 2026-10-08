@@ -47,7 +47,7 @@ function Preview({ blob, url, onClose }: { blob: Blob; url: string; onClose: () 
   </dialog>, document.body);
 }
 
-export function TierScreenshotButton({ boardId, title, titleInputId, telegramChannel }: { boardId: string; title?: string; titleInputId?: string; telegramChannel?: string | null }) {
+export function TierScreenshotButton({ boardId, title, titleInputId, telegramChannel, authorUsername }: { boardId: string; title?: string; titleInputId?: string; telegramChannel?: string | null; authorUsername?: string }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState<{ blob: Blob; url: string } | null>(null);
@@ -58,7 +58,7 @@ export function TierScreenshotButton({ boardId, title, titleInputId, telegramCha
     if (!board) return;
     setPending(true); setError('');
     const input = titleInputId ? document.getElementById(titleInputId) : null;
-    const result = renderTierScreenshot(board, input instanceof HTMLInputElement ? input.value : title ?? 'Тирлист CanRush', telegramChannel);
+    const result = renderTierScreenshot(board, input instanceof HTMLInputElement ? input.value : title ?? 'Тирлист CanRush', telegramChannel, authorUsername);
     try { const blob = await result; const url = URL.createObjectURL(blob); previewUrl.current = url; setPreview({ blob, url }); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Не удалось сделать скриншот. Попробуйте ещё раз.'); }
     finally { setPending(false); }

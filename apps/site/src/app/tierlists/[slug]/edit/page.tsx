@@ -49,7 +49,7 @@ export default async function EditTierListPage({
           <h1>Редактирование тирлиста</h1>
           <p>{list.status === 'published' ? 'Изменения появятся по публичной ссылке после сохранения.' : 'Черновик виден только вам, пока вы его не опубликуете.'}</p>
         </header>
-        <TierListEditor products={products} initialList={list} telegramChannel={list.author.telegramChannel} saved={query.saved === '1'} />
+        <TierListEditor products={products} initialList={list} telegramChannel={list.author.telegramChannel} authorUsername={list.author.username} saved={query.saved === '1'} />
       </div>
     </BrandShell>
   );
