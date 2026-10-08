@@ -38,7 +38,6 @@ export function MarketListingForm({ brands }: { brands: string[] }) {
       {!anyCity && <label>Город<input name="city" required maxLength={100} autoComplete="address-level2" placeholder="Москва" /></label>}
       <fieldset className="market-delivery"><legend>Способы доставки</legend>{Object.entries(DELIVERY).map(([value, label]) => <label key={value}><input type="checkbox" name="delivery" value={value} />{label}</label>)}</fieldset>
       </section>
-      <p className="market-note">Покупатель выбирает количество. Новый заказ резервирует банки, отмена возвращает их в продажу.</p>
     </fieldset>
     <p className="market-note">Оплату и доставку вы согласуете с покупателем в переписке. CanRush не принимает платежи и не оформляет доставку.</p>
     {error && <p className="market-error" role="alert">{error}</p>}

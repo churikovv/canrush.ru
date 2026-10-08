@@ -4902,7 +4902,8 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .price-filter-input input::placeholder { color: #596060; opacity: 1; }
 .price-filter-input input:hover { border-color: #737b83; }
 .price-filter-input input:focus-visible { outline: 2px solid #006eff; outline-offset: 3px; }
-.price-filter-toggle { position: absolute; right: 2px; top: 2px; width: 44px; height: 44px; border: 0; border-radius: 6px; background: transparent; color: #596060; font: inherit; cursor: pointer; }
+.price-filter-toggle { display: grid; place-items: center; padding: 0; position: absolute; right: 2px; top: 2px; width: 44px; height: 44px; border: 0; border-radius: 6px; background: transparent; color: #596060; font: inherit; cursor: pointer; }
+.price-filter-toggle svg { width: 20px; height: 20px; flex-shrink: 0; }
 .price-filter-toggle:hover { background: #f3f4f6; }
 .price-filter-popover { position: absolute; z-index: 10; top: calc(100% + 8px); left: 0; right: 0; border: 1px solid #c6cccc; border-radius: 8px; background: white; padding: 4px; }
 .price-filter-popover ul { list-style: none; margin: 0; padding: 0; max-height: 264px; overflow-y: auto; }

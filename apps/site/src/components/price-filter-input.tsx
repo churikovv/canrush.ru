@@ -51,7 +51,7 @@ export function PriceFilterInput({ id, value, options, allLabel, onChange }: {
         }} />
       <button className="price-filter-toggle" type="button" aria-label={open ? 'Закрыть подсказки' : 'Открыть подсказки'} aria-controls={`${id}-options`} aria-expanded={open}
         onMouseDown={event => event.preventDefault()}
-        onClick={() => { if (open) setOpen(false); else { input.current?.focus(); show(); } }}><span aria-hidden="true">⌄</span></button>
+        onClick={() => { if (open) setOpen(false); else { input.current?.focus(); show(); } }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></button>
       {open && <div className="price-filter-popover">
         <ul id={`${id}-options`} role="listbox" aria-label={allLabel}>
           {choices.map((option, index) => <li key={option.value} id={`${id}-option-${index}`} role="option" aria-selected={option.value === value}
