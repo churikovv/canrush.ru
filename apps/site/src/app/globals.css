@@ -5714,3 +5714,12 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .market-search-filters > div { min-width: 0; }
 .market-search-filters > a { color: var(--color-brand-deep); min-height: 44px; display: flex; align-items: center; }
 @media(max-width:639px) { .market-search-filters { grid-template-columns: 1fr; } }
+
+/* Photo actions stay on the image; transforms animate sorting without resizing the grid. */
+.market-photo-previews { position: relative; }
+.market-photo-previews > li { position: relative; touch-action: none; cursor: grab; border-radius: 12px; }
+.market-photo-previews > li.is-dragging { cursor: grabbing; box-shadow: 0 12px 28px rgb(0 0 0 / 18%); }
+.market-photo-previews > li:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
+.market-photo-previews img { display: block; user-select: none; }
+.market-photo-tools { position: absolute; top: 8px; right: 8px; flex-wrap: nowrap; }
+.market-photo-tools button { display: grid; place-items: center; border-radius: 10px; background: white; box-shadow: 0 2px 8px rgb(0 0 0 / 12%); cursor: pointer; }

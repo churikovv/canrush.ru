@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { motion, useReducedMotion } from 'motion/react';
 import { ProfileImageCrop, type Crop, type CropSource } from '@/components/profile-image-crop';
 
 interface Photo { id: string; file: File; original: File; src: string; preview: string; width: number; height: number; crop?: Crop }
@@ -14,6 +15,9 @@ export function MarketPhotoPicker({ onChange, onBusyChange, disabled = false, cr
   const urls = useRef(new Set<string>());
   const drag = useRef<string | null>(null);
   const adding = useRef(false);
+  const reducedMotion = useReducedMotion();
+  const [dragging, setDragging] = useState<string | null>(null);
+  const grid = useRef<HTMLOListElement>(null);
   useEffect(() => { const allocated = urls.current; return () => { for (const url of allocated) URL.revokeObjectURL(url); }; }, []);
   function update(next: Photo[]) { setPhotos(next); onChange(next.map(photo => photo.file)); }
   async function add(files: File[]) {
@@ -53,15 +57,47 @@ export function MarketPhotoPicker({ onChange, onBusyChange, disabled = false, cr
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={event => { void add(Array.from(event.target.files ?? [])); event.target.value = ''; }} />
       {!compact && <small>Или перетащите сюда. JPG, PNG, WebP, до 5 МБ каждое.</small>}
     </div>
-    {photos.length > 0 && <ol className="market-photo-previews">{photos.map((photo, index) => <li key={photo.id} draggable={!disabled && !busy} onDragStart={() => { drag.current = photo.id; }} onDragEnd={() => { drag.current = null; }} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); event.stopPropagation(); if (drag.current) move(drag.current, index); drag.current = null; }}>
-      <Image src={photo.preview} alt={`Фотография ${index + 1}${index === 0 ? ', обложка' : ''}`} width={160} height={160} unoptimized />
-      <div className="market-photo-tools">
-        {crop && <button type="button" disabled={disabled || busy} onClick={() => setEditing(photo.id)}>Обрезать</button>}
-        <button type="button" aria-label={`Переместить фото ${index + 1} влево`} disabled={disabled || busy || index === 0} onClick={() => move(photo.id, index - 1)}>←</button>
-        <button type="button" aria-label={`Переместить фото ${index + 1} вправо`} disabled={disabled || busy || index === photos.length - 1} onClick={() => move(photo.id, index + 1)}>→</button>
-        <button type="button" disabled={disabled || busy} onClick={() => { URL.revokeObjectURL(photo.src); urls.current.delete(photo.src); update(photos.filter(item => item.id !== photo.id)); }} aria-label={`Удалить фото ${index + 1}`}>Удалить</button>
+    {photos.length > 0 && <ol ref={grid} className="market-photo-previews">{photos.map((photo, index) => <motion.li
+      key={photo.id}
+      layout
+      drag={!disabled && !busy}
+      dragSnapToOrigin
+      dragMomentum={false}
+      animate={{ scale: dragging === photo.id && !reducedMotion ? 1.04 : 1 }}
+      transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
+      style={{ zIndex: dragging === photo.id ? 2 : 0 }}
+      className={dragging === photo.id ? 'is-dragging' : undefined}
+      tabIndex={disabled || busy ? -1 : 0}
+      aria-label={`Фотография ${index + 1}${index === 0 ? ', обложка' : ''}. Используйте стрелки для изменения порядка.`}
+      onKeyDown={event => {
+        if (event.target !== event.currentTarget) return;
+        const direction = ['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : ['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : 0;
+        if (direction) { event.preventDefault(); move(photo.id, index + direction); }
+      }}
+      onDragStart={() => { drag.current = photo.id; setDragging(photo.id); }}
+      onDragEnd={(_event, info) => {
+        const list = grid.current;
+        if (list) {
+          const bounds = list.getBoundingClientRect();
+          let closest = index, distance = Infinity;
+          Array.from(list.children).forEach((child, position) => {
+            const item = child as HTMLElement;
+            const x = bounds.left + item.offsetLeft + item.offsetWidth / 2;
+            const y = bounds.top + item.offsetTop + item.offsetHeight / 2;
+            const nextDistance = Math.hypot(info.point.x - x, info.point.y - y);
+            if (nextDistance < distance) { distance = nextDistance; closest = position; }
+          });
+          move(photo.id, closest);
+        }
+        drag.current = null; setDragging(null);
+      }}
+    >
+      <Image src={photo.preview} alt={`Фотография ${index + 1}${index === 0 ? ', обложка' : ''}`} width={160} height={160} unoptimized draggable={false} />
+      <div className="market-photo-tools" onPointerDown={event => event.stopPropagation()}>
+        {crop && <button type="button" disabled={disabled || busy} aria-label={`Обрезать фото ${index + 1}`} title="Обрезать" onClick={() => setEditing(photo.id)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M6 3v13a2 2 0 0 0 2 2h13M3 6h13a2 2 0 0 1 2 2v13"/></svg></button>}
+        <button type="button" disabled={disabled || busy} title="Удалить" onClick={() => { URL.revokeObjectURL(photo.src); urls.current.delete(photo.src); update(photos.filter(item => item.id !== photo.id)); }} aria-label={`Удалить фото ${index + 1}`}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>
       </div>
-    </li>)}</ol>}
+    </motion.li>)}</ol>}
     {error && <p className="market-error" role="alert">{error}</p>}
     {selected && <ProfileImageCrop key={selected.id} source={{ ...selected, kind: 'market' } satisfies CropSource} initial={selected.crop} onCancel={() => setEditing(null)} onConfirm={(area, preview) => {
       const bytes = Uint8Array.from(atob(preview.split(',')[1] ?? ''), char => char.charCodeAt(0));
