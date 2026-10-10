@@ -1,3 +1,5 @@
+import { ReviewDiscussion } from '@/components/review-discussion';
+import { getTierInteractions } from '@/lib/tier-discussions';
 import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
@@ -44,6 +46,7 @@ export default async function TierListPage({ params }: { params: TierListParams 
 
   const isOwn = session?.user.id === list.userId;
   if (list.status !== 'published' && !isOwn) notFound();
+  const interaction = list.status === 'published' ? (await getTierInteractions([list.id], session?.user.id ?? null)).get(list.id) : undefined;
   const products = tierListProductsForPlacements(groups, list.items);
   const telegramHref = list.author.telegramChannel ? `https://t.me/${list.author.telegramChannel}` : undefined;
 
@@ -84,6 +87,7 @@ export default async function TierListPage({ params }: { params: TierListParams 
           {list.status === 'published' ? <ShareTierListButton title={list.title} /> : null}
           <TierScreenshotButton boardId="tier-capture-board" title={list.title} telegramChannel={list.author.telegramChannel} authorUsername={list.author.username} />
         </div>
+        {interaction && <ReviewDiscussion target="tierlist" reviewId={list.id} initial={interaction} />}
       </div>
     </BrandShell>
   );

@@ -1,0 +1,60 @@
+import { randomUUID } from 'node:crypto';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
+import { Pool } from 'pg';
+const url = process.env.TEST_DATABASE_URL ?? 'postgresql://localhost:5432/canrush_site_test';
+if(new URL(url).pathname !== '/canrush_site_test') throw new Error('Test DB only');
+const pool = new Pool({ connectionString: url, max: 4 });
+vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
+const api = await import('../src/lib/tier-discussions');
+const users = [randomUUID(),randomUUID(),randomUUID()];
+const [owner,reader,other] = users as [string,string,string];
+let review: string;
+beforeAll(async () => {
+  for(const id of users) await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt")values($1,'Discussion test',$2,true,now(),now())`,[id,id+'@example.com']);
+  review=(await pool.query(`insert into "tierList"("userId",slug,title,status)values($1,$2,'Test','published')returning id`,[owner,randomUUID()])).rows[0].id;
+});
+afterAll(async () => { await pool.query('delete from "user" where id=any($1::text[])',[users]); await pool.end(); });
+it('keeps one vote per person, switches or removes it, forbids self votes and invalid values',async()=>{
+  await Promise.all([api.setTierReaction(reader,review,1),api.setTierReaction(reader,review,1)]);
+  expect((await api.getTierInteractions([review],reader)).get(review)).toMatchObject({likes:1,dislikes:0,vote:1});
+  await api.setTierReaction(reader,review,-1);
+  expect((await api.getTierInteractions([review],reader)).get(review)).toMatchObject({likes:0,dislikes:1,vote:-1});
+  await api.setTierReaction(reader,review,0);
+  expect((await api.getTierInteractions([review])).get(review)).toMatchObject({likes:0,dislikes:0,vote:0,authenticated:false});
+  await expect(api.setTierReaction(owner,review,1)).rejects.toThrow();
+  await expect(api.setTierReaction(reader,review,2)).rejects.toThrow();
+});
+it('limits concurrent comments, protects author deletion, and exposes them in admin search',async()=>{
+  const attempts=await Promise.allSettled([api.addTierComment(reader,review,'Comment '+reader),api.addTierComment(reader,review,'Comment '+reader)]);
+  expect(attempts.filter(x=>x.status==='fulfilled')).toHaveLength(1);
+  const thread=await api.getTierComments(review,reader);
+  expect(thread.items).toHaveLength(1); expect(thread.items[0]?.canDelete).toBe(true);
+  expect((await api.getTierComments(review,other)).items[0]?.canDelete).toBe(false);
+  await expect(api.deleteTierComment(other,review,thread.items[0]!.id)).rejects.toThrow();
+  await expect(api.addTierComment(other,review,' '.repeat(5))).rejects.toThrow();
+  await expect(api.addTierComment(other,review,'a'.repeat(1001))).rejects.toThrow();
+  await api.deleteTierComment(reader,review,thread.items[0]!.id);
+  await expect(api.addTierComment(reader,review,'Cannot bypass cooldown by deleting')).rejects.toThrow('30 секунд');
+});
+it('hides drafts and prevents commenting or voting on them', async () => {
+  await pool.query(`update "tierList" set status='draft' where id=$1`, [review]);
+  expect((await api.getTierInteractions([review], other)).size).toBe(0);
+  expect((await api.getTierComments(review, other)).items).toHaveLength(0);
+  await expect(api.setTierReaction(other, review, 1)).rejects.toThrow();
+  await expect(api.addTierComment(other, review, 'Hidden')).rejects.toThrow('недоступен');
+  await pool.query(`update "tierList" set status='published' where id=$1`, [review]);
+});
+it('paginates comments without duplicate rows and cascades when a review is removed',async()=>{
+  for(let i=0;i<23;i++)await pool.query('insert into "tierListComment"("tierListId","userId",text)values($1,$2,$3)',[review,other,'Comment '+i]);
+  const first=await api.getTierComments(review,reader);
+  const second=await api.getTierComments(review,reader,first.items.at(-1)!.id);
+  expect(first.items).toHaveLength(20);expect(first.hasMore).toBe(true);expect(second.items).toHaveLength(3);expect(second.hasMore).toBe(false);
+  expect(new Set([...first.items,...second.items].map(x=>x.id)).size).toBe(23);
+  await pool.query('insert into "userBlock"("userId")values($1)',[other]);
+  await expect(api.addTierComment(other,review,'Blocked')).rejects.toMatchObject({code:'42501'});
+  await expect(api.setTierReaction(other,review,1)).rejects.toMatchObject({code:'42501'});
+  await api.setTierReaction(reader,review,1);
+  await pool.query('delete from "tierList" where id=$1',[review]);
+  expect((await pool.query('select id from "tierListComment" where "tierListId"=$1',[review])).rowCount).toBe(0);
+  expect((await pool.query('select value from "tierListReaction" where "tierListId"=$1',[review])).rowCount).toBe(0);
+});
