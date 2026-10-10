@@ -8,3 +8,8 @@ it('validates complete unique block orders and visibility', () => {
   expect(parseProfileLayout({ order: Array(6).fill('wall'), hidden: [] })).toBeNull();
   expect(parseProfileLayout(null)).toBeNull();
 });
+
+it('restores mandatory blocks in saved or submitted layouts without changing order', () => {
+  const order = [...DEFAULT_PROFILE_LAYOUT.order].reverse();
+  expect(parseProfileLayout({ order, hidden: ['experience', 'social', 'wall'] })).toEqual({ order, hidden: ['wall'] });
+});

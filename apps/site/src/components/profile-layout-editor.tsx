@@ -1,8 +1,8 @@
 'use client';
 import { useState, type ReactNode } from 'react';
-import { DEFAULT_PROFILE_LAYOUT, PROFILE_BLOCKS, type ProfileLayout, type ProfileBlockKey } from '@/lib/profile-layout';
+import { DEFAULT_PROFILE_LAYOUT, PROFILE_BLOCKS, isRequiredProfileBlock, parseProfileLayout, type ProfileLayout, type ProfileBlockKey } from '@/lib/profile-layout';
 export function ProfileLayoutEditor({ initial = DEFAULT_PROFILE_LAYOUT, disabled, previews }: { initial?: ProfileLayout; disabled: boolean; previews?: Partial<Record<ProfileBlockKey, ReactNode>> }) {
-  const [layout, setLayout] = useState(initial);
+  const [layout, setLayout] = useState(() => parseProfileLayout(initial) ?? DEFAULT_PROFILE_LAYOUT);
   const [drag, setDrag] = useState<ProfileBlockKey | null>(null);
   const [notice, setNotice] = useState('');
   function move(key: ProfileBlockKey, target: ProfileBlockKey) {
@@ -22,7 +22,7 @@ export function ProfileLayoutEditor({ initial = DEFAULT_PROFILE_LAYOUT, disabled
         return <article className={`profile-layout-block${hidden ? ' is-hidden' : ''}`} key={key} onDragOver={event => { if (drag && keys.includes(drag)) event.preventDefault(); }} onDrop={event => { event.preventDefault(); if (!disabled && drag && keys.includes(drag)) move(drag, key); setDrag(null); }}>
           <header><button className="layout-drag" type="button" draggable={!disabled} disabled={disabled} aria-label={`Перетащить: ${block.label}`} onDragStart={() => setDrag(key)} onDragEnd={() => setDrag(null)}>⠿</button><strong>{block.label}</strong><div className="layout-block-actions">{([-1, 1] as const).map(direction => <button type="button" key={direction} disabled={disabled || !keys[index + direction]} aria-label={`${block.label}: ${direction < 0 ? 'выше' : 'ниже'}`} onClick={() => move(key, keys[index + direction]!)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={direction < 0 ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} /></svg></button>)}</div></header>
           {!hidden && <div className="layout-live-preview" inert>{previews?.[key] ?? <p>{block.label}</p>}</div>}
-          <label><input type="checkbox" checked={!hidden} disabled={disabled} onChange={() => setLayout(current => ({ ...current, hidden: hidden ? current.hidden.filter(x => x !== key) : [...current.hidden, key] }))} />{hidden ? 'Скрыт в профиле' : 'Показывать в профиле'}</label>
+          {isRequiredProfileBlock(key) ? <p className="community-muted">Всегда отображается</p> : <label><input type="checkbox" checked={!hidden} disabled={disabled} onChange={() => setLayout(current => ({ ...current, hidden: hidden ? current.hidden.filter(x => x !== key) : [...current.hidden, key] }))} />{hidden ? 'Скрыт в профиле' : 'Показывать в профиле'}</label>}
         </article>;
       })}</div></div>;
     })}</div><p className="sr-only" role="status">{notice}</p>
