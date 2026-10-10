@@ -1,13 +1,15 @@
 'use client';
+import { ProfileLayoutEditor } from '@/components/profile-layout-editor';
 import { ProfileBackButton } from '@/components/profile-back-button';
 
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useActionState, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 import { deleteAccountAction, updateProfileAction, type ProfileFormState } from '@/app/profile/actions';
 import { ProfileImageCrop, type Crop, type CropSource } from '@/components/profile-image-crop';
 import { ProfileHeader } from '@/components/profile-header';
+import type { ProfileBlockKey } from '@/lib/profile-layout';
 import type { ProfileData } from '@/lib/profile';
 
 type ImageKind = 'avatar' | 'banner';
@@ -26,7 +28,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? <p className="field-error" id={id}>{message}</p> : null;
 }
 
-export function ProfileEditForm({ profile }: { profile: ProfileData }) {
+export function ProfileEditForm({ profile, layoutPreviews }: { profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>> }) {
   const initialName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
   const [name, setName] = useState(initialName);
   const [username, setUsername] = useState(profile.username);
@@ -119,7 +121,6 @@ export function ProfileEditForm({ profile }: { profile: ProfileData }) {
             <div className="profile-edit-field"><label htmlFor="name">Имя</label>
               <input id="name" name="name" type="text" value={name} onChange={event => setName(event.target.value)} autoComplete="name" maxLength={40} aria-invalid={Boolean(state.fieldErrors?.name)} aria-describedby={state.fieldErrors?.name ? 'name-error' : undefined} required /><FieldError id="name-error" message={state.fieldErrors?.name} />
             </div>
-            <div className="profile-edit-field"><label htmlFor="email">Почта</label><input id="email" type="email" value={profile.email} readOnly aria-readonly="true" /><p className="field-help">Для смены почты нужно повторное подтверждение.</p></div>
             <div className="profile-edit-field"><label htmlFor="telegramChannel">Телеграм-канал</label>
               <input id="telegramChannel" name="telegramChannel" type="text" value={channel} onChange={event => setChannel(event.target.value)} placeholder="t.me/energyhub" autoComplete="url" maxLength={64} aria-invalid={Boolean(state.fieldErrors?.telegramChannel)} aria-describedby={state.fieldErrors?.telegramChannel ? 'telegram-error' : undefined} /><FieldError id="telegram-error" message={state.fieldErrors?.telegramChannel} />
             </div>
@@ -144,6 +145,8 @@ export function ProfileEditForm({ profile }: { profile: ProfileData }) {
           {imageError && <p className="field-error" role="alert">{imageError}</p>}
         </section>
       </div>
+      <ProfileLayoutEditor initial={profile.profileLayout} disabled={pending} previews={layoutPreviews} />
+      <div className="profile-layout-save"><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>
     </form>
     {cropSource && <ProfileImageCrop key={cropSource.src} source={cropSource} initial={images[cropSource.kind]?.source?.src === cropSource.src ? images[cropSource.kind]?.crop : undefined} onCancel={() => setCropSource(null)} onConfirm={(crop, preview) => { setImages(current => ({ ...current, [cropSource.kind]: { file: cropSource.file, crop, preview, source: cropSource } })); setCropSource(null); }} />}
     <section className="profile-editor-danger" aria-labelledby="danger-zone-title"><div><h2 id="danger-zone-title">Удаление аккаунта</h2><p>Профиль и его данные будут удалены без возможности восстановления.</p></div>

@@ -69,6 +69,12 @@ describe.sequential('profile image storage and displayed tags', () => {
     await setProfileTags(b, ['flash']);
     expect((await getReviewsForUser(b))[0]?.author.tag).toBe('Флэш');
   });
+  it('saves layout with profile changes and isolates it from other users', async () => {
+    const layout = { order: ['listings', 'experience', 'ratings', 'wall', 'social', 'about'] as const, hidden: ['wall', 'ratings'] as const };
+    await saveProfileCustomization(a, input, {}, { order: [...layout.order], hidden: [...layout.hidden] });
+    expect((await getProfileByUserId(a))?.profileLayout).toEqual(layout);
+    expect((await getProfileByUserId(b))?.profileLayout?.hidden).toEqual([]);
+  });
   it('removes images explicitly and cascades them on account deletion', async () => {
     await saveProfileCustomization(a, input, { avatar: null });
     expect((await getProfileByUserId(a))?.avatarId).toBeNull();

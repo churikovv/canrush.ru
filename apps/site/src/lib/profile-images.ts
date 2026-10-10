@@ -1,3 +1,4 @@
+import { type ProfileLayout } from '@/lib/profile-layout';
 import sharp from 'sharp';
 import { getPool } from '@/db/pool';
 import type { ProfileInput } from '@/lib/profile-fields';
@@ -47,10 +48,11 @@ export async function prepareProfileImages(form: FormData): Promise<ProfileImage
   return images;
 }
 
-export async function saveProfileCustomization(userId: string, input: ProfileInput, images: ProfileImageChanges) {
+export async function saveProfileCustomization(userId: string, input: ProfileInput, images: ProfileImageChanges, layout?: ProfileLayout) {
   const client = await getPool().connect();
   try {
     await client.query('begin');
+    if (layout) await client.query('update "user" set "profileLayout" = $2::jsonb where id = $1', [userId, JSON.stringify(layout)]);
     const user = await client.query(`update "user" set username = $2, name = $3, "telegramChannel" = $4, "updatedAt" = now() where id = $1 returning id`, [userId, input.username, input.name, input.telegramChannel]);
     if (!user.rowCount) throw new Error('Profile not found');
     for (const kind of ['avatar', 'banner'] as const) {

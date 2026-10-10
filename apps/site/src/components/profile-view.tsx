@@ -1,3 +1,4 @@
+import { ProfileBlock, ProfileBlocks } from '@/components/profile-blocks';
 import { getLatestReviewPreview } from '@/lib/reviews';
 import { achievementImage } from '@/lib/profile-achievements';
 import { getFavoriteGroups, loadAllCatalogGroups } from '@/lib/catalog';
@@ -70,8 +71,10 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
       </nav>
 
       <div className="community-columns">
-        <div className="community-main">
-          <ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} expanded />
+        <div className="community-main profile-arranged-main"><ProfileBlocks layout={profile.profileLayout}>
+          <ProfileBlock block="experience">
+          <ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} expanded /></ProfileBlock>
+          <ProfileBlock block="ratings">
           <section className="community-panel" aria-labelledby="rating-statistics-title">
             <div className="community-section-heading"><h2 id="rating-statistics-title">Статистика оценок</h2><Link href={`${base}/reviews`}>Все отзывы ↗</Link></div>
             {ratings.count ? <div className="profile-rating-summary">
@@ -83,6 +86,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             </div> : <div className="community-empty"><p>Оценок пока нет.</p>{isOwn && <Link href="/catalog">Выбрать напиток и оставить отзыв ↗</Link>}</div>}
           </section>
 
+          </ProfileBlock><ProfileBlock block="listings">
           <section className="community-panel" aria-labelledby="profile-listings-title">
             <div className="community-section-heading"><h2 id="profile-listings-title">Объявления</h2><Link href={isOwn ? '/market?mine=1' : `/market?seller=${encodeURIComponent(profile.username)}`}>Все ↗</Link></div>
             {listings.items.length ? <div className="profile-listing-previews">{listings.items.slice(0, 2).map(listing => <Link className="profile-listing-preview" key={listing.id} href={`/market/${listing.id}`}>
@@ -91,12 +95,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             </Link>)}</div> : <div className="community-empty"><p>{isOwn ? 'Вы пока не создавали объявлений.' : 'Пользователь пока не создавал объявлений.'}</p>{isOwn && <Link href="/market/new">Создать объявление ↗</Link>}</div>}
           </section>
 
-          {isOwn && <section className="community-panel" id="achievements" aria-labelledby="achievements-title">
-            <div className="community-section-heading"><h2 id="achievements-title">Теги за достижения</h2><span className="community-muted">{visibleEarned.length} / {visibleAchievements.length}</span></div>
-            {isOwn && <p className="community-section-note">Выберите один тег. Он появится в профиле и рядом с ником в отзывах.</p>}
-            <AchievementPicker key={community.tags.join(',')} earned={visibleEarned} selected={community.tags} progress={community.progress} isOwn={isOwn} viewerIsAdmin={viewerIsAdmin} />
-          </section>}
-
+          </ProfileBlock><ProfileBlock block="wall">
           <section className="community-panel" id="wall" aria-labelledby="wall-title">
             <div className="community-section-heading"><h2 id="wall-title">Стена <span>{wall.count}</span></h2></div>
             {viewerId ? <WallComposer targetId={profile.id} /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
@@ -107,19 +106,27 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             </article>)}</div> : <div className="wall-empty-card"><strong>Здесь пока тихо</strong><p>Оставьте первый комментарий.</p></div>}
             {pages > 1 && <nav className="community-pagination" aria-label="Страницы стены">{wallPage > 1 ? <Link href={`${base}?wallPage=${wallPage - 1}#wall`}>← Назад</Link> : <span />}<span>{wallPage} / {pages}</span>{wallPage < pages ? <Link href={`${base}?wallPage=${wallPage + 1}#wall`}>Далее →</Link> : <span />}</nav>}
           </section>
+          </ProfileBlock></ProfileBlocks>
+          {isOwn && <section className="community-panel" id="achievements" aria-labelledby="achievements-title">
+            <div className="community-section-heading"><h2 id="achievements-title">Теги за достижения</h2><span className="community-muted">{visibleEarned.length} / {visibleAchievements.length}</span></div>
+            {isOwn && <p className="community-section-note">Выберите один тег. Он появится в профиле и рядом с ником в отзывах.</p>}
+            <AchievementPicker key={community.tags.join(',')} earned={visibleEarned} selected={community.tags} progress={community.progress} isOwn={isOwn} viewerIsAdmin={viewerIsAdmin} />
+          </section>}
+
         </div>
 
-        <aside className="community-sidebar">
+        <aside className="community-sidebar profile-arranged-sidebar"><ProfileBlocks layout={profile.profileLayout}><ProfileBlock block="social">
           <ProfileConnections username={profile.username} groups={{
             followers: { count: followers.count, users: followers.users.slice(0, 6) },
             following: { count: following.count, users: following.users.slice(0, 6) },
             friends: { count: friends.count, users: friends.users.slice(0, 8) },
           }} />
-          <section className="community-panel" aria-labelledby="profile-about-title"><h2 id="profile-about-title">О профиле</h2>
+          </ProfileBlock><ProfileBlock block="about"><section className="community-panel" aria-labelledby="profile-about-title"><h2 id="profile-about-title">О профиле</h2>
             {telegramHref ? <a className="community-channel" href={telegramHref} target="_blank" rel="noreferrer"><Image src="/brand/icons/channel.svg" width={18} height={18} alt="" />@{profile.telegramChannel} ↗</a> : <p className="community-muted">Канал не указан</p>}
             {isOwn && <PresenceSetting key={String(community.showOnline)} visible={community.showOnline} />}
             {adminHref && <Link className="community-admin" href={adminHref}>Администрирование ↗</Link>}
           </section>
+          </ProfileBlock></ProfileBlocks>
           {!isOwn && viewerId && <ProfileReportForm targetId={profile.id} />}
           {isOwn && <SignOutButton />}
         </aside>

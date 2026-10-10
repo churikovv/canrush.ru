@@ -1,4 +1,5 @@
 'use server';
+import { parseProfileLayout } from '@/lib/profile-layout';
 
 import { parseSetCookieHeader, toCookieOptions } from 'better-auth/cookies/utils';
 import { cookies, headers } from 'next/headers';
@@ -54,7 +55,12 @@ export async function updateProfileAction(
 
   try {
     const images = await prepareProfileImages(formData);
-    await saveProfileCustomization(user.id, validation.data, images);
+    let layout;
+    if (formData.has('profileLayout')) {
+      try { layout = parseProfileLayout(JSON.parse(String(formData.get('profileLayout')))); } catch { return { message: 'Некорректные настройки блоков.' }; }
+      if (!layout) return { message: 'Некорректные настройки блоков.' };
+    }
+    await saveProfileCustomization(user.id, validation.data, images, layout);
   } catch (error) {
     if (error instanceof ProfileImageError) return { message: error.message };
     if (isUniqueViolation(error)) {
