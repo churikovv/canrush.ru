@@ -5850,3 +5850,7 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .market-filter-toggle span { color: var(--color-brand-deep); font-weight: 700; }
 .market-search-form .market-search-filters { margin: 16px 0 0; padding: 20px; border: 1px solid var(--color-control); border-radius: 16px; }
 .market-search-filters[hidden] { display: none; }
+
+.footer-about { max-width: 42ch; margin: 12px 0 0; font-size: .875rem; line-height: 1.6; }
+.footer-legal p { margin: 0; }
+.footer-legal p + p { margin-top: 12px; }

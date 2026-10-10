@@ -46,7 +46,8 @@ export function SiteFooter() {
               </span>
               <Image src="/brand/logo-wordmark-white.svg" width={63} height={18} alt="" />
             </div>
-            <p className="footer-description">Сервис по поиску энергетических напитков</p>
+            <p className="footer-description">Первая социальная сеть для любителей энергетических напитков</p>
+            <p className="footer-about">Сравнивайте цены на энергетики, читайте отзывы о вкусе и дизайне, составляйте тирлисты и находите редкие банки в маркете сообщества.</p>
           </div>
 
           <div className="footer-navigation">
@@ -68,24 +69,25 @@ export function SiteFooter() {
 
             <div className="footer-group footer-service">
               <span className="footer-label">Сервис</span>
-              <div className="footer-service-links">
-                <Link href="/tierlists">Тирлисты</Link>
-                <Link href="/catalog">Каталог</Link>
+              <nav className="footer-service-links" aria-label="Разделы CanRush">
+                <Link href="/tierlists">Тирлисты энергетиков</Link>
+                <Link href="/catalog">Каталог энергетиков</Link>
                 <Link href="/market">Маркет</Link>
                 <Link href="/prices">Цены по магазинам</Link>
                 <Link href="/terms">Пользовательское соглашение</Link>
                 <Link href="/privacy">Политика обработки данных</Link>
-              </div>
+              </nav>
             </div>
           </div>
         </div>
 
         <div className="footer-bottom">
           <p className="footer-copyright">CanRush.ru © 2026</p>
-          <p className="footer-legal">
+          <div className="footer-legal"><p>Используя сайт, вы подтверждаете своё совершеннолетие. Если вам нет 18 лет, покиньте сайт.</p>
+          <p>
             Сайт не аффилирован и не одобрен производителями или ретейлерами. Информация представлена
             в ознакомительных целях.
-          </p>
+          </p></div>
         </div>
       </motion.div>
     </footer>

@@ -13,9 +13,9 @@ import { filterCatalogGroups } from '@/lib/catalog-query';
 import { getReviewSummaries, getDiscussionCounts } from '@/lib/reviews';
 import { getLeaderboard } from '@/lib/profile-experience';
 import { experienceLevel } from '@/lib/experience-level';
-import { seoMetadata } from '@/lib/seo';
+import { DEFAULT_DESCRIPTION, seoMetadata } from '@/lib/seo';
 export const dynamic = 'force-dynamic';
-export const metadata = seoMetadata({ title: 'Энергетики, отзывы и рейтинг пользователей', description: 'Лучшие и самые обсуждаемые энергетики, цены в магазинах и рейтинг участников CanRush.', path: '/' });
+export const metadata = seoMetadata({ title: 'Энергетики, отзывы и рейтинг пользователей', description: DEFAULT_DESCRIPTION, path: '/' });
 
 export default async function HomePage() {
   const { groups, city, generatedAt } = await loadCatalogSnapshot();

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const SITE_NAME = 'CanRush';
 export const SITE_URL = 'https://canrush.ru';
 export const DEFAULT_DESCRIPTION =
-  'CanRush помогает сравнивать цены на энергетические напитки в магазинах России, читать отзывы и составлять тирлисты.';
+  'CanRush — социальная сеть для любителей энергетиков: отзывы, рейтинги и тирлисты, сравнение цен в магазинах России и маркет редких напитков.';
 
 interface SeoMetadataOptions {
   title: string;
