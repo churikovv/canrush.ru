@@ -5905,3 +5905,5 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 @media (prefers-reduced-motion: reduce) { .profile-tag[data-tag] { animation: none; } }
 
 .community-shortcut-count { margin-left: 6px; color: var(--color-muted-strong); font-size: .75rem; font-variant-numeric: tabular-nums; }
+.profile-tag[data-tag=altushka] { background: linear-gradient(120deg, #19151f, #583178); color: #f9efff; }
+.profile-tag[data-tag=flash] { background: linear-gradient(120deg, #8f162b, #c42d26); color: #fff4ef; }

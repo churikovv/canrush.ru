@@ -57,6 +57,18 @@ describe.sequential('profile image storage and displayed tags', () => {
     expect((await getReviewsForUser(a))[0]?.author.tag).toBeNull();
     await expect(setProfileTags(a, ['admin'])).rejects.toThrow();
   });
+  it('awards product tags only for the matching reviews and allows selecting them', async () => {
+    await pool.query(`insert into review ("userId", brand, flavor, design, taste, composition, text) values ($1, 'Monster', 'monster_ultra_rosa', 5, 5, 5, 'Review')`, [b]);
+    expect((await getProfileCommunity(b)).earned).not.toContain('altushka');
+    expect((await getProfileCommunity(b)).earned).not.toContain('flash');
+    await pool.query(`insert into review ("userId", brand, flavor, design, taste, composition, text) values ($1, 'Monster', 'monster_ultra_white:sugarfree', 5, 5, 5, 'Review'), ($1, 'Flash Up', 'original', 5, 5, 5, 'Review')`, [b]);
+    const community = await getProfileCommunity(b);
+    expect(community.earned).toEqual(expect.arrayContaining(['altushka', 'flash']));
+    await setProfileTags(b, ['altushka']);
+    expect((await getReviewsForUser(b))[0]?.author.tag).toBe('Альтушка');
+    await setProfileTags(b, ['flash']);
+    expect((await getReviewsForUser(b))[0]?.author.tag).toBe('Флэш');
+  });
   it('removes images explicitly and cascades them on account deletion', async () => {
     await saveProfileCustomization(a, input, { avatar: null });
     expect((await getProfileByUserId(a))?.avatarId).toBeNull();

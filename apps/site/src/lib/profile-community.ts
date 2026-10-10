@@ -10,7 +10,7 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
   const db = getPool();
   const result = await db.query<{
     following: number; followers: number; friends: number; isFollowing: boolean; followsYou: boolean;
-    burn: number; adrenaline: number; admin: number; telegram: number; profileTags: string[]; showOnline: boolean; reviews: number; brands: number; favorites: number; tierLists: number;
+    whiteMonster: number; flash: number; burn: number; adrenaline: number; admin: number; telegram: number; profileTags: string[]; showOnline: boolean; reviews: number; brands: number; favorites: number; tierLists: number;
   }>(`select u."profileTags", u."showOnline",
     (select count(*)::int from "userFollow" where "userId" = u.id) as following,
     (select count(*)::int from "userFollow" where "targetId" = u.id) as followers,
@@ -20,6 +20,8 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(*)::int from "review" where "userId" = u.id) as reviews,
     (select count(*)::int from "review" where "userId" = u.id and lower(brand) = 'burn') as burn,
     (select count(*)::int from "review" where "userId" = u.id and lower(brand) in ('adrenaline', 'adrenaline rush')) as adrenaline,
+    (select count(*)::int from "review" where "userId" = u.id and lower(brand) = 'monster' and split_part(flavor, ':', 1) = 'monster_ultra_white') as "whiteMonster",
+    (select count(*)::int from "review" where "userId" = u.id and lower(brand) = 'flash up') as flash,
     (case when exists(select 1 from "siteAdmin" where email = lower(u.email)) then 1 else 0 end) as admin,
     (case when u."telegramChannel" ~* '^[a-z][a-z0-9_]{4,31}$' then 1 else 0 end) as telegram,
     (select count(distinct brand)::int from "review" where "userId" = u.id) as brands,
@@ -28,7 +30,7 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     from "user" u where u.id = $1`, [userId, viewerId ?? null]);
   const row = result.rows[0];
   if (!row) throw new CommunityError('Профиль не найден.');
-  const progress: AchievementProgress = { reviews: row.reviews, brands: row.brands, favorites: row.favorites, tierLists: row.tierLists, friends: row.friends, burn: row.burn, adrenaline: row.adrenaline, admin: row.admin, telegram: row.telegram };
+  const progress: AchievementProgress = { whiteMonster: row.whiteMonster, flash: row.flash, reviews: row.reviews, brands: row.brands, favorites: row.favorites, tierLists: row.tierLists, friends: row.friends, burn: row.burn, adrenaline: row.adrenaline, admin: row.admin, telegram: row.telegram };
   const eligible = eligibleAchievements(progress).filter(key => key !== 'admin');
   if (eligible.length) await db.query(`insert into "profileAchievement" ("userId", "key") select $1, unnest($2::text[]) on conflict do nothing`, [userId, eligible]);
   const earned = (await db.query<{ key: string }>('select "key" from "profileAchievement" where "userId" = $1', [userId])).rows.map(item => item.key).filter(key => key !== 'admin' && PROFILE_ACHIEVEMENTS.some(item => item.key === key));

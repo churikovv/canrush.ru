@@ -1,4 +1,6 @@
 export interface AchievementProgress {
+  whiteMonster: number;
+  flash: number;
   reviews: number;
   brands: number;
   favorites: number;
@@ -11,6 +13,8 @@ export interface AchievementProgress {
 }
 
 export const PROFILE_ACHIEVEMENTS = [
+  { key: 'altushka', label: 'Альтушка', description: 'Написать отзыв на Monster Ultra White', metric: 'whiteMonster', goal: 1 },
+  { key: 'flash', label: 'Флэш', description: 'Написать отзыв на любой напиток Flash Up', metric: 'flash', goal: 1 },
   { key: 'burner', label: 'Burner', description: 'Оценить 3 напитка Burn', metric: 'burn', goal: 3 },
   { key: 'adrenaline', label: 'Adrenaline', description: 'Оценить 3 напитка Adrenaline или Adrenaline Rush', metric: 'adrenaline', goal: 3 },
   { key: 'six-seven', label: 'Six Seven', description: 'Оценить 67 напитков', metric: 'reviews', goal: 67 },
@@ -54,7 +58,7 @@ export function profilePageNumber(value: unknown): number {
   return typeof page === 'number' && Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
 }
 
-const ACHIEVEMENT_ART = new Set(['admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven']);
+const ACHIEVEMENT_ART = new Set(['altushka', 'flash', 'collector', 'admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven']);
 export function achievementImage(key: string): string {
   return ACHIEVEMENT_ART.has(key) ? `/brand/achievements/${key}.png` : '/brand/icons/achievement.svg';
 }
