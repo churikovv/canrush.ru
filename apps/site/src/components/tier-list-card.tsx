@@ -49,10 +49,10 @@ export function TierListCard({ list, products, showStatus = false }: TierListCar
             </span>
           ) : null}
         </div>
-        <TierListAuthor author={list.author} />
         <p>
           {list.itemCount} {list.itemCount === 1 ? 'товар' : list.itemCount > 1 && list.itemCount < 5 ? 'товара' : 'товаров'}
         </p>
+        <TierListAuthor author={list.author} />
         {list.status === 'published' && (list.reactionsEnabled || list.commentsEnabled) && <div className="tier-list-card-stats">
           {list.reactionsEnabled && <span aria-label={`Лайки: ${list.likes}`}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 10v11H3V10h4Zm0 0 5-8c3 0 3 3 2 7h5a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7" /></svg>{list.likes}</span>}
           {list.commentsEnabled && <Link href={`${href}#tier-discussion`} aria-label={`Комментарии: ${list.comments}`}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M20 16a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10Z" /></svg>{list.comments}</Link>}
