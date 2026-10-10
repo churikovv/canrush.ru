@@ -5827,3 +5827,10 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 @media (max-width: 639px) {
   .market-archive-controls > .community-button, .market-listing-delete-section > .community-button { width: 100%; }
 }
+
+.tier-list-card-stats { display: flex; align-items: center; gap: 20px; margin-top: 12px; color: var(--color-muted-strong); font-size: .875rem; }
+.tier-list-card-stats > * { display: inline-flex; align-items: center; gap: 6px; }
+.tier-list-card-stats a { color: inherit; text-decoration: none; min-height: 32px; }
+.tier-list-card-stats a:hover { color: var(--color-brand); }
+.tier-list-card-stats svg { flex-shrink: 0; }
+#tier-discussion { scroll-margin-top: 24px; }

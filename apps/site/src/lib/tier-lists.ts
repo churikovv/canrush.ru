@@ -32,6 +32,8 @@ interface TierListRow extends QueryResultRow {
 }
 
 interface TierListSummaryRow extends TierListRow {
+  likes: number;
+  comments: number;
   itemCount: number;
 }
 
@@ -125,7 +127,9 @@ async function getTierListSummaries(where: string, values: unknown[], limit: num
     `select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers",
             tl."createdAt", tl."updatedAt", tl."publishedAt",
             u."username", u."name", u."telegramChannel",
-            count(tli."tierListId")::int as "itemCount"
+            count(tli."tierListId")::int as "itemCount",
+            (select count(*)::int from "tierListReaction" where "tierListId"=tl.id and value=1) as likes,
+            (select count(*)::int from "tierListComment" where "tierListId"=tl.id) as comments
      from "tierList" tl
      join "user" u on u."id" = tl."userId"
      left join "tierListItem" tli on tli."tierListId" = tl."id"
@@ -140,6 +144,8 @@ async function getTierListSummaries(where: string, values: unknown[], limit: num
   return result.rows.map((row) => ({
     ...toTierList(row, []),
     itemCount: Number(row.itemCount),
+    likes: Number(row.likes),
+    comments: Number(row.comments),
     preview: (itemsByList.get(row.id) ?? []).sort((a, b) => row.tiers.indexOf(a.tier) - row.tiers.indexOf(b.tier) || a.position - b.position).slice(0, 8),
   }));
 }

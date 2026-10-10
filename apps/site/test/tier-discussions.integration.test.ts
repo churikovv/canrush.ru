@@ -28,6 +28,10 @@ it('limits concurrent comments, protects author deletion, and exposes them in ad
   const attempts=await Promise.allSettled([api.addTierComment(reader,review,'Comment '+reader),api.addTierComment(reader,review,'Comment '+reader)]);
   expect(attempts.filter(x=>x.status==='fulfilled')).toHaveLength(1);
   const thread=await api.getTierComments(review,reader);
+  const { getTierListsForOwner } = await import('../src/lib/tier-lists');
+  await api.setTierReaction(reader, review, 1);
+  expect((await getTierListsForOwner(owner))[0]).toMatchObject({ likes: 1, comments: 1 });
+  await api.setTierReaction(reader, review, 0);
   expect(thread.items).toHaveLength(1); expect(thread.items[0]?.canDelete).toBe(true);
   expect((await api.getTierComments(review,other)).items[0]?.canDelete).toBe(false);
   await expect(api.deleteTierComment(other,review,thread.items[0]!.id)).rejects.toThrow();

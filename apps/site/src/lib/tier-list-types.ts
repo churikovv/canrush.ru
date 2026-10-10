@@ -43,6 +43,8 @@ export interface TierListData {
 }
 
 export interface TierListSummary extends Omit<TierListData, 'items'> {
+  likes: number;
+  comments: number;
   itemCount: number;
   preview: TierListPlacement[];
 }
