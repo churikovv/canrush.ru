@@ -33,6 +33,10 @@ export const metadata: Metadata = {
   },
   description: DEFAULT_DESCRIPTION,
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [{ url: '/icon-48.png', sizes: '48x48', type: 'image/png' }],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   robots: {
     index: true,
     follow: true,
