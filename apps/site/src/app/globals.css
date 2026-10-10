@@ -5890,11 +5890,6 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 
 .community-shortcut { align-content: start; gap: 12px 8px; padding: 16px; text-decoration: none; }
 .community-shortcut-arrow { grid-row: 1; }
-.community-shortcut[data-category=stat-favorites] { background: #fff0f4; border-color: #f3d5df; color: #842849; }
-.community-shortcut[data-category=stat-reviews] { background: #eaf5ff; border-color: #cde3f7; color: #205b8b; }
-.community-shortcut[data-category=stat-tierlists] { background: #f0ecff; border-color: #ddd4f7; color: #614293; }
-.community-shortcut[data-category=achievement] { background: #fff5dc; border-color: #efdfb8; color: #78550d; }
-.community-shortcut:hover { box-shadow: inset 0 0 0 1px currentColor; }
 .community-shortcut-arrow { color: inherit; }
 /* Brand specialists: a subtle static gradient; advanced achievements shimmer briefly. */
 .profile-tag[data-tag=burner] { background: linear-gradient(120deg, #ffe7cc, #ffc8b1); color: #802d0b; }
@@ -5908,3 +5903,5 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .profile-tag[data-tag]:hover { animation-name: none; }
 @keyframes profile-tag-shimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 @media (prefers-reduced-motion: reduce) { .profile-tag[data-tag] { animation: none; } }
+
+.community-shortcut-count { margin-left: 6px; color: var(--color-muted-strong); font-size: .75rem; font-variant-numeric: tabular-nums; }
