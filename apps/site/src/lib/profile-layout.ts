@@ -2,10 +2,10 @@ export const PROFILE_BLOCKS = [
   { key: 'experience', label: 'Уровень', area: 'main' },
   { key: 'ratings', label: 'Статистика оценок', area: 'main' },
   { key: 'listings', label: 'Объявления', area: 'main' },
-  { key: 'wall', label: 'Стена', area: 'main' },
   { key: 'social', label: 'Друзья и подписки', area: 'side' },
   { key: 'favorites', label: 'Избранное', area: 'main' },
   { key: 'about', label: 'О профиле', area: 'side' },
+  { key: 'wall', label: 'Стена', area: 'main' },
 ] as const;
 export type ProfileBlockKey = typeof PROFILE_BLOCKS[number]['key'];
 export function isRequiredProfileBlock(key: ProfileBlockKey): boolean { return key === 'experience' || key === 'social'; }

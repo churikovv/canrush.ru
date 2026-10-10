@@ -17,6 +17,10 @@ afterAll(async () => { await pool.query('delete from "user" where id=any($1::tex
 it('creates ordered listing photos and rejects self orders', async () => {
   expect((await pool.query('select "profileLayout" from "user" where id=$1', [seller])).rows[0].profileLayout.hidden).toContain('listings');
   listing = await api.createListing(seller, { title: 'Test', description: 'Test lot', city: 'Москва', price: 10000, quantity: 10, delivery: ['pickup'] }, [photo, photo]);
+  expect((await pool.query('select key from "profileAchievement" where "userId"=$1 and key=$2', [seller, 'seller'])).rows).toHaveLength(1);
+  const community = await import('../src/lib/profile-community');
+  await community.setProfileTags(seller, ['seller']);
+  expect((await community.getProfileCommunity(seller)).tags).toContain('seller');
   const layout = (await pool.query('select "profileLayout" from "user" where id=$1', [seller])).rows[0].profileLayout;
   expect(layout.hidden).not.toContain('listings'); expect(layout.hidden).toContain('favorites');
   expect((await api.getListing(listing))?.photos).toHaveLength(2);

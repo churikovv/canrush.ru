@@ -19,3 +19,5 @@ it('keeps existing arrangements and adds a hidden favorites block', () => {
   expect(parseProfileLayout({ order, hidden: ['wall'] })).toEqual({ order: [...order, 'favorites'], hidden: ['wall', 'favorites'] });
   expect(DEFAULT_PROFILE_LAYOUT.hidden).toEqual(['favorites', 'listings']);
 });
+
+it('places the wall last by default', () => { expect(DEFAULT_PROFILE_LAYOUT.order.at(-1)).toBe('wall'); });

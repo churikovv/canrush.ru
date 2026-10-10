@@ -62,11 +62,10 @@ export function WallComposer({ targetId }: { targetId: string }) {
         <div className="review-composer-toolbar">
           <span className="review-photo-picker review-photo-icon" title="Добавить фотографии">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/></svg>
-            <input type="file" accept="image/jpeg,image/png,image/webp" multiple aria-label="Добавить фотографии на стену" aria-describedby="wall-photos-help" disabled={files.length >= 5} onChange={event => { choosePhotos(event.currentTarget.files); event.currentTarget.value = ''; }} />
+            <input type="file" accept="image/jpeg,image/png,image/webp" multiple aria-label="Добавить фотографии на стену" disabled={files.length >= 5} onChange={event => { choosePhotos(event.currentTarget.files); event.currentTarget.value = ''; }} />
           </span><span>{files.length} / 5 фото</span>
         </div>
       </div>
-      <p id="wall-photos-help" className="field-help">До 5 фотографий в формате JPG, PNG или WebP, до 5 МБ каждая.</p>
       {photoError && <p role="alert" className="field-error">{photoError}</p>}
       <div className="review-photo-previews">{files.map(({ file, url }, index) => <div key={url} className="review-photo-preview">
         {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
