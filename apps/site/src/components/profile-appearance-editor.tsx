@@ -1,4 +1,5 @@
 'use client';
+import { AvatarFrame } from '@/components/avatar-frame';
 import { PROFILE_THEMES, PROFILE_FRAMES, DEFAULT_PROFILE_APPEARANCE, type ProfileAppearance } from '@/lib/profile-appearance';
 
 export function ProfileAppearanceEditor({ value, onChange, disabled }: { value: ProfileAppearance; onChange: (value: ProfileAppearance) => void; disabled: boolean }) {
@@ -15,7 +16,7 @@ export function ProfileAppearanceEditor({ value, onChange, disabled }: { value: 
     <fieldset disabled={disabled} className="appearance-options"><legend>Рамка аватарки</legend>
       <div className="appearance-frame-options">{PROFILE_FRAMES.map(frame => <label key={frame.key} className="appearance-option">
         <input type="radio" name="profile-frame-choice" value={frame.key} checked={value.frame === frame.key} onChange={() => onChange({ ...value, frame: frame.key })} />
-        <span className="appearance-frame-sample community-avatar" data-frame={frame.key} aria-hidden="true">C</span><strong>{frame.label}</strong>
+        <span className="appearance-frame-sample community-avatar" data-frame={frame.key} aria-hidden="true">C<AvatarFrame frame={frame.key} /></span><strong>{frame.label}</strong>
       </label>)}</div>
       <p className="community-section-note">Анимация отключается, если на устройстве включено уменьшение движения.</p>
     </fieldset>

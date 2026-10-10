@@ -1,3 +1,4 @@
+import { AvatarFrame } from '@/components/avatar-frame';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 
@@ -24,6 +25,7 @@ export function ProfileHeader({ name, username, createdAt, avatarSrc, bannerSrc,
     <div className="community-identity">
       <span data-frame={frame} className={`community-avatar${avatarSrc ? ' community-avatar-custom' : ''}`}>
         <Image src={avatarSrc ?? '/brand/icons/profile-avatar.svg'} width={avatarSrc ? 80 : 32} height={avatarSrc ? 80 : 32} unoptimized={Boolean(avatarSrc)} alt={avatarSrc ? `Аватар ${name}` : ''} />
+        <AvatarFrame frame={frame} />
         {avatarControl}
       </span>
       <div className="community-name"><div className="community-name-line"><h1>{name}</h1>{status}</div>

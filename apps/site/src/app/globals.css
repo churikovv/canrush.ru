@@ -5989,9 +5989,9 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
   --profile-accent: #0058cc; --profile-banner: #006eff;
 }
 [data-profile-theme=dark] {
-  --profile-bg: #14171e; --profile-panel: #1d222c; --profile-soft: #282f3c;
-  --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #414c5e;
-  --profile-accent: #8bbcff; --profile-banner: #174da7; color-scheme: dark;
+  --profile-bg: #000; --profile-panel: #0c0c0c; --profile-soft: #1a1a1a;
+  --profile-ink: #f5f5f5; --profile-muted: #b8b8b8; --profile-line: #383838;
+  --profile-accent: #dedede; --profile-banner: #181818; color-scheme: dark;
 }
 [data-profile-theme=lavender] {
   --profile-bg: #f3effa; --profile-panel: #fdfbff; --profile-soft: #eae2f5;
@@ -6051,19 +6051,7 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 .appearance-swatch i:nth-child(3) { background: var(--profile-ink); height: 18px; }
 .community-avatar[data-frame] { position: relative; overflow: visible; isolation: isolate; }
 .community-avatar[data-frame] > img { border-radius: 50%; }
-.community-avatar[data-frame]:not([data-frame=none])::after {
-  content: ''; position: absolute; inset: -6px; border-radius: 50%; padding: 3px; pointer-events: none;
-  background: conic-gradient(from 0deg, #006eff, #a9ddff, #006eff, #5a39c5, #006eff);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  animation: profile-orbit 8s linear infinite;
-}
-.community-avatar[data-frame=pulse]:not([data-frame=none])::after { background: #006eff; animation: profile-pulse 3s ease-in-out infinite; }
-.community-avatar[data-frame=prism]:not([data-frame=none])::after { background: conic-gradient(#7042c9, #eb619d, #ffd384, #59cfc4, #7042c9); animation-duration: 12s; animation-direction: reverse; }
 .appearance-frame-sample.community-avatar { width: 56px; height: 56px; flex: none; margin: 8px auto; font-weight: 700; color: #0058cc; }
-@keyframes profile-orbit { to { transform: rotate(360deg); } }
-@keyframes profile-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .55; transform: scale(1.07); } }
-@media (prefers-reduced-motion: reduce) { .community-avatar[data-frame]::after { animation: none !important; } }
 @media (max-width: 639px) {
   .appearance-theme-options,.appearance-frame-options { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .profile-editor-tabs { gap: 0; }
@@ -6085,3 +6073,16 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 [data-profile-theme=dark] .sign-out-control .primary-button { color: #ffb5b5; border-color: #b85d65; }
 [data-profile-theme=dark] .sign-out-control .primary-button:hover:not(:disabled) { color: #ffdada; border-color: #ffb5b5; }
 .profile-editor-danger[hidden] { display: none; }
+/* Small, intermittent accents sit outside the portrait instead of rotating around it. */
+.avatar-frame { position: absolute; inset: -15%; width: 130%; height: 130%; max-width: none; pointer-events: none; z-index: 1; overflow: visible; color: #2085ff; }
+.avatar-frame-pulse { color: #c48618; }
+.avatar-frame-prism { color: #7e66d5; }
+.frame-accent { transform-box: fill-box; transform-origin: center; animation: avatar-accent 5s cubic-bezier(.22,1,.36,1) infinite; }
+.frame-accent-two { animation-delay: -2.5s; }
+.frame-accent-three { animation-delay: -1.3s; }
+.avatar-frame-prism .frame-accent { animation-name: avatar-speed; animation-duration: 4.6s; }
+@keyframes avatar-accent { 0%,12%,70%,100% { opacity: 0; transform: scale(.78); } 24%,48% { opacity: 1; transform: scale(1); } }
+@keyframes avatar-speed { 0%,15%,75%,100% { opacity: 0; transform: translate(-3px,2px); } 30%,50% { opacity: 1; transform: translate(0,0); } 65% { opacity: 0; transform: translate(3px,-2px); } }
+@media (prefers-reduced-motion: reduce) { .frame-accent { animation: none; opacity: 1; transform: none; } }
+[data-profile-theme=dark] .community-avatar:not(.community-avatar-custom) > img { filter: brightness(0) invert(1); }
+@media (prefers-reduced-motion: reduce) { .avatar-frame .frame-accent { animation: none; opacity: 1; transform: none; } }

@@ -83,7 +83,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  const theme = parseSiteTheme((await cookies()).get(SITE_THEME_COOKIE)?.value) ?? 'light';
+  const theme = parseSiteTheme((await cookies()).get(SITE_THEME_COOKIE)?.value) ?? 'system';
   return (
     <html data-site-theme={theme} lang="ru" className={objectSans.variable} data-scroll-behavior="smooth">
       <body>

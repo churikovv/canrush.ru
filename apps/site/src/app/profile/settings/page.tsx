@@ -12,10 +12,10 @@ import { saveNotificationSettings } from './actions';
 export const metadata = { title: 'Настройки', robots: { index: false, follow: false } };
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
-  const theme = parseSiteTheme((await cookies()).get(SITE_THEME_COOKIE)?.value) ?? 'light';
+  const theme = parseSiteTheme((await cookies()).get(SITE_THEME_COOKIE)?.value) ?? 'system';
   const { rows } = session ? await getPool().query<{ kind: string; enabled: boolean }>('select kind,enabled from "notificationPreference" where "userId"=$1', [session.user.id]) : { rows: [] };
   const preferences = new Map(rows.map(row => [row.kind, row.enabled]));
-  return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
+  return <BrandShell headerAction={<ProfileNavigation />} surfaceClassName="profile-surface">
     <section className="community-directory profile-settings"><ProfileBackButton /><h1>Настройки</h1>
       <ThemeSettings theme={theme} />
       {session ? <>

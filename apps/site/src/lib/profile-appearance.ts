@@ -1,14 +1,14 @@
 export const PROFILE_THEMES = [
   { key: 'default', label: 'Canrush', description: 'Тема сайта и фирменный синий' },
-  { key: 'dark', label: 'Графит', description: 'Тёмный фон и голубые акценты' },
+  { key: 'dark', label: 'Чёрная', description: 'Чистый чёрный и серебристые акценты' },
   { key: 'lavender', label: 'Лаванда', description: 'Светлый фон с фиолетовым оттенком' },
   { key: 'mint', label: 'Мята', description: 'Зелёные акценты и свежий светлый фон' },
 ] as const;
 export const PROFILE_FRAMES = [
   { key: 'none', label: 'Без рамки' },
-  { key: 'orbit', label: 'Орбита' },
-  { key: 'pulse', label: 'Пульс' },
-  { key: 'prism', label: 'Призма' },
+  { key: 'orbit', label: 'Разряд' },
+  { key: 'pulse', label: 'Искры' },
+  { key: 'prism', label: 'Скорость' },
 ] as const;
 export type ProfileAppearance = { theme: typeof PROFILE_THEMES[number]['key']; frame: typeof PROFILE_FRAMES[number]['key'] };
 export const DEFAULT_PROFILE_APPEARANCE: ProfileAppearance = { theme: 'default', frame: 'none' };
