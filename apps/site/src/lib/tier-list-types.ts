@@ -23,6 +23,9 @@ export interface TierListPlacement {
 }
 
 export interface TierListAuthor {
+  avatarId?: string | null;
+  tag?: string | null;
+  xp?: number;
   username: string;
   name: string;
   telegramChannel: string | null;

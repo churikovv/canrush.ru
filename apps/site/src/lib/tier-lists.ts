@@ -17,6 +17,9 @@ const MIN_OFFICIAL_REVIEW_COUNT = 3;
 const MIN_OFFICIAL_RETAILER_COUNT = 4;
 
 interface TierListRow extends QueryResultRow {
+  avatarId: string | null;
+  tag: string | null;
+  xp: number;
   id: string;
   userId: string;
   slug: string;
@@ -55,7 +58,11 @@ export interface PublishedTierListSitemapEntry extends QueryResultRow {
 const TIER_LIST_SELECT = `
   select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers", tl."reactionsEnabled", tl."commentsEnabled",
          tl."createdAt", tl."updatedAt", tl."publishedAt",
-         u."username", u."name", u."telegramChannel"
+         u."username", u."name", u."telegramChannel",
+         (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
+         coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
+         case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
+         when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
   from "tierList" tl
   join "user" u on u."id" = tl."userId"
 `;
@@ -84,6 +91,7 @@ function toTierList(row: TierListRow, items: TierListPlacement[]): TierListData 
     reactionsEnabled: row.reactionsEnabled,
     commentsEnabled: row.commentsEnabled,
     author: {
+      avatarId: row.avatarId, tag: row.tag, xp: Number(row.xp ?? 0),
       username: row.username,
       name: row.name,
       telegramChannel: row.telegramChannel,
@@ -131,6 +139,10 @@ async function getTierListSummaries(where: string, values: unknown[], limit: num
     `select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers", tl."reactionsEnabled", tl."commentsEnabled",
             tl."createdAt", tl."updatedAt", tl."publishedAt",
             u."username", u."name", u."telegramChannel",
+         (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
+         coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
+         case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
+         when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag,
             count(tli."tierListId")::int as "itemCount",
             (select count(*)::int from "tierListReaction" where "tierListId"=tl.id and value=1) as likes,
             (select count(*)::int from "tierListComment" where "tierListId"=tl.id) as comments

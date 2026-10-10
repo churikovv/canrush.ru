@@ -1,3 +1,4 @@
+import { TierListAuthor } from '@/components/tier-list-author';
 import { ReviewDiscussion } from '@/components/review-discussion';
 import { getTierInteractions } from '@/lib/tier-discussions';
 import { TierScreenshotButton } from '@/components/tier-screenshot-button';
@@ -30,10 +31,7 @@ export async function generateMetadata({ params }: { params: TierListParams }): 
   });
 }
 
-function displayName(name: string, username: string): string {
-  const value = name.trim();
-  return value && !value.includes('@') ? value : username;
-}
+
 
 export default async function TierListPage({ params }: { params: TierListParams }) {
   const { slug } = await params;
@@ -57,10 +55,10 @@ export default async function TierListPage({ params }: { params: TierListParams 
           <div>
             <div className="tier-list-public-meta">
               {list.status === 'draft' ? <span className="tier-list-status tier-list-status-draft">Черновик</span> : null}
-              <Link href={`/profile/${list.author.username}`}>@{list.author.username}</Link>
+
             </div>
             <h1>{list.title}</h1>
-            <p>Автор: {displayName(list.author.name, list.author.username)}</p>
+            <TierListAuthor author={list.author} />
           </div>
           {telegramHref ? (
             <a className="tier-list-telegram" href={telegramHref} target="_blank" rel="noreferrer">

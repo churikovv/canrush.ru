@@ -5965,3 +5965,11 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .layout-listing-previews img { object-fit: cover; border-radius: 8px; }
 .profile-settings > .community-panel + .community-panel { margin-top: 24px; }
 @media (max-width: 639px) { .profile-settings > .community-panel + .community-panel { margin-top: 16px; } }
+.tier-author { display: flex; align-items: center; gap: 12px; margin: 16px 0; min-width: 0; }
+.tier-author-avatar { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: #eaf2ff; color: var(--color-brand-deep); font-weight: 700; text-decoration: none; }
+.tier-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.tier-author-details { min-width: 0; display: grid; gap: 6px; }
+.tier-author-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; color: var(--color-text); text-decoration: none; overflow-wrap: anywhere; font-size: .875rem; }
+.tier-author-name span { color: var(--color-muted-strong); font-size: .75rem; }
+.tier-author-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tier-author-badges .profile-tag { font-size: .75rem; padding: 4px 7px; }
