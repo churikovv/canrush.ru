@@ -1,3 +1,4 @@
+import { SettingsHeaderLink } from '@/components/settings-header-link';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { Suspense, type ReactNode } from 'react';
@@ -27,7 +28,7 @@ export function BrandShell({ children, headerAction, surfaceClassName }: BrandSh
           />
         </Link>
         <Suspense fallback={<span className="city-header-placeholder">Город</span>}><CityHeader /></Suspense>
-        <div className="header-action">{headerAction}<NotificationBell /></div>
+        <div className="header-action">{headerAction}<NotificationBell /><SettingsHeaderLink /></div>
       </header>
       <main className={surfaceClassName ? `main-surface ${surfaceClassName}` : 'main-surface'} id="main-content">
         {children}

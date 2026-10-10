@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers';
+import { parseSiteTheme, SITE_THEME_COOKIE } from '@/lib/site-theme';
 import { CampaignTracker } from '@/components/campaign-tracker';
 import { NavigationProgressProvider } from '@/components/navigation-progress';
 import type { Metadata, Viewport } from 'next';
@@ -10,6 +12,7 @@ import { SiteMotionProvider } from '@/components/site-motion-provider';
 import { YandexMetrika } from '@/components/yandex-metrika';
 import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/seo';
 import './globals.css';
+import './site-theme.css';
 
 const objectSans = localFont({
   src: [
@@ -73,15 +76,16 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  colorScheme: 'light',
+  colorScheme: 'light dark',
   themeColor: '#006eff',
   width: 'device-width',
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const theme = parseSiteTheme((await cookies()).get(SITE_THEME_COOKIE)?.value) ?? 'light';
   return (
-    <html lang="ru" className={objectSans.variable} data-scroll-behavior="smooth">
+    <html data-site-theme={theme} lang="ru" className={objectSans.variable} data-scroll-behavior="smooth">
       <body>
         <SiteMotionProvider>
           <a className="skip-link" href="#main-content">

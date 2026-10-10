@@ -1,5 +1,5 @@
 export const PROFILE_THEMES = [
-  { key: 'default', label: 'Canrush', description: 'Светлый и фирменный синий' },
+  { key: 'default', label: 'Canrush', description: 'Тема сайта и фирменный синий' },
   { key: 'dark', label: 'Графит', description: 'Тёмный фон и голубые акценты' },
   { key: 'lavender', label: 'Лаванда', description: 'Светлый фон с фиолетовым оттенком' },
   { key: 'mint', label: 'Мята', description: 'Зелёные акценты и свежий светлый фон' },

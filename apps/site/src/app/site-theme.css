@@ -1,0 +1,92 @@
+/* Semantic site palette. Profile authors can override their own local palette. */
+:root { --color-action: #000; --color-on-action: #fff; }
+:root[data-site-theme=graphite] {
+  color-scheme: dark;
+  --color-ink: #f1f4fa;
+  --color-text: #e1e6ef;
+  --color-muted: #a8b4c5;
+  --color-muted-strong: #b5bfce;
+  --color-surface: #14171e;
+  --color-subtle: #282f3c;
+  --color-control: #414c5e;
+  --color-brand-deep: #8bbcff;
+  --color-danger: #ffb5b5;
+  --color-danger-soft: #3c232a;
+  --color-success: #7adb9a;
+  --color-success-soft: #20362e;
+  --color-focus: #8bbcff;
+  --color-action: #090d13;
+  --theme-panel: #1d222c;
+  --theme-subtle: #282f3c;
+  --theme-line: #414c5e;
+  --theme-text: #f1f4fa;
+  --theme-muted: #b5bfce;
+  --theme-link: #8bbcff;
+  --theme-danger: #ffb5b5;
+  --theme-success: #7adb9a;
+}
+.settings-header-link { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 44px; color: #fff; border-radius: 12px; }
+.settings-header-link svg { flex-shrink: 0; }
+.settings-header-link:hover,.settings-header-link[aria-current=page] { background: #ffffff2e; }
+.settings-header-link:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.site-theme-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-top: 24px; max-width: 600px; }
+.site-theme-choice { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--color-control); border-radius: 12px; background: var(--color-surface); color: var(--color-text); text-align: left; font: inherit; cursor: pointer; }
+.site-theme-choice:hover { background: var(--color-subtle); }
+.site-theme-choice[aria-pressed=true] { border-color: var(--color-brand-deep); box-shadow: inset 0 0 0 1px var(--color-brand-deep); }
+.site-theme-choice:disabled { opacity: .6; cursor: wait; }
+.site-theme-choice:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.site-theme-choice > span:last-child { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.site-theme-choice svg { visibility: hidden; flex-shrink: 0; }
+.site-theme-choice[aria-pressed=true] svg { visibility: visible; color: var(--color-brand-deep); }
+.site-theme-sample { display: block; overflow: hidden; border: 1px solid #c9ced6; background: #fff; border-radius: 8px; }
+.site-theme-sample > i { display: block; height: 20px; background: #006eff; }
+.site-theme-sample > span { display: flex; gap: 8px; padding: 14px; }
+.site-theme-sample b { display: block; height: 40px; flex: 1; background: #e8ecf2; border-radius: 4px; }
+.site-theme-sample[data-sample-theme=graphite] { background: #14171e; border-color: #414c5e; }
+.site-theme-sample[data-sample-theme=graphite] b { background: #303949; }
+.theme-save-status { min-height: 1.5em; font-size: .875rem; color: var(--color-muted-strong); margin: 16px 0 0; }
+@media (max-width: 959px) {
+  .brand-header { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 8px; padding-inline: 16px; }
+  .brand-header .brand-home { width: 36px; }
+  .brand-header .header-action:has(.profile-navigation),.brand-header .header-action { display: flex; gap: 4px; }
+  .brand-header .city-header-button,.brand-header:has(.notification-bell,.notification-slot) .city-header-button { max-width: 100%; min-width: 0; margin: 0 0 0 auto; }
+  .site-theme-choice { padding: 12px; font-size: .875rem; }
+}
+@media (min-width: 1200px) and (max-width: 1399px) { .profile-navigation { gap: 2px; } .profile-navigation-item { padding-inline: 8px; } .header-action { gap: 8px; } }
+/* Preserve artwork and the brand's white-on-blue/black surfaces. */
+:root[data-site-theme=graphite] .brand-footer { background: #090d13; color: #fff; }
+:root[data-site-theme=graphite] .site-tab-bar { box-shadow: inset 0 1px 0 #414c5e; }
+:root[data-site-theme=graphite] :is(.catalog-card-image,.catalog-product-visual,.favorite-card-image,.tier-editor-product-image) { background: #f3f4f6; color: #59616b; }
+:root[data-site-theme=graphite] .community-button { border-color: #414c5e; }
+:root[data-site-theme=graphite] .community-button-secondary { color: var(--theme-text); background: var(--theme-panel); }
+:root[data-site-theme=graphite] .community-button-text { color: var(--theme-link); background: transparent; }
+:root[data-site-theme=graphite] .community-button-secondary:hover { background: var(--theme-subtle); }
+:root[data-site-theme=graphite] .community-shortcut > img { filter: brightness(0) invert(1); }
+:root[data-site-theme=graphite] .profile-editor-tabs button { color: var(--theme-muted); }
+:root[data-site-theme=graphite] .profile-editor-tabs button[aria-selected=true] { color: var(--theme-link); }
+:root[data-site-theme=graphite] .profile-editor-tabs button:hover { background: var(--theme-subtle); }
+:root[data-site-theme=graphite] .appearance-option { border-color: var(--theme-line); }
+:root[data-site-theme=graphite] .appearance-option:has(input:checked) { background: var(--theme-panel); }
+:root[data-site-theme=graphite] .appearance-option > span:last-child { color: var(--theme-muted); }
+/* An uncustomized profile follows the visitor's theme. Explicit presets stay independent. */
+:root[data-site-theme=graphite] [data-profile-theme=default] {
+  --profile-bg: #14171e; --profile-panel: #1d222c; --profile-soft: #282f3c;
+  --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #414c5e;
+  --profile-accent: #8bbcff; --profile-banner: #006eff; color-scheme: dark;
+}
+[data-profile-theme]:not(.appearance-swatch) {
+  --theme-panel: var(--profile-panel); --theme-subtle: var(--profile-soft);
+  --theme-line: var(--profile-line); --theme-text: var(--profile-ink);
+  --theme-muted: var(--profile-muted); --theme-link: var(--profile-accent);
+  --color-ink: var(--profile-ink);
+}
+[data-profile-theme=lavender],[data-profile-theme=mint] { color-scheme: light; --theme-danger: #a61b14; --theme-success: #146c43; }
+:root[data-site-theme=graphite] [data-profile-theme=lavender] .community-shortcut > img,
+:root[data-site-theme=graphite] [data-profile-theme=mint] .community-shortcut > img { filter: none; }
+:root[data-site-theme=graphite] :is(.catalog-search-field,.catalog-filter-disclosure > summary,.catalog-sort-field,.market-search-submit,.market-filter-toggle) > img { filter: brightness(0) invert(1); }
+:root[data-site-theme=graphite] .brand-header :focus-visible { outline-color: #fff; }
+:root[data-site-theme=graphite] .primary-button { border-color: var(--color-control); }
+@media (max-width: 359px) { .site-theme-options { grid-template-columns: 1fr; } }
+:root[data-site-theme=graphite] .community-avatar:not(.community-avatar-custom) > img { filter: brightness(0) invert(1); }
+:root[data-site-theme=graphite] [data-profile-theme=lavender] .community-avatar:not(.community-avatar-custom) > img,
+:root[data-site-theme=graphite] [data-profile-theme=mint] .community-avatar:not(.community-avatar-custom) > img { filter: none; }
