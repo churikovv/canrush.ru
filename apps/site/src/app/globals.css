@@ -5885,5 +5885,26 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 
 .community-shortcut-preview { grid-column: 1 / -1; display: flex; gap: 6px; min-width: 0; overflow: hidden; }
 .community-shortcut-preview img { width: 40px; height: 40px; flex-shrink: 0; object-fit: contain; border-radius: 6px; }
-.community-shortcut { grid-template-rows: 20px auto 40px; }
-.community-shortcut-preview { grid-row: 3; }
+.community-shortcut { grid-template-rows: 20px 40px; }
+.community-shortcut-preview { grid-row: 2; }
+
+.community-shortcut { align-content: start; gap: 12px 8px; padding: 16px; text-decoration: none; }
+.community-shortcut-arrow { grid-row: 1; }
+.community-shortcut[data-category=stat-favorites] { background: #fff0f4; border-color: #f3d5df; color: #842849; }
+.community-shortcut[data-category=stat-reviews] { background: #eaf5ff; border-color: #cde3f7; color: #205b8b; }
+.community-shortcut[data-category=stat-tierlists] { background: #f0ecff; border-color: #ddd4f7; color: #614293; }
+.community-shortcut[data-category=achievement] { background: #fff5dc; border-color: #efdfb8; color: #78550d; }
+.community-shortcut:hover { box-shadow: inset 0 0 0 1px currentColor; }
+.community-shortcut-arrow { color: inherit; }
+/* Brand specialists: a subtle static gradient; advanced achievements shimmer briefly. */
+.profile-tag[data-tag=burner] { background: linear-gradient(120deg, #ffe7cc, #ffc8b1); color: #802d0b; }
+.profile-tag[data-tag=adrenaline] { background: linear-gradient(120deg, #d5efff, #dcd5ff); color: #274a85; }
+.profile-tag[data-tag=collector] { background: linear-gradient(120deg, #e4f7d6, #bfece0); color: #285e38; }
+.profile-tag[data-tag=critic], .profile-tag[data-tag=explorer], .profile-tag[data-tag=deadinside], .profile-tag[data-tag=six-seven] { background-size: 220% 100%; animation: profile-tag-shimmer 4s ease-in-out 1; }
+.profile-tag[data-tag=critic] { background-image: linear-gradient(110deg, #ffe4d2, #ffeec6, #ffd3c2, #ffe4d2); color: #853411; }
+.profile-tag[data-tag=explorer] { background-image: linear-gradient(110deg, #e3d5ff, #ffdcef, #d7e8ff, #e3d5ff); color: #60347c; }
+.profile-tag[data-tag=deadinside] { background-image: linear-gradient(110deg, #292838, #563650, #27364c, #292838); color: #fff0f7; }
+.profile-tag[data-tag=six-seven] { background-image: linear-gradient(110deg, #ffe3a0, #fff3d6, #f6c67b, #ffe9b0, #ffe3a0); color: #694008; box-shadow: inset 0 0 0 1px #dca74e; }
+.profile-tag[data-tag]:hover { animation-name: none; }
+@keyframes profile-tag-shimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@media (prefers-reduced-motion: reduce) { .profile-tag[data-tag] { animation: none; } }

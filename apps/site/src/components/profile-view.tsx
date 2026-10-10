@@ -65,7 +65,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           { href: `${base}/reviews`, label: 'Отзывы', count: profile.reviewCount, icon: 'stat-reviews', images: [] },
           { href: tierListsHref, label: 'Тирлисты', count: profile.tierListCount, icon: 'stat-tierlists', images: tierProducts.slice(0, 3).map(product => product.imageUrl).filter((src): src is string => Boolean(src)) },
           { href: `${base}/achievements`, label: 'Достижения', count: visibleEarned.length, icon: 'achievement', images: visibleEarned.slice(0, 3).map(achievementImage) }].map(item =>
-          <Link href={item.href} key={item.label} className="community-shortcut"><Image src={`/brand/icons/${item.icon}.svg`} width={20} height={20} alt="" /><span>{item.label}</span><strong>{item.count}</strong><span className="community-shortcut-arrow" aria-hidden="true">↗</span>{item.images.length > 0 && <span className="community-shortcut-preview" aria-hidden="true">{item.images.map((src, index) => <Image key={`${src}:${index}`} src={src} width={40} height={40} sizes="40px" alt="" />)}</span>}</Link>)}
+          <Link href={item.href} key={item.label} className="community-shortcut" data-category={item.icon}><Image src={`/brand/icons/${item.icon}.svg`} width={20} height={20} alt="" /><span>{item.label}</span><span className="community-shortcut-arrow" aria-hidden="true">↗</span>{item.images.length > 0 && <span className="community-shortcut-preview" aria-hidden="true">{item.images.map((src, index) => <Image key={`${src}:${index}`} src={src} width={40} height={40} sizes="40px" alt="" />)}</span>}</Link>)}
       </nav>
 
       <div className="community-columns">
