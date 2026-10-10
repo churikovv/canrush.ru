@@ -5963,3 +5963,5 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .layout-listing-previews { display: flex; gap: 16px; }
 .layout-listing-previews > div { display: grid; gap: 8px; width: 45%; }
 .layout-listing-previews img { object-fit: cover; border-radius: 8px; }
+.profile-settings > .community-panel + .community-panel { margin-top: 24px; }
+@media (max-width: 639px) { .profile-settings > .community-panel + .community-panel { margin-top: 16px; } }
