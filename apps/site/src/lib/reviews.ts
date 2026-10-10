@@ -246,3 +246,10 @@ export async function getDiscussionCounts(): Promise<Map<string, number>> {
     group by r.brand,r.flavor`);
   return new Map(rows.map(row => [`${row.brand}\u0000${row.flavor}`, Number(row.count)]));
 }
+
+export async function getLatestReviewPreview(userId: string): Promise<string | null> {
+  const { rows } = await getPool().query<{ text: string }>(
+    `select left(text, 240) as text from review where "userId" = $1 and length(trim(text)) > 0 order by "createdAt" desc, id desc limit 1`, [userId],
+  );
+  return rows[0]?.text ?? null;
+}

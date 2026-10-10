@@ -1,3 +1,4 @@
+import { getLatestReviewPreview } from '@/lib/reviews';
 import { achievementImage } from '@/lib/profile-achievements';
 import { getFavoriteGroups, loadAllCatalogGroups } from '@/lib/catalog';
 import { getTierListsForOwner, getPublishedTierListsForUser, tierListProductsForPlacements } from '@/lib/tier-lists';
@@ -37,8 +38,8 @@ function displayName(profile: { name: string; username: string | null }): string
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, friends, listings, followers, following, favorites, tierLists, catalog] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(),
+  const [community, ratings, wall, presence, friends, listings, followers, following, favorites, tierLists, catalog, reviewPreview] = await Promise.all([
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id),
   ]);
   const tierProducts = tierListProductsForPlacements(catalog, tierLists.flatMap(list => list.preview));
   const experience = (await getExperience([profile.username]))[profile.username];
@@ -65,7 +66,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           { href: `${base}/reviews`, label: 'Отзывы', count: profile.reviewCount, icon: 'stat-reviews', images: [] },
           { href: tierListsHref, label: 'Тирлисты', count: profile.tierListCount, icon: 'stat-tierlists', images: tierProducts.slice(0, 3).map(product => product.imageUrl).filter((src): src is string => Boolean(src)) },
           { href: `${base}/achievements`, label: 'Достижения', count: visibleEarned.length, icon: 'achievement', images: visibleEarned.slice(0, 3).map(achievementImage) }].map(item =>
-          <Link href={item.href} key={item.label} className="community-shortcut" data-category={item.icon}><Image src={`/brand/icons/${item.icon}.svg`} width={20} height={20} alt="" /><span>{item.label}<b className="community-shortcut-count">{item.count}</b></span><span className="community-shortcut-arrow" aria-hidden="true">↗</span>{item.images.length > 0 && <span className="community-shortcut-preview" aria-hidden="true">{item.images.map((src, index) => <Image key={`${src}:${index}`} src={src} width={40} height={40} sizes="40px" alt="" />)}</span>}</Link>)}
+          <Link href={item.href} key={item.label} className="community-shortcut" data-category={item.icon}><Image src={`/brand/icons/${item.icon}.svg`} width={20} height={20} alt="" /><span>{item.label}<b className="community-shortcut-count">{item.count}</b></span><span className="community-shortcut-arrow" aria-hidden="true">↗</span>{item.icon === 'stat-reviews' && <span className="community-shortcut-review">{reviewPreview ?? 'Пока нет отзывов'}</span>}{item.images.length > 0 && <span className="community-shortcut-preview" aria-hidden="true">{item.images.map((src, index) => <Image key={`${src}:${index}`} src={src} width={40} height={40} sizes="40px" alt="" />)}</span>}</Link>)}
       </nav>
 
       <div className="community-columns">

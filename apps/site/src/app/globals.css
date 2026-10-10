@@ -5916,3 +5916,15 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .profile-friends-avatars img { width: 100%; height: 100%; object-fit: cover; }
 @media (max-width: 639px) { .community-sidebar > .profile-social-summary { order: 1; } }
 .profile-friends-heading > a { color: var(--color-brand-deep); text-decoration: none; }
+.community-shortcut-review { grid-column: 1 / -1; grid-row: 2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: .8125rem; line-height: 20px; color: var(--color-muted-strong); overflow-wrap: anywhere; }
+.experience-panel { position: relative; overflow: hidden; }
+.experience-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.experience-heading h2 { margin: 0; }
+.experience-heading a { font-size: .8125rem; min-height: 44px; display: inline-flex; align-items: center; }
+.experience-summary { display: flex; align-items: center; gap: 24px; margin: 16px 0 24px; }
+.experience-level-number { font-size: clamp(64px, 8vw, 88px); line-height: 1; letter-spacing: -.03em; color: var(--color-brand); }
+.experience-level-copy { display: flex; flex-direction: column; gap: 8px; }
+.experience-level-copy strong { font-size: 1.25rem; }
+.experience-level-copy span { color: var(--color-muted-strong); font-size: .875rem; line-height: 1.5; }
+.experience-panel .experience-track { height: 10px; border-radius: 5px; }
+@media (max-width: 639px) { .experience-summary { gap: 20px; } }

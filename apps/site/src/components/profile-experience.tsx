@@ -37,9 +37,9 @@ export function ProfileExperience({ username, initial = { xp: 0, rank: null }, e
   const progress = experienceLevel(value.xp);
   if (!expanded) return <Link className="profile-level" href={`/profile/${username}#experience`} title={`${value.xp} XP${value.rank ? ` · № ${value.rank} в рейтинге` : ''}`}>Ур. {progress.level}</Link>;
   return <section className="community-panel experience-panel" id="experience" aria-labelledby="experience-title">
-    <div className="community-section-heading"><h2 id="experience-title">Уровень {progress.level}</h2><Link href="/leaderboard">{value.rank ? `№ ${value.rank} в рейтинге ↗` : 'Рейтинг ↗'}</Link></div>
-    <div className="experience-total"><strong>{value.xp.toLocaleString('ru-RU')} <span>XP</span></strong><span>Ещё {progress.remaining} XP до уровня {progress.level + 1}</span></div>
+    <div className="experience-heading"><h2 id="experience-title">Уровень</h2><Link href="/leaderboard">{value.rank ? `№ ${value.rank} в рейтинге ↗` : 'Рейтинг ↗'}</Link></div>
+    <div className="experience-summary"><strong className="experience-level-number" aria-label={`Уровень ${progress.level}`}>{progress.level}</strong><div className="experience-level-copy"><strong>{value.xp.toLocaleString('ru-RU')} XP</strong><span>Ещё {progress.remaining} XP до уровня {progress.level + 1}</span></div></div>
     <div className="experience-track" role="progressbar" aria-valuemin={0} aria-valuemax={progress.required} aria-valuenow={progress.current} aria-label="Прогресс уровня"><ProfileStatFill value={progress.current / progress.required} /></div>
-    <details><summary>Как получать опыт</summary><ul><li>Новый отзыв о напитке: +25 XP.</li><li>Публикация тирлиста: +50 XP, первые 10 тирлистов.</li><li>Напиток в избранном: +2 XP, первые 20 напитков.</li><li>Новое достижение: +20 XP. Роль администратора не даёт опыта.</li></ul><p>Каждое действие учитывается один раз. Повторное добавление и редактирование не дают опыта. При равном XP место в рейтинге общее.</p></details>
+
   </section>;
 }
