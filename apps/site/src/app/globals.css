@@ -5854,3 +5854,12 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .footer-about { max-width: 42ch; margin: 12px 0 0; font-size: .875rem; line-height: 1.6; }
 .footer-legal p { margin: 0; }
 .footer-legal p + p { margin-top: 12px; }
+
+.profile-connection-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--color-control); overflow-x: auto; }
+.profile-connection-tabs button { display: flex; align-items: center; justify-content: center; flex: 1; gap: 5px; min-height: 44px; padding: 8px 4px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--color-muted-strong); white-space: nowrap; font-size: .75rem; cursor: pointer; }
+.profile-connection-tabs button[aria-selected=true] { color: var(--color-brand-deep); border-bottom-color: var(--color-brand); font-weight: 700; }
+.profile-connections-preview { padding-top: 20px; min-height: 112px; }
+.profile-connection-avatars { display: flex; flex-wrap: wrap; gap: 10px; }
+.profile-connection-avatars a { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: var(--color-subtle); color: var(--color-brand-deep); font-weight: 700; text-decoration: none; }
+.profile-connection-avatars img { width: 100%; height: 100%; object-fit: cover; }
+.profile-connections-all { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-top: 8px; color: var(--color-brand-deep); }

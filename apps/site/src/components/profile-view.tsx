@@ -1,3 +1,4 @@
+import { ProfileConnections } from '@/components/profile-connections';
 import { getListings } from '@/lib/market';
 import { formatPrice } from '@/lib/market-fields';
 import { ProfileReportForm } from '@/components/profile-report-form';
@@ -33,8 +34,8 @@ function displayName(profile: { name: string; username: string | null }): string
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, friends, listings] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username),
+  const [community, ratings, wall, presence, friends, listings, followers, following] = await Promise.all([
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'),
   ]);
   const experience = (await getExperience([profile.username]))[profile.username];
   const visibleAchievements = visibleProfileAchievements(viewerIsAdmin);
@@ -104,12 +105,11 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         </div>
 
         <aside className="community-sidebar">
-          <section className="community-panel" aria-labelledby="connections-title">
-            <h2 id="connections-title">Круг общения</h2>
-            <nav className="community-connections" aria-label="Подписки и друзья">{([{ key: 'followers', label: 'Подписчики', count: community.followers }, { key: 'following', label: 'Подписки', count: community.following }, { key: 'friends', label: 'Друзья', count: community.friends }] as const).map(item => <Link key={item.key} href={`${base}/connections?type=${item.key}`}><span>{item.label}</span><strong>{item.count}</strong><span aria-hidden="true">→</span></Link>)}</nav>
-            <p className="community-section-note">Друзья подписаны друг на друга.</p>
-            {friends.users.length > 0 && <div className="community-friend-list">{friends.users.slice(0, 6).map(user => <Link href={`/profile/${user.username}`} key={user.username}><span aria-hidden="true">{user.avatarId ? <Image src={`/api/profile-images/${user.avatarId}`} width={32} height={32} unoptimized alt="" /> : user.username.slice(0, 1).toUpperCase()}</span>@{user.username}</Link>)}</div>}
-          </section>
+          <ProfileConnections username={profile.username} groups={{
+            followers: { count: followers.count, users: followers.users.slice(0, 6) },
+            following: { count: following.count, users: following.users.slice(0, 6) },
+            friends: { count: friends.count, users: friends.users.slice(0, 6) },
+          }} />
           <section className="community-panel" aria-labelledby="profile-about-title"><h2 id="profile-about-title">О профиле</h2>
             {telegramHref ? <a className="community-channel" href={telegramHref} target="_blank" rel="noreferrer"><Image src="/brand/icons/channel.svg" width={18} height={18} alt="" />@{profile.telegramChannel} ↗</a> : <p className="community-muted">Канал не указан</p>}
             {isOwn && <PresenceSetting key={String(community.showOnline)} visible={community.showOnline} />}
