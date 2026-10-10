@@ -1,4 +1,6 @@
 'use client';
+import Image from 'next/image';
+import { achievementImage } from '@/lib/profile-achievements';
 
 import { useActionState, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { updateCommunityAction } from '@/app/profile/community-actions';
@@ -58,7 +60,7 @@ export function AchievementPicker({ earned, selected, progress, isOwn, viewerIsA
   const contents = <>
     <button ref={trigger} type="button" className="tag-picker-trigger" popoverTarget={id} aria-expanded={open} aria-controls={id}
       disabled={pending} onClick={() => { if (!open) setQuery(''); placePanel(); }}>
-      <span>{current ? <span className="profile-tag">{current.label}</span> : isOwn ? 'Выберите тег' : 'Посмотреть все теги'}</span>
+      <span>{current ? <span className="profile-tag" data-tag={current.key}>{current.label}</span> : isOwn ? 'Выберите тег' : 'Посмотреть все теги'}</span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={open ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
     </button>
     <div ref={panel} id={id} popover="auto" className="tag-picker-popover" style={position}
@@ -79,7 +81,7 @@ export function AchievementPicker({ earned, selected, progress, isOwn, viewerIsA
         </label>}
         {matching.map(item => {
           const unlocked = earned.includes(item.key);
-          const copy = <><span className="achievement-copy"><strong>{item.label}</strong><span>{item.description}</span></span>
+          const copy = <><Image className="tag-picker-art" src={achievementImage(item.key)} width={48} height={48} alt="" /><span className="achievement-copy"><strong className="profile-tag" data-tag={item.key}>{item.label}</strong><span>{item.description}</span></span>
             <span className={`achievement-progress${unlocked ? ' is-earned' : ''}`}>{unlocked ? 'Получен' : `${Math.min(progress[item.metric], item.goal)} / ${item.goal}`}</span></>;
           return isOwn ? <label className={`tag-picker-option${tag === item.key ? ' is-selected' : ''}${!unlocked ? ' is-locked' : ''}`} key={item.key}>
             <input type="radio" name="tag-choice" checked={tag === item.key} disabled={!unlocked || pending} onChange={() => choose(item.key)} />{copy}

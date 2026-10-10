@@ -1,3 +1,8 @@
+import { achievementImage } from '@/lib/profile-achievements';
+import { getFavoriteGroups, loadAllCatalogGroups } from '@/lib/catalog';
+import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
+import { getTierListsForOwner, getPublishedTierListsForUser, tierListProductsForPlacements } from '@/lib/tier-lists';
+import { TierListCard } from '@/components/tier-list-card';
 import { ProfileConnections } from '@/components/profile-connections';
 import { getListings } from '@/lib/market';
 import { formatPrice } from '@/lib/market-fields';
@@ -34,9 +39,10 @@ function displayName(profile: { name: string; username: string | null }): string
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, friends, listings, followers, following] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'),
+  const [community, ratings, wall, presence, friends, listings, followers, following, favorites, tierLists, catalog] = await Promise.all([
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(),
   ]);
+  const tierProducts = tierListProductsForPlacements(catalog, tierLists.flatMap(list => list.preview));
   const experience = (await getExperience([profile.username]))[profile.username];
   const visibleAchievements = visibleProfileAchievements(viewerIsAdmin);
   const visibleEarned = community.earned.filter(key => visibleAchievements.some(item => item.key === key));
@@ -51,7 +57,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         avatarSrc={profile.avatarId ? `/api/profile-images/${profile.avatarId}` : null}
         bannerSrc={profile.bannerId ? `/api/profile-images/${profile.bannerId}` : null}
         status={<ProfilePresence userId={profile.id} initial={presence} />}
-        tags={<div className="profile-tags"><ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} />{community.tags.map(tag => <a key={tag} href={`${base}/achievements`} className="profile-tag">{PROFILE_ACHIEVEMENTS.find(item => item.key === tag)?.label}</a>)}</div>}
+        tags={<div className="profile-tags"><ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} />{community.tags.map(tag => <a key={tag} href={`${base}/achievements`} className="profile-tag" data-tag={tag}>{PROFILE_ACHIEVEMENTS.find(item => item.key === tag)?.label}</a>)}</div>}
         actions={isOwn ? <div className="profile-owner-actions"><Link href="/profile/edit" className="community-button community-button-secondary profile-edit-action">Редактировать профиль</Link><Link href="/profile/settings" className="community-button community-button-secondary">Настройки</Link></div>
           : viewerId ? <FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
           : <Link className="community-button" href="/sign-in">Войти и подписаться</Link>} />
@@ -86,6 +92,21 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             </Link>)}</div> : <div className="community-empty"><p>{isOwn ? 'Вы пока не создавали объявлений.' : 'Пользователь пока не создавал объявлений.'}</p>{isOwn && <Link href="/market/new">Создать объявление ↗</Link>}</div>}
           </section>
 
+          <section className="community-panel" aria-labelledby="profile-tiers-title">
+            <div className="community-section-heading"><h2 id="profile-tiers-title">Тирлисты</h2><Link href={tierListsHref}>Все ↗</Link></div>
+            {tierLists.length ? <div className="profile-tier-previews">{tierLists.map(list => <TierListCard key={list.id} list={list} products={tierProducts} showStatus={isOwn} />)}</div> : <p className="community-muted">{isOwn ? 'Вы пока не создавали тирлистов.' : 'Пока нет опубликованных тирлистов.'}</p>}
+          </section>
+          <section className="community-panel" aria-labelledby="profile-favorites-title">
+            <div className="community-section-heading"><h2 id="profile-favorites-title">Избранное</h2><Link href={favoritesHref}>Все ↗</Link></div>
+            {favorites.length ? <div className="profile-favorite-previews">{favorites.slice(0, 6).map(group => <Link key={`${group.brand}:${group.flavor}`} href={`/catalog/${catalogGroupSlug(group.brand, group.flavor)}`}>
+              <div>{group.coverImageUrl ? <Image src={group.coverImageUrl} width={120} height={120} sizes="(max-width: 639px) 40vw, 140px" alt="" /> : <span>Нет фото</span>}</div><strong>{group.brand}</strong><span>{flavorName(group.flavor)}</span>
+            </Link>)}</div> : <p className="community-muted">Пока нет избранных напитков.</p>}
+          </section>
+          <section className="community-panel" aria-labelledby="profile-earned-title">
+            <div className="community-section-heading"><h2 id="profile-earned-title">Достижения</h2><Link href={`${base}/achievements`}>Все ↗</Link></div>
+            {visibleEarned.length ? <div className="profile-achievement-previews">{visibleAchievements.filter(item => visibleEarned.includes(item.key)).slice(0, 6).map(item => <Link href={`${base}/achievements`} key={item.key} title={item.description}><Image src={achievementImage(item.key)} width={96} height={96} alt="" /><span>{item.label}</span></Link>)}</div> : <p className="community-muted">Пока нет полученных достижений.</p>}
+          </section>
+
           {isOwn && <section className="community-panel" id="achievements" aria-labelledby="achievements-title">
             <div className="community-section-heading"><h2 id="achievements-title">Теги за достижения</h2><span className="community-muted">{visibleEarned.length} / {visibleAchievements.length}</span></div>
             {isOwn && <p className="community-section-note">Выберите один тег. Он появится в профиле и рядом с ником в отзывах.</p>}
@@ -96,7 +117,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             <div className="community-section-heading"><h2 id="wall-title">Стена <span>{wall.count}</span></h2></div>
             {viewerId ? <WallComposer targetId={profile.id} /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
             {wall.comments.length ? <div className="wall-comments">{wall.comments.map(comment => <article key={comment.id} className="wall-comment">
-              <div className="wall-comment-heading"><span className="wall-avatar">{comment.avatarId ? <Image src={`/api/profile-images/${comment.avatarId}`} width={36} height={36} unoptimized alt="" /> : (comment.username ?? comment.name).slice(0, 1).toUpperCase()}</span><Link href={comment.username ? `/profile/${comment.username}` : '#wall'} className="wall-author"><strong>{displayName(comment)}</strong>{comment.username && <span> @{comment.username}</span>}</Link>{profileTagLabel(comment.tag) && <span className="profile-tag">{profileTagLabel(comment.tag)}</span>}{comment.username && <ProfileExperience username={comment.username} initial={{ xp: comment.xp, rank: null }} />}<time dateTime={comment.createdAt.toISOString()}>{new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' }).format(comment.createdAt)}</time></div>
+              <div className="wall-comment-heading"><span className="wall-avatar">{comment.avatarId ? <Image src={`/api/profile-images/${comment.avatarId}`} width={36} height={36} unoptimized alt="" /> : (comment.username ?? comment.name).slice(0, 1).toUpperCase()}</span><Link href={comment.username ? `/profile/${comment.username}` : '#wall'} className="wall-author"><strong>{displayName(comment)}</strong>{comment.username && <span> @{comment.username}</span>}</Link>{profileTagLabel(comment.tag) && <span className="profile-tag" data-tag={comment.tag}>{profileTagLabel(comment.tag)}</span>}{comment.username && <ProfileExperience username={comment.username} initial={{ xp: comment.xp, rank: null }} />}<time dateTime={comment.createdAt.toISOString()}>{new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' }).format(comment.createdAt)}</time></div>
               <p>{comment.text}</p><ReviewPhotoGallery photos={comment.photos} source="wall-photos" />
               {(isOwn || viewerId === comment.userId) && <DeleteWallComment id={comment.id} />}
             </article>)}</div> : <div className="wall-empty-card"><strong>Здесь пока тихо</strong><p>Оставьте первый комментарий.</p></div>}

@@ -1,3 +1,4 @@
+import { profileTagKey } from '@/lib/profile-achievements';
 import { ReviewDiscussion } from '@/components/review-discussion';
 import { ProfileExperience } from '@/components/profile-experience';
 import Image from 'next/image';
@@ -41,7 +42,7 @@ export function CatalogReviewItem({ review }: { review: ReviewData }) {
             </Link>
             <div className="review-item-meta">
               <span>@{review.author.username}</span><ProfileExperience username={review.author.username} initial={{ xp: review.author.xp ?? 0, rank: null }} />
-              {review.author.tag && <span className="profile-tag review-author-tag">{review.author.tag}</span>}
+              {review.author.tag && <span className="profile-tag review-author-tag" data-tag={profileTagKey(review.author.tag)}>{review.author.tag}</span>}
               <span aria-hidden="true">·</span>
               <time dateTime={createdAt.toISOString()}>{formatDate(createdAt)}</time>
             </div>

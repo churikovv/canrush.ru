@@ -1,4 +1,5 @@
 'use client';
+import { profileTagKey } from '@/lib/profile-achievements';
 import Link from '@/components/navigation-progress';
 import Image from 'next/image';
 import { useId, useState, useTransition } from 'react';
@@ -51,7 +52,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
       </form> : <p><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
       {!loaded ? <p role="status">{pending ? 'Загружаем комментарии…' : 'Комментарии не загружены.'} {!pending && <button type="button" onClick={() => run('read')}>Повторить</button>}</p> : !comments.length ? <p className="review-thread-empty">Комментариев пока нет. Начните обсуждение.</p> : <ul className="review-thread-list">{comments.map(comment => <li key={comment.id}>
         <div className="review-comment-avatar" aria-hidden="true">{comment.avatarId ? <Image unoptimized src={`/api/profile-images/${comment.avatarId}`} alt="" width={32} height={32} /> : (comment.name || comment.username || '?').charAt(0)}</div>
-        <div className="review-comment-body"><header>{comment.username ? <Link href={`/profile/${comment.username}`}>{comment.name.includes('@') ? `@${comment.username}` : comment.name}</Link> : <strong>{comment.name.includes('@') ? 'Участник' : comment.name}</strong>}{comment.tag && <span className="profile-tag">{comment.tag}</span>}<time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleDateString('ru-RU')}</time></header><p>{comment.text}</p>{comment.canDelete && <button className="review-comment-delete" type="button" disabled={pending} onClick={() => { if(window.confirm('Удалить комментарий?')) run('delete',comment.id); }}>Удалить</button>}</div>
+        <div className="review-comment-body"><header>{comment.username ? <Link href={`/profile/${comment.username}`}>{comment.name.includes('@') ? `@${comment.username}` : comment.name}</Link> : <strong>{comment.name.includes('@') ? 'Участник' : comment.name}</strong>}{comment.tag && <span className="profile-tag" data-tag={profileTagKey(comment.tag)}>{comment.tag}</span>}<time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleDateString('ru-RU')}</time></header><p>{comment.text}</p>{comment.canDelete && <button className="review-comment-delete" type="button" disabled={pending} onClick={() => { if(window.confirm('Удалить комментарий?')) run('delete',comment.id); }}>Удалить</button>}</div>
       </li>)}</ul>}
       {more && <button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => run('read',comments.at(-1)?.id,true)}>Ещё комментарии</button>}
     </section>}

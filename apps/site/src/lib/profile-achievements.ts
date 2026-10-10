@@ -53,3 +53,11 @@ export function profilePageNumber(value: unknown): number {
   const page = typeof value === 'string' ? Number(value) : value;
   return typeof page === 'number' && Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
 }
+
+const ACHIEVEMENT_ART = new Set(['burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven']);
+export function achievementImage(key: string): string {
+  return ACHIEVEMENT_ART.has(key) ? `/brand/achievements/${key}.png` : '/brand/icons/achievement.svg';
+}
+export function profileTagKey(value: string | null | undefined): string | undefined {
+  return PROFILE_ACHIEVEMENTS.find(item => item.key === value || item.label === value)?.key;
+}
