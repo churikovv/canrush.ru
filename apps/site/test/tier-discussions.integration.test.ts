@@ -48,6 +48,22 @@ it('hides drafts and prevents commenting or voting on them', async () => {
   await expect(api.addTierComment(other, review, 'Hidden')).rejects.toThrow('недоступен');
   await pool.query(`update "tierList" set status='published' where id=$1`, [review]);
 });
+it('disables reactions and comments independently without deleting prior activity', async () => {
+  await api.setTierReaction(reader, review, 1);
+  await pool.query(`insert into "tierListComment"("tierListId","userId",text) values($1,$2,'Preserved')`, [review, other]);
+  await pool.query(`update "tierList" set "reactionsEnabled"=false, "commentsEnabled"=false where id=$1`, [review]);
+  await expect(api.setTierReaction(other, review, 1)).rejects.toThrow();
+  await expect(api.addTierComment(other, review, 'Disabled')).rejects.toThrow();
+  expect((await api.getTierComments(review, other)).items).toHaveLength(0);
+  await pool.query(`update "tierList" set "reactionsEnabled"=true where id=$1`, [review]);
+  await api.setTierReaction(other, review, -1);
+  expect((await api.getTierComments(review, other)).items).toHaveLength(0);
+  await pool.query(`update "tierList" set "commentsEnabled"=true where id=$1`, [review]);
+  const restored = await api.getTierComments(review, other);
+  expect(restored.items[0]?.text).toBe('Preserved');
+  await api.deleteTierComment(other, review, restored.items[0]!.id);
+  await api.setTierReaction(other, review, 0);
+});
 it('paginates comments without duplicate rows and cascades when a review is removed',async()=>{
   for(let i=0;i<23;i++)await pool.query('insert into "tierListComment"("tierListId","userId",text)values($1,$2,$3)',[review,other,'Comment '+i]);
   const first=await api.getTierComments(review,reader);

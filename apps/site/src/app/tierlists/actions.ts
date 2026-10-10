@@ -85,6 +85,8 @@ export async function saveTierListAction(
 
   const items = normalizePositions(validation.data.items);
   const status: TierListStatus = intent === 'publish' ? 'published' : (existing?.status ?? 'draft');
+  const reactionsEnabled = formData.get('reactionsEnabled') !== 'false';
+  const commentsEnabled = formData.get('commentsEnabled') !== 'false';
   const slug = existing?.slug ?? newTierListSlug();
   const client = await getPool().connect();
 
@@ -96,23 +98,23 @@ export async function saveTierListAction(
         `update "tierList"
          set "title" = $3,
              "status" = $4,
-             "tiers" = $5,
+             "tiers" = $5, "reactionsEnabled" = $6, "commentsEnabled" = $7,
              "updatedAt" = current_timestamp,
              "publishedAt" = case
                when $4 = 'published' then coalesce("publishedAt", current_timestamp)
                else "publishedAt"
              end
          where "id" = $1 and "userId" = $2`,
-        [tierListId, user.id, validation.data.title, status, validation.data.tiers],
+        [tierListId, user.id, validation.data.title, status, validation.data.tiers, reactionsEnabled, commentsEnabled],
       );
       if (updated.rowCount !== 1) throw new Error('Tier list ownership changed');
       await client.query('delete from "tierListItem" where "tierListId" = $1', [tierListId]);
     } else {
       const inserted = await client.query<{ id: string }>(
-        `insert into "tierList" ("userId", "slug", "title", "status", "tiers", "publishedAt")
-         values ($1, $2, $3, $4, $5, case when $4 = 'published' then current_timestamp else null end)
+        `insert into "tierList" ("userId", "slug", "title", "status", "tiers", "reactionsEnabled", "commentsEnabled", "publishedAt")
+         values ($1, $2, $3, $4, $5, $6, $7, case when $4 = 'published' then current_timestamp else null end)
          returning "id"`,
-        [user.id, slug, validation.data.title, status, validation.data.tiers],
+        [user.id, slug, validation.data.title, status, validation.data.tiers, reactionsEnabled, commentsEnabled],
       );
       tierListId = inserted.rows[0]?.id;
       if (!tierListId) throw new Error('Tier list was not created');

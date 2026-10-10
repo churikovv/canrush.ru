@@ -9,7 +9,7 @@ import type { ReviewCommentData, ReviewInteraction } from '@/lib/review-discussi
 function Thumb({ down = false }: { down?: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={down ? { transform: 'rotate(180deg)' } : undefined}><path d="M7 10v11H3V10h4Zm0 0 5-8c3 0 3 3 2 7h5a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7" /></svg>;
 }
-export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 'review' }: { reviewId: string; initial?: ReviewInteraction; telegramChannel?: string | null; target?: 'review' | 'tierlist' }) {
+export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 'review', reactionsEnabled = true, commentsEnabled = true }: { reviewId: string; initial?: ReviewInteraction; telegramChannel?: string | null; target?: 'review' | 'tierlist'; reactionsEnabled?: boolean; commentsEnabled?: boolean }) {
   const [stats,setStats] = useState(initial ?? { likes: 0, dislikes: 0, comments: 0, vote: 0, authenticated: false });
   const [open,setOpen] = useState(false);
   const [loaded,setLoaded] = useState(false);
@@ -37,14 +37,14 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         <Image src="/brand/icons/telegram.svg" width={18} height={18} alt="" /><span>@{telegramChannel}</span>
       </a></div>}
     <div className="review-reactions">
-      <button type="button" disabled={pending} aria-label={target === 'tierlist' ? 'Нравится тирлист' : 'Нравится отзыв'} aria-pressed={stats.vote===1} onClick={() => run('vote',stats.vote===1 ? 0 : 1)}><Thumb /><span>{stats.likes}</span></button>
-      <button type="button" disabled={pending} aria-label={target === 'tierlist' ? 'Не нравится тирлист' : 'Не нравится отзыв'} aria-pressed={stats.vote===-1} onClick={() => run('vote',stats.vote===-1 ? 0 : -1)}><Thumb down /><span>{stats.dislikes}</span></button>
-      <button type="button" className="review-comments-toggle" aria-label={`Комментарии к ${target === 'tierlist' ? 'тирлисту' : 'отзыву'}: ${stats.comments}`} aria-expanded={open} aria-controls={regionId} onClick={() => { setOpen(!open); if (!open && !loaded) run('read'); }}>
+      {reactionsEnabled && <button type="button" disabled={pending} aria-label={target === 'tierlist' ? 'Нравится тирлист' : 'Нравится отзыв'} aria-pressed={stats.vote===1} onClick={() => run('vote',stats.vote===1 ? 0 : 1)}><Thumb /><span>{stats.likes}</span></button>}
+      {reactionsEnabled && <button type="button" disabled={pending} aria-label={target === 'tierlist' ? 'Не нравится тирлист' : 'Не нравится отзыв'} aria-pressed={stats.vote===-1} onClick={() => run('vote',stats.vote===-1 ? 0 : -1)}><Thumb down /><span>{stats.dislikes}</span></button>}
+      {commentsEnabled && <button type="button" className="review-comments-toggle" aria-label={`Комментарии к ${target === 'tierlist' ? 'тирлисту' : 'отзыву'}: ${stats.comments}`} aria-expanded={open} aria-controls={regionId} onClick={() => { setOpen(!open); if (!open && !loaded) run('read'); }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M20 16a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10Z" /></svg><span className="review-comments-label">Комментарии</span><span>{stats.comments}</span>
-      </button>
+      </button>}
     </div>
     {error && <p className="field-error" role="alert">{error} {signIn && <Link href="/sign-in">Войти</Link>}</p>}
-    {open && <section id={regionId} className="review-thread" aria-label={target === 'tierlist' ? 'Комментарии к тирлисту' : 'Комментарии к отзыву'} aria-busy={pending}>
+    {commentsEnabled && open && <section id={regionId} className="review-thread" aria-label={target === 'tierlist' ? 'Комментарии к тирлисту' : 'Комментарии к отзыву'} aria-busy={pending}>
       {stats.authenticated ? <form className="review-comment-composer" onSubmit={event => { event.preventDefault(); run('comment',text); }}>
         <label htmlFor={`${regionId}-text`}>Ваш комментарий</label><textarea id={`${regionId}-text`} value={text} onChange={event => setText(event.target.value)} maxLength={1000} required rows={3} placeholder={target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
         <div><span>{text.length} / 1000</span><button className="community-button" type="submit" disabled={pending || !text.trim()}>{pending ? 'Подождите…' : 'Отправить'}</button></div>

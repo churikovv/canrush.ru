@@ -39,10 +39,12 @@ it('uses ten-point thresholds for the official rating', () => {
 it('saves custom sections through the action and rejects placements in removed sections', async () => {
   const form = new FormData();
   form.set('slug', slug); form.set('title', 'Updated'); form.set('tiers', '["SS","B"]');
+  form.set('reactionsEnabled', 'false'); form.set('commentsEnabled', 'true');
   form.set('items', '[{"brand":"Burn","flavor":"original","tier":"SS","position":7}]');
   await expect(saveTierListAction({}, form)).rejects.toThrow('REDIRECT:');
   const saved = await getTierListBySlug(slug);
   expect(saved?.tiers).toEqual(['SS','B']);
+  expect(saved).toMatchObject({ reactionsEnabled: false, commentsEnabled: true });
   expect(saved?.items).toEqual([{ brand: 'Burn', flavor: 'original', tier: 'SS', position: 0 }]);
   form.set('tiers', '["B"]');
   expect((await saveTierListAction({}, form)).status).toBe('error');

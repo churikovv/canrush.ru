@@ -25,7 +25,7 @@ export async function setTierReaction(userId: string, id: string, value: number)
   if (value === 0) await db.query('delete from "tierListReaction" where "tierListId"=$1 and "userId"=$2', [id, userId]);
   else {
     const result = await db.query(`insert into "tierListReaction" ("tierListId","userId",value)
-      select id,$2,$3 from "tierList" where id=$1 and status='published' and "userId"<>$2
+      select id,$2,$3 from "tierList" where id=$1 and status='published' and "reactionsEnabled" and "userId"<>$2
       on conflict ("tierListId","userId") do update set value=excluded.value returning "tierListId"`, [id, userId, value]);
     if (!result.rowCount) throw new TierDiscussionError('Нельзя оценивать свой тирлист, либо тирлист недоступен.');
   }
@@ -38,7 +38,7 @@ export async function getTierComments(id: string, viewer: string | null, before?
     case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
       when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
     from "tierListComment" c join "user" u on u.id=c."userId"
-    where c."tierListId"=$1 and exists(select 1 from "tierList" where id=$1 and status='published') and ($3::uuid is null or (c."createdAt",c.id)<(select "createdAt",id from "tierListComment" where id=$3 and "tierListId"=$1))
+    where c."tierListId"=$1 and exists(select 1 from "tierList" where id=$1 and status='published' and "commentsEnabled") and ($3::uuid is null or (c."createdAt",c.id)<(select "createdAt",id from "tierListComment" where id=$3 and "tierListId"=$1))
     order by c."createdAt" desc,c.id desc limit 21`, [id, viewer, before ?? null]);
   return { items: rows.slice(0,20).map(row => ({ ...row, createdAt: row.createdAt.toISOString(), tag: profileTagLabel(row.tag) ?? null, canDelete: Boolean(row.canDelete) }) as TierCommentData), hasMore: rows.length > 20 };
 }
@@ -49,7 +49,7 @@ export async function addTierComment(userId: string, id: string, input: string) 
   const client = await getPool().connect();
   try {
     await client.query('begin');
-    const target = await client.query(`select id from "tierList" where id=$1 and status='published' for share`, [id]);
+    const target = await client.query(`select id from "tierList" where id=$1 and status='published' and "commentsEnabled" for share`, [id]);
     if (!target.rowCount) throw new TierDiscussionError('Тирлист недоступен.');
     const allowed = await client.query(`update "user" set "lastTierCommentAt"=now() where id=$1 and ("lastTierCommentAt" is null or "lastTierCommentAt"<now()-interval '30 seconds') returning id`, [userId]);
     if (!allowed.rowCount) throw new TierDiscussionError('Следующий комментарий можно отправить через 30 секунд.');

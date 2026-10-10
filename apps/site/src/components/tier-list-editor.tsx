@@ -22,7 +22,7 @@ type EditorColumns = Record<EditorLane, string[]>;
 
 interface TierListEditorProps {
   products: TierListProduct[];
-  initialList?: Pick<TierListData, 'slug' | 'title' | 'status' | 'items' | 'tiers'>;
+  initialList?: Pick<TierListData, 'slug' | 'title' | 'status' | 'items' | 'tiers' | 'reactionsEnabled' | 'commentsEnabled'>;
   saved?: boolean;
   telegramChannel?: string | null;
   authorUsername?: string;
@@ -157,6 +157,8 @@ function ProductButton({ product, selected, compact, onSelect, onDragStart, onDr
 
 export function TierListEditor({ products, initialList, saved = false, telegramChannel, authorUsername }: TierListEditorProps) {
   const [state, formAction] = useActionState<TierListFormState, FormData>(saveTierListAction, {});
+  const [reactionsEnabled, setReactionsEnabled] = useState(initialList?.reactionsEnabled ?? true);
+  const [commentsEnabled, setCommentsEnabled] = useState(initialList?.commentsEnabled ?? true);
   const [columns, setColumns] = useState<EditorColumns>(() => initialColumns(products, initialList?.items ?? []));
   const [tiers, setTiers] = useState<TierKey[]>(() => [...(initialList?.tiers ?? TIER_KEYS)]);
   const [activeSection, setActiveSection] = useState<TierKey>();
@@ -417,6 +419,14 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
           </Fragment>
         ))}
       </div>
+      <fieldset className="tier-discussion-settings">
+        <legend>Обсуждение тирлиста</legend>
+        <input type="hidden" name="reactionsEnabled" value={String(reactionsEnabled)} />
+        <input type="hidden" name="commentsEnabled" value={String(commentsEnabled)} />
+        <label><input type="checkbox" checked={reactionsEnabled} onChange={event => { setReactionsEnabled(event.target.checked); setDirty(true); }} />Разрешить лайки и дизлайки</label>
+        <label><input type="checkbox" checked={commentsEnabled} onChange={event => { setCommentsEnabled(event.target.checked); setDirty(true); }} />Разрешить комментарии</label>
+        <p>Можно изменить позже. При отключении прежние реакции и комментарии скрываются и сохраняются.</p>
+      </fieldset>
       {TIER_KEYS.some(tier => !tiers.includes(tier)) && <div className="tier-section-add">{TIER_KEYS.filter(tier => !tiers.includes(tier)).map(tier => <button key={tier} type="button" className="community-button community-button-secondary" onClick={() => { setTiers(current => [...current, tier]); setActiveSection(tier); setSelectedId(undefined); setDirty(true); setSectionNotice(`Секция ${tier} добавлена.`); }}>+ Добавить {tier}</button>)}</div>}
 
       <div className="tier-editor-primary-controls">

@@ -23,6 +23,8 @@ interface TierListRow extends QueryResultRow {
   title: string;
   status: TierListStatus;
   tiers: TierKey[];
+  reactionsEnabled: boolean;
+  commentsEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
   publishedAt: Date | null;
@@ -51,7 +53,7 @@ export interface PublishedTierListSitemapEntry extends QueryResultRow {
 }
 
 const TIER_LIST_SELECT = `
-  select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers",
+  select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers", tl."reactionsEnabled", tl."commentsEnabled",
          tl."createdAt", tl."updatedAt", tl."publishedAt",
          u."username", u."name", u."telegramChannel"
   from "tierList" tl
@@ -79,6 +81,8 @@ function toTierList(row: TierListRow, items: TierListPlacement[]): TierListData 
     title: row.title,
     status: row.status,
     tiers: row.tiers,
+    reactionsEnabled: row.reactionsEnabled,
+    commentsEnabled: row.commentsEnabled,
     author: {
       username: row.username,
       name: row.name,
@@ -124,7 +128,7 @@ export async function getTierListBySlug(slug: string): Promise<TierListData | nu
 
 async function getTierListSummaries(where: string, values: unknown[], limit: number): Promise<TierListSummary[]> {
   const result = await getPool().query<TierListSummaryRow>(
-    `select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers",
+    `select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers", tl."reactionsEnabled", tl."commentsEnabled",
             tl."createdAt", tl."updatedAt", tl."publishedAt",
             u."username", u."name", u."telegramChannel",
             count(tli."tierListId")::int as "itemCount",

@@ -39,6 +39,8 @@ export interface TierListData {
   updatedAt: Date;
   publishedAt: Date | null;
   tiers: TierKey[];
+  reactionsEnabled: boolean;
+  commentsEnabled: boolean;
   items: TierListPlacement[];
 }
 

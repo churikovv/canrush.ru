@@ -1,4 +1,5 @@
 'use server';
+import { getPool } from '@/db/pool';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
@@ -12,6 +13,10 @@ export async function tierDiscussionAction(id: string, action: 'read' | 'vote' |
     const viewer = session?.user.id ?? null;
     if (!['read','vote','comment','delete'].includes(action)) throw new TierDiscussionError('Неизвестное действие.');
     if (!(await getTierInteractions([id], viewer)).has(id)) return { error: 'Тирлист недоступен.' };
+    const settings = (await getPool().query<{ reactionsEnabled: boolean; commentsEnabled: boolean }>(`select "reactionsEnabled", "commentsEnabled" from "tierList" where id=$1 and status='published'`, [id])).rows[0];
+    if (!settings) return { error: 'Тирлист недоступен.' };
+    if (action === 'vote' && !settings.reactionsEnabled) return { error: 'Автор отключил реакции.' };
+    if (action !== 'vote' && !settings.commentsEnabled) return { error: 'Автор отключил комментарии.' };
     if (action !== 'read') {
       if (!viewer) return { error: 'Войдите, чтобы участвовать в обсуждении.', signIn: true };
       if (await isUserBlocked(viewer)) return { error: 'Ваш аккаунт заблокирован для публикаций.' };
