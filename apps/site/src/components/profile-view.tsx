@@ -112,7 +112,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           <ProfileConnections username={profile.username} groups={{
             followers: { count: followers.count, users: followers.users.slice(0, 6) },
             following: { count: following.count, users: following.users.slice(0, 6) },
-            friends: { count: friends.count, users: friends.users.slice(0, 6) },
+            friends: { count: friends.count, users: friends.users.slice(0, 8) },
           }} />
           <section className="community-panel" aria-labelledby="profile-about-title"><h2 id="profile-about-title">О профиле</h2>
             {telegramHref ? <a className="community-channel" href={telegramHref} target="_blank" rel="noreferrer"><Image src="/brand/icons/channel.svg" width={18} height={18} alt="" />@{profile.telegramChannel} ↗</a> : <p className="community-muted">Канал не указан</p>}
