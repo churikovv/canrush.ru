@@ -38,9 +38,9 @@ const listingSelect = `select l.*,case when trim(u.name)<>'' and u.name not like
   array(select p.id::text from "marketPhoto" p where p."listingId"=l.id order by position) as photos
   from "marketListing" l join "user" u on u.id=l."sellerId"`;
 export async function getListings(page = 1, mine?: string, archive = false, seller?: string, filters: MarketFilters = {}) {
-  const { rows } = await getPool().query(`${listingSelect} where l."deletedAt" is null and ($5::text is null or lower(l.brand)=lower($5)) and ($6::text is null or l."anyCity" or lower(l.city)=lower($6)) and ($7::text is null or $7=any(l.delivery)) and ($4::text is null or u.username=$4) and (not $3::boolean or l.closed) and
+  const { rows } = await getPool().query(`${listingSelect} where l."deletedAt" is null and ($8::text is null or strpos(lower(concat_ws(' ',l.title,l.description,l.brand)),lower($8))>0) and ($5::text is null or lower(l.brand)=lower($5)) and ($6::text is null or l."anyCity" or lower(l.city)=lower($6)) and ($7::text is null or $7=any(l.delivery)) and ($4::text is null or u.username=$4) and (not $3::boolean or l.closed) and
     ($1::text is not null and l."sellerId"=$1 or $1::text is null and not l.closed and not exists(select 1 from "userBlock" where "userId"=l."sellerId"))
-    order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24, Boolean(mine && archive), seller ?? null, filters.brand || null, filters.city || null, filters.delivery || null]);
+    order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24, Boolean(mine && archive), seller ?? null, filters.brand || null, filters.city || null, filters.delivery || null, filters.q?.trim().slice(0,200) || null]);
   return { items: rows.slice(0, 24).map(row => ({ ...row, createdAt: row.createdAt.toISOString() }) as Listing), hasMore: rows.length > 24 };
 }
 export async function getListing(id: string, viewer?: string, admin = false) {

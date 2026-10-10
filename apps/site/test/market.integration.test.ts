@@ -129,6 +129,9 @@ it('removes only owned archived listings while preserving orders and admin revie
 it('combines brand, city and delivery filters and includes nationwide listings',async()=>{
  const brand=`Brand-${randomUUID()}`;const city=`City-${randomUUID()}`;const ids=[randomUUID(),randomUUID(),randomUUID()];
  for(const [index,id] of ids.entries()) await pool.query(`insert into "marketListing"(id,"sellerId",title,description,city,price,delivery,quantity,brand,"anyCity") values($1,$2,'Filter test','Test',$3,100,array['post'],2,$4,$5)`,[id,buyer,index===0?city:'Another city',brand,index===1]);
+ expect((await api.getListings(1,undefined,false,undefined,{brand,q:'FILTER TEST'})).items).toHaveLength(3);
+ expect((await api.getListings(1,undefined,false,undefined,{brand,q:'%'})).items).toHaveLength(0);
+ expect((await api.getListings(1,undefined,false,undefined,{brand,q:'missing search phrase'})).items).toHaveLength(0);
  const matched=await api.getListings(1,undefined,false,undefined,{brand,city,delivery:'post'});
  expect(matched.items.map(row=>row.id).sort()).toEqual(ids.slice(0,2).sort());
  expect((await api.getListings(1,undefined,false,undefined,{brand,city,delivery:'pickup'})).items).toHaveLength(0);

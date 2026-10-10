@@ -31,7 +31,7 @@ export function parseListing(form: FormData) {
   return { title, description, city, brand, anyCity, price, quantity: parseQuantity(form.get('quantity')), delivery: delivery as Delivery[] };
 }
 export type ListingInput = Omit<ReturnType<typeof parseListing>, 'brand' | 'anyCity'> & { brand?: string | null; anyCity?: boolean };
-export interface MarketFilters { brand?: string; city?: string; delivery?: string }
+export interface MarketFilters { q?: string; brand?: string; city?: string; delivery?: string }
 export function canTransitionOrder(from: OrderStatus, to: OrderStatus, role: 'buyer' | 'seller') {
   return ((from === 'new' || from === 'confirmed') && to === 'cancelled')
     || (from === 'new' && to === 'confirmed' && role === 'seller')

@@ -12,18 +12,18 @@ import { DELIVERY, formatPrice } from '@/lib/market-fields';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Маркет энергетиков', description: 'Энергетики от участников CanRush. Объявления, доставка и общение с продавцами.' };
-export default async function MarketPage({ searchParams }: { searchParams: Promise<{ page?: string; mine?: string; archive?: string; seller?: string; brand?: string; city?: string; delivery?: string }> }) {
+export default async function MarketPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string; mine?: string; archive?: string; seller?: string; brand?: string; city?: string; delivery?: string }> }) {
   const query = await searchParams;
   const page = Math.min(10000, Math.max(1, Number.parseInt(query.page ?? '1', 10) || 1));
   const session = await auth.api.getSession({ headers: await headers() });
   const seller = typeof query.seller === 'string' ? query.seller.trim().slice(0, 64) : '';
   const mine = !seller && query.mine === '1' && Boolean(session);
-  const filters = { brand: typeof query.brand === 'string' ? query.brand.trim().slice(0,100) : '', city: typeof query.city === 'string' ? query.city.trim().slice(0,100) : '', delivery: typeof query.delivery === 'string' && Object.hasOwn(DELIVERY,query.delivery) ? query.delivery : '' };
+  const filters = { q: typeof query.q === 'string' ? query.q.trim().slice(0,200) : '', brand: typeof query.brand === 'string' ? query.brand.trim().slice(0,100) : '', city: typeof query.city === 'string' ? query.city.trim().slice(0,100) : '', delivery: typeof query.delivery === 'string' && Object.hasOwn(DELIVERY,query.delivery) ? query.delivery : '' };
   const [{ items, hasMore }, filterOptions] = await Promise.all([getListings(page, mine ? session?.user.id : undefined, false, seller || undefined, filters), getMarketFilterOptions()]);
   const suffix = seller ? `&seller=${encodeURIComponent(seller)}` : mine ? '&mine=1' : '';
   const filterSuffix = '&' + new URLSearchParams(filters).toString();
   const scope: Record<string,string> = seller ? {seller} : mine ? {mine:'1'} : {};
-  const filtered = Boolean(filters.brand || filters.city || filters.delivery);
+  const filtered = Boolean(filters.q || filters.brand || filters.city || filters.delivery);
   return <BrandShell headerAction={<ProfileNavigation active="market" />}><div className="market-layout">
     <header className="market-heading"><div><h1>{seller ? `Объявления @${seller}` : 'Маркет'}</h1>{seller ? <p><Link href={`/profile/${encodeURIComponent(seller)}`}>Вернуться в профиль</Link></p> : <p>Энергетики от участников CanRush</p>}</div><Link className="community-button" href="/market/new">Создать объявление</Link></header>
     <nav className="market-filters" aria-label="Объявления"><Link href="/market" aria-current={!mine && !seller ? 'page' : undefined}>Все объявления</Link>{session && <Link href="/market?mine=1" aria-current={mine ? 'page' : undefined}>Мои объявления</Link>}</nav>
@@ -35,7 +35,7 @@ export default async function MarketPage({ searchParams }: { searchParams: Promi
         <div className="market-card-delivery" title={listing.delivery.map(key => DELIVERY[key]).join(', ')}>{listing.delivery.map(key => <span key={key}>{DELIVERY[key]}</span>)}</div>
       </Link>
       <div className="market-card-bottom"><strong>{formatPrice(listing.price)}<small> / шт.</small></strong><MarketListingControls id={listing.id} own={listing.sellerId === session?.user.id} closed={listing.closed} authenticated={Boolean(session)} available={listing.quantity} unitPrice={listing.price} compact /></div>
-    </article>)}</div> : <section className="market-empty"><h2>{filtered ? 'По этим фильтрам ничего не найдено' : mine ? 'Ваши объявления появятся здесь' : 'Пока нет объявлений'}</h2><p>{filtered ? 'Попробуйте другой бренд, город или способ доставки.' : 'Предложите свою коллекцию или редкий вкус другим участникам.'}</p><Link href="/market/new">Создать объявление</Link></section>}
+    </article>)}</div> : <section className="market-empty"><h2>{filtered ? 'Ничего не найдено' : mine ? 'Ваши объявления появятся здесь' : 'Пока нет объявлений'}</h2><p>{filtered ? 'Измените поисковый запрос, бренд, город или способ доставки.' : 'Предложите свою коллекцию или редкий вкус другим участникам.'}</p><Link href="/market/new">Создать объявление</Link></section>}
     <nav className="market-pagination" aria-label="Страницы объявлений">{page > 1 && <Link href={`/market?page=${page - 1}${suffix}${filterSuffix}`}>Назад</Link>}{hasMore && <Link href={`/market?page=${page + 1}${suffix}${filterSuffix}`}>Следующая страница</Link>}</nav>
     <p className="market-note">CanRush не принимает оплату и не оформляет доставку. Обсуждайте условия с продавцом и проверяйте товар перед покупкой.</p>
   </div></BrandShell>;
