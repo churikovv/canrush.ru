@@ -22,7 +22,7 @@ async function refresh() {
   } catch { /* Keep the last confirmed value while offline. */ }
   finally { busy = false; }
 }
-export function ProfileExperience({ username, initial = { xp: 0, rank: null }, expanded = false }: { username: string; initial?: Experience; expanded?: boolean }) {
+export function ProfileExperience({ username, initial = { xp: 0, rank: null }, expanded = false, achievements }: { username: string; initial?: Experience; expanded?: boolean; achievements?: { earned: number; total: number } }) {
   const [value, setValue] = useState(initial);
   useEffect(() => {
     const subscribers = listeners.get(username) ?? new Set();
@@ -39,6 +39,7 @@ export function ProfileExperience({ username, initial = { xp: 0, rank: null }, e
   return <section className="community-panel experience-panel" id="experience" aria-labelledby="experience-title">
     <div className="experience-heading"><h2 id="experience-title">Уровень</h2><Link href="/leaderboard">{value.rank ? `№ ${value.rank} в рейтинге ↗` : 'Рейтинг ↗'}</Link></div>
     <div className="experience-summary"><strong className="experience-level-number" aria-label={`Уровень ${progress.level}`}>{progress.level}</strong><div className="experience-level-copy"><strong>{value.xp.toLocaleString('ru-RU')} XP</strong><span>Ещё {progress.remaining} XP до уровня {progress.level + 1}</span></div></div>
+    <div className="experience-extra">{achievements && <span>Достижения: получено {achievements.earned} из {achievements.total}</span>}{Boolean(value.aheadPercent && value.aheadPercent > 0) && <span>Больше опыта, чем у {value.aheadPercent}% пользователей</span>}</div>
     <div className="experience-track" role="progressbar" aria-valuemin={0} aria-valuemax={progress.required} aria-valuenow={progress.current} aria-label="Прогресс уровня"><ProfileStatFill value={progress.current / progress.required} /></div>
 
   </section>;

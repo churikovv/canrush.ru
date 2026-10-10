@@ -1,3 +1,4 @@
+import { getFavoriteGroups } from '@/lib/catalog';
 import Image from 'next/image';
 import { getProfileRatings, getProfileWall, getConnections } from '@/lib/profile-community';
 import { getListings } from '@/lib/market';
@@ -26,10 +27,11 @@ export default async function ProfileEditPage() {
 
   const profile = await ensureOwnProfile(session.user);
 
-  const [ratings, wall, listings, experience, friends, followers, following] = await Promise.all([
-    getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'),
+  const [ratings, wall, listings, experience, friends, followers, following, favorites] = await Promise.all([
+    getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id),
   ]);
   const layoutPreviews = {
+    favorites: favorites.length ? <div className="layout-listing-previews">{favorites.slice(0, 3).map(item => <div key={`${item.brand}:${item.flavor}`}>{item.coverImageUrl && <Image src={item.coverImageUrl} width={80} height={80} alt="" />}<strong>{item.brand}</strong></div>)}</div> : <p>Пока нет избранных напитков.</p>,
     experience: <ProfileExperience username={profile.username} initial={experience[profile.username]} expanded />,
     ratings: <div><strong className="layout-score">{ratings.overall.toLocaleString('ru-RU', { maximumFractionDigits: 1 })} / 10</strong><p>Средняя оценка · {ratings.count} отзывов</p></div>,
     listings: listings.items.length ? <div className="layout-listing-previews">{listings.items.slice(0, 2).map(item => <div key={item.id}>{item.photos[0] && <Image src={`/api/market-photos/${item.photos[0]}?size=thumbnail`} width={80} height={80} unoptimized alt="" />}<strong>{item.title}</strong></div>)}</div> : <p>Вы пока не создавали объявлений.</p>,

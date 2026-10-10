@@ -256,10 +256,11 @@ export async function deleteAdminCommentAction(formData: FormData): Promise<void
   const query = returnQuery(formData);
   const id = String(formData.get('commentId') ?? '');
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(id)) redirect(adminLocation('error', 'invalid-target', query));
+  const wall = formData.get('kind') === 'wall';
   let deleted: string | null;
   try {
-    deleted = await auditedMutation(admin, 'delete', 'review-comment', id, async client => {
-      const result = await client.query('delete from "reviewComment" where id=$1 returning id', [id]);
+    deleted = await auditedMutation(admin, 'delete', wall ? 'wall-reply' : 'review-comment', id, async client => {
+      const result = await client.query(wall ? 'delete from "wallReply" where id=$1 returning id' : 'delete from "reviewComment" where id=$1 returning id', [id]);
       return result.rows[0]?.id ?? null;
     });
   } catch { redirect(adminLocation('error', 'operation-failed', query)); }

@@ -6,11 +6,12 @@ import type { AdminEntry, AdminUserEntry, AdminTierListEntry, AdminReviewEntry }
 
 export const ADMIN_PAGE_SIZE = 25;
 export interface AdminWallEntry {
+  likes: number; dislikes: number; replies: number;
   photos: string[];
   id: string; text: string; createdAt: Date; authorName: string; authorEmail: string;
   authorUsername: string | null; profileUsername: string | null;
 }
-export interface AdminReviewCommentEntry { id: string; reviewId: string; text: string; createdAt: Date; authorName: string; authorEmail: string; brand: string; flavor: string }
+export interface AdminReviewCommentEntry { kind: 'review' | 'wall'; profileUsername: string | null; id: string; reviewId: string; text: string; createdAt: Date; authorName: string; authorEmail: string; brand: string; flavor: string }
 export interface AdminMetrics {
   users: number; reviews: number; tierLists: number; wall: number; admins: number; sessions: number;
   newUsers: number; newReviews: number; newWall: number; newTierLists: number;
@@ -63,7 +64,8 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
   const fragments = {
     market: `from "marketListing" l join "user" u on u.id=l."sellerId" left join "userBlock" b on b."userId"=u.id left join "siteAdmin" sa on sa.email=lower(u.email) where ($1::text is null or l.title ilike $1 or l.description ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1)`,
     reports: `from "profileReport" r join "user" u on u.id=r."userId" join "user" p on p.id=r."targetId" where ($1::text is null or r.comment ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1 or p.name ilike $1 or p.email ilike $1 or coalesce(p.username,'') ilike $1)`,
-    comments: `from "reviewComment" c join "user" u on u.id=c."userId" join review r on r.id=c."reviewId" where ($1::text is null or c.text ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1 or r.brand ilike $1)`,
+    comments: `from (select c.id,c."reviewId",c."userId",c.text,c."createdAt",r.brand,r.flavor,'review'::text as kind,null::text as "profileUsername" from "reviewComment" c join review r on r.id=c."reviewId"
+      union all select c.id,c."wallPostId",c."userId",c.text,c."createdAt",'Стена','', 'wall',p.username from "wallReply" c join "profileComment" w on w.id=c."wallPostId" join "user" p on p.id=w."profileId") c join "user" u on u.id=c."userId" where ($1::text is null or c.text ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1 or c.brand ilike $1)`,
     users: `from "user" u left join "userBlock" ub on ub."userId"=u.id left join "siteAdmin" sa on sa.email=lower(u.email)
       where ($1::text is null or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1)`,
     tierlists: `from "tierList" t join "user" u on u.id=t."userId" where ($1::text is null or t.title ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1)`,
@@ -84,8 +86,8 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
   if (tab === 'tierlists') result.tierLists = (await db.query<AdminTierListEntry>(`select t.id,t.slug,t.title,t.status,t."updatedAt",t."userId",u.name as "authorName",u.email as "authorEmail",
     (select count(*)::int from "tierListItem" where "tierListId"=t.id) as "itemCount" ${from} order by t."updatedAt" desc,t.id ${pagination}`,params)).rows;
   if (tab === 'reviews') result.reviews = (await db.query<AdminReviewEntry>(`select r.id,r.brand,r.flavor,r.text,r."createdAt",r."userId",u.name as "authorName",u.email as "authorEmail",(r.design+r.taste)::float8/2 as score ${from} order by r."createdAt" desc,r.id ${pagination}`,params)).rows;
-  if (tab === 'wall') result.wall = (await db.query<AdminWallEntry>(`select c.id,c.text,c."createdAt",coalesce((select array_agg(wp.id::text order by wp.position) from "wallPhoto" wp where wp."commentId"=c.id),'{}'::text[]) as photos,u.name as "authorName",u.email as "authorEmail",u.username as "authorUsername",p.username as "profileUsername" ${from} order by c."createdAt" desc,c.id ${pagination}`,params)).rows;
-  if (tab === 'comments') result.comments = (await db.query<AdminReviewCommentEntry>(`select c.id,c."reviewId",c.text,c."createdAt",u.name as "authorName",u.email as "authorEmail",r.brand,r.flavor ${from} order by c."createdAt" desc,c.id ${pagination}`,params)).rows;
+  if (tab === 'wall') result.wall = (await db.query<AdminWallEntry>(`select c.id,c.text,c."createdAt",(select count(*)::int from "wallReaction" where "wallPostId"=c.id and value=1) as likes,(select count(*)::int from "wallReaction" where "wallPostId"=c.id and value=-1) as dislikes,(select count(*)::int from "wallReply" where "wallPostId"=c.id) as replies,coalesce((select array_agg(wp.id::text order by wp.position) from "wallPhoto" wp where wp."commentId"=c.id),'{}'::text[]) as photos,u.name as "authorName",u.email as "authorEmail",u.username as "authorUsername",p.username as "profileUsername" ${from} order by c."createdAt" desc,c.id ${pagination}`,params)).rows;
+  if (tab === 'comments') result.comments = (await db.query<AdminReviewCommentEntry>(`select c.id,c."reviewId",c.text,c."createdAt",u.name as "authorName",u.email as "authorEmail",c.brand,c.flavor,c.kind,c."profileUsername" ${from} order by c."createdAt" desc,c.id ${pagination}`,params)).rows;
   if (tab === 'admins') result.admins = (await db.query<AdminEntry>(`select sa.email,sa."isOwner",sa."createdAt",u.name as "addedByName" ${from} order by sa."isOwner" desc,sa."createdAt",sa.email ${pagination}`,params)).rows;
   return result;
 }

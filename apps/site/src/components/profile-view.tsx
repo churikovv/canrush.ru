@@ -1,3 +1,6 @@
+import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
+import { ReviewDiscussion } from '@/components/review-discussion';
+import { getWallInteractions } from '@/lib/wall-discussions';
 import { ProfileBlock, ProfileBlocks } from '@/components/profile-blocks';
 import { getLatestReviewPreview } from '@/lib/reviews';
 import { achievementImage } from '@/lib/profile-achievements';
@@ -42,6 +45,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
   const [community, ratings, wall, presence, friends, listings, followers, following, favorites, tierLists, catalog, reviewPreview] = await Promise.all([
     getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id),
   ]);
+  const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
   const tierProducts = tierListProductsForPlacements(catalog, tierLists.flatMap(list => list.preview));
   const experience = (await getExperience([profile.username]))[profile.username];
   const visibleAchievements = visibleProfileAchievements(viewerIsAdmin);
@@ -73,7 +77,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
       <div className="community-columns">
         <div className="community-main profile-arranged-main"><ProfileBlocks layout={profile.profileLayout}>
           <ProfileBlock block="experience">
-          <ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} expanded /></ProfileBlock>
+          <ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} expanded achievements={{ earned: visibleEarned.length, total: visibleAchievements.length }} /></ProfileBlock>
           <ProfileBlock block="ratings">
           <section className="community-panel" aria-labelledby="rating-statistics-title">
             <div className="community-section-heading"><h2 id="rating-statistics-title">Статистика оценок</h2><Link href={`${base}/reviews`}>Все отзывы ↗</Link></div>
@@ -99,14 +103,17 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           <section className="community-panel" id="wall" aria-labelledby="wall-title">
             <div className="community-section-heading"><h2 id="wall-title">Стена <span>{wall.count}</span></h2></div>
             {viewerId ? <WallComposer targetId={profile.id} /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
-            {wall.comments.length ? <div className="wall-comments">{wall.comments.map(comment => <article key={comment.id} className="wall-comment">
+            {wall.comments.length ? <div className="wall-comments">{wall.comments.map(comment => <article key={comment.id} id={`wall-post-${comment.id}`} className="wall-comment">
               <div className="wall-comment-heading"><span className="wall-avatar">{comment.avatarId ? <Image src={`/api/profile-images/${comment.avatarId}`} width={36} height={36} unoptimized alt="" /> : (comment.username ?? comment.name).slice(0, 1).toUpperCase()}</span><Link href={comment.username ? `/profile/${comment.username}` : '#wall'} className="wall-author"><strong>{displayName(comment)}</strong>{comment.username && <span> @{comment.username}</span>}</Link>{profileTagLabel(comment.tag) && <span className="profile-tag" data-tag={comment.tag}>{profileTagLabel(comment.tag)}</span>}{comment.username && <ProfileExperience username={comment.username} initial={{ xp: comment.xp, rank: null }} />}<time dateTime={comment.createdAt.toISOString()}>{new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' }).format(comment.createdAt)}</time></div>
               <p>{comment.text}</p><ReviewPhotoGallery photos={comment.photos} source="wall-photos" />
+              <ReviewDiscussion reviewId={comment.id} target="wall" initial={wallInteractions.get(comment.id)} />
               {(isOwn || viewerId === comment.userId) && <DeleteWallComment id={comment.id} />}
             </article>)}</div> : <div className="wall-empty-card"><strong>Здесь пока тихо</strong><p>Оставьте первый комментарий.</p></div>}
             {pages > 1 && <nav className="community-pagination" aria-label="Страницы стены">{wallPage > 1 ? <Link href={`${base}?wallPage=${wallPage - 1}#wall`}>← Назад</Link> : <span />}<span>{wallPage} / {pages}</span>{wallPage < pages ? <Link href={`${base}?wallPage=${wallPage + 1}#wall`}>Далее →</Link> : <span />}</nav>}
           </section>
-          </ProfileBlock></ProfileBlocks>
+          </ProfileBlock><ProfileBlock block="favorites"><section className="community-panel"><div className="community-section-heading"><h2>Избранное</h2><Link href={favoritesHref}>Все ↗</Link></div>
+          {favorites.length ? <div className="profile-favorites-block">{favorites.slice(0, 6).map(group => <Link key={`${group.brand}:${group.flavor}`} href={`/catalog/${catalogGroupSlug(group.brand, group.flavor)}`}>
+          {group.coverImageUrl && <Image src={group.coverImageUrl} width={120} height={120} alt="" />}<strong>{group.brand}</strong><span>{flavorName(group.flavor)}</span></Link>)}</div> : <p className="community-muted">Пока нет избранных напитков.</p>}</section></ProfileBlock></ProfileBlocks>
           {isOwn && <section className="community-panel" id="achievements" aria-labelledby="achievements-title">
             <div className="community-section-heading"><h2 id="achievements-title">Теги за достижения</h2><span className="community-muted">{visibleEarned.length} / {visibleAchievements.length}</span></div>
             {isOwn && <p className="community-section-note">Выберите один тег. Он появится в профиле и рядом с ником в отзывах.</p>}

@@ -13,3 +13,9 @@ it('restores mandatory blocks in saved or submitted layouts without changing ord
   const order = [...DEFAULT_PROFILE_LAYOUT.order].reverse();
   expect(parseProfileLayout({ order, hidden: ['experience', 'social', 'wall'] })).toEqual({ order, hidden: ['wall'] });
 });
+
+it('keeps existing arrangements and adds a hidden favorites block', () => {
+  const order = DEFAULT_PROFILE_LAYOUT.order.filter(key => key !== 'favorites');
+  expect(parseProfileLayout({ order, hidden: ['wall'] })).toEqual({ order: [...order, 'favorites'], hidden: ['wall', 'favorites'] });
+  expect(DEFAULT_PROFILE_LAYOUT.hidden).toEqual(['favorites', 'listings']);
+});

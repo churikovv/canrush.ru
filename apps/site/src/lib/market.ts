@@ -31,6 +31,7 @@ export async function createListing(userId: string, input: ListingInput, photos:
     await allowed(db, userId); await cooldown(db, userId, 'lastMarketListingAt', 60);
     const quantity = parseQuantity(input.quantity);
     const { rows } = await db.query('insert into "marketListing"("sellerId",title,description,city,price,delivery,quantity,brand,"anyCity") values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id', [userId, input.title, input.description, input.city, input.price, input.delivery, quantity, input.brand ?? null, input.anyCity ?? false]);
+    await db.query(`update "user" set "profileLayout"=jsonb_set("profileLayout",'{hidden}',("profileLayout"->'hidden')-'listings') where id=$1`, [userId]);
     const id = rows[0].id as string; await savePhotos(db, 'listingId', id, photos); return id;
   });
 }
@@ -64,6 +65,7 @@ export async function reopenListing(userId: string, id: string) {
     await allowed(db, userId);
     const result = await db.query('update "marketListing" set closed=false where id=$1 and "sellerId"=$2 and "deletedAt" is null and quantity>0 returning id', [id,userId]);
     if (!result.rowCount) throw new MarketError('Повторная публикация доступна только для своего неудалённого объявления с остатком товара.');
+    await db.query(`update "user" set "profileLayout"=jsonb_set("profileLayout",'{hidden}',("profileLayout"->'hidden')-'listings') where id=$1`, [userId]);
   });
 }
 export async function startOrder(userId: string, listingId: string, requestedQuantity = 1) {

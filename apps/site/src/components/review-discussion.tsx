@@ -3,6 +3,7 @@ import { profileTagKey } from '@/lib/profile-achievements';
 import Link from '@/components/navigation-progress';
 import Image from 'next/image';
 import { useId, useState, useTransition } from 'react';
+import { wallDiscussionAction } from '@/app/profile/wall-discussion-actions';
 import { tierDiscussionAction } from '@/app/tierlists/discussion-actions';
 import { reviewDiscussionAction } from '@/app/catalog/discussion-actions';
 import type { ReviewCommentData, ReviewInteraction } from '@/lib/review-discussions';
@@ -10,7 +11,7 @@ import type { ReviewCommentData, ReviewInteraction } from '@/lib/review-discussi
 function Thumb({ down = false }: { down?: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={down ? { transform: 'rotate(180deg)' } : undefined}><path d="M7 10v11H3V10h4Zm0 0 5-8c3 0 3 3 2 7h5a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7" /></svg>;
 }
-export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 'review', reactionsEnabled = true, commentsEnabled = true }: { reviewId: string; initial?: ReviewInteraction; telegramChannel?: string | null; target?: 'review' | 'tierlist'; reactionsEnabled?: boolean; commentsEnabled?: boolean }) {
+export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 'review', reactionsEnabled = true, commentsEnabled = true }: { reviewId: string; initial?: ReviewInteraction; telegramChannel?: string | null; target?: 'review' | 'tierlist' | 'wall'; reactionsEnabled?: boolean; commentsEnabled?: boolean }) {
   const [stats,setStats] = useState(initial ?? { likes: 0, dislikes: 0, comments: 0, vote: 0, authenticated: false });
   const [open,setOpen] = useState(false);
   const [loaded,setLoaded] = useState(false);
@@ -25,7 +26,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
     setError(''); setSignIn(false);
     startTransition(async () => {
       try {
-        const result = await (target === 'tierlist' ? tierDiscussionAction : reviewDiscussionAction)(reviewId, action, value);
+        const result = await (target === 'wall' ? wallDiscussionAction : target === 'tierlist' ? tierDiscussionAction : reviewDiscussionAction)(reviewId, action, value);
         if (result.error) { setError(result.error); setSignIn(Boolean(result.signIn)); return; }
         if (result.interaction) setStats(result.interaction);
         if (result.thread) { setComments(previous => append ? [...previous,...result.thread!.items.filter(item => !previous.some(old => old.id === item.id))] : result.thread!.items); setMore(result.thread.hasMore); setLoaded(true); }
@@ -38,16 +39,16 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         <Image src="/brand/icons/telegram.svg" width={18} height={18} alt="" /><span>@{telegramChannel}</span>
       </a></div>}
     <div className="review-reactions">
-      {reactionsEnabled && <button type="button" disabled={pending} aria-label={target === 'tierlist' ? 'Нравится тирлист' : 'Нравится отзыв'} aria-pressed={stats.vote===1} onClick={() => run('vote',stats.vote===1 ? 0 : 1)}><Thumb /><span>{stats.likes}</span></button>}
-      {reactionsEnabled && <button type="button" disabled={pending} aria-label={target === 'tierlist' ? 'Не нравится тирлист' : 'Не нравится отзыв'} aria-pressed={stats.vote===-1} onClick={() => run('vote',stats.vote===-1 ? 0 : -1)}><Thumb down /><span>{stats.dislikes}</span></button>}
-      {commentsEnabled && <button type="button" className="review-comments-toggle" aria-label={`Комментарии к ${target === 'tierlist' ? 'тирлисту' : 'отзыву'}: ${stats.comments}`} aria-expanded={open} aria-controls={regionId} onClick={() => { setOpen(!open); if (!open && !loaded) run('read'); }}>
+      {reactionsEnabled && <button type="button" disabled={pending} aria-label={target === 'wall' ? 'Нравится запись' : target === 'tierlist' ? 'Нравится тирлист' : 'Нравится отзыв'} aria-pressed={stats.vote===1} onClick={() => run('vote',stats.vote===1 ? 0 : 1)}><Thumb /><span>{stats.likes}</span></button>}
+      {reactionsEnabled && <button type="button" disabled={pending} aria-label={target === 'wall' ? 'Не нравится запись' : target === 'tierlist' ? 'Не нравится тирлист' : 'Не нравится отзыв'} aria-pressed={stats.vote===-1} onClick={() => run('vote',stats.vote===-1 ? 0 : -1)}><Thumb down /><span>{stats.dislikes}</span></button>}
+      {commentsEnabled && <button type="button" className="review-comments-toggle" aria-label={`Комментарии к ${target === 'wall' ? 'записи' : target === 'tierlist' ? 'тирлисту' : 'отзыву'}: ${stats.comments}`} aria-expanded={open} aria-controls={regionId} onClick={() => { setOpen(!open); if (!open && !loaded) run('read'); }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M20 16a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10Z" /></svg><span className="review-comments-label">Комментарии</span><span>{stats.comments}</span>
       </button>}
     </div>
     {error && <p className="field-error" role="alert">{error} {signIn && <Link href="/sign-in">Войти</Link>}</p>}
-    {commentsEnabled && open && <section id={regionId} className="review-thread" aria-label={target === 'tierlist' ? 'Комментарии к тирлисту' : 'Комментарии к отзыву'} aria-busy={pending}>
+    {commentsEnabled && open && <section id={regionId} className="review-thread" aria-label={target === 'wall' ? 'Комментарии к записи' : target === 'tierlist' ? 'Комментарии к тирлисту' : 'Комментарии к отзыву'} aria-busy={pending}>
       {stats.authenticated ? <form className="review-comment-composer" onSubmit={event => { event.preventDefault(); run('comment',text); }}>
-        <label htmlFor={`${regionId}-text`}>Ваш комментарий</label><textarea id={`${regionId}-text`} value={text} onChange={event => setText(event.target.value)} maxLength={1000} required rows={3} placeholder={target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
+        <label htmlFor={`${regionId}-text`}>Ваш комментарий</label><textarea id={`${regionId}-text`} value={text} onChange={event => setText(event.target.value)} maxLength={1000} required rows={3} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
         <div><span>{text.length} / 1000</span><button className="community-button" type="submit" disabled={pending || !text.trim()}>{pending ? 'Подождите…' : 'Отправить'}</button></div>
       </form> : <p><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
       {!loaded ? <p role="status">{pending ? 'Загружаем комментарии…' : 'Комментарии не загружены.'} {!pending && <button type="button" onClick={() => run('read')}>Повторить</button>}</p> : !comments.length ? <p className="review-thread-empty">Комментариев пока нет. Начните обсуждение.</p> : <ul className="review-thread-list">{comments.map(comment => <li key={comment.id}>

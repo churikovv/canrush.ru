@@ -15,7 +15,10 @@ beforeAll(async () => {
 });
 afterAll(async () => { await pool.query('delete from "user" where id=any($1::text[])', [users]); await pool.end(); });
 it('creates ordered listing photos and rejects self orders', async () => {
+  expect((await pool.query('select "profileLayout" from "user" where id=$1', [seller])).rows[0].profileLayout.hidden).toContain('listings');
   listing = await api.createListing(seller, { title: 'Test', description: 'Test lot', city: 'Москва', price: 10000, quantity: 10, delivery: ['pickup'] }, [photo, photo]);
+  const layout = (await pool.query('select "profileLayout" from "user" where id=$1', [seller])).rows[0].profileLayout;
+  expect(layout.hidden).not.toContain('listings'); expect(layout.hidden).toContain('favorites');
   expect((await api.getListing(listing))?.photos).toHaveLength(2);
   await expect(api.startOrder(seller, listing)).rejects.toThrow();
   const ids = await Promise.all([api.startOrder(buyer, listing), api.startOrder(buyer, listing)]);

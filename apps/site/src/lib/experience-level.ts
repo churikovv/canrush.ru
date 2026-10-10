@@ -5,4 +5,4 @@ export function experienceLevel(xp: number) {
   const next = 50 * level * (level + 1);
   return { level, total, current: total - floor, required: next - floor, remaining: next - total };
 }
-export interface Experience { xp: number; rank: number | null }
+export interface Experience { aheadPercent?: number; xp: number; rank: number | null }

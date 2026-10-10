@@ -1,3 +1,4 @@
+vi.mock('../src/app/profile/wall-discussion-actions', () => ({ wallDiscussionAction: vi.fn() }));
 vi.mock('../src/app/tierlists/discussion-actions', () => ({ tierDiscussionAction: vi.fn() }));
 vi.mock('../src/app/catalog/review-actions', () => ({ deleteReviewAction: vi.fn() }));
 vi.mock('../src/app/catalog/discussion-actions', () => ({ reviewDiscussionAction: vi.fn() }));

@@ -13,6 +13,7 @@ const {createAuth}=await import('../src/lib/auth');
 const {buildMagicLinkVerificationPath}=await import('../src/lib/magic-link-url');
 const campaigns:string[]=[];const users:string[]=[];
 const visitor=randomUUID();
+const testIp = '2001:db8:' + randomUUID().replaceAll('-', '').slice(0,24).match(/.{4}/g)!.join(':');
 const input={name:'test',path:'/catalog',source:'test',medium:'test',campaign:'test',content:'',term:''};
 afterAll(async()=>{await pool.query('delete from "user" where id=any($1::text[])',[users]);await pool.query('delete from "adCampaign" where id=any($1::uuid[])',[campaigns]);await pool.end();});
 it('deduplicates concurrent visits and signs browser identifiers',async()=>{
@@ -27,7 +28,7 @@ it('attributes actual new Magic Link accounts to first touch and not existing-us
  const second=await api.createCampaign(input);campaigns.push(second);await api.recordCampaignVisit(second,visitor);
  const email=`campaign-${randomUUID()}@example.com`;let token='';
  const auth=createAuth({database:pool,sendMagicLink:async(_email,value)=>{token=value;}});
- const request=()=>new Request('http://localhost:3000/api/auth/sign-in/magic-link',{method:'POST',headers:{origin:'http://localhost:3000','sec-fetch-site':'same-origin','content-type':'application/json','x-forwarded-for':'203.0.113.45'},body:JSON.stringify({email,callbackURL:'/profile'})});
+ const request=()=>new Request('http://localhost:3000/api/auth/sign-in/magic-link',{method:'POST',headers:{origin:'http://localhost:3000','sec-fetch-site':'same-origin','content-type':'application/json','x-forwarded-for':testIp},body:JSON.stringify({email,callbackURL:'/profile'})});
  expect((await auth.handler(request())).status).toBe(200);
  const verify=()=>new Request(`http://localhost:3000${buildMagicLinkVerificationPath(token)}`,{headers:{cookie:`canrush_campaign_visitor=${api.visitorCookie(visitor)}`}});
  expect((await auth.handler(verify())).status).toBe(302);
