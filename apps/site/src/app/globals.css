@@ -5865,15 +5865,7 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .profile-connections-all { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-top: 8px; color: var(--color-brand-deep); }
 
 .profile-connections > h2 { margin-bottom: 24px; }
-.profile-tier-previews { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.profile-favorite-previews, .profile-achievement-previews { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 16px; }
-.profile-favorite-previews a, .profile-achievement-previews a { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: var(--color-text); text-decoration: none; }
-.profile-favorite-previews a:hover, .profile-achievement-previews a:hover { color: var(--color-brand); }
-.profile-favorite-previews a > div { display: grid; place-items: center; background: var(--color-subtle); border-radius: 12px; overflow: hidden; aspect-ratio: 1; }
-.profile-favorite-previews img { width: 100%; height: 100%; object-fit: contain; }
-.profile-favorite-previews span { font-size: .875rem; color: var(--color-muted-strong); }
-.profile-achievement-previews a { align-items: center; text-align: center; }
-.profile-achievement-previews img, .achievement-art { object-fit: contain; }
+.achievement-art { object-fit: contain; }
 .tag-picker-art { flex-shrink: 0; object-fit: contain; }
 .profile-tag[data-tag=burner], .profile-tag[data-tag=critic] { background: #fff0e5; color: #9b3509; }
 .profile-tag[data-tag=adrenaline], .profile-tag[data-tag=telegram] { background: #e6f2ff; color: #00549e; }
@@ -5882,12 +5874,7 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .profile-tag[data-tag=explorer] { background: #eee8ff; color: #6440a0; }
 .profile-tag[data-tag=first-review], .profile-tag[data-tag=six-seven] { background: #fff3cc; color: #79550a; }
 .profile-tag[data-tag=deadinside], .profile-tag[data-tag=admin] { background: #ebecef; color: #414650; }
-@media (max-width: 639px) {
-  .profile-tier-previews { grid-template-columns: minmax(0, 1fr); }
-  .profile-favorite-previews { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .profile-achievement-previews { gap: 16px 8px; font-size: .875rem; }
-  .profile-achievement-previews img { width: 80px; height: 80px; }
-}
+
 .tag-picker-option { display: grid; grid-template-columns: 20px 48px minmax(0, 1fr); gap: 10px; }
 .tag-picker-option .achievement-copy { grid-column: 3; }
 .tag-picker-option .achievement-copy:first-child { grid-column: 1 / -1; }
@@ -5895,3 +5882,8 @@ label.tag-picker-option:not(.is-locked):hover { background: #f3f5f5; }
 .tag-picker-option .achievement-progress { grid-column: 3; justify-self: start; }
 .tag-picker-option .profile-tag { width: fit-content; }
 .tag-picker-option > .tag-picker-art:first-child { grid-column: 2; }
+
+.community-shortcut-preview { grid-column: 1 / -1; display: flex; gap: 6px; min-width: 0; overflow: hidden; }
+.community-shortcut-preview img { width: 40px; height: 40px; flex-shrink: 0; object-fit: contain; border-radius: 6px; }
+.community-shortcut { grid-template-rows: 20px auto 40px; }
+.community-shortcut-preview { grid-row: 3; }

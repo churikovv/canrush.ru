@@ -1,8 +1,6 @@
 import { achievementImage } from '@/lib/profile-achievements';
 import { getFavoriteGroups, loadAllCatalogGroups } from '@/lib/catalog';
-import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { getTierListsForOwner, getPublishedTierListsForUser, tierListProductsForPlacements } from '@/lib/tier-lists';
-import { TierListCard } from '@/components/tier-list-card';
 import { ProfileConnections } from '@/components/profile-connections';
 import { getListings } from '@/lib/market';
 import { formatPrice } from '@/lib/market-fields';
@@ -63,11 +61,11 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           : <Link className="community-button" href="/sign-in">Войти и подписаться</Link>} />
 
       <nav className="community-shortcuts" aria-label="Активность пользователя">
-        {[{ href: favoritesHref, label: 'Избранное', count: profile.favoriteCount, icon: 'stat-favorites' },
-          { href: `${base}/reviews`, label: 'Отзывы', count: profile.reviewCount, icon: 'stat-reviews' },
-          { href: tierListsHref, label: 'Тирлисты', count: profile.tierListCount, icon: 'stat-tierlists' },
-          { href: `${base}/achievements`, label: 'Достижения', count: visibleEarned.length, icon: 'achievement' }].map(item =>
-          <Link href={item.href} key={item.label} className="community-shortcut"><Image src={`/brand/icons/${item.icon}.svg`} width={20} height={20} alt="" /><span>{item.label}</span><strong>{item.count}</strong><span className="community-shortcut-arrow" aria-hidden="true">↗</span></Link>)}
+        {[{ href: favoritesHref, label: 'Избранное', count: profile.favoriteCount, icon: 'stat-favorites', images: favorites.slice(0, 3).map(group => group.coverImageUrl).filter((src): src is string => Boolean(src)) },
+          { href: `${base}/reviews`, label: 'Отзывы', count: profile.reviewCount, icon: 'stat-reviews', images: [] },
+          { href: tierListsHref, label: 'Тирлисты', count: profile.tierListCount, icon: 'stat-tierlists', images: tierProducts.slice(0, 3).map(product => product.imageUrl).filter((src): src is string => Boolean(src)) },
+          { href: `${base}/achievements`, label: 'Достижения', count: visibleEarned.length, icon: 'achievement', images: visibleEarned.slice(0, 3).map(achievementImage) }].map(item =>
+          <Link href={item.href} key={item.label} className="community-shortcut"><Image src={`/brand/icons/${item.icon}.svg`} width={20} height={20} alt="" /><span>{item.label}</span><strong>{item.count}</strong><span className="community-shortcut-arrow" aria-hidden="true">↗</span>{item.images.length > 0 && <span className="community-shortcut-preview" aria-hidden="true">{item.images.map((src, index) => <Image key={`${src}:${index}`} src={src} width={40} height={40} sizes="40px" alt="" />)}</span>}</Link>)}
       </nav>
 
       <div className="community-columns">
@@ -90,21 +88,6 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
               <div className="market-card-image">{listing.photos[0] ? <Image src={`/api/market-photos/${listing.photos[0]}?size=thumbnail`} alt={listing.title} width={320} height={320} unoptimized /> : <span>Нет фото</span>}</div>
               <h3>{listing.title}</h3><strong>{formatPrice(listing.price)} / шт.</strong><p>{listing.city}{listing.closed ? ' · В архиве' : ''}</p>
             </Link>)}</div> : <div className="community-empty"><p>{isOwn ? 'Вы пока не создавали объявлений.' : 'Пользователь пока не создавал объявлений.'}</p>{isOwn && <Link href="/market/new">Создать объявление ↗</Link>}</div>}
-          </section>
-
-          <section className="community-panel" aria-labelledby="profile-tiers-title">
-            <div className="community-section-heading"><h2 id="profile-tiers-title">Тирлисты</h2><Link href={tierListsHref}>Все ↗</Link></div>
-            {tierLists.length ? <div className="profile-tier-previews">{tierLists.map(list => <TierListCard key={list.id} list={list} products={tierProducts} showStatus={isOwn} />)}</div> : <p className="community-muted">{isOwn ? 'Вы пока не создавали тирлистов.' : 'Пока нет опубликованных тирлистов.'}</p>}
-          </section>
-          <section className="community-panel" aria-labelledby="profile-favorites-title">
-            <div className="community-section-heading"><h2 id="profile-favorites-title">Избранное</h2><Link href={favoritesHref}>Все ↗</Link></div>
-            {favorites.length ? <div className="profile-favorite-previews">{favorites.slice(0, 6).map(group => <Link key={`${group.brand}:${group.flavor}`} href={`/catalog/${catalogGroupSlug(group.brand, group.flavor)}`}>
-              <div>{group.coverImageUrl ? <Image src={group.coverImageUrl} width={120} height={120} sizes="(max-width: 639px) 40vw, 140px" alt="" /> : <span>Нет фото</span>}</div><strong>{group.brand}</strong><span>{flavorName(group.flavor)}</span>
-            </Link>)}</div> : <p className="community-muted">Пока нет избранных напитков.</p>}
-          </section>
-          <section className="community-panel" aria-labelledby="profile-earned-title">
-            <div className="community-section-heading"><h2 id="profile-earned-title">Достижения</h2><Link href={`${base}/achievements`}>Все ↗</Link></div>
-            {visibleEarned.length ? <div className="profile-achievement-previews">{visibleAchievements.filter(item => visibleEarned.includes(item.key)).slice(0, 6).map(item => <Link href={`${base}/achievements`} key={item.key} title={item.description}><Image src={achievementImage(item.key)} width={96} height={96} alt="" /><span>{item.label}</span></Link>)}</div> : <p className="community-muted">Пока нет полученных достижений.</p>}
           </section>
 
           {isOwn && <section className="community-panel" id="achievements" aria-labelledby="achievements-title">

@@ -42,7 +42,7 @@ describe.sequential('profile image storage and displayed tags', () => {
   });
   it('allows exactly one earned tag and displays it on preexisting reviews', async () => {
     await setProfileTags(a, ['first-review']);
-    expect((await getReviewsForUser(a))[0]?.author.tag).toBe('Первый');
+    expect((await getReviewsForUser(a))[0]?.author.tag).toBe('Первое открытие');
     await expect(setProfileTags(a, ['first-review', 'collector'])).rejects.toThrow();
     await expect(pool.query('update "user" set "profileTags"=$2 where id=$1', [a, ['first-review', 'collector']])).rejects.toMatchObject({ code: '23514' });
     await setProfileTags(a, []); expect((await getReviewsForUser(a))[0]?.author.tag).toBeNull();

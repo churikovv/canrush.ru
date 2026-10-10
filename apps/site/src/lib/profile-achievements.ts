@@ -15,7 +15,7 @@ export const PROFILE_ACHIEVEMENTS = [
   { key: 'adrenaline', label: 'Adrenaline', description: 'Оценить 3 напитка Adrenaline или Adrenaline Rush', metric: 'adrenaline', goal: 3 },
   { key: 'six-seven', label: 'Six Seven', description: 'Оценить 67 напитков', metric: 'reviews', goal: 67 },
   { key: 'collector', label: 'Коллекционер', description: 'Добавить 10 напитков в избранное', metric: 'favorites', goal: 10 },
-  { key: 'first-review', label: 'Первый', description: 'Оставить первый отзыв', metric: 'reviews', goal: 1 },
+  { key: 'first-review', label: 'Первое открытие', description: 'Оставить первый отзыв', metric: 'reviews', goal: 1 },
   { key: 'admin', label: 'Админ', description: 'Только для действующих администраторов', metric: 'admin', goal: 1 },
   { key: 'friend', label: 'Пепе', description: 'Найти первого взаимного подписчика', metric: 'friends', goal: 1 },
   { key: 'critic', label: 'Mad', description: 'Оценить 10 напитков', metric: 'reviews', goal: 10 },
@@ -23,7 +23,7 @@ export const PROFILE_ACHIEVEMENTS = [
   { key: 'explorer', label: 'Nya ^^', description: 'Оценить напитки 5 брендов', metric: 'brands', goal: 5 },
   { key: 'three', label: ':3', description: 'Оценить 3 напитка', metric: 'reviews', goal: 3 },
   { key: 'kitty', label: 'Котик', description: 'Добавить 5 напитков в избранное', metric: 'favorites', goal: 5 },
-  { key: 'telegram', label: 'Я в телеге', description: 'Указать Telegram в настройках профиля', metric: 'telegram', goal: 1 },
+  { key: 'telegram', label: 'Телега', description: 'Указать Telegram в настройках профиля', metric: 'telegram', goal: 1 },
 ] as const satisfies ReadonlyArray<{ key: string; label: string; description: string; metric: keyof AchievementProgress; goal: number }>;
 
 export function eligibleAchievements(progress: AchievementProgress): string[] {
