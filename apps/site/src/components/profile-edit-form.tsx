@@ -1,4 +1,5 @@
 'use client';
+import { PhotoDeleteIcon } from '@/components/photo-delete-icon';
 import { ProfileAppearanceEditor } from '@/components/profile-appearance-editor';
 import { DEFAULT_PROFILE_APPEARANCE } from '@/lib/profile-appearance';
 import { ProfileLayoutEditor } from '@/components/profile-layout-editor';
@@ -30,7 +31,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? <p className="field-error" id={id}>{message}</p> : null;
 }
 
-export function ProfileEditForm({ profile, layoutPreviews }: { profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>> }) {
+export function ProfileEditForm({ profile, layoutPreviews, level = 1 }: { level?: number; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>> }) {
   const initialName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
   const [tab, setTab] = useState('details');
   const [appearance, setAppearance] = useState(profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE);
@@ -150,7 +151,7 @@ export function ProfileEditForm({ profile, layoutPreviews }: { profile: ProfileD
         </section>
       </div>
       <div id="profile-panel-appearance" role="tabpanel" aria-labelledby="profile-tab-appearance" hidden={tab !== 'appearance'}>
-        <ProfileAppearanceEditor value={appearance} onChange={setAppearance} disabled={pending} />
+        <ProfileAppearanceEditor level={level} current={profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE} value={appearance} onChange={setAppearance} disabled={pending} />
         <section className="community-panel profile-editor-images" aria-labelledby="profile-images-title">
           <div className="community-section-heading"><h2 id="profile-images-title">Изображения</h2></div>
           <p className="community-section-note">JPG, PNG или WebP, до 5 МБ. Предпросмотр сверху.</p>
@@ -158,9 +159,13 @@ export function ProfileEditForm({ profile, layoutPreviews }: { profile: ProfileD
             {(['avatar', 'banner'] as const).map(kind => <div className="profile-image-field" key={kind}>
               <h3>{kind === 'avatar' ? 'Аватар' : 'Баннер'}</h3>
               <p>{kind === 'avatar' ? 'Выберите квадратную миниатюру.' : 'Выберите область баннера 4:1.'}</p>
+              {imageSource(kind) && <div className={`profile-upload-preview profile-upload-preview-${kind}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- existing or local upload preview */}
+                <img src={imageSource(kind) ?? undefined} alt={kind === 'avatar' ? 'Превью аватара' : 'Превью баннера'} />
+                <button className="photo-delete-overlay" title="Удалить фотографию" aria-label={kind === 'avatar' ? 'Удалить аватар' : 'Удалить баннер'} type="button" onClick={() => { imageRequests.current[kind]++; setDecoding(current => ({ ...current, [kind]: false })); setImages(current => ({ ...current, [kind]: { remove: true } })); setImageError(''); }}><PhotoDeleteIcon /></button>
+              </div>}
               <div className="profile-image-actions"><label className="community-button community-button-secondary profile-file-picker"><span>{imageSource(kind) ? 'Заменить' : 'Загрузить'}</span><input type="file" accept="image/jpeg,image/png,image/webp" aria-label={kind === 'avatar' ? 'Загрузить аватар' : 'Загрузить баннер'} onChange={event => { void selectImage(kind, event.target.files?.[0]); event.target.value = ''; }} /></label>
                 {imageSource(kind) && <button className="community-button community-button-secondary" type="button" onClick={() => { void editCrop(kind); }}>Изменить кадр</button>}
-                {imageSource(kind) && <button className="community-button community-button-text" type="button" onClick={() => { imageRequests.current[kind]++; setDecoding(current => ({ ...current, [kind]: false })); setImages(current => ({ ...current, [kind]: { remove: true } })); setImageError(''); }}>Удалить {kind === 'avatar' ? 'аватар' : 'баннер'}</button>}
                 {images[kind] && <button className="community-button community-button-text" type="button" onClick={() => { imageRequests.current[kind]++; setDecoding(current => ({ ...current, [kind]: false })); setImages(current => ({ ...current, [kind]: undefined })); setImageError(''); }}>Отменить изменение</button>}
               </div>
               {images[kind]?.file && <p className="profile-selected-file">{images[kind]?.file?.name}</p>}

@@ -1,4 +1,5 @@
 'use client';
+import { PhotoDeleteIcon } from '@/components/photo-delete-icon';
 
 import { MIN_REVIEW_LENGTH, normalizeReviewText, reviewTextGuidance } from '@/lib/review-fields';
 import Link from '@/components/navigation-progress';
@@ -201,12 +202,12 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated }: Ca
           {retained.map((id, index) => <div key={id} className="review-photo-preview">
             {/* eslint-disable-next-line @next/next/no-img-element -- private uncached photo route */}
             <img src={`/api/review-photos/${id}?size=thumbnail`} alt={`Сохранённая фотография ${index + 1}`} />
-            <button type="button" onClick={() => setRetained(current => current.filter(value => value !== id))} aria-label={`Удалить сохранённую фотографию ${index + 1}`}>Удалить</button>
+            <button className="photo-delete-overlay" title="Удалить фотографию" type="button" onClick={() => setRetained(current => current.filter(value => value !== id))} aria-label={`Удалить сохранённую фотографию ${index + 1}`}><PhotoDeleteIcon /></button>
           </div>)}
           {files.map(({ file, url }, index) => <div key={url} className="review-photo-preview">
             {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
             <img src={url} alt={`Новая фотография ${index + 1}: ${file.name}`} />
-            <button type="button" onClick={() => { URL.revokeObjectURL(url); previews.current.delete(url); setFiles(current => current.filter(item => item.url !== url)); }} aria-label={`Удалить новую фотографию ${index + 1}`}>Удалить</button>
+            <button className="photo-delete-overlay" title="Удалить фотографию" type="button" onClick={() => { URL.revokeObjectURL(url); previews.current.delete(url); setFiles(current => current.filter(item => item.url !== url)); }} aria-label={`Удалить новую фотографию ${index + 1}`}><PhotoDeleteIcon /></button>
           </div>)}
         </div>
       </div>

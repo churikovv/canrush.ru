@@ -1,4 +1,5 @@
-import { parseProfileAppearance, type ProfileAppearance } from '@/lib/profile-appearance';
+import { experienceLevel } from '@/lib/experience-level';
+import { canUseProfileAppearance, DEFAULT_PROFILE_APPEARANCE, parseProfileAppearance, type ProfileAppearance } from '@/lib/profile-appearance';
 import { type ProfileLayout } from '@/lib/profile-layout';
 import sharp from 'sharp';
 import { getPool } from '@/db/pool';
@@ -54,6 +55,13 @@ export async function saveProfileCustomization(userId: string, input: ProfileInp
   const client = await getPool().connect();
   try {
     await client.query('begin');
+    if (appearance) {
+      const existing = await client.query('select "profileAppearance" from "user" where id = $1 for update', [userId]);
+      const ranking = await client.query('select xp from "profileRanking" where id = $1', [userId]);
+      const level = experienceLevel(Number(ranking.rows[0]?.xp ?? 0)).level;
+      const current = parseProfileAppearance(existing.rows[0]?.profileAppearance) ?? DEFAULT_PROFILE_APPEARANCE;
+      if (!canUseProfileAppearance(appearance, level, current)) throw new ProfileImageError('Это оформление пока закрыто. Повысьте уровень профиля.');
+    }
     if (appearance) await client.query('update "user" set "profileAppearance" = $2::jsonb where id = $1', [userId, JSON.stringify(appearance)]);
     if (layout) await client.query('update "user" set "profileLayout" = $2::jsonb where id = $1', [userId, JSON.stringify(layout)]);
     const user = await client.query(`update "user" set username = $2, name = $3, "telegramChannel" = $4, "updatedAt" = now() where id = $1 returning id`, [userId, input.username, input.name, input.telegramChannel]);

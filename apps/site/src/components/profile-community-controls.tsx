@@ -1,4 +1,5 @@
 'use client';
+import { PhotoDeleteIcon } from '@/components/photo-delete-icon';
 
 import { useActionState, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -70,7 +71,7 @@ export function WallComposer({ targetId }: { targetId: string }) {
       <div className="review-photo-previews">{files.map(({ file, url }, index) => <div key={url} className="review-photo-preview">
         {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
         <img src={url} alt={`Новая фотография ${index + 1}: ${file.name}`} />
-        <button type="button" aria-label={`Удалить новую фотографию ${index + 1}`} onClick={() => { URL.revokeObjectURL(url); previews.current.delete(url); setFiles(current => current.filter(item => item.url !== url)); }}>Удалить</button>
+        <button className="photo-delete-overlay" title="Удалить фотографию" type="button" aria-label={`Удалить новую фотографию ${index + 1}`} onClick={() => { URL.revokeObjectURL(url); previews.current.delete(url); setFiles(current => current.filter(item => item.url !== url)); }}><PhotoDeleteIcon /></button>
       </div>)}</div>
       <div className="community-form-footer"><span className="community-muted">{text.length} / 1000</span><Submit disabled={!text.trim()}>Отправить</Submit></div>
     </fieldset>

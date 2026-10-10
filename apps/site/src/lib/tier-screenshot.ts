@@ -18,7 +18,11 @@ export async function renderTierScreenshot(board: HTMLElement, title: string, te
   ctx.scale(scale, scale);
   ctx.fillStyle = getComputedStyle(board).getPropertyValue('--color-brand').trim() || '#006eff';
   ctx.beginPath(); ctx.roundRect(0, 0, width, height, 20); ctx.fill();
-  const family = getComputedStyle(board).fontFamily;
+  const boardStyle = getComputedStyle(board);
+  const surface = boardStyle.getPropertyValue('--color-surface').trim() || '#ffffff';
+  const border = boardStyle.getPropertyValue('--color-control').trim() || '#dfe3e8';
+  const muted = boardStyle.getPropertyValue('--color-muted-strong').trim() || '#59616b';
+  const family = boardStyle.fontFamily;
   ctx.fillStyle = '#ffffff'; ctx.font = `700 24px ${family}`;
   let caption = title.trim() || 'Мой тирлист';
   while (ctx.measureText(caption).width > width - padding * 2 - 72 && caption.length > 1) caption = caption.slice(0, -2) + '…';
@@ -39,7 +43,7 @@ export async function renderTierScreenshot(board: HTMLElement, title: string, te
   const boardTop = 64 + headerExtra, boardHeight = layout.height - 20 - 64;
   ctx.save();
   ctx.beginPath(); ctx.roundRect(padding, boardTop, layout.width, boardHeight, 24); ctx.clip();
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(padding, boardTop, layout.width, boardHeight);
+  ctx.fillStyle = surface; ctx.fillRect(padding, boardTop, layout.width, boardHeight);
   const imageJobs: Promise<void>[] = [];
   for (const [rowIndex, row] of boardRows.entries()) {
     const label = row.querySelector('h2');
@@ -51,7 +55,7 @@ export async function renderTierScreenshot(board: HTMLElement, title: string, te
     const style = getComputedStyle(letter);
     ctx.fillStyle = getComputedStyle(label).backgroundColor;
     ctx.fillRect(box.x, box.y, box.width, box.height);
-    ctx.strokeStyle = '#dfe3e8'; ctx.lineWidth = 1;
+    ctx.strokeStyle = border; ctx.lineWidth = 1;
     ctx.strokeRect(rowBox.x, rowBox.y, rowBox.width, rowBox.height);
     ctx.strokeRect(box.x, box.y, box.width, box.height);
     const size = 32;
@@ -77,6 +81,7 @@ export async function renderTierScreenshot(board: HTMLElement, title: string, te
             const factor = Math.min(imageBox.width / image.naturalWidth, imageBox.height / image.naturalHeight);
             const w = image.naturalWidth * factor, h = image.naturalHeight * factor;
             ctx.save(); ctx.beginPath(); ctx.roundRect(imageBox.x, imageBox.y, imageBox.width, imageBox.height, 6); ctx.clip();
+            ctx.fillStyle = '#f3f4f6'; ctx.fillRect(imageBox.x, imageBox.y, imageBox.width, imageBox.height);
             ctx.drawImage(image, imageBox.x + (imageBox.width - w) / 2, imageBox.y + (imageBox.height - h) / 2, w, h); ctx.restore(); resolve();
           };
           image.onerror = () => { clearTimeout(timeout); reject(new Error('Не удалось загрузить фотографию напитка. Попробуйте ещё раз.')); };
@@ -84,7 +89,7 @@ export async function renderTierScreenshot(board: HTMLElement, title: string, te
         }));
       } else {
         const fallback = item.querySelector('.tier-editor-product-image > span, span[aria-hidden="true"]')?.textContent ?? '?';
-        ctx.font = `700 16px ${family}`; ctx.fillStyle = '#59616b';
+        ctx.font = `700 16px ${family}`; ctx.fillStyle = muted;
         ctx.fillText(fallback, itemBox.x + itemBox.width / 2, itemBox.y + itemBox.height / 2);
       }
     }
@@ -92,6 +97,6 @@ export async function renderTierScreenshot(board: HTMLElement, title: string, te
   await Promise.all(imageJobs);
   ctx.restore();
   ctx.beginPath(); ctx.roundRect(padding + 0.5, boardTop + 0.5, layout.width - 1, boardHeight - 1, 24);
-  ctx.strokeStyle = '#dfe3e8'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.strokeStyle = border; ctx.lineWidth = 1; ctx.stroke();
   return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG.')), 'image/png'));
 }

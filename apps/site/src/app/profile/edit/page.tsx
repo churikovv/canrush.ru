@@ -1,3 +1,4 @@
+import { experienceLevel } from '@/lib/experience-level';
 import { getFavoriteGroups } from '@/lib/catalog';
 import Image from 'next/image';
 import { getProfileRatings, getProfileWall, getConnections } from '@/lib/profile-community';
@@ -41,7 +42,7 @@ export default async function ProfileEditPage() {
   };
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-      <ProfileEditForm profile={profile} layoutPreviews={layoutPreviews} />
+      <ProfileEditForm level={experienceLevel(experience[profile.username]?.xp ?? 0).level} profile={profile} layoutPreviews={layoutPreviews} />
     </BrandShell>
   );
 }
