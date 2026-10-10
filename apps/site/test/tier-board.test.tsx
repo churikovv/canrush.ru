@@ -13,11 +13,11 @@ it('omits missing cards but retains archived products with no retailers or image
  expect(html).toContain('Пока пусто');
 });
 
-it('renders saved section order including empty rows and hides removed rows', () => {
+it('renders canonical rank order including empty rows and hides removed rows', () => {
  const html = renderToStaticMarkup(createElement(TierBoard, {
   products: [], placements: [], tiers: ['B', 'SS', 'S'],
  }));
- expect(html.indexOf('id="tier-B"')).toBeLessThan(html.indexOf('id="tier-SS"'));
+ expect(html.indexOf('id="tier-S"')).toBeLessThan(html.indexOf('id="tier-B"'));
  expect(html.indexOf('id="tier-SS"')).toBeLessThan(html.indexOf('id="tier-S"'));
  expect(html).not.toContain('id="tier-A"');
 });

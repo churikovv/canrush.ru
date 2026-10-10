@@ -80,7 +80,7 @@ function toTierList(row: TierListRow, items: TierListPlacement[]): TierListData 
     slug: row.slug,
     title: row.title,
     status: row.status,
-    tiers: row.tiers,
+    tiers: TIER_KEYS.filter(tier => row.tiers.includes(tier)),
     reactionsEnabled: row.reactionsEnabled,
     commentsEnabled: row.commentsEnabled,
     author: {
@@ -150,7 +150,7 @@ async function getTierListSummaries(where: string, values: unknown[], limit: num
     itemCount: Number(row.itemCount),
     likes: Number(row.likes),
     comments: Number(row.comments),
-    preview: (itemsByList.get(row.id) ?? []).sort((a, b) => row.tiers.indexOf(a.tier) - row.tiers.indexOf(b.tier) || a.position - b.position).slice(0, 8),
+    preview: (itemsByList.get(row.id) ?? []).sort((a, b) => TIER_KEYS.indexOf(a.tier) - TIER_KEYS.indexOf(b.tier) || a.position - b.position).slice(0, 8),
   }));
 }
 

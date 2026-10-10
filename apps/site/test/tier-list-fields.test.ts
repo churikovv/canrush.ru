@@ -48,9 +48,9 @@ describe('tier list fields', () => {
   });
 });
 
-it('preserves custom section order including SS and rejects removed or duplicate sections', () => {
+it('normalizes section rank order including SS and rejects removed or duplicate sections', () => {
   const items = JSON.stringify([{ brand: 'Burn', flavor: 'original', tier: 'SS', position: 0 }]);
-  expect(validateTierListInput({ title: 'Custom', items, tiers: '["B","SS"]' }).data?.tiers).toEqual(['B', 'SS']);
+  expect(validateTierListInput({ title: 'Custom', items, tiers: '["B","SS"]' }).data?.tiers).toEqual(['SS', 'B']);
   expect(validateTierListInput({ title: 'Custom', items, tiers: '["B"]' }).errors?.items).toBeTruthy();
   for (const tiers of ['[]', '["S","S"]', '["X"]', 'null', '{']) {
     expect(validateTierListInput({ title: 'Custom', items: '[]', tiers }).errors?.tiers).toBeTruthy();

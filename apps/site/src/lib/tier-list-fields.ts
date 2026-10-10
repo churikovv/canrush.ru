@@ -64,7 +64,7 @@ export function parseTierListSections(value: string): TierKey[] | null {
     const parsed: unknown = JSON.parse(value);
     if (!Array.isArray(parsed) || parsed.length < 1 || parsed.length > TIER_KEYS.length ||
         parsed.some(tier => typeof tier !== 'string' || !TIERS.has(tier)) || new Set(parsed).size !== parsed.length) return null;
-    return parsed as TierKey[];
+    return TIER_KEYS.filter(tier => parsed.includes(tier));
   } catch { return null; }
 }
 

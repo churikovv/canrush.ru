@@ -160,7 +160,7 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
   const [reactionsEnabled, setReactionsEnabled] = useState(initialList?.reactionsEnabled ?? true);
   const [commentsEnabled, setCommentsEnabled] = useState(initialList?.commentsEnabled ?? true);
   const [columns, setColumns] = useState<EditorColumns>(() => initialColumns(products, initialList?.items ?? []));
-  const [tiers, setTiers] = useState<TierKey[]>(() => [...(initialList?.tiers ?? TIER_KEYS)]);
+  const [tiers, setTiers] = useState<TierKey[]>(() => TIER_KEYS.filter(tier => (initialList?.tiers ?? TIER_KEYS).includes(tier)));
   const [activeSection, setActiveSection] = useState<TierKey>();
   const [sectionNotice, setSectionNotice] = useState('');
   const [selectedId, setSelectedId] = useState<string>();
@@ -236,9 +236,11 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
   function moveSection(tier: TierKey, offset: number) {
     const index = tiers.indexOf(tier), target = index + offset;
     if (target < 0 || target >= tiers.length) return;
-    const next = [...tiers]; next.splice(index, 1); next.splice(target, 0, tier);
-    setTiers(next); setDirty(true);
-    setSectionNotice(`Секция ${tier} перемещена на позицию ${target + 1}.`);
+    const other = tiers[target];
+    if (!other) return;
+    setColumns(current => ({ ...current, [tier]: current[other], [other]: current[tier] }));
+    setActiveSection(other); setDirty(true);
+    setSectionNotice(`Содержимое секций ${tier} и ${other} поменялось местами.`);
   }
 
   function removeSection(tier: TierKey) {
@@ -389,7 +391,7 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
           </>
       </motion.div>}
 
-      <p className="tier-section-hint">Нажмите на букву секции, чтобы переместить или удалить её.</p>
+      <p className="tier-section-hint">Нажмите на букву секции, чтобы поменять её содержимое с соседней или удалить секцию.</p>
       {state.fieldErrors?.tiers && <p className="field-error" role="alert">{state.fieldErrors.tiers}</p>}
       <p className="sr-only" role="status">{sectionNotice}</p>
 
@@ -409,8 +411,8 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
           {activeSection === tier && <div id={`tier-controls-${tier}`} className="tier-section-toolbar" role="group" aria-label={`Управление секцией ${tier}`} onKeyDown={event => { if (event.key === 'Escape') { setActiveSection(undefined); document.querySelector<HTMLButtonElement>(`#editor-tier-${tier} button`)?.focus(); } }}>
             <span>Секция {tier}</span>
             <div>
-            <button type="button" className="community-button community-button-secondary" title="Переместить выше" aria-label={`Секцию ${tier} выше`} disabled={index === 0} onClick={() => moveSection(tier, -1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 14 6-6 6 6"/></svg></button>
-            <button type="button" className="community-button community-button-secondary" title="Переместить ниже" aria-label={`Секцию ${tier} ниже`} disabled={index === tiers.length - 1} onClick={() => moveSection(tier, 1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 10 6 6 6-6"/></svg></button>
+            <button type="button" className="community-button community-button-secondary" title="Поменять содержимое с секцией выше" aria-label={`Содержимое ${tier} выше`} disabled={index === 0} onClick={() => moveSection(tier, -1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 14 6-6 6 6"/></svg></button>
+            <button type="button" className="community-button community-button-secondary" title="Поменять содержимое с секцией ниже" aria-label={`Содержимое ${tier} ниже`} disabled={index === tiers.length - 1} onClick={() => moveSection(tier, 1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 10 6 6 6-6"/></svg></button>
             <button type="button" className="community-button community-button-secondary" title="Удалить секцию — напитки вернутся в общий список" aria-label={`Удалить секцию ${tier}`} disabled={tiers.length === 1} onClick={() => removeSection(tier)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg></button>
 
               <button type="button" className="community-button community-button-secondary" aria-label="Закрыть управление секцией" onClick={() => { setActiveSection(undefined); document.querySelector<HTMLButtonElement>(`#editor-tier-${tier} button`)?.focus(); }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
@@ -427,7 +429,7 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
         <label><input type="checkbox" checked={commentsEnabled} onChange={event => { setCommentsEnabled(event.target.checked); setDirty(true); }} />Разрешить комментарии</label>
         <p>Можно изменить позже. При отключении прежние реакции и комментарии скрываются и сохраняются.</p>
       </fieldset>
-      {TIER_KEYS.some(tier => !tiers.includes(tier)) && <div className="tier-section-add">{TIER_KEYS.filter(tier => !tiers.includes(tier)).map(tier => <button key={tier} type="button" className="community-button community-button-secondary" onClick={() => { setTiers(current => [...current, tier]); setActiveSection(tier); setSelectedId(undefined); setDirty(true); setSectionNotice(`Секция ${tier} добавлена.`); }}>+ Добавить {tier}</button>)}</div>}
+      {TIER_KEYS.some(tier => !tiers.includes(tier)) && <div className="tier-section-add">{TIER_KEYS.filter(tier => !tiers.includes(tier)).map(tier => <button key={tier} type="button" className="community-button community-button-secondary" onClick={() => { setTiers(current => TIER_KEYS.filter(key => key === tier || current.includes(key))); setActiveSection(tier); setSelectedId(undefined); setDirty(true); setSectionNotice(`Секция ${tier} добавлена.`); }}>+ Добавить {tier}</button>)}</div>}
 
       <div className="tier-editor-primary-controls">
         <ActionButtons published={initialList?.status === 'published'} dirty={dirty} saved={saved} />

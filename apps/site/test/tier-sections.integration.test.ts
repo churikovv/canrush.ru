@@ -26,11 +26,11 @@ it('preserves legacy defaults, reads reordered and empty sections, and accepts S
   await pool.query(`update "tierList" set tiers=$2 where id=$1`, [id, ['B','SS','S']]);
   await pool.query(`insert into "tierListItem" ("tierListId",brand,flavor,tier,position) values($1,'Burn','original','SS',0),($1,'Test','original','B',0)`, [id]);
   const list = await getTierListBySlug(slug);
-  expect(list?.tiers).toEqual(['B','SS','S']);
+  expect(list?.tiers).toEqual(['SS','S','B']);
   expect(list?.items).toHaveLength(2);
   const summary = (await getTierListsForOwner(user))[0]!;
-  expect(summary.tiers).toEqual(['B','SS','S']);
-  expect(summary.preview.map(item => item.tier)).toEqual(['B','SS']);
+  expect(summary.tiers).toEqual(['SS','S','B']);
+  expect(summary.preview.map(item => item.tier)).toEqual(['SS','B']);
 });
 it('uses ten-point thresholds for the official rating', () => {
   expect([10, 9, 8.99, 8, 7.99, 7, 6.99, 6, 5.99, 5, 4.99, 0].map(tierForScore)).toEqual(['SS','SS','S','S','A','A','B','B','C','C','D','D']);
@@ -51,5 +51,5 @@ it('saves custom sections through the action and rejects placements in removed s
   expect((await getTierListBySlug(slug))?.tiers).toEqual(['SS','B']);
   form.set('slug', ''); form.set('tiers', '["B","SS"]');
   await expect(saveTierListAction({}, form)).rejects.toThrow('REDIRECT:');
-  expect((await getTierListsForOwner(user))[0]?.tiers).toEqual(['B','SS']);
+  expect((await getTierListsForOwner(user))[0]?.tiers).toEqual(['SS','B']);
 });
