@@ -75,6 +75,17 @@ describe.sequential('profile image storage and displayed tags', () => {
     expect((await getProfileByUserId(a))?.profileLayout).toEqual(layout);
     expect((await getProfileByUserId(b))?.profileLayout?.hidden).toEqual(['favorites', 'listings']);
   });
+  it('persists appearance, isolates users and rolls it back with failed profile updates', async () => {
+    expect((await getProfileByUserId(b))?.profileAppearance).toEqual({ theme: 'default', frame: 'none' });
+    await saveProfileCustomization(a, input, {}, undefined, { theme: 'dark', frame: 'orbit' });
+    expect((await getProfileByUserId(a))?.profileAppearance).toEqual({ theme: 'dark', frame: 'orbit' });
+    await expect(saveProfileCustomization(a, { ...input, username: username(b) }, {}, undefined, { theme: 'mint', frame: 'pulse' })).rejects.toMatchObject({ code: '23505' });
+    expect((await getProfileByUserId(a))?.profileAppearance).toEqual({ theme: 'dark', frame: 'orbit' });
+    expect((await getProfileByUserId(b))?.profileAppearance).toEqual({ theme: 'default', frame: 'none' });
+    await expect(pool.query('update "user" set "profileAppearance"=$2 where id=$1', [a, { theme: 'unknown', frame: 'none' }])).rejects.toMatchObject({ code: '23514' });
+    await saveProfileCustomization(a, input, {});
+    expect((await getProfileByUserId(a))?.profileAppearance?.theme).toBe('dark');
+  });
   it('removes images explicitly and cascades them on account deletion', async () => {
     await saveProfileCustomization(a, input, { avatar: null });
     expect((await getProfileByUserId(a))?.avatarId).toBeNull();

@@ -1,3 +1,4 @@
+import { DEFAULT_PROFILE_APPEARANCE, parseProfileAppearance, type ProfileAppearance } from '@/lib/profile-appearance';
 import { DEFAULT_PROFILE_LAYOUT, parseProfileLayout, type ProfileLayout } from '@/lib/profile-layout';
 import type { QueryResultRow } from 'pg';
 import { getPool } from '@/db/pool';
@@ -16,6 +17,7 @@ interface ProfileRow extends QueryResultRow {
   avatarId: string | null;
   bannerId: string | null;
   profileLayout?: ProfileLayout;
+  profileAppearance?: ProfileAppearance;
 }
 
 export interface ProfileData {
@@ -31,6 +33,7 @@ export interface ProfileData {
   avatarId: string | null;
   bannerId: string | null;
   profileLayout?: ProfileLayout;
+  profileAppearance?: ProfileAppearance;
 }
 
 const PROFILE_SELECT = `
@@ -42,6 +45,7 @@ const PROFILE_SELECT = `
     u."createdAt",
     u."telegramChannel",
     u."profileLayout",
+    u."profileAppearance",
     (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
     (select id::text from "profileImage" where "userId" = u.id and kind = 'banner') as "bannerId",
     coalesce((select count(*)::int from "favorite" f where f."userId" = u."id"), 0) as "favoriteCount",
@@ -53,6 +57,7 @@ const PROFILE_SELECT = `
 function toProfile(row: ProfileRow): ProfileData | null {
   if (!row.username) return null;
   return {
+    profileAppearance: parseProfileAppearance(row.profileAppearance) ?? DEFAULT_PROFILE_APPEARANCE,
     profileLayout: parseProfileLayout(row.profileLayout) ?? DEFAULT_PROFILE_LAYOUT,
     id: row.id,
     username: row.username,

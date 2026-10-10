@@ -1,4 +1,6 @@
 'use client';
+import { ProfileAppearanceEditor } from '@/components/profile-appearance-editor';
+import { DEFAULT_PROFILE_APPEARANCE } from '@/lib/profile-appearance';
 import { ProfileLayoutEditor } from '@/components/profile-layout-editor';
 import { ProfileBackButton } from '@/components/profile-back-button';
 
@@ -30,6 +32,9 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 export function ProfileEditForm({ profile, layoutPreviews }: { profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>> }) {
   const initialName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
+  const [tab, setTab] = useState('details');
+  const [appearance, setAppearance] = useState(profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE);
+  const tabs = [{ key: 'details', label: 'Данные' }, { key: 'appearance', label: 'Оформление' }, { key: 'blocks', label: 'Блоки' }];
   const [name, setName] = useState(initialName);
   const [username, setUsername] = useState(profile.username);
   const [channel, setChannel] = useState(profile.telegramChannel ? `t.me/${profile.telegramChannel}` : '');
@@ -48,7 +53,10 @@ export function ProfileEditForm({ profile, layoutPreviews }: { profile: ProfileD
       if (selected?.crop) form.set(`crop-${kind}`, JSON.stringify(selected.crop));
       if (selected?.remove) form.set(`remove-${kind}`, 'true');
     }
-    return updateProfileAction(previous, form);
+    form.set('profileAppearance', JSON.stringify(appearance));
+    const result = await updateProfileAction(previous, form);
+    if (result.fieldErrors) setTab('details');
+    return result;
   }, {});
   useEffect(() => { if (state.message) errorSummaryRef.current?.focus(); }, [state]);
   useEffect(() => {
@@ -105,12 +113,26 @@ export function ProfileEditForm({ profile, layoutPreviews }: { profile: ProfileD
   }
   return <div className="community-profile profile-editor ym-hide-content">
     <ProfileBackButton />
-    <form className="profile-customization-form" action={formAction}>
-      <ProfileHeader name={name.trim() || initialName} username={username.replace(/^@+/, '') || profile.username} createdAt={profile.createdAt}
+    <form className="profile-customization-form" action={formAction} noValidate onSubmit={event => {
+      if (!event.currentTarget.checkValidity()) {
+        event.preventDefault(); setTab('details');
+        const form = event.currentTarget;
+        requestAnimationFrame(() => form.reportValidity());
+      }
+    }}>
+      <div className="profile-editor-preview" data-profile-theme={appearance.theme}>
+      <ProfileHeader frame={appearance.frame} name={name.trim() || initialName} username={username.replace(/^@+/, '') || profile.username} createdAt={profile.createdAt}
         avatarSrc={imageSource('avatar')} bannerSrc={imageSource('banner')} avatarControl={imageControl('avatar')} bannerControl={imageControl('banner')}
         actions={<div className="profile-editor-actions"><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>} />
+      </div>
       {state.message && <div className="profile-form-error" ref={errorSummaryRef} role="alert" tabIndex={-1}><h2>Не удалось сохранить профиль</h2><p>{state.message}</p></div>}
-      <div className="profile-editor-grid">
+      <div className="profile-editor-tabs" role="tablist" aria-label="Редактирование профиля">{tabs.map((item, index) => <button key={item.key} id={`profile-tab-${item.key}`} type="button" role="tab" aria-selected={tab === item.key} aria-controls={`profile-panel-${item.key}`} tabIndex={tab === item.key ? 0 : -1} onClick={() => setTab(item.key)} onKeyDown={event => {
+        const target = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : -1;
+        if (target < 0) return;
+        event.preventDefault(); const next = tabs[target]!;
+        setTab(next.key); document.getElementById(`profile-tab-${next.key}`)?.focus();
+      }}>{item.label}</button>)}</div>
+      <div id="profile-panel-details" role="tabpanel" aria-labelledby="profile-tab-details" hidden={tab !== 'details'}>
         <section className="community-panel" aria-labelledby="profile-fields-title">
           <div className="community-section-heading"><h2 id="profile-fields-title">Данные профиля</h2></div>
           <fieldset className="profile-editor-fields" disabled={pending}>
@@ -126,7 +148,10 @@ export function ProfileEditForm({ profile, layoutPreviews }: { profile: ProfileD
             </div>
           </fieldset>
         </section>
-        <section className="community-panel" aria-labelledby="profile-images-title">
+      </div>
+      <div id="profile-panel-appearance" role="tabpanel" aria-labelledby="profile-tab-appearance" hidden={tab !== 'appearance'}>
+        <ProfileAppearanceEditor value={appearance} onChange={setAppearance} disabled={pending} />
+        <section className="community-panel profile-editor-images" aria-labelledby="profile-images-title">
           <div className="community-section-heading"><h2 id="profile-images-title">Изображения</h2></div>
           <p className="community-section-note">JPG, PNG или WebP, до 5 МБ. Предпросмотр сверху.</p>
           <fieldset className="profile-image-fields" disabled={pending}>
@@ -145,11 +170,13 @@ export function ProfileEditForm({ profile, layoutPreviews }: { profile: ProfileD
           {imageError && <p className="field-error" role="alert">{imageError}</p>}
         </section>
       </div>
-      <ProfileLayoutEditor initial={profile.profileLayout} disabled={pending} previews={layoutPreviews} />
+      <div id="profile-panel-blocks" role="tabpanel" aria-labelledby="profile-tab-blocks" hidden={tab !== 'blocks'}>
+        <div data-profile-theme={appearance.theme} className="profile-blocks-preview"><ProfileLayoutEditor initial={profile.profileLayout} disabled={pending} previews={layoutPreviews} /></div>
+      </div>
       <div className="profile-layout-save"><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>
     </form>
     {cropSource && <ProfileImageCrop key={cropSource.src} source={cropSource} initial={images[cropSource.kind]?.source?.src === cropSource.src ? images[cropSource.kind]?.crop : undefined} onCancel={() => setCropSource(null)} onConfirm={(crop, preview) => { setImages(current => ({ ...current, [cropSource.kind]: { file: cropSource.file, crop, preview, source: cropSource } })); setCropSource(null); }} />}
-    <section className="profile-editor-danger" aria-labelledby="danger-zone-title"><div><h2 id="danger-zone-title">Удаление аккаунта</h2><p>Профиль и его данные будут удалены без возможности восстановления.</p></div>
+    <section hidden={tab !== 'details'} className="profile-editor-danger" aria-labelledby="danger-zone-title"><div><h2 id="danger-zone-title">Удаление аккаунта</h2><p>Профиль и его данные будут удалены без возможности восстановления.</p></div>
       <form action={deleteAccountAction} onSubmit={event => { if (!window.confirm('Удалить аккаунт и все персональные данные? Это действие нельзя отменить.')) event.preventDefault(); }}><input type="hidden" name="confirmation" value="delete-account" /><DeleteButton /></form>
     </section>
   </div>;

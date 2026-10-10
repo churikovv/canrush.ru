@@ -16,7 +16,7 @@ it('requires authentication before decoding or saving images', async () => {
 });
 it('saves only the session owner and refreshes old usernames and review pages', async () => {
   await expect(updateProfileAction({}, form())).rejects.toThrow('REDIRECT:/profile');
-  expect(mocks.save).toHaveBeenCalledWith('actor', { username: 'updated', name: 'Updated', telegramChannel: null }, { avatar: Buffer.from('image') }, undefined);
+  expect(mocks.save).toHaveBeenCalledWith('actor', { username: 'updated', name: 'Updated', telegramChannel: null }, { avatar: Buffer.from('image') }, undefined, undefined);
   expect(mocks.revalidate).toHaveBeenCalledWith('/profile/before');
   expect(mocks.revalidate).toHaveBeenCalledWith('/catalog', 'layout');
 });
@@ -31,4 +31,16 @@ it('rejects invalid profile layouts before saving', async () => {
   const data = form(); data.set('profileLayout', JSON.stringify({ order: ['wall'], hidden: [] }));
   expect((await updateProfileAction({}, data)).message).toContain('блоков');
   expect(mocks.save).not.toHaveBeenCalled();
+});
+
+it('validates appearance presets and saves them only for the session owner', async () => {
+  const data = form();
+  for (const value of ['invalid json', '{"theme":"custom","frame":"none"}', '{"theme":"dark","frame":null}']) {
+    data.set('profileAppearance', value);
+    expect((await updateProfileAction({}, data)).message).toContain('оформление');
+  }
+  expect(mocks.save).not.toHaveBeenCalled();
+  data.set('profileAppearance', JSON.stringify({ theme: 'dark', frame: 'prism' }));
+  await expect(updateProfileAction({}, data)).rejects.toThrow('REDIRECT:/profile');
+  expect(mocks.save).toHaveBeenCalledWith('actor', expect.anything(), expect.anything(), undefined, { theme: 'dark', frame: 'prism' });
 });

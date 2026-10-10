@@ -1,3 +1,4 @@
+import { parseProfileAppearance, type ProfileAppearance } from '@/lib/profile-appearance';
 import { type ProfileLayout } from '@/lib/profile-layout';
 import sharp from 'sharp';
 import { getPool } from '@/db/pool';
@@ -48,10 +49,12 @@ export async function prepareProfileImages(form: FormData): Promise<ProfileImage
   return images;
 }
 
-export async function saveProfileCustomization(userId: string, input: ProfileInput, images: ProfileImageChanges, layout?: ProfileLayout) {
+export async function saveProfileCustomization(userId: string, input: ProfileInput, images: ProfileImageChanges, layout?: ProfileLayout, appearance?: ProfileAppearance) {
+  if (appearance && !parseProfileAppearance(appearance)) throw new ProfileImageError('Некорректное оформление профиля.');
   const client = await getPool().connect();
   try {
     await client.query('begin');
+    if (appearance) await client.query('update "user" set "profileAppearance" = $2::jsonb where id = $1', [userId, JSON.stringify(appearance)]);
     if (layout) await client.query('update "user" set "profileLayout" = $2::jsonb where id = $1', [userId, JSON.stringify(layout)]);
     const user = await client.query(`update "user" set username = $2, name = $3, "telegramChannel" = $4, "updatedAt" = now() where id = $1 returning id`, [userId, input.username, input.name, input.telegramChannel]);
     if (!user.rowCount) throw new Error('Profile not found');

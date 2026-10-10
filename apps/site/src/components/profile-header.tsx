@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 
-export function ProfileHeader({ name, username, createdAt, avatarSrc, bannerSrc, actions, status, tags, avatarControl, bannerControl }: {
+export function ProfileHeader({ name, username, createdAt, avatarSrc, bannerSrc, actions, status, tags, avatarControl, bannerControl, frame = 'none' }: {
+  frame?: import('@/lib/profile-appearance').ProfileAppearance['frame'];
   name: string;
   username: string;
   createdAt: Date | string;
@@ -21,7 +22,7 @@ export function ProfileHeader({ name, username, createdAt, avatarSrc, bannerSrc,
       {bannerControl}
     </div>
     <div className="community-identity">
-      <span className={`community-avatar${avatarSrc ? ' community-avatar-custom' : ''}`}>
+      <span data-frame={frame} className={`community-avatar${avatarSrc ? ' community-avatar-custom' : ''}`}>
         <Image src={avatarSrc ?? '/brand/icons/profile-avatar.svg'} width={avatarSrc ? 80 : 32} height={avatarSrc ? 80 : 32} unoptimized={Boolean(avatarSrc)} alt={avatarSrc ? `Аватар ${name}` : ''} />
         {avatarControl}
       </span>
