@@ -226,7 +226,8 @@ it('recognizes localized Monster editions and groups equivalent retailer spellin
   const { groupByFlavor } = await import('../src/storage.js');
   const config = loadProductsConfig();
   const editions = [
-    ['monster_ultra_rosa', ['Monster Ultra Rosa', 'Monster Ультра Роза', 'Монстр Ультра Роса без сахара']],
+    ['monster_ultra_rosa', ['Monster Energy Rosa', 'Monster Ultra Rosa', 'Monster Ультра Роза', 'Монстр Ультра Роса без сахара']],
+    ['monster_ultra_watermelon', ['Monster Energy Watermelow', 'Monster Ultra Watermelon']],
     ['monster_bad_apple', ['Monster Bad Apple', 'Monster Бэд Эппл', 'Monster Бед Эпл']],
     ['monster_ultra_white', ['Monster Ultra White', 'Monster Zero Ultra', 'Monster Зеро Ультра']],
     ['monster_ultra_peachy_keen', ['Monster Ultra Peachy Keen', 'Monster Ультра Пичи Кин', 'Monster Ultra Peachy Keen Zero Sugar']],

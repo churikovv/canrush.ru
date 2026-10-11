@@ -30,7 +30,10 @@ export function activeOffers(groups: CatalogGroup[], now = Date.now()): CatalogG
 }
 export async function readCityCatalog(cityId: CityId) {
   const regional = await readCatalogFile(`regions/${cityId}.json`);
-  if (regional?.cityId === cityId) return regional;
+  if (regional?.cityId === cityId) {
+    const archive = await readCatalogFile('product-registry.json');
+    return { ...regional, groups: restoreCatalogCovers(regional.groups ?? [], archive?.groups ?? []) };
+  }
   if (cityId !== DEFAULT_CITY.id) return null;
   const legacy = await readCatalogFile('catalog.json');
   if (!legacy) return null;
@@ -51,14 +54,14 @@ export async function readAllCatalogGroups(): Promise<CatalogGroup[]> {
     const key = JSON.stringify([group.brand, group.flavor]);
     const previous = groups.get(key);
     if (!previous) groups.set(key, group);
-    else if (!previous.coverImageUrl && group.coverImageUrl) groups.set(key, { ...previous, coverImageUrl: group.coverImageUrl });
+    else if ((!previous.coverImageUrl || (!previous.coverImageUrl.startsWith('/') && group.coverImageUrl?.startsWith('/'))) && group.coverImageUrl) groups.set(key, { ...previous, coverImageUrl: group.coverImageUrl });
   }
   const archive = await readCatalogFile('product-registry.json');
   for (const group of archive?.groups ?? []) {
     const key = JSON.stringify([group.brand, group.flavor]);
     const current = groups.get(key);
     if (!current) groups.set(key, { ...group, variants: [], minPrice: 0 });
-    else if (!current.coverImageUrl && group.coverImageUrl) groups.set(key, { ...current, coverImageUrl: group.coverImageUrl });
+    else if ((!current.coverImageUrl || (!current.coverImageUrl.startsWith('/') && group.coverImageUrl?.startsWith('/'))) && group.coverImageUrl) groups.set(key, { ...current, coverImageUrl: group.coverImageUrl });
   }
   return [...groups.values()];
 }
@@ -98,4 +101,16 @@ export async function readTierPickerGroups(): Promise<CatalogGroup[]> {
       return brand.length > 0 && brand.toLowerCase() !== 'unknown' && !isExcludedEnergyBrand(brand)
         && isResolvedFlavor(group.flavor) && group.variants.length > 0;
     });
+}
+
+/** Keep downloaded product covers when a new offer supplies an expiring CDN URL. */
+export function restoreCatalogCovers(groups: CatalogGroup[], archive: CatalogGroup[]): CatalogGroup[] {
+  const covers = new Map(archive.map(group => [JSON.stringify([group.brand, group.flavor]), group.coverImageUrl]));
+  return groups.map(group => {
+    if (group.coverImageUrl?.startsWith('/')) return group;
+    const saved = covers.get(JSON.stringify([group.brand, group.flavor]));
+    const local = group.variants.find(offer => offer.imageUrl?.startsWith('/'))?.imageUrl
+      ?? (saved?.startsWith('/') ? saved : undefined);
+    return local ? { ...group, coverImageUrl: local } : group;
+  });
 }

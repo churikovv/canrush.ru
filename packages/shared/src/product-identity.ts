@@ -5,6 +5,15 @@ export function isResolvedFlavor(flavor: string): boolean {
 
 /** Verified aliases for retailer titles that omit part of a product name. */
 export function canonicalProductFlavor(brand: string | undefined, flavor: string): string {
+  if (brand === 'Monster') {
+    const reviewed: Record<string, string> = {
+      mango: 'monster_mango_loco',
+      'unresolved:263797c983e786005750a4f6': 'monster_bad_apple',
+      'unresolved:5728c1f5c98f51d6e2c5ccd2': 'monster_ultra_rosa',
+      'unresolved:a5c012183b7ff4462e51f4fc': 'monster_ultra_watermelon',
+    };
+    if (reviewed[flavor]) return reviewed[flavor];
+  }
   if (brand === 'Monster' && flavor.endsWith(':sugarfree')) {
     const edition = flavor.slice(0, -':sugarfree'.length);
     // These editions are inherently zero-sugar; VR46, Original and juice lines are not.

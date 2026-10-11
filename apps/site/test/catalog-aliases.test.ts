@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { canonicalProductFlavor, type CatalogGroup } from '@canrush/shared';
-import { mergeCatalogAliases } from '../src/lib/catalog-files';
+import { mergeCatalogAliases, restoreCatalogCovers } from '../src/lib/catalog-files';
 
 it('merges Burn aliases while retaining offers and an archived cover', () => {
   const groups: CatalogGroup[] = ['blend:mango+peach', 'peach:sugarfree', 'blend:mango+peach:sugarfree'].map((flavor, i) => ({
@@ -54,4 +54,20 @@ it('deduplicates inherently sugar-free Monster editions, preserving distinct reg
     expect(canonicalProductFlavor('Monster', `${edition}:sugarfree`)).toBe(`${edition}:sugarfree`);
   }
   expect(canonicalProductFlavor('Other', 'monster_full_throttle:sugarfree')).toBe('monster_full_throttle:sugarfree');
+});
+
+it('merges reviewed Monster retailer identities without merging other editions', () => {
+  expect(canonicalProductFlavor('Monster', 'mango')).toBe('monster_mango_loco');
+  expect(canonicalProductFlavor('Monster', 'unresolved:263797c983e786005750a4f6')).toBe('monster_bad_apple');
+  expect(canonicalProductFlavor('Monster', 'unresolved:5728c1f5c98f51d6e2c5ccd2')).toBe('monster_ultra_rosa');
+  expect(canonicalProductFlavor('Monster', 'unresolved:a5c012183b7ff4462e51f4fc')).toBe('monster_ultra_watermelon');
+  expect(canonicalProductFlavor('Monster', 'monster_ultra_fiesta')).toBe('monster_ultra_fiesta');
+  expect(canonicalProductFlavor('Other', 'mango')).toBe('mango');
+});
+
+it('uses archived local photos without restoring stale offers or replacing existing local covers', () => {
+  const live: CatalogGroup = { brand: 'Volt Energy', flavor: 'blend:grapefruit+strawberry', coverImageUrl: 'https://example.com/expired', variants: [], minPrice: 120 };
+  const archive = { ...live, coverImageUrl: '/images/products/saved.jpg', minPrice: 0 };
+  expect(restoreCatalogCovers([live], [archive])[0]).toEqual({ ...live, coverImageUrl: archive.coverImageUrl });
+  expect(restoreCatalogCovers([{ ...live, coverImageUrl: '/images/products/current.jpg' }], [archive])[0]?.coverImageUrl).toBe('/images/products/current.jpg');
 });

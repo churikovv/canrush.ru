@@ -1,3 +1,4 @@
+import { canonicalProductFlavor } from '@canrush/shared';
 import { archiveProducts } from './product-registry.js';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -78,7 +79,8 @@ export function groupByFlavor(products: Product[]): CatalogGroup[] {
   for (const product of products) {
     if (isMixedBurnOffer(product.brand, product.name)) continue;
     const brand = product.brand ?? 'Unknown';
-    const flavor = product.flavor && product.flavor !== 'unknown' ? product.flavor : `unresolved:${createHash('sha256').update(JSON.stringify([product.source, product.sourceId, product.name])).digest('hex').slice(0, 24)}`;
+    const rawFlavor = product.flavor && product.flavor !== 'unknown' ? product.flavor : `unresolved:${createHash('sha256').update(JSON.stringify([product.source, product.sourceId, product.name])).digest('hex').slice(0, 24)}`;
+    const flavor = canonicalProductFlavor(brand, rawFlavor);
     const key = JSON.stringify([brand, flavor]);
 
     const variant: FlavorVariant = {
