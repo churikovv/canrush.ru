@@ -50,6 +50,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       headerAction={<Link className="admin-back-link" href="/profile">Вернуться в профиль</Link>}
       surfaceClassName="admin-surface"
     >
+      <Link className="community-button community-button-secondary" href="/admin/stores">Магазины · модерация</Link>
       <AdminDashboard
         campaignPanel={tab === 'campaigns' ? <AdminCampaigns days={[0,7,30,90].includes(Number(params.days)) ? Number(params.days) : 30} page={adminPage(params.page)} /> : undefined}
         admin={admin}

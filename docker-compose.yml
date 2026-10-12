@@ -41,6 +41,7 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-CanRush}
+      YANDEX_MAPS_API_KEY: ${YANDEX_MAPS_API_KEY:-}
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
     volumes:
       # Shared catalog data (parser writes to /app/apps/site/data, site reads from cwd/data)

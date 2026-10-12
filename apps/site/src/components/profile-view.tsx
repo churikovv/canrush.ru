@@ -1,3 +1,5 @@
+import { ProfileCompatibility } from '@/components/profile-compatibility';
+import { getProfileCompatibility } from '@/lib/profile-compatibility-data';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { ReviewDiscussion } from '@/components/review-discussion';
 import { getWallInteractions } from '@/lib/wall-discussions';
@@ -42,8 +44,8 @@ function displayName(profile: { name: string; username: string | null }): string
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, friends, listings, followers, following, favorites, tierLists, catalog, reviewPreview] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id),
+  const [community, ratings, wall, presence, friends, listings, followers, following, favorites, tierLists, catalog, reviewPreview, compatibility] = await Promise.all([
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null,
   ]);
   const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
   const tierProducts = tierListProductsForPlacements(catalog, tierLists.flatMap(list => list.preview));
@@ -65,6 +67,8 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         actions={isOwn ? <div className="profile-owner-actions"><Link href="/profile/edit" className="community-button community-button-secondary profile-edit-action">Редактировать профиль</Link></div>
           : viewerId ? <FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
           : <Link className="community-button" href="/sign-in">Войти и подписаться</Link>} />
+
+      {compatibility && <ProfileCompatibility value={compatibility} />}
 
       <nav className="community-shortcuts" aria-label="Активность пользователя">
         {[{ href: favoritesHref, label: 'Избранное', count: profile.favoriteCount, icon: 'stat-favorites', images: favorites.slice(0, 3).map(group => group.coverImageUrl).filter((src): src is string => Boolean(src)) },

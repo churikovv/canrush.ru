@@ -1,0 +1,57 @@
+import { randomUUID } from 'node:crypto';
+import { afterAll,beforeAll,expect,it,vi } from 'vitest';
+import { Pool } from 'pg';
+const url=process.env.TEST_DATABASE_URL??'postgresql://localhost:5432/canrush_site_test';
+if(new URL(url).pathname!=='/canrush_site_test')throw new Error('Test DB only');
+const pool=new Pool({connectionString:url,max:3});vi.mock('../src/db/pool',()=>({getPool:()=>pool}));
+const api=await import('../src/lib/stores');
+const [owner,admin,stranger]=[randomUUID(),randomUUID(),randomUUID()] as [string,string,string];
+let id:string;
+const input={name:'Test '+randomUUID(),city:'moscow',address:'Test 1',latitude:55.75,longitude:37.61,metro:null,description:'',catalog:[]};
+beforeAll(async()=>{for(const uid of [owner,admin,stranger])await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt") values($1,'Store test',$2,true,now(),now())`,[uid,uid+'@example.com']);await pool.query('insert into "siteAdmin"(email) values($1)',[admin+'@example.com']);});
+afterAll(async()=>{await pool.query('delete from "siteAdmin" where email=$1',[admin+'@example.com']);await pool.query('delete from "user" where id=any($1::text[])',[[owner,admin,stranger]]);await pool.end();});
+it('keeps pending stores private and enforces ownership, duplicates and cooldown',async()=>{
+ id=await api.saveStore(owner,input);
+ expect((await api.listStores('moscow',input.name,1)).items).toHaveLength(0);
+ expect((await api.listStores('moscow',input.name,1,owner)).items).toHaveLength(1);
+ await expect(api.saveStore(stranger,input,id)).rejects.toThrow('редактирования');
+ await expect(api.saveStore(owner,{...input,name:'Another'})).rejects.toThrow('минуту');
+ await expect(api.saveStore(stranger,input)).rejects.toThrow('уже добавлен');
+});
+it('only administrators can publish the exact reviewed version',async()=>{
+ const row=(await api.getStore(id))!;
+ await expect(api.moderateStore(stranger,id,'published','',row.updatedAt.toISOString())).rejects.toThrow();
+ await expect(api.moderateStore(admin,id,'published','',new Date(0).toISOString())).rejects.toThrow();
+ await api.moderateStore(admin,id,'published','',row.updatedAt.toISOString());
+ expect((await api.listStores('moscow',input.name,1)).items).toHaveLength(1);
+ await api.saveStore(owner,{...input,description:'Changed'},id);
+ expect((await api.listStores('moscow',input.name,1)).items).toHaveLength(0);
+});
+it('requires a rejection reason and lets the owner correct their submission',async()=>{
+ const row=(await api.getStore(id))!;
+ await expect(api.moderateStore(admin,id,'rejected','',row.updatedAt.toISOString())).rejects.toThrow('причину');
+ await api.moderateStore(admin,id,'rejected','Уточните адрес',row.updatedAt.toISOString());
+ expect((await api.getStore(id))?.moderationNote).toBe('Уточните адрес');
+ await api.saveStore(owner,input,id);
+ expect((await api.getStore(id))?.moderationNote).toBe('');
+});
+it('keeps photos private until moderation and validates retained ownership atomically',async()=>{
+ const photo={data:Buffer.from('webp fixture'),thumbnail:Buffer.from('thumbnail fixture')};
+ await api.saveStore(owner,input,id,{retained:[],photos:[photo]});
+ const row=(await api.getStore(id))!;
+ const photoId=row.photos[0]!;
+ expect(row.photos).toHaveLength(1);
+ expect(await api.getStorePhoto(photoId,null)).toBeNull();
+ expect(await api.getStorePhoto(photoId,stranger)).toBeNull();
+ expect(await api.getStorePhoto(photoId,owner)).toEqual(photo.data);
+ expect(await api.getStorePhoto(photoId,admin,true)).toEqual(photo.thumbnail);
+ await api.moderateStore(admin,id,'published','',row.updatedAt.toISOString());
+ expect(await api.getStorePhoto(photoId,null)).toEqual(photo.data);
+ await expect(api.saveStore(owner,input,id,{retained:[randomUUID()],photos:[]})).rejects.toThrow('не принадлежит');
+ expect((await api.getStore(id))?.status).toBe('published');
+ await api.saveStore(owner,input,id,{retained:[photoId],photos:[]});
+ expect(await api.getStorePhoto(photoId,null)).toBeNull();
+ expect((await api.getStore(id))?.photos).toEqual([photoId]);
+ await api.saveStore(owner,input,id,{retained:[],photos:[]});
+ expect(await api.getStorePhoto(photoId,owner)).toBeNull();
+});

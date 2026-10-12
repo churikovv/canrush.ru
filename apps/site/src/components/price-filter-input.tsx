@@ -3,7 +3,7 @@
 import { searchMatches } from '@/lib/search-match';
 import { useRef, useState } from 'react';
 
-interface FilterOption { value: string; label: string }
+interface FilterOption { value: string; label: string; color?: string }
 
 export function PriceFilterInput({ id, value, options, allLabel, onChange }: {
   id: string;
@@ -16,8 +16,10 @@ export function PriceFilterInput({ id, value, options, allLabel, onChange }: {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(-1);
   const input = useRef<HTMLInputElement>(null);
-  const selected = options.find(option => option.value === value)?.label ?? '';
-  const choices = [{ value: '', label: allLabel }, ...options].filter(option => searchMatches(option.label, query));
+  const selectedOption = options.find(option => option.value === value);
+  const selected = selectedOption?.label ?? '';
+  const color = !open ? selectedOption?.color : undefined;
+  const choices: FilterOption[] = [{ value: '', label: allLabel }, ...options].filter(option => searchMatches(option.label, query));
   function choose(option: FilterOption) {
     onChange(option.value);
     setOpen(false);
@@ -27,9 +29,10 @@ export function PriceFilterInput({ id, value, options, allLabel, onChange }: {
   function show() { setQuery(''); setActive(-1); setOpen(true); }
 
   return (
-    <div className="price-filter-input" onBlur={event => {
+    <div className={`price-filter-input${color ? ' price-filter-input-colored' : ''}`} onBlur={event => {
       if (!event.currentTarget.contains(event.relatedTarget)) { setOpen(false); setQuery(''); setActive(-1); }
     }}>
+      {color && <span className="metro-line-dot metro-line-selected" style={{backgroundColor:color}} aria-hidden="true" />}
       <input ref={input} id={id} role="combobox" autoComplete="off" aria-autocomplete="list"
         aria-expanded={open} aria-controls={`${id}-options`}
         aria-activedescendant={open && active >= 0 && choices[active] ? `${id}-option-${active}` : undefined}
@@ -58,7 +61,7 @@ export function PriceFilterInput({ id, value, options, allLabel, onChange }: {
             className={index === active ? 'is-active' : undefined}
             ref={element => { if (index === active) element?.scrollIntoView({ block: 'nearest' }); }}
             onMouseDown={event => event.preventDefault()} onClick={() => choose(option)}>
-            {option.label}{option.value === value && <span aria-hidden="true">✓</span>}
+            <span className="price-filter-option-label">{option.color && <span className="metro-line-dot" style={{backgroundColor:option.color}} aria-hidden="true" />}{option.label}</span>{option.value === value && <span aria-hidden="true">✓</span>}
           </li>)}
         </ul>
         {!choices.length && <p role="status">Ничего не найдено</p>}
