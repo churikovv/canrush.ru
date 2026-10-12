@@ -14,7 +14,7 @@ import {
 } from '@/lib/tier-list-types';
 
 const MIN_OFFICIAL_REVIEW_COUNT = 3;
-const MIN_OFFICIAL_RETAILER_COUNT = 4;
+const MIN_OFFICIAL_RETAILER_COUNT = 1;
 
 interface TierListRow extends QueryResultRow {
   avatarId: string | null;

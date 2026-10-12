@@ -36,11 +36,11 @@ export default async function TierListsPage() {
             <p className="tierlists-kicker">Рейтинг CanRush</p>
             <h1>Тирлист энергетиков</h1>
             <p>
-              В рейтинге участвуют напитки из четырёх и более магазинов, у которых есть минимум три отзыва.
+              В рейтинге участвуют напитки, доступные хотя бы в одном магазине и получившие минимум три отзыва.
             </p>
           </div>
           <dl className="tierlists-facts">
-            <div><dt>Доступны широко</dt><dd>{official.eligibleCount}</dd></div>
+            <div><dt>Есть в продаже</dt><dd>{official.eligibleCount}</dd></div>
             <div><dt>Получили оценку</dt><dd>{official.ratedCount}</dd></div>
           </dl>
         </header>
