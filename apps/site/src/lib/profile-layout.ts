@@ -11,6 +11,13 @@ export type ProfileBlockKey = typeof PROFILE_BLOCKS[number]['key'];
 export function isRequiredProfileBlock(key: ProfileBlockKey): boolean { return key === 'experience' || key === 'social'; }
 export type ProfileLayout = { order: ProfileBlockKey[]; hidden: ProfileBlockKey[] };
 export const DEFAULT_PROFILE_LAYOUT: ProfileLayout = { order: PROFILE_BLOCKS.map(x => x.key), hidden: ['favorites', 'listings'] };
+/** Places `key` right before or after `target`; returns null when the order would not change. */
+export function placeProfileBlock(order: readonly ProfileBlockKey[], key: ProfileBlockKey, target: ProfileBlockKey, after: boolean): ProfileBlockKey[] | null {
+  if (key === target || !order.includes(key) || !order.includes(target)) return null;
+  const next = order.filter(item => item !== key);
+  next.splice(next.indexOf(target) + (after ? 1 : 0), 0, key);
+  return next.every((item, index) => item === order[index]) ? null : next;
+}
 export function parseProfileLayout(value: unknown): ProfileLayout | null {
   if (!value || typeof value !== 'object') return null;
   const { order, hidden } = value as ProfileLayout;

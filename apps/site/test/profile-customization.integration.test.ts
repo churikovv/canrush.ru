@@ -80,8 +80,10 @@ describe.sequential('profile image storage and displayed tags', () => {
     await expect(saveProfileCustomization(a, { ...input, name: 'Locked change' }, {}, undefined, { theme: 'mint', frame: 'prism' })).rejects.toThrow('пока закрыто');
     expect((await getProfileByUserId(a))?.name).toBe(input.name);
     await pool.query(`insert into "profileExperience" ("userId", reason, "sourceKey", points) values ($1, 'review', 'appearance-test', 3000)`, [a]);
-    await saveProfileCustomization(a, input, {}, undefined, { theme: 'dark', frame: 'orbit' });
-    expect((await getProfileByUserId(a))?.profileAppearance).toEqual({ theme: 'dark', frame: 'orbit' });
+    for (const frame of ['abyss', 'nova', 'orbit'] as const) {
+      await saveProfileCustomization(a, input, {}, undefined, { theme: 'dark', frame });
+      expect((await getProfileByUserId(a))?.profileAppearance).toEqual({ theme: 'dark', frame });
+    }
     await expect(saveProfileCustomization(a, { ...input, username: username(b) }, {}, undefined, { theme: 'mint', frame: 'pulse' })).rejects.toMatchObject({ code: '23505' });
     expect((await getProfileByUserId(a))?.profileAppearance).toEqual({ theme: 'dark', frame: 'orbit' });
     expect((await getProfileByUserId(b))?.profileAppearance).toEqual({ theme: 'default', frame: 'none' });

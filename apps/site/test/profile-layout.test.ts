@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { DEFAULT_PROFILE_LAYOUT, parseProfileLayout } from '../src/lib/profile-layout';
+import { DEFAULT_PROFILE_LAYOUT, parseProfileLayout, placeProfileBlock } from '../src/lib/profile-layout';
 it('validates complete unique block orders and visibility', () => {
   expect(parseProfileLayout(DEFAULT_PROFILE_LAYOUT)).toEqual(DEFAULT_PROFILE_LAYOUT);
   expect(parseProfileLayout({ order: ['wall'], hidden: [] })).toBeNull();
@@ -21,3 +21,12 @@ it('keeps existing arrangements and adds a hidden favorites block', () => {
 });
 
 it('places the wall last by default', () => { expect(DEFAULT_PROFILE_LAYOUT.order.at(-1)).toBe('wall'); });
+
+it('moves a block before or after a target and reports no-op moves', () => {
+  const order = ['experience', 'ratings', 'listings', 'social'] as const;
+  expect(placeProfileBlock(order, 'experience', 'ratings', true)).toEqual(['ratings', 'experience', 'listings', 'social']);
+  expect(placeProfileBlock(order, 'listings', 'experience', false)).toEqual(['listings', 'experience', 'ratings', 'social']);
+  expect(placeProfileBlock(order, 'experience', 'ratings', false)).toBeNull();
+  expect(placeProfileBlock(order, 'ratings', 'ratings', true)).toBeNull();
+  expect(placeProfileBlock(order, 'wall', 'ratings', true)).toBeNull();
+});

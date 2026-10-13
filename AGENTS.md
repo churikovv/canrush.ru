@@ -133,6 +133,23 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
 - Мобильный таб-бар: Каталог, Цены, Тирлисты, Маркет, Сообщения, Профиль. Главная доступна через логотип.
 - Браузерная проверка: `node apps/site/scripts/market-smoke.mjs`. Требует сборку и отдельный сервер на `localhost:3100` с `DATABASE_URL=postgresql://localhost:5432/canrush_site_test`, `BETTER_AUTH_URL=http://localhost:3100`, `BETTER_AUTH_SECRET=canrush-market-browser-test-secret-32-bytes` (фиктивный секрет только тестового сервера). Создаёт и очищает только собственные тестовые аккаунты, не отправляет письма.
 
+## Рамки аватарки
+
+- Пресеты — `PROFILE_FRAMES` в `src/lib/profile-appearance.ts`, отрисовка — `src/components/avatar-frame.tsx` (SVG + CSS keyframes, без JS). Ключи стабильны: не переименовывай их, у пользователей они сохранены в БД.
+- Новая рамка требует миграции, которая пересоздаёт check `user_profile_appearance` (см. `0049_profile_frames_abyss_nova.sql`), иначе сохранение упадёт с `23514`.
+- Свечение (`filter: drop-shadow`) вешай на корневой `<svg>` или HTML-элемент: Safari игнорирует CSS-фильтры на вложенных SVG-элементах. Неоновые ободки (`.avatar-ring`) — HTML + `conic-gradient` + `mask`.
+- Базовые стили — статичная поза для `prefers-reduced-motion` и закрытых вариантов в редакторе; временные элементы (блики, искры) по умолчанию `opacity: 0`.
+
+## Уровень и таб бар
+
+- Ранги уровня — `LEVEL_TIERS` в `src/lib/level-tier.ts` (Новичок 1, Бронза 3, Серебро 5, Золото 8, Платина 12, Легенда 20). `LevelEmblem` (панель опыта) и `LevelChip`/`profile-level` (строки авторов) в `src/components/level-badge.tsx`; палитра — CSS-переменные `[data-level-tier]` (не `data-tier`, чтобы не путать с тирлистами). `LevelEmblem` использует `useId` для градиентов: в тестовых обвязках рендерь несколько эмблем одним деревом.
+- Анимации иконок таб бара и хедера: `tap-motion.tsx` внутри `[data-motion-scope]` (`header`, `tab-bar`) ставит `data-activated` на нажатый `[data-motion]` и через `sessionStorage` продолжает анимацию с отрицательной `--tab-delay` на следующей странице (хедер и таб бар перемонтируются при навигации). Ключи анимаций — значения `data-motion` в `globals.css`.
+
+## Топ месяца
+
+- Гонка — XP, набранный за календарный месяц по Москве (без самих наградных XP). Итоги подводит идемпотентная `settle_monthly_top()` (миграция `0050_monthly_top.sql`), её вызывают главная и `/leaderboard` через `settleMonthlyTop()`; первый подсчёт — за октябрь 2026. Топ-3 получают +500/+300/+150 XP (`reason='monthly-top'`), достижение и тег `top` («ТОП», единственный тег с постоянной анимацией) и уведомление `monthly-top`.
+- Тест: `test/monthly-top.integration.test.ts` передаёт `settle_monthly_top(at)` с далёким будущим месяцем и удаляет только свою запись `monthlyTopSettlement`.
+
 ## Экран загрузки
 
 - Общий `app/loading.tsx` и загрузки маркета/сообщений используют `SiteLoading`: пиксельные буквы Canrush, CSS keyframes, без JavaScript, дополнительных библиотек и задержки открытия страниц.

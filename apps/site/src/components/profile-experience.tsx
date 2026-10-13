@@ -3,6 +3,8 @@ import { ProfileStatFill } from '@/components/profile-stat-fill';
 import Link from '@/components/navigation-progress';
 import { useEffect, useState } from 'react';
 import { experienceLevel, type Experience } from '@/lib/experience-level';
+import { LevelChipContent, LevelEmblem } from '@/components/level-badge';
+import { levelTier } from '@/lib/level-tier';
 
 // One batched request for all visible authors, including repeated review authors.
 const listeners = new Map<string, Set<(value: Experience) => void>>();
@@ -35,12 +37,13 @@ export function ProfileExperience({ username, initial = { xp: 0, rank: null }, e
     };
   }, [username]);
   const progress = experienceLevel(value.xp);
-  if (!expanded) return <Link className="profile-level" href={`/profile/${username}#experience`} title={`${value.xp} XP${value.rank ? ` · № ${value.rank} в рейтинге` : ''}`}>Ур. {progress.level}</Link>;
+  const { tier, next } = levelTier(progress.level);
+  if (!expanded) return <Link className="profile-level" data-level-tier={tier.key} href={`/profile/${username}#experience`} title={`${tier.label} · ${value.xp} XP${value.rank ? ` · № ${value.rank} в рейтинге` : ''}`}><LevelChipContent level={progress.level} /></Link>;
   return <section className="community-panel experience-panel" id="experience" aria-labelledby="experience-title">
     <div className="experience-heading"><h2 id="experience-title">Уровень</h2><Link href="/leaderboard">{value.rank ? `№ ${value.rank} в рейтинге ↗` : 'Рейтинг ↗'}</Link></div>
-    <div className="experience-summary"><strong className="experience-level-number" aria-label={`Уровень ${progress.level}`}>{progress.level}</strong><div className="experience-level-copy"><strong>{value.xp.toLocaleString('ru-RU')} XP</strong><span>Ещё {progress.remaining} XP до уровня {progress.level + 1}</span></div></div>
+    <div className="experience-summary" data-level-tier={tier.key}><LevelEmblem level={progress.level} /><div className="experience-level-copy"><span className="experience-tier">{tier.label}</span><strong>{value.xp.toLocaleString('ru-RU')} XP</strong><span>Ещё {progress.remaining} XP до уровня {progress.level + 1}{next && ` · «${next.label}» с уровня ${next.min}`}</span></div></div>
     <div className="experience-extra">{achievements && <span>Достижения: получено {achievements.earned} из {achievements.total}</span>}{Boolean(value.aheadPercent && value.aheadPercent > 0) && <span>Больше опыта, чем у {value.aheadPercent}% пользователей</span>}</div>
-    <div className="experience-track" role="progressbar" aria-valuemin={0} aria-valuemax={progress.required} aria-valuenow={progress.current} aria-label="Прогресс уровня"><ProfileStatFill value={progress.current / progress.required} /></div>
+    <div className="experience-track" data-level-tier={tier.key} role="progressbar" aria-valuemin={0} aria-valuemax={progress.required} aria-valuenow={progress.current} aria-label="Прогресс уровня"><ProfileStatFill value={progress.current / progress.required} /></div>
 
   </section>;
 }

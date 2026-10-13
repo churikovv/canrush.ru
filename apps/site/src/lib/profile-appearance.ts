@@ -6,8 +6,10 @@ export const PROFILE_THEMES = [
 ] as const;
 export const PROFILE_FRAMES = [
   { key: 'none', level: 1, label: 'Без рамки' },
-  { key: 'orbit', level: 5, label: 'Разряд' },
   { key: 'pulse', level: 3, label: 'Искры' },
+  { key: 'orbit', level: 5, label: 'Разряд' },
+  { key: 'abyss', level: 5, label: 'Бездна' },
+  { key: 'nova', level: 6, label: 'Сверхновая' },
   { key: 'prism', level: 8, label: 'Nya desuu' },
 ] as const;
 export type ProfileAppearance = { theme: typeof PROFILE_THEMES[number]['key']; frame: typeof PROFILE_FRAMES[number]['key'] };

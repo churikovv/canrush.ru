@@ -56,13 +56,9 @@ export function CookieNotice() {
       aria-live="polite"
       initial={false}
     >
-      <div className="cookie-notice-copy">
-        <h2 id="cookie-notice-title">Cookie на CanRush</h2>
-        <p>
-          Мы используем необходимые cookie для входа и, с вашего согласия, аналитику рекламных переходов и Яндекс Метрику для
-          статистики и улучшения сайта. <Link href="/privacy#cookies">Подробнее в Политике</Link>.
-        </p>
-      </div>
+      <p id="cookie-notice-title" className="cookie-notice-copy">
+        Мы используем <Link href="/privacy#cookies">куки</Link>
+      </p>
       <button className="cookie-notice-button" type="button" onClick={acceptCookies}>
         Принять и закрыть
       </button>

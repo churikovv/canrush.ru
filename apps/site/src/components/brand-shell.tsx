@@ -5,6 +5,7 @@ import { Suspense, type ReactNode } from 'react';
 import { CityHeader } from '@/components/city-header';
 import { NotificationBell } from '@/components/notification-bell';
 import { SiteFooter } from '@/components/site-footer';
+import { TapMotion } from '@/components/tap-motion';
 
 interface BrandShellProps {
   children: ReactNode;
@@ -15,7 +16,8 @@ interface BrandShellProps {
 export function BrandShell({ children, headerAction, surfaceClassName }: BrandShellProps) {
   return (
     <div className="site-shell">
-      <header className="brand-header">
+      <header className="brand-header" data-motion-scope="header">
+        <TapMotion />
         <Link className="brand-home" href="/" aria-label="CanRush, на главную">
           <Image className="brand-mark" src="/brand/logo-mark.svg" width={36} height={30} alt="" priority />
           <Image

@@ -11,9 +11,11 @@ export interface AchievementProgress {
   adrenaline: number;
   admin: number;
   telegram: number;
+  monthlyTop: number;
 }
 
 export const PROFILE_ACHIEVEMENTS = [
+  { key: 'top', label: 'ТОП', description: 'Попасть в топ-3 рейтинга месяца', metric: 'monthlyTop', goal: 1 },
   { key: 'seller', label: 'Селлер', description: 'Опубликовать товар в маркете', metric: 'listings', goal: 1 },
   { key: 'altushka', label: 'Альтушка', description: 'Написать отзыв на Monster Ultra White', metric: 'whiteMonster', goal: 1 },
   { key: 'flash', label: 'Флэш', description: 'Написать отзыв на любой напиток Flash Up', metric: 'flash', goal: 1 },
@@ -60,7 +62,7 @@ export function profilePageNumber(value: unknown): number {
   return typeof page === 'number' && Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
 }
 
-const ACHIEVEMENT_ART = new Set(['seller', 'altushka', 'flash', 'collector', 'admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven']);
+const ACHIEVEMENT_ART = new Set(['top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven']);
 export function achievementImage(key: string): string {
   return ACHIEVEMENT_ART.has(key) ? `/brand/achievements/${key}.png` : '/brand/icons/achievement.svg';
 }

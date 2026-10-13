@@ -45,7 +45,7 @@ export function NotificationBell() {
   },[open]);
   if (!authenticated) return <span className="notification-slot" aria-hidden="true" />;
   return <>
-    <button ref={trigger} type="button" className="notification-bell" aria-label={`Уведомления${unread ? `, непрочитанных: ${unread}` : ''}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpen(true); void load(); }}>
+    <button ref={trigger} type="button" className="notification-bell" data-motion="bell" aria-label={`Уведомления${unread ? `, непрочитанных: ${unread}` : ''}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpen(true); void load(); }}>
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
       {unread>0 && <span className="notification-count" aria-hidden="true">{unread>99?'99+':unread}</span>}
     </button>

@@ -66,6 +66,10 @@ export async function getNotifications(userId: string, before?: string) {
     } else if (row.kind==='wall-comment') {
       title = `${actor} оставил запись на вашей стене`; detail = row.wall?.slice(0,160) ?? '';
       href = row.ownerUsername ? `/profile/${encodeURIComponent(row.ownerUsername)}#wall` : '/profile#wall';
+    } else if (row.kind==='monthly-top') {
+      const p = row.payload;
+      title = `Вы заняли ${p.place} место в топе месяца`; detail = `+${p.reward} XP и тег «ТОП» для профиля`;
+      href = row.ownerUsername ? `/profile/${encodeURIComponent(row.ownerUsername)}/achievements` : '/profile';
     } else if (row.kind==='price') {
       const p = row.payload; city = p.city;
       title = `${p.price < p.before ? 'Цена снизилась' : 'Цена выросла'}: ${p.brand} · ${flavorName(p.flavor)}`;
