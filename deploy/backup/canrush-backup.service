@@ -1,0 +1,15 @@
+[Unit]
+Description=Canrush PostgreSQL backup to Yandex Disk
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Environment=RCLONE_CONFIG=/root/.config/rclone/rclone.conf
+EnvironmentFile=-/etc/canrush-backup.env
+ExecStart=/usr/bin/python3 /opt/canrush/deploy/backup/backup.py
+UMask=0077
+TimeoutStartSec=2h
+Nice=10

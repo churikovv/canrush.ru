@@ -24,3 +24,5 @@ out/
 apps/site/public/images/
 apps/site/data/
 apps/apps/site/public/images/
+
+__pycache__/
