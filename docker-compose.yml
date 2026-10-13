@@ -41,11 +41,13 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-CanRush}
+      PRICE_HISTORY_DIR: /app/price-history/regions
       YANDEX_MAPS_API_KEY: ${YANDEX_MAPS_API_KEY:-}
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
     volumes:
       # Shared catalog data (parser writes to /app/apps/site/data, site reads from cwd/data)
       # Next.js standalone server sets cwd to /app/apps/site, so mount there
+      - parser-data:/app/price-history:ro
       - catalog-data:/app/apps/site/data
       # Product images (parser downloads, site serves)
       - product-images:/app/apps/site/public/images

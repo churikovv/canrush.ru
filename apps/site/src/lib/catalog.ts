@@ -1,4 +1,4 @@
-import { isResolvedFlavor } from '@canrush/shared';
+import { isResolvedFlavor, reviewedProductIdentity, canonicalProductFlavor } from '@canrush/shared';
 import { cache } from 'react';
 import { selectedCity } from '@/lib/location';
 import { activeOffers, readCityCatalog, readAllCatalogGroups, readTierPickerGroups } from '@/lib/catalog-files';
@@ -29,6 +29,8 @@ function groupKey(brand: string, flavor: string): string {
 }
 
 export async function getCatalogGroup(brand: string, flavor: string): Promise<CatalogGroup | null> {
+  ({ brand, flavor } = reviewedProductIdentity(brand, flavor));
+  flavor = canonicalProductFlavor(brand, flavor);
   const groups = await loadCatalogGroups();
   const local = groups.find(group => group.brand === brand && group.flavor === flavor);
   if (local) return local;

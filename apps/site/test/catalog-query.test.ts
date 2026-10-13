@@ -164,7 +164,7 @@ describe('catalog query', () => {
 
   it('кодирует и декодирует безопасный ключ карточки', () => {
     const slug = catalogGroupSlug('Adrenaline Rush', 'strawberry');
-    expect(decodeCatalogGroupSlug(slug)).toEqual({ brand: 'Adrenaline Rush', flavor: 'strawberry' });
+    expect(decodeCatalogGroupSlug(slug)).toEqual({ brand: 'Adrenaline Rush', flavor: 'blend:calamansi+strawberry+yuzu' });
     expect(decodeCatalogGroupSlug('invalid')).toBeNull();
   });
 });

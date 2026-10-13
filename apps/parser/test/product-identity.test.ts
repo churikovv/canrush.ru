@@ -31,7 +31,7 @@ describe('product identity across cities', () => {
     expect(product('Red Bull Апельсин и Маракуйя').flavor).toBe('blend:orange+passion_fruit');
     expect(product('Red Bull ZERO ананас-лимон').flavor).toBe('blend:lemon+pineapple:sugarfree');
     expect(product('Red Bull Sods Zero Sugar Summer Berry').flavor).toBe('redbull_sods_summer_berry:sugarfree');
-    expect(product('Red Bull Krating Daeng Extra Zinc').flavor).toBeUndefined();
+    expect(product('Red Bull Krating Daeng Extra Zinc').flavor).toBe('redbull_krating_daeng_extra_zinc');
     expect(product('Red Bull Coffee').flavor).toBe('coffee');
   });
 });
@@ -113,7 +113,7 @@ it('recognizes the reported regional product editions without merging ambiguous 
     ['Vulkan', 'Напиток энергетический Vulkan без сахара, 450 мл', 'sugarfree'],
     ['Drive Me', 'Напиток Drive Me Max газированный, 449мл', 'drive_max'],
     ['Drive Me', 'Напиток энергетический Drive Me, 449 мл', 'original'],
-    ['Pulseup', 'Энергетический Напиток Pulseup Energy 0,45л Ж/б', 'original'],
+    ['Pulseup', 'Энергетический Напиток Pulseup Energy 0,45л Ж/б', 'pulse_your'],
     ['Pulseup', 'Pulseup Prosecco Energy 0,45л', 'pulse_prosecco'],
     ['Pulseup', 'PulseUp Frozen Energy 330мл', 'pulse_frozen'],
     ['Fun Up', 'FUN UP Guarana 450мл', 'guarana'],
@@ -159,7 +159,7 @@ it('resolves additional named drinks but keeps assorted and unspecified Jaguar o
     ['Bacchus', 'Напиток негазированный Бахус 250мл', 'bacchus_still'],
     ['Bacchus', 'Напиток газированный Бахус 250мл', 'bacchus_sparkling'],
     ['Lit Energy', 'Lit Energy Granat 450мл', 'pomegranate'],
-    ['Lit Energy', 'Lit Energy Turbo Zero 450мл', 'lit_turbo:sugarfree'],
+    ['Lit Energy', 'Lit Energy Turbo Zero 450мл', 'lit_turbo'],
     ['Lit Energy', 'Lit Energy Турбо 450мл', 'lit_turbo'],
     ['Doma By Guf', 'Doma By Guf Энергия 450мл', 'original'],
     ['Doma By Guf', 'Doma By Guf Ориджинал 450мл', 'original'],
@@ -175,4 +175,35 @@ it('resolves additional named drinks but keeps assorted and unspecified Jaguar o
   for (const [brand, name, flavor] of cases) {
     expect(normalizeProduct('edadeal', { sourceId: name, name, brand, price: 100, url: 'https://example.com' }, config.brands, '2026-10-02', config.brandAliases, config.flavors, config.flavorAliases).flavor).toBe(flavor);
   }
+});
+
+describe('reviewed archive titles', () => {
+  it.each([
+    ['Lit Energy Клубничная жвачка 450 мл', 'blend:bubblegum+strawberry'],
+    ['Lit Energy Turbo Zero 450 мл', 'lit_turbo'],
+    ['Volt Ягодное драже 450 мл', 'berry_dragee'],
+    ['Monster Energy Nitro со вкусом апельсина и лимона', 'monster_nitro'],
+    ['Flash Up Zero Mode Peach Bilberry', 'blend:blueberry+peach:sugarfree'],
+    ['Напиток энергетич.Ред Булл газ.0,25л ж/б', 'original'],
+    ['Напиток энергетич.Ред Булл б/сахара газ.0,25л ж/б', 'sugarfree'],
+  ])('recognizes %s', (name, expected) => expect(product(name).flavor).toBe(expected));
+  it('keeps assortment unresolved', () => expect(product('Напиток энергетический ЛИТ ЭНЕРДЖИ в ассортименте').flavor).toBeUndefined());
+});
+
+it.each([
+  ['RedBull Fruit Mix 325 мл', 'redbull_fruit_mix'],
+  ['RedBull Krating m 250 мл', 'redbull_krating_daeng'],
+  ['RedBull Krating Daeng Extra Zinc m стекло 145 мл', 'redbull_krating_daeng_extra_zinc'],
+  ['Drive Me Экзотическая энергия луло-кактус 449 мл', 'blend:cactus+lulo'],
+])('recognizes reviewed edition %s', (name, flavor) => expect(product(name).flavor).toBe(flavor));
+
+it.each([
+  ['Adrenaline Rush Vitamin Power Манго 449 мл', 'mango'],
+  ['Adrenaline Vitamin Power со вкусом Апельсина 449 мл', 'orange'],
+  ['Adrenaline Vitamin Power Ягодная энергия 449 мл', 'berry'],
+  ['Adrenaline Rush Game Fuel Манго 449 мл', 'mango'],
+])('keeps Vitamin Power editions distinct: %s', (name, flavor) => expect(product(name).flavor).toBe(flavor));
+
+it('keeps Flash Zero Mode sugarfree even when a source omits that suffix', () => {
+  expect(product('Flash Up Zero Mode Peach Bilberry 450 мл').flavor).toBe('blend:blueberry+peach:sugarfree');
 });

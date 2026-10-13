@@ -1,6 +1,7 @@
+import { getPriceHistory } from '@/lib/price-history-files';
+import { selectedCity } from '@/lib/location';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { canonicalProductFlavor } from '@canrush/shared';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
 import { CatalogProductDetail } from '@/components/catalog-product-detail';
@@ -25,7 +26,7 @@ async function productFromParams(params: ProductParams) {
     const group = (await loadAllCatalogGroups()).find(item => catalogGroupSlug(item.brand, item.flavor) === product);
     return group ? getCatalogGroup(group.brand, group.flavor) : null;
   }
-  return getCatalogGroup(decoded.brand, canonicalProductFlavor(decoded.brand, decoded.flavor));
+  return getCatalogGroup(decoded.brand, decoded.flavor);
 }
 
 function resolveTab(value: string | undefined): ProductTab {
@@ -54,7 +55,7 @@ export default async function CatalogProductPage({
   const { tab } = await searchParams;
   const decoded = decodeCatalogGroupSlug((await params).product);
   if (decoded && catalogGroupSlug(decoded.brand, decoded.flavor) !== (await params).product) {
-    permanentRedirect(`/catalog/${catalogGroupSlug(decoded.brand, canonicalProductFlavor(decoded.brand, decoded.flavor))}${tab === 'reviews' ? '?tab=reviews' : ''}`);
+    permanentRedirect(`/catalog/${catalogGroupSlug(decoded.brand, decoded.flavor)}${tab === 'reviews' ? '?tab=reviews' : ''}`);
   }
   const activeTab = resolveTab(tab);
 
@@ -72,10 +73,13 @@ export default async function CatalogProductPage({
     getProductIngredients(group.brand, group.flavor),
   ]);
 
+  const priceHistory=activeTab==='prices'?await getPriceHistory((await selectedCity()).id,group.brand,group.flavor):[];
+
   return (
     <BrandShell headerAction={<ProfileNavigation active="catalog" />} surfaceClassName="catalog-detail-surface">
       <CatalogProductDetail
         group={group}
+        priceHistory={priceHistory}
         ingredients={ingredients}
         favorite={favorite}
         authenticated={Boolean(session)}

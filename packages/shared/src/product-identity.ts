@@ -1,3 +1,4 @@
+import { reviewedProductIdentity } from './reviewed-product-aliases.js';
 /** Unknown is an old aggregate, never a verified product identity. */
 export function isResolvedFlavor(flavor: string): boolean {
   return Boolean(flavor) && flavor !== 'unknown' && !flavor.startsWith('unresolved:');
@@ -5,6 +6,8 @@ export function isResolvedFlavor(flavor: string): boolean {
 
 /** Verified aliases for retailer titles that omit part of a product name. */
 export function canonicalProductFlavor(brand: string | undefined, flavor: string): string {
+  const reviewedIdentity = reviewedProductIdentity(brand ?? '', flavor);
+  brand = reviewedIdentity.brand; flavor = reviewedIdentity.flavor;
   if (brand === 'Monster') {
     const reviewed: Record<string, string> = {
       mango: 'monster_mango_loco',
@@ -12,7 +15,7 @@ export function canonicalProductFlavor(brand: string | undefined, flavor: string
       'unresolved:5728c1f5c98f51d6e2c5ccd2': 'monster_ultra_rosa',
       'unresolved:a5c012183b7ff4462e51f4fc': 'monster_ultra_watermelon',
     };
-    if (reviewed[flavor]) return reviewed[flavor];
+    if (reviewed[flavor]) return reviewed[flavor]!;
   }
   if (brand === 'Monster' && flavor.endsWith(':sugarfree')) {
     const edition = flavor.slice(0, -':sugarfree'.length);
@@ -43,4 +46,15 @@ export function isExcludedEnergyBrand(brand: string | undefined): boolean {
 export function isMixedBurnOffer(brand: string | undefined, title: string): boolean {
   return brand === 'Burn' && title.split(';').length >= 3
     && /сочная\s+энергия/iu.test(title) && /оригинальн/iu.test(title);
+}
+
+/** Source flyers offer an assortment, not one identifiable drink. Keep old URLs only. */
+export function isAssortmentFlavor(flavor: string): boolean {
+  return new Set([
+    'unresolved:60396be429e67ccda809b2ce', 'unresolved:2c1c23f860fbc7a92b360cc5',
+    'unresolved:0cfddc502558b3d4acf37b8c', 'unresolved:6f98614815925e033e75dbb9',
+    'unresolved:7f516352068e02893726783f', 'unresolved:e0f63668e506c70a2c34e3a1',
+    'unresolved:5905a894223acba9c92f77a6', 'unresolved:f6f432c378e1fba5092c3918',
+    'unresolved:f8afa2cd1aacb8228b4920b0',
+  ]).has(flavor);
 }

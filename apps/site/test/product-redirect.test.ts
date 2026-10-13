@@ -1,4 +1,4 @@
-import { canonicalProductFlavor } from '@canrush/shared';
+import { canonicalProductFlavor, reviewedProductIdentity } from '@canrush/shared';
 import { expect, it } from 'vitest';
 import { NextRequest } from 'next/server';
 import { proxy } from '../src/proxy';
@@ -19,8 +19,9 @@ it('all reserved slugs are unique and resolve to their original identities', () 
   for (const [key, slug] of entries) {
     const [brand, flavor] = JSON.parse(key) as [string, string];
     expect(slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-    const canonicalKey = JSON.stringify([brand, canonicalProductFlavor(brand, flavor)]);
-    expect(catalogGroupSlug(brand, flavor)).toBe((registry as Record<string, string>)[canonicalKey]);
+    const canonical = reviewedProductIdentity(brand, flavor);
+    const canonicalKey = JSON.stringify([canonical.brand, canonicalProductFlavor(canonical.brand, canonical.flavor)]);
+    expect(catalogGroupSlug(brand, flavor)).toBe((registry as Record<string, string>)[canonicalKey] ?? catalogGroupSlug(canonical.brand, canonical.flavor));
     expect(decodeCatalogGroupSlug(slug)).toEqual({ brand, flavor });
   }
 });

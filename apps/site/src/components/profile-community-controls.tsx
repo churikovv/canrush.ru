@@ -24,8 +24,7 @@ export function FollowControl({ targetId, following, mutual }: { targetId: strin
   return <CommunityForm>
     <input type="hidden" name="operation" value={following ? 'unfollow' : 'follow'} />
     <input type="hidden" name="targetId" value={targetId} />
-    <Submit className={following ? 'community-button-secondary' : ''}>{following ? 'Отписаться' : mutual ? 'Подписаться в ответ' : 'Подписаться'}</Submit>
-    {following && mutual && <span className="community-friend-label">Вы друзья</span>}
+    <Submit className={following ? 'community-button-secondary' : ''}>{following ? (mutual ? 'Удалить из друзей' : 'Отписаться') : mutual ? 'Подписаться в ответ' : 'Подписаться'}</Submit>
     {!following && mutual && <span className="community-muted">Подписан на вас</span>}
   </CommunityForm>;
 }

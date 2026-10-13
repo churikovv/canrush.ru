@@ -2,7 +2,7 @@ import { canonicalProductFlavor } from '@canrush/shared';
 import { namedProductFlavor, isPlainOriginal } from './product-lines.js';
 import type { BrandAliases, FlavorAliases, Product, SourceName } from '@canrush/shared';
 
-export const NORMALIZATION_VERSION = 11;
+export const NORMALIZATION_VERSION = 12;
 
 export interface RawProductInput {
   sourceId: string;
@@ -131,7 +131,7 @@ export function normalizeProduct(
       const remainder = name.replace(/red ?bull|ред ?булл/gu, ' ')
         .replace(/\d+(?:[., ]\d+)?/gu, ' ')
         .split(/\s+/u).filter(Boolean)
-        .filter(word => !['энергетический','энергетик','энерг','напиток','газированный','тонизирующий','безалкогольный','energy','drink','ж','б','а','алк','л','мл','шт','x','х','большая','банка','без','сахара','сах','sugarfree','sugar','free','zero'].includes(word));
+        .filter(word => !['энергетич','газ','ст','энергетический','энергетик','энерг','напиток','газированный','тонизирующий','безалкогольный','energy','drink','ж','б','а','алк','л','мл','шт','x','х','большая','банка','без','сахара','сах','sugarfree','sugar','free','zero'].includes(word));
       if (!remainder.length) flavor = 'original';
     }
   }

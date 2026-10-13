@@ -1,3 +1,7 @@
+import { isAssortmentFlavor } from '@canrush/shared';
+import { CatalogVolumeTabs } from '@/components/catalog-volume-tabs';
+import { CatalogPriceHistory } from '@/components/catalog-price-history';
+import type { PriceSeries } from '@/lib/price-history';
 import Image from 'next/image';
 import type { CatalogGroup, PublishedIngredients } from '@canrush/shared';
 import { CatalogProductIngredients } from '@/components/catalog-product-ingredients';
@@ -17,6 +21,7 @@ function volumeLabel(volume: number | undefined): string | undefined {
 
 interface CatalogProductDetailProps {
   group: CatalogGroup;
+  priceHistory?: PriceSeries[];
   ingredients: PublishedIngredients | null;
   favorite: boolean;
   authenticated: boolean;
@@ -26,8 +31,9 @@ interface CatalogProductDetailProps {
   activeTab: ProductTab;
 }
 
-export function CatalogProductDetail({ group, ingredients, favorite, authenticated, reviews, summary, userReview, activeTab }: CatalogProductDetailProps) {
-  const volumeGroups = catalogOffersByVolume(group);
+export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, activeTab }: CatalogProductDetailProps) {
+  const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
+  const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
 
   return (
     <article className="catalog-product-detail">
@@ -58,15 +64,15 @@ export function CatalogProductDetail({ group, ingredients, favorite, authenticat
         </div>
 
         <h1>{flavorName(group.flavor)}</h1>
+        {isAssortmentFlavor(group.flavor) && <p className="catalog-product-note">В источнике указано несколько напитков в ассортименте. Конкретный вкус и фотография отдельной банки не предоставлены.</p>}
 
         <CatalogProductTabs active={activeTab} reviewCount={summary.count} />
 
         {activeTab === 'prices' ? (
           <div id="tab-panel-prices" role="tabpanel" aria-labelledby="tab-prices" className="catalog-product-tab-panel">
-            <section className="catalog-product-section" aria-labelledby="store-prices-title">
-              <h2 id="store-prices-title">Цены в магазинах</h2>
+            <section className="catalog-product-section" aria-label="Цены в магазинах">
               {volumeGroups.length > 0 ? (
-                <div className="catalog-store-groups">
+                <CatalogVolumeTabs labels={volumeGroups.map(({volumeMl})=>volumeLabel(volumeMl) ?? "Объём не указан")}>
                   {volumeGroups.map(({ volumeMl, offers }) => (
                     <section className="catalog-store-volume" key={volumeMl ?? 'unknown'} aria-labelledby={`volume-${volumeMl ?? 'unknown'}`}>
                       <h3 id={`volume-${volumeMl ?? 'unknown'}`}>{volumeLabel(volumeMl) ?? 'Объём не указан'}</h3>
@@ -106,11 +112,13 @@ export function CatalogProductDetail({ group, ingredients, favorite, authenticat
                       </div>
                     </section>
                   ))}
-                </div>
+                </CatalogVolumeTabs>
               ) : (
                 <p className="catalog-product-note">Пока нет актуальных предложений.</p>
               )}
             </section>
+
+            <CatalogPriceHistory icons={Object.fromEntries([...new Set(priceHistory.flatMap(s=>s.stores.map(store=>store.name)))].map(name=>[name,<RetailerBadge key={name} name={name} decorative/>]))} series={sortedHistory} today={new Date().toISOString().slice(0,10)}/>
 
             <CatalogProductIngredients data={ingredients} />
           </div>

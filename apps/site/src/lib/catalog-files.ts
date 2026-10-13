@@ -1,7 +1,7 @@
 import { catalogCover } from './catalog-covers';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { CITIES, DEFAULT_CITY, canonicalProductFlavor, isMixedBurnOffer, isResolvedFlavor, isExcludedEnergyBrand, type CatalogGroup, type CityId } from '@canrush/shared';
+import { CITIES, DEFAULT_CITY, isAssortmentFlavor, reviewedProductIdentity, canonicalProductFlavor, isMixedBurnOffer, isResolvedFlavor, isExcludedEnergyBrand, type CatalogGroup, type CityId } from '@canrush/shared';
 export interface CatalogFile { groups?: CatalogGroup[]; generatedAt?: string | null; cityId?: CityId; status?: 'ok' | 'stale' | 'unavailable' }
 const cache = new Map<string, { stamp: string; data: CatalogFile }>();
 const pending = new Map<string, Promise<CatalogFile | null>>();
@@ -23,7 +23,7 @@ export async function readCatalogFile(relative: string): Promise<CatalogFile | n
 }
 export function activeOffers(groups: CatalogGroup[], now = Date.now()): CatalogGroup[] {
   return groups.flatMap(group => {
-    if (isExcludedEnergyBrand(group.brand)) return [];
+    if (isExcludedEnergyBrand(group.brand) || isAssortmentFlavor(group.flavor)) return [];
     const variants = group.variants.filter(offer => offer.price > 0 && Number.isFinite(offer.price) && (!offer.promoEndsAt || Date.parse(offer.promoEndsAt) > now));
     return variants.length ? [{ ...group, variants, minPrice: Math.min(...variants.map(offer => offer.price)) }] : [];
   });
@@ -69,7 +69,8 @@ export async function readAllCatalogGroups(): Promise<CatalogGroup[]> {
 /** Merge only verified aliases within a single city snapshot; never mix regional offers. */
 export function mergeCatalogAliases(groups: CatalogGroup[]): CatalogGroup[] {
   const merged = new Map<string, CatalogGroup>();
-  for (const group of groups) {
+  for (const original of groups) {
+    const group = { ...original, ...reviewedProductIdentity(original.brand, original.flavor) };
     // Historical Burn "juicy zero" was created from multi-edition flyers, not a product.
     // Exclude the archived identity as well, so it cannot reappear in tierlists.
     if (group.brand === 'Burn' && group.flavor === 'burn_juicy:sugarfree') continue;
@@ -85,7 +86,7 @@ export function mergeCatalogAliases(groups: CatalogGroup[]): CatalogGroup[] {
     const unique = [...new Map(variants.map(offer => [JSON.stringify([offer.source, offer.retailer, offer.volumeMl, offer.url]), offer])).values()];
     merged.set(key, {
       ...group, flavor, variants: unique,
-      coverImageUrl: catalogCover(group.brand, flavor, previous?.coverImageUrl || group.coverImageUrl),
+      coverImageUrl: isAssortmentFlavor(flavor) ? undefined : catalogCover(group.brand, flavor, previous?.coverImageUrl || group.coverImageUrl),
       minPrice: unique.length ? Math.min(...unique.map(offer => offer.price)) : 0,
     });
   }

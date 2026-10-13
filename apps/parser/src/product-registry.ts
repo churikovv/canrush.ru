@@ -1,11 +1,13 @@
 import { mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
-import type { CatalogGroup } from '@canrush/shared';
+import { reviewedProductIdentity, canonicalProductFlavor, type CatalogGroup } from '@canrush/shared';
 import { writeAtomic } from './atomic-file.js';
 const registryPath = path.resolve(import.meta.dirname, '../../site/data/product-registry.json');
 export function mergeProductRegistry(previous: CatalogGroup[], incoming: CatalogGroup[]): CatalogGroup[] {
   const result = new Map<string, CatalogGroup>();
-  for (const group of [...previous, ...incoming]) {
+  for (const original of [...previous, ...incoming]) {
+    const identity = reviewedProductIdentity(original.brand, original.flavor);
+    const group = { ...original, ...identity, flavor: canonicalProductFlavor(identity.brand, identity.flavor) };
     const key = JSON.stringify([group.brand, group.flavor]);
     const old = result.get(key);
     const coverImageUrl = old?.coverImageUrl?.startsWith('/images/') && !group.coverImageUrl?.startsWith('/images/') ? old.coverImageUrl : group.coverImageUrl || old?.coverImageUrl;

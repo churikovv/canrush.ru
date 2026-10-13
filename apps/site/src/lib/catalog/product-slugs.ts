@@ -1,5 +1,5 @@
 import registry from './product-slugs.json';
-import { canonicalProductFlavor } from '@canrush/shared';
+import { canonicalProductFlavor, reviewedProductIdentity } from '@canrush/shared';
 
 const slugs: Record<string, string> = registry;
 const identities = new Map(Object.entries(slugs).map(([key, slug]) => [slug, JSON.parse(key) as [string, string]]));
@@ -12,6 +12,7 @@ function readable(value: string) {
 
 /** Frozen registry slugs never depend on stock, city, ordering or display translations. */
 export function productSlug(brand: string, flavor: string): string {
+  ({ brand, flavor } = reviewedProductIdentity(brand, flavor));
   flavor = canonicalProductFlavor(brand, flavor);
   const key = JSON.stringify([brand, flavor]);
   if (slugs[key]) return slugs[key];

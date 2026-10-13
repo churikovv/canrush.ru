@@ -1,3 +1,4 @@
+import { recordCompatibility } from './profile-compatibility-history';
 import { getPool } from '@/db/pool';
 import { profileCompatibility, type Preference, type RatedPreference } from './profile-compatibility';
 
@@ -8,5 +9,7 @@ export async function getProfileCompatibility(viewerId: string, profileId: strin
     getPool().query<RatedPreference & { userId: string }>('select "userId", brand, flavor, taste, design from review where "userId" = any($1::text[]) order by "updatedAt" desc', [ids]),
   ]);
   const data = (id: string) => ({ favorites: favorites.rows.filter(row => row.userId === id), reviews: reviews.rows.filter(row => row.userId === id) });
-  return profileCompatibility(data(viewerId), data(profileId));
+  const value = profileCompatibility(data(viewerId), data(profileId));
+  const trend = await recordCompatibility(viewerId, profileId, value);
+  return { ...value, trend };
 }

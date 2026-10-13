@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     exclude: [
-      'test/stores.integration.test.ts',
+      'test/vulkan-fruit-alias-migration.integration.test.ts', 'test/pulse-alias-migration.integration.test.ts', 'test/gorilla-alias-migration.integration.test.ts', 'test/cosmos-alias-migration.integration.test.ts', 'test/flash-alias-migration.integration.test.ts', 'test/adrenaline-alias-migration.integration.test.ts', 'test/imported-alias-migration.integration.test.ts', 'test/reviewed-alias-migration.integration.test.ts', 'test/profile-compatibility-history.integration.test.ts', 'test/stores.integration.test.ts',
       'test/wall-discussions.integration.test.ts', 'test/tier-discussions.integration.test.ts',
       'test/favorite-removal.integration.test.ts',
       'test/tier-sections.integration.test.ts',

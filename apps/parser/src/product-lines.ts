@@ -1,13 +1,15 @@
 import { monsterFlavor } from './monster-lines.js';
 /** Named editions are product identities even when retailers omit their taste. */
 export function namedProductFlavor(brand: string | undefined, name: string): string | undefined {
+  if (brand === 'Pulse Up') brand = 'Pulseup';
   if (brand === 'Monster') return monsterFlavor(name);
   const rules: Record<string, Array<[RegExp, string]>> = {
+    '100 Kwt': [[/raw energy/u, 'kwt_raw']],
     'Bacchus': [
       [/(?:^| )негазированный(?: |$)/u, 'bacchus_still'],
       [/(?:^| )газированный(?: |$)/u, 'bacchus_sparkling'],
     ],
-    'Lit Energy': [[/(?:granat|гранат)/u, 'pomegranate'], [/(?:turbo|турбо)/u, 'lit_turbo']],
+    'Lit Energy': [[/клубничн.*жвач/u, 'blend:bubblegum+strawberry'], [/(?:granat|гранат)/u, 'pomegranate'], [/(?:turbo|турбо)/u, 'lit_turbo']],
     'Doma By Guf': [[/ориджинал/u, 'original']],
     'Dydo': [[/вита энерджи желе/u, 'dydo_vita_jelly']],
     'Bizon': [[/(?:^| )black(?: |$)/u, 'bizon_black']],
@@ -15,7 +17,7 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
     'Scandalist': [[/adder terror/u, 'scandalist_adder_terror'], [/geneve/u, 'scandalist_geneve']],
     'Go Champ': [[/aperative/u, 'go_champ_aperative']],
     'Ashkudi': [[/belarus apples/u, 'ashkudi_belarus_apples'], [/pomegranade/u, 'pomegranate']],
-    'Red Bull': [[/sods.*summer berry/u, 'redbull_sods_summer_berry']],
+    'Red Bull': [[/krating.*extra.*zinc/u, 'redbull_krating_daeng_extra_zinc'], [/krating/u, 'redbull_krating_daeng'], [/fruit mix/u, 'redbull_fruit_mix'], [/sods.*summer berry/u, 'redbull_sods_summer_berry']],
     'Drive Me': [
       [/(?:caramel|сaramel|карамель).*(?:lollypop|лоллипоп)/u, 'drive_caramel'],
       [/bubble blast/u, 'drive_bubble'],
@@ -77,27 +79,31 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
       [/(?:^| )sour marm(?: |$)/u, 'tornado_sour_marm'],
     ],
     'Adrenaline Rush': [
+      [/(?:vitamin\s*power|витаминная сила|game fuel).*(?:манго|mango)/u, 'mango'],
+      [/(?:vitamin\s*power|витаминная сила).*(?:апельсин|orange)/u, 'orange'],
       [/(?:game fuel|г[еэ]йм фью[еэ]л|игровая энергия|игр энергия)/u, 'game_fuel'],
       [/(?:spicy|спайси|табаско)/u, 'spicy'],
       [/(?:breeze|бриз)/u, 'breeze'],
       [/(?:таинственная энергия)/u, 'mystery'],
       [/(?:extra|экстра)/u, 'extra'],
       [/(?:juicy|джуси|апельсиновая энергия)/u, 'orange'],
-      [/(?:vitamin power|витамин пауэр|red energy|ред энерджи|рэд энерджи|ягодная энергия| раш ред )/u, 'berry'],
+      [/(?:red energy|ред энерджи|рэд энерджи|ягодная энергия|ягодная|ягод| раш ред )/u, 'berry'],
       [/(?:юдзу|юзу).*(?:клуб|каламан)/u, 'blend:calamansi+strawberry+yuzu'],
     ],
     'Volt Energy': [
+      [/ягодное драже/u, 'berry_dragee'],
       [/(?:сливов.*пирог)/u, 'plum_pie'],
       [/(?:попкорн|popcorn)/u, 'popcorn'],
     ],
     'Flash Up': [
+      [/zero mode.*peach.*bilberry/u, 'blend:blueberry+peach'],
       [/(?:game mode|гейм мод|игровой режим).*(?:xp|хp|хр|икс пи|очки опыта)/u, 'game_mode_xp'],
       [/(?:game mode|гейм мод|игровой режим).*(?:mp|мп|эм пи|очки маны)/u, 'game_mode_mp'],
       [/(?:ultra|ультра)/u, 'ultra'],
       [/(?:bubble gum|баббл гам|бабл гам)/u, 'bubblegum'],
       [/(?:marshmallow|marhmallow|маршм[еэ]ллоу)/u, 'marshmallow'],
       [/(?:lemon waffle|лимон.*вафл)/u, 'lemon_waffle'],
-      [/(?:черни.*(?:донат|пончик)|blueberry donut)/u, 'blueberry_donut'],
+      [/(?:черни.*(?:донат|пончик)|blueberry donut|блюберри донат)/u, 'blueberry_donut'],
     ],
   };
   return rules[brand ?? '']?.find(([pattern]) => pattern.test(name))?.[1];
@@ -115,11 +121,11 @@ export function isPlainOriginal(brand: string | undefined, name: string): boolea
     'Gorilla': /gorilla|горилла|energy|drink/gu,
     'Adrenaline Rush': /adrenaline?|адреналин|rush|раш|абсолютная|энергия|energy|power|silver|сильвер|серебряная|энержи|пепсико/gu,
     'Volt Energy': /volt|вольта?|energy|энергия|энерджи/gu,
-    'Flash Up': /flash|фл[еэ]ш|up|ап|energy|энергия|энерджи|энержи|max|макс/gu,
+    'Flash Up': /балтика|flash|фл[еэ]ш|up|ап|energy|энергия|энерджи|энержи|max|макс/gu,
   };
   const pattern = brands[brand ?? ''];
   if (!pattern || /(?:ассорт|ссорт|со вкусом|вкус)/u.test(name)) return false;
-  const generic = new Set('напиток энергетический энергетик энергет энергетич энерг безалкогольный безалк газированный сильногазированный газ тонизирующий тониз витаминизированный витамин ароматизированный пастеризованный вода в жестяной банке металлическая банка бан пэт ж б а п к л мл г шт x х с кофеином и таурином консервантов без сахара сах sugarfree sugar free zero зеро шугар'.split(' '));
+  const generic = new Set('нап м напиток энергетический энергетик энергет энергетич энерг безалкогольный безалк газированный сильногазированный газ тонизирующий тониз витаминизированный витамин ароматизированный пастеризованный вода в жестяной банке металлическая банка бан пэт ж б а п к л мл г шт x х с кофеином и таурином консервантов без сахара сах sugarfree sugar free zero зеро шугар'.split(' '));
   const remainder = name.replace(new RegExp(`(?:^| )(?:${pattern.source})(?= |$)`, 'gu'), ' ').replace(/\d+/gu, ' ').split(/\s+/u).filter(Boolean);
   return remainder.every(word => generic.has(word));
 }

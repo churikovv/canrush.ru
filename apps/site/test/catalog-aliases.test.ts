@@ -50,7 +50,7 @@ it('deduplicates inherently sugar-free Monster editions, preserving distinct reg
     const groups = [edition, `${edition}:sugarfree`].map(flavor => ({ brand: 'Monster', flavor, variants: [], minPrice: 0 }));
     expect(mergeCatalogAliases(groups).map(group => group.flavor)).toEqual([edition]);
   }
-  for (const edition of ['monster_vr46', 'monster_the_doctor', 'monster_mango_loco', 'strawberry', 'original']) {
+  for (const edition of ['monster_vr46', 'monster_the_doctor', 'monster_mango_loco', 'original']) {
     expect(canonicalProductFlavor('Monster', `${edition}:sugarfree`)).toBe(`${edition}:sugarfree`);
   }
   expect(canonicalProductFlavor('Other', 'monster_full_throttle:sugarfree')).toBe('monster_full_throttle:sugarfree');
@@ -70,4 +70,36 @@ it('uses archived local photos without restoring stale offers or replacing exist
   const archive = { ...live, coverImageUrl: '/images/products/saved.jpg', minPrice: 0 };
   expect(restoreCatalogCovers([live], [archive])[0]).toEqual({ ...live, coverImageUrl: archive.coverImageUrl });
   expect(restoreCatalogCovers([{ ...live, coverImageUrl: '/images/products/current.jpg' }], [archive])[0]?.coverImageUrl).toBe('/images/products/current.jpg');
+});
+
+it('merges verified strawberry Ultra aliases', () => { expect(canonicalProductFlavor('Monster', 'strawberry:sugarfree')).toBe('monster_ultra_strawberry'); });
+
+it('merges historical Volt brand and mixture aliases without mixing Mango editions', () => {
+  const make = (brand: string, flavor: string): CatalogGroup => ({ brand, flavor, variants: [], minPrice: 0 });
+  const result = mergeCatalogAliases([make('Volt', 'mint'), make('Volt Energy', 'pomelo'), make('Volt Energy', 'blend:mint+pomelo')]);
+  expect(result.map(g => [g.brand, g.flavor])).toEqual([['Volt Energy', 'blend:mint+pomelo']]);
+  expect(canonicalProductFlavor('Volt Energy', 'mango')).toBe('mango');
+  expect(canonicalProductFlavor('Volt Energy', 'original')).toBe('original');
+  expect(canonicalProductFlavor('Volt', 'original')).toBe('berry_dragee');
+});
+
+it('merges legacy Vulkan single-fruit identities into the matching mixtures', () => {
+  expect(canonicalProductFlavor('Vulkan', 'mango')).toBe('tropical');
+  expect(canonicalProductFlavor('Vulkan', 'passion_fruit')).toBe('tropical');
+  expect(canonicalProductFlavor('Vulkan', 'raspberry')).toBe('berry');
+  expect(canonicalProductFlavor('Vulkan', 'citrus')).toBe('citrus');
+});
+
+it('keeps Raw Energy separate and resolves reviewed Jaguar mixtures', () => {
+  expect(canonicalProductFlavor('100 Kwt', 'unresolved:cd3221b1786a268cf5c1223d')).toBe('kwt_raw');
+  expect(canonicalProductFlavor('100 Kwt', 'orange')).toBe('blend:grapefruit+orange');
+  expect(canonicalProductFlavor('Jaguar', 'kiwi')).toBe('blend:cactus+kiwi');
+  expect(canonicalProductFlavor('Jaguar', 'jaguar_live')).toBe('jaguar_live');
+  expect(canonicalProductFlavor('Jaguar', 'jaguar_cult')).toBe('jaguar_cult');
+});
+
+it('merges Gorilla fruit aliases without merging distinct berry editions', () => {
+  expect(canonicalProductFlavor('Gorilla', 'berry')).toBe('gorilla_berry_blast');
+  expect(canonicalProductFlavor('Gorilla', 'blueberry')).toBe('gorilla_berry_bloom');
+  expect(canonicalProductFlavor('Gorilla', 'coconut')).toBe('blend:coconut+mango');
 });
