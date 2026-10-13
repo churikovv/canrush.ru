@@ -166,8 +166,11 @@ async function getTierListSummaries(where: string, values: unknown[], limit: num
   }));
 }
 
-export function getCommunityTierLists(limit = 12): Promise<TierListSummary[]> {
-  return getTierListSummaries('where tl."status" = \'published\'', [], Math.min(Math.max(limit, 1), 48));
+export function getCommunityTierLists(limit = 12, query = ''): Promise<TierListSummary[]> {
+  const q = query.trim().slice(0, 200);
+  return getTierListSummaries(
+    `where tl."status" = 'published'${q ? ' and (strpos(lower(tl."title"), lower($1)) > 0 or strpos(lower(u."username"), lower($1)) > 0 or strpos(lower(u."name"), lower($1)) > 0)' : ''}`,
+    q ? [q] : [], Math.min(Math.max(limit, 1), 48));
 }
 
 export async function getPublishedTierListSitemapEntries(): Promise<PublishedTierListSitemapEntry[]> {
@@ -196,6 +199,7 @@ export function getPublishedTierListsForUser(userId: string, limit = 48): Promis
 export function catalogGroupsToTierProducts(
   groups: CatalogGroup[],
   summaries: Map<string, ReviewSummary> = new Map(),
+  metric: OfficialTierMetric = 'overall',
 ): TierListProduct[] {
   return groups.map((group) => {
     const summary = summaries.get(productKey(group.brand, group.flavor));
@@ -208,7 +212,7 @@ export function catalogGroupsToTierProducts(
       retailerCount: catalogRetailerCount(group),
       price: group.minPrice > 0 ? group.minPrice : undefined,
       reviewCount: summary?.count ?? 0,
-      score: summary && summary.count > 0 ? summary.overall : undefined,
+      score: summary && summary.count > 0 ? summary[metric] : undefined,
     };
   });
 }
@@ -229,10 +233,12 @@ export interface OfficialTierList {
   ratedCount: number;
 }
 
-export async function buildOfficialTierList(groups: CatalogGroup[]): Promise<OfficialTierList> {
+export type OfficialTierMetric = 'overall' | 'design' | 'taste';
+
+export async function buildOfficialTierList(groups: CatalogGroup[], metric: OfficialTierMetric = 'overall'): Promise<OfficialTierList> {
   const eligible = groups.filter((group) => catalogRetailerCount(group) >= MIN_OFFICIAL_RETAILER_COUNT);
   const summaries = await getReviewSummaries(eligible.map(({ brand, flavor }) => ({ brand, flavor })));
-  const products = catalogGroupsToTierProducts(eligible, summaries)
+  const products = catalogGroupsToTierProducts(eligible, summaries, metric)
     .filter((product) => product.reviewCount >= MIN_OFFICIAL_REVIEW_COUNT && product.score !== undefined)
     .sort((left, right) => (right.score ?? 0) - (left.score ?? 0) || left.brand.localeCompare(right.brand, 'ru-RU'));
   const positions = new Map<TierKey, number>(TIER_KEYS.map((tier) => [tier, 0]));

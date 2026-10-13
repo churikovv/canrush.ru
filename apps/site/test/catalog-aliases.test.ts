@@ -103,3 +103,12 @@ it('merges Gorilla fruit aliases without merging distinct berry editions', () =>
   expect(canonicalProductFlavor('Gorilla', 'blueberry')).toBe('gorilla_berry_bloom');
   expect(canonicalProductFlavor('Gorilla', 'coconut')).toBe('blend:coconut+mango');
 });
+
+it('merges Volt orange into orange-passion fruit without losing store offers', () => {
+  const groups = ['orange', 'blend:orange+passion_fruit'].map((flavor, i) => ({
+    brand: 'Volt Energy', flavor, minPrice: 90 + i,
+    variants: [{ source: 'edadeal' as const, retailer: `Store ${i}`, price: 90 + i, url: `https://example.com/${i}`, fetchedAt: '2026-10-13' }],
+  }));
+  expect(mergeCatalogAliases(groups)).toMatchObject([{ flavor: 'blend:orange+passion_fruit', variants: [{ retailer: 'Store 0' }, { retailer: 'Store 1' }] }]);
+  expect(canonicalProductFlavor('Other', 'orange')).toBe('orange');
+});

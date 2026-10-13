@@ -58,10 +58,21 @@ function PricePlot({ stores, icons }: { stores: StorePriceSeries[]; icons: Recor
     days.forEach((day, index) => { if (Math.abs(x(day.date) - target) < Math.abs(x(days[nearest]!.date) - target)) nearest = index; });
     setActive(nearest); setExpanded(true);
   };
+  const tickDates: string[] = [];
+  for (const date of dates) {
+    if (!tickDates.length || x(date) - x(tickDates[tickDates.length - 1]!) >= 90) tickDates.push(date);
+  }
+  const lastDate = dates[dates.length - 1]!;
+  if (tickDates[tickDates.length - 1] !== lastDate) {
+    if (tickDates.length > 1 && x(lastDate) - x(tickDates[tickDates.length - 1]!) < 90) tickDates.pop();
+    tickDates.push(lastDate);
+  }
   return <>
     <div className="price-history-summary" aria-live="polite"><strong>{money(selected.median)}</strong><span>{dateLabel(selected.date)} · медианная цена</span></div>
-    <div className="price-history-plot-wrap" ref={plot}>
-    <svg className="price-history-mini" viewBox={`0 0 ${width} 160`} role="button" tabIndex={0} aria-label={`Медианная цена ${money(selected.median)} за ${dateLabel(selected.date)}. Нажмите для цен магазинов. Стрелки меняют дату.`} aria-expanded={expanded} onClick={e => choose(e.clientX, e.currentTarget.getBoundingClientRect())} onKeyDown={event => {
+    <div className="price-history-plot-wrap" ref={plot} onPointerLeave={event => { if (event.pointerType === 'mouse') setExpanded(false); }}>
+    <svg className="price-history-mini" viewBox={`0 0 ${width} 160`} role="button" tabIndex={0} aria-label={`Медианная цена ${money(selected.median)} за ${dateLabel(selected.date)}. Нажмите для цен магазинов. Стрелки меняют дату.`} aria-expanded={expanded} onPointerMove={event => {
+      if (event.pointerType === 'mouse' && window.matchMedia('(hover: hover) and (pointer: fine)').matches) choose(event.clientX, event.currentTarget.getBoundingClientRect());
+    }} onClick={e => choose(e.clientX, e.currentTarget.getBoundingClientRect())} onKeyDown={event => {
       if (['ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', ' '].includes(event.key)) {
         event.preventDefault(); setExpanded(true);
         if (event.key === 'ArrowLeft') setActive(Math.max(0, active - 1));
@@ -73,7 +84,7 @@ function PricePlot({ stores, icons }: { stores: StorePriceSeries[]; icons: Recor
       <defs><linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1"><stop stopColor="currentColor" stopOpacity=".2"/><stop offset="1" stopColor="currentColor" stopOpacity="0"/></linearGradient></defs>
       {days.length > 1 && <><path d={`${line} L ${width - 20} 132 L 20 132 Z`} fill={`url(#${gradient})`}/><path d={line} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/></>}
       <circle cx={x(selected.date)} cy={y(selected.median)} r="5" fill="var(--theme-bg,white)" stroke="currentColor" strokeWidth="3"/>
-      {[...new Set([0, Math.floor((days.length - 1) / 2), days.length - 1])].map(index => <text key={index} x={x(days[index]!.date)} y="155" textAnchor={days.length === 1 ? 'middle' : index === 0 ? 'start' : index === days.length - 1 ? 'end' : 'middle'}>{dateLabel(days[index]!.date)}</text>)}
+      {tickDates.map((date, index) => <text key={date} x={x(date)} y="155" textAnchor={days.length === 1 ? 'middle' : index === 0 ? 'start' : index === tickDates.length - 1 ? 'end' : 'middle'}>{dateLabel(date)}</text>)}
     </svg>
     {expanded && <div className="price-history-popover" role="region" aria-label={`Цены за ${dateLabel(selected.date)}`} style={{ left: Math.min(Math.max(x(selected.date) - 130, 0), Math.max(0, width - 260)) }}>
       <header><span>{dateLabel(selected.date)}</span><button type="button" aria-label="Закрыть цены" onClick={() => setExpanded(false)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button></header>
@@ -81,7 +92,7 @@ function PricePlot({ stores, icons }: { stores: StorePriceSeries[]; icons: Recor
       <ul>{selected.offers.map(offer => <li key={offer.name}>{icons[offer.name]}<span>{offer.name}</span><b>{money(offer.price)}</b></li>)}</ul>
     </div>}
     </div>
-    <p className="price-history-hint">Нажмите на график, чтобы увидеть цены магазинов</p>
+    <p className="price-history-hint">Наведите курсор или нажмите на график, чтобы увидеть цены магазинов</p>
 
 
   </>;

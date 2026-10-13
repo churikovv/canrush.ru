@@ -56,7 +56,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
   const searching = Boolean(first(params.q).trim());
   const allGroups = searching ? await loadAllCatalogGroups() : groups;
   const currentKeys = new Set(groups.map(group => JSON.stringify([group.brand, group.flavor])));
-  const archived = allGroups.filter(group => !currentKeys.has(JSON.stringify([group.brand, group.flavor])) && !isExcludedEnergyBrand(group.brand) && group.flavor !== 'unknown' && !(group.brand === 'Volt Energy' && group.flavor === 'mango') && !isAssortmentFlavor(group.flavor)).map(group => ({ ...group, variants: [], minPrice: 0 }));
+  const archived = allGroups.filter(group => !currentKeys.has(JSON.stringify([group.brand, group.flavor])) && !isExcludedEnergyBrand(group.brand) && !/^(?:unknown|unresolved)(?::|$)/.test(group.flavor) && !(group.brand === 'Volt Energy' && group.flavor === 'mango') && !isAssortmentFlavor(group.flavor)).map(group => ({ ...group, variants: [], minPrice: 0 }));
   const brands = [...new Set(allGroups.map((group) => group.brand))].sort((a, b) => a.localeCompare(b, 'ru-RU'));
   const flavorValues = [...new Set(allGroups.map((group) => group.flavor))];
   const flavors = flavorValues

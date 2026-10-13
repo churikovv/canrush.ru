@@ -1,5 +1,6 @@
 /** Historical identities verified against saved retailer titles and packaging. */
 export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, string, string]> = [
+  ["Volt Energy", "orange", "Volt Energy", "blend:orange+passion_fruit"],
   ["Cosmos", "original", "Cosmos", "cosmos_bold"],
   ["Gorilla", "berry", "Gorilla", "gorilla_berry_blast"],
   ["Gorilla", "blueberry", "Gorilla", "gorilla_berry_bloom"],

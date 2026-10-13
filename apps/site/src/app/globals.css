@@ -3377,6 +3377,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 }
 
 .tier-list-card-copy {
+  flex: 1;
   display: flex;
   min-width: 0;
   flex-direction: column;
@@ -5828,7 +5829,7 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
   .market-archive-controls > .community-button, .market-listing-delete-section > .community-button { width: 100%; }
 }
 
-.tier-list-card-stats { display: flex; align-items: center; gap: 20px; margin-top: 12px; color: var(--color-muted-strong); font-size: .875rem; }
+.tier-list-card-stats { display: flex; align-items: center; gap: 20px; margin-top: auto; padding-top: 12px; color: var(--color-muted-strong); font-size: .875rem; }
 .tier-list-card-stats > * { display: inline-flex; align-items: center; gap: 6px; }
 .tier-list-card-stats a { color: inherit; text-decoration: none; min-height: 32px; }
 .tier-list-card-stats a:hover { color: var(--color-brand); }
@@ -6303,3 +6304,6 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 .catalog-archive-heading { grid-column: 1 / -1; margin-top: 24px; }
 .catalog-archive-heading h2 { margin: 0 0 8px; }
 .catalog-archive-heading p { margin: 0; color: var(--color-muted); }
+
+.tier-ranking-tabs a { flex-shrink: 0; display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 10px; color: inherit; text-decoration: none; }
+.tier-ranking-tabs a[aria-current="page"] { background: var(--color-brand); color: #fff; }

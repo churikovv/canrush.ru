@@ -23,9 +23,15 @@ export const metadata: Metadata = seoMetadata({
   path: '/tierlists',
 });
 
-export default async function TierListsPage() {
+export default async function TierListsPage({ searchParams }: { searchParams: Promise<{ q?: string; metric?: string }> }) {
+  const params = await searchParams;
+  const q = typeof params.q === 'string' ? params.q.trim().slice(0, 200) : '';
+  const metric = params.metric === 'design' || params.metric === 'taste' ? params.metric : 'overall';
+  const modes = { overall: 'Общий тирлист', design: 'По дизайну', taste: 'По вкусу' };
+  const title = metric === 'overall' ? 'Тирлист энергетиков CanRush' : `Тирлист энергетиков CanRush — ${modes[metric].toLowerCase()}`;
+
   const groups = await loadAllCatalogGroups();
-  const [official, community] = await Promise.all([buildOfficialTierList(groups), getCommunityTierLists()]);
+  const [official, community] = await Promise.all([buildOfficialTierList(groups, metric), getCommunityTierLists(48, q)]);
   const communityProducts = tierListProductsForPlacements(groups, community.flatMap((list) => list.preview));
 
   return (
@@ -45,6 +51,10 @@ export default async function TierListsPage() {
           </dl>
         </header>
 
+        <nav className="catalog-volume-tabs tier-ranking-tabs" aria-label="Критерий рейтинга">
+          {Object.entries(modes).map(([value, label]) => <Link key={value} href={`/tierlists?${new URLSearchParams({ metric: value, ...(q ? { q } : {}) })}`} aria-current={metric === value ? 'page' : undefined}>{label}</Link>)}
+        </nav>
+
         <TierBoard products={official.products} placements={official.placements} emptyLabel="Ждём оценок" />
 
         {official.ratedCount === 0 ? (
@@ -60,8 +70,8 @@ export default async function TierListsPage() {
             Создать свой
             <Image src="/brand/icons/tierlists.svg" width={22} height={22} alt="" />
           </Link>
-          <ShareTierListButton title="Тирлист энергетиков CanRush" />
-          <TierScreenshotButton boardId="tier-capture-board" title="Тирлист энергетиков CanRush" official />
+          <ShareTierListButton title={title} />
+          <TierScreenshotButton boardId="tier-capture-board" title={title} official />
         </div>
 
         <section className="tierlists-community" aria-labelledby="community-title">
@@ -73,14 +83,23 @@ export default async function TierListsPage() {
             {community.length > 0 ? <span>{community.length} последних</span> : null}
           </div>
 
+          <form className="market-search-form" action="/tierlists" method="get">
+            <input type="hidden" name="metric" value={metric} />
+            <div className="market-search-toolbar"><div className="catalog-search-field">
+              <button className="market-search-submit" type="submit" aria-label="Найти тирлисты"><Image src="/brand/icons/catalog-search.svg" width={24} height={24} alt="" /></button>
+              <input key={q} type="search" name="q" defaultValue={q} maxLength={200} placeholder="Поиск по названию или автору" aria-label="Поиск тирлистов" />
+            </div></div>
+          </form>
+          {q && <Link href={`/tierlists?metric=${metric}`}>Сбросить поиск</Link>}
+
           {community.length > 0 ? (
             <div className="tier-list-cards">
               {community.map((list) => <TierListCard list={list} products={communityProducts} key={list.id} />)}
             </div>
           ) : (
             <div className="tierlists-community-empty">
-              <strong>Первый тирлист может быть вашим</strong>
-              <p>Разложите знакомые энергетики по категориям и поделитесь результатом.</p>
+              <strong>{q ? 'Тирлисты не найдены' : 'Первый тирлист может быть вашим'}</strong>
+              <p>{q ? 'Попробуйте другое название или имя автора.' : 'Разложите знакомые энергетики по категориям и поделитесь результатом.'}</p>
               <Link href="/tierlists/new">Создать первый тирлист</Link>
             </div>
           )}
