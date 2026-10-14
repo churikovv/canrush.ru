@@ -4,6 +4,7 @@ import { CITIES, nearestCity, type CityId } from '@canrush/shared';
 import { selectCityAction } from '@/app/location/actions';
 export function CitySelector({ selected }: { selected: CityId }) {
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [locating, setLocating] = useState(false);
@@ -21,10 +22,21 @@ export function CitySelector({ selected }: { selected: CityId }) {
     document.body.style.overflow = 'hidden'; modal?.showModal();
     return () => { generation.value++; modal?.close(); document.body.style.overflow = overflow; previous?.focus(); };
   }, [open]);
+  /** Plays the exit animation (CSS `.city-dialog[data-closing]`) before unmounting; instant with reduced motion. */
+  function close() {
+    const modal = dialog.current;
+    if (closing) return;
+    if (!modal || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setOpen(false); return; }
+    setClosing(true);
+    const finish = () => { clearTimeout(fallback); modal.removeEventListener('animationend', onEnd); setClosing(false); setOpen(false); };
+    const onEnd = (event: AnimationEvent) => { if (event.target === modal) finish(); };
+    const fallback = window.setTimeout(finish, 250);
+    modal.addEventListener('animationend', onEnd);
+  }
   function choose(id: CityId) {
     request.current.value++; setLocating(false); setError('');
     startTransition(async () => {
-      try { const result = await selectCityAction(id); if (result.error) setError(result.error); else { setOpen(false); setQuery(''); setSuggestion(null); } }
+      try { const result = await selectCityAction(id); if (result.error) setError(result.error); else { close(); setQuery(''); setSuggestion(null); } }
       catch { setError('Не удалось сохранить город. Попробуйте ещё раз.'); }
     });
   }
@@ -48,8 +60,8 @@ export function CitySelector({ selected }: { selected: CityId }) {
   const cities = CITIES.filter(item => normalize(`${item.name} ${item.id}${item.id === 'saint-petersburg' ? ' спб питер' : item.id === 'moscow' ? ' мск' : ''}`).includes(normalize(query)));
   return <>
     <button type="button" className="city-header-button" data-motion="city" onClick={() => { setOpen(true); setError(''); setLocating(false); }} aria-label={`Город: ${city.name}. Изменить город`} aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.5" /></svg><span>{city.name}</span><svg className="city-header-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
-    {open && <dialog ref={dialog} className="city-dialog" aria-labelledby="city-title" onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!pending) setOpen(false); } }} onCancel={event => { event.preventDefault(); if (!pending) setOpen(false); }}>
-      <div className="city-dialog-heading"><h2 id="city-title">Ваш город</h2><button type="button" onClick={() => setOpen(false)} disabled={pending} aria-label="Закрыть выбор города"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg></button></div>
+    {open && <dialog ref={dialog} className="city-dialog" data-closing={closing || undefined} aria-labelledby="city-title" onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!pending) close(); } }} onCancel={event => { event.preventDefault(); if (!pending) close(); }}>
+      <div className="city-dialog-heading"><h2 id="city-title">Ваш город</h2><button type="button" onClick={() => close()} disabled={pending} aria-label="Закрыть выбор города"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg></button></div>
       <p>От города зависят ассортимент и цены.</p>
       <button className="city-detect-button" type="button" onClick={locate} disabled={locating || pending}>{locating ? 'Определяем местоположение…' : 'Определить по геолокации'}</button>
       {suggestion && <div className="city-suggestion"><span>Рядом с вами: {CITIES.find(item => item.id === suggestion)?.name}</span><button className="community-button" type="button" disabled={pending} onClick={() => choose(suggestion)}>Выбрать этот город</button></div>}

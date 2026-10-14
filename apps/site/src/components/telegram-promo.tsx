@@ -4,6 +4,7 @@ export const TELEGRAM_CHANNEL_URL = 'https://t.me/canrushoff';
 
 export function TelegramPromo() {
   return <section className="telegram-promo" aria-labelledby="telegram-promo-title">
+    <Image className="telegram-promo-art" src="/brand/achievements/telegram.png" width={128} height={128} alt="" />
     <div className="telegram-promo-copy">
       <span className="telegram-promo-kicker"><Image src="/brand/icons/telegram.svg" width={20} height={20} alt="" />Telegram · @canrushoff</span>
       <h2 id="telegram-promo-title">CanRush в Telegram</h2>
