@@ -1,6 +1,6 @@
 import type { PreparedReviewPhoto } from '@/lib/review-photos';
 import { getPool } from '@/db/pool';
-import { PROFILE_ACHIEVEMENTS, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
+import { ACHIEVEMENT_METRICS, DETAILED_REVIEW_CHARS, PROFILE_ACHIEVEMENTS, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
 
 export const COMMUNITY_PAGE_SIZE = 20;
 export type ConnectionKind = 'friends' | 'followers' | 'following';
@@ -8,31 +8,47 @@ export class CommunityError extends Error {}
 
 export async function getProfileCommunity(userId: string, viewerId?: string) {
   const db = getPool();
-  const result = await db.query<{
-    following: number; followers: number; friends: number; isFollowing: boolean; followsYou: boolean;
-    listings: number; whiteMonster: number; flash: number; burn: number; adrenaline: number; admin: number; telegram: number; monthlyTop: number; profileTags: string[]; showOnline: boolean; reviews: number; brands: number; favorites: number; tierLists: number;
-  }>(`select u."profileTags", u."showOnline",
+  const result = await db.query<AchievementProgress & {
+    following: number; isFollowing: boolean; followsYou: boolean; profileTags: string[]; showOnline: boolean;
+  }>(`with r as (
+      select brand, flavor, lower(brand) as b, char_length(btrim(text)) >= $3 as detailed,
+        exists(select 1 from "reviewPhoto" p where p."reviewId" = review.id) as photo
+      from "review" where "userId" = $1
+    ), fav as (select brand, lower(brand) as b, flavor from "favorite" where "userId" = $1)
+    select u."profileTags", u."showOnline",
     (select count(*)::int from "userFollow" where "userId" = u.id) as following,
     (select count(*)::int from "userFollow" where "targetId" = u.id) as followers,
     (select count(*)::int from "userFollow" f join "userFollow" b on b."userId" = f."targetId" and b."targetId" = f."userId" where f."userId" = u.id) as friends,
     exists(select 1 from "userFollow" where "userId" = $2 and "targetId" = u.id) as "isFollowing",
     exists(select 1 from "userFollow" where "targetId" = $2 and "userId" = u.id) as "followsYou",
     (select count(*)::int from "marketListing" where "sellerId" = u.id) as listings,
-    (select count(*)::int from "review" where "userId" = u.id) as reviews,
-    (select count(*)::int from "review" where "userId" = u.id and lower(brand) = 'burn') as burn,
-    (select count(*)::int from "review" where "userId" = u.id and lower(brand) in ('adrenaline', 'adrenaline rush')) as adrenaline,
-    (select count(*)::int from "review" where "userId" = u.id and lower(brand) = 'monster' and split_part(flavor, ':', 1) = 'monster_ultra_white') as "whiteMonster",
-    (select count(*)::int from "review" where "userId" = u.id and lower(brand) = 'flash up') as flash,
+    (select count(*)::int from "marketOrder" o join "marketListing" l on l.id = o."listingId" where l."sellerId" = u.id and o.status = 'completed') as sales,
+    (select count(*)::int from r) as reviews,
+    (select count(*)::int from r where detailed) as "detailedReviews",
+    (select count(*)::int from r where photo) as "photoReviews",
+    (select count(distinct brand)::int from r) as brands,
+    (select count(*)::int from "reviewReaction" x join "review" rv on rv.id = x."reviewId" where rv."userId" = u.id and x."userId" <> u.id and x.value = 1) as "reviewLikes",
+    (select count(*)::int from r where b = 'burn') as burn,
+    (select count(*)::int from r where b = 'burn' and detailed) as "burnDetailed",
+    (select count(*)::int from fav where b = 'burn') as "burnFavorites",
+    (select count(*)::int from r where b in ('adrenaline', 'adrenaline rush')) as adrenaline,
+    (select count(*)::int from r where b in ('adrenaline', 'adrenaline rush') and detailed) as "adrenalineDetailed",
+    (select count(*)::int from fav where b in ('adrenaline', 'adrenaline rush')) as "adrenalineFavorites",
+    (select count(*)::int from r where b = 'monster' and split_part(flavor, ':', 1) = 'monster_ultra_white') as "whiteMonster",
+    (select count(*)::int from fav where b = 'monster' and split_part(flavor, ':', 1) = 'monster_ultra_white') as "whiteMonsterFavorite",
+    (select count(*)::int from r where b = 'flash up') as flash,
+    (select count(*)::int from r where b = 'flash up' and detailed) as "flashDetailed",
     (case when exists(select 1 from "siteAdmin" where email = lower(u.email)) then 1 else 0 end) as admin,
     (case when u."telegramChannel" ~* '^[a-z][a-z0-9_]{4,31}$' then 1 else 0 end) as telegram,
-    (select count(distinct brand)::int from "review" where "userId" = u.id) as brands,
-    (select count(*)::int from "favorite" where "userId" = u.id) as favorites,
+    (select count(*)::int from fav) as favorites,
+    (select count(distinct brand)::int from fav) as "favoriteBrands",
     (select count(*)::int from "tierList" where "userId" = u.id and status = 'published') as "tierLists",
+    (select count(*)::int from "tierListReaction" x join "tierList" t on t.id = x."tierListId" where t."userId" = u.id and t.status = 'published' and x."userId" <> u.id and x.value = 1) as "tierListLikes",
     (select count(*)::int from "monthlyTopAward" where "userId" = u.id) as "monthlyTop"
-    from "user" u where u.id = $1`, [userId, viewerId ?? null]);
+    from "user" u where u.id = $1`, [userId, viewerId ?? null, DETAILED_REVIEW_CHARS]);
   const row = result.rows[0];
   if (!row) throw new CommunityError('Профиль не найден.');
-  const progress: AchievementProgress = { listings: row.listings, whiteMonster: row.whiteMonster, flash: row.flash, reviews: row.reviews, brands: row.brands, favorites: row.favorites, tierLists: row.tierLists, friends: row.friends, burn: row.burn, adrenaline: row.adrenaline, admin: row.admin, telegram: row.telegram, monthlyTop: row.monthlyTop };
+  const progress = Object.fromEntries(ACHIEVEMENT_METRICS.map(metric => [metric, row[metric]])) as AchievementProgress;
   const eligible = eligibleAchievements(progress).filter(key => key !== 'admin');
   if (eligible.length) await db.query(`insert into "profileAchievement" ("userId", "key") select $1, unnest($2::text[]) on conflict do nothing`, [userId, eligible]);
   const earned = (await db.query<{ key: string }>('select "key" from "profileAchievement" where "userId" = $1', [userId])).rows.map(item => item.key).filter(key => key !== 'admin' && PROFILE_ACHIEVEMENTS.some(item => item.key === key));

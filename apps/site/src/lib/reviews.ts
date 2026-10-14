@@ -247,6 +247,26 @@ export async function getDiscussionCounts(): Promise<Map<string, number>> {
   return new Map(rows.map(row => [`${row.brand}\u0000${row.flavor}`, Number(row.count)]));
 }
 
+export interface FeaturedReview { text: string; score: number; username: string; name: string; avatarId: string | null }
+
+/** One showcase review per product: most liked first, then the most detailed. */
+export async function getFeaturedReviews(products: Array<{ brand: string; flavor: string }>): Promise<Map<string, FeaturedReview>> {
+  if (!products.length) return new Map();
+  const { rows } = await getPool().query<FeaturedReview & { brand: string; flavor: string }>(
+    `select distinct on (r.brand, r.flavor) r.brand, r.flavor, left(btrim(r.text), 280) as text,
+       (r.design + r.taste)::float8 / 2 as score, u.username, u.name,
+       (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId"
+     from review r join "user" u on u.id = r."userId"
+     where (r.brand, r.flavor) in (${products.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`).join(', ')})
+       and u.username is not null and char_length(btrim(r.text)) >= 20
+     order by r.brand, r.flavor,
+       (select count(*) from "reviewReaction" x where x."reviewId" = r.id and x.value = 1 and x."userId" <> r."userId") desc,
+       char_length(r.text) desc, r."createdAt" desc`,
+    products.flatMap(product => [product.brand, product.flavor]),
+  );
+  return new Map(rows.map(({ brand, flavor, ...review }) => [`${brand}\u0000${flavor}`, { ...review, score: Number(review.score) }]));
+}
+
 export async function getLatestReviewPreview(userId: string): Promise<string | null> {
   const { rows } = await getPool().query<{ text: string }>(
     `select left(text, 240) as text from review where "userId" = $1 and length(trim(text)) > 0 order by "createdAt" desc, id desc limit 1`, [userId],

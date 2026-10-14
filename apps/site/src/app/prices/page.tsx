@@ -2,6 +2,9 @@ import { RetailerBadge } from '@/components/retailer-badge';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { RetailerPriceChart } from '@/components/retailer-price-chart';
+import { StoreTabs } from '@/components/section-tabs';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
 import { loadCatalogSnapshot } from '@/lib/catalog';
 import { preparePriceObservations } from '@/lib/price-statistics';
 import { seoMetadata } from '@/lib/seo';
@@ -14,7 +17,7 @@ export const metadata = seoMetadata({
 });
 
 export default async function PricesPage() {
-  const { groups, generatedAt, city, status } = await loadCatalogSnapshot();
+  const [{ groups, generatedAt, city, status }, session] = await Promise.all([loadCatalogSnapshot(), auth.api.getSession({ headers: await headers() })]);
   const observations = generatedAt ? preparePriceObservations(groups, generatedAt).observations : [];
   const date = generatedAt ? new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeZone: 'Europe/Moscow' }).format(new Date(generatedAt)) : null;
   return (
@@ -27,6 +30,7 @@ export default async function PricesPage() {
           {date && <p className="price-chart-date">Обновлено {date}</p>}
           </div>}
         </header>
+        <StoreTabs active="prices" signedIn={Boolean(session)} />
         {observations.length ? <RetailerPriceChart key={city.id} observations={observations} retailerBadges={Object.fromEntries([...new Set(observations.map(row => row.retailer))].map(name => [name, <RetailerBadge key={name} name={name} decorative />]))} /> : <p className="price-chart-empty">Для сравнения пока недостаточно данных. Они появятся после обновления каталога.</p>}
       </div>
     </BrandShell>

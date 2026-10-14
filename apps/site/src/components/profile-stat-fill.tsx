@@ -3,7 +3,8 @@
 import { useEffect, useRef } from 'react';
 
 /** The final value is rendered on the server; motion only enhances its reveal. */
-export function ProfileStatFill({ value, delay = 0 }: { value: number; delay?: number }) {
+export function ProfileStatFill({ value, delay = 0, axis = 'x' }: { value: number; delay?: number; axis?: 'x' | 'y' }) {
+  const scale = axis === 'x' ? 'scaleX' : 'scaleY';
   const ratio = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
   const fill = useRef<HTMLSpanElement>(null);
   const revealed = useRef(false);
@@ -20,8 +21,8 @@ export function ProfileStatFill({ value, delay = 0 }: { value: number; delay?: n
       revealed.current = true;
       if (reduced.matches) return;
       animation = element!.animate([
-        { transform: `scaleX(${initial ? 0 : from})` },
-        { transform: `scaleX(${ratio})` },
+        { transform: `${scale}(${initial ? 0 : from})` },
+        { transform: `${scale}(${ratio})` },
       ], { duration: initial ? 650 : 350, delay: initial ? delay : 0, easing: 'cubic-bezier(0.22, 0, 0.2, 1)', fill: 'backwards' });
     }
     const onPreference = () => { if (reduced.matches) animation?.cancel(); };
@@ -32,7 +33,7 @@ export function ProfileStatFill({ value, delay = 0 }: { value: number; delay?: n
     if (revealed.current) play(false);
     else observer.observe(element.parentElement ?? element);
     return () => { observer.disconnect(); animation?.cancel(); reduced.removeEventListener('change', onPreference); };
-  }, [ratio, delay]);
+  }, [ratio, delay, scale]);
 
-  return <span ref={fill} className="profile-stat-fill" style={{ transform: `scaleX(${ratio})` }} aria-hidden="true" />;
+  return <span ref={fill} className="profile-stat-fill" data-axis={axis} style={{ transform: `${scale}(${ratio})` }} aria-hidden="true" />;
 }

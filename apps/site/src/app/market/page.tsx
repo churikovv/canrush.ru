@@ -6,6 +6,7 @@ import { headers } from 'next/headers';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { MarketListingControls } from '@/components/market-listing-controls';
+import { MarketTabs } from '@/components/section-tabs';
 import { auth } from '@/lib/auth';
 import { getListings, getMarketFilterOptions } from '@/lib/market';
 import { DELIVERY, formatPrice } from '@/lib/market-fields';
@@ -26,7 +27,7 @@ export default async function MarketPage({ searchParams }: { searchParams: Promi
   const filtered = Boolean(filters.q || filters.brand || filters.city || filters.delivery);
   return <BrandShell headerAction={<ProfileNavigation active="market" />}><div className="market-layout">
     <header className="market-heading"><div><h1>{seller ? `Объявления @${seller}` : 'Маркет'}</h1>{seller ? <p><Link href={`/profile/${encodeURIComponent(seller)}`}>Вернуться в профиль</Link></p> : <p>Энергетики от участников CanRush</p>}</div><Link className="community-button" href="/market/new">Создать объявление</Link></header>
-    <nav className="market-filters" aria-label="Объявления"><Link href="/market" aria-current={!mine && !seller ? 'page' : undefined}>Все объявления</Link>{session && <Link href="/market?mine=1" aria-current={mine ? 'page' : undefined}>Мои объявления</Link>}<Link href="/market/stores">Магазины</Link>{session && <Link href="/market/stores?mine=1">Мои магазины</Link>}</nav>
+    <MarketTabs active={seller ? undefined : mine ? 'mine' : 'all'} signedIn={Boolean(session)} />
     <MarketFilters key={JSON.stringify([filters,scope])} brands={filterOptions.brands} cities={filterOptions.cities} initial={filters} scope={scope}/>
     {items.length ? <div className="market-grid">{items.map(listing => <article className="market-card" key={listing.id}>
       <Link href={`/market/${listing.id}`} className="market-card-link">

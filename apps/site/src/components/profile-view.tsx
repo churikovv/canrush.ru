@@ -12,7 +12,7 @@ import { ProfileConnections } from '@/components/profile-connections';
 import { getListings } from '@/lib/market';
 import { formatPrice } from '@/lib/market-fields';
 import { ProfileReportForm } from '@/components/profile-report-form';
-import { ProfileStatFill } from '@/components/profile-stat-fill';
+import { ProfileRatingStats } from '@/components/profile-rating-stats';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import { getExperience } from '@/lib/profile-experience';
 import { ProfileExperience } from '@/components/profile-experience';
@@ -55,7 +55,6 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
   const base = `/profile/${profile.username}`;
   const telegramHref = profile.telegramChannel ? `https://t.me/${profile.telegramChannel}` : undefined;
   const pages = Math.ceil(wall.count / COMMUNITY_PAGE_SIZE);
-  const formatScore = (value: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(value);
 
   return (
     <div data-profile-theme={profile.profileAppearance?.theme ?? 'default'} className={`community-profile${isOwn ? ' ym-hide-content' : ''}`}>
@@ -84,13 +83,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           <ProfileBlock block="ratings">
           <section className="community-panel" aria-labelledby="rating-statistics-title">
             <div className="community-section-heading"><h2 id="rating-statistics-title">Статистика оценок</h2><Link href={`${base}/reviews`}>Все отзывы ↗</Link></div>
-            {ratings.count ? <div className="profile-rating-summary">
-              <div className="profile-rating-average"><strong>{formatScore(ratings.overall)}<span> / 10</span></strong><p>Средняя оценка</p><dl>{([['Дизайн', ratings.design], ['Вкус', ratings.taste]] as const).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{formatScore(value)}</dd></div>)}</dl></div>
-              <div className="profile-rating-distribution" role="img" aria-label={`Распределение оценок: ${ratings.histogram.map(row => `${row.score} баллов: ${row.count}`).join(', ')}. Общая оценка отзыва округлена до целого.`}>
-                {ratings.histogram.map((row, index) => <div key={row.score}><span>{row.score} <span aria-hidden="true">★</span></span><span className="profile-rating-track"><ProfileStatFill value={row.count / ratings.count} delay={index * 30} /></span><span>{row.count}</span></div>)}
-                <p>Оценок: {ratings.count}</p>
-              </div>
-            </div> : <div className="community-empty"><p>Оценок пока нет.</p>{isOwn && <Link href="/catalog">Выбрать напиток и оставить отзыв ↗</Link>}</div>}
+            {ratings.count ? <ProfileRatingStats ratings={ratings} /> : <div className="community-empty"><p>Оценок пока нет.</p>{isOwn && <Link href="/catalog">Выбрать напиток и оставить отзыв ↗</Link>}</div>}
           </section>
 
           </ProfileBlock><ProfileBlock block="listings">

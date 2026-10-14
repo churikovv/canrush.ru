@@ -10,5 +10,5 @@ export const metadata={title:'Редактировать магазин',robots:
 export default async function EditStorePage({params}:{params:Promise<{id:string}>}){
  const session=await auth.api.getSession({headers:await headers()});if(!session)redirect('/sign-in');
  const store=await getStore((await params).id);if(!store||store.ownerId!==session.user.id)notFound();
- return <BrandShell headerAction={<ProfileNavigation active="market"/>}><div className="market-layout"><ProfileBackButton href="/market/stores?mine=1" label="Мои магазины"/><header className="store-editor-heading"><h1>Редактировать магазин</h1></header><StoreForm initial={store} cityId={store.city} apiKey={process.env.YANDEX_MAPS_API_KEY??''}/></div></BrandShell>;
+ return <BrandShell headerAction={<ProfileNavigation active="prices"/>}><div className="market-layout"><ProfileBackButton href="/market/stores?mine=1" label="Мои магазины"/><header className="store-editor-heading"><h1>Редактировать магазин</h1></header><StoreForm initial={store} cityId={store.city} apiKey={process.env.YANDEX_MAPS_API_KEY??''}/></div></BrandShell>;
 }

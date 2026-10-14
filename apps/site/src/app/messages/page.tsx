@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { MarketInboxRefresh } from '@/components/market-inbox-refresh';
+import { MarketTabs } from '@/components/section-tabs';
 import { auth } from '@/lib/auth';
 import { getOrders } from '@/lib/market';
 import { ORDER_STATUS, formatPrice } from '@/lib/market-fields';
@@ -16,8 +17,9 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
   const query = await searchParams;
   const page = Math.min(10000, Math.max(1, Number.parseInt(query.page ?? '1', 10) || 1));
   const { items, hasMore } = await getOrders(session.user.id, page);
-  return <BrandShell headerAction={<ProfileNavigation active="messages" />}><div className="market-layout market-inbox"><MarketInboxRefresh />
-    <header className="market-heading"><h1>Заказы</h1><Link href="/market">Перейти в маркет</Link></header>
+  return <BrandShell headerAction={<ProfileNavigation active="market" />}><div className="market-layout market-inbox"><MarketInboxRefresh />
+    <header className="market-heading"><div><h1>Маркет</h1><p>Энергетики от участников CanRush</p></div><Link className="community-button" href="/market/new">Создать объявление</Link></header>
+    <MarketTabs active="orders" signedIn />
     {items.length ? <ul className="market-threads">{items.map(order => <li key={order.id}><Link href={`/messages/${order.id}`}>
       <div className="market-thread-person"><strong>{order.buyerId === session.user.id ? order.sellerName : order.buyerName}</strong><span>{order.buyerId === session.user.id ? 'Покупаете' : 'Продаёте'}</span>{order.unread > 0 && <span className="market-unread" aria-label={`${order.unread} непрочитанных сообщений`}>{order.unread}</span>}</div>
       <h2>{order.title}</h2><div className="market-thread-meta"><span>{order.quantity} шт. · {formatPrice(order.price)}</span><span>{ORDER_STATUS[order.status]}</span></div>

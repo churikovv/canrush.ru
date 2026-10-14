@@ -24,12 +24,12 @@ export function ProfileNavigation({ active }: ProfileNavigationProps) {
           className="profile-navigation-item"
           data-motion="prices"
           href="/prices"
-          aria-label="Цены по магазинам"
-          title="Цены по магазинам"
+          aria-label="Магазины и цены"
+          title="Магазины и цены"
           aria-current={active === 'prices' ? 'page' : undefined}
         >
           <NavigationIcon section="prices" />
-          <span className="profile-navigation-label">Цены</span>
+          <span className="profile-navigation-label">Магазины</span>
         </Link>
         <Link
           className="profile-navigation-item"
@@ -43,9 +43,6 @@ export function ProfileNavigation({ active }: ProfileNavigationProps) {
         </Link>
         <Link className="profile-navigation-item" data-motion="market" href="/market" aria-label="Маркет" aria-current={active === 'market' ? 'page' : undefined}>
           <NavigationIcon section="market" /><span className="profile-navigation-label">Маркет</span>
-        </Link>
-        <Link className="profile-navigation-item" data-motion="messages" href="/messages" aria-label="Заказы" aria-current={active === 'messages' ? 'page' : undefined}>
-          <NavigationIcon section="messages" /><span className="profile-navigation-label">Заказы</span>
         </Link>
         <Link
           className="profile-navigation-item"

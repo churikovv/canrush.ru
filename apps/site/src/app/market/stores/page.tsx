@@ -4,6 +4,7 @@ import Link from '@/components/navigation-progress';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { StoreDirectory } from '@/components/store-directory';
+import { StoreTabs } from '@/components/section-tabs';
 import Image from 'next/image';
 import { auth } from '@/lib/auth';
 import { listStores } from '@/lib/stores';
@@ -15,8 +16,8 @@ export default async function StoresPage({searchParams}:{searchParams:Promise<{q
  const mine=params.mine==='1'&&!!session;const city=defaultCity;const q=typeof params.q==='string'?params.q.trim().slice(0,100):'';const page=Math.min(10000,Math.max(1,parseInt(params.page??'1',10)||1));
  const {items,hasMore}=await listStores(city.id,q,page,mine?session!.user.id:undefined);
  const href=(n:number)=>`/market/stores?${new URLSearchParams({q,page:String(n),...(mine?{mine:'1'}:{})})}`;
- return <BrandShell headerAction={<ProfileNavigation active="market"/>}><div className="market-layout"><header className="market-heading"><div><h1>Магазины</h1><p>Места, где участники находят энергетики</p></div><Link className="community-button" href="/market/stores/new">Добавить магазин</Link></header>
- <nav className="market-filters" aria-label="Маркет"><Link href="/market">Все объявления</Link>{session&&<Link href="/market?mine=1">Мои объявления</Link>}<Link href="/market/stores" aria-current={!mine?'page':undefined}>Магазины</Link>{session&&<Link href={"/market/stores?mine=1"} aria-current={mine?'page':undefined}>Мои магазины</Link>}</nav>
+ return <BrandShell headerAction={<ProfileNavigation active="prices"/>}><div className="market-layout"><header className="market-heading"><div><h1>Магазины</h1><p>Места, где участники находят энергетики</p></div><Link className="community-button" href="/market/stores/new">Добавить магазин</Link></header>
+ <StoreTabs active={mine?'mine':'stores'} signedIn={Boolean(session)}/>
  <form className="market-search-form" action="/market/stores">
  <div className="catalog-search-field"><button className="market-search-submit" type="submit" aria-label="Найти магазины"><Image src="/brand/icons/catalog-search.svg" width={24} height={24} alt="" /></button><input name="q" type="search" aria-label="Поиск магазинов" maxLength={100} defaultValue={q} placeholder="Название, адрес или напиток"/></div>
  {mine&&<input type="hidden" name="mine" value="1"/>}</form>

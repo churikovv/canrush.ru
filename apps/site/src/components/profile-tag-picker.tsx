@@ -2,9 +2,9 @@
 import Image from 'next/image';
 import { achievementImage } from '@/lib/profile-achievements';
 
-import { useActionState, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useActionState, useCallback, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { updateCommunityAction } from '@/app/profile/community-actions';
-import { profileTagLabel, visibleProfileAchievements, type AchievementProgress } from '@/lib/profile-achievements';
+import { ACHIEVEMENT_RARITIES, achievementCompletion, achievementStepsDone, profileTagLabel, visibleProfileAchievements, type AchievementProgress } from '@/lib/profile-achievements';
 
 export function AchievementPicker({ earned, selected, progress, isOwn, viewerIsAdmin = false }: {
   earned: string[]; selected: string[]; progress: AchievementProgress; isOwn: boolean; viewerIsAdmin?: boolean;
@@ -18,7 +18,7 @@ export function AchievementPicker({ earned, selected, progress, isOwn, viewerIsA
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0, maxHeight: 400 });
   const [state, action, pending] = useActionState(updateCommunityAction, {});
   const items = visibleProfileAchievements(viewerIsAdmin);
-  const matching = items.filter(item => `${item.label} ${item.description}`.toLocaleLowerCase('ru').includes(query.trim().toLocaleLowerCase('ru')));
+  const matching = items.filter(item => [item.label, item.description, ACHIEVEMENT_RARITIES[item.rarity], ...item.steps.map(step => step.label)].join(' ').toLocaleLowerCase('ru').includes(query.trim().toLocaleLowerCase('ru')));
   const current = items.find(item => item.key === tag);
 
   const placePanel = useCallback(() => {
@@ -81,11 +81,28 @@ export function AchievementPicker({ earned, selected, progress, isOwn, viewerIsA
         </label>}
         {matching.map(item => {
           const unlocked = earned.includes(item.key);
-          const copy = <><Image className="tag-picker-art" src={achievementImage(item.key)} width={48} height={48} alt="" /><span className="achievement-copy"><strong className="profile-tag" data-tag={item.key}>{item.label}</strong><span>{item.description}</span></span>
-            <span className={`achievement-progress${unlocked ? ' is-earned' : ''}`}>{unlocked ? 'Получен' : `${Math.min(progress[item.metric], item.goal)} / ${item.goal}`}</span></>;
-          return isOwn ? <label className={`tag-picker-option${tag === item.key ? ' is-selected' : ''}${!unlocked ? ' is-locked' : ''}`} key={item.key}>
+          const done = achievementStepsDone(item, progress);
+          const copy = <><Image className="tag-picker-art" src={achievementImage(item.key)} width={48} height={48} alt="" />
+            <span className="achievement-copy">
+              <span className="achievement-heading"><strong className="profile-tag" data-tag={item.key}>{item.label}</strong><span className="achievement-rarity" data-rarity={item.rarity}>{ACHIEVEMENT_RARITIES[item.rarity]}</span></span>
+              <span>{item.description}</span>
+              <span className="achievement-steps" role="list" aria-label={`Условия: ${unlocked ? 'выполнены' : `${done} из ${item.steps.length}`}`}>
+                {item.steps.map(step => {
+                  const value = Math.min(progress[step.metric], step.goal);
+                  const complete = unlocked || value >= step.goal;
+                  return <span role="listitem" key={step.metric} className={complete ? 'is-done' : undefined} style={{ '--step-progress': complete ? 1 : value / step.goal } as CSSProperties}>
+                    <span className="achievement-step-mark" aria-hidden="true" />
+                    <span className="achievement-step-label">{step.label}</span>
+                    <span className="achievement-step-count">{complete ? 'Готово' : `${value} / ${step.goal}`}</span>
+                  </span>;
+                })}
+              </span>
+            </span>
+            <span className={`achievement-progress${unlocked ? ' is-earned' : ''}`}>{unlocked ? 'Получен' : `${Math.round(achievementCompletion(item, progress) * 100)}%`}</span></>;
+          const className = `tag-picker-option${tag === item.key ? ' is-selected' : ''}${!unlocked ? ' is-locked' : ''}`;
+          return isOwn ? <label className={className} data-rarity={item.rarity} key={item.key}>
             <input type="radio" name="tag-choice" checked={tag === item.key} disabled={!unlocked || pending} onChange={() => choose(item.key)} />{copy}
-          </label> : <div className="tag-picker-option" key={item.key}>{copy}</div>;
+          </label> : <div className={className} data-rarity={item.rarity} key={item.key}>{copy}</div>;
         })}
         {!matching.length && <p className="tag-picker-empty" role="status">Тег не найден. Попробуйте другое название.</p>}
       </div>

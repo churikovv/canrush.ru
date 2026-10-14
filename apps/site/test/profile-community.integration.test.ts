@@ -25,6 +25,8 @@ describe.sequential('community profile storage', () => {
     expect((await community.getConnections(a, 'friends')).users).toHaveLength(1);
     await community.setFollowing(b, a, false);
     expect((await community.getProfileCommunity(a)).friends).toBe(0);
+    expect((await community.getProfileCommunity(a)).earned).not.toContain('friend');
+    await pool.query(`insert into "profileAchievement" ("userId", "key") values ($1, 'friend')`, [a]);
     expect((await community.getProfileCommunity(a)).earned).toContain('friend');
     await expect(community.setFollowing(a, a, true)).rejects.toThrow('себя');
     expect((await community.getConnections(a, 'following', 2)).users).toEqual([]);

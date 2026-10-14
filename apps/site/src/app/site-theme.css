@@ -58,6 +58,13 @@
 :root[data-site-theme=graphite] .site-tab-bar { box-shadow: inset 0 1px 0 #414c5e; }
 :root[data-site-theme=graphite] :is(.catalog-card-image,.catalog-product-visual,.favorite-card-image,.tier-editor-product-image) { background: #f3f4f6; color: #59616b; }
 :root[data-site-theme=graphite] .community-button { border-color: #414c5e; }
+:root[data-site-theme=graphite] .telegram-promo { border-color: #24506d; background: linear-gradient(120deg, #15283a, #10202f); }
+:root[data-site-theme=graphite] .telegram-promo::after { opacity: .16; background: #3db4ec; }
+:root[data-site-theme=graphite] .telegram-promo-kicker { color: #7cccf5; }
+:root[data-site-theme=graphite] .telegram-promo h2 { color: #f1f4fa; }
+:root[data-site-theme=graphite] .telegram-promo p { color: #b9c8d8; }
+:root[data-site-theme=graphite] .telegram-promo-button { box-shadow: 0 8px 18px rgb(0 0 0 / .35); }
+:root[data-site-theme=graphite] .telegram-promo-button:focus-visible { outline-color: #7cccf5; }
 :root[data-site-theme=graphite] .community-button-secondary { color: var(--theme-text); background: var(--theme-panel); }
 :root[data-site-theme=graphite] .community-button-text { color: var(--theme-link); background: transparent; }
 :root[data-site-theme=graphite] .community-button-secondary:hover { background: var(--theme-subtle); }
@@ -132,6 +139,13 @@
 :root[data-site-theme=system] .site-tab-bar { box-shadow: inset 0 1px 0 #414c5e; }
 :root[data-site-theme=system] :is(.catalog-card-image,.catalog-product-visual,.favorite-card-image,.tier-editor-product-image) { background: #f3f4f6; color: #59616b; }
 :root[data-site-theme=system] .community-button { border-color: #414c5e; }
+:root[data-site-theme=system] .telegram-promo { border-color: #24506d; background: linear-gradient(120deg, #15283a, #10202f); }
+:root[data-site-theme=system] .telegram-promo::after { opacity: .16; background: #3db4ec; }
+:root[data-site-theme=system] .telegram-promo-kicker { color: #7cccf5; }
+:root[data-site-theme=system] .telegram-promo h2 { color: #f1f4fa; }
+:root[data-site-theme=system] .telegram-promo p { color: #b9c8d8; }
+:root[data-site-theme=system] .telegram-promo-button { box-shadow: 0 8px 18px rgb(0 0 0 / .35); }
+:root[data-site-theme=system] .telegram-promo-button:focus-visible { outline-color: #7cccf5; }
 :root[data-site-theme=system] .community-button-secondary { color: var(--theme-text); background: var(--theme-panel); }
 :root[data-site-theme=system] .community-button-text { color: var(--theme-link); background: transparent; }
 :root[data-site-theme=system] .community-button-secondary:hover { background: var(--theme-subtle); }

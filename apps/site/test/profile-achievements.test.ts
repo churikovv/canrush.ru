@@ -1,10 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, visibleProfileAchievements } from '../src/lib/profile-achievements';
+import { ACHIEVEMENT_METRICS, PROFILE_ACHIEVEMENTS, achievementCompletion, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, visibleProfileAchievements, type AchievementProgress } from '../src/lib/profile-achievements';
+const progress = (values: Partial<AchievementProgress> = {}): AchievementProgress =>
+  ({ ...Object.fromEntries(ACHIEVEMENT_METRICS.map(metric => [metric, 0])), ...values }) as AchievementProgress;
+const burner = PROFILE_ACHIEVEMENTS.find(item => item.key === 'burner')!;
 describe('profile achievement and wall validation', () => {
-  it('unlocks tags at their exact thresholds', () => {
-    expect(eligibleAchievements({ listings: 0, whiteMonster: 0, flash: 0, burn: 0, adrenaline: 0, admin: 0, telegram: 0, reviews: 0, brands: 0, favorites: 0, tierLists: 0, friends: 0, monthlyTop: 0 })).toEqual([]);
-    expect(eligibleAchievements({ listings: 0, whiteMonster: 0, flash: 0, burn: 3, adrenaline: 3, admin: 1, telegram: 1, reviews: 67, brands: 5, favorites: 10, tierLists: 3, friends: 1, monthlyTop: 0 })).toHaveLength(13);
-    expect(eligibleAchievements({ listings: 0, whiteMonster: 0, flash: 0, burn: 0, adrenaline: 0, admin: 0, telegram: 0, reviews: 1, brands: 1, favorites: 4, tierLists: 0, friends: 0, monthlyTop: 0 })).toEqual(['first-review']);
+  it('unlocks tags only when every step reaches its threshold', () => {
+    expect(eligibleAchievements(progress())).toEqual([]);
+    expect(eligibleAchievements(progress({ reviews: 1, brands: 1, favorites: 4 }))).toEqual(['first-review']);
+    expect(eligibleAchievements(progress({ burn: 5, burnDetailed: 3 }))).not.toContain('burner');
+    expect(eligibleAchievements(progress({ burn: 5, burnDetailed: 3, burnFavorites: 1 }))).toContain('burner');
+    const maxed = progress();
+    for (const step of PROFILE_ACHIEVEMENTS.flatMap(item => item.steps)) maxed[step.metric] = Math.max(maxed[step.metric], step.goal);
+    expect(eligibleAchievements(maxed)).toHaveLength(PROFILE_ACHIEVEMENTS.length);
+  });
+  it('caps each step when computing completion', () => {
+    expect(achievementCompletion(burner, progress({ burn: 50 }))).toBeCloseTo(5 / 9);
+    expect(achievementCompletion(burner, progress({ burn: 5, burnDetailed: 3, burnFavorites: 1 }))).toBe(1);
+  });
+  it('gives every tag a rarity and at least one step', () => {
+    for (const item of PROFILE_ACHIEVEMENTS) expect(item.steps.length).toBeGreaterThan(0);
+    expect(PROFILE_ACHIEVEMENTS.filter(item => item.rarity === 'epic').map(item => item.key)).toEqual(['burner', 'adrenaline', 'deadinside']);
   });
   it('hides administrative options from regular viewers', () => {
     expect(visibleProfileAchievements(false).some(item => item.key === 'admin')).toBe(false);

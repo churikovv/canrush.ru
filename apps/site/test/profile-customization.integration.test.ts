@@ -61,7 +61,13 @@ describe.sequential('profile image storage and displayed tags', () => {
     await pool.query(`insert into review ("userId", brand, flavor, design, taste, composition, text) values ($1, 'Monster', 'monster_ultra_rosa', 5, 5, 5, 'Review')`, [b]);
     expect((await getProfileCommunity(b)).earned).not.toContain('altushka');
     expect((await getProfileCommunity(b)).earned).not.toContain('flash');
-    await pool.query(`insert into review ("userId", brand, flavor, design, taste, composition, text) values ($1, 'Monster', 'monster_ultra_white:sugarfree', 5, 5, 5, 'Review'), ($1, 'Flash Up', 'original', 5, 5, 5, 'Review')`, [b]);
+    await pool.query(`insert into review ("userId", brand, flavor, design, taste, composition, text) values ($1, 'Monster', 'monster_ultra_white:sugarfree', 5, 5, 5, 'Review'), ($1, 'Flash Up', 'original', 5, 5, 5, $2), ($1, 'Flash Up', 'berry', 5, 5, 5, 'Review')`, [b, 'x'.repeat(150)]);
+    const partial = await getProfileCommunity(b);
+    expect(partial.earned).not.toContain('altushka');
+    expect(partial.earned).not.toContain('flash');
+    expect(partial.progress).toMatchObject({ whiteMonster: 1, flash: 2, flashDetailed: 1 });
+    await pool.query(`insert into review ("userId", brand, flavor, design, taste, composition, text) values ($1, 'Flash Up', 'mango', 5, 5, 5, 'Review')`, [b]);
+    await pool.query(`insert into favorite ("userId", brand, flavor) values ($1, 'Monster', 'monster_ultra_white:sugarfree')`, [b]);
     const community = await getProfileCommunity(b);
     expect(community.earned).toEqual(expect.arrayContaining(['altushka', 'flash']));
     await setProfileTags(b, ['altushka']);

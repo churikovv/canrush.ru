@@ -57,6 +57,10 @@ export function LevelChip({ level }: { level: number }) {
   return <span className="profile-level" data-level-tier={tier.key} title={tier.label}><LevelChipContent level={level} /></span>;
 }
 
+export function LevelTierGlyph({ tier }: { tier: LevelTier['key'] }) {
+  return <svg className="level-tier-glyph" viewBox="0 0 100 100" aria-hidden="true"><path d={SHAPES[tier]} /></svg>;
+}
+
 /** Compact chip for author rows; the tier shape doubles as a glyph. */
 export function LevelChipContent({ level }: { level: number }) {
   const { tier } = levelTier(level);

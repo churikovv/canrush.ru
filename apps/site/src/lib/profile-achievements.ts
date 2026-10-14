@@ -1,45 +1,96 @@
-export interface AchievementProgress {
-  listings: number;
-  whiteMonster: number;
-  flash: number;
-  reviews: number;
-  brands: number;
-  favorites: number;
-  tierLists: number;
-  friends: number;
-  burn: number;
-  adrenaline: number;
-  admin: number;
-  telegram: number;
-  monthlyTop: number;
+export const ACHIEVEMENT_METRICS = [
+  'listings', 'sales', 'reviews', 'detailedReviews', 'photoReviews', 'reviewLikes', 'brands', 'favorites', 'favoriteBrands',
+  'tierLists', 'tierListLikes', 'friends', 'followers', 'whiteMonster', 'whiteMonsterFavorite', 'flash', 'flashDetailed',
+  'burn', 'burnDetailed', 'burnFavorites', 'adrenaline', 'adrenalineDetailed', 'adrenalineFavorites',
+  'admin', 'telegram', 'monthlyTop',
+] as const;
+export type AchievementMetric = typeof ACHIEVEMENT_METRICS[number];
+export type AchievementProgress = Record<AchievementMetric, number>;
+
+/** A review counts as detailed once its trimmed text reaches this length. */
+export const DETAILED_REVIEW_CHARS = 150;
+
+export const ACHIEVEMENT_RARITIES = {
+  common: 'Обычный',
+  rare: 'Редкий',
+  epic: 'Эпический',
+  legendary: 'Легендарный',
+  special: 'Особый',
+} as const;
+export type AchievementRarity = keyof typeof ACHIEVEMENT_RARITIES;
+
+interface AchievementStep { metric: AchievementMetric; goal: number; label: string }
+export interface ProfileAchievement { key: string; label: string; rarity: AchievementRarity; description: string; steps: readonly AchievementStep[] }
+
+// Earned keys are stored in "profileAchievement" forever, so raising goals never revokes an old tag.
+export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
+  { key: 'top', label: 'ТОП', rarity: 'legendary', description: 'Победить в гонке месяца', steps: [
+    { metric: 'monthlyTop', goal: 1, label: 'Попасть в топ-3 рейтинга месяца' }] },
+  { key: 'six-seven', label: 'Six Seven', rarity: 'legendary', description: 'Путь настоящего дегустатора', steps: [
+    { metric: 'reviews', goal: 67, label: 'Оценить 67 напитков' },
+    { metric: 'detailedReviews', goal: 20, label: `Написать 20 развёрнутых отзывов (от ${DETAILED_REVIEW_CHARS} символов)` },
+    { metric: 'brands', goal: 15, label: 'Попробовать 15 брендов' }] },
+  { key: 'burner', label: 'Burner', rarity: 'epic', description: 'Прожечь линейку Burn насквозь', steps: [
+    { metric: 'burn', goal: 5, label: 'Оценить 5 вкусов Burn' },
+    { metric: 'burnDetailed', goal: 3, label: `Написать 3 развёрнутых отзыва на Burn (от ${DETAILED_REVIEW_CHARS} символов)` },
+    { metric: 'burnFavorites', goal: 1, label: 'Добавить Burn в избранное' }] },
+  { key: 'adrenaline', label: 'Adrenaline', rarity: 'epic', description: 'Разогнать пульс линейкой Adrenaline', steps: [
+    { metric: 'adrenaline', goal: 5, label: 'Оценить 5 вкусов Adrenaline или Adrenaline Rush' },
+    { metric: 'adrenalineDetailed', goal: 3, label: `Написать 3 развёрнутых отзыва на Adrenaline (от ${DETAILED_REVIEW_CHARS} символов)` },
+    { metric: 'adrenalineFavorites', goal: 1, label: 'Добавить Adrenaline в избранное' }] },
+  { key: 'deadinside', label: 'Deadinside', rarity: 'epic', description: 'Тирлисты, о которых говорят', steps: [
+    { metric: 'tierLists', goal: 5, label: 'Опубликовать 5 тирлистов' },
+    { metric: 'tierListLikes', goal: 10, label: 'Собрать 10 лайков на тирлистах' }] },
+  { key: 'seller', label: 'Селлер', rarity: 'rare', description: 'Довести сделки до конца', steps: [
+    { metric: 'listings', goal: 1, label: 'Опубликовать товар в маркете' },
+    { metric: 'sales', goal: 3, label: 'Завершить 3 продажи' }] },
+  { key: 'altushka', label: 'Альтушка', rarity: 'rare', description: 'Белый Monster — образ жизни', steps: [
+    { metric: 'whiteMonster', goal: 1, label: 'Оценить Monster Ultra White' },
+    { metric: 'whiteMonsterFavorite', goal: 1, label: 'Добавить Monster Ultra White в избранное' }] },
+  { key: 'flash', label: 'Флэш', rarity: 'rare', description: 'Быстрее всех по линейке Flash Up', steps: [
+    { metric: 'flash', goal: 3, label: 'Оценить 3 вкуса Flash Up' },
+    { metric: 'flashDetailed', goal: 1, label: `Написать развёрнутый отзыв на Flash Up (от ${DETAILED_REVIEW_CHARS} символов)` }] },
+  { key: 'critic', label: 'Mad', rarity: 'rare', description: 'Отзывы, которые читают', steps: [
+    { metric: 'reviews', goal: 15, label: 'Оценить 15 напитков' },
+    { metric: 'detailedReviews', goal: 5, label: `Написать 5 развёрнутых отзывов (от ${DETAILED_REVIEW_CHARS} символов)` },
+    { metric: 'reviewLikes', goal: 5, label: 'Получить 5 лайков на отзывах' }] },
+  { key: 'explorer', label: 'Nya ^^', rarity: 'rare', description: 'Исследовать полку целиком', steps: [
+    { metric: 'brands', goal: 8, label: 'Оценить напитки 8 брендов' },
+    { metric: 'photoReviews', goal: 3, label: 'Приложить фото к 3 отзывам' }] },
+  { key: 'collector', label: 'Коллекционер', rarity: 'rare', description: 'Собрать настоящую коллекцию', steps: [
+    { metric: 'favorites', goal: 25, label: 'Добавить 25 напитков в избранное' },
+    { metric: 'favoriteBrands', goal: 8, label: 'Собрать в избранном 8 брендов' }] },
+  { key: 'friend', label: 'Пепе', rarity: 'rare', description: 'Обрасти своей тусовкой', steps: [
+    { metric: 'friends', goal: 3, label: 'Найти 3 взаимных подписчика' },
+    { metric: 'followers', goal: 5, label: 'Набрать 5 подписчиков' }] },
+  { key: 'first-review', label: 'Первое открытие', rarity: 'common', description: 'Первый шаг', steps: [
+    { metric: 'reviews', goal: 1, label: 'Оставить первый отзыв' }] },
+  { key: 'three', label: ':3', rarity: 'common', description: 'Втянуться', steps: [
+    { metric: 'reviews', goal: 3, label: 'Оценить 3 напитка' }] },
+  { key: 'kitty', label: 'Котик', rarity: 'common', description: 'Начать собирать любимое', steps: [
+    { metric: 'favorites', goal: 5, label: 'Добавить 5 напитков в избранное' }] },
+  { key: 'telegram', label: 'Телега', rarity: 'common', description: 'Связь с автором', steps: [
+    { metric: 'telegram', goal: 1, label: 'Указать Telegram в настройках профиля' }] },
+  { key: 'admin', label: 'Админ', rarity: 'special', description: 'Только для действующих администраторов', steps: [
+    { metric: 'admin', goal: 1, label: 'Быть администратором сайта' }] },
+];
+
+export function achievementStepsDone(item: ProfileAchievement, progress: AchievementProgress): number {
+  return item.steps.filter(step => progress[step.metric] >= step.goal).length;
 }
 
-export const PROFILE_ACHIEVEMENTS = [
-  { key: 'top', label: 'ТОП', description: 'Попасть в топ-3 рейтинга месяца', metric: 'monthlyTop', goal: 1 },
-  { key: 'seller', label: 'Селлер', description: 'Опубликовать товар в маркете', metric: 'listings', goal: 1 },
-  { key: 'altushka', label: 'Альтушка', description: 'Написать отзыв на Monster Ultra White', metric: 'whiteMonster', goal: 1 },
-  { key: 'flash', label: 'Флэш', description: 'Написать отзыв на любой напиток Flash Up', metric: 'flash', goal: 1 },
-  { key: 'burner', label: 'Burner', description: 'Оценить 3 напитка Burn', metric: 'burn', goal: 3 },
-  { key: 'adrenaline', label: 'Adrenaline', description: 'Оценить 3 напитка Adrenaline или Adrenaline Rush', metric: 'adrenaline', goal: 3 },
-  { key: 'six-seven', label: 'Six Seven', description: 'Оценить 67 напитков', metric: 'reviews', goal: 67 },
-  { key: 'collector', label: 'Коллекционер', description: 'Добавить 10 напитков в избранное', metric: 'favorites', goal: 10 },
-  { key: 'first-review', label: 'Первое открытие', description: 'Оставить первый отзыв', metric: 'reviews', goal: 1 },
-  { key: 'admin', label: 'Админ', description: 'Только для действующих администраторов', metric: 'admin', goal: 1 },
-  { key: 'friend', label: 'Пепе', description: 'Найти первого взаимного подписчика', metric: 'friends', goal: 1 },
-  { key: 'critic', label: 'Mad', description: 'Оценить 10 напитков', metric: 'reviews', goal: 10 },
-  { key: 'deadinside', label: 'Deadinside', description: 'Опубликовать 3 тирлиста', metric: 'tierLists', goal: 3 },
-  { key: 'explorer', label: 'Nya ^^', description: 'Оценить напитки 5 брендов', metric: 'brands', goal: 5 },
-  { key: 'three', label: ':3', description: 'Оценить 3 напитка', metric: 'reviews', goal: 3 },
-  { key: 'kitty', label: 'Котик', description: 'Добавить 5 напитков в избранное', metric: 'favorites', goal: 5 },
-  { key: 'telegram', label: 'Телега', description: 'Указать Telegram в настройках профиля', metric: 'telegram', goal: 1 },
-] as const satisfies ReadonlyArray<{ key: string; label: string; description: string; metric: keyof AchievementProgress; goal: number }>;
+/** Share of the combined goal reached, capped per step so one grind cannot carry the rest. */
+export function achievementCompletion(item: ProfileAchievement, progress: AchievementProgress): number {
+  const total = item.steps.reduce((sum, step) => sum + step.goal, 0);
+  return item.steps.reduce((sum, step) => sum + Math.min(progress[step.metric], step.goal), 0) / total;
+}
 
 export function eligibleAchievements(progress: AchievementProgress): string[] {
-  return PROFILE_ACHIEVEMENTS.filter(item => progress[item.metric] >= item.goal).map(item => item.key);
+  return PROFILE_ACHIEVEMENTS.filter(item => achievementStepsDone(item, progress) === item.steps.length).map(item => item.key);
 }
 
 export function visibleProfileAchievements(viewerIsAdmin: boolean) {
-  return PROFILE_ACHIEVEMENTS.filter(item => item.metric !== 'admin' || viewerIsAdmin);
+  return PROFILE_ACHIEVEMENTS.filter(item => item.key !== 'admin' || viewerIsAdmin);
 }
 
 export function validateProfileTags(value: unknown, earned: string[]): string[] | null {
