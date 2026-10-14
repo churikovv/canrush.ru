@@ -1,6 +1,7 @@
 import { AvatarFrame } from '@/components/avatar-frame';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
+import { joinedLabel } from '@/lib/last-seen';
 
 export function ProfileHeader({ name, username, createdAt, avatarSrc, bannerSrc, actions, status, tags, avatarControl, bannerControl, frame = 'none' }: {
   frame?: import('@/lib/profile-appearance').ProfileAppearance['frame'];
@@ -15,7 +16,7 @@ export function ProfileHeader({ name, username, createdAt, avatarSrc, bannerSrc,
   avatarControl?: ReactNode;
   bannerControl?: ReactNode;
 }) {
-  const date = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' }).format(new Date(createdAt));
+  const date = joinedLabel(createdAt);
   return <header className="community-hero">
     <div className={`community-cover${bannerSrc ? ' community-cover-custom' : ''}`}>
       {bannerSrc ? <Image src={bannerSrc} fill sizes="(max-width: 1200px) 100vw, 1120px" unoptimized alt="Баннер профиля" priority />
@@ -29,7 +30,7 @@ export function ProfileHeader({ name, username, createdAt, avatarSrc, bannerSrc,
         {avatarControl}
       </span>
       <div className="community-name"><div className="community-name-line"><h1>{name}</h1>{status}</div>
-        <p>@{username} <span>· С нами с {date}</span></p>{tags}
+        <p>@{username}<span className="community-joined">С нами с {date}</span></p>{tags}
       </div>
       <div className="community-hero-actions">{actions}</div>
     </div>

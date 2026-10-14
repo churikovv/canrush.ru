@@ -23,7 +23,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
     {items.length ? <ul className="market-threads">{items.map(order => <li key={order.id}><Link href={`/messages/${order.id}`}>
       <div className="market-thread-person"><strong>{order.buyerId === session.user.id ? order.sellerName : order.buyerName}</strong><span>{order.buyerId === session.user.id ? 'Покупаете' : 'Продаёте'}</span>{order.unread > 0 && <span className="market-unread" aria-label={`${order.unread} непрочитанных сообщений`}>{order.unread}</span>}</div>
       <h2>{order.title}</h2><div className="market-thread-meta"><span>{order.quantity} шт. · {formatPrice(order.price)}</span><span>{ORDER_STATUS[order.status]}</span></div>
-    </Link></li>)}</ul> : <section className="market-empty"><h2>Здесь будут ваши заказы</h2><p>Нажмите «Заказать» в объявлении, чтобы обсудить покупку с продавцом. Входящие заказы тоже появятся здесь.</p><Link href="/market">Посмотреть объявления</Link></section>}
+    </Link></li>)}</ul> : <section className="market-empty"><h2>Здесь будут ваши заказы</h2><p>Нажмите «Заказать» в объявлении, чтобы обсудить покупку с продавцом. Входящие заказы тоже появятся здесь.</p><div className="market-empty-actions"><Link className="community-button" href="/market">Посмотреть объявления</Link></div></section>}
     <nav className="market-pagination" aria-label="Страницы заказов">{page > 1 && <Link href={`/messages?page=${page - 1}`}>Назад</Link>}{hasMore && <Link href={`/messages?page=${page + 1}`}>Следующая страница</Link>}</nav>
   </div></BrandShell>;
 }

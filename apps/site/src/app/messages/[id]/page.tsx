@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import Link from '@/components/navigation-progress';
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
+import { ProfileBackButton } from '@/components/profile-back-button';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { MarketChat } from '@/components/market-chat';
@@ -20,6 +20,6 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   if (!order) notFound();
   const [messages, blocked] = await Promise.all([getMessages(session.user.id, id), isUserBlocked(session.user.id)]);
   return <BrandShell headerAction={<ProfileNavigation active="market" />}><div className="market-layout market-chat-layout">
-    <Link className="market-back" href="/messages">← Все заказы</Link><MarketChat key={id} initialOrder={order} initialMessages={messages.items} initialHasMore={messages.hasMore} userId={session.user.id} blocked={blocked} />
+    <ProfileBackButton href="/messages" label="Все заказы" /><MarketChat key={id} initialOrder={order} initialMessages={messages.items} initialHasMore={messages.hasMore} userId={session.user.id} blocked={blocked} />
   </div></BrandShell>;
 }

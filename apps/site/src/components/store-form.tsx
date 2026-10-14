@@ -10,6 +10,7 @@ import { StoreMap } from '@/components/store-map';
 import { METRO, STOCK_LABELS, type StockStatus } from '@/lib/store-fields';
 import type { Store } from '@/lib/stores';
 import { saveStoreAction } from '@/app/market/stores/actions';
+import { FormOptional, FormStep } from '@/components/form-step';
 export function StoreForm({initial,cityId,apiKey}:{initial?:Store;cityId:string;apiKey:string}){
   const [photos,setPhotos]=useState<File[]>([]);
   const [photosBusy,setPhotosBusy]=useState(false);
@@ -21,30 +22,41 @@ export function StoreForm({initial,cityId,apiKey}:{initial?:Store;cityId:string;
   const location=findCity(city)??CITIES[0];
   const latitude=Number(lat.replace(',','.')),longitude=Number(lng.replace(',','.'));
   const points=lat&&lng&&Number.isFinite(latitude)&&Number.isFinite(longitude)&&Math.abs(latitude)<=90&&Math.abs(longitude)<=180?[{id:'new',latitude,longitude}]:[];
-  if(state.saved)return <section className="market-empty"><h2>Магазин отправлен на проверку</h2><p>После модерации он появится в списке и на карте.</p><Link href="/market/stores?mine=1" className="community-button">Мои магазины</Link></section>;
+  if(state.saved)return <section className="market-empty"><h2>Магазин отправлен на проверку</h2><p>После модерации он появится в списке и на карте.</p><div className="market-empty-actions"><Link href="/market/stores?mine=1" className="community-button">Мои магазины</Link></div></section>;
+  const optional=<FormOptional/>;
   return <form action={form=>{if(photosBusy)return;photos.forEach(photo=>form.append('photos',photo));action(form);}} className="store-form"><fieldset disabled={pending}>
-    <label>Название магазина<input name="name" required maxLength={120} defaultValue={initial?.name}/></label>
-    <section className="store-photo-section"><h2>Фотографии · необязательно</h2>
+    <section className="form-card" aria-labelledby="store-step-main">
+      <FormStep n={1} id="store-step-main" title="О магазине" hint="Название и адрес, по которым его найдут покупатели."/>
+      <label>Название магазина<input name="name" required maxLength={120} defaultValue={initial?.name} placeholder="Например, «Энергия у метро»"/></label>
+      <div className="store-form-grid"><label>Город<select aria-label="Город" name="city" value={city} onChange={e=>{setCity(e.target.value);setMetro('');setLat('');setLng('');}}>{CITIES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+      <label>Адрес<input name="address" required maxLength={300} placeholder="Улица, дом, этаж или павильон" defaultValue={initial?.address}/></label></div>
+      {(METRO[city]?.length??0)>0&&<div className="form-field"><label htmlFor="store-metro"><span className="form-label">Ближайшее метро {optional}</span></label><PriceFilterInput id="store-metro" value={metro} onChange={setMetro} allLabel="Не указано" options={METRO[city]!.map(s=>({value:s.id,label:`${s.name} · ${s.line}`,color:s.color}))}/></div>}
+      <input type="hidden" name="metro" value={metro}/>
+      <label><span className="form-label">Описание {optional}</span><textarea name="description" maxLength={1500} rows={3} defaultValue={initial?.description} placeholder="Как найти вход, какие напитки продаются"/></label>
+    </section>
+    <section className="form-card" aria-labelledby="store-step-map">
+      <FormStep n={2} id="store-step-map" title="Точка на карте" hint={apiKey?'Нажмите на карту в месте входа в магазин.':'Укажите координаты входа в магазин. Их можно скопировать из ссылки или карточки места в картах.'}/>
+      {apiKey&&<StoreMap apiKey={apiKey} center={[location.lat,location.lng]} points={points} onPick={(a,b)=>{setLat(a.toFixed(6));setLng(b.toFixed(6));}}/>}
+      <div className="store-form-grid"><label>Широта<input name="latitude" inputMode="decimal" required value={lat} onChange={e=>setLat(e.target.value)} placeholder={String(location.lat)}/></label><label>Долгота<input name="longitude" inputMode="decimal" required value={lng} onChange={e=>setLng(e.target.value)} placeholder={String(location.lng)}/></label></div>
+      <a className="store-form-link" href={`https://yandex.ru/maps/?ll=${location.lng},${location.lat}&z=12`} target="_blank" rel="noopener noreferrer">Открыть карту города ↗</a>
+    </section>
+    <section className="form-card store-photo-section" aria-labelledby="store-step-photos">
+      <FormStep n={3} id="store-step-photos" title="Фотографии" hint="Вход, витрина или холодильник с напитками — до 5 фото." optional/>
       {retained.map(id=><input key={id} type="hidden" name="retainedPhoto" value={id}/>)}
       {retained.length>0&&<div className="store-photo-previews">{retained.map((id,index)=><div key={id}><Image src={`/api/store-photos/${id}?size=thumbnail`} alt={`Фото магазина ${index+1}`} width={160} height={160} unoptimized/><button type="button" className="photo-delete-button" aria-label={`Удалить сохранённое фото ${index+1}`} onClick={()=>setRetained(retained.filter(v=>v!==id))}><PhotoDeleteIcon/></button></div>)}</div>}
       <MarketPhotoPicker compact crop={false} maxPhotos={5-retained.length} onChange={setPhotos} onBusyChange={setPhotosBusy} disabled={pending}/>
     </section>
-    <div className="store-form-grid"><label>Город<select aria-label="Город" name="city" value={city} onChange={e=>{setCity(e.target.value);setMetro('');setLat('');setLng('');}}>{CITIES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
-    <label>Адрес<input name="address" required maxLength={300} placeholder="Улица, дом, этаж или павильон" defaultValue={initial?.address}/></label></div>
-    {(METRO[city]?.length??0)>0&&<div><label htmlFor="store-metro">Ближайшее метро · необязательно</label><PriceFilterInput id="store-metro" value={metro} onChange={setMetro} allLabel="Не указано" options={METRO[city]!.map(s=>({value:s.id,label:`${s.name} · ${s.line}`,color:s.color}))}/></div>}
-    <input type="hidden" name="metro" value={metro}/>
-    <div><h2>Точка на карте</h2><p>{apiKey?'Нажмите на карту в месте входа в магазин.':'Укажите координаты входа в магазин. Их можно скопировать из ссылки или карточки места в картах.'}</p>
-    {apiKey&&<StoreMap apiKey={apiKey} center={[location.lat,location.lng]} points={points} onPick={(a,b)=>{setLat(a.toFixed(6));setLng(b.toFixed(6));}}/>}
-    <div className="store-form-grid"><label>Широта<input name="latitude" inputMode="decimal" required value={lat} onChange={e=>setLat(e.target.value)} placeholder={String(location.lat)}/></label><label>Долгота<input name="longitude" inputMode="decimal" required value={lng} onChange={e=>setLng(e.target.value)} placeholder={String(location.lng)}/></label></div>
-    <a href={`https://yandex.ru/maps/?ll=${location.lng},${location.lat}&z=12`} target="_blank" rel="noopener noreferrer">Открыть карту города ↗</a></div>
-    <label>Описание · необязательно<textarea name="description" maxLength={1500} rows={3} defaultValue={initial?.description} placeholder="Как найти вход, какие напитки продаются"/></label>
-    <section><h2>Напитки и цены · необязательно</h2><p>Добавьте известные позиции. Неизвестную цену можно оставить пустой.</p>
+    <section className="form-card" aria-labelledby="store-step-stock">
+      <FormStep n={4} id="store-step-stock" title="Напитки и цены" hint="Добавьте известные позиции. Неизвестную цену можно оставить пустой." optional/>
       <input type="hidden" name="catalog" value={JSON.stringify(items.map(({name,price,availability})=>({name,price:price.trim()?Math.round(Number(price.replace(',','.'))*100):null,availability})))}/>
-      <div className="store-stock-editor">{items.map((item,index)=><div key={item.id} className="store-stock-row"><label>Напиток<input aria-label={`Напиток ${index+1}`} required maxLength={150} value={item.name} onChange={e=>setItems(items.map(v=>v.id===item.id?{...v,name:e.target.value}:v))}/></label><label>Цена, ₽<input type="number" min="0.01" max="1000000" step="0.01" value={item.price} onChange={e=>setItems(items.map(v=>v.id===item.id?{...v,price:e.target.value}:v))}/></label><label>Наличие<select aria-label="Наличие" value={item.availability} onChange={e=>setItems(items.map(v=>v.id===item.id?{...v,availability:e.target.value as StockStatus}:v))}>{Object.entries(STOCK_LABELS).map(([k,v])=><option value={k} key={k}>{v}</option>)}</select></label><button type="button" className="community-button community-button-secondary" aria-label={`Удалить напиток ${index+1}`} onClick={()=>setItems(items.filter(v=>v.id!==item.id))}><PhotoDeleteIcon/></button></div>)}</div>
-      <button type="button" className="community-button community-button-secondary" disabled={items.length>=50} onClick={()=>setItems([...items,{id:crypto.randomUUID(),name:'',price:'',availability:'unknown'}])}>Добавить напиток</button>
+      {items.length>0&&<div className="store-stock-editor">{items.map((item,index)=><div key={item.id} className="store-stock-row"><label>Напиток<input aria-label={`Напиток ${index+1}`} required maxLength={150} value={item.name} onChange={e=>setItems(items.map(v=>v.id===item.id?{...v,name:e.target.value}:v))}/></label><label>Цена, ₽<input type="number" min="0.01" max="1000000" step="0.01" value={item.price} onChange={e=>setItems(items.map(v=>v.id===item.id?{...v,price:e.target.value}:v))}/></label><label>Наличие<select aria-label="Наличие" value={item.availability} onChange={e=>setItems(items.map(v=>v.id===item.id?{...v,availability:e.target.value as StockStatus}:v))}>{Object.entries(STOCK_LABELS).map(([k,v])=><option value={k} key={k}>{v}</option>)}</select></label><button type="button" className="store-stock-remove" aria-label={`Удалить напиток ${index+1}`} onClick={()=>setItems(items.filter(v=>v.id!==item.id))}><PhotoDeleteIcon/></button></div>)}</div>}
+      <button type="button" className="store-stock-add" disabled={items.length>=50} onClick={()=>setItems([...items,{id:crypto.randomUUID(),name:'',price:'',availability:'unknown'}])}><span aria-hidden="true">+</span>Добавить напиток</button>
     </section>
-    {initial&&<p>После изменения магазин снова пройдёт модерацию и временно исчезнет из публичного списка.</p>}
-    {state.error&&<p className="field-error" role="alert">{state.error}</p>}
-    <button className="community-button" disabled={pending||photosBusy} type="submit">{pending?'Отправляем…':'Отправить на проверку'}</button>
+    <div className="form-submit">
+      {initial&&<p>После изменения магазин снова пройдёт модерацию и временно исчезнет из публичного списка.</p>}
+      {state.error&&<p className="field-error" role="alert">{state.error}</p>}
+      <button className="community-button" disabled={pending||photosBusy} type="submit">{pending?'Отправляем…':'Отправить на проверку'}</button>
+    </div>
   </fieldset></form>;
 }
+

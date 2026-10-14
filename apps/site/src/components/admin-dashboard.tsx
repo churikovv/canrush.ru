@@ -7,9 +7,22 @@ import { AdminActionButton } from '@/components/admin-action-button';
 import type { SiteAdminIdentity } from '@/lib/admin';
 import { ADMIN_PAGE_SIZE, type AdminDashboardData } from '@/lib/admin-dashboard-data';
 import { ADMIN_TABS, adminHref, type AdminTab } from '@/lib/admin-tabs';
+import { AdminIcon, AdminShell } from '@/components/admin-shell';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 
 interface Props { admin: SiteAdminIdentity; data: AdminDashboardData; query: string; tab: AdminTab; notice?: string; error?: string; campaignPanel?: ReactNode }
+const SUBTITLES: Record<AdminTab, string> = {
+  analytics: 'Ключевые показатели сайта на момент открытия',
+  campaigns: 'UTM-ссылки и переходы по размещениям',
+  users: 'Аккаунты, активность и блокировки',
+  tierlists: 'Опубликованные тирлисты и черновики',
+  reviews: 'Оценки и тексты отзывов о напитках',
+  comments: 'Комментарии к отзывам и записям стены',
+  wall: 'Записи на стенах профилей',
+  market: 'Объявления участников и продавцы',
+  reports: 'Жалобы участников на профили',
+  admins: 'Доступ к админ-панели',
+};
 const formatDate = (value: Date) => new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Europe/Moscow' }).format(value);
 const number = (value: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(value);
 function RecordText({ text }: { text: string }) {
@@ -25,23 +38,19 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
   const context = <><input type="hidden" name="query" value={query} /><input type="hidden" name="tab" value={tab} /><input type="hidden" name="page" value={data.page} /></>;
   const metrics = data.metrics;
   const maxRegistrations = Math.max(1, ...data.registrations.map(day => day.count));
-  return <div className="admin-layout admin-dashboard ym-hide-content ym-disable-clickmap">
-    <header className="admin-dashboard-heading"><div><h1>Администрирование</h1><p>CanRush · Управление сайтом</p></div><span className="admin-account">{admin.email}</span></header>
-    <nav className="admin-dashboard-tabs" aria-label="Разделы администрирования">
-      {ADMIN_TABS.map(item => <Link key={item.key} href={adminHref(item.key)} aria-current={item.key === tab ? 'page' : undefined}>{item.label}</Link>)}
-    </nav>
+  return <AdminShell active={tab} email={admin.email} title={label} subtitle={SUBTITLES[tab]}>
     {notice && <div className="admin-feedback admin-feedback-success" role="status">{notice}</div>}
     {error && <div className="admin-feedback admin-feedback-error" role="alert">{error}</div>}
     {tab === 'analytics' && metrics && <>
-      <section aria-labelledby="admin-overview-title"><div className="admin-panel-heading"><h2 id="admin-overview-title">Обзор сайта</h2><span>Данные на момент открытия</span></div>
+      <section aria-label="Обзор сайта">
         <div className="admin-metrics">{[
-          { label: 'Участники', value: metrics.users, note: `+${number(metrics.newUsers)} за 30 дней`, tab: 'users' },
-          { label: 'Отзывы', value: metrics.reviews, note: `+${number(metrics.newReviews)} за 30 дней`, tab: 'reviews' },
-          { label: 'Тирлисты', value: metrics.tierLists, note: `+${number(metrics.newTierLists)} за 30 дней`, tab: 'tierlists' },
-          { label: 'Комментарии стены', value: metrics.wall, note: `+${number(metrics.newWall)} за 30 дней`, tab: 'wall' },
-          { label: 'Администраторы', value: metrics.admins, note: 'Включая владельца', tab: 'admins' },
-          { label: 'Активные сессии', value: metrics.sessions, note: 'Уникальные участники с действующим входом', tab: 'users' },
-        ].map(item => <Link href={adminHref(item.tab as AdminTab)} className="admin-metric" key={item.label}><span>{item.label}</span><strong>{number(item.value)}</strong><small>{item.note}</small></Link>)}</div>
+          { label: 'Участники', value: metrics.users, delta: metrics.newUsers, note: 'за 30 дней', tab: 'users' },
+          { label: 'Отзывы', value: metrics.reviews, delta: metrics.newReviews, note: 'за 30 дней', tab: 'reviews' },
+          { label: 'Тирлисты', value: metrics.tierLists, delta: metrics.newTierLists, note: 'за 30 дней', tab: 'tierlists' },
+          { label: 'Комментарии стены', value: metrics.wall, delta: metrics.newWall, note: 'за 30 дней', tab: 'wall' },
+          { label: 'Администраторы', value: metrics.admins, delta: null, note: 'Включая владельца', tab: 'admins' },
+          { label: 'Активные сессии', value: metrics.sessions, delta: null, note: 'Участники с действующим входом', tab: 'users' },
+        ].map(item => <Link href={adminHref(item.tab as AdminTab)} className="admin-metric" key={item.label}><span className="admin-metric-head"><span className="admin-metric-icon"><AdminIcon section={item.tab as AdminTab} /></span>{item.label}</span><strong>{number(item.value)}</strong><small>{item.delta !== null && <b className={item.delta > 0 ? 'admin-delta admin-delta-up' : 'admin-delta'}>+{number(item.delta)}</b>}{item.note}</small></Link>)}</div>
       </section>
       <div className="admin-analytics-grid">
         <section className="admin-data-panel" aria-labelledby="admin-registrations-title"><div className="admin-panel-heading"><h2 id="admin-registrations-title">Регистрации</h2><span>14 дней · МСК</span></div>
@@ -91,5 +100,5 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
       </>}
       {data.total > 0 && <nav className="admin-table-pagination" aria-label="Страницы записей"><span>{(data.page - 1) * ADMIN_PAGE_SIZE + 1}–{Math.min(data.page * ADMIN_PAGE_SIZE, data.total)} из {number(data.total)}</span><div>{data.page > 1 && <Link href={adminHref(tab, query, data.page - 1)}>← Назад</Link>}<span>{data.page} / {pages}</span>{data.page < pages && <Link href={adminHref(tab, query, data.page + 1)}>Далее →</Link>}</div></nav>}
     </section>}
-  </div>;
+  </AdminShell>;
 }

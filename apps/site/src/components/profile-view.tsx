@@ -21,7 +21,7 @@ import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { SignOutButton } from '@/components/sign-out-button';
 import type { ProfileData } from '@/lib/profile';
-import { COMMUNITY_PAGE_SIZE, getConnections, getPresence, getProfileCommunity, getProfileRatings, getProfileWall } from '@/lib/profile-community';
+import { COMMUNITY_PAGE_SIZE, getConnections, getLastSeen, getPresence, getProfileCommunity, getProfileRatings, getProfileWall } from '@/lib/profile-community';
 import { PROFILE_ACHIEVEMENTS, visibleProfileAchievements } from '@/lib/profile-achievements';
 import { AchievementPicker, DeleteWallComment, FollowControl, PresenceSetting, WallComposer } from '@/components/profile-community-controls';
 import { ProfileHeader } from '@/components/profile-header';
@@ -44,8 +44,8 @@ function displayName(profile: { name: string; username: string | null }): string
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, friends, listings, followers, following, favorites, tierLists, catalog, reviewPreview, compatibility] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null,
+  const [community, ratings, wall, presence, lastSeen, friends, listings, followers, following, favorites, tierLists, catalog, reviewPreview, compatibility] = await Promise.all([
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null,
   ]);
   const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
   const tierProducts = tierListProductsForPlacements(catalog, tierLists.flatMap(list => list.preview));
@@ -61,7 +61,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
       <ProfileHeader frame={profile.profileAppearance?.frame} name={displayName(profile)} username={profile.username} createdAt={profile.createdAt}
         avatarSrc={profile.avatarId ? `/api/profile-images/${profile.avatarId}` : null}
         bannerSrc={profile.bannerId ? `/api/profile-images/${profile.bannerId}` : null}
-        status={<ProfilePresence userId={profile.id} initial={presence} />}
+        status={<ProfilePresence userId={profile.id} initial={presence} lastSeen={lastSeen} />}
         tags={<div className="profile-tags"><ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} />{community.tags.map(tag => <a key={tag} href={`${base}/achievements`} className="profile-tag" data-tag={tag}>{PROFILE_ACHIEVEMENTS.find(item => item.key === tag)?.label}</a>)}</div>}
         actions={isOwn ? <div className="profile-owner-actions"><Link href="/profile/edit" className="community-button community-button-secondary profile-edit-action">Редактировать профиль</Link></div>
           : viewerId ? <FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
@@ -125,10 +125,13 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             friends: { count: friends.count, users: friends.users.slice(0, 8) },
           }} />
           {compatibility && <ProfileCompatibility value={compatibility} />}
-          </ProfileBlock><ProfileBlock block="about"><section className="community-panel" aria-labelledby="profile-about-title"><h2 id="profile-about-title">О профиле</h2>
-            {telegramHref ? <a className="community-channel" href={telegramHref} target="_blank" rel="noreferrer"><svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false" style={{ flexShrink: 0 }}><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg>@{profile.telegramChannel} ↗</a> : <p className="community-muted">Канал не указан</p>}
+          </ProfileBlock><ProfileBlock block="about"><section className="community-panel profile-about" aria-labelledby="profile-about-title"><h2 id="profile-about-title">О профиле</h2>
+            <div className="profile-about-list">
+            {telegramHref ? <a className="profile-about-row" href={telegramHref} target="_blank" rel="noreferrer"><span className="profile-about-icon profile-about-icon-telegram"><svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg></span><span className="profile-about-text"><small>Telegram-канал</small><strong>@{profile.telegramChannel}</strong></span><span className="profile-about-arrow" aria-hidden="true">↗</span></a>
+              : <div className="profile-about-row is-muted"><span className="profile-about-icon"><svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg></span><span className="profile-about-text"><small>Telegram-канал</small><strong>Не указан</strong></span></div>}
             {isOwn && <PresenceSetting key={String(community.showOnline)} visible={community.showOnline} />}
-            {adminHref && <Link className="community-admin" href={adminHref}>Администрирование ↗</Link>}
+            {adminHref && <Link className="profile-about-row" href={adminHref}><span className="profile-about-icon profile-about-icon-admin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm-3 10 2 2 4-4" /></svg></span><span className="profile-about-text"><small>Доступ</small><strong>Админ-панель</strong></span><span className="profile-about-arrow" aria-hidden="true">→</span></Link>}
+            </div>
           </section>
           </ProfileBlock></ProfileBlocks>
           {!isOwn && viewerId && <ProfileReportForm targetId={profile.id} />}

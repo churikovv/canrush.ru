@@ -151,6 +151,11 @@ export async function getPresence(userId: string): Promise<'online' | 'offline' 
     else 'offline' end as status from "user" u where id = $1`, [userId]);
   return result.rows[0]?.status ?? 'hidden';
 }
+/** Last heartbeat for the profile chip, only while the member shows their status (hiding it also clears the time). */
+export async function getLastSeen(userId: string): Promise<string | null> {
+  const result = await getPool().query<{ lastSeenAt: Date | null }>('select "lastSeenAt" from "user" where id = $1 and "showOnline"', [userId]);
+  return result.rows[0]?.lastSeenAt?.toISOString() ?? null;
+}
 export async function setPresenceVisibility(userId: string, visible: boolean) {
   await getPool().query('update "user" set "showOnline" = $2, "lastSeenAt" = null where id = $1', [userId, visible]);
 }

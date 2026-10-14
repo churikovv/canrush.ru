@@ -1,6 +1,6 @@
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import type { Metadata } from 'next';
-import Link from '@/components/navigation-progress';
+import { ProfileBackButton } from '@/components/profile-back-button';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
@@ -16,7 +16,7 @@ export default async function NewListingPage() {
   const brands = [...new Set((await loadAllCatalogGroups()).map(group=>group.brand).filter(brand=>brand && brand.toLowerCase()!=='unknown'))].sort((a,b)=>a.localeCompare(b,'ru'));
   const blocked = await isUserBlocked(session.user.id);
   return <BrandShell headerAction={<ProfileNavigation active="market" />}><div className="market-layout market-editor-layout">
-    <Link className="market-back" href="/market">← Маркет</Link><header className="market-heading"><h1>Новое объявление</h1></header>
+    <ProfileBackButton href="/market" label="Маркет" /><header className="store-editor-heading"><h1>Новое объявление</h1><p>Заполните четыре шага — объявление сразу появится в маркете.</p></header>
     {blocked ? <p role="alert">Публикация объявлений для этого аккаунта ограничена.</p> : <MarketListingForm brands={brands} />}
   </div></BrandShell>;
 }

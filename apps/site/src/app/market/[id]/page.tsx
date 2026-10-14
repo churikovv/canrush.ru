@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from '@/components/navigation-progress';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
+import { ProfileBackButton } from '@/components/profile-back-button';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { MarketGallery } from '@/components/market-gallery';
@@ -22,7 +23,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   if (!listing) notFound();
   const activeOrderId = session ? await getActiveOrderId(session.user.id, id) : undefined;
   return <BrandShell headerAction={<ProfileNavigation active="market" />}><div className="market-layout">
-    <Link href="/market" className="market-back">← Все объявления</Link>
+    <ProfileBackButton href="/market" label="Все объявления" />
     <div className="market-detail"><MarketGallery photos={listing.photos} title={listing.title} /><section className="market-detail-info">
       <p className="market-city">{listing.city}</p><h1>{listing.title}</h1><strong className="market-price">{formatPrice(listing.price)}<small> / шт.</small></strong>
       <p className="market-stock">В наличии: {listing.quantity} шт.</p>

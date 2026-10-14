@@ -83,5 +83,15 @@ export function DeleteWallComment({ id }: { id: string }) {
 }
 
 export function PresenceSetting({ visible }: { visible: boolean }) {
-  return <CommunityForm className="presence-setting"><input type="hidden" name="operation" value="visibility" /><input type="hidden" name="visible" value={visible ? 'false' : 'true'} /><span className="community-muted">Статус в сети: {visible ? 'виден всем' : 'скрыт'}</span><Submit className="community-button-text">{visible ? 'Скрыть статус' : 'Показывать статус'}</Submit></CommunityForm>;
+  return <CommunityForm className="profile-about-row presence-setting"><input type="hidden" name="operation" value="visibility" /><input type="hidden" name="visible" value={visible ? 'false' : 'true'} />
+    <span className={`profile-about-icon presence-dot${visible ? ' is-on' : ''}`} aria-hidden="true"><i /></span>
+    <span className="profile-about-text"><small>Статус в сети</small><strong>{visible ? 'Виден всем' : 'Скрыт'}</strong></span>
+    <PresenceSwitch visible={visible} />
+  </CommunityForm>;
+}
+
+/** Submit button styled as a switch: the form flips the stored visibility, so the switch shows the current state. */
+function PresenceSwitch({ visible }: { visible: boolean }) {
+  const { pending } = useFormStatus();
+  return <button className="presence-switch" type="submit" role="switch" aria-checked={visible} aria-label={visible ? 'Скрыть статус в сети' : 'Показывать статус в сети'} disabled={pending} data-pending={pending || undefined}><span /></button>;
 }
