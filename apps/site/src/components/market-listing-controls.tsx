@@ -38,7 +38,13 @@ export function MarketListingControls({ id, own, closed, authenticated, availabl
   if (!own && available === 0) return <span className="market-status">Нет в наличии</span>;
   if (!authenticated) return <Link href="/sign-in" className="community-button">Войти и заказать</Link>;
   return <div className="market-listing-controls">
-    {!own && choosing && <div className="market-order-quantity"><label>Количество для заказа<input type="number" inputMode="numeric" min={1} max={available} step={1} value={quantity} disabled={pending} onChange={event => setQuantity(event.target.value)} /></label><span aria-live="polite">{valid ? `Итого: ${formatPrice(unitPrice * count)}` : `Выберите от 1 до ${available} шт.`}</span></div>}
+    {!own && choosing && <div className="market-order-quantity"><label htmlFor={`order-quantity-${id}`}>Количество</label>
+      <div className="market-stepper">
+        <button type="button" aria-label="Уменьшить количество" disabled={pending || !valid || count <= 1} onClick={() => setQuantity(String(count - 1))}>−</button>
+        <input id={`order-quantity-${id}`} type="number" inputMode="numeric" min={1} max={available} step={1} value={quantity} disabled={pending} onChange={event => setQuantity(event.target.value)} />
+        <button type="button" aria-label="Увеличить количество" disabled={pending || !valid || count >= available} onClick={() => setQuantity(String(count + 1))}>+</button>
+      </div>
+      <span aria-live="polite" className={valid ? 'market-order-total' : 'market-order-hint'}>{valid ? <>Итого <strong>{formatPrice(unitPrice * count)}</strong></> : `Выберите от 1 до ${available} шт.`}</span></div>}
     <button className={`community-button${own ? ' community-button-secondary' : ''}`} disabled={pending || (!own && choosing && !valid)} onClick={() => {
       if (own && !confirm) { setConfirm(true); return; }
       if (!own && !choosing) { setChoosing(true); return; }
@@ -46,7 +52,7 @@ export function MarketListingControls({ id, own, closed, authenticated, availabl
         try { const result = await listingAction(id, own ? 'close' : 'order', own ? 1 : count); if (result.error) setError(result.error); else if (result.id) router.push(`/messages/${result.id}`); else router.refresh(); }
         catch { setError('Не удалось выполнить действие. Проверьте соединение.'); }
       });
-    }}>{pending ? 'Подождите…' : own ? confirm ? 'Подтвердить закрытие' : 'Закрыть объявление' : 'Заказать'}</button>
+    }}>{pending ? 'Подождите…' : own ? confirm ? 'Подтвердить закрытие' : 'Закрыть объявление' : !compact && valid ? `Заказать · ${formatPrice(unitPrice * count)}` : 'Заказать'}</button>
     {confirm && <button type="button" className="market-text-button" onClick={() => setConfirm(false)} disabled={pending}>Не закрывать</button>}
     {error && <p role="alert" className="market-error">{error}</p>}
   </div>;

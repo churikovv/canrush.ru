@@ -8,7 +8,7 @@ export function MarketGallery({ photos, title }: { photos: string[]; title: stri
   const current = photos[selected];
   if (!current) return null;
   return <div className="market-gallery">
-    <button type="button" className="market-gallery-open" onClick={() => setOpen(true)} aria-label="Открыть фотографии объявления"><Image className="market-gallery-main" src={`/api/market-photos/${current}`} alt={`${title}, фото ${selected + 1}`} width={800} height={800} unoptimized priority /></button>
+    <button type="button" className="market-gallery-open" onClick={() => setOpen(true)} aria-label="Открыть фотографии объявления"><span className="market-gallery-backdrop" aria-hidden="true" style={{ backgroundImage: `url(/api/market-photos/${current})` }} /><Image className="market-gallery-main" src={`/api/market-photos/${current}`} alt={`${title}, фото ${selected + 1}`} width={800} height={800} unoptimized priority /></button>
     {photos.length > 1 && <div className="market-gallery-thumbs" aria-label="Фотографии объявления">{photos.map((id, index) => <button key={id} aria-label={`Показать фотографию ${index + 1}`} aria-pressed={index === selected} onClick={() => setSelected(index)}><Image src={`/api/market-photos/${id}?size=thumbnail`} alt="" width={80} height={80} unoptimized /></button>)}</div>}
     {open && <PhotoViewer photos={photos} initialIndex={selected} source="market-photos" onClose={() => setOpen(false)} />}
   </div>;
