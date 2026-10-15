@@ -53,3 +53,23 @@ describe('Telegram schedule', () => {
     expect(due('2026-10-20T08:30:00Z')).toEqual(['prune', 'admin-summary', 'promo-alerts']);
   });
 });
+
+describe('Telegram API base URL', async () => {
+  const { getTelegramApiUrl } = await import('../src/lib/env.js');
+  const withValue = (value: string | undefined) => {
+    const previous = process.env.TELEGRAM_API_URL;
+    if (value === undefined) delete process.env.TELEGRAM_API_URL; else process.env.TELEGRAM_API_URL = value;
+    try { return getTelegramApiUrl(); } finally { if (previous === undefined) delete process.env.TELEGRAM_API_URL; else process.env.TELEGRAM_API_URL = previous; }
+  };
+
+  it('defaults to Telegram and accepts an HTTPS reverse proxy', () => {
+    expect(withValue(undefined)).toBe('https://api.telegram.org');
+    expect(withValue('https://tg.example.com/relay/')).toBe('https://tg.example.com/relay');
+    expect(withValue('https://tg.example.com:8443')).toBe('https://tg.example.com:8443');
+  });
+
+  it('rejects plain HTTP, which would expose the bot token', () => {
+    expect(() => withValue('http://tg.example.com')).toThrow('https://');
+    expect(() => withValue('https://user:pass@tg.example.com')).toThrow();
+  });
+});

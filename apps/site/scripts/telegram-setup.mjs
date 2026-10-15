@@ -11,9 +11,12 @@ const secret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim();
 const siteUrl = process.env.BETTER_AUTH_URL?.trim().replace(/\/$/u, '');
 if (!token || !secret || !siteUrl) throw new Error('TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET and BETTER_AUTH_URL are required');
 if (!siteUrl.startsWith('https://')) throw new Error('Telegram webhooks need a public HTTPS BETTER_AUTH_URL');
+// Same base URL as the site: a reverse proxy abroad when api.telegram.org is unreachable.
+const apiUrl = (process.env.TELEGRAM_API_URL?.trim() || 'https://api.telegram.org').replace(/\/+$/u, '');
+if (!apiUrl.startsWith('https://')) throw new Error('TELEGRAM_API_URL must use https://');
 
 async function call(method, body) {
-  const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+  const response = await fetch(`${apiUrl}/bot${token}/${method}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),

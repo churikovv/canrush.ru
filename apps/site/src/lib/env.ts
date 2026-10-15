@@ -93,6 +93,27 @@ export function getTelegramEnv(): TelegramEnv | null {
   return { botToken, miniAppUrl: url.toString(), botUsername, webhookSecret };
 }
 
+export const DEFAULT_TELEGRAM_API_URL = 'https://api.telegram.org';
+
+/**
+ * Bot API base URL. TELEGRAM_API_URL points to a reverse proxy abroad when the server cannot reach
+ * api.telegram.org directly. HTTPS is required: the bot token travels in the request path.
+ */
+export function getTelegramApiUrl(): string {
+  const value = process.env.TELEGRAM_API_URL?.trim();
+  if (!value) return DEFAULT_TELEGRAM_API_URL;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('TELEGRAM_API_URL must be a valid URL');
+  }
+  if (url.protocol !== 'https:' || url.search || url.hash || url.username || url.password) {
+    throw new Error('TELEGRAM_API_URL must be an https:// URL without query or credentials');
+  }
+  return `${url.origin}${url.pathname.replace(/\/+$/u, '')}`;
+}
+
 export function getSmtpEnv(): SmtpEnv {
   const port = Number(required('SMTP_PORT'));
   if (!Number.isInteger(port) || port !== 465) throw new Error('SMTP_PORT must be 465 for implicit TLS');

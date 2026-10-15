@@ -1,3 +1,5 @@
+import { getTelegramApiUrl } from '@/lib/env';
+
 export class TelegramApiError extends Error {
   constructor(message: string, readonly code: number, readonly retryAfter?: number) {
     super(message);
@@ -25,7 +27,7 @@ interface TelegramResponse<T> {
 export async function callTelegram<T = unknown>(token: string, method: string, body: Record<string, unknown>): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+    response = await fetch(`${getTelegramApiUrl()}/bot${token}/${method}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
