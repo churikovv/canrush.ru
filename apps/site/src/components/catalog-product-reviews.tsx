@@ -2,6 +2,7 @@ import { isResolvedFlavor } from '@canrush/shared';
 import { CatalogReviewForm } from '@/components/catalog-review-form';
 import { CatalogReviewItem } from '@/components/catalog-review-item';
 import { RatingStars } from '@/components/rating-stars';
+import { ReviewSorter } from '@/components/review-sorter';
 import type { ReviewData, ReviewSummary } from '@/lib/reviews';
 
 interface CatalogProductReviewsProps {
@@ -101,11 +102,14 @@ export function CatalogProductReviews({
         </div>
 
         {reviews.length > 0 ? (
-          <div className="review-list">
-            {reviews.map((review) => (
-              <CatalogReviewItem key={review.id} review={review} />
-            ))}
-          </div>
+          <ReviewSorter
+            items={reviews.map((review) => ({
+              id: review.id,
+              createdAt: review.createdAt.toISOString(),
+              likes: review.interaction?.likes ?? 0,
+              node: <CatalogReviewItem review={review} />,
+            }))}
+          />
         ) : (
           <div className="review-empty">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

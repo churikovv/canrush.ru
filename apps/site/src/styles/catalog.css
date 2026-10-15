@@ -373,3 +373,11 @@
 .price-history-popover li > span:not(.retailer-badge) { flex: 1; }
 .price-history-popover li b { margin-left: auto; white-space: nowrap; }
 .catalog-archive-heading { grid-column: 1 / -1; margin-top: 24px; }
+/* Review order: a compact segmented switch above the list. */
+.review-sort { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--color-subtle); width: fit-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.review-sort::-webkit-scrollbar { display: none; }
+.review-sort button { flex-shrink: 0; min-height: 36px; padding: 6px 14px; border: 0; border-radius: 9px; background: transparent; color: var(--color-muted-strong); font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.review-sort button:hover { color: var(--color-ink); }
+.review-sort button[aria-pressed="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
+.review-sort button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .review-sort button { transition: none; } }
