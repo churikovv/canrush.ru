@@ -3,7 +3,7 @@ import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { profileTagLabel } from '@/lib/profile-achievements';
 export class WallDiscussionError extends Error {}
 export interface WallInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean }
-export interface WallCommentData { id: string; text: string; createdAt: string; editedAt: string | null; name: string; username: string | null; avatarId: string | null; tag: string | null; canDelete: boolean; likes: number; liked: boolean }
+export interface WallCommentData { id: string; text: string; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; canDelete: boolean; likes: number; liked: boolean }
 export function wallPostId(value: unknown): string {
   if (typeof value !== 'string' || !PHOTO_ID_PATTERN.test(value)) throw new WallDiscussionError('Запись или комментарий не найден.');
   return value;
@@ -32,19 +32,20 @@ export async function setWallReaction(userId: string, id: string, value: number)
 }
 export async function getWallComments(id: string, viewer: string | null, before?: string) {
   wallPostId(id); if (before) wallPostId(before);
-  const { rows } = await getPool().query(`select c.id,c.text,c."createdAt",c."editedAt",u.name,u.username,
+  const { rows } = await getPool().query(`select c.id,c.text,c."createdAt",c."editedAt",u.name,u.username,ru.username as "replyToUsername",ru.name as "replyToName",
     c."userId"=$2 as "canDelete",
     (select count(*)::int from "wallReplyLike" where "replyId"=c.id) as likes,
     exists(select 1 from "wallReplyLike" where "replyId"=c.id and "userId"=$2) as liked,
     (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
     case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
       when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
-    from "wallReply" c join "user" u on u.id=c."userId"
+    from "wallReply" c join "user" u on u.id=c."userId" left join "user" ru on ru.id=c."replyToUserId"
     where c."wallPostId"=$1 and exists(select 1 from "profileComment" where id=$1) and ($3::uuid is null or (c."createdAt",c.id)<(select "createdAt",id from "wallReply" where id=$3 and "wallPostId"=$1))
     order by c."createdAt" desc,c.id desc limit 21`, [id, viewer, before ?? null]);
-  return { items: rows.slice(0,20).map(row => ({ ...row, createdAt: row.createdAt.toISOString(), editedAt: row.editedAt?.toISOString() ?? null, tag: profileTagLabel(row.tag) ?? null, canDelete: Boolean(row.canDelete), liked: Boolean(row.liked) }) as WallCommentData), hasMore: rows.length > 20 };
+  return { items: rows.slice(0,20).map(({ replyToUsername, replyToName, ...row }) => ({ ...row, createdAt: row.createdAt.toISOString(), editedAt: row.editedAt?.toISOString() ?? null, tag: profileTagLabel(row.tag) ?? null, replyTo: replyToName ? { username: replyToUsername, name: replyToName } : null, canDelete: Boolean(row.canDelete), liked: Boolean(row.liked) }) as WallCommentData), hasMore: rows.length > 20 };
 }
-export async function addWallComment(userId: string, id: string, input: string) {
+export async function addWallComment(userId: string, id: string, input: string, replyToId?: string) {
+  if (replyToId) wallPostId(replyToId);
   wallPostId(id);
   const text = input.trim();
   if (!text || text.length > 1000) throw new WallDiscussionError('Напишите от 1 до 1000 символов.');
@@ -55,7 +56,14 @@ export async function addWallComment(userId: string, id: string, input: string) 
     if (!target.rowCount) throw new WallDiscussionError('Запись недоступна.');
     const allowed = await client.query(`update "user" set "lastWallReplyAt"=now() where id=$1 and ("lastWallReplyAt" is null or "lastWallReplyAt"<now()-interval '30 seconds') returning id`, [userId]);
     if (!allowed.rowCount) throw new WallDiscussionError('Следующий комментарий можно отправить через 30 секунд.');
-    await client.query('insert into "wallReply" ("wallPostId","userId",text) values ($1,$2,$3)', [id,userId,text]);
+    // The addressee comes from the answered comment of the same thread, never from the client.
+    let replyToUserId: string | null = null;
+    if (replyToId) {
+      const target = await client.query<{ userId: string }>('select "userId" from "wallReply" where id=$1 and "wallPostId"=$2', [replyToId, id]);
+      if (!target.rows[0]) throw new WallDiscussionError('Комментарий, на который вы отвечаете, удалён.');
+      replyToUserId = target.rows[0].userId;
+    }
+    await client.query('insert into "wallReply" ("wallPostId","userId",text,"replyToId","replyToUserId") values ($1,$2,$3,$4,$5)', [id,userId,text,replyToId ?? null,replyToUserId]);
     await client.query('commit');
   } catch(error) { await client.query('rollback'); throw error; }
   finally { client.release(); }

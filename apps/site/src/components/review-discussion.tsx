@@ -2,7 +2,7 @@
 import { profileTagKey } from '@/lib/profile-achievements';
 import Link from '@/components/navigation-progress';
 import Image from 'next/image';
-import { useId, useState, useTransition } from 'react';
+import { useId, useRef, useState, useTransition } from 'react';
 import { wallCommentLikeAction, wallDiscussionAction } from '@/app/profile/wall-discussion-actions';
 import { EditIcon, TrashIcon } from '@/components/action-icons';
 import { tierDiscussionAction } from '@/app/tierlists/discussion-actions';
@@ -16,6 +16,9 @@ type Comment = ReviewCommentData & Partial<Pick<WallCommentData, 'likes' | 'like
 function Thumb({ down = false }: { down?: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={down ? { transform: 'rotate(180deg)' } : undefined}><path d="M7 10v11H3V10h4Zm0 0 5-8c3 0 3 3 2 7h5a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7" /></svg>;
 }
+function authorLabel(comment: Pick<Comment, 'name' | 'username'>): string {
+  return comment.username ? `@${comment.username}` : comment.name.includes('@') ? 'Участник' : comment.name;
+}
 export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 'review', reactionsEnabled = true, commentsEnabled = true }: { reviewId: string; initial?: ReviewInteraction; telegramChannel?: string | null; target?: 'review' | 'tierlist' | 'wall'; reactionsEnabled?: boolean; commentsEnabled?: boolean }) {
   const [stats,setStats] = useState(initial ?? { likes: 0, dislikes: 0, comments: 0, vote: 0, authenticated: false });
   const [open,setOpen] = useState(false);
@@ -24,13 +27,15 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
   const [liking,setLiking] = useState<string | null>(null);
   const [editing,setEditing] = useState<string | null>(null);
   const [draft,setDraft] = useState('');
+  const [replyTo,setReplyTo] = useState<{ id: string; label: string } | null>(null);
+  const composer = useRef<HTMLTextAreaElement>(null);
   const [more,setMore] = useState(false);
   const [text,setText] = useState('');
   const [error,setError] = useState('');
   const [signIn,setSignIn] = useState(false);
   const [pending,startTransition] = useTransition();
   const regionId = useId();
-  function run(action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string }, append = false) {
+  function run(action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string } | { text: string; replyToId: string }, append = false) {
     setError(''); setSignIn(false);
     startTransition(async () => {
       try {
@@ -38,7 +43,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         if (result.error) { setError(result.error); setSignIn(Boolean(result.signIn)); return; }
         if (result.interaction) setStats(result.interaction);
         if (result.thread) { setComments(previous => append ? [...previous,...result.thread!.items.filter(item => !previous.some(old => old.id === item.id))] : result.thread!.items); setMore(result.thread.hasMore); setLoaded(true); }
-        if (action === 'comment') setText('');
+        if (action === 'comment') { setText(''); setReplyTo(null); }
         const edited = result.edited;
         if (edited) { setComments(previous => previous.map(item => item.id === edited.id ? { ...item, text: edited.text, editedAt: edited.editedAt } : item)); setEditing(null); }
       } catch { setError('Нет связи с сервером. Попробуйте ещё раз.'); }
@@ -57,6 +62,11 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
     } catch { patch({ liked: comment.liked, likes: comment.likes }); setError('Нет связи с сервером. Попробуйте ещё раз.'); }
     finally { setLiking(null); }
   }
+  function answer(comment: Comment) {
+    setReplyTo({ id: comment.id, label: authorLabel(comment) });
+    composer.current?.focus({ preventScroll: true });
+    composer.current?.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
   return <footer className="review-discussion">
     {telegramChannel && <div className="review-author-channel"><span>Канал автора</span><a className="review-item-channel" href={`https://t.me/${telegramChannel}`} target="_blank" rel="noopener noreferrer" aria-label={`Telegram-канал автора @${telegramChannel} (откроется в новой вкладке)`}>
         <Image src="/brand/icons/telegram.svg" width={18} height={18} alt="" /><span>@{telegramChannel}</span>
@@ -70,8 +80,10 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
     </div>
     {error && <p className="field-error" role="alert">{error} {signIn && <Link href="/sign-in">Войти</Link>}</p>}
     {commentsEnabled && open && <section id={regionId} className="review-thread" aria-label={target === 'wall' ? 'Комментарии к записи' : target === 'tierlist' ? 'Комментарии к тирлисту' : 'Комментарии к отзыву'} aria-busy={pending}>
-      {stats.authenticated ? <form className="review-comment-composer" onSubmit={event => { event.preventDefault(); run('comment',text); }}>
-        <label htmlFor={`${regionId}-text`}>Ваш комментарий</label><textarea id={`${regionId}-text`} value={text} onChange={event => setText(event.target.value)} maxLength={1000} required rows={3} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
+      {stats.authenticated ? <form className="review-comment-composer" onSubmit={event => { event.preventDefault(); run('comment', replyTo ? { text, replyToId: replyTo.id } : text); }}>
+        <label htmlFor={`${regionId}-text`}>{replyTo ? 'Ваш ответ' : 'Ваш комментарий'}</label>
+        {replyTo && <div className="review-reply-target"><span>Ответ <b>{replyTo.label}</b></span><button type="button" aria-label="Отменить ответ" title="Отменить ответ" onClick={() => setReplyTo(null)}>×</button></div>}
+        <textarea ref={composer} id={`${regionId}-text`} value={text} onChange={event => setText(event.target.value)} maxLength={1000} required rows={3} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
         <div><span>{text.length} / 1000</span><button className="community-button" type="submit" disabled={pending || !text.trim()}>{pending ? 'Подождите…' : 'Отправить'}</button></div>
       </form> : <p><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
       {!loaded ? <p role="status">{pending ? 'Загружаем комментарии…' : 'Комментарии не загружены.'} {!pending && <button type="button" onClick={() => run('read')}>Повторить</button>}</p> : !comments.length ? <p className="review-thread-empty">Комментариев пока нет. Начните обсуждение.</p> : <ul className="review-thread-list">{comments.map(comment => <li key={comment.id}>
@@ -85,10 +97,13 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
           <label htmlFor={`${regionId}-edit-${comment.id}`} className="sr-only">Текст комментария</label>
           <textarea id={`${regionId}-edit-${comment.id}`} value={draft} onChange={event => setDraft(event.target.value)} maxLength={1000} rows={2} required autoFocus disabled={pending} onKeyDown={event => { if (event.key === 'Escape') setEditing(null); }} />
           <div><span>{draft.length} / 1000</span><button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => setEditing(null)}>Отмена</button><button className="community-button" type="submit" disabled={pending || !draft.trim() || draft.trim() === comment.text}>{pending ? 'Сохраняем…' : 'Сохранить'}</button></div>
-        </form> : <p>{comment.text}</p>}
-        {typeof comment.likes === 'number' && <button className="review-comment-like" type="button" aria-pressed={Boolean(comment.liked)} aria-label={comment.canDelete ? `Лайков: ${comment.likes}` : comment.liked ? `Убрать лайк, лайков: ${comment.likes}` : `Нравится комментарий, лайков: ${comment.likes}`} disabled={comment.canDelete || liking === comment.id} onClick={() => void toggleLike(comment)}>
+        </form> : <p>{comment.replyTo && <>{comment.replyTo.username ? <Link className="review-reply-mention" href={`/profile/${comment.replyTo.username}`}>@{comment.replyTo.username}</Link> : <span className="review-reply-mention">{comment.replyTo.name.includes('@') ? 'Участник' : comment.replyTo.name}</span>}{' '}</>}{comment.text}</p>}
+        <div className="review-comment-footer">{typeof comment.likes === 'number' && <button className="review-comment-like" type="button" aria-pressed={Boolean(comment.liked)} aria-label={comment.canDelete ? `Лайков: ${comment.likes}` : comment.liked ? `Убрать лайк, лайков: ${comment.likes}` : `Нравится комментарий, лайков: ${comment.likes}`} disabled={comment.canDelete || liking === comment.id} onClick={() => void toggleLike(comment)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill={comment.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M12 20.5 4.6 13.3A4.6 4.6 0 0 1 11.1 6.8l.9.9.9-.9a4.6 4.6 0 0 1 6.5 6.5L12 20.5Z" /></svg><span>{comment.likes}</span>
-        </button>}</div>
+        </button>}
+        {stats.authenticated && !comment.canDelete && <button className="review-comment-reply" type="button" disabled={pending} aria-label={`Ответить ${authorLabel(comment)}`} onClick={() => answer(comment)}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg><span>Ответить</span>
+        </button>}</div></div>
       </li>)}</ul>}
       {more && <button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => run('read',comments.at(-1)?.id,true)}>Ещё комментарии</button>}
     </section>}

@@ -6,7 +6,7 @@ import { auth } from '@/lib/auth';
 import { isUserBlocked } from '@/lib/moderation';
 import { addTierComment, deleteTierComment, editTierComment, getTierComments, getTierInteractions, TierDiscussionError, tierListId, setTierReaction } from '@/lib/tier-discussions';
 
-export async function tierDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string }) {
+export async function tierDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string } | { text: string; replyToId: string }) {
   try {
     tierListId(id);
     const session = await auth.api.getSession({ headers: await headers() });
@@ -25,10 +25,11 @@ export async function tierDiscussionAction(id: string, action: 'read' | 'vote' |
         if (typeof value !== 'number') throw new TierDiscussionError('Некорректная реакция.');
         await setTierReaction(viewer, id, value);
       } else if (action === 'comment') {
-        if (typeof value !== 'string') throw new TierDiscussionError('Напишите комментарий.');
-        await addTierComment(viewer, id, value);
+        if (typeof value === 'string') await addTierComment(viewer, id, value);
+        else if (value && typeof value === 'object' && 'replyToId' in value && typeof value.text === 'string' && typeof value.replyToId === 'string') await addTierComment(viewer, id, value.text, value.replyToId);
+        else throw new TierDiscussionError('Напишите комментарий.');
       } else if (action === 'edit') {
-        if (!value || typeof value !== 'object' || typeof value.commentId !== 'string' || typeof value.text !== 'string') throw new TierDiscussionError('Комментарий не найден.');
+        if (!value || typeof value !== 'object' || !('commentId' in value) || typeof value.commentId !== 'string' || typeof value.text !== 'string') throw new TierDiscussionError('Комментарий не найден.');
         edited = await editTierComment(viewer, id, value.commentId, value.text);
       } else {
         if (typeof value !== 'string') throw new TierDiscussionError('Комментарий не найден.');

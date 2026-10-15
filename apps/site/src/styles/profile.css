@@ -653,3 +653,6 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 .achievement-cards .achievement-rarity { margin-bottom: 8px; }
 [data-profile-theme] .review-comment-edit textarea { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
 [data-profile-theme] :is(.review-comment-action,.review-comment-edited) { color: var(--profile-muted); }
+[data-profile-theme] :is(.review-reply-mention,.review-reply-target b) { color: var(--profile-accent); }
+[data-profile-theme] .review-comment-reply { color: var(--profile-muted); }
+[data-profile-theme] .review-comment-reply:hover:not(:disabled) { color: var(--profile-accent); }

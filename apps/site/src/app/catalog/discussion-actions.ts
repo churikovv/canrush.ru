@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { isUserBlocked } from '@/lib/moderation';
 import { addReviewComment, deleteReviewComment, editReviewComment, getReviewComments, getReviewInteractions, ReviewDiscussionError, reviewId, setReviewReaction } from '@/lib/review-discussions';
 
-export async function reviewDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string }) {
+export async function reviewDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string } | { text: string; replyToId: string }) {
   try {
     reviewId(id);
     const session = await auth.api.getSession({ headers: await headers() });
@@ -19,10 +19,11 @@ export async function reviewDiscussionAction(id: string, action: 'read' | 'vote'
         if (typeof value !== 'number') throw new ReviewDiscussionError('Некорректная реакция.');
         await setReviewReaction(viewer, id, value);
       } else if (action === 'comment') {
-        if (typeof value !== 'string') throw new ReviewDiscussionError('Напишите комментарий.');
-        await addReviewComment(viewer, id, value);
+        if (typeof value === 'string') await addReviewComment(viewer, id, value);
+        else if (value && typeof value === 'object' && 'replyToId' in value && typeof value.text === 'string' && typeof value.replyToId === 'string') await addReviewComment(viewer, id, value.text, value.replyToId);
+        else throw new ReviewDiscussionError('Напишите комментарий.');
       } else if (action === 'edit') {
-        if (!value || typeof value !== 'object' || typeof value.commentId !== 'string' || typeof value.text !== 'string') throw new ReviewDiscussionError('Комментарий не найден.');
+        if (!value || typeof value !== 'object' || !('commentId' in value) || typeof value.commentId !== 'string' || typeof value.text !== 'string') throw new ReviewDiscussionError('Комментарий не найден.');
         edited = await editReviewComment(viewer, id, value.commentId, value.text);
       } else {
         if (typeof value !== 'string') throw new ReviewDiscussionError('Комментарий не найден.');

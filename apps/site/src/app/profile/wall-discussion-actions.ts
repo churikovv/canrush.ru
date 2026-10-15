@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { isUserBlocked } from '@/lib/moderation';
 import { addWallComment, deleteWallComment, editWallComment, getWallComments, getWallInteractions, WallDiscussionError, wallPostId, setWallCommentLike, setWallReaction } from '@/lib/wall-discussions';
 
-export async function wallDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string }) {
+export async function wallDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string } | { text: string; replyToId: string }) {
   try {
     wallPostId(id);
     const session = await auth.api.getSession({ headers: await headers() });
@@ -20,10 +20,11 @@ export async function wallDiscussionAction(id: string, action: 'read' | 'vote' |
         if (typeof value !== 'number') throw new WallDiscussionError('Некорректная реакция.');
         await setWallReaction(viewer, id, value);
       } else if (action === 'comment') {
-        if (typeof value !== 'string') throw new WallDiscussionError('Напишите комментарий.');
-        await addWallComment(viewer, id, value);
+        if (typeof value === 'string') await addWallComment(viewer, id, value);
+        else if (value && typeof value === 'object' && 'replyToId' in value && typeof value.text === 'string' && typeof value.replyToId === 'string') await addWallComment(viewer, id, value.text, value.replyToId);
+        else throw new WallDiscussionError('Напишите комментарий.');
       } else if (action === 'edit') {
-        if (!value || typeof value !== 'object' || typeof value.commentId !== 'string' || typeof value.text !== 'string') throw new WallDiscussionError('Комментарий не найден.');
+        if (!value || typeof value !== 'object' || !('commentId' in value) || typeof value.commentId !== 'string' || typeof value.text !== 'string') throw new WallDiscussionError('Комментарий не найден.');
         edited = await editWallComment(viewer, id, value.commentId, value.text);
       } else {
         if (typeof value !== 'string') throw new WallDiscussionError('Комментарий не найден.');

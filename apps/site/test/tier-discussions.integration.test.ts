@@ -73,6 +73,21 @@ it('lets only the author edit a comment and marks it as edited',async()=>{
   expect((await api.getTierComments(review,null)).items.find(x=>x.id===id)).toMatchObject({text:'After',editedAt:expect.any(String)});
   await pool.query('delete from "tierListComment" where id=$1',[id]);
 });
+it('stores replies with their addressee and notifies the person answered, once and never themselves',async()=>{
+  const answered=(await pool.query('insert into "tierListComment"("tierListId","userId",text)values($1,$2,$3)returning id',[review,reader,'Question'])).rows[0].id;
+  await pool.query('update "user" set "lastWallReplyAt"=null,"lastReviewCommentAt"=null,"lastTierCommentAt"=null where id=$1',[other]);
+  await expect(api.addTierComment(other,review,'Wrong thread',randomUUID())).rejects.toThrow('удалён');
+  await api.addTierComment(other,review,'Answer',answered);
+  const reply=(await api.getTierComments(review,null)).items.find(x=>x.text==='Answer');
+  expect(reply?.replyTo).toMatchObject({name:'Discussion test'});
+  const sent=await pool.query('select "actorId",payload from notification where "userId"=$1 and kind=$2 and payload->>$3=$4',[reader,'comment-reply','commentId',reply!.id]);
+  expect(sent.rows).toEqual([expect.objectContaining({actorId:other,payload:expect.objectContaining({text:'Answer'})})]);
+  await pool.query('delete from "tierListComment" where id=$1',[answered]);
+  expect((await api.getTierComments(review,null)).items.find(x=>x.id===reply!.id)?.replyTo).toMatchObject({name:'Discussion test'});
+  await pool.query('delete from "tierListComment" where id=$1',[reply!.id]);
+  await pool.query('delete from notification where "userId"=$1 and kind=$2',[reader,'comment-reply']);
+  await pool.query('update "user" set "lastWallReplyAt"=null,"lastReviewCommentAt"=null,"lastTierCommentAt"=null where id=$1',[other]);
+});
 it('paginates comments without duplicate rows and cascades when a review is removed',async()=>{
   for(let i=0;i<23;i++)await pool.query('insert into "tierListComment"("tierListId","userId",text)values($1,$2,$3)',[review,other,'Comment '+i]);
   const first=await api.getTierComments(review,reader);

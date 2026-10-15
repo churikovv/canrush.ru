@@ -48,9 +48,14 @@ export async function getNotifications(userId: string, before?: string) {
   const [unread, result] = await Promise.all([
     getPool().query('select count(*)::int as count from notification where "userId"=$1 and "readAt" is null',[userId]),
     getPool().query(`select n.*,u.name,u.username,r.brand,r.flavor,c.text as comment,w.text as wall,
-      owner.username as "ownerUsername" from notification n
+      owner.username as "ownerUsername", rr.brand as "replyBrand", rr.flavor as "replyFlavor", rt.slug as "replyTierSlug", rt.title as "replyTierTitle",
+      wo.username as "replyWallOwner" from notification n
       left join "user" u on u.id=n."actorId" left join review r on r.id=n."reviewId"
       left join "reviewComment" c on c.id=n."commentId" left join "profileComment" w on w.id=n."wallId"
+      left join review rr on n.kind='comment-reply' and rr.id=(n.payload->>'reviewId')::uuid
+      left join "tierList" rt on n.kind='comment-reply' and rt.id=(n.payload->>'tierListId')::uuid
+      left join "profileComment" rw on n.kind='comment-reply' and rw.id=(n.payload->>'wallId')::uuid
+      left join "user" wo on wo.id=rw."profileId"
       join "user" owner on owner.id=n."userId"
       where n."userId"=$1 and ($2::uuid is null or (n."createdAt",n.id)<(select "createdAt",id from notification where id=$2 and "userId"=$1))
       order by n."createdAt" desc,n.id desc limit 21`,[userId,before ?? null]),
@@ -66,6 +71,18 @@ export async function getNotifications(userId: string, before?: string) {
     } else if (row.kind==='wall-comment') {
       title = `${actor} оставил запись на вашей стене`; detail = row.wall?.slice(0,160) ?? '';
       href = row.ownerUsername ? `/profile/${encodeURIComponent(row.ownerUsername)}#wall` : '/profile#wall';
+    } else if (row.kind==='comment-reply') {
+      const p = row.payload;
+      title = `${actor} ответил на ваш комментарий`;
+      if (p.target==='review' && row.replyBrand) {
+        detail = `${row.replyBrand} · ${flavorName(row.replyFlavor)}`;
+        href = `/catalog/${catalogGroupSlug(row.replyBrand,row.replyFlavor)}?tab=reviews#review-${p.reviewId}`;
+      } else if (p.target==='tierlist' && row.replyTierSlug) {
+        detail = row.replyTierTitle ?? ''; href = `/tierlists/${encodeURIComponent(row.replyTierSlug)}`;
+      } else if (p.target==='wall' && row.replyWallOwner) {
+        href = `/profile/${encodeURIComponent(row.replyWallOwner)}#wall-post-${p.wallId}`;
+      }
+      if (p.text) detail = detail ? `${detail} — ${p.text}` : p.text;
     } else if (row.kind==='monthly-top') {
       const p = row.payload;
       title = `Вы заняли ${p.place} место в топе месяца`; detail = `+${p.reward} XP и тег «ТОП» для профиля`;

@@ -257,3 +257,16 @@
 .review-comment-edit > div { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 .review-comment-edit > div > span { margin-right: auto; color: var(--color-muted-strong); font-size: .75rem; }
 .review-comment-edit .community-button { min-height: 36px; padding: 6px 12px; }
+/* Replies: the composer names the addressee, the answer starts with a highlighted nickname. */
+.review-reply-target { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 12px; border-radius: 10px; background: color-mix(in srgb, var(--color-brand, #006eff) 10%, transparent); color: var(--color-muted-strong); font-size: .8125rem; }
+.review-reply-target b { color: var(--color-brand-deep, #0058cc); }
+.review-reply-target button { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 1.125rem; line-height: 1; cursor: pointer; }
+.review-reply-target button:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+.review-reply-mention { display: inline-block; margin-right: 2px; padding: 0 6px; border-radius: 6px; background: color-mix(in srgb, var(--color-brand, #006eff) 12%, transparent); color: var(--color-brand-deep, #0058cc); font-weight: 600; text-decoration: none; }
+a.review-reply-mention:hover { background: color-mix(in srgb, var(--color-brand, #006eff) 20%, transparent); }
+.review-comment-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.review-comment-footer:empty { display: none; }
+.review-comment-reply { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 10px; border: 0; border-radius: 999px; background: transparent; color: var(--color-muted-strong); font: inherit; font-size: .8125rem; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.review-comment-reply:hover:not(:disabled) { background: color-mix(in srgb, currentColor 10%, transparent); color: var(--color-brand-deep, #0058cc); }
+.review-comment-reply:focus-visible, .review-reply-target button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .review-comment-reply { transition: none; } }
