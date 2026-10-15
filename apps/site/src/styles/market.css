@@ -13,7 +13,8 @@
 .market-card-delivery::after { content: ''; position: absolute; inset: 0 0 0 auto; width: 36px; background: linear-gradient(to right, transparent, var(--color-surface)); pointer-events: none; }
 .market-card-bottom { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
 .market-pagination { display: flex; gap: 24px; margin: 32px 0; }
-.market-editor-layout, .market-chat-layout, .market-inbox { max-width: 880px; }
+/* Orders share the market tabs, so the inbox keeps the market width: the header and tabs must not jump. */
+.market-editor-layout, .market-chat-layout { max-width: 880px; }
 .market-form { display: grid; gap: 20px; }
 .market-form > fieldset { display: grid; gap: 24px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .market-layout textarea { resize: vertical; }
