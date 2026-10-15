@@ -1,17 +1,33 @@
 import { getPool } from '@/db/pool';
+import { parseRange } from '@/lib/byte-range';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 
 export const runtime = 'nodejs';
+
+const NO_STORE = { 'Cache-Control': 'no-store' };
+const missing = () => new Response(null, { status: 404, headers: NO_STORE });
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!PHOTO_ID_PATTERN.test(id)) return new Response(null, { status: 404 });
-  const thumbnail = new URL(request.url).searchParams.get('size') === 'thumbnail';
-  const result = await getPool().query<{ data: Buffer }>(
-    `select ${thumbnail ? '"thumbnail"' : '"data"'} as data from "wallPhoto" where "id" = $1`, [id],
-  );
-  const photo = result.rows[0];
-  if (!photo) return new Response(null, { status: 404, headers: { 'Cache-Control': 'no-store' } });
-  return new Response(new Uint8Array(photo.data), {
-    headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Disposition': 'inline' },
-  });
+  if (!PHOTO_ID_PATTERN.test(id)) return missing();
+  const db = getPool();
+  const common = { 'X-Content-Type-Options': 'nosniff', 'Content-Disposition': 'inline', ...NO_STORE };
+  if (new URL(request.url).searchParams.get('size') === 'thumbnail') {
+    const result = await db.query<{ data: Buffer }>('select thumbnail as data from "wallPhoto" where id = $1', [id]);
+    const photo = result.rows[0];
+    return photo ? new Response(new Uint8Array(photo.data), { headers: { 'Content-Type': 'image/webp', ...common } }) : missing();
+  }
+  const meta = (await db.query<{ mime: string; size: number }>('select mime, octet_length(data) as size from "wallPhoto" where id = $1', [id])).rows[0];
+  if (!meta) return missing();
+  const range = meta.mime.startsWith('video/') ? parseRange(request.headers.get('range'), meta.size) : null;
+  if (range === 'invalid') return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${meta.size}`, ...NO_STORE } });
+  const headers = { 'Content-Type': meta.mime, 'Accept-Ranges': meta.mime.startsWith('video/') ? 'bytes' : 'none', ...common };
+  if (!range) {
+    const photo = (await db.query<{ data: Buffer }>('select data from "wallPhoto" where id = $1', [id])).rows[0];
+    return photo ? new Response(new Uint8Array(photo.data), { headers }) : missing();
+  }
+  // substring() is 1-based; with external storage Postgres reads only the requested TOAST chunks.
+  const slice = (await db.query<{ data: Buffer }>('select substring(data from $2 for $3) as data from "wallPhoto" where id = $1', [id, range.start + 1, range.end - range.start + 1])).rows[0];
+  if (!slice) return missing();
+  return new Response(new Uint8Array(slice.data), { status: 206, headers: { ...headers, 'Content-Range': `bytes ${range.start}-${range.end}/${meta.size}`, 'Content-Length': String(slice.data.length) } });
 }

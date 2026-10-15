@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import type { WallMediaKind } from '@/lib/wall-media-limits';
 
 type View = { scale: number; x: number; y: number };
 const INITIAL_VIEW: View = { scale: 1, x: 0, y: 0 };
@@ -78,7 +79,14 @@ function PhotoCanvas({ id, label, source, onSwipe }: { id: string; label: string
   );
 }
 
-export function PhotoViewer({ photos, initialIndex, onClose, source }: { photos: string[]; initialIndex: number; onClose: () => void; source: string }) {
+/** Wall videos play in the viewer with native controls; swipe and zoom stay with photos. */
+function VideoCanvas({ id, label, source }: { id: string; label: string; source: string }) {
+  return <div className="review-photo-stage review-video-stage">
+    <video src={`/api/${source}/${id}`} poster={`/api/${source}/${id}?size=thumbnail`} controls autoPlay playsInline preload="metadata" aria-label={label} />
+  </div>;
+}
+
+export function PhotoViewer({ photos, kinds, initialIndex, onClose, source }: { photos: string[]; kinds?: WallMediaKind[]; initialIndex: number; onClose: () => void; source: string }) {
   const [index, setIndex] = useState(initialIndex);
   const dialog = useRef<HTMLDialogElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -98,10 +106,12 @@ export function PhotoViewer({ photos, initialIndex, onClose, source }: { photos:
         if (event.key === 'ArrowLeft') { event.preventDefault(); setIndex(current => Math.max(0, current - 1)); }
       }}>
       <div className="review-photo-toolbar">
-        <span aria-live="polite">Фото {index + 1} из {photos.length}</span>
+        <span aria-live="polite">{kinds ? 'Вложение' : 'Фото'} {index + 1} из {photos.length}</span>
         <button type="button" ref={closeButton} onClick={onClose} aria-label="Закрыть фотографии">Закрыть ×</button>
       </div>
-      <PhotoCanvas onSwipe={direction => setIndex(current => Math.max(0, Math.min(photos.length - 1, current + direction)))} source={source} key={photos[index]} id={photos[index]!} label={`Фотография публикации ${index + 1} из ${photos.length}`} />
+      {kinds?.[index] === 'video'
+        ? <VideoCanvas source={source} key={photos[index]} id={photos[index]!} label={`Видео публикации ${index + 1} из ${photos.length}`} />
+        : <PhotoCanvas onSwipe={direction => setIndex(current => Math.max(0, Math.min(photos.length - 1, current + direction)))} source={source} key={photos[index]} id={photos[index]!} label={`${kinds?.[index] === 'gif' ? 'GIF' : 'Фотография'} публикации ${index + 1} из ${photos.length}`} />}
       <div className="review-photo-navigation">
         <button type="button" disabled={index === 0} onClick={() => setIndex(index - 1)} aria-label="Предыдущая фотография">←</button>
         <p>Листайте свайпом или стрелками. Увеличивайте двумя пальцами или кнопками. Увеличенное фото можно перемещать.</p>
@@ -111,18 +121,22 @@ export function PhotoViewer({ photos, initialIndex, onClose, source }: { photos:
   );
 }
 
-export function ReviewPhotoGallery({ photos, source = 'review-photos' }: { photos: string[]; source?: 'review-photos' | 'wall-photos' }) {
+const KIND_LABEL: Record<WallMediaKind, string> = { image: 'фотографию', gif: 'GIF', video: 'видео' };
+
+export function ReviewPhotoGallery({ photos, kinds, source = 'review-photos' }: { photos: string[]; kinds?: WallMediaKind[]; source?: 'review-photos' | 'wall-photos' }) {
   const [active, setActive] = useState<number | null>(null);
   if (!photos.length) return null;
   return (
     <>
       <div className="review-photo-thumbnails" aria-label="Фотографии публикации">
-        {photos.map((id, index) => <button type="button" key={id} onClick={() => setActive(index)} aria-label={`Открыть фотографию ${index + 1} из ${photos.length}`}>
+        {photos.map((id, index) => <button type="button" key={id} data-kind={kinds?.[index]} onClick={() => setActive(index)} aria-label={`Открыть ${KIND_LABEL[kinds?.[index] ?? 'image']} ${index + 1} из ${photos.length}`}>
           {/* eslint-disable-next-line @next/next/no-img-element -- thumbnails are served already resized */}
-          <img src={`/api/${source}/${id}?size=thumbnail`} alt={`Фотография публикации ${index + 1}`} loading="lazy" />
+          <img src={`/api/${source}/${id}?size=thumbnail`} alt={`Вложение публикации ${index + 1}`} loading="lazy" />
+          {kinds?.[index] === 'gif' && <span className="review-media-badge" aria-hidden="true">GIF</span>}
+          {kinds?.[index] === 'video' && <span className="review-media-play" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" /></svg></span>}
         </button>)}
       </div>
-      {active !== null ? <PhotoViewer source={source} photos={photos} initialIndex={active} onClose={() => setActive(null)} /> : null}
+      {active !== null ? <PhotoViewer source={source} photos={photos} kinds={kinds} initialIndex={active} onClose={() => setActive(null)} /> : null}
     </>
   );
 }

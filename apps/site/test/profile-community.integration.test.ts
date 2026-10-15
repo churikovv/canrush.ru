@@ -63,9 +63,9 @@ describe.sequential('community profile storage', () => {
   });
   it('stores wall photos atomically and removes them with the post', async () => {
     await pool.query('update "user" set "lastWallPostAt"=null where id=$1', [b]);
-    await expect(community.addProfileComment(b, a, 'invalid photo', [{ data: Buffer.alloc(0), thumbnail: Buffer.from('x') }])).rejects.toThrow();
+    await expect(community.addProfileComment(b, a, 'invalid photo', [{ kind: 'image', mime: 'image/webp', data: Buffer.alloc(0), thumbnail: Buffer.from('x') }])).rejects.toThrow();
     expect((await pool.query('select "lastWallPostAt" from "user" where id=$1', [b])).rows[0].lastWallPostAt).toBeNull();
-    const id = await community.addProfileComment(b, a, 'with photo', [{ data: Buffer.from('photo'), thumbnail: Buffer.from('thumb') }]);
+    const id = await community.addProfileComment(b, a, 'with photo', [{ kind: 'image', mime: 'image/webp', data: Buffer.from('photo'), thumbnail: Buffer.from('thumb') }]);
     const wall = await community.getProfileWall(a);
     const photos = wall.comments.find(comment => comment.id === id)!.photos;
     expect(photos).toHaveLength(1);
@@ -103,6 +103,32 @@ describe.sequential('community profile storage', () => {
     expect((await community.getProfileWall(b)).comments.find(post => post.id === id)).toMatchObject({ text: 'edited', editedAt: expect.any(Date) });
     expect((await community.getFeed(null)).posts.find(post => post.id === id)?.text).toBe('edited');
     await community.deleteProfileComment(b, id);
+  });
+  it('stores GIF and video attachments and streams the video by byte ranges', async () => {
+    await pool.query('update "user" set "lastWallPostAt"=null where id=$1', [b]);
+    const video = Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from('ftypisom'), Buffer.alloc(3000, 7)]);
+    const id = await community.addProfileComment(b, a, 'media', [
+      { kind: 'gif', mime: 'image/webp', data: Buffer.from('gif'), thumbnail: Buffer.from('thumb') },
+      { kind: 'video', mime: 'video/mp4', data: video, thumbnail: Buffer.from('poster') },
+    ]);
+    const post = (await community.getProfileWall(a)).comments.find(comment => comment.id === id)!;
+    expect(post.mediaKinds).toEqual(['gif', 'video']);
+    const { GET } = await import('../src/app/api/wall-photos/[id]/route');
+    const get = (range?: string) => GET(new Request(`https://canrush.ru/api/wall-photos/${post.photos[1]}`, { headers: range ? { range } : {} }), { params: Promise.resolve({ id: post.photos[1]! }) });
+    const partial = await get('bytes=4-11');
+    expect(partial.status).toBe(206);
+    expect(partial.headers.get('content-range')).toBe(`bytes 4-11/${video.length}`);
+    expect(Buffer.from(await partial.arrayBuffer()).toString('latin1')).toBe('ftypisom');
+    const full = await get();
+    expect(full.headers.get('content-type')).toBe('video/mp4');
+    expect((await full.arrayBuffer()).byteLength).toBe(video.length);
+    expect((await get('bytes=99999-')).status).toBe(416);
+    await pool.query('update "user" set "lastWallPostAt"=null where id=$1', [b]);
+    await expect(community.addProfileComment(b, a, 'two videos', [
+      { kind: 'video', mime: 'video/mp4', data: video, thumbnail: Buffer.from('p') },
+      { kind: 'video', mime: 'video/mp4', data: video, thumbnail: Buffer.from('p') },
+    ])).rejects.toMatchObject({ constraint: 'wallPhoto_one_video_idx' });
+    await community.deleteProfileComment(a, id);
   });
   it('blocks public contributions by moderated users at the database boundary', async () => {
     await pool.query('insert into "userBlock" ("userId") values ($1)', [c]);

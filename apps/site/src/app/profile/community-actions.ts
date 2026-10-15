@@ -1,6 +1,7 @@
 'use server';
 
-import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
+import { ReviewPhotoError } from '@/lib/review-photos';
+import { prepareWallMedia } from '@/lib/wall-media';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
@@ -28,7 +29,7 @@ export async function updateCommunityAction(_state: CommunityActionState, form: 
         break;
       case 'comment': {
         await ensureOwnProfile(session.user);
-        await addProfileComment(userId, String(form.get('targetId') ?? ''), form.get('text'), (await prepareReviewPhotos(form)).photos);
+        await addProfileComment(userId, String(form.get('targetId') ?? ''), form.get('text'), await prepareWallMedia(form));
         break;
       }
       case 'delete-comment':

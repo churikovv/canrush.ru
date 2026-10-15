@@ -48,7 +48,7 @@ export function WallPost({ post, interaction, canDelete, canEdit, owner }: WallP
         </div>
       </div>
     </>}>
-      <ReviewPhotoGallery photos={post.photos} source="wall-photos" />
+      <ReviewPhotoGallery photos={post.photos} kinds={post.mediaKinds} source="wall-photos" />
       <ReviewDiscussion reviewId={post.id} target="wall" initial={interaction} />
     </WallPostBody>
   </article>;

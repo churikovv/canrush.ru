@@ -16,6 +16,7 @@ export function proxy(request: NextRequest) {
     development ? "style-src 'self' 'unsafe-inline'" : `style-src 'self' 'nonce-${nonce}'`,
     "style-src-attr 'unsafe-inline'",
     "img-src 'self' blob: data: https://mc.yandex.ru https://yastatic.net https://*.maps.yandex.net https://api-maps.yandex.ru https://yandex.ru",
+    "media-src 'self' blob:",
     "font-src 'self'",
     "connect-src 'self' https://mc.yandex.ru https://api-maps.yandex.ru https://*.api-maps.yandex.ru https://*.maps.yandex.net",
     "child-src blob: https://mc.yandex.ru",

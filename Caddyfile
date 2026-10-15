@@ -23,8 +23,9 @@ canrush.ru, www.canrush.ru {
 	@static path /_next/static/* /images/* /brand/*
 	header @static Cache-Control "public, max-age=31536000, immutable"
 
-	# Request body size limit (for forms, file uploads)
+	# Request body size limit (for forms, file uploads). Matches the site's 26 MB server-action limit:
+	# wall records carry up to 24 MB of attachments (a 20 MB video plus photos).
 	request_body {
-		max_size 10MB
+		max_size 26MB
 	}
 }

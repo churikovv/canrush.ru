@@ -28,6 +28,6 @@ it('blocks publishing for moderated users but permits unfollowing', async () => 
 
 it('rejects malformed wall attachments without publishing', async () => {
   const data = form('comment'); data.append('photos', 'not a file');
-  expect((await updateCommunityAction({}, data)).error).toContain('фотографии');
+  expect((await updateCommunityAction({}, data)).error).toContain('вложения');
   expect(mocks.comment).not.toHaveBeenCalled();
 });

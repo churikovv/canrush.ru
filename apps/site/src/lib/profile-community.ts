@@ -1,4 +1,5 @@
-import type { PreparedReviewPhoto } from '@/lib/review-photos';
+import type { PreparedWallMedia } from '@/lib/wall-media';
+import type { WallMediaKind } from '@/lib/wall-media-limits';
 import { getPool } from '@/db/pool';
 import { ACHIEVEMENT_METRICS, DETAILED_REVIEW_CHARS, PROFILE_ACHIEVEMENTS, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
 
@@ -102,12 +103,12 @@ export async function getProfileRatings(userId: string) {
 }
 export type ProfileRatings = Awaited<ReturnType<typeof getProfileRatings>>;
 
-export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; editedAt: Date | null; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; photos: string[] }
+export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; editedAt: Date | null; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; photos: string[]; mediaKinds: WallMediaKind[] }
 export interface FeedPostRow extends WallPostRow { ownerUsername: string | null; ownerName: string }
 export type FeedScope = 'all' | 'following';
 
 // One record serves both the wall it was written on and the feed, so both views select the same columns.
-const WALL_POST_COLUMNS = `c.id, c."profileId", c."userId", c.text, c."createdAt", c."editedAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, u.username, u.name,
+const WALL_POST_COLUMNS = `c.id, c."profileId", c."userId", c.text, c."createdAt", c."editedAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, coalesce((select array_agg(p.kind order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as "mediaKinds", u.username, u.name,
       (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
       coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
       case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
@@ -138,8 +139,8 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
   return { posts: rows.slice(0, COMMUNITY_PAGE_SIZE), hasMore: rows.length > COMMUNITY_PAGE_SIZE };
 }
 
-export async function addProfileComment(userId: string, profileId: string, input: unknown, photos: PreparedReviewPhoto[] = []) {
-  if (photos.length > 5) throw new CommunityError('Можно добавить не более 5 фотографий.');
+export async function addProfileComment(userId: string, profileId: string, input: unknown, photos: PreparedWallMedia[] = []) {
+  if (photos.length > 5) throw new CommunityError('Можно добавить не более 5 вложений.');
   const text = validateWallText(input);
   if (!text) throw new CommunityError('Напишите от 1 до 1000 символов.');
   const client = await getPool().connect();
@@ -149,7 +150,7 @@ export async function addProfileComment(userId: string, profileId: string, input
     if (!allowed.rowCount) throw new CommunityError('Следующий комментарий можно отправить через 30 секунд.');
     const result = await client.query<{ id: string }>('insert into "profileComment" ("profileId", "userId", text) values ($1, $2, $3) returning id', [profileId, userId, text]);
     for (const [position, photo] of photos.entries()) {
-      await client.query('insert into "wallPhoto" ("commentId", position, data, thumbnail) values ($1, $2, $3, $4)', [result.rows[0]!.id, position, photo.data, photo.thumbnail]);
+      await client.query('insert into "wallPhoto" ("commentId", position, kind, mime, data, thumbnail) values ($1, $2, $3, $4, $5, $6)', [result.rows[0]!.id, position, photo.kind, photo.mime, photo.data, photo.thumbnail]);
     }
     await client.query('commit');
     return result.rows[0]!.id;
