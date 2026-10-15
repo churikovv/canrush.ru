@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { SignInForm } from '@/components/sign-in-form';
+import { TelegramSignIn } from '@/components/telegram-sign-in';
 import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +41,7 @@ export default async function SignInPage() {
             избранное.
           </p>
         </section>
+        <TelegramSignIn />
         <SignInForm />
       </div>
     </BrandShell>

@@ -58,6 +58,30 @@ export function getAuthEnv(): AuthEnv {
   };
 }
 
+export interface TelegramEnv {
+  botToken: string;
+  /** Direct Mini App link, e.g. https://t.me/canrush_bot/app. */
+  miniAppUrl: string;
+}
+
+/** Telegram Mini App sign-in is optional: without both variables the feature stays off. */
+export function getTelegramEnv(): TelegramEnv | null {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  const miniAppUrl = process.env.TELEGRAM_MINI_APP_URL?.trim();
+  if (!botToken || !miniAppUrl) return null;
+  if (!/^\d+:[A-Za-z0-9_-]{30,}$/u.test(botToken)) throw new Error('TELEGRAM_BOT_TOKEN has an unexpected format');
+  let url: URL;
+  try {
+    url = new URL(miniAppUrl);
+  } catch {
+    throw new Error('TELEGRAM_MINI_APP_URL must be a valid URL');
+  }
+  if (url.protocol !== 'https:' || url.hostname !== 't.me' || url.search || url.hash) {
+    throw new Error('TELEGRAM_MINI_APP_URL must be a https://t.me/<bot>/<app> link');
+  }
+  return { botToken, miniAppUrl: url.toString() };
+}
+
 export function getSmtpEnv(): SmtpEnv {
   const port = Number(required('SMTP_PORT'));
   if (!Number.isInteger(port) || port !== 465) throw new Error('SMTP_PORT must be 465 for implicit TLS');

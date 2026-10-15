@@ -10,7 +10,8 @@ import {
   emailRateLimitKey,
 } from '@/lib/email-rate-limit';
 import { sendMagicLinkEmail } from '@/lib/email';
-import { getAuthEnv } from '@/lib/env';
+import { getAuthEnv, getTelegramEnv } from '@/lib/env';
+import { telegramMiniApp } from '@/lib/telegram-auth';
 
 interface RateLimitRecord {
   count: number;
@@ -23,6 +24,8 @@ export type MagicLinkSender = (email: string, token: string) => Promise<void>;
 export interface CreateAuthOptions {
   database?: Pool;
   sendMagicLink?: MagicLinkSender;
+  /** Overrides TELEGRAM_BOT_TOKEN; `null` disables Telegram sign-in. */
+  telegramBotToken?: string | null;
 }
 
 function requestOrigin(value: string | null): string | undefined {
@@ -121,6 +124,7 @@ function createEmailRateLimitHook(secret: string, trustedOrigin: string) {
 export function createAuth(options: CreateAuthOptions = {}) {
   const env = getAuthEnv();
   const sendMagicLink = options.sendMagicLink ?? sendMagicLinkEmail;
+  const telegramBotToken = options.telegramBotToken !== undefined ? options.telegramBotToken : (getTelegramEnv()?.botToken ?? null);
 
   return betterAuth({
     appName: 'CanRush',
@@ -162,6 +166,7 @@ export function createAuth(options: CreateAuthOptions = {}) {
         storeToken: 'hashed',
         sendMagicLink: async ({ email, token }) => sendMagicLink(email, token),
       }),
+      telegramMiniApp({ botToken: telegramBotToken, trustedOrigin: env.authUrl }),
     ],
   });
 }

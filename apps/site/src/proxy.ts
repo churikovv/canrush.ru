@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
   const productionHttps = process.env.NODE_ENV === 'production' && request.nextUrl.protocol === 'https:';
   const directives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://mc.yandex.ru https://yastatic.net${development ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://mc.yandex.ru https://yastatic.net https://telegram.org${development ? " 'unsafe-eval'" : ''}`,
     development ? "style-src 'self' 'unsafe-inline'" : `style-src 'self' 'nonce-${nonce}'`,
     "style-src-attr 'unsafe-inline'",
     "img-src 'self' blob: data: https://mc.yandex.ru https://yastatic.net https://*.maps.yandex.net https://api-maps.yandex.ru https://yandex.ru",

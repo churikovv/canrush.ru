@@ -80,3 +80,16 @@
     grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
   }
 }
+.telegram-sign-in {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.telegram-sign-in h2,
+.telegram-sign-in p {
+  margin: 0;
+}
+/* Inside Telegram the magic link would open in an external browser, so the email form gives way. */
+.sign-in-layout:has(.telegram-sign-in) .auth-form {
+  display: none;
+}

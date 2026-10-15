@@ -122,6 +122,15 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
 - **Безопасность**: не логируй и не коммить токены (`TG_BOT_TOKEN`, `OZON_FEED_URL`
   с ключами). Секреты — только в `.env`/`.env.local`, которые в `.gitignore`.
 
+## Telegram Mini App
+
+- Тот же сайт открывается в Telegram как Mini App; вне Telegram ничего не меняется. `TelegramMiniApp` (корневой layout) включается, только если в hash есть `tgWebAppData` (или маркер в `sessionStorage` после перезагрузки): ставит `data-telegram-app` на `html`, грузит SDK `telegram.org` (разрешён в CSP), ведёт `BackButton` и открывает внешние ссылки через `openLink`/`openTelegramLink`.
+- Вход — плагин Better Auth `telegramMiniApp` (`src/lib/telegram-auth.ts`), `POST /api/auth/telegram/sign-in`. Сервер проверяет HMAC `initData` токеном бота и `auth_date` ≤ 24 ч (`telegram-init-data.ts`); клиентским `initDataUnsafe` не доверяй. Связь — строка `account` (`providerId='telegram'`, `issuer='local:telegram'`, `accountId` = Telegram id), уникальность даёт индекс `(issuer, accountId)`; миграция не нужна.
+- Новый аккаунт создаётся только явной кнопкой «Продолжить с Telegram» (`createAccount: true`), иначе ответ `unlinked` — чтобы владелец email-аккаунта мог привязать его, а не получить дубль. Почта таких аккаунтов — заглушка `<username>@<id>.telegram.invalid` (`isTelegramPlaceholderEmail`): письма на неё не уходят, отвязать Telegram у такого аккаунта нельзя.
+- Привязка: Настройки → `createTelegramLink` кладёт одноразовый код (хэш в `verification`, 10 мин) и открывает `TELEGRAM_MINI_APP_URL?startapp=link_<code>`; код приходит в подписанном `start_param` и погашается `consumeVerificationValue`.
+- `TELEGRAM_BOT_TOKEN` и `TELEGRAM_MINI_APP_URL` — в `apps/site/.env.local`; без них функция выключена. Telegram Web (web.telegram.org, iframe) не поддерживается: `frame-ancestors 'none'`/`X-Frame-Options: DENY` оставлены намеренно.
+- Нижние отступы в Mini App учитывают `--tg-safe-area-inset-bottom` (правило таб бара в `globals.css`). Тесты: `test/telegram-init-data.test.ts`, `test/telegram-auth.integration.test.ts`.
+
 ## Маркет и переписка
 
 - `/market` и `/messages` используют `src/lib/market.ts`; миграции `0020_market.sql`, `0021_market_stock.sql`.

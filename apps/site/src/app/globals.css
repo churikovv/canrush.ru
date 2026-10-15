@@ -809,6 +809,15 @@ html[data-cookie-notice="visible"] .brand-footer {
     box-shadow: inset 0 0.5px 0 rgb(0 0 0 / 30%);
     padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
+
+  /* Telegram Mini App: the WebView may report a zero env() inset, the SDK exposes its own. */
+  html[data-telegram-app]:has(.site-tab-bar) {
+    --site-tab-bar-offset: calc(var(--site-tab-bar-height) + max(env(safe-area-inset-bottom), var(--tg-safe-area-inset-bottom, 0px)));
+  }
+
+  html[data-telegram-app] .site-tab-bar {
+    padding-bottom: max(env(safe-area-inset-bottom), var(--tg-safe-area-inset-bottom, 0px));
+  }
 }
 @media (max-width: 359px) {
   .site-tab-bar-item {

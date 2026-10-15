@@ -9,6 +9,7 @@ import { NotificationStateProvider } from '@/components/notification-state';
 import { ActivityHeartbeat } from '@/components/profile-presence';
 import { CookieNotice } from '@/components/cookie-notice';
 import { SiteMotionProvider } from '@/components/site-motion-provider';
+import { TelegramMiniApp } from '@/components/telegram-mini-app';
 import { YandexMetrika } from '@/components/yandex-metrika';
 import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/seo';
 import './globals.css';
@@ -94,6 +95,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <NavigationProgressProvider><NotificationStateProvider>{children}</NotificationStateProvider></NavigationProgressProvider>
           <CookieNotice />
           <ActivityHeartbeat />
+          <TelegramMiniApp />
           <Suspense fallback={null}>
             <YandexMetrika />
             <CampaignTracker />
