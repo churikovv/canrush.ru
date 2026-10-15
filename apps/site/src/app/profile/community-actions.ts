@@ -40,6 +40,7 @@ export async function updateCommunityAction(_state: CommunityActionState, form: 
       default: return { error: 'Неизвестное действие.' };
     }
     revalidatePath('/profile', 'layout');
+    if (operation === 'comment' || operation === 'delete-comment') revalidatePath('/feed');
     if (operation === 'tags') revalidatePath('/catalog', 'layout');
     return { success: operation === 'comment' ? 'Комментарий опубликован.' : operation === 'delete-comment' ? 'Комментарий удалён.' : 'Сохранено.' };
   } catch (error) {

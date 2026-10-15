@@ -29,7 +29,7 @@ export function FollowControl({ targetId, following, mutual }: { targetId: strin
   </CommunityForm>;
 }
 
-export function WallComposer({ targetId }: { targetId: string }) {
+export function WallComposer({ targetId, label = 'Комментарий на стене', placeholder = 'Напишите на стене…' }: { targetId: string; label?: string; placeholder?: string }) {
   const [text, setText] = useState('');
   const [files, setFiles] = useState<{ file: File; url: string }[]>([]);
   const [photoError, setPhotoError] = useState('');
@@ -56,9 +56,9 @@ export function WallComposer({ targetId }: { targetId: string }) {
   return <form action={action} className="wall-composer">
     <input type="hidden" name="operation" value="comment" /><input type="hidden" name="targetId" value={targetId} />
     <fieldset disabled={pending}>
-      <label htmlFor="wall-text" className="sr-only">Комментарий на стене</label>
+      <label htmlFor="wall-text" className="sr-only">{label}</label>
       <div className="review-text-composer">
-        <textarea id="wall-text" name="text" value={text} onChange={event => setText(event.target.value)} placeholder="Напишите на стене…" maxLength={1000} rows={3} required />
+        <textarea id="wall-text" name="text" value={text} onChange={event => setText(event.target.value)} placeholder={placeholder} maxLength={1000} rows={3} required />
         <div className="review-composer-toolbar">
           <span className="review-photo-picker review-photo-icon" title="Добавить фотографии">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/></svg>
@@ -79,7 +79,14 @@ export function WallComposer({ targetId }: { targetId: string }) {
 }
 
 export function DeleteWallComment({ id }: { id: string }) {
-  return <CommunityForm className="wall-delete"><input type="hidden" name="operation" value="delete-comment" /><input type="hidden" name="commentId" value={id} /><Submit className="community-button-text">Удалить</Submit></CommunityForm>;
+  return <CommunityForm className="wall-delete"><input type="hidden" name="operation" value="delete-comment" /><input type="hidden" name="commentId" value={id} /><DeleteWallButton /></CommunityForm>;
+}
+
+function DeleteWallButton() {
+  const { pending } = useFormStatus();
+  return <button className="wall-delete-button" type="submit" disabled={pending} aria-label="Удалить запись" title="Удалить запись" onClick={event => { if (!window.confirm('Удалить запись?')) event.preventDefault(); }}>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
+  </button>;
 }
 
 export function PresenceSetting({ visible }: { visible: boolean }) {

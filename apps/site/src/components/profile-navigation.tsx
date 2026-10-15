@@ -41,6 +41,9 @@ export function ProfileNavigation({ active }: ProfileNavigationProps) {
           <NavigationIcon section="tierlists" />
           <span className="profile-navigation-label">Тирлисты</span>
         </Link>
+        <Link className="profile-navigation-item" data-motion="feed" href="/feed" aria-label="Лента" aria-current={active === 'feed' ? 'page' : undefined}>
+          <NavigationIcon section="feed" /><span className="profile-navigation-label">Лента</span>
+        </Link>
         <Link className="profile-navigation-item" data-motion="market" href="/market" aria-label="Маркет" aria-current={active === 'market' ? 'page' : undefined}>
           <NavigationIcon section="market" /><span className="profile-navigation-label">Маркет</span>
         </Link>

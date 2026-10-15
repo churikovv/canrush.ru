@@ -73,6 +73,27 @@ describe.sequential('community profile storage', () => {
     await community.deleteProfileComment(a, id);
     expect((await pool.query('select id from "wallPhoto" where id=$1', [photos[0]])).rowCount).toBe(0);
   });
+  it('shows the same record on the wall and in the feed, and narrows the feed to subscriptions', async () => {
+    await pool.query('update "user" set "lastWallPostAt" = null where id = any($1::text[])', [ids]);
+    const own = await community.addProfileComment(b, b, 'feed post');
+    const guest = await community.addProfileComment(a, b, 'on a followed wall');
+    const stranger = await community.addProfileComment(c, a, 'unrelated wall');
+    expect((await community.getProfileWall(b)).comments.map(comment => comment.id)).toEqual(expect.arrayContaining([own, guest]));
+    const all = (await community.getFeed(null)).posts;
+    expect(all.find(post => post.id === own)).toMatchObject({ profileId: b, userId: b, text: 'feed post' });
+    expect(all.find(post => post.id === guest)).toMatchObject({ profileId: b, userId: a });
+    expect((await community.getFeed(null, 'following')).posts.map(post => post.id)).toContain(stranger);
+    const before = (await community.getFeed(c, 'following')).posts.map(post => post.id);
+    expect(before).toContain(stranger);
+    expect(before).not.toContain(own);
+    await community.setFollowing(c, b, true);
+    const after = (await community.getFeed(c, 'following')).posts.map(post => post.id);
+    expect(after).toEqual(expect.arrayContaining([own, guest, stranger]));
+    await community.setFollowing(c, b, false);
+    await community.deleteProfileComment(b, own);
+    expect((await community.getFeed(null)).posts.map(post => post.id)).not.toContain(own);
+    for (const id of [guest, stranger]) await pool.query('delete from "profileComment" where id = $1', [id]);
+  });
   it('blocks public contributions by moderated users at the database boundary', async () => {
     await pool.query('insert into "userBlock" ("userId") values ($1)', [c]);
     await expect(community.setFollowing(c, a, true)).rejects.toMatchObject({ code: '42501' });

@@ -692,6 +692,11 @@ html[data-cookie-notice="visible"] .brand-footer {
 [data-motion="tierlists"][data-activated] .nav-icon-part { --lift: -7px; animation-name: tab-layer-drop; animation-duration: 540ms; }
 [data-motion="tierlists"][data-activated] .nav-icon-part:nth-child(2) { --lift: -4px; animation-delay: calc(var(--tab-delay, 0ms) + 50ms); }
 [data-motion="tierlists"][data-activated] .nav-icon-part:nth-child(3) { --lift: -2px; animation-delay: calc(var(--tab-delay, 0ms) + 100ms); }
+/* Feed: a new post pops in on top and nudges the older lines down. */
+[data-motion="feed"] .nav-icon-part { transform-box: fill-box; transform-origin: 50% 100%; }
+[data-motion="feed"][data-activated] .nav-icon-part:first-child { animation-name: tab-feed-post; animation-duration: 560ms; }
+[data-motion="feed"][data-activated] .nav-icon-part:nth-child(n + 2) { transform-origin: 50% 50%; animation-name: tab-feed-push; animation-duration: 520ms; animation-delay: calc(var(--tab-delay, 0ms) + 70ms); }
+[data-motion="feed"][data-activated] .nav-icon-part:nth-child(3) { animation-delay: calc(var(--tab-delay, 0ms) + 120ms); }
 [data-motion="settings"][data-activated] > svg { transform-origin: 50% 50%; animation-name: tab-gear; animation-duration: 700ms; }
 [data-motion="bell"][data-activated] > svg { transform-origin: 50% 8%; animation-name: tab-bell; animation-duration: 700ms; animation-timing-function: ease-out; }
 [data-motion="city"][data-activated] > svg:first-of-type { transform-origin: 50% 100%; animation-name: tab-pin; animation-duration: 560ms; }
@@ -725,6 +730,18 @@ html[data-cookie-notice="visible"] .brand-footer {
   0% { opacity: .4; transform: translateY(var(--lift)); }
   55% { opacity: 1; transform: translateY(1px); }
   78% { transform: translateY(-.5px); }
+  100% { transform: none; }
+}
+@keyframes tab-feed-post {
+  0% { opacity: 0; transform: translateY(-4px) scale(.4, .3); }
+  45% { opacity: 1; transform: scale(1.08, 1.12); }
+  72% { transform: scale(.97, .95); }
+  100% { transform: none; }
+}
+@keyframes tab-feed-push {
+  0% { transform: translateY(-5px); opacity: .5; }
+  55% { transform: translateY(1.5px); opacity: 1; }
+  80% { transform: translateY(-.5px); }
   100% { transform: none; }
 }
 @keyframes tab-gear {

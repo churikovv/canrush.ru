@@ -102,18 +102,40 @@ export async function getProfileRatings(userId: string) {
 }
 export type ProfileRatings = Awaited<ReturnType<typeof getProfileRatings>>;
 
-export async function getProfileWall(profileId: string, page = 1) {
-  const [count, comments] = await Promise.all([
-    getPool().query<{ count: number }>('select count(*)::int as count from "profileComment" where "profileId" = $1', [profileId]),
-    getPool().query<{ id: string; userId: string; text: string; createdAt: Date; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; photos: string[] }>(`select c.id, c."userId", c.text, c."createdAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, u.username, u.name,
+export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; photos: string[] }
+export interface FeedPostRow extends WallPostRow { ownerUsername: string | null; ownerName: string }
+export type FeedScope = 'all' | 'following';
+
+// One record serves both the wall it was written on and the feed, so both views select the same columns.
+const WALL_POST_COLUMNS = `c.id, c."profileId", c."userId", c.text, c."createdAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, u.username, u.name,
       (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
       coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
       case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
-      when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
+      when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag`;
+
+export async function getProfileWall(profileId: string, page = 1) {
+  const [count, comments] = await Promise.all([
+    getPool().query<{ count: number }>('select count(*)::int as count from "profileComment" where "profileId" = $1', [profileId]),
+    getPool().query<WallPostRow>(`select ${WALL_POST_COLUMNS}
       from "profileComment" c join "user" u on u.id = c."userId" where c."profileId" = $1 order by c."createdAt" desc, c.id desc limit $2 offset $3`,
     [profileId, COMMUNITY_PAGE_SIZE, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE]),
   ]);
   return { count: count.rows[0]?.count ?? 0, comments: comments.rows };
+}
+
+/**
+ * All walls merged into one timeline. `following` keeps the viewer's own records and those written by
+ * or on the walls of people the viewer follows.
+ */
+export async function getFeed(viewerId: string | null, scope: FeedScope = 'all', page = 1) {
+  const following = scope === 'following' && viewerId !== null;
+  const { rows } = await getPool().query<FeedPostRow>(`select ${WALL_POST_COLUMNS}, o.username as "ownerUsername", o.name as "ownerName"
+      from "profileComment" c join "user" u on u.id = c."userId" join "user" o on o.id = c."profileId"
+      where not $1::boolean or c."userId" = $2 or c."profileId" = $2
+        or exists(select 1 from "userFollow" f where f."userId" = $2 and f."targetId" in (c."userId", c."profileId"))
+      order by c."createdAt" desc, c.id desc limit $3 offset $4`,
+  [following, viewerId, COMMUNITY_PAGE_SIZE + 1, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE]);
+  return { posts: rows.slice(0, COMMUNITY_PAGE_SIZE), hasMore: rows.length > COMMUNITY_PAGE_SIZE };
 }
 
 export async function addProfileComment(userId: string, profileId: string, input: unknown, photos: PreparedReviewPhoto[] = []) {

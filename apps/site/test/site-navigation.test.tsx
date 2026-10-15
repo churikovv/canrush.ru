@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { SiteTabBar } from '@/components/site-tab-bar';
-import { MarketTabs, StoreTabs } from '@/components/section-tabs';
+import { FeedTabs, MarketTabs, StoreTabs } from '@/components/section-tabs';
 
 function links(html: string) {
   return [...html.matchAll(/<a\s([^>]*)>/g)].map(([, attributes = '']) => ({
@@ -14,10 +14,10 @@ function links(html: string) {
 }
 
 describe('site tab bar', () => {
-  it('lists five sections; orders live inside the market', () => {
+  it('lists six sections; orders live inside the market', () => {
     const html = renderToStaticMarkup(createElement(SiteTabBar));
-    expect(links(html).map(({ href }) => href)).toEqual(['/catalog', '/prices', '/tierlists', '/market', '/profile']);
-    for (const label of ['Каталог', 'Магазины', 'Тирлисты', 'Маркет', 'Профиль']) expect(html).toContain(`>${label}</span>`);
+    expect(links(html).map(({ href }) => href)).toEqual(['/catalog', '/prices', '/tierlists', '/feed', '/market', '/profile']);
+    for (const label of ['Каталог', 'Магазины', 'Тирлисты', 'Лента', 'Маркет', 'Профиль']) expect(html).toContain(`>${label}</span>`);
     expect(html).not.toContain('/messages');
     expect(links(html).find(({ href }) => href === '/prices')?.label).toBe('Магазины и цены');
     expect(html).not.toContain('aria-current');
@@ -32,6 +32,12 @@ describe('site tab bar', () => {
   it('marks only the active section as the current page', () => {
     const html = renderToStaticMarkup(createElement(SiteTabBar, { active: 'favorites' }));
     expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/profile']);
+  });
+
+  it('marks the feed in the header and the tab bar', () => {
+    const html = renderToStaticMarkup(createElement(ProfileNavigation, { active: 'feed' }));
+    expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/feed', '/feed']);
+    expect(html.match(/data-motion="feed"/g)).toHaveLength(2);
   });
 
   it('renders the header buttons and the tab bar with the same active section', () => {
@@ -53,6 +59,12 @@ describe('section tabs', () => {
     const member = renderToStaticMarkup(createElement(MarketTabs, { active: 'orders', signedIn: true }));
     expect(links(member).map(({ href }) => href)).toEqual(['/market', '/market?mine=1', '/messages']);
     expect(links(member).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/messages']);
+  });
+  it('hides the following feed from guests', () => {
+    const guest = renderToStaticMarkup(createElement(FeedTabs, { active: 'all', signedIn: false }));
+    expect(links(guest).map(({ href }) => href)).toEqual(['/feed']);
+    const member = renderToStaticMarkup(createElement(FeedTabs, { active: 'following', signedIn: true }));
+    expect(links(member).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/feed?scope=following']);
   });
   it('groups prices and stores under one section', () => {
     const html = renderToStaticMarkup(createElement(StoreTabs, { active: 'stores', signedIn: true }));

@@ -194,12 +194,33 @@ a.profile-about-row:hover .profile-about-arrow { color: var(--theme-link, #0058c
 @media (prefers-reduced-motion: reduce) { .presence-switch, .presence-switch span, .profile-about-arrow { transition: none; } }
 .community-sidebar .sign-out-control .primary-button { border-radius: 8px; min-height: 44px; font-size: .875rem; }
 .wall-comments { margin-top: 20px; }
-.wall-comment-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
-.wall-author { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%; font-size: .875rem; color: var(--theme-text, #3e3e3f); overflow-wrap: anywhere; min-height: 24px; }
-.wall-author strong { font-size: 1rem; }
-.wall-author > span { color: var(--theme-muted, #59616b); }
-.wall-author:hover strong { color: var(--theme-link, #0058cc); }
-.wall-delete .community-button { font-size: .75rem; }
+/* Wall record (also rendered in /feed): avatar, name line with badges, muted meta line, delete icon on the right. */
+.wall-comment a { text-decoration: none; }
+.wall-comment-heading { display: flex; align-items: flex-start; gap: 12px; }
+.wall-comment-heading .wall-avatar { width: 40px; height: 40px; flex-basis: 40px; font-weight: 700; }
+.wall-post-meta { display: grid; gap: 4px; flex: 1; min-width: 0; }
+.wall-post-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-height: 24px; }
+.wall-post-author { min-width: 0; color: var(--theme-text, #3e3e3f); font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; transition: color 150ms ease-out; }
+a.wall-post-author:hover { color: var(--theme-link, #0058cc); }
+.wall-post-sub { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 0; color: var(--theme-muted, #59616b); font-size: .75rem; line-height: 1.4; }
+.wall-post-sub > * + *::before { content: "·"; margin: 0 6px; }
+.wall-post-sub a { color: inherit; transition: color 150ms ease-out; }
+.wall-post-sub a:hover { color: var(--theme-link, #0058cc); }
+.wall-comment .wall-post-sub time { font-size: inherit; color: inherit; }
+.wall-delete { flex: none; display: grid; justify-items: end; margin: -6px -8px 0 0; }
+.wall-delete > p { max-width: 180px; margin: 4px 0 0; text-align: right; font-size: .75rem; }
+.wall-delete-button { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--theme-muted, #59616b); cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.wall-delete-button:hover { background: color-mix(in srgb, #e5484d 12%, transparent); color: #e5484d; }
+.wall-delete-button:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.wall-delete-button:disabled { opacity: .5; cursor: wait; }
+.wall-comment > p { margin-top: 12px; font-size: .9375rem; line-height: 1.55; }
+.wall-comment .review-discussion { margin-top: 12px; padding-top: 0; border-top: 0; }
+.wall-comment .review-reactions { display: flex; gap: 6px; }
+.wall-comment .review-reactions button { min-height: 36px; padding: 6px 12px; border-color: transparent; border-radius: 999px; background: color-mix(in srgb, currentColor 7%, transparent); font-size: .8125rem; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.wall-comment .review-reactions button:hover:not(:disabled) { background: color-mix(in srgb, currentColor 12%, transparent); }
+.wall-comment .review-reactions button[aria-pressed="true"] { border-color: currentColor; background: color-mix(in srgb, currentColor 12%, transparent); }
+.wall-comment .review-reactions button svg { width: 16px; height: 16px; }
+@media (prefers-reduced-motion: reduce) { .wall-post-author, .wall-post-sub a, .wall-delete-button, .wall-comment .review-reactions button { transition: none; } }
 .community-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 20px; font-size: .875rem; }
 .community-directory { max-width: 760px; }
 .community-directory > a { display: inline-flex; align-items: center; min-height: 44px; color: var(--theme-link, #0058cc); }
@@ -277,12 +298,10 @@ a.profile-about-row:hover .profile-about-arrow { color: var(--theme-link, #0058c
 }
 .community-user-avatar, .community-friend-list a > span { overflow: hidden; }
 .community-user-avatar img, .community-friend-list a > span img { width: 100%; height: 100%; object-fit: cover; }
-.wall-comment-heading { flex-wrap: wrap; }
 .profile-editor .community-avatar, .profile-editor .community-cover { position: relative; }
 .profile-drop-target { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; cursor: pointer; overflow: hidden; border-radius: inherit; }
 .profile-drop-target > span { padding: 8px 12px; background: #16191cd9; color: #ffffff; font-size: 12px; text-align: center; pointer-events: none; }
 .profile-drop-target input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-@media (max-width: 480px) { .wall-comment-heading time { flex-basis: 100%; } }
 .community-cover-custom { height: auto; aspect-ratio: 4 / 1; }
 /* Tag picker: one selected badge, searchable achievement requirements. */
 .tag-picker-trigger { display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%; min-height: 56px; border: 1px solid var(--theme-line, #c6ccd4); border-radius: 12px; padding: 10px 14px; background: var(--theme-panel, #fff); color: var(--theme-text, #3e3e3f); font: inherit; font-size: 1rem; text-align: left; cursor: pointer; }
@@ -456,7 +475,9 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
   .profile-editor-preview { padding: 12px 12px 0; }
   .profile-blocks-preview { padding: 12px; }
 }
-[data-profile-theme] :is(.wall-comment-heading time,.wall-empty-card p) { color: var(--profile-muted); }
+[data-profile-theme] :is(.wall-post-sub,.wall-empty-card p) { color: var(--profile-muted); }
+[data-profile-theme] a.wall-post-author { color: var(--profile-ink); }
+[data-profile-theme] :is(a.wall-post-author,.wall-post-sub a):hover { color: var(--profile-accent); }
 [data-profile-theme] .wall-empty-card strong { color: var(--profile-ink); }
 [data-profile-theme] .tag-picker-search input { color: var(--profile-ink); }
 [data-profile-theme] :is(.tag-picker-option.is-selected,label.tag-picker-option:not(.is-locked):hover) { background: var(--profile-soft); }

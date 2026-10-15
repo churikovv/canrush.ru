@@ -27,3 +27,12 @@ export function MarketTabs({ active, signedIn }: { active?: typeof MARKET_TABS[n
 export function StoreTabs({ active, signedIn }: { active: typeof STORE_TABS[number]['key']; signedIn: boolean }) {
   return <SectionTabs tabs={STORE_TABS} active={active} signedIn={signedIn} label="Магазины" />;
 }
+
+const FEED_TABS = [
+  { key: 'all', href: '/feed', label: 'Все записи' },
+  { key: 'following', href: '/feed?scope=following', label: 'Подписки', private: true },
+] as const;
+
+export function FeedTabs({ active, signedIn }: { active: typeof FEED_TABS[number]['key']; signedIn: boolean }) {
+  return <SectionTabs tabs={FEED_TABS} active={active} signedIn={signedIn} label="Лента" />;
+}

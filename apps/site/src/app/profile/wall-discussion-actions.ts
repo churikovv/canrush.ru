@@ -25,7 +25,7 @@ export async function wallDiscussionAction(id: string, action: 'read' | 'vote' |
         if (typeof value !== 'string') throw new WallDiscussionError('Комментарий не найден.');
         await deleteWallComment(viewer, id, value);
       }
-      revalidatePath('/profile', 'layout'); revalidatePath('/admin');
+      revalidatePath('/profile', 'layout'); revalidatePath('/feed'); revalidatePath('/admin');
     }
     const interaction = (await getWallInteractions([id], viewer)).get(id);
     if (!interaction) return { error: 'Запись недоступна.' };

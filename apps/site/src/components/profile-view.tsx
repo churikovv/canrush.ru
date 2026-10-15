@@ -1,7 +1,6 @@
 import { ProfileCompatibility } from '@/components/profile-compatibility';
 import { getProfileCompatibility } from '@/lib/profile-compatibility-data';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
-import { ReviewDiscussion } from '@/components/review-discussion';
 import { getWallInteractions } from '@/lib/wall-discussions';
 import { ProfileBlock, ProfileBlocks } from '@/components/profile-blocks';
 import { getLatestReviewPreview } from '@/lib/reviews';
@@ -13,17 +12,16 @@ import { getListings } from '@/lib/market';
 import { formatPrice } from '@/lib/market-fields';
 import { ProfileReportForm } from '@/components/profile-report-form';
 import { ProfileRatingStats } from '@/components/profile-rating-stats';
-import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import { getExperience } from '@/lib/profile-experience';
 import { ProfileExperience } from '@/components/profile-experience';
-import { profileTagLabel } from '@/lib/profile-achievements';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { SignOutButton } from '@/components/sign-out-button';
 import type { ProfileData } from '@/lib/profile';
 import { COMMUNITY_PAGE_SIZE, getConnections, getLastSeen, getPresence, getProfileCommunity, getProfileRatings, getProfileWall } from '@/lib/profile-community';
 import { PROFILE_ACHIEVEMENTS, visibleProfileAchievements } from '@/lib/profile-achievements';
-import { AchievementPicker, DeleteWallComment, FollowControl, PresenceSetting, WallComposer } from '@/components/profile-community-controls';
+import { WallPost, displayName } from '@/components/wall-post';
+import { AchievementPicker, FollowControl, PresenceSetting, WallComposer } from '@/components/profile-community-controls';
 import { ProfileHeader } from '@/components/profile-header';
 import { ProfilePresence } from '@/components/profile-presence';
 
@@ -36,11 +34,6 @@ interface ProfileViewProps {
   viewerId?: string;
   viewerIsAdmin?: boolean;
   wallPage?: number;
-}
-
-function displayName(profile: { name: string; username: string | null }): string {
-  const name = profile.name.trim();
-  return name && !name.includes('@') ? name : profile.username || 'Участник';
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
@@ -97,14 +90,9 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
 
           </ProfileBlock><ProfileBlock block="wall">
           <section className="community-panel" id="wall" aria-labelledby="wall-title">
-            <div className="community-section-heading"><h2 id="wall-title">Стена <span>{wall.count}</span></h2></div>
+            <div className="community-section-heading"><h2 id="wall-title">Стена <span>{wall.count}</span></h2><Link href="/feed">В ленте ↗</Link></div>
             {viewerId ? <WallComposer targetId={profile.id} /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
-            {wall.comments.length ? <div className="wall-comments">{wall.comments.map(comment => <article key={comment.id} id={`wall-post-${comment.id}`} className="wall-comment">
-              <div className="wall-comment-heading"><span className="wall-avatar">{comment.avatarId ? <Image src={`/api/profile-images/${comment.avatarId}`} width={36} height={36} unoptimized alt="" /> : (comment.username ?? comment.name).slice(0, 1).toUpperCase()}</span><Link href={comment.username ? `/profile/${comment.username}` : '#wall'} className="wall-author"><strong>{displayName(comment)}</strong>{comment.username && <span> @{comment.username}</span>}</Link>{profileTagLabel(comment.tag) && <span className="profile-tag" data-tag={comment.tag}>{profileTagLabel(comment.tag)}</span>}{comment.username && <ProfileExperience username={comment.username} initial={{ xp: comment.xp, rank: null }} />}<time dateTime={comment.createdAt.toISOString()}>{new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' }).format(comment.createdAt)}</time></div>
-              <p>{comment.text}</p><ReviewPhotoGallery photos={comment.photos} source="wall-photos" />
-              <ReviewDiscussion reviewId={comment.id} target="wall" initial={wallInteractions.get(comment.id)} />
-              {(isOwn || viewerId === comment.userId) && <DeleteWallComment id={comment.id} />}
-            </article>)}</div> : <div className="wall-empty-card"><strong>Здесь пока тихо</strong><p>Оставьте первый комментарий.</p></div>}
+            {wall.comments.length ? <div className="wall-comments">{wall.comments.map(comment => <WallPost key={comment.id} post={comment} interaction={wallInteractions.get(comment.id)} canDelete={isOwn || viewerId === comment.userId} />)}</div> : <div className="wall-empty-card"><strong>Здесь пока тихо</strong><p>Оставьте первый комментарий.</p></div>}
             {pages > 1 && <nav className="community-pagination" aria-label="Страницы стены">{wallPage > 1 ? <Link href={`${base}?wallPage=${wallPage - 1}#wall`}>← Назад</Link> : <span />}<span>{wallPage} / {pages}</span>{wallPage < pages ? <Link href={`${base}?wallPage=${wallPage + 1}#wall`}>Далее →</Link> : <span />}</nav>}
           </section>
           </ProfileBlock><ProfileBlock block="favorites"><section className="community-panel"><div className="community-section-heading"><h2>Избранное</h2><Link href={favoritesHref}>Все ↗</Link></div>
