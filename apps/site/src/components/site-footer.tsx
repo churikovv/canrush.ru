@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
-import { TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
+import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
 import { useRef, useSyncExternalStore } from 'react';
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react';
 
@@ -64,6 +64,12 @@ export function SiteFooter() {
                     <Image src="/brand/icons/telegram.svg" width={24} height={24} alt="" />
                   </span>
                   <span className="footer-social-name">Telegram</span>
+                </a>
+                <a className="footer-social-row" href={TELEGRAM_BOT_URL} target="_blank" rel="noopener noreferrer" aria-label="Telegram-бот CanRush (откроется в новой вкладке)">
+                  <span className="footer-social-icon" aria-hidden="true">
+                    <Image src="/brand/icons/telegram.svg" width={24} height={24} alt="" />
+                  </span>
+                  <span className="footer-social-name">Telegram-бот</span>
                 </a>
               </div>
             </div>

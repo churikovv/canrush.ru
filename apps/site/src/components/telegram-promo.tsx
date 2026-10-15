@@ -1,6 +1,7 @@
 import Image from 'next/image';
 
 export const TELEGRAM_CHANNEL_URL = 'https://t.me/canrushoff';
+export const TELEGRAM_BOT_URL = 'https://t.me/canrush_bot';
 
 export function TelegramPromo() {
   return <section className="telegram-promo" aria-labelledby="telegram-promo-title">
