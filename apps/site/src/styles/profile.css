@@ -656,6 +656,6 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 [data-profile-theme] :is(.review-reply-mention,.review-reply-target b) { color: var(--profile-accent); }
 [data-profile-theme] .review-comment-reply { color: var(--profile-muted); }
 [data-profile-theme] .review-comment-reply:hover:not(:disabled) { color: var(--profile-accent); }
-.telegram-link-setting { margin-top: 20px; }
-.telegram-link-setting h3 { margin: 0; font-size: 1rem; }
-.telegram-link-setting form { display: contents; }
+.telegram-settings h3 { margin: 20px 0 0; font-size: 1rem; }
+.telegram-settings > form:not(.telegram-bot-settings) { display: contents; }
+.telegram-bot-settings { display: grid; gap: 12px; }

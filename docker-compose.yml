@@ -44,6 +44,9 @@ services:
       PRICE_HISTORY_DIR: /app/price-history/regions
       YANDEX_MAPS_API_KEY: ${YANDEX_MAPS_API_KEY:-}
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_MINI_APP_URL: ${TELEGRAM_MINI_APP_URL:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
     volumes:
       # Shared catalog data (parser writes to /app/apps/site/data, site reads from cwd/data)
       # Next.js standalone server sets cwd to /app/apps/site, so mount there

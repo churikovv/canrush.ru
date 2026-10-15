@@ -12,7 +12,8 @@
     "db:plan": "node ./scripts/migrate.mjs --plan",
     "db:migrate": "node ./scripts/migrate.mjs",
     "test": "vitest run",
-    "test:auth": "vitest run --config vitest.integration.config.ts"
+    "test:auth": "vitest run --config vitest.integration.config.ts",
+    "telegram:setup": "node ./scripts/telegram-setup.mjs"
   },
   "dependencies": {
     "@canrush/shared": "^0.1.0",

@@ -62,12 +62,18 @@ export interface TelegramEnv {
   botToken: string;
   /** Direct Mini App link, e.g. https://t.me/canrush_bot/app. */
   miniAppUrl: string;
+  /** Bot username taken from the Mini App link. */
+  botUsername: string;
+  /** Secret Telegram echoes in X-Telegram-Bot-Api-Secret-Token; without it the bot webhook is off. */
+  webhookSecret: string | null;
 }
 
 /** Telegram Mini App sign-in is optional: without both variables the feature stays off. */
 export function getTelegramEnv(): TelegramEnv | null {
   const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
-  const miniAppUrl = process.env.TELEGRAM_MINI_APP_URL?.trim();
+  // Accept the link as BotFather prints it, with or without the scheme.
+  const rawMiniAppUrl = process.env.TELEGRAM_MINI_APP_URL?.trim();
+  const miniAppUrl = rawMiniAppUrl && !/^[a-z]+:\/\//iu.test(rawMiniAppUrl) ? `https://${rawMiniAppUrl}` : rawMiniAppUrl;
   if (!botToken || !miniAppUrl) return null;
   if (!/^\d+:[A-Za-z0-9_-]{30,}$/u.test(botToken)) throw new Error('TELEGRAM_BOT_TOKEN has an unexpected format');
   let url: URL;
@@ -76,10 +82,15 @@ export function getTelegramEnv(): TelegramEnv | null {
   } catch {
     throw new Error('TELEGRAM_MINI_APP_URL must be a valid URL');
   }
-  if (url.protocol !== 'https:' || url.hostname !== 't.me' || url.search || url.hash) {
+  const botUsername = /^\/([A-Za-z0-9_]{5,32})(?:\/[A-Za-z0-9_]{3,30})?$/u.exec(url.pathname)?.[1];
+  if (url.protocol !== 'https:' || url.hostname !== 't.me' || url.search || url.hash || !botUsername) {
     throw new Error('TELEGRAM_MINI_APP_URL must be a https://t.me/<bot>/<app> link');
   }
-  return { botToken, miniAppUrl: url.toString() };
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() || null;
+  if (webhookSecret && !/^[A-Za-z0-9_-]{32,256}$/u.test(webhookSecret)) {
+    throw new Error('TELEGRAM_WEBHOOK_SECRET must be 32-256 characters of A-Z, a-z, 0-9, _ or -');
+  }
+  return { botToken, miniAppUrl: url.toString(), botUsername, webhookSecret };
 }
 
 export function getSmtpEnv(): SmtpEnv {

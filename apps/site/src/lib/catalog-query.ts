@@ -123,7 +123,7 @@ function normalizeText(value: string): string {
   return value.toLocaleLowerCase('ru-RU').replace(/ё/gu, 'е').trim();
 }
 
-function matchesCatalogQuery(group: CatalogGroup, query: string): boolean {
+export function matchesCatalogQuery(group: CatalogGroup, query: string): boolean {
   const variants = group.variants.flatMap((variant) => {
     const volume = variant.volumeMl;
     return [catalogRetailerName(variant), volume === undefined ? '' : `${volume} мл ${volume / 1000} л`];

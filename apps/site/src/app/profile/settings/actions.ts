@@ -3,6 +3,9 @@ import { randomBytes } from 'node:crypto';
 import { getTelegramEnv } from '@/lib/env';
 import { TELEGRAM_LINK_TTL_SECONDS, TELEGRAM_PROVIDER_ID, telegramLinkIdentifier } from '@/lib/telegram-auth';
 import { isTelegramPlaceholderEmail, TELEGRAM_LINK_PREFIX } from '@/lib/telegram-init-data';
+import { findCity } from '@canrush/shared';
+import { isSiteAdminEmail } from '@/lib/admin';
+import { TELEGRAM_BOT_OPTIONS } from '@/lib/telegram-bot/settings';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -47,4 +50,17 @@ export async function unlinkTelegram() {
     await getPool().query('delete from "account" where "userId" = $1 and "providerId" = $2', [session.user.id, TELEGRAM_PROVIDER_ID]);
   }
   redirect('/profile/settings');
+}
+
+export async function saveTelegramBotSettings(form: FormData) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect('/sign-in');
+  const city = findCity(form.get('city'))?.id ?? null;
+  const admin = await isSiteAdminEmail(session.user.email);
+  const values = TELEGRAM_BOT_OPTIONS.map(option => (option.adminOnly && !admin ? null : form.get(option.column) === 'on'));
+  // Column names come from the fixed option list; values are parameters.
+  await getPool().query(`update "telegramChat" c set ${TELEGRAM_BOT_OPTIONS.map((option, index) => `"${option.column}" = coalesce($${index + 3}, c."${option.column}")`).join(', ')}, city = coalesce($2, c.city)
+    from account a where a."userId" = $1 and a."providerId" = 'telegram' and a."accountId" = c."telegramId"::text`,
+    [session.user.id, city, ...values]);
+  redirect('/profile/settings?saved=telegram');
 }

@@ -2,6 +2,8 @@ import type { PoolClient } from 'pg';
 import { getPool } from '@/db/pool';
 import { MarketError, marketId, canTransitionOrder, parseQuantity, type MarketFilters, type Delivery, type ListingInput, type OrderStatus } from './market-fields';
 import type { PreparedReviewPhoto } from './review-photos';
+import type { MarketEvent } from './telegram-bot/format';
+import { enqueueTelegram, type MarketPayload } from './telegram-bot/outbox';
 
 export interface Listing extends ListingInput { id: string; sellerId: string; sellerName: string; username: string | null; closed: boolean; createdAt: string; photos: string[] }
 export interface MarketOrder { id: string; listingId: string; buyerId: string; sellerId: string; status: OrderStatus; title: string; price: number; unitPrice: number; quantity: number; city: string; delivery: Delivery[]; closed: boolean; buyerName: string; sellerName: string; updatedAt: string; unread: number }
@@ -68,6 +70,17 @@ export async function reopenListing(userId: string, id: string) {
     await db.query(`update "user" set "profileLayout"=jsonb_set("profileLayout",'{hidden}',("profileLayout"->'hidden')-'listings') where id=$1`, [userId]);
   });
 }
+/** Mirrors a market event to the other party's Telegram; a message burst notifies once per 10 minutes. */
+async function notifyMarket(db: PoolClient, recipientId: string, actorId: string, orderId: string, event: MarketEvent, message?: string) {
+  const { rows } = await db.query<{ title: string; actor: string }>(`select l.title,
+    case when trim(u.name)<>'' and u.name not like '%@%' then u.name else coalesce(u.username,'Участник') end as actor
+    from "marketOrder" o join "marketListing" l on l.id=o."listingId" join "user" u on u.id=$2 where o.id=$1`, [orderId, actorId]);
+  const row = rows[0];
+  if (!row) return;
+  const payload: MarketPayload = { event, orderId, title: row.title, counterpart: row.actor, ...(message ? { message } : {}) };
+  const dedupe = event === 'message' ? `market:message:${orderId}:${recipientId}:${Math.floor(Date.now() / 600_000)}` : `market:${event}:${orderId}`;
+  await enqueueTelegram(db, recipientId, 'market', payload, dedupe);
+}
 export async function startOrder(userId: string, listingId: string, requestedQuantity = 1) {
   marketId(listingId);
   const quantity = parseQuantity(requestedQuantity);
@@ -84,6 +97,7 @@ export async function startOrder(userId: string, listingId: string, requestedQua
     await cooldown(db, userId, 'lastMarketOrderAt', 10);
     await db.query('update "marketListing" set quantity=quantity-$2 where id=$1', [listingId, quantity]);
     const result = await db.query('insert into "marketOrder"("listingId","buyerId",quantity,"unitPrice","stockReserved") values($1,$2,$3,$4,true) returning id', [listingId, userId, quantity, listing.price]);
+    await notifyMarket(db, listing.sellerId, userId, result.rows[0].id, 'new');
     return result.rows[0].id as string;
   });
 }
@@ -114,6 +128,7 @@ export async function changeOrderStatus(userId: string, id: string, status: Orde
     if (!canTransitionOrder(order.status, status, order.buyerId === userId ? 'buyer' : 'seller')) throw new MarketError('Этот переход статуса недоступен. Обновите страницу.');
     if (status === 'cancelled' && order.stockReserved) await db.query('update "marketListing" set quantity=quantity+$2 where id=$1', [order.listingId, order.quantity]);
     await db.query(`update "marketOrder" set status=$2,"updatedAt"=clock_timestamp(),"stockReserved"=case when $2='cancelled' then false else "stockReserved" end where id=$1`, [id, status]);
+    if (status !== 'new') await notifyMarket(db, order.buyerId === userId ? order.sellerId : order.buyerId, userId, id, status);
   });
 }
 export async function sendMarketMessage(userId: string, id: string, text: string, photos: PreparedReviewPhoto[]) {
@@ -121,11 +136,12 @@ export async function sendMarketMessage(userId: string, id: string, text: string
   if ((!text && !photos.length) || text.length > 4000 || photos.length > 5) throw new MarketError('Напишите сообщение до 4000 символов или добавьте до 5 фотографий.');
   return transaction(async db => {
     await allowed(db, userId);
-    await lockOrder(db, userId, id);
+    const order = await lockOrder(db, userId, id);
     await cooldown(db, userId, 'lastMarketMessageAt', 3);
     const result = await db.query('insert into "marketMessage"("orderId","senderId",text) values($1,$2,$3) returning id', [id, userId, text]);
     await savePhotos(db, 'messageId', result.rows[0].id, photos);
     await db.query('update "marketOrder" set "updatedAt"=clock_timestamp() where id=$1', [id]);
+    await notifyMarket(db, order.buyerId === userId ? order.sellerId : order.buyerId, userId, id, 'message', text || 'Фото');
   });
 }
 export async function getMessages(userId: string, id: string, before?: string) {

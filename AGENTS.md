@@ -131,6 +131,15 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
 - `TELEGRAM_BOT_TOKEN` и `TELEGRAM_MINI_APP_URL` — в `apps/site/.env.local`; без них функция выключена. Telegram Web (web.telegram.org, iframe) не поддерживается: `frame-ancestors 'none'`/`X-Frame-Options: DENY` оставлены намеренно.
 - Нижние отступы в Mini App учитывают `--tg-safe-area-inset-bottom` (правило таб бара в `globals.css`). Тесты: `test/telegram-init-data.test.ts`, `test/telegram-auth.integration.test.ts`.
 
+## Telegram-бот
+
+- Тот же бот, что у Mini App. Код — `apps/site/src/lib/telegram-bot/`, webhook — `POST /api/telegram/webhook` (проверяет `X-Telegram-Bot-Api-Secret-Token` = `TELEGRAM_WEBHOOK_SECRET`; без секрета роут отвечает 404). Регистрация webhook, команд и кнопки меню — `npm -w apps/site run telegram:setup`; inline-режим включается вручную через `/setinline` в @BotFather.
+- Миграция `0057_telegram_bot.sql`: `telegramChat` (кто нажал /start, город, переключатели, `blockedAt`), `telegramOutbox` (очередь), `telegramJobRun` (захват периода задачи), `telegramPromoSeen` (уже объявленные акции). Аккаунт находится через `account` с `providerId='telegram'`; без привязки бот умеет только поиск и подборку недели.
+- Не шли сообщения напрямую из запросов: пиши в очередь через `enqueueTelegram`/SQL `telegram_enqueue` с уникальным `dedupeKey` — функция сама проверяет чат, блокировку и переключатель. Очередь хранит вид + данные, текст рендерит отправитель (`renderOutboxMessage`), поэтому HTML экранируется в одном месте (`format.ts`).
+- Уведомления сайта зеркалит триггер `notification_telegram` (после фильтра настроек сайта). Маркет — `notifyMarket` в `market.ts` внутри той же транзакции; поток сообщений одного заказа — не чаще раза в 10 минут.
+- Воркер стартует из `src/instrumentation.ts` в процессе сайта (`TELEGRAM_WORKER=off` отключает): раз в секунду до 20 сообщений (лимит Telegram 30/с), строки берутся с арендой на 2 минуты и `skip locked`; 429 — повтор после `retry_after`, 403 — чат помечается заблокированным. Расписание по Москве: 04:00 чистка, 09:00 сводка админам (только с привязанным Telegram и `siteAdmin`), 10:00 акции на избранное, понедельник 11:00 подборка недели. Каждая задача сначала вставляет `(job, period)` в `telegramJobRun`, при ошибке удаляет — так несколько инстансов не дублируют рассылку.
+- Переключатели бота общие для `/settings` и страницы настроек — `TELEGRAM_BOT_OPTIONS` (`settings.ts`); имена колонок только из этого списка. Тесты: `test/telegram-bot.test.ts`, `test/telegram-bot.integration.test.ts` (fetch замокан, сообщения не уходят).
+
 ## Маркет и переписка
 
 - `/market` и `/messages` используют `src/lib/market.ts`; миграции `0020_market.sql`, `0021_market_stock.sql`.

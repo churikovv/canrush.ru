@@ -44,10 +44,7 @@ export async function syncFavoritePrices(userId: string, city: { id: CityId; nam
   finally { client.release(); }
 }
 
-export async function getNotifications(userId: string, before?: string) {
-  const [unread, result] = await Promise.all([
-    getPool().query('select count(*)::int as count from notification where "userId"=$1 and "readAt" is null',[userId]),
-    getPool().query(`select n.*,u.name,u.username,r.brand,r.flavor,c.text as comment,w.text as wall,
+const NOTIFICATION_SELECT = `select n.*,u.name,u.username,r.brand,r.flavor,c.text as comment,w.text as wall,
       owner.username as "ownerUsername", rr.brand as "replyBrand", rr.flavor as "replyFlavor", rt.slug as "replyTierSlug", rt.title as "replyTierTitle",
       wo.username as "replyWallOwner" from notification n
       left join "user" u on u.id=n."actorId" left join review r on r.id=n."reviewId"
@@ -56,11 +53,9 @@ export async function getNotifications(userId: string, before?: string) {
       left join "tierList" rt on n.kind='comment-reply' and rt.id=(n.payload->>'tierListId')::uuid
       left join "profileComment" rw on n.kind='comment-reply' and rw.id=(n.payload->>'wallId')::uuid
       left join "user" wo on wo.id=rw."profileId"
-      join "user" owner on owner.id=n."userId"
-      where n."userId"=$1 and ($2::uuid is null or (n."createdAt",n.id)<(select "createdAt",id from notification where id=$2 and "userId"=$1))
-      order by n."createdAt" desc,n.id desc limit 21`,[userId,before ?? null]),
-  ]);
-  const items: NotificationItem[] = result.rows.slice(0,20).map(row => {
+      join "user" owner on owner.id=n."userId"`;
+
+function describeNotification(row: any): NotificationItem {
     const actor = row.username ? `@${row.username}` : row.name && !row.name.includes('@') ? row.name : 'Участник';
     let title = `${actor} подписался на вас`;
     let detail = ''; let href = row.username ? `/profile/${encodeURIComponent(row.username)}` : '/profile'; let city: string | undefined;
@@ -94,7 +89,22 @@ export async function getNotifications(userId: string, before?: string) {
       href = `/catalog/${catalogGroupSlug(p.brand,p.flavor)}`;
     }
     return { id:row.id,kind:row.kind,title,detail,href,city,unread:!row.readAt,createdAt:row.createdAt.toISOString() };
-  });
+}
+
+/** One notification rendered as in the inbox, for mirroring to Telegram. */
+export async function getNotificationById(id: string): Promise<NotificationItem | null> {
+  const result = await getPool().query(`${NOTIFICATION_SELECT} where n.id=$1`, [id]);
+  return result.rows[0] ? describeNotification(result.rows[0]) : null;
+}
+
+export async function getNotifications(userId: string, before?: string) {
+  const [unread, result] = await Promise.all([
+    getPool().query('select count(*)::int as count from notification where "userId"=$1 and "readAt" is null',[userId]),
+    getPool().query(`${NOTIFICATION_SELECT}
+      where n."userId"=$1 and ($2::uuid is null or (n."createdAt",n.id)<(select "createdAt",id from notification where id=$2 and "userId"=$1))
+      order by n."createdAt" desc,n.id desc limit 21`,[userId,before ?? null]),
+  ]);
+  const items = result.rows.slice(0,20).map(describeNotification);
   return { items, unread: unread.rows[0]?.count ?? 0, hasMore:result.rows.length > 20 };
 }
 export async function readNotifications(userId: string, id?: string) {
