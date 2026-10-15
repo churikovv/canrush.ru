@@ -147,3 +147,14 @@
 .admin-online-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #2fbf71; animation: admin-online-pulse 1.8s ease-out infinite; }
 @keyframes admin-online-pulse { from { opacity: .6; transform: scale(1); } to { opacity: 0; transform: scale(2.6); } }
 @media (prefers-reduced-motion: reduce) { .admin-online-dot::after { animation: none; opacity: 0; } }
+/* Online chart: 24 hourly columns, so labels thin out on narrow screens; the current hour is still filling up. */
+.admin-online-chart { gap: 4px; }
+.admin-online-chart .admin-chart-track > span { background: linear-gradient(180deg, #4fd18b, #2fbf71); }
+.admin-online-chart [data-current] .admin-chart-track > span { opacity: .55; }
+.admin-online-chart + .admin-chart-note { margin: 12px 0 0; }
+@media (max-width: 959px) {
+  .admin-online-chart { gap: 2px; }
+  .admin-online-chart .admin-chart-column > strong { visibility: hidden; }
+  .admin-online-chart .admin-chart-column:hover > strong { visibility: visible; }
+  .admin-online-chart .admin-chart-column:not(:nth-child(3n)) > small { visibility: hidden; }
+}

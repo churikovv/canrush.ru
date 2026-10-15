@@ -26,14 +26,17 @@ export interface AdminDashboardData {
   users: AdminUserEntry[]; tierLists: AdminTierListEntry[]; reviews: AdminReviewEntry[];
   admins: AdminEntry[]; wall: AdminWallEntry[]; total: number; page: number;
   metrics: AdminMetrics | null; registrations: { day: string; count: number }[];
+  /** Last 24 hours, oldest first: peak of members active in one 5-minute window during the hour. */
+  onlineByHour: { hour: string; peak: number }[];
 }
 
 export async function getAdminDashboardData(search: string, tab: AdminTab, requestedPage = 1): Promise<AdminDashboardData> {
   const db = getPool();
-  const result: AdminDashboardData = { market: [], reports: [], comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [] };
+  const result: AdminDashboardData = { market: [], reports: [], comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [] };
   if (tab === 'campaigns') return result;
   if (tab === 'analytics') {
-    const [metrics, registrations] = await Promise.all([
+    await db.query(`delete from "presenceSample" where bucket < now() - interval '8 days'`);
+    const [metrics, registrations, online] = await Promise.all([
       db.query<AdminMetrics>(`select
         (select count(*)::int from "user") as users,
         -- Same rule as the profile status (getPresence): a heartbeat within 2 minutes and a live session.
@@ -57,7 +60,14 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
       ), counts as (select ("createdAt" at time zone 'Europe/Moscow')::date as day, count(*)::int as count from "user"
         where "createdAt">=(((now() at time zone 'Europe/Moscow')::date-13)::timestamp at time zone 'Europe/Moscow') group by 1)
       select to_char(days.day,'YYYY-MM-DD') as day, coalesce(counts.count,0) as count from days left join counts using(day) order by days.day`),
+      db.query<{ hour: string; peak: number }>(`with hours as (
+        select generate_series(date_trunc('hour', now()) - interval '23 hours', date_trunc('hour', now()), interval '1 hour') as hour
+      ), buckets as (select bucket, count(*)::int as online from "presenceSample" where bucket >= date_trunc('hour', now()) - interval '23 hours' group by bucket)
+      select to_char(hours.hour at time zone 'Europe/Moscow', 'YYYY-MM-DD"T"HH24:00') as hour, coalesce(max(buckets.online), 0)::int as peak
+      from hours left join buckets on buckets.bucket >= hours.hour and buckets.bucket < hours.hour + interval '1 hour'
+      group by hours.hour order by hours.hour`),
     ]);
+    result.onlineByHour = online.rows;
     result.metrics = metrics.rows[0] ?? null;
     result.registrations = registrations.rows;
     return result;

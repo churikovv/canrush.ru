@@ -46,3 +46,17 @@ it('counts online members like the profile status: recent heartbeat, live sessio
   await pool.query(`update "user" set "lastSeenAt"=now()-interval '3 minutes' where id=$1`, [active]);
   expect(await online()).toBe(before);
 });
+it('charts the hourly online peak from heartbeats of members who show their status', async () => {
+  const { touchPresence } = await import('../src/lib/profile-community');
+  const peak = async () => (await getAdminDashboardData('', 'analytics')).onlineByHour;
+  expect(await peak()).toHaveLength(24);
+  const [visible, second, hidden] = [ids[5]!, ids[6]!, ids[7]!];
+  await pool.query(`update "user" set "lastSeenAt"=null, "showOnline"=(id<>$1) where id=any($2::text[])`, [hidden, [visible, second, hidden]]);
+  for (const id of [visible, visible, second, hidden]) await touchPresence(id);
+  expect((await pool.query('select count(*)::int as n from "presenceSample" where "userId"=any($1::text[])', [[visible, second, hidden]])).rows[0].n).toBe(2);
+  const after = await peak();
+  expect(after.at(-1)!.peak).toBeGreaterThanOrEqual(2);
+  await pool.query(`insert into "presenceSample" (bucket,"userId") values (now()-interval '9 days',$1)`, [visible]);
+  await getAdminDashboardData('', 'analytics');
+  expect((await pool.query(`select 1 from "presenceSample" where "userId"=$1 and bucket<now()-interval '8 days'`, [visible])).rowCount).toBe(0);
+});

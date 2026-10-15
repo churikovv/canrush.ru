@@ -176,7 +176,10 @@ export async function deleteProfileComment(userId: string, commentId: string) {
 }
 
 export async function touchPresence(userId: string) {
-  await getPool().query(`update "user" set "lastSeenAt" = now() where id = $1 and "showOnline" and ("lastSeenAt" is null or "lastSeenAt" < now() - interval '30 seconds')`, [userId]);
+  // The same heartbeat marks the member in the current 5-minute window of the admin online chart.
+  await getPool().query(`with seen as (
+      update "user" set "lastSeenAt" = now() where id = $1 and "showOnline" and ("lastSeenAt" is null or "lastSeenAt" < now() - interval '30 seconds') returning id
+    ) insert into "presenceSample" (bucket, "userId") select date_bin('5 minutes', now(), timestamptz '2000-01-01'), id from seen on conflict do nothing`, [userId]);
 }
 export async function getPresence(userId: string): Promise<'online' | 'offline' | 'hidden'> {
   const result = await getPool().query<{ status: 'online' | 'offline' | 'hidden' }>(`select case when not "showOnline" then 'hidden'

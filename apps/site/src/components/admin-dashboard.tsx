@@ -38,6 +38,8 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
   const context = <><input type="hidden" name="query" value={query} /><input type="hidden" name="tab" value={tab} /><input type="hidden" name="page" value={data.page} /></>;
   const metrics = data.metrics;
   const maxRegistrations = Math.max(1, ...data.registrations.map(day => day.count));
+  const maxOnline = Math.max(1, ...data.onlineByHour.map(hour => hour.peak));
+  const onlinePeak = data.onlineByHour.reduce<(typeof data.onlineByHour)[number] | null>((best, hour) => hour.peak > 0 && hour.peak >= (best?.peak ?? 0) ? hour : best, null);
   return <AdminShell active={tab} email={admin.email} title={label} subtitle={SUBTITLES[tab]}>
     {notice && <div className="admin-feedback admin-feedback-success" role="status">{notice}</div>}
     {error && <div className="admin-feedback admin-feedback-error" role="alert">{error}</div>}
@@ -52,6 +54,12 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
           { label: 'Администраторы', value: metrics.admins, delta: null, note: 'Включая владельца', tab: 'admins' },
           { label: 'Активные сессии', value: metrics.sessions, delta: null, note: 'Участники с действующим входом', tab: 'users' },
         ].map(item => <Link href={adminHref(item.tab as AdminTab)} className="admin-metric" key={item.label}><span className="admin-metric-head"><span className="admin-metric-icon">{'live' in item ? <span className="admin-online-dot" /> : <AdminIcon section={item.tab as AdminTab} />}</span>{item.label}</span><strong>{number(item.value)}</strong><small>{item.delta !== null && <b className={item.delta > 0 ? 'admin-delta admin-delta-up' : 'admin-delta'}>+{number(item.delta)}</b>}{item.note}</small></Link>)}</div>
+      </section>
+      <section className="admin-data-panel" aria-labelledby="admin-online-title"><div className="admin-panel-heading"><h2 id="admin-online-title">Онлайн за сутки</h2><span>{onlinePeak ? `Пик ${number(onlinePeak.peak)} в ${onlinePeak.hour.slice(11)}` : 'Пока без данных'} · 24 часа · МСК</span></div>
+        <div className="admin-registration-chart admin-online-chart" role="img" aria-label={`Пиковый онлайн по часам: ${data.onlineByHour.map(hour => `${hour.hour.slice(11)}: ${hour.peak}`).join('; ')}`}>
+          {data.onlineByHour.map((hour, index) => <div className="admin-chart-column" key={hour.hour} title={`${hour.hour.slice(11)}–${hour.hour.slice(11, 13)}:59 · до ${hour.peak} в сети`} data-current={index === data.onlineByHour.length - 1 || undefined}><strong>{hour.peak}</strong><div className="admin-chart-track"><span style={{ height: `${hour.peak / maxOnline * 100}%` }} /></div><small>{hour.hour.slice(11, 13)}</small></div>)}
+        </div>
+        <p className="admin-chart-note">{onlinePeak ? 'Максимум участников, активных в одном 5-минутном окне за час. Скрывшие статус не учитываются.' : 'График заполнится, когда участники начнут заходить на сайт: история онлайна собирается с этого обновления.'}</p>
       </section>
       <div className="admin-analytics-grid">
         <section className="admin-data-panel" aria-labelledby="admin-registrations-title"><div className="admin-panel-heading"><h2 id="admin-registrations-title">Регистрации</h2><span>14 дней · МСК</span></div>
