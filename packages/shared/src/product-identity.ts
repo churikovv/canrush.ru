@@ -37,7 +37,7 @@ export function canonicalProductFlavor(brand: string | undefined, flavor: string
 }
 
 /** Known non-energy labels supplied incorrectly by the source. Extend after review. */
-const EXCLUDED_ENERGY_BRANDS = new Set(['pepsi', 'пепси']);
+const EXCLUDED_ENERGY_BRANDS = new Set(['pepsi', 'пепси', 'dr. pepper', 'dr pepper', 'доктор пеппер']);
 export function isExcludedEnergyBrand(brand: string | undefined): boolean {
   return EXCLUDED_ENERGY_BRANDS.has((brand ?? '').trim().toLowerCase());
 }
@@ -48,6 +48,11 @@ export function isMixedBurnOffer(brand: string | undefined, title: string): bool
     && /сочная\s+энергия/iu.test(title) && /оригинальн/iu.test(title);
 }
 
+/** A flyer "в ассортименте" stands for several drinks, so it never becomes a product card. */
+export function isAssortmentOffer(flavor: string | undefined, title: string): boolean {
+  return !flavor && /(?:^|[^a-zа-яё])в\s+ассортименте(?=$|[^a-zа-яё])/iu.test(title);
+}
+
 /** Source flyers offer an assortment, not one identifiable drink. Keep old URLs only. */
 export function isAssortmentFlavor(flavor: string): boolean {
   return new Set([
@@ -55,6 +60,7 @@ export function isAssortmentFlavor(flavor: string): boolean {
     'unresolved:0cfddc502558b3d4acf37b8c', 'unresolved:6f98614815925e033e75dbb9',
     'unresolved:7f516352068e02893726783f', 'unresolved:e0f63668e506c70a2c34e3a1',
     'unresolved:5905a894223acba9c92f77a6', 'unresolved:f6f432c378e1fba5092c3918',
-    'unresolved:f8afa2cd1aacb8228b4920b0',
+    'unresolved:f8afa2cd1aacb8228b4920b0', 'unresolved:31499aa17539fa00766c03c7',
+    'unresolved:5f313765398cc24a9275d081',
   ]).has(flavor);
 }

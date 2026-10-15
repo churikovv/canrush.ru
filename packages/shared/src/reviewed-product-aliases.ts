@@ -83,6 +83,14 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ['Flash Up', 'unresolved:2279ecdd4b8973ce10e794ab', 'Flash Up', 'blueberry_donut'],
   ...['56309029a553e29e3d9c64d1', '8f903599828ec7c4ba5c7c9e', '75d6da7139783d6fcad07b6c', 'a7c07eb567bdeffecaa674c1', '50d33a1efcb146f5a2ed66af'].map(id => ['Red Bull', `unresolved:${id}`, 'Red Bull', 'original'] as const),
   ...['386f0d7bb336e65555044ddd', 'fb3c91b19ef226609d8a37b1'].map(id => ['Red Bull', `unresolved:${id}`, 'Red Bull', 'sugarfree'] as const),
+  ['Red Bull', 'unresolved:6a738d5df477296f241eafcf', 'Red Bull', 'redbull_winter_ice_gummies'],
+  ['Red Bull', 'unresolved:f6ab5fd1cd3a2b54599c05aa', 'Red Bull', 'watermelon'],
+  ...['da30249c14de0adb913924fc', 'b9e32f17430fe6d77c37120e'].map(id => ['Doma By Guf', `unresolved:${id}`, 'Doma By Guf', 'doma_tangerine_puer'] as const),
+  ...['12c04198f8cb45dec71c17b2', 'ac4db0be477bb333af104606'].map(id => ['Sangaria', `unresolved:${id}`, 'Sangaria', 'sangaria_miracle'] as const),
+  ['Plan B', 'unresolved:873f12c312f04ad672606e88', 'Plan B', 'plan_b_vitamin'],
+  ['White', 'unresolved:567f71a9d9c21511e12d9538', 'White Shark', 'original'],
+  ...['3f5fce95675e132ed823143a', 'dfd12677ae493a876b9a7859'].map(id => ['Carabao', `unresolved:${id}`, 'Carabao', 'original'] as const),
+  ['M-150', 'unresolved:dffd1aae315ade30a7ce399e', 'M-150', 'original'],
 ];
 export function reviewedProductIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
   const alias = REVIEWED_PRODUCT_ALIASES.find(entry => entry[0] === brand && entry[1] === flavor);

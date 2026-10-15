@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { isAssortmentFlavor, isExcludedEnergyBrand } from '@canrush/shared';
 import { loadProductsConfig } from '../src/config.js';
 import { normalizeProduct } from '../src/normalize.js';
 import { groupByFlavor } from '../src/storage.js';
@@ -206,4 +207,23 @@ it.each([
 
 it('keeps Flash Zero Mode sugarfree even when a source omits that suffix', () => {
   expect(product('Flash Up Zero Mode Peach Bilberry 450 мл').flavor).toBe('blend:blueberry+peach:sugarfree');
+});
+
+it('recognizes October 2026 retailer titles and keeps assortment flyers and sodas out of the catalog', () => {
+  const offer = (name: string, brand: string) => normalizeProduct('edadeal', { sourceId: name, name, brand, price: 100, url: 'https://example.com' }, config.brands, '2026-10-15', config.brandAliases, config.flavors, config.flavorAliases);
+  expect(offer('Напиток энергетический Red Bull The Winter Edition Ледяные мармеладки газированный, 250мл, 250 мл', 'Red Bull').flavor).toBe('redbull_winter_ice_gummies');
+  expect(offer('Напиток безалкогольный RED BULL Red Edition газированный, 0.25л', 'Red Bull').flavor).toBe('watermelon');
+  expect(offer('Напиток Баста Гуф Мандариновый пуэр тонизирующий энергетический газированный, 450мл, 450 мл', 'Doma By Guf').flavor).toBe('doma_tangerine_puer');
+  expect(offer('Напиток by Баста Мандариновый пуэр Баста Гуф тонизирующий энергетический газированный 450 мл', 'Doma By Guf').flavor).toBe('doma_tangerine_puer');
+  expect(offer('Напиток энергетический сильногазированный Сангария Миракл, 500 мл, ж/б, Япония', 'Sangaria').flavor).toBe('sangaria_miracle');
+  expect(offer('Напиток энергетический План Б Витаминная энергия б/а газ.0,45л ж/б', 'Plan B').flavor).toBe('plan_b_vitamin');
+  expect(offer('Энергетический напиток WHITE SHARK, 150 мл', 'White')).toMatchObject({ brand: 'White Shark', flavor: 'original' });
+  expect(offer('Напиток энергетический Carabao, 150 мл', 'Carabao').flavor).toBe('original');
+  expect(offer('Напиток энергетический М-150, 150 мл', 'M-150').flavor).toBe('original');
+  const flyers = [offer('НАПИТОК FLASH UP энергетический, в ассортименте, 0,45 л', 'Flash Up'), offer('НАПИТОК TORNADO MAX ENERGY энергетический, в ассортименте, 450 мл', 'Tornado')];
+  expect(flyers.map(item => item.flavor)).toEqual([undefined, undefined]);
+  expect(groupByFlavor([...flyers, offer('Напиток энергетический Carabao, 150 мл', 'Carabao')]).map(group => group.flavor)).toEqual(['original']);
+  // Cards already published from such flyers are hidden as assortments.
+  expect(isAssortmentFlavor('unresolved:31499aa17539fa00766c03c7') && isAssortmentFlavor('unresolved:5f313765398cc24a9275d081')).toBe(true);
+  expect(isExcludedEnergyBrand('Dr. Pepper')).toBe(true);
 });

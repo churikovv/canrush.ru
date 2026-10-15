@@ -10,14 +10,16 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
       [/(?:^| )газированный(?: |$)/u, 'bacchus_sparkling'],
     ],
     'Lit Energy': [[/клубничн.*жвач/u, 'blend:bubblegum+strawberry'], [/(?:granat|гранат)/u, 'pomegranate'], [/(?:turbo|турбо)/u, 'lit_turbo']],
-    'Doma By Guf': [[/ориджинал/u, 'original']],
+    'Doma By Guf': [[/ориджинал/u, 'original'], [/(?:мандарин.*пуэр|пуэр.*мандарин)/u, 'doma_tangerine_puer']],
+    'Sangaria': [[/(?:миракл|miracle)/u, 'sangaria_miracle']],
+    'Plan B': [[/витаминная энергия/u, 'plan_b_vitamin']],
     'Dydo': [[/вита энерджи желе/u, 'dydo_vita_jelly']],
     'Bizon': [[/(?:^| )black(?: |$)/u, 'bizon_black']],
     'Power Torr': [[/(?:^| )red(?: |$)/u, 'power_torr_red']],
     'Scandalist': [[/adder terror/u, 'scandalist_adder_terror'], [/geneve/u, 'scandalist_geneve']],
     'Go Champ': [[/aperative/u, 'go_champ_aperative']],
     'Ashkudi': [[/belarus apples/u, 'ashkudi_belarus_apples'], [/pomegranade/u, 'pomegranate']],
-    'Red Bull': [[/krating.*extra.*zinc/u, 'redbull_krating_daeng_extra_zinc'], [/krating/u, 'redbull_krating_daeng'], [/fruit mix/u, 'redbull_fruit_mix'], [/sods.*summer berry/u, 'redbull_sods_summer_berry']],
+    'Red Bull': [[/(?:winter edition|ледяные мармеладки)/u, 'redbull_winter_ice_gummies'], [/(?:^| )red edition(?: |$)/u, 'watermelon'], [/krating.*extra.*zinc/u, 'redbull_krating_daeng_extra_zinc'], [/krating/u, 'redbull_krating_daeng'], [/fruit mix/u, 'redbull_fruit_mix'], [/sods.*summer berry/u, 'redbull_sods_summer_berry']],
     'Drive Me': [
       [/(?:caramel|сaramel|карамель).*(?:lollypop|лоллипоп)/u, 'drive_caramel'],
       [/bubble blast/u, 'drive_bubble'],
@@ -122,6 +124,9 @@ export function isPlainOriginal(brand: string | undefined, name: string): boolea
     'Adrenaline Rush': /adrenaline?|адреналин|rush|раш|абсолютная|энергия|energy|power|silver|сильвер|серебряная|энержи|пепсико/gu,
     'Volt Energy': /volt|вольта?|energy|энергия|энерджи/gu,
     'Flash Up': /балтика|flash|фл[еэ]ш|up|ап|energy|энергия|энерджи|энержи|max|макс/gu,
+    'Carabao': /carabao|карабао|energy|drink/gu,
+    'M-150': /m 150|м 150|energy|drink/gu,
+    'White Shark': /white shark|уайт шарк|energy|drink/gu,
   };
   const pattern = brands[brand ?? ''];
   if (!pattern || /(?:ассорт|ссорт|со вкусом|вкус)/u.test(name)) return false;
