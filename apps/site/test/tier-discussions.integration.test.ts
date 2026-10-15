@@ -64,6 +64,15 @@ it('disables reactions and comments independently without deleting prior activit
   await api.deleteTierComment(other, review, restored.items[0]!.id);
   await api.setTierReaction(other, review, 0);
 });
+it('lets only the author edit a comment and marks it as edited',async()=>{
+  const id=(await pool.query('insert into "tierListComment"("tierListId","userId",text)values($1,$2,$3)returning id',[review,reader,'Before'])).rows[0].id;
+  expect((await api.getTierComments(review,reader)).items.find(x=>x.id===id)?.editedAt).toBeNull();
+  await expect(api.editTierComment(other,review,id,'Hijack')).rejects.toThrow('доступа');
+  await expect(api.editTierComment(reader,review,id,'   ')).rejects.toThrow('1000');
+  expect(await api.editTierComment(reader,review,id,' After ')).toMatchObject({id,text:'After'});
+  expect((await api.getTierComments(review,null)).items.find(x=>x.id===id)).toMatchObject({text:'After',editedAt:expect.any(String)});
+  await pool.query('delete from "tierListComment" where id=$1',[id]);
+});
 it('paginates comments without duplicate rows and cascades when a review is removed',async()=>{
   for(let i=0;i<23;i++)await pool.query('insert into "tierListComment"("tierListId","userId",text)values($1,$2,$3)',[review,other,'Comment '+i]);
   const first=await api.getTierComments(review,reader);

@@ -38,6 +38,27 @@ it('limits concurrent comments, protects author deletion, and exposes them in ad
   await api.deleteWallComment(reader,review,thread.items[0]!.id);
   await expect(api.addWallComment(reader,review,'Cannot bypass cooldown by deleting')).rejects.toThrow('30 секунд');
 });
+it('likes comments once per person, never one\'s own, and drops likes with the comment',async()=>{
+  const reply=(await pool.query('insert into "wallReply"("wallPostId","userId",text)values($1,$2,$3)returning id',[review,reader,'Likeable'])).rows[0].id;
+  await Promise.all([api.setWallCommentLike(owner,review,reply,true),api.setWallCommentLike(owner,review,reply,true)]);
+  expect(await api.setWallCommentLike(other,review,reply,true)).toEqual({likes:2,liked:true});
+  expect((await api.getWallComments(review,owner)).items.find(x=>x.id===reply)).toMatchObject({likes:2,liked:true});
+  expect((await api.getWallComments(review,null)).items.find(x=>x.id===reply)).toMatchObject({likes:2,liked:false});
+  expect(await api.setWallCommentLike(owner,review,reply,false)).toEqual({likes:1,liked:false});
+  await expect(api.setWallCommentLike(reader,review,reply,true)).rejects.toThrow('свой');
+  await expect(api.setWallCommentLike(owner,randomUUID(),reply,true)).rejects.toThrow('удалён');
+  await pool.query('delete from "wallReply" where id=$1',[reply]);
+  expect((await pool.query('select 1 from "wallReplyLike" where "replyId"=$1',[reply])).rowCount).toBe(0);
+});
+it('lets only the author edit a comment and marks it as edited',async()=>{
+  const id=(await pool.query('insert into "wallReply"("wallPostId","userId",text)values($1,$2,$3)returning id',[review,reader,'Before'])).rows[0].id;
+  expect((await api.getWallComments(review,reader)).items.find(x=>x.id===id)?.editedAt).toBeNull();
+  await expect(api.editWallComment(other,review,id,'Hijack')).rejects.toThrow('доступа');
+  await expect(api.editWallComment(reader,review,id,'   ')).rejects.toThrow('1000');
+  expect(await api.editWallComment(reader,review,id,' After ')).toMatchObject({id,text:'After'});
+  expect((await api.getWallComments(review,null)).items.find(x=>x.id===id)).toMatchObject({text:'After',editedAt:expect.any(String)});
+  await pool.query('delete from "wallReply" where id=$1',[id]);
+});
 it('paginates comments without duplicate rows and cascades when a review is removed',async()=>{
   for(let i=0;i<23;i++)await pool.query('insert into "wallReply"("wallPostId","userId",text)values($1,$2,$3)',[review,other,'Comment '+i]);
   const first=await api.getWallComments(review,reader);

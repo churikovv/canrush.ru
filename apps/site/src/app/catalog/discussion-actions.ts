@@ -3,14 +3,15 @@ import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { isUserBlocked } from '@/lib/moderation';
-import { addReviewComment, deleteReviewComment, getReviewComments, getReviewInteractions, ReviewDiscussionError, reviewId, setReviewReaction } from '@/lib/review-discussions';
+import { addReviewComment, deleteReviewComment, editReviewComment, getReviewComments, getReviewInteractions, ReviewDiscussionError, reviewId, setReviewReaction } from '@/lib/review-discussions';
 
-export async function reviewDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete', value?: string | number) {
+export async function reviewDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string }) {
   try {
     reviewId(id);
     const session = await auth.api.getSession({ headers: await headers() });
     const viewer = session?.user.id ?? null;
-    if (!['read','vote','comment','delete'].includes(action)) throw new ReviewDiscussionError('Неизвестное действие.');
+    if (!['read','vote','comment','delete','edit'].includes(action)) throw new ReviewDiscussionError('Неизвестное действие.');
+    let edited: { id: string; text: string; editedAt: string } | undefined;
     if (action !== 'read') {
       if (!viewer) return { error: 'Войдите, чтобы участвовать в обсуждении.', signIn: true };
       if (await isUserBlocked(viewer)) return { error: 'Ваш аккаунт заблокирован для публикаций.' };
@@ -20,6 +21,9 @@ export async function reviewDiscussionAction(id: string, action: 'read' | 'vote'
       } else if (action === 'comment') {
         if (typeof value !== 'string') throw new ReviewDiscussionError('Напишите комментарий.');
         await addReviewComment(viewer, id, value);
+      } else if (action === 'edit') {
+        if (!value || typeof value !== 'object' || typeof value.commentId !== 'string' || typeof value.text !== 'string') throw new ReviewDiscussionError('Комментарий не найден.');
+        edited = await editReviewComment(viewer, id, value.commentId, value.text);
       } else {
         if (typeof value !== 'string') throw new ReviewDiscussionError('Комментарий не найден.');
         await deleteReviewComment(viewer, id, value);
@@ -28,8 +32,8 @@ export async function reviewDiscussionAction(id: string, action: 'read' | 'vote'
     }
     const interaction = (await getReviewInteractions([id], viewer)).get(id);
     if (!interaction) return { error: 'Отзыв уже удалён.' };
-    const thread = action === 'vote' ? undefined : await getReviewComments(id, viewer, action === 'read' && typeof value === 'string' ? value : undefined);
-    return { interaction, thread };
+    const thread = action === 'vote' || action === 'edit' ? undefined : await getReviewComments(id, viewer, action === 'read' && typeof value === 'string' ? value : undefined);
+    return { interaction, thread, edited };
   } catch(error) {
     return { error: error instanceof ReviewDiscussionError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
   }

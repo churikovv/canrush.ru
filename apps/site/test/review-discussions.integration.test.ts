@@ -38,6 +38,15 @@ it('limits concurrent comments, protects author deletion, and exposes them in ad
   await api.deleteReviewComment(reader,review,thread.items[0]!.id);
   await expect(api.addReviewComment(reader,review,'Cannot bypass cooldown by deleting')).rejects.toThrow('30 секунд');
 });
+it('lets only the author edit a comment and marks it as edited',async()=>{
+  const id=(await pool.query('insert into "reviewComment"("reviewId","userId",text)values($1,$2,$3)returning id',[review,reader,'Before'])).rows[0].id;
+  expect((await api.getReviewComments(review,reader)).items.find(x=>x.id===id)?.editedAt).toBeNull();
+  await expect(api.editReviewComment(other,review,id,'Hijack')).rejects.toThrow('доступа');
+  await expect(api.editReviewComment(reader,review,id,'   ')).rejects.toThrow('1000');
+  expect(await api.editReviewComment(reader,review,id,' After ')).toMatchObject({id,text:'After'});
+  expect((await api.getReviewComments(review,null)).items.find(x=>x.id===id)).toMatchObject({text:'After',editedAt:expect.any(String)});
+  await pool.query('delete from "reviewComment" where id=$1',[id]);
+});
 it('paginates comments without duplicate rows and cascades when a review is removed',async()=>{
   for(let i=0;i<23;i++)await pool.query('insert into "reviewComment"("reviewId","userId",text)values($1,$2,$3)',[review,other,'Comment '+i]);
   const first=await api.getReviewComments(review,reader);

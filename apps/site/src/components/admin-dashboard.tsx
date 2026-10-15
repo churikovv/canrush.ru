@@ -45,12 +45,13 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
       <section aria-label="Обзор сайта">
         <div className="admin-metrics">{[
           { label: 'Участники', value: metrics.users, delta: metrics.newUsers, note: 'за 30 дней', tab: 'users' },
+          { label: 'В сети сейчас', value: metrics.online, delta: null, note: 'Активны за 2 минуты, без скрывших статус', tab: 'users', live: true },
           { label: 'Отзывы', value: metrics.reviews, delta: metrics.newReviews, note: 'за 30 дней', tab: 'reviews' },
           { label: 'Тирлисты', value: metrics.tierLists, delta: metrics.newTierLists, note: 'за 30 дней', tab: 'tierlists' },
           { label: 'Комментарии стены', value: metrics.wall, delta: metrics.newWall, note: 'за 30 дней', tab: 'wall' },
           { label: 'Администраторы', value: metrics.admins, delta: null, note: 'Включая владельца', tab: 'admins' },
           { label: 'Активные сессии', value: metrics.sessions, delta: null, note: 'Участники с действующим входом', tab: 'users' },
-        ].map(item => <Link href={adminHref(item.tab as AdminTab)} className="admin-metric" key={item.label}><span className="admin-metric-head"><span className="admin-metric-icon"><AdminIcon section={item.tab as AdminTab} /></span>{item.label}</span><strong>{number(item.value)}</strong><small>{item.delta !== null && <b className={item.delta > 0 ? 'admin-delta admin-delta-up' : 'admin-delta'}>+{number(item.delta)}</b>}{item.note}</small></Link>)}</div>
+        ].map(item => <Link href={adminHref(item.tab as AdminTab)} className="admin-metric" key={item.label}><span className="admin-metric-head"><span className="admin-metric-icon">{'live' in item ? <span className="admin-online-dot" /> : <AdminIcon section={item.tab as AdminTab} />}</span>{item.label}</span><strong>{number(item.value)}</strong><small>{item.delta !== null && <b className={item.delta > 0 ? 'admin-delta admin-delta-up' : 'admin-delta'}>+{number(item.delta)}</b>}{item.note}</small></Link>)}</div>
       </section>
       <div className="admin-analytics-grid">
         <section className="admin-data-panel" aria-labelledby="admin-registrations-title"><div className="admin-panel-heading"><h2 id="admin-registrations-title">Регистрации</h2><span>14 дней · МСК</span></div>

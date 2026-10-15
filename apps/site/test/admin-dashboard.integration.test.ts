@@ -35,3 +35,14 @@ it('uses full database metrics rather than the page size or search results', asy
   expect(data.registrations).toHaveLength(14);
   expect(data.registrations.reduce((n,day)=>n+day.count,0)).toBeGreaterThanOrEqual(27);
 });
+it('counts online members like the profile status: recent heartbeat, live session, visible status', async () => {
+  const online = async () => (await getAdminDashboardData('', 'analytics')).metrics!.online;
+  const before = await online();
+  const [active, noSession, hidden] = [ids[2]!, ids[3]!, ids[4]!];
+  await pool.query(`update "user" set "lastSeenAt"=now() where id=any($1::text[])`, [[active, noSession, hidden]]);
+  await pool.query(`update "user" set "showOnline"=false where id=$1`, [hidden]);
+  for (const id of [active, hidden]) await pool.query(`insert into session (id,"userId",token,"expiresAt","createdAt","updatedAt") values ($1,$2,$3,now()+interval '1 hour',now(),now())`, [randomUUID(), id, randomUUID()]);
+  expect(await online()).toBe(before + 1);
+  await pool.query(`update "user" set "lastSeenAt"=now()-interval '3 minutes' where id=$1`, [active]);
+  expect(await online()).toBe(before);
+});

@@ -94,6 +94,16 @@ describe.sequential('community profile storage', () => {
     expect((await community.getFeed(null)).posts.map(post => post.id)).not.toContain(own);
     for (const id of [guest, stranger]) await pool.query('delete from "profileComment" where id = $1', [id]);
   });
+  it('lets only the author edit a wall record, the change showing on the wall and in the feed', async () => {
+    await pool.query('update "user" set "lastWallPostAt" = null where id = any($1::text[])', [ids]);
+    const id = await community.addProfileComment(a, b, 'original');
+    await expect(community.editProfileComment(b, id, 'owner rewrite')).rejects.toThrow('доступа');
+    await expect(community.editProfileComment(a, id, '')).rejects.toThrow('1000');
+    expect(await community.editProfileComment(a, id, ' edited ')).toMatchObject({ text: 'edited' });
+    expect((await community.getProfileWall(b)).comments.find(post => post.id === id)).toMatchObject({ text: 'edited', editedAt: expect.any(Date) });
+    expect((await community.getFeed(null)).posts.find(post => post.id === id)?.text).toBe('edited');
+    await community.deleteProfileComment(b, id);
+  });
   it('blocks public contributions by moderated users at the database boundary', async () => {
     await pool.query('insert into "userBlock" ("userId") values ($1)', [c]);
     await expect(community.setFollowing(c, a, true)).rejects.toMatchObject({ code: '42501' });

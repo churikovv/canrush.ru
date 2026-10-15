@@ -1,5 +1,6 @@
 'use client';
 import { PhotoDeleteIcon } from '@/components/photo-delete-icon';
+import { TrashIcon } from '@/components/action-icons';
 
 import { useActionState, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -84,8 +85,8 @@ export function DeleteWallComment({ id }: { id: string }) {
 
 function DeleteWallButton() {
   const { pending } = useFormStatus();
-  return <button className="wall-delete-button" type="submit" disabled={pending} aria-label="Удалить запись" title="Удалить запись" onClick={event => { if (!window.confirm('Удалить запись?')) event.preventDefault(); }}>
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
+  return <button className="wall-action-button wall-delete-button" type="submit" disabled={pending} aria-label="Удалить запись" title="Удалить запись" onClick={event => { if (!window.confirm('Удалить запись?')) event.preventDefault(); }}>
+    <TrashIcon />
   </button>;
 }
 

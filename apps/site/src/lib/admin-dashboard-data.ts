@@ -13,7 +13,7 @@ export interface AdminWallEntry {
 }
 export interface AdminReviewCommentEntry { kind: 'review' | 'wall'; profileUsername: string | null; id: string; reviewId: string; text: string; createdAt: Date; authorName: string; authorEmail: string; brand: string; flavor: string }
 export interface AdminMetrics {
-  users: number; reviews: number; tierLists: number; wall: number; admins: number; sessions: number;
+  users: number; online: number; reviews: number; tierLists: number; wall: number; admins: number; sessions: number;
   newUsers: number; newReviews: number; newWall: number; newTierLists: number;
   published: number; drafts: number; blocked: number; averageRating: number | null;
 }
@@ -36,6 +36,9 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
     const [metrics, registrations] = await Promise.all([
       db.query<AdminMetrics>(`select
         (select count(*)::int from "user") as users,
+        -- Same rule as the profile status (getPresence): a heartbeat within 2 minutes and a live session.
+        (select count(*)::int from "user" u where u."showOnline" and u."lastSeenAt">now()-interval '2 minutes'
+          and exists(select 1 from session s where s."userId"=u.id and s."expiresAt">now())) as online,
         (select count(*)::int from review) as reviews,
         (select count(*)::int from "tierList") as "tierLists",
         (select count(*)::int from "profileComment") as wall,

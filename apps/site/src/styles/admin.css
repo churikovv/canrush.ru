@@ -142,3 +142,8 @@
 .campaign-metrics dt { font-size: .875rem; color: var(--theme-muted, #59616b); }
 .campaign-metrics dd { margin: 8px 0 0; font-size: 1.5rem; font-weight: 700; }
 @media(max-width:639px) { .campaign-form { grid-template-columns: 1fr; } .campaign-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+/* "Online now" metric: a pulsing status dot instead of a section icon. */
+.admin-online-dot { position: relative; width: 10px; height: 10px; border-radius: 50%; background: #2fbf71; }
+.admin-online-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #2fbf71; animation: admin-online-pulse 1.8s ease-out infinite; }
+@keyframes admin-online-pulse { from { opacity: .6; transform: scale(1); } to { opacity: 0; transform: scale(2.6); } }
+@media (prefers-reduced-motion: reduce) { .admin-online-dot::after { animation: none; opacity: 0; } }

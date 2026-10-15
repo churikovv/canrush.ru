@@ -102,12 +102,12 @@ export async function getProfileRatings(userId: string) {
 }
 export type ProfileRatings = Awaited<ReturnType<typeof getProfileRatings>>;
 
-export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; photos: string[] }
+export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; editedAt: Date | null; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; photos: string[] }
 export interface FeedPostRow extends WallPostRow { ownerUsername: string | null; ownerName: string }
 export type FeedScope = 'all' | 'following';
 
 // One record serves both the wall it was written on and the feed, so both views select the same columns.
-const WALL_POST_COLUMNS = `c.id, c."profileId", c."userId", c.text, c."createdAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, u.username, u.name,
+const WALL_POST_COLUMNS = `c.id, c."profileId", c."userId", c.text, c."createdAt", c."editedAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, u.username, u.name,
       (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
       coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
       case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
@@ -155,6 +155,17 @@ export async function addProfileComment(userId: string, profileId: string, input
     return result.rows[0]!.id;
   } catch (error) { await client.query('rollback'); throw error; }
   finally { client.release(); }
+}
+
+/** Only the author edits a wall record (the wall owner may delete it, not rewrite it). Photos stay as they are. */
+export async function editProfileComment(userId: string, commentId: string, input: unknown) {
+  if (!/^[0-9a-f-]{36}$/i.test(commentId)) throw new CommunityError('Запись не найдена.');
+  const text = validateWallText(input);
+  if (!text) throw new CommunityError('Напишите от 1 до 1000 символов.');
+  const result = await getPool().query<{ text: string; editedAt: Date }>('update "profileComment" set text = $3, "editedAt" = now() where id = $1 and "userId" = $2 returning text, "editedAt"', [commentId, userId, text]);
+  const row = result.rows[0];
+  if (!row) throw new CommunityError('Нет доступа к этой записи.');
+  return { text: row.text, editedAt: row.editedAt.toISOString() };
 }
 
 export async function deleteProfileComment(userId: string, commentId: string) {

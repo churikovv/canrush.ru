@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { ensureOwnProfile } from '@/lib/profile';
 import { isUserBlocked } from '@/lib/moderation';
-import { CommunityError, addProfileComment, deleteProfileComment, getPresence, setFollowing, setPresenceVisibility, setProfileTags, touchPresence } from '@/lib/profile-community';
+import { CommunityError, addProfileComment, deleteProfileComment, editProfileComment, getPresence, setFollowing, setPresenceVisibility, setProfileTags, touchPresence } from '@/lib/profile-community';
 
 export interface CommunityActionState { error?: string; success?: string }
 
@@ -45,6 +45,20 @@ export async function updateCommunityAction(_state: CommunityActionState, form: 
     return { success: operation === 'comment' ? 'Комментарий опубликован.' : operation === 'delete-comment' ? 'Комментарий удалён.' : 'Сохранено.' };
   } catch (error) {
     return { error: error instanceof CommunityError || error instanceof ReviewPhotoError ? error.message : 'Не удалось сохранить изменения. Попробуйте ещё раз.' };
+  }
+}
+
+export async function editWallPostAction(commentId: string, text: string): Promise<{ text?: string; editedAt?: string; error?: string }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { error: 'Войдите в аккаунт и повторите действие.' };
+  try {
+    if (typeof commentId !== 'string' || typeof text !== 'string') throw new CommunityError('Запись не найдена.');
+    if (await isUserBlocked(session.user.id)) return { error: 'Публикации для этого аккаунта ограничены.' };
+    const edited = await editProfileComment(session.user.id, commentId, text);
+    revalidatePath('/profile', 'layout'); revalidatePath('/feed');
+    return edited;
+  } catch (error) {
+    return { error: error instanceof CommunityError ? error.message : 'Не удалось сохранить запись. Попробуйте ещё раз.' };
   }
 }
 
