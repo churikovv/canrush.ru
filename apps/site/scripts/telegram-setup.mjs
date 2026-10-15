@@ -14,6 +14,10 @@ if (!siteUrl.startsWith('https://')) throw new Error('Telegram webhooks need a p
 // Same base URL as the site: a reverse proxy abroad when api.telegram.org is unreachable.
 const apiUrl = (process.env.TELEGRAM_API_URL?.trim() || 'https://api.telegram.org').replace(/\/+$/u, '');
 if (!apiUrl.startsWith('https://')) throw new Error('TELEGRAM_API_URL must use https://');
+// Public address Telegram posts updates to. A relay abroad forwards it to /api/telegram/webhook
+// when Telegram cannot reach this host directly.
+const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL?.trim() || `${siteUrl}/api/telegram/webhook`;
+if (!webhookUrl.startsWith('https://')) throw new Error('TELEGRAM_WEBHOOK_URL must use https://');
 
 async function call(method, body) {
   const response = await fetch(`${apiUrl}/bot${token}/${method}`, {
@@ -27,7 +31,7 @@ async function call(method, body) {
 }
 
 await call('setWebhook', {
-  url: `${siteUrl}/api/telegram/webhook`,
+  url: webhookUrl,
   secret_token: secret,
   allowed_updates: ['message', 'callback_query', 'inline_query', 'my_chat_member'],
   drop_pending_updates: true,

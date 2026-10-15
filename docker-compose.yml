@@ -48,6 +48,7 @@ services:
       TELEGRAM_MINI_APP_URL: ${TELEGRAM_MINI_APP_URL:-}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       TELEGRAM_API_URL: ${TELEGRAM_API_URL:-}
+      TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
     volumes:
       # Shared catalog data (parser writes to /app/apps/site/data, site reads from cwd/data)
       # Next.js standalone server sets cwd to /app/apps/site, so mount there
