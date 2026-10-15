@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/admin.css';
 import { BrandShell } from '@/components/brand-shell';
 import Link from '@/components/navigation-progress';
 import { StoreCard } from '@/components/store-card';

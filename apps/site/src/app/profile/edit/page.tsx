@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/profile.css';
 import { experienceLevel } from '@/lib/experience-level';
 import { getFavoriteGroups } from '@/lib/catalog';
 import Image from 'next/image';

@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/profile.css';
 import { ProfileBackButton } from '@/components/profile-back-button';
 import { ThemeSettings } from '@/components/theme-settings';
 import { parseSiteTheme, SITE_THEME_COOKIE } from '@/lib/site-theme';

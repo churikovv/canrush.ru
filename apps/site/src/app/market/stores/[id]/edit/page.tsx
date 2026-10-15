@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/market.css';
 import { headers } from 'next/headers';
 import { redirect,notFound } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';

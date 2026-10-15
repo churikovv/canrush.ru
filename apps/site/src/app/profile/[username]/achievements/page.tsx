@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/profile.css';
 import Image from 'next/image';
 import { achievementImage } from '@/lib/profile-achievements';
 import { ProfileBackButton } from '@/components/profile-back-button';

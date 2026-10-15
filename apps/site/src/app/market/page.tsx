@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/market.css';
 import { MarketFilters } from '@/components/market-filters';
 import type { Metadata } from 'next';
 import Link from '@/components/navigation-progress';

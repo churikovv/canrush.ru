@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/catalog.css';
 import { isExcludedEnergyBrand, isAssortmentFlavor } from '@canrush/shared';
 import type { Metadata } from 'next';
 import Link from '@/components/navigation-progress';

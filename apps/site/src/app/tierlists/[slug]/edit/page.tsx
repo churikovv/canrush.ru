@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/tierlists.css';
 import { getReviewSummaries } from '@/lib/reviews';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';

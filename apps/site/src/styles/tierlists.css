@@ -1,0 +1,493 @@
+/* /tierlists/*. Loaded after globals.css: equal-specificity rules here win over it. */
+.main-surface.tierlists-surface {
+  padding-top: 24px;
+}
+.tierlists-layout,
+.tier-editor-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.tierlists-facts {
+  display: grid;
+  margin: 0;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.tierlists-facts dt {
+  color: var(--color-muted-strong);
+  font-size: 0.75rem;
+}
+.tierlists-facts dd {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.tier-board,
+.tier-editor-board {
+  overflow: hidden;
+  border: 1px solid var(--color-control);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+.tier-board-row,
+.tier-editor-row {
+  display: flex;
+  min-height: 88px;
+}
+.tier-board-row + .tier-board-row,
+.tier-editor-row + .tier-editor-row {
+  border-top: 1px solid var(--color-control);
+}
+.tier-board-label,
+.tier-editor-row > h2 {
+  display: flex;
+  width: 56px;
+  min-height: 88px;
+  flex: 0 0 56px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 1px 1px 0 var(--color-surface);
+}
+.tier-board-label,
+.tier-editor-row > h2 { background: var(--theme-panel, #fff); }
+.tier-board-items,
+.tier-editor-row-items {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+}
+.tier-board-product > span:not(.sr-only) {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--color-control);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.tierlists-main-actions,
+.tier-editor-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tierlists-community {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+.tierlists-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.tierlists-section-heading h2 {
+  color: var(--color-ink);
+  font-size: 1.5rem;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.tier-list-public-meta {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 10px;
+}
+.tier-list-public-meta a {
+  color: var(--color-brand-deep);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.tier-list-public-meta a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.tier-list-telegram {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 48px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: var(--theme-subtle, #eaf3ff);
+  padding: 10px 14px;
+  color: var(--color-brand-deep);
+  font-weight: 700;
+  text-decoration: none;
+}
+.tier-editor-heading {
+  max-width: 680px;
+}
+.main-surface.tierlists-surface:has(.tier-editor) {
+  z-index: auto;
+}
+.tier-editor {
+  --tier-editor-command-clearance: 188px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: calc(var(--tier-editor-command-clearance) + var(--site-tab-bar-offset, 0px) + env(safe-area-inset-bottom));
+}
+.tier-editor :is(button, input, select, a) {
+  scroll-margin-bottom: var(--tier-editor-command-clearance);
+}
+.tier-editor-title-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tier-editor-title-field label,
+.tier-editor-filters label > span {
+  color: var(--color-ink);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.tier-editor-title-field input {
+  min-height: 56px;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+.tier-editor-command {
+  position: fixed;
+  z-index: 30;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: calc(var(--site-tab-bar-offset, 0px) + max(12px, env(safe-area-inset-bottom)));
+  left: max(12px, env(safe-area-inset-left));
+  display: flex;
+  width: auto;
+  max-width: 980px;
+  margin: 0 auto;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid #3d3d3d;
+  border-radius: 16px;
+  background: #101010;
+  color: var(--color-on-action);
+  padding: 14px;
+  box-shadow: 0 4px 8px rgb(0 0 0 / 28%);
+}
+html[data-cookie-notice="visible"] .tier-editor-command {
+  bottom: calc(76px + var(--site-tab-bar-offset, 0px) + max(12px, env(safe-area-inset-bottom)));
+}
+html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
+  scroll-margin-bottom: calc(76px + var(--tier-editor-command-clearance));
+}
+.tier-editor-command > p > span {
+  color: var(--theme-muted, #d1d1d1);
+}
+.tier-editor-command-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tier-editor-command-buttons .tier-editor-remove-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.tier-editor-remove-button svg {
+  display: block;
+}
+.tier-editor-command-buttons button:active:not(:disabled) {
+  background: var(--color-brand);
+}
+.tier-editor-order-previous {
+  right: 64px;
+}
+.tier-editor-order-next {
+  right: 14px;
+}
+.tier-editor-order-button svg {
+  display: block;
+}
+.tier-editor-product-selected {
+  border-color: var(--color-brand);
+  background: var(--theme-subtle, #eef6ff);
+}
+.tier-editor-product-copy strong,
+.tier-editor-product-copy span,
+.tier-editor-product-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tier-editor-product-copy strong {
+  color: var(--color-ink);
+  font-size: 0.8125rem;
+}
+.tier-editor-product-compact .tier-editor-product-image img {
+  width: 56px;
+  height: 56px;
+}
+.tier-editor-pool {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+.tier-editor-pool-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.tier-editor-pool-heading > div {
+  min-width: 0;
+}
+.tier-editor-pool-heading h2,
+.tier-editor-pool-heading p {
+  margin: 0;
+}
+.tier-editor-pool-heading h2 {
+  color: var(--color-ink);
+  font-size: 1.5rem;
+}
+.tier-editor-pool-heading > a {
+  min-height: 44px;
+  flex: 0 0 auto;
+  padding: 10px 0;
+  color: var(--color-brand-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+.tier-editor-filters {
+  display: grid;
+  gap: 10px;
+}
+.tier-editor-filters label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+.tier-editor-pool-grid {
+  display: grid;
+  min-height: 180px;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.tier-editor-empty strong {
+  color: var(--color-ink);
+}
+.tier-editor-footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tier-editor-primary-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@supports (content-visibility: auto) {
+  .tier-editor-pool-grid .tier-editor-product {
+    content-visibility: auto;
+    contain-intrinsic-size: 174px;
+  }
+}
+@media (min-width: 640px) {
+  .tierlists-facts {
+    width: 280px;
+    flex: 0 0 280px;
+  }
+
+  .tierlists-main-actions,
+  .tier-editor-actions {
+    flex-direction: row;
+  }
+
+  .tier-editor-command {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .tier-editor-order-button {
+    position: static;
+  }
+
+  .tier-editor {
+    --tier-editor-command-clearance: 104px;
+  }
+
+  .tier-editor-footer-actions {
+    align-items: flex-start;
+  }
+
+  .tier-editor-primary-controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .tier-delete-action {
+    width: auto;
+    min-width: 190px;
+  }
+
+  html[data-cookie-notice="visible"] .tier-editor-command {
+    bottom: calc(76px + var(--site-tab-bar-offset, 0px) + max(12px, env(safe-area-inset-bottom)));
+  }
+
+  html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
+    scroll-margin-bottom: calc(76px + var(--tier-editor-command-clearance));
+  }
+
+  .tier-editor-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tier-editor-pool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 960px) {
+  .main-surface.tierlists-surface {
+    padding-top: 48px;
+  }
+
+  .tierlists-layout,
+  .tier-editor-layout {
+    gap: 32px;
+  }
+
+  .tier-board-label,
+  .tier-editor-row > h2 {
+    width: 72px;
+    flex-basis: 72px;
+  }
+
+  .tier-board-items,
+  .tier-editor-row-items {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .tier-editor-filters {
+    grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr));
+  }
+
+  .tier-editor-pool-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+.share-toast-error { background: #8e2430; }
+.share-toast button:focus-visible { outline: 2px solid var(--theme-line, #ffffff); outline-offset: 2px; }
+.tier-editor-filter-field { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.tier-editor-filter-field > label { font-size: .75rem; color: var(--color-muted-strong); }
+.tier-editor-filter-field .price-filter-input input { padding-right: 42px; }
+.tier-editor-actions, .tierlists-main-actions { flex-wrap: wrap; }
+.tier-screenshot-control { min-width: 0; }
+.tier-screenshot-dialog { width: min(900px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 24px; border: 0; border-radius: 16px; background: var(--theme-panel, #ffffff); color: var(--color-ink); overflow: auto; }
+.tier-screenshot-dialog::backdrop { background: #0009; }
+.tier-screenshot-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.tier-screenshot-heading h2 { font-size: 1.25rem; }
+.tier-screenshot-dialog > p { margin: 16px 0; line-height: 1.5; }
+.tier-screenshot-preview { max-height: 55dvh; overflow: auto; border: 1px solid var(--color-control); border-radius: 8px; }
+.tier-screenshot-preview img { display: block; width: 100%; height: auto; }
+.tier-screenshot-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+/* Format switch: «Как есть» or the 9:16 TikTok frame; the preview shows the selected one whole. */
+.tier-screenshot-formats { display: inline-flex; gap: 4px; margin: 16px 0 12px; padding: 4px; border-radius: 12px; background: var(--color-subtle); }
+.tier-screenshot-formats button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.tier-screenshot-preview.is-story img { width: auto; max-width: 100%; max-height: calc(55dvh - 24px); border-radius: 12px; }
+.tier-screenshot-pending { margin: 0; padding: 48px 16px; color: var(--color-muted-strong); text-align: center; }
+.tier-screenshot-actions [aria-disabled="true"] { opacity: .5; pointer-events: none; }
+@media (max-width: 639px) {
+  .tier-screenshot-dialog { padding: 16px; }
+  .tier-screenshot-heading { align-items: flex-start; }
+}
+.tier-editor-primary-controls { flex-wrap: wrap; }
+@media (min-width: 1024px) {
+  .tier-editor-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .tier-editor-search { grid-column: 1 / -1; }
+}
+.tier-screenshot-heading > button { flex-shrink: 0; white-space: nowrap; }
+@media (max-width: 639px) {
+  .home-heading h1,
+  .tierlists-hero h1,
+  .tier-list-public-heading h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: normal;
+  }
+  .tierlists-hero > div > .tierlists-kicker { display: none; }
+}
+.tier-board-label, .tier-editor-row > h2 { border-right: 1px solid var(--color-control); }
+.tier-editor-product-image { overflow: hidden; }
+.tier-editor-primary-controls { flex-wrap: wrap; }
+.tier-editor-command { background: var(--color-surface); color: var(--color-ink); border-color: var(--color-control); box-shadow: 0 2px 8px rgb(0 0 0 / 12%); }
+.tier-editor-command > p > span { color: var(--color-muted-strong); }
+.tier-editor-command-buttons button { border: 1px solid var(--color-control); background: var(--color-surface); color: var(--color-ink); border-radius: 8px; }
+.tier-editor-command-buttons .tier-letter { font-size: 1.125rem; }
+.tier-editor-command-buttons button:hover:not(:disabled), .tier-editor-command-buttons button:active:not(:disabled) { background: var(--color-subtle); }
+.tier-editor-command-buttons button { border-radius: 12px; }
+.tier-section-hint { margin: 0; color: var(--color-muted-strong); font-size: .875rem; }
+.tier-section-trigger { display: grid; place-items: center; width: 100%; height: 100%; min-height: 88px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.tier-section-trigger:focus-visible { outline: 2px solid var(--color-brand); outline-offset: -3px; }
+.tier-section-toolbar + .tier-editor-row { border-top: 1px solid var(--color-control); }
+.tier-editor-rank-buttons { display: contents; }
+@media (max-width: 959px) {
+  .tier-editor-command { flex-direction: column; align-items: stretch; }
+  .tier-editor-command > p { min-height: 48px; justify-content: center; padding-right: 52px; }
+  .tier-editor-command-ordered > p { padding-right: 156px; }
+  .tier-editor-command-buttons { width: 100%; }
+  .tier-editor-rank-buttons { display: grid; width: 100%; grid-template-columns: repeat(var(--tier-count), minmax(0, 1fr)); gap: 8px; }
+  .tier-editor-rank-buttons button { width: 100%; min-width: 0; min-height: 56px; padding: 10px; }
+  .tier-editor-rank-buttons .tier-letter { font-size: 1.5rem; }
+  .tier-editor-command-buttons .tier-editor-remove-button { position: absolute; top: 14px; right: 14px; width: 48px; height: 48px; }
+  .tier-editor-command-buttons .tier-editor-order-button { position: absolute; top: 14px; width: 48px; height: 48px; }
+  .tier-editor-command-buttons .tier-editor-order-previous { right: 118px; }
+  .tier-editor-command-buttons .tier-editor-order-next { right: 66px; }
+  .tier-editor { --tier-editor-command-clearance: 172px; }
+}
+@media (max-width: 639px) {
+  .tier-editor-rank-buttons { grid-template-columns: repeat(min(3, var(--tier-count)), minmax(0, 1fr)); }
+  .tier-editor { --tier-editor-command-clearance: 236px; }
+}
+.tier-editor-heading { gap: 20px; margin-bottom: 12px; }
+.tier-editor-heading h1 { line-height: 1.12; }
+.tier-editor-heading > p:last-child { max-width: 58ch; line-height: 1.6; }
+.tier-editor-save-group { display: flex; flex-direction: column; gap: 10px; }
+.tier-editor-save-status.is-dirty::before { content: ''; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--color-brand); }
+.tier-editor-primary-controls { align-items: stretch; }
+@media (min-width: 640px) { .tier-editor-primary-controls { align-items: flex-end; } }
+@media (max-width: 639px) { .tier-editor-heading { gap: 16px; margin-bottom: 8px; } }
+.tier-screenshot-heading { align-items: flex-start; margin-bottom: 20px; }
+.tier-screenshot-heading h2 { margin: 0; line-height: 1.3; }
+.tier-screenshot-heading p { margin: 8px 0 0; color: var(--color-muted-strong); line-height: 1.5; font-size: .875rem; }
+.tier-screenshot-close { width: 44px; height: 44px; padding: 8px; }
+.tier-screenshot-toast { z-index: 1; bottom: max(24px, env(safe-area-inset-bottom)); }
+.tier-discussion-settings { display: grid; gap: 12px; border: 1px solid var(--color-control); border-radius: 12px; padding: 20px; margin: 24px 0; }
+.tier-discussion-settings legend { font-weight: 700; padding: 0 6px; }
+.tier-discussion-settings label { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.tier-discussion-settings input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--color-brand); }
+.tier-discussion-settings p { margin: 0; color: var(--color-muted-strong); font-size: .875rem; }
+.tier-ranking-tabs a { flex-shrink: 0; display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 10px; color: inherit; text-decoration: none; }
+.tier-ranking-tabs a[aria-current="page"] { background: var(--color-brand); color: #fff; }
+@media (max-width: 639px) {
+/* On phones the tabs bleed to the viewport edges so the last one peeks in as a scroll hint instead of being clipped by the gutter. */
+  .tier-ranking-tabs { gap: 4px; margin-inline: calc(50% - 50vw); padding-inline: calc(50vw - 50%); scroll-padding-inline: calc(50vw - 50%); scrollbar-width: none; }
+  .tier-ranking-tabs::-webkit-scrollbar { display: none; }
+  .tier-ranking-tabs a { padding-inline: 14px; }
+}

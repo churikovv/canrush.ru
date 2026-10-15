@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/market.css';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import type { Metadata } from 'next';
 import { ProfileBackButton } from '@/components/profile-back-button';

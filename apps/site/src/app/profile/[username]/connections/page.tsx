@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/profile.css';
 import { ProfileBackButton } from '@/components/profile-back-button';
 import type { Metadata } from 'next';
 import Image from 'next/image';

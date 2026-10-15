@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/admin.css';
 import { AdminCampaigns } from '@/components/admin-campaigns';
 import type { Metadata } from 'next';
 import Link from '@/components/navigation-progress';

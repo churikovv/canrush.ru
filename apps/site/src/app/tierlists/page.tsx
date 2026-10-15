@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/tierlists.css';
 import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import type { Metadata } from 'next';
 import Image from 'next/image';

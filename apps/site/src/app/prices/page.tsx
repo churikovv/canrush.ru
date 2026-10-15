@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/prices.css';
 import { RetailerBadge } from '@/components/retailer-badge';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';

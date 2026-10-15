@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/profile.css';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';

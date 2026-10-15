@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/legal.css';
 import type { Metadata } from 'next';
 import Link from '@/components/navigation-progress';
 import { BrandShell } from '@/components/brand-shell';

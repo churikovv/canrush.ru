@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/market.css';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';

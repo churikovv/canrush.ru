@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/tierlists.css';
 import { TierListAuthor } from '@/components/tier-list-author';
 import { ReviewDiscussion } from '@/components/review-discussion';
 import { getTierInteractions } from '@/lib/tier-discussions';

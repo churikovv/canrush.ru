@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/catalog.css';
 import { getPriceHistory } from '@/lib/price-history-files';
 import { selectedCity } from '@/lib/location';
 import type { Metadata } from 'next';

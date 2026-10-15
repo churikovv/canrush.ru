@@ -1,3 +1,5 @@
+import '@/styles/shared.css';
+import '@/styles/market.css';
 import { isSiteAdminEmail } from '@/lib/admin';
 import type { Metadata } from 'next';
 import Link from '@/components/navigation-progress';
