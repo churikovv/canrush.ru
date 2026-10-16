@@ -10,6 +10,7 @@ export const SOURCES = [
   'magnit',
   'lenta',
   'edadeal',
+  'lavka',
 ] as const;
 
 export type SourceName = (typeof SOURCES)[number];
@@ -109,6 +110,8 @@ export interface SourceQueryConfig {
   sapCode?: string;
   /** Регион/город для ритейлеров, влияющий на цены и наличие */
   regionId?: string;
+  /** Города сайта (CityId), в которых опрашивается источник (Яндекс Лавка) */
+  cities?: string[];
   /** Явный список брендов/названий для фильтрации результатов */
   brands?: string[];
   brandAliases?: BrandAliases;

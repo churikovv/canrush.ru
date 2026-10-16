@@ -10,7 +10,7 @@ import { writeAtomic } from './atomic-file.js';
 export async function reindexCatalog() {
   const config = loadProductsConfig();
   const normalize = (products: Product[]) => products.map(product => {
-    const normalized = normalizeProduct(product.source, { ...product, flavor: product.source === 'edadeal' ? undefined : product.flavor }, config.brands, product.fetchedAt, config.brandAliases, config.flavors, config.flavorAliases);
+    const normalized = normalizeProduct(product.source, { ...product, flavor: product.source === 'edadeal' || product.source === 'lavka' ? undefined : product.flavor }, config.brands, product.fetchedAt, config.brandAliases, config.flavors, config.flavorAliases);
     return { ...product, ...normalized, volumeMl: normalized.volumeMl ?? product.volumeMl };
   });
   for (const city of CITIES) {

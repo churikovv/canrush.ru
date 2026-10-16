@@ -102,6 +102,8 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
                               key={`${name}:${offer.volumeMl ?? 'unknown'}:${offer.url}`}
                             >
                               {content}
+                              <span className="catalog-store-offer-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M7 17 17 7M9 7h8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+                              <span className="sr-only">, открыть в магазине в новой вкладке</span>
                             </a>
                           ) : (
                             <div className={className} key={`${name}:${offer.volumeMl ?? 'unknown'}:${offer.url}`}>

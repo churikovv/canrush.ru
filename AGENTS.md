@@ -24,6 +24,7 @@ data/              # выходные данные парсера (latest.json, 
 | Магнит       | `magnit.ts`     | `in_page_fetch` (нужны `storeCode`, `categoryId`) |
 | Лента        | `lenta.ts`      | `in_page_fetch`                             |
 | Едадил       | `edadeal.ts`    | `http_api` (открытый JSON `search.edadeal.io`, без браузера; только акции; `regionId` = Yandex geoid) |
+| Яндекс Лавка | `lavka.ts`      | `http_api` (SSR-страница каталога большой лавки + cookie `lastGeoCoordinate`; полный прайс; города — `sources.lavka.cities`) |
 
 Антибот: `src/browser/challenge.ts` (детект), `src/browser/session.ts`
 (переиспользование сессий в `.sessions/<source>/`). Разблокировка —
@@ -108,6 +109,13 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
   выдача собирается через брендовые батчи (обычный ответ обрезан до 600 групп),
   бренд — по `brandUuid`, затем через глобальные `brandAliases`. Не убирай паузу
   800 мс между запросами.
+- **Яндекс Лавка**: только «большая лавка» (`/supermarket/…`, `depotType=supermarket`),
+  её нет за пределами Москвы и Петербурга — «лавку у дома» и демо-каталог адаптер
+  отбрасывает (`hasSupermarket`). Данные — из SSR `storedehydratedstate-data`, товары
+  только из подразделов «Энергетики…» (в категории `energy_beer` есть пиво и вино).
+  `/api/` запрещён в robots.txt — не ходи туда и не включай перехват XHR; headless
+  получает 403, капчу не обходим. Лавка опрашивается в региональном прогоне рядом с
+  Едадилом, её сбой оставляет прошлые цены Лавки как stale (`fetchLavka` в `regions.ts`).
 - **Иконки сетей**: адаптер Едадила кладёт логотип сети (`partner.imageUrl`) в
   `Product.retailerIconUrl`. `npm -w apps/parser run download-icons` скачивает
   его в `apps/site/public/images/retailers/` (общий volume с сайтом) и пишет в

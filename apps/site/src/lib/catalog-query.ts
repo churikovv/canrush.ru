@@ -20,6 +20,7 @@ const SOURCE_NAMES: Record<SourceName, string> = {
   pyaterochka: 'Пятёрочка',
   magnit: 'Магнит',
   lenta: 'Лента',
+  lavka: 'Яндекс Лавка',
 };
 
 export interface CatalogFilters {

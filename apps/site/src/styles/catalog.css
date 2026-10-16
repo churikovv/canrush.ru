@@ -265,6 +265,34 @@
 .catalog-store-offer-static {
   cursor: default;
 }
+/* Arrow marks offers that open the store's own product page. */
+.catalog-store-offer-arrow {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-subtle);
+  color: var(--color-muted-strong);
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+.catalog-store-offer-arrow svg {
+  transition: transform 150ms ease-out;
+}
+.catalog-store-offer:is(:hover, :focus-visible) .catalog-store-offer-arrow {
+  background: var(--color-brand);
+  color: var(--color-surface);
+}
+.catalog-store-offer:is(:hover, :focus-visible) .catalog-store-offer-arrow svg {
+  transform: translate(1px, -1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .catalog-store-offer-arrow,
+  .catalog-store-offer-arrow svg {
+    transition: none;
+  }
+}
 /* Ingredient card follows the product's existing rounded panels. */
 .catalog-ingredients-card {
   padding: 20px;

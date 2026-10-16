@@ -3,8 +3,9 @@ import { NORMALIZATION_VERSION } from './normalize.js';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { CITIES, findCity, type CityId, type CatalogGroup, type Product } from '@canrush/shared';
+import { CITIES, findCity, type CityId, type CatalogGroup, type Product, type SourceQueryConfig } from '@canrush/shared';
 import { edadealAdapter } from './adapters/edadeal.js';
+import { lavkaAdapter } from './adapters/lavka.js';
 import { loadProductsConfig } from './config.js';
 import { DATA_DIR, filterSuspiciousVariants, groupByFlavor } from './storage.js';
 import { applyLocalImages, downloadProductImages } from './images.js';
@@ -44,6 +45,15 @@ export async function saveSnapshot(snapshot: RegionSnapshot) {
   if (snapshot.generatedAt) await writeAtomic(path.join(DATA_DIR, 'regions', snapshot.cityId, 'history', `${snapshot.generatedAt.slice(0, 10)}.json`), JSON.stringify({ ...catalog, products }));
 }
 
+/** Лавка — дополнительный источник: её сбой не роняет город, а оставляет прошлые цены Лавки как stale. */
+async function fetchLavka(config: SourceQueryConfig, previous: RegionSnapshot | null): Promise<Product[]> {
+  try { return (await lavkaAdapter.fetchPrices(config)).products; }
+  catch (error) {
+    console.warn(`[regions] Яндекс Лавка: ${(error as Error).message}`);
+    return (previous?.products ?? []).filter(product => product.source === 'lavka').map(product => ({ ...product, stale: true, lastSeenAt: product.lastSeenAt ?? product.fetchedAt }));
+  }
+}
+
 export async function runRegionalParser(options: { cities?: CityId[]; force?: boolean } = {}) {
   const cities = options.cities ?? CITIES.map(city => city.id);
   if (cities.some(id => !findCity(id))) throw new Error('Unknown city');
@@ -63,7 +73,9 @@ export async function runRegionalParser(options: { cities?: CityId[]; force?: bo
     for (const [index, cityId] of cities.entries()) {
       const city = findCity(cityId)!;
       const effective = { ...config.sources.edadeal, regionId: city.geoId, keywords: config.keywords, brands: config.brands, brandAliases: config.brandAliases, flavors: config.flavors, flavorAliases: config.flavorAliases };
-      const configHash = createHash('sha256').update(JSON.stringify({ ...effective, normalizationVersion: NORMALIZATION_VERSION })).digest('hex');
+      const lavka = config.sources.lavka?.cities?.includes(cityId) ? { ...config.sources.lavka, regionId: city.geoId, brands: config.brands, brandAliases: config.brandAliases, flavors: config.flavors, flavorAliases: config.flavorAliases } : undefined;
+      // Лавка входит в хэш только там, где включена, чтобы кэш остальных городов не сбрасывался.
+      const configHash = createHash('sha256').update(JSON.stringify({ ...effective, normalizationVersion: NORMALIZATION_VERSION, ...(lavka ? { lavka } : {}) })).digest('hex');
       const previous = await loadSnapshot(cityId);
       const now = Date.now();
       const fresh = regionCacheFresh(previous, configHash, now);
@@ -74,7 +86,7 @@ export async function runRegionalParser(options: { cities?: CityId[]; force?: bo
       }
       let snapshot: RegionSnapshot;
       try {
-        const { products } = await edadealAdapter.fetchPrices(effective);
+        const products = [...(await edadealAdapter.fetchPrices(effective)).products, ...(lavka ? await fetchLavka(lavka, previous) : [])];
         const localized = applyLocalImages({ products, groups: filterSuspiciousVariants(groupByFlavor(products)) }, await downloadProductImages(products));
         await downloadRetailerIcons(products);
         snapshot = { cityId, configHash, generatedAt: new Date().toISOString(), attemptedAt: new Date().toISOString(), status: 'ok', ...localized };

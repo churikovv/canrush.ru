@@ -443,6 +443,11 @@
       "query": "энергетик",
       "regionId": "213",
       "maxItems": 2000
+    },
+    "lavka": {
+      "categorySlug": "energy_beer",
+      "cities": ["moscow", "saint-petersburg"],
+      "maxItems": 500
     }
   }
 }

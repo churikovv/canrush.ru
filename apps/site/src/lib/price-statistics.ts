@@ -10,7 +10,7 @@ export interface PriceObservation {
 
 const SOURCE_NAMES: Record<FlavorVariant['source'], string> = {
   edadeal: 'Едадил', magnit: 'Магнит', pyaterochka: 'Пятёрочка',
-  lenta: 'Лента', ozon: 'Ozon', wildberries: 'Wildberries',
+  lenta: 'Лента', ozon: 'Ozon', wildberries: 'Wildberries', lavka: 'Яндекс Лавка',
 };
 
 function isMultipack(variant: FlavorVariant): boolean {

@@ -60,6 +60,7 @@ const RETAILER_DOMAINS: Array<{ match: string; domain: string }> = [
   { match: 'мария ра', domain: 'maria-ra.ru' },
   { match: 'чижик', domain: 'chizhik.ru' },
   { match: 'самокат', domain: 'samokat.ru' },
+  { match: 'лавк', domain: 'lavka.yandex.ru' },
   { match: 'пятёрочка', domain: 'pyaterochka.ru' },
 ];
 
