@@ -11,6 +11,8 @@ import { CookieNotice } from '@/components/cookie-notice';
 import { SiteMotionProvider } from '@/components/site-motion-provider';
 import { TelegramMiniApp } from '@/components/telegram-mini-app';
 import { YandexMetrika } from '@/components/yandex-metrika';
+import { GoogleAnalytics } from '@/components/google-analytics';
+import { googleAnalyticsId } from '@/lib/google-analytics';
 import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/seo';
 import './globals.css';
 import './site-theme.css';
@@ -85,6 +87,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   const theme = parseSiteTheme((await cookies()).get(SITE_THEME_COOKIE)?.value) ?? 'system';
+  const analyticsId = googleAnalyticsId();
   return (
     <html data-site-theme={theme} lang="ru" className={objectSans.variable} data-scroll-behavior="smooth">
       <body>
@@ -96,6 +99,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <CookieNotice />
           <ActivityHeartbeat />
           <TelegramMiniApp />
+          {analyticsId && <GoogleAnalytics id={analyticsId} />}
           <Suspense fallback={null}>
             <YandexMetrika />
             <CampaignTracker />

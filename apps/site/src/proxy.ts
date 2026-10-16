@@ -12,13 +12,13 @@ export function proxy(request: NextRequest) {
   const productionHttps = process.env.NODE_ENV === 'production' && request.nextUrl.protocol === 'https:';
   const directives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://mc.yandex.ru https://yastatic.net https://telegram.org${development ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://mc.yandex.ru https://yastatic.net https://telegram.org https://www.googletagmanager.com${development ? " 'unsafe-eval'" : ''}`,
     development ? "style-src 'self' 'unsafe-inline'" : `style-src 'self' 'nonce-${nonce}'`,
     "style-src-attr 'unsafe-inline'",
-    "img-src 'self' blob: data: https://mc.yandex.ru https://yastatic.net https://*.maps.yandex.net https://api-maps.yandex.ru https://yandex.ru",
+    "img-src 'self' blob: data: https://mc.yandex.ru https://yastatic.net https://*.maps.yandex.net https://api-maps.yandex.ru https://yandex.ru https://*.google-analytics.com https://*.googletagmanager.com",
     "media-src 'self' blob:",
     "font-src 'self'",
-    "connect-src 'self' https://mc.yandex.ru https://api-maps.yandex.ru https://*.api-maps.yandex.ru https://*.maps.yandex.net",
+    "connect-src 'self' https://mc.yandex.ru https://api-maps.yandex.ru https://*.api-maps.yandex.ru https://*.maps.yandex.net https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
     "child-src blob: https://mc.yandex.ru",
     "frame-src blob: https://mc.yandex.ru",
     "object-src 'none'",
