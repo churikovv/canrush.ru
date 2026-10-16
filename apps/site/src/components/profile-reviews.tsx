@@ -3,6 +3,7 @@ import { ProfileBackButton } from '@/components/profile-back-button';
 import { ProfileReviewDeleteButton } from '@/components/profile-review-delete-button';
 import Link from '@/components/navigation-progress';
 import { CatalogReviewItem } from '@/components/catalog-review-item';
+import { ProfileReviewEditor } from '@/components/profile-review-editor';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import type { ReviewData } from '@/lib/reviews';
 
@@ -40,7 +41,7 @@ export function ProfileReviews({ reviews, username, ownerName, count, page, page
               </h2>
               {isOwn && <ProfileReviewDeleteButton brand={review.brand} flavor={review.flavor} />}
               </div>
-              <CatalogReviewItem review={review} />
+              {isOwn ? <ProfileReviewEditor review={review}><CatalogReviewItem review={review} own /></ProfileReviewEditor> : <CatalogReviewItem review={review} />}
             </section>
           ))}
         </div>

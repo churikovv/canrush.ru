@@ -49,7 +49,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
           {viewerId ? <WallComposer targetId={viewerId} label="Новая запись в ленте и на вашей стене" placeholder="Что нового? Запись появится и на вашей стене…" /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы написать в ленту.</p>}
         </section>
         <section className="feed-posts" aria-label="Записи">
-          {feed.posts.length ? <div className="wall-comments">{feed.posts.map(post => <WallPost key={post.id} post={post} owner={{ username: post.ownerUsername, name: post.ownerName }} interaction={interactions.get(post.id)} canDelete={viewerId === post.userId || viewerId === post.profileId} canEdit={viewerId === post.userId} />)}</div>
+          {feed.posts.length ? <div className="wall-comments">{feed.posts.map(post => <WallPost key={post.id} post={post} owner={{ username: post.ownerUsername, name: post.ownerName, avatarId: post.ownerAvatarId }} interaction={interactions.get(post.id)} canDelete={viewerId === post.userId || viewerId === post.profileId} canEdit={viewerId === post.userId} />)}</div>
             : <div className="wall-empty-card">{scope === 'following'
               ? <><strong>Подписок пока нет</strong><p>Подпишитесь на участников из <Link href="/leaderboard">рейтинга</Link>, чтобы видеть их записи здесь.</p></>
               : <><strong>Здесь пока тихо</strong><p>Напишите первую запись — она появится и на вашей стене.</p></>}</div>}

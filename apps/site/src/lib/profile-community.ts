@@ -104,7 +104,7 @@ export async function getProfileRatings(userId: string) {
 export type ProfileRatings = Awaited<ReturnType<typeof getProfileRatings>>;
 
 export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; editedAt: Date | null; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; photos: string[]; mediaKinds: WallMediaKind[] }
-export interface FeedPostRow extends WallPostRow { ownerUsername: string | null; ownerName: string }
+export interface FeedPostRow extends WallPostRow { ownerUsername: string | null; ownerName: string; ownerAvatarId: string | null }
 export type FeedScope = 'all' | 'following';
 
 // One record serves both the wall it was written on and the feed, so both views select the same columns.
@@ -130,7 +130,8 @@ export async function getProfileWall(profileId: string, page = 1) {
  */
 export async function getFeed(viewerId: string | null, scope: FeedScope = 'all', page = 1) {
   const following = scope === 'following' && viewerId !== null;
-  const { rows } = await getPool().query<FeedPostRow>(`select ${WALL_POST_COLUMNS}, o.username as "ownerUsername", o.name as "ownerName"
+  const { rows } = await getPool().query<FeedPostRow>(`select ${WALL_POST_COLUMNS}, o.username as "ownerUsername", o.name as "ownerName",
+      (select id::text from "profileImage" where "userId"=o.id and kind='avatar') as "ownerAvatarId"
       from "profileComment" c join "user" u on u.id = c."userId" join "user" o on o.id = c."profileId"
       where not $1::boolean or c."userId" = $2 or c."profileId" = $2
         or exists(select 1 from "userFollow" f where f."userId" = $2 and f."targetId" in (c."userId", c."profileId"))

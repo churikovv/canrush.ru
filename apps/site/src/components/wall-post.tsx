@@ -22,7 +22,7 @@ interface WallPostProps {
   /** Only the author may edit; the wall owner can just delete. */
   canEdit: boolean;
   /** Set in the feed: whose wall the record lives on. Omitted on the wall itself. */
-  owner?: { username: string | null; name: string };
+  owner?: { username: string | null; name: string; avatarId?: string | null };
 }
 
 /** A wall record. The same row is rendered on the owner's wall and in the feed. */
@@ -31,7 +31,14 @@ export function WallPost({ post, interaction, canDelete, canEdit, owner }: WallP
   const onOtherWall = owner && post.profileId !== post.userId;
   const profileHref = post.username ? `/profile/${post.username}` : undefined;
   const avatar = post.avatarId ? <Image src={`/api/profile-images/${post.avatarId}`} width={40} height={40} unoptimized alt="" /> : (post.username ?? post.name).slice(0, 1).toUpperCase();
-  return <article id={`wall-post-${post.id}`} className="wall-comment">
+  const ownerAvatar = owner?.avatarId ? <Image src={`/api/profile-images/${owner.avatarId}`} width={20} height={20} unoptimized alt="" /> : (owner?.username ?? owner?.name ?? '').slice(0, 1).toUpperCase();
+  return <article id={`wall-post-${post.id}`} className={`wall-comment${onOtherWall ? ' is-on-other-wall' : ''}`}>
+    {onOtherWall && owner.username && <Link className="wall-post-target" href={`/profile/${owner.username}#wall`}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 5v6a4 4 0 0 0 4 4h11" /><path d="m15 11 4 4-4 4" /></svg>
+      <span className="wall-post-target-label">На стене</span>
+      <span className="wall-post-target-avatar" aria-hidden="true">{ownerAvatar}</span>
+      <strong>{displayName(owner)}</strong>
+    </Link>}
     <WallPostBody id={post.id} text={post.text} canEdit={canEdit} canDelete={canDelete} heading={<>
       {profileHref ? <Link className="wall-avatar" href={profileHref} tabIndex={-1} aria-hidden="true">{avatar}</Link> : <span className="wall-avatar">{avatar}</span>}
       <div className="wall-post-meta">
@@ -41,10 +48,9 @@ export function WallPost({ post, interaction, canDelete, canEdit, owner }: WallP
           {post.username && <ProfileExperience username={post.username} initial={{ xp: post.xp, rank: null }} />}
         </div>
         <div className="wall-post-sub">
-          {post.username && <span>@{post.username}</span>}
-          {owner?.username ? <Link href={`/profile/${owner.username}#wall`} title="Открыть стену">{time}</Link> : time}
+          {profileHref && <Link href={profileHref}>@{post.username}</Link>}
+          {owner?.username ? <Link href={`/profile/${owner.username}#wall`} title="Открыть стену">{time}</Link> : <a href={`#wall-post-${post.id}`} title="Ссылка на запись">{time}</a>}
           {post.editedAt && <span title={`Изменено ${postTime.format(post.editedAt)}`}>изменено</span>}
-          {onOtherWall && owner.username && <Link href={`/profile/${owner.username}#wall`}>на стене {displayName(owner)}</Link>}
         </div>
       </div>
     </>}>

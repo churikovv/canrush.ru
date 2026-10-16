@@ -1,6 +1,7 @@
 vi.mock('../src/app/profile/wall-discussion-actions', () => ({ wallDiscussionAction: vi.fn() }));
 vi.mock('../src/app/tierlists/discussion-actions', () => ({ tierDiscussionAction: vi.fn() }));
-vi.mock('../src/app/catalog/review-actions', () => ({ deleteReviewAction: vi.fn() }));
+vi.mock('../src/app/catalog/review-actions', () => ({ deleteReviewAction: vi.fn(), submitReviewAction: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock('../src/app/catalog/discussion-actions', () => ({ reviewDiscussionAction: vi.fn() }));
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -18,17 +19,19 @@ describe('profile review list', () => {
   it('shows public review content and photos, with links back to author and product reviews', () => {
     const html = renderToStaticMarkup(createElement(ProfileReviews, { ...base, reviews: [review] }));
     expect(html).toContain('Отличный вкус');
-    expect(html).toContain('review-author-tag');
+    expect(html).toContain('class="profile-tag" data-tag="burner"');
     expect(html).toContain('Burner');
     expect(html).toContain('href="/profile/reader"');
     expect(html).toContain('?tab=reviews');
     expect(html).toContain('Открыть фотографию 1 из 1');
     expect(html).not.toContain('Удалить отзыв');
+    expect(html).not.toContain('Редактировать свой отзыв');
   });
-  it('shows product images and owner removal controls', () => {
+  it('shows product images and owner edit and removal controls', () => {
     const html = renderToStaticMarkup(createElement(ProfileReviews, { ...base, isOwn: true, reviews: [review] }));
     expect(html).toContain('adrenaline-rush-original.jpg');
     expect(html).toContain('Удалить отзыв');
+    expect(html).toContain('Редактировать свой отзыв');
     expect(html).toContain('href="/profile"');
   });
   it('shows an empty state instead of an empty feed', () => {

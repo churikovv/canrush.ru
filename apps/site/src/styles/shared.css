@@ -239,7 +239,9 @@
 .store-photo-gallery a { flex: 0 0 160px; }
 .store-photo-gallery img { width: 160px; height: 120px; object-fit: cover; border-radius: 12px; }
 .catalog-volume-tabs { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px; }
-.catalog-volume-tabs button { flex-shrink: 0; min-height: 44px; padding: 8px 16px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.catalog-volume-tabs button { flex-shrink: 0; min-height: 44px; padding: 8px 16px; border: 0; border-radius: 10px; background: transparent; color: var(--color-muted-strong); font: inherit; font-weight: 600; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.catalog-volume-tabs button:not([aria-selected="true"]):hover { background: var(--color-subtle); color: var(--color-ink); }
+@media (prefers-reduced-motion: reduce) { .catalog-volume-tabs button { transition: none; } }
 .catalog-volume-tabs button[aria-selected="true"] { background: var(--color-brand); color: #fff; }
 /* Like on a wall comment: a quiet pill under the text, filled heart once liked. */
 .review-comment-like { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 10px; border: 0; border-radius: 999px; background: color-mix(in srgb, currentColor 7%, transparent); color: var(--color-muted-strong); font: inherit; font-size: .8125rem; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
@@ -279,3 +281,100 @@ a.review-reply-mention:hover { background: color-mix(in srgb, var(--color-brand,
 .review-video-stage { cursor: default; touch-action: auto; user-select: auto; }
 .review-video-stage video { max-width: 100%; max-height: 100%; border-radius: 12px; background: #000; }
 .review-photo-preview video { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; background: #000; display: block; }
+/* Wall record (also rendered in /feed) and catalog review cards: avatar, name line with badges, muted meta line, action icons on the right. */
+.wall-comment a { text-decoration: none; }
+.wall-comment-heading { display: flex; align-items: flex-start; gap: 12px; }
+.wall-comment-heading .wall-avatar { width: 40px; height: 40px; flex-basis: 40px; font-weight: 700; }
+.wall-post-meta { display: grid; gap: 6px; flex: 1; min-width: 0; }
+.wall-post-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-height: 24px; }
+.wall-post-author { min-width: 0; color: var(--theme-text, #3e3e3f); font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; transition: color 150ms ease-out; }
+a.wall-post-author:hover { color: var(--theme-link, #0058cc); }
+.wall-post-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0; color: var(--theme-muted, #59616b); font-size: .8125rem; line-height: 1.4; }
+.wall-post-sub > * + *::before { content: "·"; margin: 0 10px; }
+/* Links in the meta line get a taller hit area without shifting the text. */
+.wall-post-sub a { display: inline-flex; align-items: center; min-height: 28px; margin-block: -4px; color: inherit; transition: color 150ms ease-out; }
+.wall-post-sub a:hover { color: var(--theme-link, #0058cc); }
+.wall-comment .wall-post-sub time { font-size: inherit; color: inherit; }
+.wall-post-actions { display: flex; align-items: flex-start; flex: none; gap: 2px; margin: -6px -8px 0 0; }
+.wall-delete { display: grid; justify-items: end; }
+.wall-delete > p { max-width: 180px; margin: 4px 0 0; text-align: right; font-size: .75rem; }
+.wall-action-button { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--theme-muted, #59616b); cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.wall-action-button:hover:not(:disabled) { background: color-mix(in srgb, currentColor 10%, transparent); color: var(--theme-link, #0058cc); }
+.wall-delete-button:hover:not(:disabled) { background: color-mix(in srgb, #e5484d 12%, transparent); color: #e5484d; }
+.wall-action-button:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.wall-action-button:disabled { opacity: .5; cursor: wait; }
+.wall-post-edit { margin-top: 12px; }
+.wall-post-edit textarea { width: 100%; min-height: 96px; max-height: 400px; resize: vertical; border: 1px solid var(--theme-line, #c6ccd4); border-radius: 8px; padding: 12px; background: var(--theme-panel, #ffffff); color: var(--theme-text, #3e3e3f); font: inherit; font-size: .9375rem; }
+.wall-post-edit .community-form-footer { margin-top: 10px; }
+.wall-post-edit-buttons { display: flex; gap: 8px; }
+.wall-comment > p { margin-top: 12px; font-size: .9375rem; line-height: 1.55; }
+:is(.wall-comment,.review-item) .review-discussion { margin-top: 12px; padding-top: 0; border-top: 0; }
+:is(.wall-comment,.review-item) .review-reactions { display: flex; gap: 6px; }
+:is(.wall-comment,.review-item) .review-reactions button { min-height: 36px; padding: 6px 12px; border-color: transparent; border-radius: 999px; background: color-mix(in srgb, currentColor 7%, transparent); font-size: .8125rem; transition: background-color 150ms ease-out, color 150ms ease-out; }
+:is(.wall-comment,.review-item) .review-reactions button:hover:not(:disabled) { background: color-mix(in srgb, currentColor 12%, transparent); }
+:is(.wall-comment,.review-item) .review-reactions button[aria-pressed="true"] { border-color: currentColor; background: color-mix(in srgb, currentColor 12%, transparent); }
+:is(.wall-comment,.review-item) .review-reactions button svg { width: 16px; height: 16px; }
+@media (prefers-reduced-motion: reduce) { .wall-post-author, .wall-post-sub a, .wall-action-button, :is(.wall-comment,.review-item) .review-reactions button { transition: none; } }
+/* Feed record written on someone else's wall: a tinted strip above the heading names whose wall it is. */
+.wall-post-target { display: flex; align-items: center; gap: 8px; width: fit-content; max-width: 100%; min-height: 32px; margin: -4px 0 12px; padding: 4px 12px 4px 8px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand, #006eff) 10%, transparent); color: var(--theme-muted, #59616b); font-size: .8125rem; line-height: 1.3; transition: background-color 150ms ease-out; }
+.wall-post-target svg { flex: none; color: var(--color-brand, #006eff); }
+.wall-post-target-label { flex: none; white-space: nowrap; }
+.wall-post-target strong { min-width: 0; overflow: hidden; color: var(--theme-text, #3e3e3f); text-overflow: ellipsis; white-space: nowrap; }
+.wall-post-target:hover { background: color-mix(in srgb, var(--color-brand, #006eff) 16%, transparent); }
+.wall-post-target:hover strong { color: var(--theme-link, #0058cc); }
+.wall-post-target:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.wall-post-target-avatar { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; overflow: hidden; border-radius: 50%; background: var(--theme-subtle, #eef3fa); color: var(--theme-link, #006eff); font-size: .625rem; font-weight: 700; }
+.wall-post-target-avatar img { width: 100%; height: 100%; object-fit: cover; }
+@media (prefers-reduced-motion: reduce) { .wall-post-target { transition: none; } }
+/* Published review card (catalog and profile reviews): author column beside the review, wall record avatar/actions/reactions.
+   Container query on the list, because the profile reviews column is narrower than the catalog one. */
+:is(.review-list,.profile-review-entry) { container-type: inline-size; }
+.review-item { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 20px; }
+.review-item a { text-decoration: none; }
+.review-item-author { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 4px 12px; min-width: 0; }
+.review-item-author .review-item-avatar { width: 44px; height: 44px; flex-basis: 44px; font-weight: 700; }
+.review-item-who { display: grid; gap: 2px; min-width: 0; }
+.review-item-who .wall-post-author { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.3; }
+.review-item-handle { overflow: hidden; color: var(--theme-muted, #59616b); font-size: .8125rem; text-overflow: ellipsis; white-space: nowrap; }
+.review-item-badges { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.review-item-badges:empty { display: none; }
+.review-item-body { display: grid; gap: 14px; min-width: 0; }
+.review-item-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; min-height: 36px; }
+.review-item-overall { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 4px 11px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 12%, transparent); color: var(--color-brand); }
+.review-item-overall strong { color: var(--color-ink); font-size: .875rem; line-height: 1; }
+.review-item-ratings { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; font-size: .8125rem; line-height: 1.4; }
+.review-item-ratings > div { display: flex; gap: 6px; }
+.review-item-ratings dt { color: var(--theme-muted, #59616b); }
+.review-item-ratings dd { margin: 0; color: var(--color-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.review-item-date { color: var(--theme-muted, #59616b); font-size: .75rem; opacity: .8; white-space: nowrap; }
+/* Own review: edit/delete sit in the card's top-right corner, in the free space beside the name. */
+.review-item-actions { position: absolute; top: 14px; right: 12px; margin: 0; }
+.review-item:has(> .review-item-actions) .review-item-who { padding-right: 76px; }
+.review-item .review-item-text { max-width: 68ch; }
+.review-item .review-author-channel { gap: 0 8px; margin-bottom: 4px; padding-bottom: 0; border-bottom: 0; }
+.review-item .review-item-channel { min-height: 36px; }
+.review-item .review-discussion { margin-top: 2px; }
+@container (min-width: 680px) {
+  .review-item { grid-template-columns: 200px minmax(0, 1fr); gap: 32px; padding: 24px 28px; }
+  .review-item-author { align-self: center; align-content: center; align-items: start; grid-template-columns: 48px minmax(0, 1fr); }
+  .review-item:has(> .review-item-actions) .review-item-who { padding-right: 0; }
+  .review-item:has(> .review-item-actions) .review-item-top { padding-right: 76px; }
+  .review-item-actions { top: 18px; right: 18px; }
+  .review-item-author .review-item-avatar { width: 48px; height: 48px; flex-basis: 48px; }
+  .review-item-who { padding-top: 3px; }
+  .review-item-badges { margin-top: 12px; }
+  /* Desktop: the author's channel follows the reactions on the same row, keeping the review text area clean. */
+  .review-item .review-discussion { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+  .review-item .review-discussion > * { flex-basis: 100%; order: 2; }
+  .review-item .review-discussion > .review-reactions { flex-basis: auto; order: 0; }
+  .review-item .review-discussion > .review-author-channel { flex-basis: auto; order: 1; margin: 0; }
+}
+/* Review form (catalog product and profile reviews): edit/delete icons inside the composer. */
+.review-composer-actions { display: inline-flex; gap: 4px; margin-left: auto; }
+.review-composer-action { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--color-muted-strong); cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.review-composer-action:hover:not(:disabled) { background: var(--color-control); color: var(--color-ink); }
+.review-composer-delete:hover:not(:disabled) { background: var(--color-danger-soft); color: var(--color-danger); }
+.review-composer-action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.review-composer-action:disabled { cursor: wait; opacity: .55; }
+@media (prefers-reduced-motion: reduce) { .review-composer-action { transition: none; } }
+.review-photo-editor:has(> .review-photo-previews:empty):not(:has(> .field-error)) { display: none; }

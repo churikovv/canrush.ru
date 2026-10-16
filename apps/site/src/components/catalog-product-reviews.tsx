@@ -107,7 +107,7 @@ export function CatalogProductReviews({
               id: review.id,
               createdAt: review.createdAt.toISOString(),
               likes: review.interaction?.likes ?? 0,
-              node: <CatalogReviewItem review={review} />,
+              node: <CatalogReviewItem review={review} own={review.id === userReview?.id} />,
             }))}
           />
         ) : (

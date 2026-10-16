@@ -2,9 +2,10 @@
 import Image from 'next/image';
 import { achievementImage } from '@/lib/profile-achievements';
 
-import { useActionState, useCallback, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import { useActionState, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { AchievementSteps } from '@/components/achievement-steps';
 import { updateCommunityAction } from '@/app/profile/community-actions';
-import { ACHIEVEMENT_RARITIES, achievementCompletion, achievementStepsDone, profileTagLabel, visibleProfileAchievements, type AchievementProgress } from '@/lib/profile-achievements';
+import { ACHIEVEMENT_RARITIES, achievementCompletion, profileTagLabel, visibleProfileAchievements, type AchievementProgress } from '@/lib/profile-achievements';
 
 export function AchievementPicker({ earned, selected, progress, isOwn, viewerIsAdmin = false }: {
   earned: string[]; selected: string[]; progress: AchievementProgress; isOwn: boolean; viewerIsAdmin?: boolean;
@@ -81,22 +82,11 @@ export function AchievementPicker({ earned, selected, progress, isOwn, viewerIsA
         </label>}
         {matching.map(item => {
           const unlocked = earned.includes(item.key);
-          const done = achievementStepsDone(item, progress);
           const copy = <><Image className="tag-picker-art" src={achievementImage(item.key)} width={48} height={48} alt="" />
             <span className="achievement-copy">
               <span className="achievement-heading"><strong className="profile-tag" data-tag={item.key}>{item.label}</strong><span className="achievement-rarity" data-rarity={item.rarity}>{ACHIEVEMENT_RARITIES[item.rarity]}</span></span>
               <span>{item.description}</span>
-              <span className="achievement-steps" role="list" aria-label={`Условия: ${unlocked ? 'выполнены' : `${done} из ${item.steps.length}`}`}>
-                {item.steps.map(step => {
-                  const value = Math.min(progress[step.metric], step.goal);
-                  const complete = unlocked || value >= step.goal;
-                  return <span role="listitem" key={step.metric} className={complete ? 'is-done' : undefined} style={{ '--step-progress': complete ? 1 : value / step.goal } as CSSProperties}>
-                    <span className="achievement-step-mark" aria-hidden="true" />
-                    <span className="achievement-step-label">{step.label}</span>
-                    <span className="achievement-step-count">{complete ? 'Готово' : `${value} / ${step.goal}`}</span>
-                  </span>;
-                })}
-              </span>
+              <AchievementSteps item={item} progress={progress} unlocked={unlocked} />
             </span>
             <span className={`achievement-progress${unlocked ? ' is-earned' : ''}`}>{unlocked ? 'Получен' : `${Math.round(achievementCompletion(item, progress) * 100)}%`}</span></>;
           const className = `tag-picker-option${tag === item.key ? ' is-selected' : ''}${!unlocked ? ' is-locked' : ''}`;

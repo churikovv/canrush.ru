@@ -194,39 +194,6 @@ a.profile-about-row:hover .profile-about-arrow { color: var(--theme-link, #0058c
 @media (prefers-reduced-motion: reduce) { .presence-switch, .presence-switch span, .profile-about-arrow { transition: none; } }
 .community-sidebar .sign-out-control .primary-button { border-radius: 8px; min-height: 44px; font-size: .875rem; }
 .wall-comments { margin-top: 20px; }
-/* Wall record (also rendered in /feed): avatar, name line with badges, muted meta line, delete icon on the right. */
-.wall-comment a { text-decoration: none; }
-.wall-comment-heading { display: flex; align-items: flex-start; gap: 12px; }
-.wall-comment-heading .wall-avatar { width: 40px; height: 40px; flex-basis: 40px; font-weight: 700; }
-.wall-post-meta { display: grid; gap: 4px; flex: 1; min-width: 0; }
-.wall-post-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-height: 24px; }
-.wall-post-author { min-width: 0; color: var(--theme-text, #3e3e3f); font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; transition: color 150ms ease-out; }
-a.wall-post-author:hover { color: var(--theme-link, #0058cc); }
-.wall-post-sub { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 0; color: var(--theme-muted, #59616b); font-size: .75rem; line-height: 1.4; }
-.wall-post-sub > * + *::before { content: "·"; margin: 0 6px; }
-.wall-post-sub a { color: inherit; transition: color 150ms ease-out; }
-.wall-post-sub a:hover { color: var(--theme-link, #0058cc); }
-.wall-comment .wall-post-sub time { font-size: inherit; color: inherit; }
-.wall-post-actions { display: flex; align-items: flex-start; flex: none; gap: 2px; margin: -6px -8px 0 0; }
-.wall-delete { display: grid; justify-items: end; }
-.wall-delete > p { max-width: 180px; margin: 4px 0 0; text-align: right; font-size: .75rem; }
-.wall-action-button { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--theme-muted, #59616b); cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
-.wall-action-button:hover:not(:disabled) { background: color-mix(in srgb, currentColor 10%, transparent); color: var(--theme-link, #0058cc); }
-.wall-delete-button:hover:not(:disabled) { background: color-mix(in srgb, #e5484d 12%, transparent); color: #e5484d; }
-.wall-action-button:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
-.wall-action-button:disabled { opacity: .5; cursor: wait; }
-.wall-post-edit { margin-top: 12px; }
-.wall-post-edit textarea { width: 100%; min-height: 96px; max-height: 400px; resize: vertical; border: 1px solid var(--theme-line, #c6ccd4); border-radius: 8px; padding: 12px; background: var(--theme-panel, #ffffff); color: var(--theme-text, #3e3e3f); font: inherit; font-size: .9375rem; }
-.wall-post-edit .community-form-footer { margin-top: 10px; }
-.wall-post-edit-buttons { display: flex; gap: 8px; }
-.wall-comment > p { margin-top: 12px; font-size: .9375rem; line-height: 1.55; }
-.wall-comment .review-discussion { margin-top: 12px; padding-top: 0; border-top: 0; }
-.wall-comment .review-reactions { display: flex; gap: 6px; }
-.wall-comment .review-reactions button { min-height: 36px; padding: 6px 12px; border-color: transparent; border-radius: 999px; background: color-mix(in srgb, currentColor 7%, transparent); font-size: .8125rem; transition: background-color 150ms ease-out, color 150ms ease-out; }
-.wall-comment .review-reactions button:hover:not(:disabled) { background: color-mix(in srgb, currentColor 12%, transparent); }
-.wall-comment .review-reactions button[aria-pressed="true"] { border-color: currentColor; background: color-mix(in srgb, currentColor 12%, transparent); }
-.wall-comment .review-reactions button svg { width: 16px; height: 16px; }
-@media (prefers-reduced-motion: reduce) { .wall-post-author, .wall-post-sub a, .wall-action-button, .wall-comment .review-reactions button { transition: none; } }
 .community-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 20px; font-size: .875rem; }
 .community-directory { max-width: 760px; }
 .community-directory > a { display: inline-flex; align-items: center; min-height: 44px; color: var(--theme-link, #0058cc); }
@@ -659,3 +626,14 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 .telegram-settings h3 { margin: 20px 0 0; font-size: 1rem; }
 .telegram-settings > form:not(.telegram-bot-settings) { display: contents; }
 .telegram-bot-settings { display: grid; gap: 12px; }
+/* Achievements page: locked cards are muted and show what is left to unlock. */
+.achievement-locked-title { margin: 40px 0 16px; }
+.achievement-cards > article.is-locked { display: grid; align-content: start; gap: 12px; box-shadow: inset 0 3px 0 color-mix(in srgb, var(--rarity) 35%, transparent); }
+.achievement-cards > article.is-locked p { margin: 0; color: var(--profile-muted, var(--theme-muted, #59616b)); }
+.achievement-locked-head { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; align-items: center; gap: 16px; }
+.achievement-locked-head h3 { margin: 0 0 8px; font-size: 1.125rem; }
+.achievement-locked-head .achievement-art { filter: grayscale(1); opacity: .45; }
+.achievement-locked-head .achievement-rarity { opacity: .75; }
+.achievement-percent { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--rarity); }
+/* Own review on the profile: the edit icon sits in the card corner (the card has no padding there). */
+.profile-review-entry .review-item-actions { top: -6px; right: -8px; }
