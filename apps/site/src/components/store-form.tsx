@@ -11,7 +11,7 @@ import { StoreDrinkPicker } from '@/components/store-drink-picker';
 import { METRO, STOCK_LABELS, formatDistance, nearestStations, type LocationSource, type StockStatus } from '@/lib/store-fields';
 import type { Store } from '@/lib/stores';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
-import { saveStoreAction } from '@/app/market/stores/actions';
+import { geocodeStoreAction, saveStoreAction } from '@/app/market/stores/actions';
 import { FormOptional, FormStep } from '@/components/form-step';
 
 type GeoStatus = {kind:'idle'}|{kind:'searching'}|{kind:'found';address:string;precise:boolean}|{kind:'missing'}|{kind:'error'};
@@ -20,7 +20,7 @@ const parse=(value:string)=>Number(value.replace(',','.'));
 function validPoint(lat:string,lng:string){const a=parse(lat),b=parse(lng);return lat.trim()&&lng.trim()&&Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a)<=90&&Math.abs(b)<=180?[a,b] as const:null;}
 const nearestId=(city:string,point:readonly [number,number]|null)=>point?nearestStations(city,point[0],point[1],1)[0]?.station.id??'':'';
 
-export function StoreForm({initial,cityId,apiKey,drinks}:{initial?:Store;cityId:string;apiKey:string;drinks:StoreDrinkOption[]}){
+export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial?:Store;cityId:string;apiKey:string;drinks:StoreDrinkOption[];geocoder?:boolean}){
   const [photos,setPhotos]=useState<File[]>([]);
   const [photosBusy,setPhotosBusy]=useState(false);
   const [retained,setRetained]=useState(initial?.photos??[]);
@@ -43,6 +43,7 @@ export function StoreForm({initial,cityId,apiKey,drinks}:{initial?:Store;cityId:
   const nearby=point?nearestStations(city,point[0],point[1],3):[];
   const taken=useMemo(()=>new Set(items.flatMap(item=>item.brand!==undefined?[JSON.stringify([item.brand,item.flavor])]:[])),[items]);
   const busy=pending||photosBusy||geo.kind==='searching';
+  const canGeocode=geocoder||Boolean(apiKey);
 
   function place(next:readonly [number,number]|null,how:LocationSource|''){
     setLat(next?next[0].toFixed(6):'');setLng(next?next[1].toFixed(6):'');setSource(next?how:'');
@@ -50,10 +51,13 @@ export function StoreForm({initial,cityId,apiKey,drinks}:{initial?:Store;cityId:
   }
   async function locate(force=false):Promise<readonly [number,number]|null>{
     const query=address.trim();const key=`${city}|${query}`;
-    if(!apiKey||query.length<3||(source==='manual'&&!force)||(!force&&geocoded.current===key))return null;
+    if(!canGeocode||query.length<3||(source==='manual'&&!force)||(!force&&geocoded.current===key))return null;
     geocoded.current=key;setGeo({kind:'searching'});
     try{
-      const result=await geocodeAddress(apiKey,`${location.name}, ${query}`,[location.lat,location.lng]);
+      // The server geocoder has its own key; without it the Maps JS API key is tried in the browser.
+      let result;
+      if(geocoder){const answer=await geocodeStoreAction(city,query);if('error' in answer)throw new Error(answer.error);result=answer.result;}
+      else result=await geocodeAddress(apiKey,`${location.name}, ${query}`,[location.lat,location.lng]);
       if(!result){setGeo({kind:'missing'});return null;}
       const next=[result.latitude,result.longitude] as const;place(next,'geocoded');setGeo({kind:'found',address:result.address,precise:result.precise});return next;
     }catch{geocoded.current='';setGeo({kind:'error'});return null;}
@@ -63,7 +67,7 @@ export function StoreForm({initial,cityId,apiKey,drinks}:{initial?:Store;cityId:
   const optional=<FormOptional/>;
   return <form action={form=>{
     if(busy)return;photos.forEach(photo=>form.append('photos',photo));
-    if(point||!apiKey){startTransition(()=>action(form));return;}
+    if(point||!canGeocode){startTransition(()=>action(form));return;}
     // No point yet: geocode the address right before sending; the store may still be saved without a point.
     void locate(true).then(found=>{
       if(found){form.set('latitude',found[0].toFixed(6));form.set('longitude',found[1].toFixed(6));form.set('locationSource','geocoded');if(!metroManual)form.set('metro',nearestId(city,found));setGeoError('');}
@@ -76,7 +80,7 @@ export function StoreForm({initial,cityId,apiKey,drinks}:{initial?:Store;cityId:
       <label>Название магазина<input name="name" required maxLength={120} defaultValue={initial?.name} placeholder="Например, «Энергия у метро»"/></label>
       <div className="store-form-grid store-address-grid"><label>Город<select aria-label="Город" name="city" value={city} onChange={e=>{setCity(e.target.value);setMetro('');setMetroManual(false);setLat('');setLng('');setSource('');setGeo({kind:'idle'});geocoded.current='';}}>{CITIES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
       <label>Адрес<span className="store-address-field"><input name="address" required maxLength={300} placeholder="Улица, дом, этаж или павильон" value={address} onChange={e=>setAddress(e.target.value)} onBlur={()=>{void locate();}}/>
-        {apiKey&&<button type="button" className="community-button community-button-secondary" disabled={busy||address.trim().length<3} onClick={()=>{void locate(true);}}>Найти на карте</button>}</span></label></div>
+        {canGeocode&&<button type="button" className="community-button community-button-secondary" disabled={busy||address.trim().length<3} onClick={()=>{void locate(true);}}>Найти на карте</button>}</span></label></div>
       <p className="store-geo-status" role="status">{geo.kind==='searching'?'Ищем адрес на карте…':geo.kind==='found'?`Точка найдена: ${geo.address}${geo.precise?'':' (примерно — уточните на карте)'}`:geo.kind==='missing'?'Адрес не найден на карте. Уточните его или поставьте точку вручную.':geo.kind==='error'?'Поиск по адресу сейчас недоступен. Нажмите на карту в месте входа или укажите координаты.':source==='manual'?'Точка указана вручную — она приоритетнее адреса.':''}</p>
       <label><span className="form-label">Описание {optional}</span><textarea name="description" maxLength={1500} rows={3} defaultValue={initial?.description} placeholder="Как найти вход, какие напитки продаются"/></label>
     </section>
@@ -86,7 +90,7 @@ export function StoreForm({initial,cityId,apiKey,drinks}:{initial?:Store;cityId:
       <input type="hidden" name="locationSource" value={source}/>
       <details className="store-coordinates" open={!apiKey||source==='manual'}><summary>Координаты вручную</summary>
         <div className="store-form-grid"><label>Широта<input name="latitude" inputMode="decimal" value={lat} onChange={e=>{setLat(e.target.value);setSource('manual');const next=validPoint(e.target.value,lng);if(!metroManual)setMetro(nearestId(city,next));}} placeholder={String(location.lat)}/></label><label>Долгота<input name="longitude" inputMode="decimal" value={lng} onChange={e=>{setLng(e.target.value);setSource('manual');const next=validPoint(lat,e.target.value);if(!metroManual)setMetro(nearestId(city,next));}} placeholder={String(location.lng)}/></label></div>
-        <div className="store-coordinates-actions">{source==='manual'&&apiKey&&<button type="button" className="store-form-link" onClick={()=>{setSource('');void locate(true);}}>Найти точку по адресу</button>}{point&&<button type="button" className="store-form-link" onClick={()=>place(null,'')}>Убрать точку</button>}<a className="store-form-link" href={`https://yandex.ru/maps/?ll=${location.lng},${location.lat}&z=12`} target="_blank" rel="noopener noreferrer">Открыть карту города ↗</a></div>
+        <div className="store-coordinates-actions">{source==='manual'&&canGeocode&&<button type="button" className="store-form-link" onClick={()=>{setSource('');void locate(true);}}>Найти точку по адресу</button>}{point&&<button type="button" className="store-form-link" onClick={()=>place(null,'')}>Убрать точку</button>}<a className="store-form-link" href={`https://yandex.ru/maps/?ll=${location.lng},${location.lat}&z=12`} target="_blank" rel="noopener noreferrer">Открыть карту города ↗</a></div>
       </details>
       {(METRO[city]?.length??0)>0&&<div className="form-field"><label htmlFor="store-metro"><span className="form-label">Ближайшая станция метро, МЦК или МЦД {optional}</span></label><PriceFilterInput id="store-metro" value={metro} onChange={value=>{setMetro(value||nearestId(city,point));setMetroManual(Boolean(value));}} allLabel={point?'Определить автоматически':'Не указано'} options={METRO[city]!.map(s=>({value:s.id,label:`${s.name} · ${s.line}`,color:s.color}))}/>
         {nearby.length>0&&<p className="store-metro-suggest">Рядом: {nearby.map(({station,km},index)=><span key={station.id}>{index>0&&', '}<button type="button" className="store-form-link" aria-pressed={metro===station.id} onClick={()=>{setMetro(station.id);setMetroManual(true);}}><span className="metro-line-dot" style={{backgroundColor:station.color}} aria-hidden="true"/>{station.name} · {formatDistance(km)}</button></span>)}</p>}
