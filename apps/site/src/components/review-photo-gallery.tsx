@@ -5,8 +5,13 @@ import type { WallMediaKind } from '@/lib/wall-media-limits';
 
 type View = { scale: number; x: number; y: number };
 const INITIAL_VIEW: View = { scale: 1, x: 0, y: 0 };
+const MAX_SCALE = 5;
+
+function Icon({ path, size = 22 }: { path: string; size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={path} /></svg>;
+}
 function zoom(view: View, factor: number, anchor = { x: 0, y: 0 }): View {
-  const scale = Math.max(1, Math.min(5, view.scale * factor));
+  const scale = Math.max(1, Math.min(MAX_SCALE, view.scale * factor));
   if (scale === 1) return INITIAL_VIEW;
   const ratio = scale / view.scale;
   return { scale, x: anchor.x - (anchor.x - view.x) * ratio, y: anchor.y - (anchor.y - view.y) * ratio };
@@ -52,10 +57,9 @@ function PhotoCanvas({ id, label, source, onSwipe }: { id: string; label: string
   }
   return (
     <>
-      <div className="review-photo-zoom-controls" aria-label="Масштаб фотографии">
-        <button type="button" aria-label="Уменьшить" disabled={view.scale === 1 || !loaded} onClick={() => setView(current => zoom(current, 1 / 1.5))}>−</button>
-        <button type="button" aria-label="Сбросить масштаб" onClick={() => setView(INITIAL_VIEW)}>{Math.round(view.scale * 100)}%</button>
-        <button type="button" aria-label="Увеличить" disabled={view.scale === 5 || !loaded} onClick={() => setView(current => zoom(current, 1.5))}>+</button>
+      <div className="review-photo-zoom-controls" role="group" aria-label="Масштаб фотографии">
+        <button type="button" aria-label="Уменьшить" disabled={view.scale === 1 || !loaded} onClick={() => setView(current => zoom(current, 1 / 1.5))}><Icon path="M5 12h14" /></button>
+        <button type="button" aria-label="Увеличить" disabled={view.scale === MAX_SCALE || !loaded} onClick={() => setView(current => zoom(current, 1.5))}><Icon path="M12 5v14M5 12h14" /></button>
       </div>
       <div className="review-photo-stage" ref={stage}
         onPointerDown={event => { swipe.current = pointers.current.size === 0 && view.scale === 1 ? { x: event.clientX, y: event.clientY } : null; event.currentTarget.setPointerCapture(event.pointerId); pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY }); }}
@@ -68,10 +72,10 @@ function PhotoCanvas({ id, label, source, onSwipe }: { id: string; label: string
         onPointerCancel={event => { swipe.current = null; pointers.current.delete(event.pointerId); }}
         onLostPointerCapture={event => pointers.current.delete(event.pointerId)}
         onDoubleClick={() => setView(current => current.scale > 1 ? INITIAL_VIEW : zoom(current, 2))}>
-        {!loaded && !failed ? <p className="review-photo-load" role="status">Загружаем фотографию…</p> : null}
+        {!loaded && !failed ? <span className="review-photo-spinner" role="status" aria-label="Загружаем фотографию" /> : null}
         {failed ? <p className="review-photo-load" role="alert">Не удалось загрузить фотографию. Закройте её и попробуйте снова.</p> : (
           /* eslint-disable-next-line @next/next/no-img-element -- full-size image must remain uncached after moderation */
-          <img src={`/api/${source}/${id}`} alt={label} draggable={false} onLoad={() => setLoaded(true)} onError={() => setFailed(true)}
+          <img src={`/api/${source}/${id}`} alt={label} draggable={false} data-loaded={loaded || undefined} onLoad={() => setLoaded(true)} onError={() => setFailed(true)}
             style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }} />
         )}
       </div>
@@ -106,17 +110,17 @@ export function PhotoViewer({ photos, kinds, initialIndex, onClose, source }: { 
         if (event.key === 'ArrowLeft') { event.preventDefault(); setIndex(current => Math.max(0, current - 1)); }
       }}>
       <div className="review-photo-toolbar">
-        <span aria-live="polite">{kinds ? 'Вложение' : 'Фото'} {index + 1} из {photos.length}</span>
-        <button type="button" ref={closeButton} onClick={onClose} aria-label="Закрыть фотографии">Закрыть ×</button>
+        {photos.length > 1 ? <span className="review-photo-counter" aria-live="polite" aria-label={`${kinds ? 'Вложение' : 'Фото'} ${index + 1} из ${photos.length}`}>{index + 1} / {photos.length}</span> : <span />}
+        <button type="button" className="review-photo-close" ref={closeButton} onClick={onClose} aria-label="Закрыть просмотр"><Icon path="M6 6l12 12M18 6 6 18" /></button>
       </div>
       {kinds?.[index] === 'video'
         ? <VideoCanvas source={source} key={photos[index]} id={photos[index]!} label={`Видео публикации ${index + 1} из ${photos.length}`} />
         : <PhotoCanvas onSwipe={direction => setIndex(current => Math.max(0, Math.min(photos.length - 1, current + direction)))} source={source} key={photos[index]} id={photos[index]!} label={`${kinds?.[index] === 'gif' ? 'GIF' : 'Фотография'} публикации ${index + 1} из ${photos.length}`} />}
-      <div className="review-photo-navigation">
-        <button type="button" disabled={index === 0} onClick={() => setIndex(index - 1)} aria-label="Предыдущая фотография">←</button>
-        <p>Листайте свайпом или стрелками. Увеличивайте двумя пальцами или кнопками. Увеличенное фото можно перемещать.</p>
-        <button type="button" disabled={index === photos.length - 1} onClick={() => setIndex(index + 1)} aria-label="Следующая фотография">→</button>
-      </div>
+      {photos.length > 1 && <>
+        <button type="button" className="review-photo-arrow" data-side="prev" disabled={index === 0} onClick={() => setIndex(index - 1)} aria-label="Предыдущее вложение"><Icon path="m15 6-6 6 6 6" size={26} /></button>
+        <button type="button" className="review-photo-arrow" data-side="next" disabled={index === photos.length - 1} onClick={() => setIndex(index + 1)} aria-label="Следующее вложение"><Icon path="m9 6 6 6-6 6" size={26} /></button>
+        <div className="review-photo-dots" aria-hidden="true">{photos.map((id, dot) => <span key={id} data-active={dot === index || undefined} />)}</div>
+      </>}
     </dialog>
   );
 }

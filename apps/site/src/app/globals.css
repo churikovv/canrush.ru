@@ -2665,19 +2665,46 @@ html[data-cookie-notice="visible"] .brand-footer {
 .review-photo-preview button { min-height: 40px; border: 0; background: none; font: inherit; font-size: .8rem; cursor: pointer; text-decoration: underline; }
 .review-photo-thumbnails button { padding: 0; border: 0; background: transparent; cursor: zoom-in; border-radius: 8px; }
 .review-photo-thumbnails img { display: block; }
-.review-photo-dialog { position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; height: 100dvh; max-height: none; margin: 0; border: 0; padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom)); background: #151719; color: #ffffff; overflow: hidden; }
-.review-photo-dialog[open] { display: flex; flex-direction: column; gap: 8px; }
-.review-photo-dialog::backdrop { background: #151719; }
-.review-photo-dialog button { background: #303438; color: #ffffff; border: 0; border-radius: 8px; min-height: 44px; min-width: 44px; padding: 8px 14px; font: inherit; cursor: pointer; }
-.review-photo-dialog button:disabled { opacity: .4; cursor: default; }
-.review-photo-dialog button:focus-visible { outline: 2px solid var(--theme-line, #ffffff); outline-offset: 2px; }
-.review-photo-toolbar, .review-photo-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; }
-.review-photo-zoom-controls { display: flex; justify-content: center; gap: 8px; flex-shrink: 0; }
-.review-photo-stage { position: relative; display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; overflow: hidden; touch-action: none; user-select: none; cursor: grab; }
+/* Media viewer (reviews, wall, market, admin): full-screen stage, floating glass controls in the site's brand colours. */
+.review-photo-dialog { --viewer-glass: rgb(28 31 36 / .62); --viewer-glass-hover: rgb(48 52 58 / .78); position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; height: 100dvh; max-height: none; margin: 0; border: 0; padding: 0; background: transparent; color: #ffffff; overflow: hidden; }
+.review-photo-dialog[open] { display: block; animation: viewer-in 180ms ease-out; }
+.review-photo-dialog::backdrop { background: rgb(8 10 14 / .94); backdrop-filter: blur(12px); }
+.review-photo-dialog button { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0; border: 1px solid rgb(255 255 255 / .12); border-radius: 999px; background: var(--viewer-glass); color: #ffffff; font: inherit; cursor: pointer; backdrop-filter: blur(16px); transition: background-color 150ms ease-out, opacity 150ms ease-out, transform 150ms ease-out; }
+@media (hover: hover) { .review-photo-dialog button:hover:not(:disabled) { background: var(--viewer-glass-hover); } }
+.review-photo-dialog button:active:not(:disabled) { transform: scale(.94); }
+.review-photo-dialog button:disabled { opacity: 0; pointer-events: none; }
+.review-photo-dialog button:focus-visible { outline: 2px solid var(--color-brand, #006eff); outline-offset: 3px; }
+.review-photo-toolbar { position: absolute; inset: max(16px, env(safe-area-inset-top)) 16px auto; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; pointer-events: none; }
+.review-photo-toolbar > * { pointer-events: auto; }
+.review-photo-counter { padding: 8px 14px; border: 1px solid rgb(255 255 255 / .12); border-radius: 999px; background: var(--viewer-glass); font-size: .875rem; font-weight: 700; font-variant-numeric: tabular-nums; backdrop-filter: blur(16px); }
+.review-photo-close { width: 44px; height: 44px; }
+.review-photo-stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: max(76px, calc(env(safe-area-inset-top) + 64px)) 16px max(104px, calc(env(safe-area-inset-bottom) + 96px)); overflow: hidden; touch-action: none; user-select: none; cursor: grab; }
 .review-photo-stage:active { cursor: grabbing; }
-.review-photo-stage img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: none; flex-shrink: 0; }
-.review-photo-load { position: absolute; padding: 20px; text-align: center; }
-.review-photo-navigation p { text-align: center; font-size: .8rem; max-width: 55ch; color: #d8dcdf; }
+.review-photo-stage img { display: block; max-width: 100%; max-height: 100%; border-radius: 12px; object-fit: contain; pointer-events: none; flex-shrink: 0; opacity: 0; transition: opacity 200ms ease-out; }
+.review-photo-stage img[data-loaded] { opacity: 1; }
+.review-photo-spinner { position: absolute; width: 36px; height: 36px; border: 3px solid rgb(255 255 255 / .2); border-top-color: var(--color-brand, #006eff); border-radius: 50%; animation: viewer-spin 800ms linear infinite; }
+.review-photo-load { position: absolute; max-width: 32ch; padding: 20px; color: rgb(255 255 255 / .8); text-align: center; }
+.review-photo-arrow { position: absolute; top: 50%; z-index: 2; width: 52px; height: 52px; translate: 0 -50%; }
+.review-photo-arrow[data-side="prev"] { left: max(16px, env(safe-area-inset-left)); }
+.review-photo-arrow[data-side="next"] { right: max(16px, env(safe-area-inset-right)); }
+.review-photo-zoom-controls { position: absolute; bottom: max(24px, calc(env(safe-area-inset-bottom) + 16px)); left: 50%; z-index: 2; display: flex; gap: 2px; padding: 4px; border: 1px solid rgb(255 255 255 / .12); border-radius: 999px; background: var(--viewer-glass); translate: -50% 0; backdrop-filter: blur(16px); }
+.review-photo-zoom-controls button { border: 0; background: transparent; backdrop-filter: none; }
+.review-photo-zoom-controls button:disabled { opacity: .35; pointer-events: none; }
+.review-photo-dots { position: absolute; bottom: max(84px, calc(env(safe-area-inset-bottom) + 76px)); left: 50%; z-index: 1; display: flex; gap: 6px; translate: -50% 0; pointer-events: none; }
+.review-photo-dots span { width: 6px; height: 6px; border-radius: 3px; background: rgb(255 255 255 / .35); transition: width 200ms ease-out, background-color 200ms ease-out; }
+.review-photo-dots span[data-active] { width: 18px; background: var(--color-brand, #006eff); }
+/* Videos keep their native controls, so the stage stays clear of the zoom pill area only. */
+.review-video-stage { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px)); }
+@media (max-width: 639px) {
+  .review-photo-arrow { width: 44px; height: 44px; }
+  .review-photo-stage { padding-inline: 8px; }
+}
+@keyframes viewer-in { from { opacity: 0; } }
+@keyframes viewer-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .review-photo-dialog[open], .review-photo-spinner { animation: none; }
+  .review-photo-dialog button, .review-photo-stage img, .review-photo-dots span { transition: none; }
+}
 .profile-reviews-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .875rem; }
 .profile-reviews-pagination a { padding: 12px 0; color: var(--color-brand-deep); }
 /* Community profiles retain the CanRush shell and use content-led cards. */

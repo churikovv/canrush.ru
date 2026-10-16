@@ -334,11 +334,16 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
     align-items: flex-start;
   }
 
+  /* Save and screenshot stay together; only the destructive delete is pushed to the far edge. */
   .tier-editor-primary-controls {
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    gap: 24px;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .tier-editor-primary-controls > .tier-delete-action {
+    margin-left: auto;
   }
 
   .tier-delete-action {
