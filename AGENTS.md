@@ -162,6 +162,13 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
 - Вкладки разделов — `src/components/section-tabs.tsx`: `MarketTabs` (Все объявления, Мои объявления, Заказы → `/messages`) и `StoreTabs` (Цены → `/prices`, Магазины и Мои магазины → `/market/stores`). URL не менялись; `/messages*` подсвечивают раздел `market`, `/market/stores*` — раздел `prices`. Приватные вкладки скрыты для гостей.
 - Браузерная проверка: `node apps/site/scripts/market-smoke.mjs`. Требует сборку и отдельный сервер на `localhost:3100` с `DATABASE_URL=postgresql://localhost:5432/canrush_site_test`, `BETTER_AUTH_URL=http://localhost:3100`, `BETTER_AUTH_SECRET=canrush-market-browser-test-secret-32-bytes` (фиктивный секрет только тестового сервера). Создаёт и очищает только собственные тестовые аккаунты, не отправляет письма.
 
+## Магазины
+
+- `/market/stores` (`src/lib/stores.ts`, `store-fields.ts`, `store-catalog.ts`), публичная страница — `/market/stores/[id]` (`getVisibleStore`: опубликован, или автор, или админ). Миграции `0036`, `0037`, `0058_store_locations.sql`.
+- Точку задаёт адрес: форма геокодирует его в браузере через `ymaps.geocode` того же Maps JS API и ключа `YANDEX_MAPS_API_KEY` (без серверного секрета и правок CSP). Координаты необязательны; поставленные вручную (клик по карте/поля) приоритетнее адреса — `locationSource` = `manual`/`geocoded`, у магазина без точки все три поля `null` (check `market_store_location`). Ключу нужен доступ к геокодированию, иначе форма предлагает поставить точку вручную.
+- Станции метро, МЦК и МЦД с координатами — статичный `src/lib/stores/metro.json` из открытого `api.hh.ru/metro`; обновление `npm -w apps/site run metro:update`. id станций хранятся в БД: скрипт сохраняет пропавшие из hh.ru станции. Если станция не выбрана, сервер подставляет ближайшую в пределах `NEAREST_METRO_KM`.
+- Напиток магазина — `{brand, flavor}` группы каталога (имя и ссылку на карточку сервер проверяет по `storeDrinkOptions`, неизвестная связь становится своим напитком) или свой напиток только с `name`.
+
 ## Лента
 
 - `/feed` — все стены одной лентой: те же записи `profileComment`, без отдельной таблицы и копий. Запись из ленты пишется на стену автора (`profileId = userId`), запись на любой стене сразу видна в ленте; удаление, реакции и комментарии общие. Не заводи для ленты отдельное хранилище — связь держится на том, что это одна строка.

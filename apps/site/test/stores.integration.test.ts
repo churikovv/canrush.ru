@@ -5,9 +5,10 @@ const url=process.env.TEST_DATABASE_URL??'postgresql://localhost:5432/canrush_si
 if(new URL(url).pathname!=='/canrush_site_test')throw new Error('Test DB only');
 const pool=new Pool({connectionString:url,max:3});vi.mock('../src/db/pool',()=>({getPool:()=>pool}));
 const api=await import('../src/lib/stores');
+import type { StoreInput } from '../src/lib/store-fields';
 const [owner,admin,stranger]=[randomUUID(),randomUUID(),randomUUID()] as [string,string,string];
 let id:string;
-const input={name:'Test '+randomUUID(),city:'moscow',address:'Test 1',latitude:55.75,longitude:37.61,metro:null,description:'',catalog:[]};
+const input:StoreInput={name:'Test '+randomUUID(),city:'moscow',address:'Test 1',latitude:55.75,longitude:37.61,locationSource:'manual',metro:null,description:'',catalog:[]};
 beforeAll(async()=>{for(const uid of [owner,admin,stranger])await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt") values($1,'Store test',$2,true,now(),now())`,[uid,uid+'@example.com']);await pool.query('insert into "siteAdmin"(email) values($1)',[admin+'@example.com']);});
 afterAll(async()=>{await pool.query('delete from "siteAdmin" where email=$1',[admin+'@example.com']);await pool.query('delete from "user" where id=any($1::text[])',[[owner,admin,stranger]]);await pool.end();});
 it('keeps pending stores private and enforces ownership, duplicates and cooldown',async()=>{
@@ -54,4 +55,22 @@ it('keeps photos private until moderation and validates retained ownership atomi
  expect((await api.getStore(id))?.photos).toEqual([photoId]);
  await api.saveStore(owner,input,id,{retained:[],photos:[]});
  expect(await api.getStorePhoto(photoId,owner)).toBeNull();
+});
+it('stores an address-only point, its source and catalog links; the page follows moderation visibility',async()=>{
+ const catalog=[{name:'Monster · Ultra White',price:15900,availability:'available' as const,brand:'Monster',flavor:'monster_ultra_white'},{name:'Местный энергетик',price:null,availability:'unknown' as const}];
+ await api.saveStore(owner,{...input,latitude:null,longitude:null,locationSource:null,catalog},id);
+ let row=(await api.getStore(id))!;
+ expect([row.latitude,row.longitude,row.locationSource]).toEqual([null,null,null]);
+ expect(row.catalog).toEqual(catalog);
+ expect(await api.getVisibleStore(id,null)).toBeNull();
+ expect(await api.getVisibleStore(id,stranger)).toBeNull();
+ expect((await api.getVisibleStore(id,owner))?.id).toBe(id);
+ expect((await api.getVisibleStore(id,admin))?.id).toBe(id);
+ await api.moderateStore(admin,id,'published','',row.updatedAt.toISOString());
+ expect((await api.getVisibleStore(id,null))?.id).toBe(id);
+ await api.saveStore(owner,{...input,locationSource:'geocoded'},id);
+ row=(await api.getStore(id))!;
+ expect([row.latitude,row.longitude,row.locationSource]).toEqual([55.75,37.61,'geocoded']);
+ await expect(pool.query('update "marketStore" set "locationSource"=null where id=$1',[id])).rejects.toThrow();
+ expect(await api.getVisibleStore('not-a-uuid',owner)).toBeNull();
 });

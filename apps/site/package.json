@@ -13,7 +13,8 @@
     "db:migrate": "node ./scripts/migrate.mjs",
     "test": "vitest run",
     "test:auth": "vitest run --config vitest.integration.config.ts",
-    "telegram:setup": "node ./scripts/telegram-setup.mjs"
+    "telegram:setup": "node ./scripts/telegram-setup.mjs",
+    "metro:update": "node ./scripts/update-metro.mjs"
   },
   "dependencies": {
     "@canrush/shared": "^0.1.0",

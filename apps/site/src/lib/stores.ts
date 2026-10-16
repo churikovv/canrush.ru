@@ -13,6 +13,13 @@ export async function getStore(id: string) {
   if(!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(id))return null;
   return (await getPool().query<Store>('select s.*, array(select p.id::text from "storePhoto" p where p."storeId"=s.id order by p.position) as photos from "marketStore" s where s.id=$1',[id])).rows[0]??null;
 }
+/** Public page of a store: published (author not blocked), or the author's own, or for site admins. */
+export async function getVisibleStore(id: string, userId: string | null) {
+  if(!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(id))return null;
+  return (await getPool().query<Store>(`select s.*, array(select p.id::text from "storePhoto" p where p."storeId"=s.id order by p.position) as photos from "marketStore" s where s.id=$1 and (
+   (s.status='published' and not exists(select 1 from "userBlock" b where b."userId"=s."ownerId")) or s."ownerId"=$2
+   or exists(select 1 from "user" u join "siteAdmin" a on lower(u.email)=a.email where u.id=$2))`,[id,userId])).rows[0]??null;
+}
 export async function saveStore(userId: string, input: StoreInput, id?: string, photoChanges?: {retained: string[]; photos: PreparedReviewPhoto[]}) {
   const db=await getPool().connect();
   try {
@@ -23,8 +30,8 @@ export async function saveStore(userId: string, input: StoreInput, id?: string, 
       const counts=await db.query<{count:number;recent:boolean}>(`select count(*) filter(where status='pending')::int as count,coalesce(bool_or("createdAt">now()-interval '60 seconds'),false) as recent from "marketStore" where "ownerId"=$1`,[userId]);
       if(counts.rows[0]!.count>=10 || counts.rows[0]!.recent)throw new StoreError('Подождите минуту между заявками. Одновременно можно отправить до 10 магазинов на проверку.');
     }
-    const values=[userId,input.name,input.city,input.address,input.latitude,input.longitude,input.metro,input.description,JSON.stringify(input.catalog)];
-    const result = id ? await db.query(`update "marketStore" set name=$2,city=$3,address=$4,latitude=$5,longitude=$6,metro=$7,description=$8,catalog=$9,status='pending',"moderationNote"='',"reviewedAt"=null,"reviewedBy"=null,"updatedAt"=clock_timestamp() where "ownerId"=$1 and id=$10 returning id`,[...values,id]) : await db.query(`insert into "marketStore"("ownerId",name,city,address,latitude,longitude,metro,description,catalog) values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id`,values);
+    const values=[userId,input.name,input.city,input.address,input.latitude,input.longitude,input.metro,input.description,JSON.stringify(input.catalog),input.locationSource];
+    const result = id ? await db.query(`update "marketStore" set name=$2,city=$3,address=$4,latitude=$5,longitude=$6,metro=$7,description=$8,catalog=$9,"locationSource"=$10,status='pending',"moderationNote"='',"reviewedAt"=null,"reviewedBy"=null,"updatedAt"=clock_timestamp() where "ownerId"=$1 and id=$11 returning id`,[...values,id]) : await db.query(`insert into "marketStore"("ownerId",name,city,address,latitude,longitude,metro,description,catalog,"locationSource") values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,values);
     if(!result.rowCount)throw new StoreError('Магазин недоступен для редактирования.');
     const storeId=result.rows[0].id as string;
     if(photoChanges){
