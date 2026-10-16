@@ -26,6 +26,8 @@ export interface CreateAuthOptions {
   sendMagicLink?: MagicLinkSender;
   /** Overrides TELEGRAM_BOT_TOKEN; `null` disables Telegram sign-in. */
   telegramBotToken?: string | null;
+  /** Overrides the bot username from TELEGRAM_MINI_APP_URL; `null` disables website sign-in via the bot. */
+  telegramBotUsername?: string | null;
 }
 
 function requestOrigin(value: string | null): string | undefined {
@@ -166,7 +168,7 @@ export function createAuth(options: CreateAuthOptions = {}) {
         storeToken: 'hashed',
         sendMagicLink: async ({ email, token }) => sendMagicLink(email, token),
       }),
-      telegramMiniApp({ botToken: telegramBotToken, trustedOrigin: env.authUrl }),
+      telegramMiniApp({ botToken: telegramBotToken, botUsername: options.telegramBotUsername !== undefined ? options.telegramBotUsername : (getTelegramEnv()?.botUsername ?? null), trustedOrigin: env.authUrl }),
     ],
   });
 }

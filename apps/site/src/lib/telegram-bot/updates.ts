@@ -3,6 +3,7 @@ import { CITIES, DEFAULT_CITY, findCity, type CityId } from '@canrush/shared';
 import type { Pool } from 'pg';
 import { callTelegram, type InlineKeyboard } from './api';
 import { searchProducts } from './catalog';
+import { askLoginConfirmation, decideLogin } from './login';
 import { TELEGRAM_BOT_OPTIONS, type TelegramBotColumn } from './settings';
 import { escapeHtml, openButton, productCard, productName, productSummary, productUrl, truncate } from './format';
 
@@ -13,7 +14,7 @@ export interface BotContext {
   botUsername: string;
 }
 
-interface TelegramUserRef { id: number }
+interface TelegramUserRef { id: number; first_name?: string; last_name?: string; username?: string }
 interface Chat { id: number; type: string }
 interface Message { message_id: number; chat: Chat; from?: TelegramUserRef; text?: string }
 interface CallbackQuery { id: string; from: TelegramUserRef; data?: string; message?: Message }
@@ -114,6 +115,8 @@ async function handleMessage(ctx: BotContext, message: Message): Promise<void> {
 
   if (command === 'start') {
     await startChat(ctx, message.from.id, chatId);
+    const payload = text.split(/\s+/u)[1] ?? '';
+    if (payload.startsWith('login_') && await askLoginConfirmation(ctx.pool, payload.slice('login_'.length), (body, keyboard) => send(ctx, chatId, body, keyboard))) return;
     const state = await chatState(ctx.pool, message.from.id);
     await send(ctx, chatId, welcomeText(ctx, state), state.linked ? [] : [[openButton('Открыть CanRush', ctx.siteUrl)]]);
     if (!state.settings?.city) await send(ctx, chatId, 'Выберите город, чтобы цены и акции были местными:', cityKeyboard());
@@ -156,7 +159,9 @@ async function handleCallback(ctx: BotContext, query: CallbackQuery): Promise<vo
   const data = query.data ?? '';
   const message = query.message;
   let notice: string | undefined;
-  if (message && data.startsWith('t:')) {
+  if (message && data.startsWith('lg:')) {
+    notice = (await decideLogin(ctx.pool, ctx.token, query.from, data, message.chat.id, message.message_id)) ?? undefined;
+  } else if (message && data.startsWith('t:')) {
     const code = data.slice(2);
     const toggle = Object.hasOwn(TOGGLES, code) ? TOGGLES[code as ToggleCode] : undefined;
     if (toggle) {

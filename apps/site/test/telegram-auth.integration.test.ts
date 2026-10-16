@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
 
 const BASE_URL = 'http://localhost:3000';
@@ -13,7 +13,9 @@ process.env.BETTER_AUTH_SECRET = 'canrush-integration-test-secret-32-bytes-minim
 const { createAuth } = await import('../src/lib/auth.js');
 const { telegramLinkIdentifier } = await import('../src/lib/telegram-auth.js');
 const pool = new Pool({ connectionString: DATABASE_URL, max: 2, allowExitOnIdle: true });
-const auth = createAuth({ database: pool, sendMagicLink: async () => {}, telegramBotToken: BOT_TOKEN });
+const auth = createAuth({ database: pool, sendMagicLink: async () => {}, telegramBotToken: BOT_TOKEN, telegramBotUsername: 'canrush_test_bot' });
+const { decideLogin } = await import('../src/lib/telegram-bot/login.js');
+vi.stubGlobal('fetch', async () => Response.json({ ok: true, result: {} }));
 const runId = randomUUID().replaceAll('-', '').slice(0, 12);
 // Unique Telegram ids per run so parallel or repeated runs never collide.
 const baseId = 9_000_000_000 + Number.parseInt(runId.slice(0, 8), 16) % 1_000_000_000;
@@ -106,5 +108,58 @@ describe.sequential('Telegram Mini App sign-in', () => {
     });
     // Telegram already used by another CanRush account.
     expect((await signIn({ initData: initData(baseId, `link_${secondCode}`) })).status).toBe(409);
+  });
+});
+
+describe.sequential('Telegram website sign-in through the bot', () => {
+  function authRequest(path: string, body: unknown, cookie?: string): Promise<Response> {
+    ipCounter += 1;
+    return auth.handler(new Request(`${BASE_URL}/api/auth${path}`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: BASE_URL,
+        'sec-fetch-site': 'same-origin',
+        'x-forwarded-for': `2001:db8:7e1f:${ipCounter.toString(16)}::${runId.slice(0, 4)}`,
+        ...(cookie ? { cookie } : {}),
+      },
+      body: JSON.stringify(body),
+    }));
+  }
+
+  async function start() {
+    const response = await authRequest('/telegram/login/start', {});
+    expect(response.status).toBe(200);
+    const data = (await response.json()) as { url: string; token: string };
+    const cookie = response.headers.getSetCookie().map(value => value.split(';', 1)[0]).join('; ');
+    const hash = (await import('../src/lib/telegram-auth.js')).telegramLoginHash(data.token);
+    return { ...data, cookie, hash };
+  }
+
+  it('signs the browser in after the member confirms in Telegram, once', async () => {
+    const login = await start();
+    expect(login.url).toBe(`https://t.me/canrush_test_bot?start=login_${login.token}`);
+    expect(login.cookie).toContain('telegram_login');
+
+    expect(await (await authRequest('/telegram/login/poll', { token: login.token }, login.cookie)).json()).toEqual({ status: 'pending' });
+    expect((await authRequest('/telegram/login/poll', { token: login.token })).status).toBe(403);
+
+    const telegramId = baseId + 5;
+    await decideLogin(pool, '1:test', { id: telegramId, first_name: 'Бот', username: `w${runId}` }, `lg:y:${login.hash}`, telegramId, 1);
+    const signedIn = await authRequest('/telegram/login/poll', { token: login.token }, login.cookie);
+    expect(await signedIn.clone().json()).toEqual({ status: 'signed-in', created: true });
+    const session = signedIn.headers.getSetCookie().map(value => value.split(';', 1)[0]).find(value => value?.includes('session_token'));
+    expect((await auth.api.getSession({ headers: new Headers({ cookie: session ?? '' }) }))?.user.email).toBe(`w${runId}@${telegramId}.telegram.invalid`);
+    createdEmails.push(`w${runId}@${telegramId}.telegram.invalid`);
+
+    expect(await (await authRequest('/telegram/login/poll', { token: login.token }, login.cookie)).json()).toEqual({ status: 'expired' });
+  });
+
+  it('reports a rejected sign-in without creating a session', async () => {
+    const login = await start();
+    await decideLogin(pool, '1:test', { id: baseId + 6, first_name: 'Нет' }, `lg:n:${login.hash}`, baseId + 6, 1);
+    const response = await authRequest('/telegram/login/poll', { token: login.token }, login.cookie);
+    expect(await response.clone().json()).toEqual({ status: 'rejected' });
+    expect(response.headers.getSetCookie().some(value => value.includes('session_token='))).toBe(false);
   });
 });

@@ -70,26 +70,99 @@
     font-size: 2.5rem;
   }
 }
-@media (min-width: 960px) {
-  .sign-in-layout {
-    display: grid;
-    width: 100%;
-    max-width: 1040px;
-    align-items: center;
-    gap: clamp(40px, 5vw, 72px);
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
-  }
+.sign-in-card {
+  display: flex;
+  max-width: 420px;
+  flex-direction: column;
+  gap: 20px;
+}
+.sign-in-card h1 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 2rem;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+.sign-in-card .auth-form {
+  gap: 12px;
+}
+.sign-in-email-button {
+  width: 100%;
+}
+.sign-in-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  color: var(--color-muted-strong);
+  font-size: 0.8125rem;
+}
+.sign-in-divider::before,
+.sign-in-divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--theme-line, var(--color-control));
+  content: "";
+}
+.telegram-button {
+  display: inline-flex;
+  width: 100%;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 16px;
+  background: #0b7bc2;
+  color: #ffffff;
+  padding: 14px 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background-color var(--motion-fast) ease-out;
+}
+.telegram-button:hover:not(:disabled) {
+  background: #0a6aa8;
+}
+.telegram-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
 }
 .telegram-sign-in {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
-.telegram-sign-in h2,
 .telegram-sign-in p {
   margin: 0;
 }
-/* Inside Telegram the magic link would open in an external browser, so the email form gives way. */
-.sign-in-layout:has(.telegram-sign-in) .auth-form {
+.telegram-sign-in-waiting {
+  align-items: center;
+  text-align: center;
+}
+.telegram-sign-in-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--theme-line, var(--color-control));
+  border-top-color: #0b7bc2;
+  border-radius: 50%;
+  animation: telegram-sign-in-spin 0.9s linear infinite;
+}
+@keyframes telegram-sign-in-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .telegram-sign-in-spinner { animation-duration: 3s; }
+}
+.telegram-sign-in-cancel {
+  border: 0;
+  background: none;
+  color: var(--color-muted-strong);
+  padding: 8px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* Inside Telegram the magic link would open in an external browser, so only Telegram sign-in stays. */
+html[data-telegram-app] .sign-in-card :is(.sign-in-divider, .sign-in-email) {
   display: none;
 }

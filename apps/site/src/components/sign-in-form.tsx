@@ -1,14 +1,12 @@
 'use client';
 
 import { useId, useState, type FormEvent } from 'react';
-import Link from '@/components/navigation-progress';
 import { authClient } from '@/lib/auth-client';
 
 type FormState = 'idle' | 'sending' | 'sent';
 
 export function SignInForm() {
   const emailId = useId();
-  const helpId = useId();
   const errorId = useId();
   const [email, setEmail] = useState('');
   const [formState, setFormState] = useState<FormState>('idle');
@@ -56,7 +54,7 @@ export function SignInForm() {
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
       <div className="field-group">
-        <label htmlFor={emailId}>Email</label>
+        <label htmlFor={emailId} className="sr-only">Email</label>
         <input
           id={emailId}
           name="email"
@@ -69,27 +67,20 @@ export function SignInForm() {
           maxLength={254}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          aria-describedby={`${helpId}${error ? ` ${errorId}` : ''}`}
+          aria-describedby={error ? errorId : undefined}
           aria-invalid={Boolean(error)}
           placeholder="you@example.com"
           disabled={formState === 'sending'}
         />
-        <p id={helpId} className="field-help">
-          При первом входе аккаунт создастся автоматически.
-        </p>
         {error ? (
           <p id={errorId} className="field-error" role="alert">
             {error}
           </p>
         ) : null}
       </div>
-      <button className="primary-button" type="submit" disabled={formState === 'sending'}>
-        {formState === 'sending' ? 'Отправляем…' : 'Получить ссылку для входа'}
+      <button className="secondary-button sign-in-email-button" type="submit" disabled={formState === 'sending'}>
+        {formState === 'sending' ? 'Отправляем…' : 'Получить ссылку'}
       </button>
-      <p className="privacy-note">
-        Нажимая кнопку, вы принимаете <Link href="/terms">Пользовательское соглашение</Link>. Порядок
-        обработки данных описан в <Link href="/privacy">Политике</Link>.
-      </p>
     </form>
   );
 }
