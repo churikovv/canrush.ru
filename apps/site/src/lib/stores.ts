@@ -9,6 +9,15 @@ export async function listStores(city: string, query: string, page: number, owne
     order by s."updatedAt" desc,s.id limit 25 offset $5`,[city,query,ownerId??null,pending,(page-1)*24]);
   return {items:result.rows.slice(0,24),hasMore:result.rows.length>24};
 }
+export interface StorePoint { id: string; name: string; city: string; address: string; metro: string | null; latitude: number; longitude: number; drinks: number }
+/** Published stores of a city that have a point, for the home page map. */
+export async function listStorePoints(city: string, limit = 300): Promise<StorePoint[]> {
+  const { rows } = await getPool().query<StorePoint>(`select s.id, s.name, s.city, s.address, s.metro, s.latitude, s.longitude, jsonb_array_length(s.catalog)::int as drinks
+    from "marketStore" s where s.city=$1 and s.status='published' and s.latitude is not null and s.longitude is not null
+      and not exists(select 1 from "userBlock" b where b."userId"=s."ownerId")
+    order by s."updatedAt" desc, s.id limit $2`, [city, limit]);
+  return rows.map(row => ({ ...row, latitude: Number(row.latitude), longitude: Number(row.longitude) }));
+}
 export async function getStore(id: string) {
   if(!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(id))return null;
   return (await getPool().query<Store>('select s.*, array(select p.id::text from "storePhoto" p where p."storeId"=s.id order by p.position) as photos from "marketStore" s where s.id=$1',[id])).rows[0]??null;

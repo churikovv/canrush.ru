@@ -193,9 +193,6 @@
 .store-stock-list li { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--color-control); }
 .store-stock-list small { display: block; color: var(--color-muted-strong); margin-top: 4px; }
 .store-stock-list strong { text-align: right; }
-.store-map-shell { position: relative; }
-.store-map { height: 480px; width: 100%; border-radius: 12px; overflow: hidden; background: var(--color-subtle); }
-.store-map-message { padding: 24px; border: 1px solid var(--color-control); border-radius: 12px; background: var(--theme-panel,#fff); line-height: 1.6; }
 /* Store editor: numbered step cards, then a submit bar. */
 .store-form { max-width: 960px; margin-top: 24px; }
 .store-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 16px; }
