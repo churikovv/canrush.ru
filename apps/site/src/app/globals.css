@@ -3359,10 +3359,27 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
 .profile-tag[data-tag=friend]::before { content: ''; flex: none; width: 1.35em; height: .8em; background: radial-gradient(.36em circle at 27% 55%, #1b1b1b 0 34%, #fff 38% 80%, #3f7d23 84% 97%, transparent 100%), radial-gradient(.36em circle at 73% 55%, #1b1b1b 0 34%, #fff 38% 80%, #3f7d23 84% 97%, transparent 100%); animation: friend-blink 3.6s ease-in-out infinite; }
 @keyframes friend-hop { 0%,70%,94%,100% { transform: none; } 78% { transform: translateY(-3px); } 86% { transform: translateY(0) scaleY(.94); } 90% { transform: translateY(-1px); } }
 @keyframes friend-blink { 0%,40%,46%,100% { transform: none; } 43% { transform: scaleY(.1); } }
+/* Drink calendar tags: a sipping can, then flames that grow hotter with the streak (orange → blue → legendary). */
+.profile-tag:is([data-tag=drink-start],[data-tag=streak-7],[data-tag=streak-14],[data-tag=streak-30]) { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; --tag-flame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 22'%3E%3Cpath d='M9 0c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1-9Z'/%3E%3C/svg%3E"); }
+.profile-tag:is([data-tag=drink-start],[data-tag=streak-7],[data-tag=streak-14],[data-tag=streak-30])::before { content: ''; flex: none; width: 1em; height: 1.15em; -webkit-mask: var(--tag-icon, var(--tag-flame)) center / contain no-repeat; mask: var(--tag-icon, var(--tag-flame)) center / contain no-repeat; transform-origin: 50% 100%; }
+.profile-tag:is([data-tag=streak-14],[data-tag=streak-30])::after { content: ''; position: absolute; z-index: -1; pointer-events: none; }
+.profile-tag[data-tag=drink-start] { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 24'%3E%3Cpath d='M4 0h8l1 2v1l1 1v18l-2 2H4l-2-2V4l1-1V2Z'/%3E%3C/svg%3E"); color: #003f8f; background: linear-gradient(120deg, #e3efff, #cfe3ff); box-shadow: inset 0 0 0 1px #a8caff; }
+.profile-tag[data-tag=drink-start]::before { width: .7em; background: linear-gradient(180deg, #3ddc97 0 22%, #0a7a4d 22% 30%, #3ddc97 30%); animation: drink-start-sip 4.4s ease-in-out infinite; }
+@keyframes drink-start-sip { 0%,62%,100% { transform: none; } 70%,84% { transform: translate(1px,-2px) rotate(-38deg); } }
+.profile-tag[data-tag=streak-7] { color: #7a2e00; background: linear-gradient(120deg, #fff1de, #ffd2a6); box-shadow: inset 0 0 0 1px #ffb066; }
+.profile-tag[data-tag=streak-7]::before { background: linear-gradient(0deg, #ff3d00, #ff9f1a 60%, #ffd76a); animation: streak-flicker 1.6s ease-in-out infinite; }
+@keyframes streak-flicker { 0%,100% { transform: scale(1,1) skewX(0); } 25% { transform: scale(.92,1.08) skewX(-4deg); } 50% { transform: scale(1.05,.95) skewX(3deg); } 75% { transform: scale(.96,1.06) skewX(-2deg); } }
+.profile-tag[data-tag=streak-14],.profile-tag[data-tag=streak-14]:hover { color: #e8f6ff; text-shadow: 0 0 6px rgb(90 190 255 / .8); background: linear-gradient(0deg, #0a3fa8, #071c4d 60%, #050d24); box-shadow: inset 0 0 0 1px rgb(110 200 255 / .5), 0 0 8px rgb(0 140 255 / .45); animation: streak-14-heat 1.8s ease-in-out infinite alternate; }
+.profile-tag[data-tag=streak-14]::before { background: linear-gradient(0deg, #006eff, #5ac8ff 55%, #e6f7ff); animation: streak-flicker 1.2s ease-in-out infinite; }
+.profile-tag[data-tag=streak-14]::after { inset: 0 0 -100% 0; background: radial-gradient(1.3px 1.3px at 16% 40%, #a8e4ff 98%, transparent), radial-gradient(1px 1px at 42% 76%, #fff 98%, transparent), radial-gradient(1.5px 1.5px at 70% 24%, #6fd0ff 98%, transparent), radial-gradient(1px 1px at 88% 62%, #d6f2ff 98%, transparent); background-size: 100% 50%; animation: burner-sparks 1.6s linear infinite; }
+@keyframes streak-14-heat { to { box-shadow: inset 0 0 0 1px rgb(150 220 255 / .85), 0 0 14px rgb(0 160 255 / .7); } }
+.profile-tag[data-tag=streak-30],.profile-tag[data-tag=streak-30]:hover { color: #fff; font-weight: 800; letter-spacing: .03em; text-shadow: 0 1px 2px rgb(40 0 60 / .55); background: linear-gradient(110deg, #5b21b6, #c026d3, #ff2d8a, #ff7a18, #ffcf3a, #ff2d8a, #5b21b6) 0 50% / 300% 100%; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .5), 0 0 10px rgb(255 45 138 / .5), 0 0 20px rgb(139 92 246 / .35); animation: top-tag-flow 5s linear infinite, top-tag-glow 2.4s ease-in-out infinite; }
+.profile-tag[data-tag=streak-30]::before { background: linear-gradient(0deg, #fff3b0, #fff); animation: streak-flicker 1s ease-in-out infinite; }
+.profile-tag[data-tag=streak-30]::after { inset: -2px; background: linear-gradient(105deg, transparent 32%, rgb(255 255 255 / .85) 48%, transparent 62%); transform: translateX(-130%); animation: top-tag-shine 3s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .profile-tag[data-tag],.profile-tag[data-tag]:hover,.profile-tag[data-tag]::before,.profile-tag[data-tag]::after { animation: none; }
   .profile-tag[data-tag=burner]::before { transform: scaleY(.65); }
-  .profile-tag:is([data-tag=burner],[data-tag=six-seven],[data-tag=admin],[data-tag=collector])::after { display: none; }
+  .profile-tag:is([data-tag=burner],[data-tag=six-seven],[data-tag=admin],[data-tag=collector],[data-tag=streak-14],[data-tag=streak-30])::after { display: none; }
 }
 /* Experience panel: tier-tinted glow, a level bar with both ends, the rank road and quick stats. */
 .experience-panel { isolation: isolate; }

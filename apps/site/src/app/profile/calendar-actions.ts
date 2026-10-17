@@ -1,0 +1,37 @@
+'use server';
+
+import { headers } from 'next/headers';
+import { revalidatePath } from 'next/cache';
+import { auth } from '@/lib/auth';
+import { addDrink, deleteDrink } from '@/lib/drink-calendar';
+import { DrinkCalendarError, days, moscowDay, parseDrinkForm } from '@/lib/drink-calendar-fields';
+import { isUserBlocked } from '@/lib/moderation';
+import { ensureOwnProfile } from '@/lib/profile';
+
+export interface DrinkActionState { error?: string; success?: string; at?: number }
+
+export async function addDrinkAction(_state: DrinkActionState, form: FormData): Promise<DrinkActionState> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { error: 'Войдите в аккаунт и повторите действие.' };
+  try {
+    if (await isUserBlocked(session.user.id)) return { error: 'Записи для этого аккаунта ограничены.' };
+    await ensureOwnProfile(session.user);
+    const { streak } = await addDrink(session.user.id, parseDrinkForm(form, moscowDay()));
+    revalidatePath('/profile', 'layout');
+    return { success: streak > 1 ? `Отмечено! Серия — ${days(streak)} подряд.` : 'Отмечено! Птица довольна.', at: Date.now() };
+  } catch (error) {
+    return { error: error instanceof DrinkCalendarError ? error.message : 'Не удалось сохранить запись. Попробуйте ещё раз.', at: Date.now() };
+  }
+}
+
+export async function deleteDrinkAction(id: string): Promise<{ error?: string }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { error: 'Войдите в аккаунт и повторите действие.' };
+  try {
+    await deleteDrink(session.user.id, typeof id === 'string' ? id : '');
+    revalidatePath('/profile', 'layout');
+    return {};
+  } catch (error) {
+    return { error: error instanceof DrinkCalendarError ? error.message : 'Не удалось удалить запись.' };
+  }
+}

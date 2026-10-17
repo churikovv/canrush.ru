@@ -2,7 +2,7 @@ export const ACHIEVEMENT_METRICS = [
   'listings', 'sales', 'reviews', 'detailedReviews', 'photoReviews', 'reviewLikes', 'brands', 'favorites', 'favoriteBrands',
   'tierLists', 'tierListLikes', 'friends', 'followers', 'whiteMonster', 'whiteMonsterFavorite', 'flash', 'flashDetailed',
   'burn', 'burnDetailed', 'burnFavorites', 'adrenaline', 'adrenalineDetailed', 'adrenalineFavorites',
-  'admin', 'telegram', 'monthlyTop',
+  'admin', 'telegram', 'monthlyTop', 'drinkLogs', 'drinkStreak',
 ] as const;
 export type AchievementMetric = typeof ACHIEVEMENT_METRICS[number];
 export type AchievementProgress = Record<AchievementMetric, number>;
@@ -26,6 +26,8 @@ export interface ProfileAchievement { key: string; label: string; rarity: Achiev
 export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
   { key: 'top', label: 'ТОП', rarity: 'legendary', description: 'Победить в гонке месяца', steps: [
     { metric: 'monthlyTop', goal: 1, label: 'Попасть в топ-3 рейтинга месяца' }] },
+  { key: 'streak-30', label: 'Серия 30', rarity: 'legendary', description: 'Месяц без единого пропуска', steps: [
+    { metric: 'drinkStreak', goal: 30, label: 'Отмечать энергетик в календаре 30 дней подряд' }] },
   { key: 'six-seven', label: 'Six Seven', rarity: 'legendary', description: 'Путь настоящего дегустатора', steps: [
     { metric: 'reviews', goal: 67, label: 'Оценить 67 напитков' },
     { metric: 'detailedReviews', goal: 20, label: `Написать 20 развёрнутых отзывов (от ${DETAILED_REVIEW_CHARS} символов)` },
@@ -38,9 +40,13 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
     { metric: 'adrenaline', goal: 5, label: 'Оценить 5 вкусов Adrenaline или Adrenaline Rush' },
     { metric: 'adrenalineDetailed', goal: 3, label: `Написать 3 развёрнутых отзыва на Adrenaline (от ${DETAILED_REVIEW_CHARS} символов)` },
     { metric: 'adrenalineFavorites', goal: 1, label: 'Добавить Adrenaline в избранное' }] },
+  { key: 'streak-14', label: 'Серия 14', rarity: 'epic', description: 'Две недели на заряде', steps: [
+    { metric: 'drinkStreak', goal: 14, label: 'Отмечать энергетик в календаре 14 дней подряд' }] },
   { key: 'deadinside', label: 'Deadinside', rarity: 'epic', description: 'Тирлисты, о которых говорят', steps: [
     { metric: 'tierLists', goal: 5, label: 'Опубликовать 5 тирлистов' },
     { metric: 'tierListLikes', goal: 10, label: 'Собрать 10 лайков на тирлистах' }] },
+  { key: 'streak-7', label: 'Серия 7', rarity: 'rare', description: 'Неделя, когда птица довольна', steps: [
+    { metric: 'drinkStreak', goal: 7, label: 'Отмечать энергетик в календаре 7 дней подряд' }] },
   { key: 'seller', label: 'Селлер', rarity: 'rare', description: 'Довести сделки до конца', steps: [
     { metric: 'listings', goal: 1, label: 'Опубликовать товар в маркете' },
     { metric: 'sales', goal: 3, label: 'Завершить 3 продажи' }] },
@@ -67,6 +73,8 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
     { metric: 'reviews', goal: 1, label: 'Оставить первый отзыв' }] },
   { key: 'three', label: ':3', rarity: 'common', description: 'Втянуться', steps: [
     { metric: 'reviews', goal: 3, label: 'Оценить 3 напитка' }] },
+  { key: 'drink-start', label: 'Первый глоток', rarity: 'common', description: 'Завести календарь выпитого', steps: [
+    { metric: 'drinkLogs', goal: 1, label: 'Отметить первый энергетик в календаре' }] },
   { key: 'kitty', label: 'Котик', rarity: 'common', description: 'Начать собирать любимое', steps: [
     { metric: 'favorites', goal: 5, label: 'Добавить 5 напитков в избранное' }] },
   { key: 'telegram', label: 'Телега', rarity: 'common', description: 'Связь с автором', steps: [
@@ -113,7 +121,7 @@ export function profilePageNumber(value: unknown): number {
   return typeof page === 'number' && Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
 }
 
-const ACHIEVEMENT_ART = new Set(['top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven']);
+const ACHIEVEMENT_ART = new Set(['top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven', 'drink-start', 'streak-7', 'streak-14', 'streak-30']);
 export function achievementImage(key: string): string {
   return ACHIEVEMENT_ART.has(key) ? `/brand/achievements/${key}.png` : '/brand/icons/achievement.svg';
 }

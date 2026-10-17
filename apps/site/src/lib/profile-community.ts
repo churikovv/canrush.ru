@@ -45,7 +45,10 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(distinct brand)::int from fav) as "favoriteBrands",
     (select count(*)::int from "tierList" where "userId" = u.id and status = 'published') as "tierLists",
     (select count(*)::int from "tierListReaction" x join "tierList" t on t.id = x."tierListId" where t."userId" = u.id and t.status = 'published' and x."userId" <> u.id and x.value = 1) as "tierListLikes",
-    (select count(*)::int from "monthlyTopAward" where "userId" = u.id) as "monthlyTop"
+    (select count(*)::int from "monthlyTopAward" where "userId" = u.id) as "monthlyTop",
+    (select count(*)::int from "drinkLog" where "userId" = u.id) as "drinkLogs",
+    (select coalesce(max(n), 0)::int from (select count(*) as n from (select day - (row_number() over (order by day))::int as run
+      from (select distinct day from "drinkLog" where "userId" = u.id) d) s group by run) t) as "drinkStreak"
     from "user" u where u.id = $1`, [userId, viewerId ?? null, DETAILED_REVIEW_CHARS]);
   const row = result.rows[0];
   if (!row) throw new CommunityError('Профиль не найден.');

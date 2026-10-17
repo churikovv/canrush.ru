@@ -20,6 +20,13 @@ it('keeps existing arrangements and adds a hidden favorites block', () => {
   expect(DEFAULT_PROFILE_LAYOUT.hidden).toEqual(['favorites', 'listings']);
 });
 
+it('adds the calendar right after the level to layouts saved before it existed', () => {
+  const order = DEFAULT_PROFILE_LAYOUT.order.filter(key => key !== 'calendar').reverse();
+  const parsed = parseProfileLayout({ order, hidden: ['wall'] });
+  expect(parsed?.order[parsed.order.indexOf('experience') + 1]).toBe('calendar');
+  expect(parsed?.hidden).toEqual(['wall']);
+});
+
 it('places the wall last by default', () => { expect(DEFAULT_PROFILE_LAYOUT.order.at(-1)).toBe('wall'); });
 
 it('moves a block before or after a target and reports no-op moves', () => {

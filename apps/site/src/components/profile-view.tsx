@@ -23,6 +23,7 @@ import { PROFILE_ACHIEVEMENTS, visibleProfileAchievements } from '@/lib/profile-
 import { WallPost, displayName } from '@/components/wall-post';
 import { AchievementPicker, FollowControl, PresenceSetting, WallComposer } from '@/components/profile-community-controls';
 import { ProfileHeader } from '@/components/profile-header';
+import { DrinkCalendarBlock } from '@/components/drink-calendar-block';
 import { ProfilePresence } from '@/components/profile-presence';
 
 interface ProfileViewProps {
@@ -73,6 +74,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         <div className="community-main profile-arranged-main"><ProfileBlocks layout={profile.profileLayout}>
           <ProfileBlock block="experience">
           <ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} expanded achievements={{ earned: visibleEarned.length, total: visibleAchievements.length }} /></ProfileBlock>
+          <ProfileBlock block="calendar"><DrinkCalendarBlock userId={profile.id} username={profile.username} isOwn={isOwn} /></ProfileBlock>
           <ProfileBlock block="ratings">
           <section className="community-panel" aria-labelledby="rating-statistics-title">
             <div className="community-section-heading"><h2 id="rating-statistics-title">Статистика оценок</h2><Link href={`${base}/reviews`}>Все отзывы ↗</Link></div>

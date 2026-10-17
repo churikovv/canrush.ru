@@ -13,13 +13,18 @@ describe('profile achievement and wall validation', () => {
     for (const step of PROFILE_ACHIEVEMENTS.flatMap(item => item.steps)) maxed[step.metric] = Math.max(maxed[step.metric], step.goal);
     expect(eligibleAchievements(maxed)).toHaveLength(PROFILE_ACHIEVEMENTS.length);
   });
+  it('grants calendar tags from the logged cans and the best streak', () => {
+    expect(eligibleAchievements(progress({ drinkLogs: 1, drinkStreak: 1 }))).toEqual(['drink-start']);
+    expect(eligibleAchievements(progress({ drinkLogs: 14, drinkStreak: 14 }))).toEqual(['streak-14', 'streak-7', 'drink-start']);
+    expect(eligibleAchievements(progress({ drinkLogs: 40, drinkStreak: 30 }))).toContain('streak-30');
+  });
   it('caps each step when computing completion', () => {
     expect(achievementCompletion(burner, progress({ burn: 50 }))).toBeCloseTo(5 / 9);
     expect(achievementCompletion(burner, progress({ burn: 5, burnDetailed: 3, burnFavorites: 1 }))).toBe(1);
   });
   it('gives every tag a rarity and at least one step', () => {
     for (const item of PROFILE_ACHIEVEMENTS) expect(item.steps.length).toBeGreaterThan(0);
-    expect(PROFILE_ACHIEVEMENTS.filter(item => item.rarity === 'epic').map(item => item.key)).toEqual(['burner', 'adrenaline', 'deadinside']);
+    expect(PROFILE_ACHIEVEMENTS.filter(item => item.rarity === 'epic').map(item => item.key)).toEqual(['burner', 'adrenaline', 'streak-14', 'deadinside']);
   });
   it('hides administrative options from regular viewers', () => {
     expect(visibleProfileAchievements(false).some(item => item.key === 'admin')).toBe(false);

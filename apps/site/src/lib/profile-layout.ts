@@ -1,5 +1,6 @@
 export const PROFILE_BLOCKS = [
   { key: 'experience', label: 'Уровень', area: 'main' },
+  { key: 'calendar', label: 'Календарь выпитого', area: 'main' },
   { key: 'ratings', label: 'Статистика оценок', area: 'main' },
   { key: 'listings', label: 'Объявления', area: 'main' },
   { key: 'social', label: 'Друзья и подписки', area: 'side' },
@@ -22,6 +23,11 @@ export function parseProfileLayout(value: unknown): ProfileLayout | null {
   if (!value || typeof value !== 'object') return null;
   const { order, hidden } = value as ProfileLayout;
   const valid = (keys: unknown): keys is ProfileBlockKey[] => Array.isArray(keys) && keys.every(key => PROFILE_BLOCKS.some(block => block.key === key)) && new Set(keys).size === keys.length;
-  if (!valid(order) || (order.length !== PROFILE_BLOCKS.length && !(order.length === PROFILE_BLOCKS.length - 1 && !order.includes('favorites'))) || !valid(hidden)) return null;
-  return { order: order.includes('favorites') ? order : [...order, 'favorites'], hidden: (order.includes('favorites') ? hidden : [...hidden, 'favorites'] as ProfileBlockKey[]).filter(key => !isRequiredProfileBlock(key)) };
+  if (!valid(order) || !valid(hidden)) return null;
+  // Layouts saved before a block existed only lack those later blocks: favorites joins hidden at the end, the calendar right after the level.
+  if (PROFILE_BLOCKS.some(block => !order.includes(block.key) && block.key !== 'favorites' && block.key !== 'calendar')) return null;
+  const nextOrder = [...order], nextHidden = [...hidden];
+  if (!nextOrder.includes('calendar')) nextOrder.splice(nextOrder.indexOf('experience') + 1, 0, 'calendar');
+  if (!nextOrder.includes('favorites')) { nextOrder.push('favorites'); if (!nextHidden.includes('favorites')) nextHidden.push('favorites'); }
+  return { order: nextOrder, hidden: nextHidden.filter(key => !isRequiredProfileBlock(key)) };
 }
