@@ -12,9 +12,12 @@ import { applyLocalImages, downloadProductImages } from './images.js';
 import { downloadRetailerIcons } from './retailer-icons.js';
 import { delay } from './http.js';
 import { writeAtomic } from './atomic-file.js';
+import { SourceBlockedError } from './fetch/errors.js';
 
 export const REGION_TTL_MS = 6 * 60 * 60 * 1000;
 const RETRY_MS = 30 * 60 * 1000;
+/** Капча Лавки бывает разовой (первый запрос с сервера): один повтор после паузы, не чаще. */
+const LAVKA_RETRY_MS = 60_000;
 const SITE_REGIONS = path.resolve(import.meta.dirname, '../../site/data/regions');
 export interface RegionSnapshot {
   cityId: CityId; generatedAt: string | null; attemptedAt: string;
@@ -47,8 +50,15 @@ export async function saveSnapshot(snapshot: RegionSnapshot) {
 
 /** Лавка — дополнительный источник: её сбой не роняет город, а оставляет прошлые цены Лавки как stale. */
 async function fetchLavka(config: SourceQueryConfig, previous: RegionSnapshot | null): Promise<Product[]> {
-  try { return (await lavkaAdapter.fetchPrices(config)).products; }
-  catch (error) {
+  try {
+    try { return (await lavkaAdapter.fetchPrices(config)).products; }
+    catch (error) {
+      if (!(error instanceof SourceBlockedError)) throw error;
+      console.warn(`[regions] Яндекс Лавка: ${error.message}; повтор через минуту`);
+      await delay(LAVKA_RETRY_MS + Math.random() * 30_000);
+      return (await lavkaAdapter.fetchPrices(config)).products;
+    }
+  } catch (error) {
     console.warn(`[regions] Яндекс Лавка: ${(error as Error).message}`);
     return (previous?.products ?? []).filter(product => product.source === 'lavka').map(product => ({ ...product, stale: true, lastSeenAt: product.lastSeenAt ?? product.fetchedAt }));
   }

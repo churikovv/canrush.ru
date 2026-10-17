@@ -14,6 +14,7 @@ vi.mock('../src/adapters/lavka.js', () => ({ lavkaAdapter: { fetchPrices: fixtur
 vi.mock('../src/images.js', () => ({ downloadProductImages: async () => new Map(), applyLocalImages: (data: unknown) => data }));
 vi.mock('../src/retailer-icons.js', () => ({ downloadRetailerIcons: async () => ({}) }));
 vi.mock('../src/http.js', () => ({ delay: async () => {} }));
+import { SourceBlockedError } from '../src/fetch/errors.js';
 const { runRegionalParser } = await import('../src/regions.js');
 const { DATA_DIR } = await import('../src/storage.js');
 function product(region: string): Product { return { source: 'edadeal', sourceId: 'same-id', name: 'Burn', brand: 'Burn', flavor: 'original', price: Number(region), currency: 'RUB', fetchedAt: new Date().toISOString(), url: `https://example.com/${region}` }; }
@@ -50,6 +51,24 @@ describe('regional parser persistence', () => {
     const variants = moscow.groups[0].variants as Array<{ source: string; stale?: boolean }>;
     expect(variants.find(v => v.source === 'lavka')).toMatchObject({ price: 220, stale: true });
     expect(variants.find(v => v.source === 'edadeal')?.stale).toBeUndefined();
+  });
+  it('retries Lavka once after a captcha and keeps the fresh prices', async () => {
+    fixture.lavka.mockRejectedValueOnce(new SourceBlockedError('lavka', 'капча'));
+    await runRegionalParser({ cities: ['moscow'], force: true });
+    expect(fixture.lavka).toHaveBeenCalledTimes(2);
+    const variants = JSON.parse(snapshot('moscow')!).groups[0].variants as Array<{ source: string; stale?: boolean }>;
+    expect(variants.find(v => v.source === 'lavka')).toMatchObject({ price: 220 });
+    expect(variants.find(v => v.source === 'lavka')?.stale).toBeUndefined();
+  });
+  it('does not retry Lavka on other errors and gives up after the second captcha', async () => {
+    fixture.lavka.mockRejectedValueOnce(new Error('HTTP 500'));
+    await runRegionalParser({ cities: ['moscow'], force: true });
+    expect(fixture.lavka).toHaveBeenCalledTimes(1);
+    fixture.lavka.mockReset();
+    fixture.lavka.mockRejectedValue(new SourceBlockedError('lavka', 'капча'));
+    await runRegionalParser({ cities: ['moscow'], force: true });
+    expect(fixture.lavka).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(snapshot('moscow')!).status).toBe('ok');
   });
   it('publishes an honest empty state when a new city has no previous data', async () => {
     fixture.fetch.mockRejectedValue(new Error('Source unavailable'));

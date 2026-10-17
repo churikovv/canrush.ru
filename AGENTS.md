@@ -115,7 +115,7 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
   только из подразделов «Энергетики…» (в категории `energy_beer` есть пиво и вино).
   `/api/` запрещён в robots.txt — не ходи туда и не включай перехват XHR; headless
   получает 403, капчу не обходим. Лавка опрашивается в региональном прогоне рядом с
-  Едадилом, её сбой оставляет прошлые цены Лавки как stale (`fetchLavka` в `regions.ts`).
+  Едадилом, её сбой оставляет прошлые цены Лавки как stale (`fetchLavka` в `regions.ts`). На капчу/запрет (`SourceBlockedError`) — ровно один повтор через 60–90 с: с сервера капча бывает разовой; больше повторов не добавляй.
 - **Иконки сетей**: адаптер Едадила кладёт логотип сети (`partner.imageUrl`) в
   `Product.retailerIconUrl`. `npm -w apps/parser run download-icons` скачивает
   его в `apps/site/public/images/retailers/` (общий volume с сайтом) и пишет в
