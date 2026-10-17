@@ -34,21 +34,22 @@ export function DrinkMonth({ weeks, entries, streaks, today, isOwn }: { weeks: (
         if (!day) return <span key={column} className="drink-month-day is-outside" />;
         const items = entries[day] ?? [];
         const run = streakOn(streaks, day);
+        const streakDay = run && run.length > 1 ? dayDiff(run.start, day) + 1 : 0;
         const covers = items.filter(item => item.cover).slice(0, 3);
-        const price = items.reduce((sum, item) => sum + (item.price ?? 0), 0);
         return <span key={day} className="drink-month-cell">
           <button type="button" className="drink-month-day" data-level={heatLevel(items.length)} data-future={day > today || undefined} data-today={day === today || undefined}
-            data-streak={run && run.length > 1 ? (day === run.start ? 'start' : day === run.end ? 'end' : 'middle') : undefined}
-            aria-label={`${dayTitle(day)}: ${items.length ? cans(items.length) : 'нет отметок'}`} aria-pressed={day === selected}
+            data-streak={streakDay ? '' : undefined}
+            aria-label={`${dayTitle(day)}: ${items.length ? cans(items.length) : 'нет отметок'}${streakDay ? `, ${streakDay}-й день серии` : ''}`} aria-pressed={day === selected}
             onPointerEnter={event => { if (event.pointerType === 'mouse') setHovered(day); }} onFocus={() => setHovered(null)} onClick={() => setSelected(day)}>
             <span className="drink-month-number">{Number(day.slice(8))}</span>
             {items.length > 0 && <span className="drink-month-covers" aria-hidden="true">{covers.length
               ? covers.map((item, position) => <Image key={item.id} src={item.cover!} width={22} height={22} alt="" style={{ zIndex: 3 - position }} />)
               : <span className="drink-month-can">⚡</span>}{items.length > covers.length && covers.length > 0 && <small>+{items.length - covers.length}</small>}</span>}
-            {isOwn && price > 0 && <span className="drink-month-price">{formatPrice(price)}</span>}
+            {streakDay > 0 && <span className="drink-month-streak" aria-hidden="true">{streakDay}</span>}
           </button>
         </span>;
       })}</div>)}
+      <p className="drink-month-legend" aria-hidden="true"><span className="drink-month-streak">3</span> день серии подряд<span className="drink-month-swatch" /> ярче — больше банок за день</p>
     </div>
 
     <aside className="drink-day-panel" aria-live="polite">

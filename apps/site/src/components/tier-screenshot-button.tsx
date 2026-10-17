@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { renderTierScreenshot, renderTierStory } from '@/lib/tier-screenshot';
 
-function Preview({ blob, url, renderStory, onClose }: { blob: Blob; url: string; renderStory: () => Promise<Blob>; onClose: () => void }) {
+export interface ScreenshotLabels { title: string; alt: string; file: string }
+const TIER_LABELS: ScreenshotLabels = { title: 'Скриншот тирлиста', alt: 'Текущий тирлист', file: 'canrush-tierlist' };
+
+/** Preview dialog with «Как есть» / 9:16 formats, copy and download; shared by tier lists and the drink calendar. */
+export function ScreenshotPreview({ blob, url, renderStory, onClose, labels = TIER_LABELS }: { blob: Blob; url: string; renderStory: () => Promise<Blob>; onClose: () => void; labels?: ScreenshotLabels }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [notice, setNotice] = useState<{ message: string; error: boolean; id: number } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -38,7 +42,7 @@ function Preview({ blob, url, renderStory, onClose }: { blob: Blob; url: string;
   }, []);
   return createPortal(<dialog ref={dialog} className="tier-screenshot-dialog" aria-labelledby="tier-screenshot-title" onCancel={onClose}>
     <div className="tier-screenshot-heading">
-      <div><h2 id="tier-screenshot-title">Скриншот тирлиста</h2><p>Выберите формат и нажмите «Копировать» или «Скачать PNG».</p></div>
+      <div><h2 id="tier-screenshot-title">{labels.title}</h2><p>Выберите формат и нажмите «Копировать» или «Скачать PNG».</p></div>
       <button type="button" className="community-button community-button-secondary tier-screenshot-close" onClick={onClose} aria-label="Закрыть скриншот"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
     </div>
     <div className="tier-screenshot-formats" role="radiogroup" aria-label="Формат скриншота">
@@ -48,7 +52,7 @@ function Preview({ blob, url, renderStory, onClose }: { blob: Blob; url: string;
     <div className={`tier-screenshot-preview${format === 'story' ? ' is-story' : ''}`} aria-busy={format === 'story' && storyPending}>
       {format === 'story' && storyPending ? <p className="tier-screenshot-pending">Готовим вертикальный формат…</p>
         // eslint-disable-next-line @next/next/no-img-element -- locally generated PNG
-        : <img src={current.url} alt={format === 'story' ? 'Тирлист в вертикальном формате 9:16' : 'Текущий тирлист'} />}
+        : <img src={current.url} alt={format === 'story' ? `${labels.alt} в вертикальном формате 9:16` : labels.alt} />}
     </div>
     <div className="tier-screenshot-actions">
       <button type="button" className="tier-primary-action" disabled={pending || (format === 'story' && !story)} onClick={async () => {
@@ -58,7 +62,7 @@ function Preview({ blob, url, renderStory, onClose }: { blob: Blob; url: string;
         finally { setPending(false); }
       }}>{pending ? 'Копируем…' : 'Копировать'}</button>
       {format === 'story' && !story ? <span className="tier-secondary-action" aria-disabled="true">Скачать PNG</span>
-        : <a className="tier-secondary-action" href={current.url} download={format === 'story' ? 'canrush-tierlist-tiktok.png' : 'canrush-tierlist.png'}>Скачать PNG</a>}
+        : <a className="tier-secondary-action" href={current.url} download={format === 'story' ? `${labels.file}-tiktok.png` : `${labels.file}.png`}>Скачать PNG</a>}
     </div>
     {notice && <div className={`share-toast tier-screenshot-toast${notice.error ? ' share-toast-error' : ''}`}>
       <span key={notice.id} role={notice.error ? 'alert' : 'status'}>{notice.message}</span>
@@ -89,6 +93,6 @@ export function TierScreenshotButton({ boardId, title, titleInputId, telegramCha
   return <div className="tier-screenshot-control">
     <button type="button" className="tier-secondary-action" disabled={pending} onClick={capture}>{pending ? 'Создаём скриншот…' : 'Сделать скриншот'}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M8 6 9.4 4.6A2 2 0 0 1 10.8 4h2.4a2 2 0 0 1 1.4.6L16 6h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" strokeLinejoin="round"/><circle cx="12" cy="12" r="4"/></svg></button>
     {error && <p className="field-error" role="alert">{error}</p>}
-    {preview && <Preview {...preview} onClose={() => { URL.revokeObjectURL(preview.url); previewUrl.current = null; setPreview(null); }} />}
+    {preview && <ScreenshotPreview {...preview} onClose={() => { URL.revokeObjectURL(preview.url); previewUrl.current = null; setPreview(null); }} />}
   </div>;
 }

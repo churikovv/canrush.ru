@@ -148,3 +148,13 @@ export function monthSummary(entries: readonly { day: string; name: string; pric
   return { cans: entries.length, days: new Set(entries.map(entry => entry.day)).size, unique: byName.size,
     top: top ? { name: top[0], count: top[1] } : null, spent: priced.reduce((sum, entry) => sum + entry.price!, 0), priced: priced.length };
 }
+
+/** The next streak length that pays a bonus. */
+export function nextMilestone(length: number): number {
+  const goal = STREAK_MILESTONES.find(item => item > length);
+  if (goal) return goal;
+  const last = STREAK_MILESTONES.at(-1)!;
+  return last + Math.ceil((length - last + 1) / STREAK_REPEAT_DAYS) * STREAK_REPEAT_DAYS;
+}
+/** Flame colour tier of a streak: matches the 7 / 14 / 30 day tags. */
+export function streakTier(length: number): 0 | 7 | 14 | 30 { return length >= 30 ? 30 : length >= 14 ? 14 : length >= 7 ? 7 : 0; }

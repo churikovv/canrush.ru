@@ -23,8 +23,9 @@ afterAll(async () => { await pool.query('delete from "user" where id = $1', [own
 
 describe.sequential('drink calendar storage', () => {
   it('links catalog drinks on the server and keeps private notes from other viewers', async () => {
-    await calendar.addDrink(owner, drink(start, { brand: 'Burn', flavor: 'original', price: 12990, store: 'Магнит' }), start);
-    await calendar.addDrink(owner, drink(start, { brand: 'Fake', flavor: 'nope' }), start);
+    // The first can pays the day XP and the "first sip" tag with its own XP, and reports both for the celebration card.
+    expect(await calendar.addDrink(owner, drink(start, { brand: 'Burn', flavor: 'original', price: 12990, store: 'Магнит' }), start)).toEqual({ streak: 1, xp: 30, tags: ['drink-start'] });
+    expect(await calendar.addDrink(owner, drink(start, { brand: 'Fake', flavor: 'nope' }), start)).toEqual({ streak: 1, xp: 0, tags: [] });
     const own = await calendar.getDrinkEntries(owner, start, start, true, true);
     expect(own.map(entry => [entry.name, entry.brand, entry.price, entry.store])).toEqual([['Burn · Оригинальный', 'Burn', 12990, 'Магнит'], ['Свой напиток', null, null, null]]);
     expect(own[0]!.href).toMatch(/^\/catalog\/burn/);

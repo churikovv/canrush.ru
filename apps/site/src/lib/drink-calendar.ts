@@ -55,6 +55,8 @@ export async function addDrink(userId: string, input: DrinkInput, today = moscow
   }
   const client = await getPool().connect();
   let streak: DrinkStreak | undefined;
+  let xp = 0;
+  const before = new Set((await getPool().query<{ key: string }>('select key from "profileAchievement" where "userId" = $1', [userId])).rows.map(row => row.key));
   try {
     await client.query('begin');
     await client.query('select 1 from "user" where id = $1 for no key update', [userId]);
@@ -66,16 +68,19 @@ export async function addDrink(userId: string, input: DrinkInput, today = moscow
     streak = streakOn(drinkStreaks(days.rows.map(row => row.day)), input.day);
     const awards: [string, string, number][] = [['drink-day', input.day, DRINK_DAY_XP]];
     if (streak) for (const goal of reachedMilestones(streak)) awards.push(['drink-streak', `${streak.start}:${goal}`, streakReward(goal)]);
-    await client.query(`insert into "profileExperience" ("userId", reason, "sourceKey", points)
+    const paid = await client.query<{ points: number }>(`insert into "profileExperience" ("userId", reason, "sourceKey", points)
       select $1, a.reason, a.key, a.points from unnest($2::text[], $3::text[], $4::int[]) as a(reason, key, points)
-      where not exists(select 1 from "userBlock" where "userId" = $1) on conflict do nothing`,
+      where not exists(select 1 from "userBlock" where "userId" = $1) on conflict do nothing returning points`,
     [userId, awards.map(item => item[0]), awards.map(item => item[1]), awards.map(item => item[2])]);
     await client.query('commit');
+    xp = paid.rows.reduce((sum, row) => sum + row.points, 0);
   } catch (error) { await client.query('rollback'); throw error; }
   finally { client.release(); }
   // Grants the calendar tags (and their XP) right away instead of on the next profile view.
-  await getProfileCommunity(userId);
-  return { streak: currentStreak(streak ? [streak] : [], today)?.length ?? 0 };
+  const tags = (await getProfileCommunity(userId)).earned.filter(key => !before.has(key) && key !== 'admin');
+  if (tags.length) xp += (await getPool().query<{ points: number }>(`select coalesce(sum(points), 0)::int as points from "profileExperience"
+    where "userId" = $1 and reason = 'achievement' and "sourceKey" = any($2::text[])`, [userId, tags])).rows[0]?.points ?? 0;
+  return { streak: currentStreak(streak ? [streak] : [], today)?.length ?? 0, xp, tags };
 }
 
 /** Only recent cans can be removed, so a streak's first day (which keys its bonuses) cannot be shifted to re-earn them. */

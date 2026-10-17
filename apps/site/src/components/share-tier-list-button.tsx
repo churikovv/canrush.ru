@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-export function ShareTierListButton({ title }: { title: string }) {
+/** Shares a link (with optional text) through the system sheet on touch devices, the clipboard elsewhere; confirms in a toast. */
+export function ShareTierListButton({ title, text, path, label = 'Поделиться' }: { title: string; text?: string; path?: string; label?: string }) {
   const [notice, setNotice] = useState<{ message: string; error: boolean; id: number } | null>(null);
   const [pending, setPending] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -17,13 +18,13 @@ export function ShareTierListButton({ title }: { title: string }) {
   }
 
   async function share() {
-    const url = window.location.href;
+    const url = path ? new URL(path, window.location.origin).toString() : window.location.href;
     setPending(true);
     try {
       // On desktop, make the action predictable: copy and confirm visibly.
       if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
         try {
-          await navigator.share({ title, url });
+          await navigator.share({ title, text, url });
           notify('Ссылка отправлена');
           return;
         } catch (error) {
@@ -31,8 +32,8 @@ export function ShareTierListButton({ title }: { title: string }) {
           // If the system share sheet fails, try copying instead.
         }
       }
-      await navigator.clipboard.writeText(url);
-      notify('Ссылка скопирована');
+      await navigator.clipboard.writeText(text ? `${text}\n${url}` : url);
+      notify(text ? 'Итог и ссылка скопированы' : 'Ссылка скопирована');
     } catch {
       notify('Не удалось скопировать ссылку. Скопируйте её из адресной строки.', true);
     } finally {
@@ -43,7 +44,7 @@ export function ShareTierListButton({ title }: { title: string }) {
   return (
     <>
       <button className="tier-secondary-action" type="button" onClick={share} disabled={pending}>
-        Поделиться
+        {label}
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
           <path d="M12 16V3m0 0L7 8m5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M5 13v6h14v-6" strokeLinecap="round" strokeLinejoin="round" />

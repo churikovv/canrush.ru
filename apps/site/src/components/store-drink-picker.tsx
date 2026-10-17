@@ -6,7 +6,7 @@ import type { StoreDrinkOption } from '@/lib/store-catalog';
 
 const LIMIT = 40;
 /** Combobox over catalog drinks; the last option adds the typed text as the author's own drink. */
-export function StoreDrinkPicker({id,options,taken,disabled,onAdd}:{id:string;options:StoreDrinkOption[];taken:Set<string>;disabled?:boolean;onAdd:(drink:{name:string;brand?:string;flavor?:string})=>void}){
+export function StoreDrinkPicker({id,options,taken,disabled,placeholder='Найдите энергетик или впишите свой',onAdd}:{id:string;options:StoreDrinkOption[];taken:Set<string>;disabled?:boolean;placeholder?:string;onAdd:(drink:{name:string;brand?:string;flavor?:string})=>void}){
   const [query,setQuery]=useState('');const [open,setOpen]=useState(false);const [active,setActive]=useState(-1);
   const input=useRef<HTMLInputElement>(null);
   const trimmed=query.trim();
@@ -26,7 +26,7 @@ export function StoreDrinkPicker({id,options,taken,disabled,onAdd}:{id:string;op
   return <div className="price-filter-input store-drink-picker" onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget)){setOpen(false);setActive(-1);}}}>
     <input ref={input} id={id} role="combobox" autoComplete="off" aria-autocomplete="list" aria-expanded={open} aria-controls={`${id}-options`} disabled={disabled} maxLength={150}
       aria-activedescendant={open&&active>=0&&active<count?`${id}-option-${active}`:undefined}
-      placeholder="Найдите энергетик или впишите свой" value={query}
+      placeholder={placeholder} value={query}
       onFocus={()=>setOpen(true)} onClick={()=>setOpen(true)}
       onChange={event=>{setQuery(event.target.value);setActive(-1);setOpen(true);}}
       onKeyDown={event=>{
