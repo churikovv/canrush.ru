@@ -1,4 +1,5 @@
 import { getPool } from '@/db/pool';
+import { getBrandCollections } from '@/lib/brand-collection';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 import { getProfileCommunity } from '@/lib/profile-community';
 import { storeDrinkOptions } from '@/lib/store-catalog';
@@ -80,6 +81,8 @@ export async function addDrink(userId: string, input: DrinkInput, today = moscow
   const tags = (await getProfileCommunity(userId)).earned.filter(key => !before.has(key) && key !== 'admin');
   if (tags.length) xp += (await getPool().query<{ points: number }>(`select coalesce(sum(points), 0)::int as points from "profileExperience"
     where "userId" = $1 and reason = 'achievement' and "sourceKey" = any($2::text[])`, [userId, tags])).rows[0]?.points ?? 0;
+  // A new catalog drink can complete a share of its brand collection.
+  if (brand !== undefined) xp += (await getBrandCollections(userId)).xp;
   return { streak: currentStreak(streak ? [streak] : [], today)?.length ?? 0, xp, tags };
 }
 

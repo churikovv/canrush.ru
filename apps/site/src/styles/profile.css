@@ -880,3 +880,53 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
   .drink-bird *, .drink-bird-z text, .drink-log-celebrate, .drink-log-celebrate .drink-bird { animation: none !important; }
   .drink-month-day { transition: none; }
 }
+
+/* Brand collections: profile block and /profile/[username]/collection. Untried cans are grey silhouettes. */
+.brand-collection-page { max-width: 960px; margin-inline: auto; display: grid; gap: 20px; }
+.brand-collection-page > h1 { margin: 0; }
+.brand-collection-page .community-panel { margin: 0; }
+.brand-collection-intro { display: grid; gap: 12px; }
+.brand-collection-intro p { margin: 0; font-size: .875rem; line-height: 1.5; }
+.brand-collection-intro a { color: var(--theme-link, #0058cc); }
+.brand-collection-stats [data-stat=tried] { border-color: rgb(0 110 255 / .45); background: linear-gradient(135deg, rgb(0 110 255 / .14), rgb(0 110 255 / .04)); }
+.brand-collection-block .brand-collection-stats { margin-bottom: 16px; }
+.brand-collection-list { display: grid; gap: 12px; }
+.brand-collection-card { padding: 0; scroll-margin-top: 80px; }
+.brand-collection-card > summary { display: block; padding: 18px 24px; cursor: pointer; list-style: none; border-radius: inherit; }
+.brand-collection-card > summary::-webkit-details-marker { display: none; }
+.brand-collection-card > summary:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.brand-collection-card > summary .brand-collection-heading::after { content: ''; grid-area: arrow; width: 8px; height: 8px; border: solid var(--theme-muted, #59616b); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .2s; }
+.brand-collection-card[open] > summary .brand-collection-heading::after { transform: rotate(-135deg); }
+.brand-collection-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'brand count arrow' 'bar bar bar' 'next next next'; align-items: center; gap: 8px 12px; color: var(--theme-text, #111); }
+.brand-collection-heading > strong { grid-area: brand; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1rem; }
+.brand-collection-count { grid-area: count; color: var(--theme-muted, #59616b); font-size: .8125rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.brand-collection-count[data-done] { color: var(--theme-success, #20783c); }
+.brand-collection-progress { grid-area: bar; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #006eff calc(var(--collection-progress, 0) * 100%), var(--theme-subtle, #eef1f5) 0); }
+.brand-collection-next { grid-area: next; color: var(--theme-muted, #59616b); font-size: .75rem; font-variant-numeric: tabular-nums; }
+.brand-collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 12px; padding: 0 24px 24px; }
+.brand-collection-can { display: grid; gap: 6px; justify-items: center; color: var(--theme-muted, #59616b); text-align: center; text-decoration: none; font-size: .75rem; line-height: 1.3; }
+.brand-collection-can[data-tried] { color: var(--theme-text, #111); font-weight: 600; }
+.brand-collection-can:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; border-radius: 10px; }
+.brand-collection-name { overflow-wrap: anywhere; }
+/* Product photos are JPEGs on near-white: they sit on white tiles with multiply so no grey square shows. */
+.brand-collection-cover { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 10px; background: #fff; box-shadow: inset 0 0 0 1px var(--theme-line, #dfe3e8); color: var(--theme-muted, #59616b); font-weight: 800; overflow: hidden; }
+.brand-collection-cover img { width: 86%; height: 86%; object-fit: contain; mix-blend-mode: multiply; filter: grayscale(1) contrast(.6) brightness(1.15); opacity: .4; transition: filter .2s, opacity .2s; }
+[data-tried] > .brand-collection-cover, .brand-collection-cover[data-tried] { box-shadow: inset 0 0 0 2px #006eff; }
+[data-tried] > .brand-collection-cover img, .brand-collection-cover[data-tried] img { filter: none; opacity: 1; }
+.brand-collection-can:not([data-tried]) .brand-collection-cover, .brand-collection-strip .brand-collection-cover:not([data-tried]) { opacity: .7; }
+:root[data-site-theme=graphite] :is(.brand-collection-can:not([data-tried]) .brand-collection-cover, .brand-collection-strip .brand-collection-cover:not([data-tried])), [data-profile-theme=dark] :is(.brand-collection-can:not([data-tried]) .brand-collection-cover, .brand-collection-strip .brand-collection-cover:not([data-tried])) { opacity: .35; }
+.brand-collection-can:not([data-tried]):hover .brand-collection-cover { opacity: 1; }
+[data-tried] > .brand-collection-cover::after { content: ''; position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; border-radius: 50%; background: #006eff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4.5 8.2 2.3 2.3 4.7-5' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% no-repeat; }
+.brand-collection-preview { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.brand-collection-preview-row { display: grid; gap: 10px; padding: 12px 14px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 10px; color: inherit; text-decoration: none; }
+.brand-collection-preview-row:hover { border-color: #006eff; }
+.brand-collection-strip { display: flex; gap: 6px; }
+.brand-collection-strip .brand-collection-cover { width: 40px; flex: none; border-radius: 8px; font-size: .75rem; }
+.brand-collection-strip [data-tried]::after { display: none; }
+@media (max-width: 640px) {
+  .brand-collection-card > summary { padding: 16px; }
+  .brand-collection-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0 16px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-collection-card > summary .brand-collection-heading::after, .brand-collection-cover img { transition: none; }
+}

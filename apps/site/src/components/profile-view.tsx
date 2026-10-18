@@ -24,6 +24,8 @@ import { WallPost, displayName } from '@/components/wall-post';
 import { AchievementPicker, FollowControl, PresenceSetting, WallComposer } from '@/components/profile-community-controls';
 import { ProfileHeader } from '@/components/profile-header';
 import { DrinkCalendarBlock } from '@/components/drink-calendar-block';
+import { BrandCollectionBlock } from '@/components/brand-collection';
+import { getBrandCollections } from '@/lib/brand-collection';
 import { ProfilePresence } from '@/components/profile-presence';
 
 interface ProfileViewProps {
@@ -38,8 +40,8 @@ interface ProfileViewProps {
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, lastSeen, friends, listings, followers, following, favorites, tierLists, catalog, reviewPreview, compatibility] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null,
+  const [community, ratings, wall, presence, lastSeen, friends, listings, followers, following, favorites, tierLists, catalog, reviewPreview, compatibility, collection] = await Promise.all([
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id),
   ]);
   const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
   const tierProducts = tierListProductsForPlacements(catalog, tierLists.flatMap(list => list.preview));
@@ -75,6 +77,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           <ProfileBlock block="experience">
           <ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} expanded achievements={{ earned: visibleEarned.length, total: visibleAchievements.length }} /></ProfileBlock>
           <ProfileBlock block="calendar"><DrinkCalendarBlock userId={profile.id} username={profile.username} isOwn={isOwn} /></ProfileBlock>
+          <ProfileBlock block="collection"><BrandCollectionBlock summary={collection} username={profile.username} isOwn={isOwn} /></ProfileBlock>
           <ProfileBlock block="ratings">
           <section className="community-panel" aria-labelledby="rating-statistics-title">
             <div className="community-section-heading"><h2 id="rating-statistics-title">Статистика оценок</h2><Link href={`${base}/reviews`}>Все отзывы ↗</Link></div>

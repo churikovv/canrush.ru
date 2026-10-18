@@ -41,10 +41,10 @@ describe('city-specific assortment', () => {
 });
 
 it('restores archived identities without reviving old prices or replacing current offers', async () => {
-  put('product-registry.json', { groups: [{ ...group(55, 'apple'), coverImageUrl: '/images/products/apple.jpg' }, { ...group(50), coverImageUrl: '/images/products/original.jpg' }] });
+  put('product-registry.json', { groups: [{ ...group(55, 'guava'), coverImageUrl: '/images/products/guava.jpg' }, { ...group(50), coverImageUrl: '/images/products/original.jpg' }] });
   put('regions/moscow.json', { cityId: 'moscow', groups: [group(120)] });
   const all = await readAllCatalogGroups();
-  expect(all.find(item => item.flavor === 'apple')).toMatchObject({ minPrice: 0, variants: [], coverImageUrl: '/images/products/apple.jpg' });
+  expect(all.find(item => item.flavor === 'guava')).toMatchObject({ minPrice: 0, variants: [], coverImageUrl: '/images/products/guava.jpg' });
   expect(all.find(item => item.flavor === 'original')).toMatchObject({ minPrice: 120, coverImageUrl: '/images/products/original.jpg' });
   expect((await readCityCatalog('moscow'))?.groups).toHaveLength(1);
 });
@@ -53,10 +53,10 @@ it('keeps archived and unresolved cards for saved lists but excludes them from t
   const { readTierPickerGroups } = await import('../src/lib/catalog-files');
   put('regions/moscow.json', { cityId: 'moscow', groups: [group(99), group(100, 'unknown'), group(101, 'unresolved:old')] });
   put('regions/kazan.json', { cityId: 'kazan', groups: [group(129), group(130, 'kiwi')] });
-  put('product-registry.json', { groups: [group(55, 'apple')] });
+  put('product-registry.json', { groups: [group(55, 'guava')] });
   const picker = await readTierPickerGroups();
   expect(picker.map(item => item.flavor)).toEqual(['original', 'kiwi']);
-  expect((await readAllCatalogGroups()).map(item => item.flavor)).toContain('apple');
+  expect((await readAllCatalogGroups()).map(item => item.flavor)).toContain('guava');
   expect((await readAllCatalogGroups()).map(item => item.flavor)).toContain('unresolved:old');
 });
 

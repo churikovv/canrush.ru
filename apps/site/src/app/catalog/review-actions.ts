@@ -13,6 +13,7 @@ import { isUserBlocked } from '@/lib/moderation';
 import { validateReviewInput } from '@/lib/review-fields';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { deleteReview, upsertReview } from '@/lib/reviews';
+import { getBrandCollections } from '@/lib/brand-collection';
 import type { ReviewFieldErrors } from '@/lib/review-fields';
 
 export interface ReviewFormState {
@@ -73,6 +74,7 @@ export async function submitReviewAction(
   }
 
   await getProfileCommunity(user.id);
+  await getBrandCollections(user.id);
 
   const slug = catalogGroupSlug(brand, flavor);
   revalidatePath(`/catalog/${slug}`);

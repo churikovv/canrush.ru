@@ -5,6 +5,7 @@ vi.mock('next/navigation', () => ({ redirect: () => { throw new Error('SIGN_IN_R
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidate }));
 vi.mock('../src/lib/auth', () => ({ auth: { api: { getSession: mocks.session } } }));
 vi.mock('../src/lib/profile-community', () => ({ getProfileCommunity: vi.fn() }));
+vi.mock('../src/lib/brand-collection', () => ({ getBrandCollections: vi.fn() }));
 vi.mock('../src/lib/moderation', () => ({ isUserBlocked: mocks.blocked }));
 vi.mock('../src/lib/catalog', () => ({ getCatalogGroup: mocks.product }));
 vi.mock('../src/lib/reviews', () => ({ upsertReview: mocks.save, deleteReview: vi.fn() }));

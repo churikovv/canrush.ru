@@ -202,6 +202,14 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
 - Теги `drink-start`, `streak-7`, `streak-14`, `streak-30` (метрики `drinkLogs`, `drinkStreak`), арт — PNG из Figma (`570:3616`) в `public/brand/achievements`. Маскот — `DrinkBird` (`drink-bird.tsx`, векторы совы из Figma `635:2207` + CSS-анимации, настроения happy/waiting/sleepy; на тёмных темах — светлый контур, иначе чёрные крылья пропадают).
 - Профиль: блок `calendar` (`DrinkCalendarBlock`, теплокарта за год), старые раскладки получают его сразу после уровня (`parseProfileLayout`). Страница — `/profile/[username]/calendar?month=YYYY-MM`. Тесты: `test/drink-calendar-fields.test.ts`, `test/drink-calendar.integration.test.ts`.
 
+## Коллекция вкусов
+
+- Своей таблицы нет: вкус считается попробованным, если у пользователя есть отзыв (`review`) или банка из каталога в `drinkLog`. Набор вкусов — `storeDrinkOptions` без «в ассортименте», бренды меньше чем с `MIN_COLLECTION_SIZE` вкусами не показываются, а попробованные вкусы, которых больше нет в каталоге, не считаются. Старые идентичности из отзывов приводятся через `canonicalDrink`.
+- Линии со своим брендом в каталоге собираются вместе с основным брендом: `COLLECTION_BRAND_LINES` (Adrenaline Game Fuel → Adrenaline Rush, название с префиксом линии).
+- Опыт: вехи 25/50/75/100% бренда (`COLLECTION_MILESTONES`), `reason='collection'`, `sourceKey` = `<бренд>:<процент>` — ключ по доле, а не по числу вкусов, поэтому рост каталога не платит повторно. У маленьких брендов доли, достигаемые одним и тем же числом вкусов, сливаются в старшую (`brandMilestones`). Начисляет `getBrandCollections` — при просмотре коллекции/профиля, после отзыва и после банки из каталога в календаре.
+- Дубликаты вкусов в коллекции — почти всегда архивные идентичности из `product-registry.json` без предложений: у них то же фото, что у живого товара. Их склеивают алиасами в `REVIEWED_PRODUCT_ALIASES` + миграцией данных (`0060_archived_duplicate_aliases.sql`, переносит и `drinkLog`). Burn `peach` и Volt Energy `mango` намеренно не склеены (`test/catalog-aliases.test.ts`).
+- Логика — `src/lib/brand-collection-fields.ts` (чистая) и `brand-collection.ts` (БД), разметка — `src/components/brand-collection.tsx`, страница — `/profile/[username]/collection`, блок профиля `collection` (старые раскладки получают его сразу после календаря). Тесты: `test/brand-collection-fields.test.ts`, `test/brand-collection.integration.test.ts`, `test/archived-duplicate-alias-migration.integration.test.ts`.
+
 ## Топ месяца
 
 - Гонка — XP, набранный за календарный месяц по Москве (без самих наградных XP). Итоги подводит идемпотентная `settle_monthly_top()` (миграция `0050_monthly_top.sql`), её вызывают главная и `/leaderboard` через `settleMonthlyTop()`; первый подсчёт — за октябрь 2026. Топ-3 получают +500/+300/+150 XP (`reason='monthly-top'`), достижение и тег `top` («ТОП», легендарный) и уведомление `monthly-top`.

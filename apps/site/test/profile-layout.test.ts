@@ -37,3 +37,9 @@ it('moves a block before or after a target and reports no-op moves', () => {
   expect(placeProfileBlock(order, 'ratings', 'ratings', true)).toBeNull();
   expect(placeProfileBlock(order, 'wall', 'ratings', true)).toBeNull();
 });
+
+it('adds the collection right after the calendar to layouts saved before it existed', () => {
+  const order = DEFAULT_PROFILE_LAYOUT.order.filter(key => key !== 'collection' && key !== 'calendar');
+  const parsed = parseProfileLayout({ order, hidden: [] });
+  expect(parsed?.order.slice(parsed.order.indexOf('experience'), parsed.order.indexOf('experience') + 3)).toEqual(['experience', 'calendar', 'collection']);
+});
