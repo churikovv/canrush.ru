@@ -11,7 +11,7 @@ import { DrinkSeries } from '@/components/drink-series';
 import { DrinkSummaryActions } from '@/components/drink-share-button';
 import { ProfileBackButton } from '@/components/profile-back-button';
 import { ProfileNavigation } from '@/components/profile-navigation';
-import { displayName } from '@/components/wall-post';
+import { ProfileSubpageOwner } from '@/components/profile-subpage-owner';
 import { auth } from '@/lib/auth';
 import { getDrinkEntries, getDrinkOverview, getRecentDrinkStores, type DrinkEntry } from '@/lib/drink-calendar';
 import { addDays, birdLine, birdMood, cans, days, isMonth, monthDays, monthSummary, monthTitle, monthWeeks, shiftMonth } from '@/lib/drink-calendar-fields';
@@ -50,7 +50,7 @@ export default async function DrinkCalendarPage({ params, searchParams }: { para
   return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
     <section className="community-directory drink-calendar-page" data-profile-theme={profile.profileAppearance?.theme ?? 'default'}>
       <ProfileBackButton href={isOwn ? '/profile' : `/profile/${profile.username}`} />
-      <h1>Календарь выпитого{!isOwn && <span className="community-muted"> · {displayName(profile)}</span>}</h1>
+      <div className="profile-subpage-title"><h1>Календарь выпитого</h1>{!isOwn && <ProfileSubpageOwner profile={profile} />}</div>
 
       <div className="community-panel drink-calendar-hero is-large">
         <DrinkBird mood={mood} size={120} />

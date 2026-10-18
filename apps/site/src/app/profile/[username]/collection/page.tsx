@@ -7,7 +7,7 @@ import { BrandShell } from '@/components/brand-shell';
 import { BrandCollectionList, BrandCollectionStats } from '@/components/brand-collection';
 import { ProfileBackButton } from '@/components/profile-back-button';
 import { ProfileNavigation } from '@/components/profile-navigation';
-import { displayName } from '@/components/wall-post';
+import { ProfileSubpageOwner } from '@/components/profile-subpage-owner';
 import { auth } from '@/lib/auth';
 import { getBrandCollections } from '@/lib/brand-collection';
 import { getProfileByUsername } from '@/lib/profile';
@@ -25,7 +25,7 @@ export default async function BrandCollectionPage({ params }: { params: Promise<
   return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
     <section className="community-directory brand-collection-page" data-profile-theme={profile.profileAppearance?.theme ?? 'default'}>
       <ProfileBackButton href={isOwn ? '/profile' : `/profile/${profile.username}`} />
-      <h1>Коллекция вкусов{!isOwn && <span className="community-muted"> · {displayName(profile)}</span>}</h1>
+      <div className="profile-subpage-title"><h1>Коллекция вкусов</h1>{!isOwn && <ProfileSubpageOwner profile={profile} />}</div>
       <div className="community-panel brand-collection-intro">
         <BrandCollectionStats summary={summary} />
         <p className="community-muted">Вкус попадает в коллекцию, когда {isOwn ? 'вы оставляете' : 'пользователь оставляет'} на него отзыв или отмечает банку в календаре выпитого. За 25, 50, 75 и 100% каждого бренда начисляется опыт.

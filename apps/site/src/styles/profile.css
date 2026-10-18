@@ -948,3 +948,30 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
   .brand-collection-card > summary .brand-collection-heading::after, .brand-collection-cover img { transition: none; }
   [data-done] .brand-collection-progress::after { animation: none; display: none; }
 }
+
+/* Profile subpages (calendar, collection): title with the owner as a link under it. */
+.profile-subpage-title { display: grid; gap: 10px; justify-items: start; }
+.profile-subpage-title h1 { margin: 0; }
+.profile-subpage-owner { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 14px 4px 4px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 999px; color: var(--theme-text, #111); text-decoration: none; }
+.profile-subpage-owner:hover { border-color: var(--theme-link, #0058cc); }
+.profile-subpage-owner:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.profile-subpage-owner-avatar { display: grid; place-items: center; width: 32px; height: 32px; flex: none; overflow: hidden; border-radius: 50%; background: var(--theme-subtle, #eef1f5); color: var(--theme-muted, #59616b); font-weight: 800; font-size: .875rem; }
+.profile-subpage-owner-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-subpage-owner strong { font-size: .9375rem; }
+.profile-subpage-owner small { color: var(--theme-muted, #59616b); font-size: .8125rem; }
+
+/* Collection search and status filter. */
+.brand-collection-tools { display: grid; gap: 12px; }
+.brand-collection-search { margin: 0; }
+.brand-collection-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.brand-collection-filters button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 14px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 999px; background: transparent; color: var(--theme-text, #111); font: inherit; font-size: .875rem; font-weight: 700; cursor: pointer; }
+.brand-collection-filters button span { color: var(--theme-muted, #59616b); font-weight: 600; font-variant-numeric: tabular-nums; }
+.brand-collection-filters button[aria-pressed=true] { border-color: #006eff; background: #006eff; color: #fff; }
+.brand-collection-filters button[aria-pressed=true] span { color: rgb(255 255 255 / .8); }
+.brand-collection-filters button:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.brand-collection-empty { margin: 0; text-align: center; }
+.brand-collection-card[hidden], .brand-collection-can[hidden] { display: none; }
+@media (max-width: 640px) {
+  .brand-collection-filters { flex-wrap: nowrap; overflow-x: auto; margin-inline: -16px; padding: 2px 16px; scrollbar-width: none; }
+  .brand-collection-filters button { flex: none; }
+}

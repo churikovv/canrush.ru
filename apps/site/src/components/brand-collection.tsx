@@ -1,6 +1,9 @@
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
+import { ENERGY_DRINK_BRAND_ALIASES } from '@canrush/shared';
 import Link from '@/components/navigation-progress';
+import { BrandCollectionSearch, type CollectionFilter } from '@/components/brand-collection-search';
+import { normalizeCollectionSearch } from '@/lib/collection-search';
 import { completion, earnedCollectionXp, flavors, nextMilestone, type BrandCollection, type CollectionItem, type CollectionSummary } from '@/lib/brand-collection-fields';
 
 const SOURCE_LABELS = { review: 'отзыв', calendar: 'календарь' } as const;
@@ -14,7 +17,7 @@ function Progress({ collection, label }: { collection: { tried: number; total: n
 
 function Can({ item, brand }: { item: CollectionItem; brand: string }) {
   const tried = item.tried.length > 0;
-  return <Link className="brand-collection-can" data-tried={tried || undefined} href={item.href}
+  return <Link className="brand-collection-can" data-tried={tried || undefined} href={item.href} data-collection-can="" data-search={normalizeCollectionSearch(item.name)}
     title={tried ? `${brand} · ${item.name}: ${item.tried.map(source => SOURCE_LABELS[source]).join(', ')}` : `${brand} · ${item.name}: ещё не пробовали`}>
     <span className="brand-collection-cover">{item.cover ? <Image src={item.cover} width={96} height={96} sizes="96px" alt="" /> : <span aria-hidden="true">?</span>}</span>
     <span className="brand-collection-name">{item.name}</span>
@@ -39,14 +42,19 @@ function BrandHeading({ collection }: { collection: BrandCollection }) {
   </span>;
 }
 
-/** Full collection page: every brand is a disclosure, started ones are open. */
+const status = (collection: { tried: number; total: number }): CollectionFilter => isComplete(collection) ? 'done' : collection.tried ? 'started' : 'new';
+const brandSearch = (brand: string) => normalizeCollectionSearch([brand, ...(ENERGY_DRINK_BRAND_ALIASES[brand] ?? [])].join(' '));
+
+/** Full collection page: every brand is a disclosure, started ones are open; search filters them in place. */
 export function BrandCollectionList({ summary }: { summary: CollectionSummary }) {
-  return <div className="brand-collection-list">{summary.brands.map(collection =>
-    <details key={collection.brand} id={`brand-${collection.slug}`} className="community-panel brand-collection-card" data-done={isComplete(collection) || undefined} open={collection.tried > 0}>
+  const counts = { all: summary.brands.length, started: summary.started, done: summary.completed, new: summary.brands.length - summary.started };
+  return <BrandCollectionSearch counts={counts}><div className="brand-collection-list">{summary.brands.map(collection =>
+    <details key={collection.brand} id={`brand-${collection.slug}`} className="community-panel brand-collection-card" data-done={isComplete(collection) || undefined} open={collection.tried > 0}
+      data-collection-brand="" data-status={status(collection)} data-search={brandSearch(collection.brand)} data-open-default={String(collection.tried > 0)}>
       <summary><BrandHeading collection={collection} /></summary>
       <div className="brand-collection-grid">{collection.items.map(item => <Can key={`${item.brand}:${item.flavor}`} item={item} brand={collection.brand} />)}</div>
     </details>)}
-  </div>;
+  </div></BrandCollectionSearch>;
 }
 
 export function BrandCollectionStats({ summary }: { summary: CollectionSummary }) {
