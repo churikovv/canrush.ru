@@ -38,3 +38,14 @@ export function canTransitionOrder(from: OrderStatus, to: OrderStatus, role: 'bu
     || (from === 'confirmed' && to === 'completed' && role === 'buyer');
 }
 export function formatPrice(price: number) { return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: price % 100 ? 2 : 0 }).format(price / 100); }
+/** Order progress for the order page: steps already reached, and what this member should do next. */
+export const ORDER_STEPS = [{ key: 'new', label: 'Создан' }, { key: 'confirmed', label: 'Подтверждён' }, { key: 'completed', label: 'Получен' }] as const;
+export function orderStepIndex(status: OrderStatus): number {
+  return status === 'completed' ? 2 : status === 'confirmed' ? 1 : 0;
+}
+export function orderNextStep(status: OrderStatus, role: 'buyer' | 'seller'): string {
+  if (status === 'cancelled') return 'Заказ отменён. Зарезервированные банки вернулись в объявление.';
+  if (status === 'completed') return role === 'buyer' ? 'Вы подтвердили получение. Заказ завершён.' : 'Покупатель подтвердил получение. Заказ завершён.';
+  if (status === 'confirmed') return role === 'buyer' ? 'Продавец подтвердил заказ. Когда получите банки, подтвердите получение.' : 'Вы подтвердили заказ. Договоритесь о передаче — покупатель завершит заказ после получения.';
+  return role === 'buyer' ? 'Ждём, пока продавец подтвердит заказ. Напишите ему о доставке и оплате.' : 'Проверьте наличие и подтвердите заказ — банки уже зарезервированы за покупателем.';
+}

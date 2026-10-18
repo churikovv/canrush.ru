@@ -6,7 +6,7 @@ import type { MarketEvent } from './telegram-bot/format';
 import { enqueueTelegram, type MarketPayload } from './telegram-bot/outbox';
 
 export interface Listing extends ListingInput { id: string; sellerId: string; sellerName: string; username: string | null; closed: boolean; createdAt: string; photos: string[] }
-export interface MarketOrder { id: string; listingId: string; buyerId: string; sellerId: string; status: OrderStatus; title: string; price: number; unitPrice: number; quantity: number; city: string; delivery: Delivery[]; closed: boolean; buyerName: string; sellerName: string; updatedAt: string; unread: number }
+export interface MarketOrder { id: string; listingId: string; buyerId: string; sellerId: string; status: OrderStatus; title: string; price: number; unitPrice: number; quantity: number; city: string; delivery: Delivery[]; closed: boolean; buyerName: string; sellerName: string; buyerUsername: string | null; sellerUsername: string | null; photoId: string | null; updatedAt: string; unread: number }
 export interface MarketMessage { id: string; senderId: string; text: string; createdAt: string; photos: string[] }
 async function transaction<T>(work: (db: PoolClient) => Promise<T>) {
   const db = await getPool().connect();
@@ -102,6 +102,7 @@ export async function startOrder(userId: string, listingId: string, requestedQua
   });
 }
 const orderSelect = `select o.*,(o."unitPrice"::bigint*o.quantity)::double precision as price,l."sellerId",l.title,l.city,l.delivery,l.closed,
+  (select p.id::text from "marketPhoto" p where p."listingId"=l.id order by p.position limit 1) as "photoId",b.username as "buyerUsername",s.username as "sellerUsername",
   case when trim(b.name)<>'' and b.name not like '%@%' then b.name else coalesce(b.username,'Участник') end as "buyerName",
   case when trim(s.name)<>'' and s.name not like '%@%' then s.name else coalesce(s.username,'Участник') end as "sellerName",
   (select count(*)::int from "marketMessage" m where m."orderId"=o.id and m."senderId"<>$1 and m."createdAt">coalesce(case when o."buyerId"=$1 then o."buyerReadAt" else o."sellerReadAt" end,'epoch')) as unread

@@ -60,12 +60,12 @@ try {
   await buyer.getByRole('button', { name: 'Заказать', exact: true }).click();
   await buyer.waitForURL(/\/messages\/[0-9a-f-]+$/);
   const orderUrl = buyer.url();
-  await buyer.locator('.market-order-summary').waitFor();
-  assert.match(await buyer.locator('.market-order-summary').innerText(), /2 шт\./);
+  await buyer.locator('.market-order-card').waitFor();
+  assert.match(await buyer.locator('.market-order-card').innerText(), /2 шт\./);
   const listingId = listingUrl.split('/').at(-1);
   assert.equal((await pool.query('select quantity from "marketListing" where id=$1', [listingId])).rows[0].quantity, 4);
   await buyer.getByLabel('Сообщение', { exact: true }).fill('Здравствуйте! Набор ещё в наличии?');
-  await buyer.locator('summary').click();
+  await buyer.getByRole('button', { name: 'Прикрепить фотографии' }).click();
   await buyer.locator('input[type=file]').setInputFiles({ name: 'message.png', mimeType: 'image/png', buffer });
   await buyer.getByRole('button', { name: 'Отправить сообщение' }).click();
   await buyer.locator('.market-message').first().waitFor();
@@ -73,8 +73,8 @@ try {
   await seller.getByRole('button', { name: 'Подтвердить заказ', exact: true }).click();
   await buyer.reload();
   await buyer.getByRole('button', { name: 'Подтвердить получение' }).click();
-  await buyer.getByRole('button', { name: 'Да, товар получен' }).click();
-  await buyer.getByText('Завершён', { exact: true }).waitFor();
+  await buyer.getByRole('button', { name: 'Да, банки получены' }).click();
+  await buyer.getByText('Завершён', { exact: true }).first().waitFor();
   await buyer.screenshot({ path: '/tmp/canrush-market-chat.png', fullPage: true });
   const attachment = await buyer.locator('.market-message-photos a').first().getAttribute('href');
   const anonymous = await browser.newContext();
@@ -88,7 +88,7 @@ try {
   assert.notEqual(buyer.url(), orderUrl);
   await buyer.getByRole('button', { name: 'Отменить заказ', exact: true }).click();
   await buyer.getByRole('button', { name: 'Да, отменить заказ', exact: true }).click();
-  await buyer.getByText('Отменён', { exact: true }).waitFor();
+  await buyer.getByText('Отменён', { exact: true }).first().waitFor();
   assert.equal((await pool.query('select quantity from "marketListing" where id=$1', [listingId])).rows[0].quantity, 4);
   const publicPage = await anonymous.newPage();
   for (const width of [320, 390, 768, 1024, 1440]) {

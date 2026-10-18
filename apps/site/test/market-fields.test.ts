@@ -37,3 +37,13 @@ it('validates brand and allows any city without a city input',()=>{
  data.set('brand','Monster');data.delete('city');expect(()=>parseListing(data)).toThrow();
  data.set('anyCity','on');expect(parseListing(data)).toMatchObject({brand:'Monster',anyCity:true,city:'Любой город'});
 });
+
+it('describes order progress and the next step for each side', async () => {
+  const { orderNextStep, orderStepIndex, ORDER_STEPS } = await import('@/lib/market-fields');
+  expect(ORDER_STEPS.map(step => step.key)).toEqual(['new', 'confirmed', 'completed']);
+  expect((['new', 'confirmed', 'completed', 'cancelled'] as const).map(orderStepIndex)).toEqual([0, 1, 2, 0]);
+  expect(orderNextStep('new', 'seller')).toMatch(/подтвердите заказ/);
+  expect(orderNextStep('new', 'buyer')).toMatch(/Ждём, пока продавец/);
+  expect(orderNextStep('confirmed', 'buyer')).toMatch(/подтвердите получение/);
+  expect(orderNextStep('cancelled', 'buyer')).toBe(orderNextStep('cancelled', 'seller'));
+});

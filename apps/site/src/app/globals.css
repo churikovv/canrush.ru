@@ -114,9 +114,6 @@
 .market-card-image > span { background: rgb(0 0 0 / .55); color: #fff; backdrop-filter: blur(6px); font-weight: 600; }
 .market-thread-person > span, .market-thread-meta { font-size: .875rem; color: var(--color-muted-strong); }
 .market-thread-person .market-unread { margin-left: auto; border-radius: 16px; padding: 2px 8px; background: var(--color-brand); color: var(--color-on-action); }
-.market-chat-header p { margin: 0 0 4px; color: var(--color-muted-strong); font-size: .875rem; }
-.market-order-summary > a { font-weight: 700; color: var(--color-brand-deep); overflow-wrap: anywhere; }
-.market-order-summary > p { font-size: .875rem; }
 .market-message-photos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .market-message-photos a { width: min(160px, 100%); }
 .market-message-photos img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
