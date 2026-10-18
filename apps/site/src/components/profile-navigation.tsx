@@ -1,4 +1,5 @@
 import Link from '@/components/navigation-progress';
+import { HeaderMenu } from '@/components/header-menu';
 import { NavigationIcon, type NavigationSection } from '@/components/navigation-icon';
 import { SiteTabBar } from '@/components/site-tab-bar';
 
@@ -6,47 +7,25 @@ interface ProfileNavigationProps {
   active?: NavigationSection;
 }
 
+/** Desktop header groups; the mobile tab bar keeps every section as its own tab. */
+const COMMUNITY = [
+  { section: 'tierlists', href: '/tierlists', label: 'Тирлисты', hint: 'Рейтинги вкусов' },
+  { section: 'market', href: '/market', label: 'Объявления', hint: 'Маркет банок от участников' },
+  { section: 'feed', href: '/feed', label: 'Лента', hint: 'Записи всех стен' },
+] as const;
+const STORES = [
+  { section: 'catalog', href: '/catalog', label: 'Каталог', hint: 'Все энергетики и отзывы' },
+  { section: 'prices', href: '/prices', label: 'Цены', hint: 'Цены по магазинам' },
+  { section: 'stores', href: '/market/stores', label: 'Найти', hint: 'Магазины на карте' },
+] as const;
+
 export function ProfileNavigation({ active }: ProfileNavigationProps) {
+  const items = (group: typeof COMMUNITY | typeof STORES) => group.map(item => ({ ...item, current: item.section === active }));
   return (
     <>
       <nav className="profile-navigation" aria-label="Основная навигация">
-        <Link
-          className="profile-navigation-item"
-          data-motion="catalog"
-          href="/catalog"
-          aria-label="Каталог"
-          aria-current={active === 'catalog' ? 'page' : undefined}
-        >
-          <NavigationIcon section="catalog" />
-          <span className="profile-navigation-label">Каталог</span>
-        </Link>
-        <Link
-          className="profile-navigation-item"
-          data-motion="prices"
-          href="/prices"
-          aria-label="Магазины и цены"
-          title="Магазины и цены"
-          aria-current={active === 'prices' ? 'page' : undefined}
-        >
-          <NavigationIcon section="prices" />
-          <span className="profile-navigation-label">Магазины</span>
-        </Link>
-        <Link
-          className="profile-navigation-item"
-          data-motion="tierlists"
-          href="/tierlists"
-          aria-label="Тирлисты"
-          aria-current={active === 'tierlists' ? 'page' : undefined}
-        >
-          <NavigationIcon section="tierlists" />
-          <span className="profile-navigation-label">Тирлисты</span>
-        </Link>
-        <Link className="profile-navigation-item" data-motion="feed" href="/feed" aria-label="Лента" aria-current={active === 'feed' ? 'page' : undefined}>
-          <NavigationIcon section="feed" /><span className="profile-navigation-label">Лента</span>
-        </Link>
-        <Link className="profile-navigation-item" data-motion="market" href="/market" aria-label="Маркет" aria-current={active === 'market' ? 'page' : undefined}>
-          <NavigationIcon section="market" /><span className="profile-navigation-label">Маркет</span>
-        </Link>
+        <HeaderMenu label="Сообщество" icon="community" current={COMMUNITY.some(item => item.section === active)} items={items(COMMUNITY)} />
+        <HeaderMenu label="Магазины" icon="prices" current={STORES.some(item => item.section === active)} items={items(STORES)} />
         <Link
           className="profile-navigation-item"
           data-motion="profile"

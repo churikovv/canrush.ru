@@ -20,7 +20,7 @@ export default async function StoresPage({searchParams}:{searchParams:Promise<{q
  const {items:rows,hasMore}=await listStores(city.id,q,page,mine?session!.user.id:undefined);
  const items=await withCatalogLinks(rows.map(s=>({id:s.id,photos:s.photos,ownerId:mine?s.ownerId:'',name:s.name,city:s.city,address:s.address,latitude:s.latitude,longitude:s.longitude,locationSource:s.locationSource,metro:s.metro,description:s.description,catalog:s.catalog,status:s.status,moderationNote:mine?s.moderationNote:'',updatedAt:s.updatedAt,reviewedAt:null})));
  const href=(n:number)=>`/market/stores?${new URLSearchParams({q,page:String(n),...(mine?{mine:'1'}:{})})}`;
- return <BrandShell headerAction={<ProfileNavigation active="prices"/>}><div className="market-layout"><header className="market-heading"><div><h1>Магазины</h1><p>Места, где участники находят энергетики</p></div><Link className="community-button" href="/market/stores/new">Добавить магазин</Link></header>
+ return <BrandShell headerAction={<ProfileNavigation active="stores"/>}><div className="market-layout"><header className="market-heading"><div><h1>Магазины</h1><p>Места, где участники находят энергетики</p></div><Link className="community-button" href="/market/stores/new">Добавить магазин</Link></header>
  <StoreTabs active={mine?'mine':'stores'} signedIn={Boolean(session)}/>
  <form className="market-search-form" action="/market/stores">
  <div className="catalog-search-field"><button className="market-search-submit" type="submit" aria-label="Найти магазины"><Image src="/brand/icons/catalog-search.svg" width={24} height={24} alt="" /></button><input name="q" type="search" aria-label="Поиск магазинов" maxLength={100} defaultValue={q} placeholder="Название, адрес или напиток"/></div>

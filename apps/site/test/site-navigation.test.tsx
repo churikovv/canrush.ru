@@ -52,6 +52,25 @@ describe('site tab bar', () => {
   });
 });
 
+describe('header menus', () => {
+  it('groups the desktop header into community and stores menus plus the profile', () => {
+    const html = renderToStaticMarkup(createElement(ProfileNavigation));
+    const header = html.slice(0, html.indexOf('<nav class="site-tab-bar"'));
+    // Each group label links to its first page, then the panel lists every page of the group.
+    expect(links(header).map(({ href }) => href)).toEqual(['/tierlists', '/tierlists', '/market', '/feed', '/catalog', '/catalog', '/prices', '/market/stores', '/profile']);
+    for (const label of ['Сообщество', 'Магазины', 'Объявления', 'Тирлисты', 'Лента', 'Каталог', 'Цены', 'Найти']) expect(header).toContain(label);
+    expect(header.match(/aria-expanded="false"/g)).toHaveLength(2);
+  });
+
+  it('marks the store finder in the header menu and «Магазины» in the tab bar', () => {
+    const html = renderToStaticMarkup(createElement(ProfileNavigation, { active: 'stores' }));
+    const tabBarStart = html.indexOf('<nav class="site-tab-bar"');
+    expect(links(html.slice(0, tabBarStart)).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/market/stores']);
+    expect(links(html.slice(tabBarStart)).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/prices']);
+    expect(html.slice(0, tabBarStart).match(/data-current="true"/g)).toHaveLength(1);
+  });
+});
+
 describe('section tabs', () => {
   it('puts orders into the market and hides private tabs from guests', () => {
     const guest = renderToStaticMarkup(createElement(MarketTabs, { active: 'all', signedIn: false }));

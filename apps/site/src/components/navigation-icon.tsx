@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 
-export type NavigationSection = 'home' | 'catalog' | 'prices' | 'tierlists' | 'favorites' | 'profile' | 'market' | 'feed';
+export type NavigationSection = 'home' | 'catalog' | 'prices' | 'stores' | 'tierlists' | 'favorites' | 'profile' | 'market' | 'feed';
+/** Header groups have their own glyphs; they are not pages. */
+export type NavigationIconName = NavigationSection | 'community';
 
-const GLYPHS: Record<NavigationSection, ReactNode> = {
+const GLYPHS: Record<NavigationIconName, ReactNode> = {
   market: <path d="M3 3h18l1 6a3 3 0 0 1-5 2 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-5-2l1-6Zm1 10h5v8H4v-8Zm7 0h9v8h-9v-8Z" />,
   feed: (
     <>
@@ -12,6 +14,8 @@ const GLYPHS: Record<NavigationSection, ReactNode> = {
     </>
   ),
   home: <path d="M12 2.5 2 11h2.5v10h5v-6h5v6h5V11H22L12 2.5Z" />,
+  stores: <path d="M12 2a7.5 7.5 0 0 0-7.5 7.5c0 5.4 6.2 11.6 6.9 12.2a.9.9 0 0 0 1.2 0c.7-.6 6.9-6.8 6.9-12.2A7.5 7.5 0 0 0 12 2Zm0 10.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Z" />,
+  community: <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7.5 0a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5ZM9 12.75c-3.6 0-6.5 2-6.5 4.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2.65c0-2.6-2.9-4.6-6.5-4.6Zm7.5.5c-.55 0-1.07.05-1.57.15a5.6 5.6 0 0 1 1.82 3.95V21h3.75a1 1 0 0 0 1-1v-2.2c0-2.5-2.2-4.55-5-4.55Z" />,
   catalog: (
     <path d="M11.5 3.25C10.1759 3.25009 8.87121 3.56889 7.69626 4.17948C6.52131 4.79007 5.51059 5.67451 4.7495 6.75805C3.98841 7.8416 3.49932 9.09242 3.32355 10.4048C3.14777 11.7173 3.29048 13.0527 3.73962 14.2983C4.18875 15.544 4.93112 16.6632 5.90398 17.5614C6.87685 18.4597 8.05164 19.1106 9.32908 19.4591C10.6065 19.8076 11.9491 19.8435 13.2433 19.5638C14.5376 19.2841 15.7455 18.697 16.765 17.852L19.443 20.53C19.5852 20.6625 19.7732 20.7346 19.9675 20.7312C20.1618 20.7277 20.3472 20.649 20.4846 20.5116C20.622 20.3742 20.7007 20.1888 20.7042 19.9945C20.7076 19.8002 20.6355 19.6122 20.503 19.47L17.828 16.794C18.8351 15.5903 19.478 14.1242 19.6812 12.568C19.8843 11.0117 19.6394 9.42975 18.975 8.00781C18.3107 6.58587 17.2545 5.38294 15.9305 4.54021C14.6064 3.69747 13.0695 3.24989 11.5 3.25Z" />
   ),
@@ -35,7 +39,7 @@ const GLYPHS: Record<NavigationSection, ReactNode> = {
   ),
 };
 
-export function NavigationIcon({ section }: { section: NavigationSection }) {
+export function NavigationIcon({ section }: { section: NavigationIconName }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       {GLYPHS[section]}

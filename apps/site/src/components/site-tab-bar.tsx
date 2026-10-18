@@ -19,6 +19,11 @@ const TABS: readonly Tab[] = [
   { section: 'profile', href: '/profile', label: 'Профиль' },
 ];
 
+/** Subsections light up their tab: favorites live in the profile, store pages under «Магазины». */
+function tabSection(active?: NavigationSection): NavigationSection | undefined {
+  return active === 'favorites' ? 'profile' : active === 'stores' ? 'prices' : active;
+}
+
 export function SiteTabBar({ active }: { active?: NavigationSection }) {
   return (
     <nav className="site-tab-bar" aria-label="Основная навигация" data-motion-scope="tab-bar">
@@ -30,7 +35,7 @@ export function SiteTabBar({ active }: { active?: NavigationSection }) {
           data-motion={section}
           href={href}
           aria-label={accessibleLabel}
-          aria-current={(active === 'favorites' ? 'profile' : active) === section ? 'page' : undefined}
+          aria-current={tabSection(active) === section ? 'page' : undefined}
         >
           <NavigationIcon section={section} />
           <SiteTabBarLabel>{label}</SiteTabBarLabel>

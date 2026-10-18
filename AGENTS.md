@@ -88,7 +88,12 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
   `apps/site/fonts`, токены — в `DESIGN.md`. Не подменяй логотипы и не добавляй
   runtime-ссылки на временные Figma assets.
 - **Навигация сайта**: `ProfileNavigation` рендерит кнопки хедера (≥960px) и
-  таб бар `SiteTabBar` (<960px), иконки общие (`navigation-icon.tsx`). Таб бар
+  таб бар `SiteTabBar` (<960px), иконки общие (`navigation-icon.tsx`). В хедере два
+  выпадающих меню `HeaderMenu` — «Сообщество» (Тирлисты, Объявления, Лента) и «Магазины»
+  (Каталог, Цены, Найти → `/market/stores`) — и «Профиль». Подпись группы — ссылка на её первую
+  страницу (`/tierlists`, `/catalog`), меню открывается наведением или кнопкой-стрелкой рядом; таб бар по-прежнему из шести
+  вкладок. Страницы `/market/stores*` передают `active="stores"`: в меню отмечается «Найти»,
+  в таб баре — «Магазины». Таб бар
   фиксирован снизу и задаёт `--site-tab-bar-offset` на `html` только там, где он
   есть (юридические страницы и админка без `ProfileNavigation` его не показывают).
   Новые фиксированные снизу элементы и нижние отступы считай через
@@ -161,7 +166,7 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
 - Фото объявлений публичны, вложения сообщений доступны только участникам через `/api/market-photos/[id]`, без кеширования. Не раскрывать вложения через публичные URL или Next Image optimizer.
 - Проверка маркета: `npm -w apps/site test -- test/market-fields.test.ts test/site-navigation.test.tsx`, `npm -w apps/site run test:auth -- test/market.integration.test.ts` (после миграции отдельной тестовой БД).
 - Мобильный таб-бар и хедер: Каталог, Магазины (`/prices`, раздел `prices`), Тирлисты, Лента (`/feed`), Маркет, Профиль. Главная доступна через логотип.
-- Вкладки разделов — `src/components/section-tabs.tsx`: `MarketTabs` (Все объявления, Мои объявления, Заказы → `/messages`) и `StoreTabs` (Цены → `/prices`, Магазины и Мои магазины → `/market/stores`). URL не менялись; `/messages*` подсвечивают раздел `market`, `/market/stores*` — раздел `prices`. Приватные вкладки скрыты для гостей.
+- Вкладки разделов — `src/components/section-tabs.tsx`: `MarketTabs` (Все объявления, Мои объявления, Заказы → `/messages`) и `StoreTabs` (Цены → `/prices`, Магазины и Мои магазины → `/market/stores`). URL не менялись; `/messages*` подсвечивают раздел `market`, `/market/stores*` — раздел `stores` (в таб баре это вкладка «Магазины», как и `prices`). Приватные вкладки скрыты для гостей.
 - Браузерная проверка: `node apps/site/scripts/market-smoke.mjs`. Требует сборку и отдельный сервер на `localhost:3100` с `DATABASE_URL=postgresql://localhost:5432/canrush_site_test`, `BETTER_AUTH_URL=http://localhost:3100`, `BETTER_AUTH_SECRET=canrush-market-browser-test-secret-32-bytes` (фиктивный секрет только тестового сервера). Создаёт и очищает только собственные тестовые аккаунты, не отправляет письма.
 
 ## Магазины
