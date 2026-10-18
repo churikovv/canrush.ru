@@ -19,3 +19,24 @@ it('serializes concurrent writers without losing identities', async () => {
   expect(JSON.parse(await readFile(file, 'utf8')).groups).toHaveLength(2);
  } finally { await rm(directory, { recursive: true, force: true }); }
 });
+it('downloads archived CDN covers once and keeps local covers and failed links', async () => {
+ const { localizeRegistryCovers } = await import('../src/product-registry.js');
+ const directory = await mkdtemp(path.join(tmpdir(), 'registry-test-'));
+ try {
+  const file = path.join(directory, 'registry.json');
+  await archiveProducts([
+   { brand: 'Neft', flavor: 'orange', coverImageUrl: 'https://leonardo.edadeal.io/a', variants: [], minPrice: 0 },
+   { brand: 'Neft', flavor: 'original', coverImageUrl: 'https://leonardo.edadeal.io/broken', variants: [], minPrice: 0 },
+   { brand: 'Burn', flavor: 'original', coverImageUrl: '/images/products/burn.jpg', variants: [], minPrice: 0 },
+  ], file);
+  const calls: string[] = [];
+  const download = async (url: string) => { calls.push(url); return url.endsWith('/a') ? '/images/products/neft.jpg' : undefined; };
+  expect(await localizeRegistryCovers(download, { file })).toEqual({ repaired: 1, failed: 1 });
+  expect(calls).toEqual(['https://leonardo.edadeal.io/a', 'https://leonardo.edadeal.io/broken']);
+  const covers = Object.fromEntries((JSON.parse(await readFile(file, 'utf8')).groups as { flavor: string; brand: string; coverImageUrl?: string }[]).map(group => [`${group.brand}:${group.flavor}`, group.coverImageUrl]));
+  expect(covers).toEqual({ 'Neft:orange': '/images/products/neft.jpg', 'Neft:original': 'https://leonardo.edadeal.io/broken', 'Burn:original': '/images/products/burn.jpg' });
+  calls.length = 0;
+  expect(await localizeRegistryCovers(download, { file })).toEqual({ repaired: 0, failed: 1 });
+  expect(calls).toEqual(['https://leonardo.edadeal.io/broken']);
+ } finally { await rm(directory, { recursive: true, force: true }); }
+});

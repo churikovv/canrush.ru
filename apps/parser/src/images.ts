@@ -5,6 +5,7 @@ import axios from 'axios';
 import type { CatalogGroup, Product } from '@canrush/shared';
 import { DEFAULT_USER_AGENT, delay } from './http.js';
 import { writeAtomic } from './atomic-file.js';
+import { localizeRegistryCovers } from './product-registry.js';
 import { saveSiteCatalog } from './storage.js';
 
 // apps/parser/src/images.ts -> apps/site/public/images/products
@@ -80,6 +81,10 @@ async function fetchImage(url: string): Promise<string | undefined> {
     console.warn('[images] изображение недоступно, повторная попытка не раньше чем через час');
     return undefined;
   }
+}
+/** Downloads covers of archived identities that kept a CDN link, pausing like the offer downloads. */
+export async function localizeArchivedCovers(): Promise<{ repaired: number; failed: number }> {
+  return localizeRegistryCovers(downloadImage, { pause: () => delay(DOWNLOAD_DELAY_MS) });
 }
 export function downloadImage(url: string): Promise<string | undefined> {
   const pending = inFlight.get(url);

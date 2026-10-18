@@ -6,7 +6,7 @@ const SOURCES = ['edadeal'] as const;
 import { parseCities, runRegionalParser } from './regions.js';
 import { runParser } from './run.js';
 import { startSchedule } from './schedule.js';
-import { applyLocalImages, downloadProductImages, loadLatestData, saveLatestData } from './images.js';
+import { applyLocalImages, downloadProductImages, loadLatestData, localizeArchivedCovers, saveLatestData } from './images.js';
 import { downloadRetailerIcons } from './retailer-icons.js';
 
 type Flags = Record<string, string | boolean>;
@@ -69,6 +69,8 @@ async function runDownloadImages(): Promise<void> {
   const updated = applyLocalImages(data, urlMap);
   await saveLatestData(updated);
   console.log('data/latest.json обновлён с локальными путями.');
+  const archived = await localizeArchivedCovers();
+  console.log(`Архив: докачано обложек ${archived.repaired}, не удалось ${archived.failed}.`);
 }
 
 async function runDownloadIcons(): Promise<void> {

@@ -8,7 +8,7 @@ import { edadealAdapter } from './adapters/edadeal.js';
 import { lavkaAdapter } from './adapters/lavka.js';
 import { loadProductsConfig } from './config.js';
 import { DATA_DIR, filterSuspiciousVariants, groupByFlavor } from './storage.js';
-import { applyLocalImages, downloadProductImages } from './images.js';
+import { applyLocalImages, downloadProductImages, localizeArchivedCovers } from './images.js';
 import { downloadRetailerIcons } from './retailer-icons.js';
 import { delay } from './http.js';
 import { writeAtomic } from './atomic-file.js';
@@ -109,5 +109,7 @@ export async function runRegionalParser(options: { cities?: CityId[]; force?: bo
       await saveSnapshot(snapshot);
       if (index < cities.length - 1) await delay(3000 + Math.random() * 2000);
     }
+    const archived = await localizeArchivedCovers();
+    if (archived.repaired || archived.failed) console.log(`[regions] архив: докачано обложек ${archived.repaired}, не удалось ${archived.failed}`);
   } finally { await rm(lock, { recursive: true, force: true }); }
 }

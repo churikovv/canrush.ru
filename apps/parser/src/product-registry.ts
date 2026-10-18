@@ -33,3 +33,28 @@ export async function archiveProducts(groups: CatalogGroup[], file = registryPat
     await writeAtomic(file, JSON.stringify({ groups: mergeProductRegistry(previous, groups) }));
   } finally { await rm(lock, { recursive: true, force: true }); }
 }
+
+/**
+ * Archived identities keep the cover their last offer had. When that run failed to download it,
+ * the cover stays a CDN link that later expires and is skipped by local-only previews, and the
+ * product never comes back to retry. Downloads run outside the lock; results merge like any
+ * archive write, where a local cover wins over a remote one.
+ */
+export async function localizeRegistryCovers(
+  download: (url: string) => Promise<string | undefined>,
+  options: { file?: string; pause?: () => Promise<void> } = {},
+): Promise<{ repaired: number; failed: number }> {
+  const file = options.file ?? registryPath;
+  let groups: CatalogGroup[];
+  try { groups = (JSON.parse(await readFile(file, 'utf8')) as { groups: CatalogGroup[] }).groups; }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return { repaired: 0, failed: 0 }; throw error; }
+  const remote = groups.filter(group => group.coverImageUrl?.startsWith('https://'));
+  const repaired: CatalogGroup[] = [];
+  for (const [index, group] of remote.entries()) {
+    const local = await download(group.coverImageUrl!);
+    if (local) repaired.push({ brand: group.brand, flavor: group.flavor, coverImageUrl: local, variants: [], minPrice: 0 });
+    if (index < remote.length - 1) await options.pause?.();
+  }
+  if (repaired.length) await archiveProducts(repaired, file);
+  return { repaired: repaired.length, failed: remote.length - repaired.length };
+}

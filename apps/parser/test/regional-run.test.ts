@@ -11,7 +11,7 @@ vi.mock('../src/atomic-file.js', () => ({ writeAtomic: async (file: string, data
 vi.mock('../src/config.js', () => ({ loadProductsConfig: () => ({ keywords: ['энергетик'], brands: ['Burn'], flavors: ['original'], sources: { edadeal: { query: 'энергетик' }, lavka: { cities: ['moscow'] } } }) }));
 vi.mock('../src/adapters/edadeal.js', () => ({ edadealAdapter: { fetchPrices: fixture.fetch } }));
 vi.mock('../src/adapters/lavka.js', () => ({ lavkaAdapter: { fetchPrices: fixture.lavka } }));
-vi.mock('../src/images.js', () => ({ downloadProductImages: async () => new Map(), applyLocalImages: (data: unknown) => data }));
+vi.mock('../src/images.js', () => ({ downloadProductImages: async () => new Map(), applyLocalImages: (data: unknown) => data, localizeArchivedCovers: async () => ({ repaired: 0, failed: 0 }) }));
 vi.mock('../src/retailer-icons.js', () => ({ downloadRetailerIcons: async () => ({}) }));
 vi.mock('../src/http.js', () => ({ delay: async () => {} }));
 import { SourceBlockedError } from '../src/fetch/errors.js';
