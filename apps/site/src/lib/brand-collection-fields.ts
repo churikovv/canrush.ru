@@ -105,3 +105,8 @@ export function collectionAwards(summary: CollectionSummary): CollectionAward[] 
 export function nextMilestone(collection: { tried: number; total: number }): CollectionMilestone | undefined {
   return brandMilestones(collection.total).find(step => collection.tried < step.needed);
 }
+
+/** XP a brand has paid so far: every milestone already reached. */
+export function earnedCollectionXp(collection: { tried: number; total: number }): number {
+  return brandMilestones(collection.total).filter(step => collection.tried >= step.needed).reduce((sum, step) => sum + step.points, 0);
+}
