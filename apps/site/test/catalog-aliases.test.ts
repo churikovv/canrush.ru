@@ -74,11 +74,13 @@ it('uses archived local photos without restoring stale offers or replacing exist
 
 it('merges verified strawberry Ultra aliases', () => { expect(canonicalProductFlavor('Monster', 'strawberry:sugarfree')).toBe('monster_ultra_strawberry'); });
 
-it('merges historical Volt brand and mixture aliases without mixing Mango editions', () => {
+it('merges historical Volt brand and mixture aliases, keeping the lime + mango edition apart', () => {
   const make = (brand: string, flavor: string): CatalogGroup => ({ brand, flavor, variants: [], minPrice: 0 });
   const result = mergeCatalogAliases([make('Volt', 'mint'), make('Volt Energy', 'pomelo'), make('Volt Energy', 'blend:mint+pomelo')]);
   expect(result.map(g => [g.brand, g.flavor])).toEqual([['Volt Energy', 'blend:mint+pomelo']]);
-  expect(canonicalProductFlavor('Volt Energy', 'mango')).toBe('mango');
+  // The archived plain mango card carries the coconut + mango cover (reported as a duplicate).
+  expect(canonicalProductFlavor('Volt Energy', 'mango')).toBe('blend:coconut+mango');
+  expect(canonicalProductFlavor('Volt Energy', 'blend:lime+mango')).toBe('blend:lime+mango');
   expect(canonicalProductFlavor('Volt Energy', 'original')).toBe('original');
   expect(canonicalProductFlavor('Volt', 'original')).toBe('berry_dragee');
 });

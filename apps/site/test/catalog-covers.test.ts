@@ -17,3 +17,10 @@ it('leaves other flavors and brands untouched',()=>{
  expect(catalogCover('Drive Me','berry','berry.jpg')).toBe('berry.jpg');
  expect(catalogCover('Burn','original','burn.jpg')).toBe('burn.jpg');
 });
+
+it('replaces the plain Zero Sugar photo retailers attach to Monster VR46 Zero', () => {
+  expect(catalogCover('Monster', 'monster_vr46:sugarfree', '/images/products/3a006c5024a80ca0.jpg')).toBe('/brand/products/monster-vr46-zero.jpg');
+  expect(catalogCover('Monster', 'monster_vr46', '/images/products/x.jpg')).toBe('/images/products/x.jpg');
+  expect(catalogCover('Monster', 'sugarfree', '/images/products/ultra-white.jpg')).toBe('/brand/products/monster-zero-sugar.jpg');
+  for (const file of ['monster-vr46-zero.jpg', 'monster-zero-sugar.jpg']) expect(existsSync(`public/brand/products/${file}`)).toBe(true);
+});

@@ -75,6 +75,7 @@ it('recognizes Tornado editions, including retailer typos, without guessing thei
     [['Tornado Bubble', 'Торнадо Баббл'], 'tornado_bubble'],
     [['Tornado Boost', 'Tornado Tornadoboost'], 'tornado_boost'],
     [['Tornado Sour & Marm'], 'tornado_sour_marm'],
+    [['Tornado Max Energy Lemoncake', 'Торнадо Лимонный кекс'], 'tornado_lemoncake'],
   ] as Array<[string[], string]>) {
     const products = names.map(normalize);
     expect(products.every(product => product.flavor === flavor)).toBe(true);

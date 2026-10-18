@@ -79,6 +79,7 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
       [/(?:^| )active(?: |$)/u, 'tornado_active'],
       [/(?:^| )berrycream(?: |$)/u, 'tornado_berrycream'],
       [/(?:^| )sour marm(?: |$)/u, 'tornado_sour_marm'],
+      [/(?:lemon ?cake|лемон ?кейк|лимонн\S* кекс)/u, 'tornado_lemoncake'],
     ],
     'Adrenaline Rush': [
       [/(?:vitamin\s*power|витаминная сила|game fuel).*(?:манго|mango)/u, 'mango'],

@@ -171,6 +171,14 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Max", "original", "Tornado", "tornado_berrycream"],
   ["Go Champ", "grapefruit", "Go Champ", "blend:grapefruit+watermelon"],
   ["Tassay", "unresolved:c5563315b9f9cea139f1f86d", "Tassay", "original"],
+  ["Drive Me", "unresolved:694eb7e1e8c49093e30aa420", "Drive Me", "original"], // flyer "ДРАЙВ МИ оридж"
+  ["Drive Me", "sugarfree", "Drive Me", "blend:guava+mango:sugarfree"], // Lavka "Drive Me манго без сахара" (guava + mango zero can)
+  ["Volt Energy", "mango", "Volt Energy", "blend:coconut+mango"], // archived card with the coconut + mango cover
+  ["Adrenaline Rush", "blend:lime+melon+mint:sugarfree", "Adrenaline Rush", "blend:lime+melon+mint"], // one flyer for Juiced melon-lime-mint and Silver zero
+  ["Red Bull", "citrus", "Red Bull", "lime"], // Summer Edition "Citrus Zest" is the sudachi lime can
+  ["Burn", "unresolved:8c920057d6960a32c56e29af", "Burn", "mango"], // Metro flyer "BURN арт. 241868" shows the mango can
+  ["Rocket", "unresolved:e5fcf35a0a30ae2756bac51d", "Rocket", "original"], // Rocket Ride Vitamins, the same can as the original card
+  ["Tornado", "unresolved:a8dfc8f215a4a82ed09c9312", "Tornado", "tornado_lemoncake"], // Magnit offer of Tornado Max Energy Lemoncake
 ];
 export function reviewedProductIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
   const alias = REVIEWED_PRODUCT_ALIASES.find(entry => entry[0] === brand && entry[1] === flavor);

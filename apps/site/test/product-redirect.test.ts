@@ -41,3 +41,21 @@ it('points the published Tassay flyer URL at the original edition', () => {
   expect(decodeCatalogGroupSlug('tassay-unresolved-c5563315b9f9cea139f1f86d-pxdukzagvkbd')).toEqual({ brand: 'Tassay', flavor: 'unresolved:c5563315b9f9cea139f1f86d' });
   expect(catalogGroupSlug('Tassay', 'unresolved:c5563315b9f9cea139f1f86d')).toBe('tassay-original');
 });
+
+it('points reported duplicate URLs at the live products', () => {
+  for (const [slug, canonical] of [
+    ['drive-me-unresolved-694eb7e1e8c49093e30aa420-d5h2j9n098jg', catalogGroupSlug('Drive Me', 'original')],
+    ['drive-me-zero-2q56gjzcm38u7', catalogGroupSlug('Drive Me', 'blend:guava+mango:sugarfree')],
+    ['volt-energy-mango', catalogGroupSlug('Volt Energy', 'blend:coconut+mango')],
+    ['adrenaline-rush-lime-melon-mint-zero-ivqlpyxs5rir', catalogGroupSlug('Adrenaline Rush', 'blend:lime+melon+mint')],
+    ['red-bull-citrus', catalogGroupSlug('Red Bull', 'lime')],
+    ['burn-unresolved-8c920057d6960a32c56e29af-g158f6tuhk6l', catalogGroupSlug('Burn', 'mango')],
+    ['rocket-unresolved-e5fcf35a0a30ae2756bac51d', catalogGroupSlug('Rocket', 'original')],
+    ['tornado-unresolved-a8dfc8f215a4a82ed09c9312-226f8qwpzk3s7', catalogGroupSlug('Tornado', 'tornado_lemoncake')],
+  ]) {
+    const identity = decodeCatalogGroupSlug(slug!);
+    expect(identity).not.toBeNull();
+    expect(catalogGroupSlug(identity!.brand, identity!.flavor)).toBe(canonical);
+    expect(canonical).not.toBe(slug);
+  }
+});
