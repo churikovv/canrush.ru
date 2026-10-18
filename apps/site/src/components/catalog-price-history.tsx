@@ -17,7 +17,9 @@ export function CatalogPriceHistory({ series, today, icons }: { series: PriceSer
   </section>;
 }
 
-function PricePlot({ stores, icons }: { stores: StorePriceSeries[]; icons: Record<string, ReactNode> }) {
+/** Median price over time; hover, tap or arrow keys show each store's price that day. */
+export function PricePlot({ stores, icons, unit = '', caption = 'медианная цена' }: { stores: StorePriceSeries[]; icons: Record<string, ReactNode>; unit?: string; caption?: string }) {
+  const value = (price: number) => money(price) + unit;
   const gradient = useId();
   const plot = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(600);
@@ -68,9 +70,9 @@ function PricePlot({ stores, icons }: { stores: StorePriceSeries[]; icons: Recor
     tickDates.push(lastDate);
   }
   return <>
-    <div className="price-history-summary" aria-live="polite"><strong>{money(selected.median)}</strong><span>{dateLabel(selected.date)} · медианная цена</span></div>
+    <div className="price-history-summary" aria-live="polite"><strong>{value(selected.median)}</strong><span>{dateLabel(selected.date)} · {caption}</span></div>
     <div className="price-history-plot-wrap" ref={plot} onPointerLeave={event => { if (event.pointerType === 'mouse') setExpanded(false); }}>
-    <svg className="price-history-mini" viewBox={`0 0 ${width} 160`} role="button" tabIndex={0} aria-label={`Медианная цена ${money(selected.median)} за ${dateLabel(selected.date)}. Нажмите для цен магазинов. Стрелки меняют дату.`} aria-expanded={expanded} onPointerMove={event => {
+    <svg className="price-history-mini" viewBox={`0 0 ${width} 160`} role="button" tabIndex={0} aria-label={`Медианная цена ${value(selected.median)} за ${dateLabel(selected.date)}. Нажмите для цен магазинов. Стрелки меняют дату.`} aria-expanded={expanded} onPointerMove={event => {
       if (event.pointerType === 'mouse' && window.matchMedia('(hover: hover) and (pointer: fine)').matches) choose(event.clientX, event.currentTarget.getBoundingClientRect());
     }} onClick={e => choose(e.clientX, e.currentTarget.getBoundingClientRect())} onKeyDown={event => {
       if (['ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', ' '].includes(event.key)) {
@@ -88,7 +90,7 @@ function PricePlot({ stores, icons }: { stores: StorePriceSeries[]; icons: Recor
     </svg>
     {expanded && <div className="price-history-popover" role="region" aria-label={`Цены за ${dateLabel(selected.date)}`} style={{ left: Math.min(Math.max(x(selected.date) - 130, 0), Math.max(0, width - 260)) }}>
       <header><span>{dateLabel(selected.date)}</span><button type="button" aria-label="Закрыть цены" onClick={() => setExpanded(false)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button></header>
-      <strong>{money(selected.median)}</strong>
+      <strong>{value(selected.median)}</strong>
       <ul>{selected.offers.map(offer => <li key={offer.name}>{icons[offer.name]}<span>{offer.name}</span><b>{money(offer.price)}</b></li>)}</ul>
     </div>}
     </div>

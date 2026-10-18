@@ -17,3 +17,22 @@ it('keeps different retailers as separate series',()=>{
  expect(data[0]?.stores.find(s=>s.name==='Магазин')?.points[0]?.price).toBe(100);
  expect(data[0]?.stores.find(s=>s.name==='Другой магазин')?.points[0]?.price).toBe(80);
 });
+
+it('turns shelf snapshots into daily per-store medians per 100 ml, for one brand or all', async () => {
+  const { collectRetailerPriceDays, retailerPriceSeries } = await import('../src/lib/price-history');
+  const offer = (retailer: string, price: number, volumeMl = 500, extra = {}) => ({ source: 'edadeal' as const, retailer, price, volumeMl, url: 'https://edadeal.ru/moskva/search?text=x', fetchedAt: '2026-10-01', ...extra });
+  const days = collectRetailerPriceDays([
+    { date: '2026-10-01', groups: [
+      { brand: 'Burn', flavor: 'original', minPrice: 100, variants: [offer('Магнит', 100), offer('Пятёрочка', 150)] },
+      { brand: 'Tornado', flavor: 'original', minPrice: 50, variants: [offer('Магнит', 50, 500), offer('Магнит', 999, 500, { stale: true })] },
+    ] },
+    { date: '2026-10-02', groups: [{ brand: 'Burn', flavor: 'original', minPrice: 90, variants: [offer('Магнит', 90, 450)] }] },
+  ]);
+  expect(retailerPriceSeries(days, 'Burn')).toEqual([
+    { name: 'Магнит', points: [{ date: '2026-10-01', price: 20 }, { date: '2026-10-02', price: 20 }] },
+    { name: 'Пятёрочка', points: [{ date: '2026-10-01', price: 30 }] },
+  ]);
+  // All brands: Magnit had Burn 20 and Tornado 10 per 100 ml on the first day; the stale offer is ignored.
+  expect(retailerPriceSeries(days).find(store => store.name === 'Магнит')?.points[0]).toEqual({ date: '2026-10-01', price: 15 });
+  expect(retailerPriceSeries(days, 'Nope')).toEqual([]);
+});

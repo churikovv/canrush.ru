@@ -1,18 +1,12 @@
 import 'server-only';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import Image from 'next/image';
+import { RetailerBadgeView, type RetailerAsset } from '@/components/retailer-badge-view';
 
 interface RetailerBadgeProps {
   name: string;
   size?: 'small' | 'large';
   decorative?: boolean;
-}
-
-interface RetailerAsset {
-  src: string;
-  size: number;
-  tile?: boolean;
 }
 
 type RetailerIconManifest = Record<string, string | { src?: unknown; tile?: unknown }>;
@@ -60,25 +54,12 @@ async function retailerAsset(name: string, badgeSize: number): Promise<RetailerA
   return manifestAsset(manifest[name], badgeSize);
 }
 
-function initials(name: string): string {
-  const words = name.match(/[a-zа-яё0-9]+/giu) ?? [];
-  if (words.length === 0) return '•';
-  if (words.length === 1) return words[0]!.slice(0, 2).toLocaleUpperCase('ru-RU');
-  return words
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join('')
-    .toLocaleUpperCase('ru-RU');
+/** Assets for client widgets, which cannot render the async server badge themselves. */
+export async function retailerAssets(names: string[], size: 'small' | 'large' = 'small'): Promise<Record<string, RetailerAsset | null>> {
+  const entries = await Promise.all(names.map(async name => [name, await retailerAsset(name, size === 'large' ? 34 : 28)] as const));
+  return Object.fromEntries(entries);
 }
 
 export async function RetailerBadge({ name, size = 'small', decorative = false }: RetailerBadgeProps) {
-  const asset = await retailerAsset(name, size === 'large' ? 34 : 28);
-  const accessibility = decorative ? { 'aria-hidden': true as const } : { role: 'img', 'aria-label': `Магазин ${name}` };
-  const className = `retailer-badge retailer-badge-${size}${asset?.tile ? ' retailer-badge-tile' : ''}`;
-
-  return (
-    <span className={className} title={name} {...accessibility}>
-      {asset ? <Image src={asset.src} width={asset.size} height={asset.size} alt="" /> : <span>{initials(name)}</span>}
-    </span>
-  );
+  return <RetailerBadgeView name={name} asset={await retailerAsset(name, size === 'large' ? 34 : 28)} size={size} decorative={decorative} />;
 }

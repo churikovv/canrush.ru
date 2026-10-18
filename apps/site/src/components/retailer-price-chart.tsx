@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 import { PriceFilterInput } from '@/components/price-filter-input';
+import { RetailerPriceHistory } from '@/components/retailer-price-history';
 import { compareRetailerPrices, type PriceObservation, type PriceSort } from '@/lib/price-statistics';
 
 const money = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -35,6 +36,7 @@ export function RetailerPriceChart({ observations, retailerBadges }: { observati
         </section>
 
       </div>
+      <RetailerPriceHistory brand={brand} icons={retailerBadges} />
       <section className="price-results" aria-labelledby="price-results-title">
         <div className="price-chart-summary">
           <div><h2 id="price-results-title">Магазины <span>₽ / 100 мл</span></h2><p aria-live="polite">Магазины: {rows.length} · Позиции: {count}</p></div>

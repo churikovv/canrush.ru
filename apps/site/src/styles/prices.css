@@ -61,3 +61,14 @@
 .price-retailer-name > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 .price-heading-meta { display: flex; flex-direction: column; gap: 4px; margin-left: auto; text-align: right; line-height: 1.5; }
 @media (max-width: 959px) { .price-heading-meta { flex-basis: 100%; margin-left: 0; text-align: left; } }
+/* Store price trend above the comparison table. */
+/* One rhythm between the filter, the trend and the table. */
+.price-comparison { display: grid; gap: 28px; }
+.price-comparison > .price-chart-controls { margin-bottom: 0; }
+.price-comparison > .retailer-price-history { margin: 0; padding: 20px 24px; border-color: var(--theme-line, #dfe2e6); border-radius: 12px; }
+.retailer-price-history .price-history-summary { margin-top: 12px; }
+@media (max-width: 639px) {
+  .price-comparison { gap: 20px; }
+  .price-comparison > .retailer-price-history { padding: 16px; }
+}
+.retailer-price-history h2 > span { margin-left: 6px; color: var(--color-muted-strong); font-size: .875rem; font-weight: 500; }
