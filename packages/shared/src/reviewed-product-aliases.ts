@@ -155,7 +155,7 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Toxic Waste", "blueberry", "Toxic Waste", "blend:blueberry+raspberry"],
   ["Lit Energy", "barberry", "Lit Energy", "blend:barberry+cranberry"],
   ["Lit Energy", "lime", "Lit Energy", "blend:lime+yuzu"],
-  ["Mix", "grapefruit", "Mix", "blend:citrus+grapefruit+lemon+orange"],
+  ["Mix", "grapefruit", "By Баста", "blend:grapefruit+lemon+orange"],
   ["My", "original", "My Element", "original"],
   ["My", "bubblegum", "My Element", "bubblegum"],
   ["Adrenaline", "pineapple", "Adrenaline Rush", "blend:pineapple+pomelo"],
@@ -179,6 +179,9 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Burn", "unresolved:8c920057d6960a32c56e29af", "Burn", "mango"], // Metro flyer "BURN арт. 241868" shows the mango can
   ["Rocket", "unresolved:e5fcf35a0a30ae2756bac51d", "Rocket", "original"], // Rocket Ride Vitamins, the same can as the original card
   ["Tornado", "unresolved:a8dfc8f215a4a82ed09c9312", "Tornado", "tornado_lemoncake"], // Magnit offer of Tornado Max Energy Lemoncake
+  ["Monster", "monster_vr46", "Monster", "monster_vr46:sugarfree"], // the only non-Doctor VR46 can is the blue Zero Sugar one
+  ["Mix", "orange", "Burn", "orange"], // "Mix" is Edadeal's brand for Burn "Апельсиновый микс"
+  ["Mix", "blend:citrus+grapefruit+lemon+orange", "By Баста", "blend:grapefruit+lemon+orange"], // "BYБАСТА Цитрус микс", the same can
 ];
 export function reviewedProductIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
   const alias = REVIEWED_PRODUCT_ALIASES.find(entry => entry[0] === brand && entry[1] === flavor);

@@ -54,6 +54,9 @@ it('deduplicates inherently sugar-free Monster editions, preserving distinct reg
     expect(canonicalProductFlavor('Monster', `${edition}:sugarfree`)).toBe(`${edition}:sugarfree`);
   }
   expect(canonicalProductFlavor('Other', 'monster_full_throttle:sugarfree')).toBe('monster_full_throttle:sugarfree');
+  // VR46 without "zero" in the title is the blue Zero Sugar can; The Doctor (also VR46-branded) stays apart.
+  expect(canonicalProductFlavor('Monster', 'monster_vr46')).toBe('monster_vr46:sugarfree');
+  expect(canonicalProductFlavor('Monster', 'monster_the_doctor')).toBe('monster_the_doctor');
 });
 
 it('merges reviewed Monster retailer identities without merging other editions', () => {

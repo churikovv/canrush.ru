@@ -52,6 +52,10 @@ it('points reported duplicate URLs at the live products', () => {
     ['burn-unresolved-8c920057d6960a32c56e29af-g158f6tuhk6l', catalogGroupSlug('Burn', 'mango')],
     ['rocket-unresolved-e5fcf35a0a30ae2756bac51d', catalogGroupSlug('Rocket', 'original')],
     ['tornado-unresolved-a8dfc8f215a4a82ed09c9312-226f8qwpzk3s7', catalogGroupSlug('Tornado', 'tornado_lemoncake')],
+    ['monster-monster-vr46', 'monster-monster-vr46-zero'],
+    ['mix-orange-3n7d5swpvat7d', catalogGroupSlug('Burn', 'orange')],
+    ['mix-citrus-grapefruit-lemon-orange', catalogGroupSlug('By Баста', 'blend:grapefruit+lemon+orange')],
+    ['mix-grapefruit', catalogGroupSlug('By Баста', 'blend:grapefruit+lemon+orange')],
   ]) {
     const identity = decodeCatalogGroupSlug(slug!);
     expect(identity).not.toBeNull();
