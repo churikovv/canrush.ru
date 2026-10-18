@@ -36,28 +36,32 @@ try {
   const sellerConsent = seller.getByRole('button', { name: 'Принять и закрыть' }); if (await sellerConsent.isVisible()) await sellerConsent.click();
   const buffer = await sharp({ create: { width: 800, height: 1000, channels: 3, background: '#006eff' } }).png().toBuffer();
   await seller.locator('input[type=file]').setInputFiles([{ name: 'test.png', mimeType: 'image/png', buffer }, { name: 'test2.png', mimeType: 'image/png', buffer }]);
-  await seller.getByRole('button', { name: 'Обрезать', exact: true }).first().click();
+  await seller.getByRole('button', { name: 'Обрезать фото 1', exact: true }).click();
   await seller.getByRole('button', { name: 'Применить', exact: true }).click();
-  await seller.getByRole('button', { name: 'Переместить фото 2 влево' }).click();
-  await seller.getByLabel('Название', { exact: true }).fill('Набор редких энергетиков');
+  // Photos reorder with the arrow keys on a focused tile.
+  await seller.getByLabel(/^Фотография 2\./).press('ArrowLeft');
+  await seller.getByLabel(/^Фотография 1, обложка/).waitFor();
+  await seller.getByLabel('Название объявления', { exact: true }).fill('Набор редких энергетиков');
+  await seller.getByRole('combobox', { name: 'Бренд' }).fill('Разные');
+  await seller.getByRole('option', { name: 'Разные бренды' }).click();
   await seller.getByLabel('Описание', { exact: true }).fill('Три банки из коллекции. Срок годности до декабря. Упакую каждую банку отдельно.');
-  for (const name of ['Самовывоз', 'Яндекс', 'Авито', 'Сдек', 'Почта России', 'X5 Post']) await seller.getByLabel(name, { exact: true }).check();
+  for (const name of ['Самовывоз', 'Яндекс', 'Авито', 'Сдэк', 'Почта России', 'X5 Post']) await seller.getByLabel(name, { exact: true }).check();
   await seller.getByLabel('Город', { exact: true }).fill('Москва');
-  await seller.getByLabel('Количество в наличии, шт.').fill('6');
+  await seller.getByLabel('Количество, шт.').fill('6');
   await seller.getByLabel('Цена за одну банку, ₽').fill('1200,50');
   await seller.screenshot({ path: '/tmp/canrush-market-form.png', fullPage: true });
   await seller.getByRole('button', { name: 'Опубликовать объявление' }).click();
   await seller.waitForURL(/\/market\/[0-9a-f-]+$/);
   await seller.locator('.market-gallery').waitFor();
   const listingUrl = seller.url();
-  assert.equal(await seller.getByRole('button', { name: 'Заказать', exact: true }).count(), 0);
+  assert.equal(await seller.getByRole('button', { name: /^Заказать/ }).count(), 0);
   await seller.screenshot({ path: '/tmp/canrush-market-detail.png', fullPage: true });
   const buyer = await person('Покупатель теста');
   await buyer.goto(listingUrl);
   await buyer.locator('.market-gallery').waitFor();
   const buyerConsent = buyer.getByRole('button', { name: 'Принять и закрыть' }); if (await buyerConsent.isVisible()) await buyerConsent.click();
-  await buyer.getByLabel('Количество для заказа').fill('2');
-  await buyer.getByRole('button', { name: 'Заказать', exact: true }).click();
+  await buyer.locator('.market-order-quantity input').fill('2');
+  await buyer.getByRole('button', { name: /^Заказать/ }).click();
   await buyer.waitForURL(/\/messages\/[0-9a-f-]+$/);
   const orderUrl = buyer.url();
   await buyer.locator('.market-order-card').waitFor();
@@ -82,8 +86,8 @@ try {
   assert.equal((await buyer.request.get(origin + attachment)).status(), 200);
   await pool.query('update "user" set "lastMarketOrderAt"=null where id=$1', [users[1]]);
   await buyer.goto(listingUrl);
-  await buyer.getByLabel('Количество для заказа').fill('1');
-  await buyer.getByRole('button', { name: 'Заказать', exact: true }).click();
+  await buyer.locator('.market-order-quantity input').fill('1');
+  await buyer.getByRole('button', { name: /^Заказать/ }).click();
   await buyer.waitForURL(/\/messages\/[0-9a-f-]+$/);
   assert.notEqual(buyer.url(), orderUrl);
   await buyer.getByRole('button', { name: 'Отменить заказ', exact: true }).click();
@@ -98,12 +102,16 @@ try {
     assert.equal(await publicPage.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `Overflow at ${width}`);
     if (width === 390 || width === 1440) await publicPage.screenshot({ path: `/tmp/canrush-market-${width}.png`, fullPage: true });
   }
+  // The loading screen covers slow client navigations only (no loading.tsx): start on a page that does not
+  // read listings, hold the listings table, then follow the tab bar link to the market.
+  await publicPage.setViewportSize({ width: 390, height: 844 });
+  await publicPage.goto(`${origin}/catalog`);
+  await publicPage.locator('.site-tab-bar a[href="/market"]').waitFor();
   const blocker = await pool.connect();
   try {
     await blocker.query('begin');
     await blocker.query('lock table "marketListing" in access exclusive mode');
-    await publicPage.setViewportSize({ width: 390, height: 844 });
-    await publicPage.goto(`${origin}/market`, { waitUntil: 'commit' });
+    await publicPage.locator('.site-tab-bar a[href="/market"]').click();
     await publicPage.locator('.site-loading:visible').waitFor();
     await publicPage.waitForFunction(() => [...document.querySelectorAll('.site-loading-grid rect')].some(element => element.getAnimations().length > 0));
     const initial = await publicPage.locator('.site-loading:visible .site-loading-grid rect').evaluateAll(elements => elements.map(element => getComputedStyle(element).transform));
@@ -118,7 +126,7 @@ try {
   } finally { await blocker.query('rollback'); blocker.release(); }
   await publicPage.locator('.market-card').first().waitFor();
   assert.deepEqual(errors, []);
-  console.log('PASS: create, crop, reorder, quantity, reserve, cancel, repurchase, photo message, complete, private attachments, responsive widths 320–1440, animated loading and reduced motion.');
+  console.log('PASS: create, crop, reorder, quantity, reserve, cancel, repurchase, photo message, complete, private attachments, responsive widths 320–1440, animated loading on slow navigation and reduced motion.');
 } finally {
   await browser.close();
   if (users.length) await pool.query('delete from "user" where id=any($1::text[])', [users]);
