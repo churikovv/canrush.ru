@@ -169,6 +169,8 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Energy", "cherry", "Ashkudi", "cherry"],
   ["Energy", "grape", "Ashkudi", "grape"],
   ["Max", "original", "Tornado", "tornado_berrycream"],
+  ["Go Champ", "grapefruit", "Go Champ", "blend:grapefruit+watermelon"],
+  ["Tassay", "unresolved:c5563315b9f9cea139f1f86d", "Tassay", "original"],
 ];
 export function reviewedProductIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
   const alias = REVIEWED_PRODUCT_ALIASES.find(entry => entry[0] === brand && entry[1] === flavor);

@@ -31,3 +31,13 @@ it('redirects already published readable Vulkan aliases to the edition URL', () 
   expect(response.status).toBe(301);
   expect(response.headers.get('location')).toBe('https://canrush.ru/catalog/vulkan-citrus?tab=reviews');
 });
+
+it('keeps the published hashed URL of the archived Go Champ grapefruit and points it at the watermelon + grapefruit can', () => {
+  expect(decodeCatalogGroupSlug('go-champ-grapefruit-33n3hifs6v49t')).toEqual({ brand: 'Go Champ', flavor: 'grapefruit' });
+  expect(catalogGroupSlug('Go Champ', 'grapefruit')).toBe('go-champ-grapefruit-watermelon');
+});
+
+it('points the published Tassay flyer URL at the original edition', () => {
+  expect(decodeCatalogGroupSlug('tassay-unresolved-c5563315b9f9cea139f1f86d-pxdukzagvkbd')).toEqual({ brand: 'Tassay', flavor: 'unresolved:c5563315b9f9cea139f1f86d' });
+  expect(catalogGroupSlug('Tassay', 'unresolved:c5563315b9f9cea139f1f86d')).toBe('tassay-original');
+});

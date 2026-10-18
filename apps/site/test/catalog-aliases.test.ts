@@ -112,3 +112,12 @@ it('merges Volt orange into orange-passion fruit without losing store offers', (
   expect(mergeCatalogAliases(groups)).toMatchObject([{ flavor: 'blend:orange+passion_fruit', variants: [{ retailer: 'Store 0' }, { retailer: 'Store 1' }] }]);
   expect(canonicalProductFlavor('Other', 'orange')).toBe('orange');
 });
+
+it('merges the archived Go Champ grapefruit card into the watermelon + grapefruit can', () => {
+  const offer = { source: 'edadeal' as const, price: 89, url: 'https://example.com/go', fetchedAt: '2026-10-05' };
+  const merged = mergeCatalogAliases([
+    { brand: 'Go Champ', flavor: 'grapefruit', minPrice: 0, variants: [] },
+    { brand: 'Go Champ', flavor: 'blend:grapefruit+watermelon', minPrice: 89, variants: [offer] },
+  ]);
+  expect(merged.map(group => [group.flavor, group.variants.length])).toEqual([['blend:grapefruit+watermelon', 1]]);
+});
