@@ -1,9 +1,9 @@
 import { isAssortmentFlavor } from '@canrush/shared';
 import { productSlug, registeredProductIdentity } from './catalog/product-slugs';
 import { searchMatches } from './search-match';
+import { brandSearchTerms, transliterate } from './search-aliases';
 import { Buffer } from 'node:buffer';
 import {
-  ENERGY_DRINK_BRAND_ALIASES,
   isResolvedFlavor,
   type CatalogGroup,
   type FlavorVariant,
@@ -129,9 +129,9 @@ export function matchesCatalogQuery(group: CatalogGroup, query: string): boolean
     const volume = variant.volumeMl;
     return [catalogRetailerName(variant), volume === undefined ? '' : `${volume} мл ${volume / 1000} л`];
   });
-  const brandAliases = ENERGY_DRINK_BRAND_ALIASES[group.brand] ?? [];
+  const flavor = flavorName(group.flavor);
   const haystack = normalizeText(
-    [group.brand, ...brandAliases, group.flavor, flavorName(group.flavor), ...variants].join(' '),
+    [...brandSearchTerms(group.brand), group.flavor, flavor, transliterate(flavor), ...variants].join(' '),
   );
   return searchMatches(haystack, query);
 }

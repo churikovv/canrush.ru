@@ -102,6 +102,7 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
 - **Не коммить**: `.sessions/`, `data/raw/`, `data/history/`, `data/latest.json`,
   `data/state.json`, `apps/site/data/`, `apps/site/public/images/`, `.env` (см. `.gitignore`).
 - **Робототехника**: `src/robots.ts` уважает `robots.txt`. Не отключай его.
+- **Поиск по брендам**: русские и другие «как пишут» написания — в `BRAND_SEARCH_ALIASES` (`apps/site/src/lib/search-aliases.ts`), плюс автотранслитерация в обе стороны. Не добавляй их в `ENERGY_DRINK_BRAND_ALIASES`: по ним парсер определяет бренд в названиях товаров. Новый бренд с неочевидным чтением («Juster» → «Джастер») — сразу в поисковый словарь.
 - **Едадил — агрегатор**: `source: 'edadeal'`, а сеть (Пятёрочка/Магнит/…) — в
   `Product.retailer`; цены только акционные (`promoEndsAt`). Это единственный
   источник без Playwright — не добавляй ему браузерных стратегий и не ходи на

@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
-import { ENERGY_DRINK_BRAND_ALIASES } from '@canrush/shared';
 import Link from '@/components/navigation-progress';
 import { BrandCollectionSearch, type CollectionFilter } from '@/components/brand-collection-search';
 import { normalizeCollectionSearch } from '@/lib/collection-search';
+import { brandSearchTerms, transliterate } from '@/lib/search-aliases';
 import { completion, earnedCollectionXp, flavors, nextMilestone, type BrandCollection, type CollectionItem, type CollectionSummary } from '@/lib/brand-collection-fields';
 
 const SOURCE_LABELS = { review: 'отзыв', calendar: 'календарь' } as const;
@@ -17,7 +17,7 @@ function Progress({ collection, label }: { collection: { tried: number; total: n
 
 function Can({ item, brand }: { item: CollectionItem; brand: string }) {
   const tried = item.tried.length > 0;
-  return <Link className="brand-collection-can" data-tried={tried || undefined} href={item.href} data-collection-can="" data-search={normalizeCollectionSearch(item.name)}
+  return <Link className="brand-collection-can" data-tried={tried || undefined} href={item.href} data-collection-can="" data-search={normalizeCollectionSearch(`${item.name} ${transliterate(item.name)}`)}
     title={tried ? `${brand} · ${item.name}: ${item.tried.map(source => SOURCE_LABELS[source]).join(', ')}` : `${brand} · ${item.name}: ещё не пробовали`}>
     <span className="brand-collection-cover">{item.cover ? <Image src={item.cover} width={96} height={96} sizes="96px" alt="" /> : <span aria-hidden="true">?</span>}</span>
     <span className="brand-collection-name">{item.name}</span>
@@ -43,7 +43,7 @@ function BrandHeading({ collection }: { collection: BrandCollection }) {
 }
 
 const status = (collection: { tried: number; total: number }): CollectionFilter => isComplete(collection) ? 'done' : collection.tried ? 'started' : 'new';
-const brandSearch = (brand: string) => normalizeCollectionSearch([brand, ...(ENERGY_DRINK_BRAND_ALIASES[brand] ?? [])].join(' '));
+const brandSearch = (brand: string) => normalizeCollectionSearch(brandSearchTerms(brand).join(' '));
 
 /** Full collection page: every brand is a disclosure, started ones are open; search filters them in place. */
 export function BrandCollectionList({ summary }: { summary: CollectionSummary }) {

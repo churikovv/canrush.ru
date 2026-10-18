@@ -1,6 +1,7 @@
 'use client';
 import Image from 'next/image';
 import { useMemo, useRef, useState } from 'react';
+import { brandSearchTerms } from '@/lib/search-aliases';
 import { searchMatches } from '@/lib/search-match';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
 
@@ -10,10 +11,12 @@ export function StoreDrinkPicker({id,options,taken,disabled,placeholder='Най�
   const [query,setQuery]=useState('');const [open,setOpen]=useState(false);const [active,setActive]=useState(-1);
   const input=useRef<HTMLInputElement>(null);
   const trimmed=query.trim();
+  // Russian and transliterated brand spellings, so «ашкуди» finds Ashkudi.
+  const searchText=useMemo(()=>new Map(options.map(option=>[option,`${option.label} ${brandSearchTerms(option.brand).join(' ')}`])),[options]);
   const matches=useMemo(()=>{
     const free=options.filter(option=>!taken.has(JSON.stringify([option.brand,option.flavor])));
-    return (trimmed?free.filter(option=>searchMatches(option.label,trimmed)):free).slice(0,LIMIT);
-  },[options,taken,trimmed]);
+    return (trimmed?free.filter(option=>searchMatches(searchText.get(option)??option.label,trimmed)):free).slice(0,LIMIT);
+  },[options,taken,trimmed,searchText]);
   const custom=trimmed.length>0&&trimmed.length<=150&&!matches.some(option=>option.label.toLocaleLowerCase('ru-RU')===trimmed.toLocaleLowerCase('ru-RU'));
   const count=matches.length+(custom?1:0);
   function choose(index:number){
