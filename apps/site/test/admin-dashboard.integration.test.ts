@@ -60,3 +60,20 @@ it('charts the hourly online peak from heartbeats of members who show their stat
   await getAdminDashboardData('', 'analytics');
   expect((await pool.query(`select 1 from "presenceSample" where "userId"=$1 and bucket<now()-interval '8 days'`, [visible])).rowCount).toBe(0);
 });
+it('counts members active today and this week, hidden status included and blocked excluded', async () => {
+  const { touchPresence } = await import('../src/lib/profile-community');
+  const metrics = async () => (await getAdminDashboardData('', 'analytics')).metrics!;
+  const [shown, hidden, earlier, blocked] = [ids[8]!, ids[9]!, ids[10]!, ids[11]!];
+  const before = await metrics();
+  await pool.query(`update "user" set "showOnline"=(id<>$1) where id=any($2::text[])`, [hidden, [shown, hidden]]);
+  for (const id of [shown, shown, hidden, blocked]) await touchPresence(id);
+  await pool.query(`insert into "userBlock" ("userId") values ($1)`, [blocked]);
+  await pool.query(`insert into "activityDay" (day,"userId") values ((now() at time zone 'Europe/Moscow')::date-3,$1),((now() at time zone 'Europe/Moscow')::date-500,$1)`, [earlier]);
+  const after = await metrics();
+  expect(after.activeToday - before.activeToday).toBe(2);
+  expect(after.activeWeek - before.activeWeek).toBe(3);
+  const activity = (await getAdminDashboardData('', 'analytics')).activity;
+  expect(activity).toHaveLength(14); expect(activity.at(-1)!.count).toBeGreaterThanOrEqual(2);
+  expect((await pool.query(`select 1 from "activityDay" where "userId"=$1 and day<(now() at time zone 'Europe/Moscow')::date-400`, [earlier])).rowCount).toBe(0);
+  await pool.query('delete from "userBlock" where "userId"=$1', [blocked]);
+});

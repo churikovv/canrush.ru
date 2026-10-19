@@ -17,6 +17,8 @@ export interface AdminMetrics {
   users: number; online: number; reviews: number; tierLists: number; wall: number; admins: number; sessions: number;
   newUsers: number; newReviews: number; newWall: number; newTierLists: number;
   published: number; drafts: number; blocked: number; averageRating: number | null;
+  /** Members with signed-in activity today (Moscow day) and in the last 7 days including today, hidden status included. */
+  activeToday: number; activeWeek: number;
 }
 export interface AdminReportEntry { id: string; reason: ReportReason; comment: string; status: 'open' | 'resolved' | 'dismissed'; createdAt: Date; authorName: string; authorUsername: string | null; targetName: string; targetUsername: string | null }
 export interface AdminMarketEntry { id: string; title: string; sellerId: string; sellerName: string; sellerEmail: string; username: string | null; closed: boolean; deletedAt: Date | null; blockedAt: Date | null; isAdmin: boolean; createdAt: Date }
@@ -29,15 +31,18 @@ export interface AdminDashboardData {
   metrics: AdminMetrics | null; registrations: { day: string; count: number }[];
   /** Last 24 hours, oldest first: peak of members active in one 5-minute window during the hour. */
   onlineByHour: { hour: string; peak: number }[];
+  /** Last 14 Moscow days, oldest first: members with signed-in activity that day. */
+  activity: { day: string; count: number }[];
 }
 
 export async function getAdminDashboardData(search: string, tab: AdminTab, requestedPage = 1): Promise<AdminDashboardData> {
   const db = getPool();
-  const result: AdminDashboardData = { market: [], reports: [], comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [] };
+  const result: AdminDashboardData = { market: [], reports: [], comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [], activity: [] };
   if (tab === 'campaigns') return result;
   if (tab === 'analytics') {
     await db.query(`delete from "presenceSample" where bucket < now() - interval '8 days'`);
-    const [metrics, registrations, online] = await Promise.all([
+    await db.query(`delete from "activityDay" where day < (now() at time zone 'Europe/Moscow')::date - 400`);
+    const [metrics, registrations, online, activity] = await Promise.all([
       db.query<AdminMetrics>(`select
         (select count(*)::int from "user") as users,
         -- Same rule as the profile status (getPresence): a heartbeat within 2 minutes and a live session.
@@ -55,7 +60,11 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
         (select count(*)::int from "tierList" where status='published') as published,
         (select count(*)::int from "tierList" where status='draft') as drafts,
         (select count(*)::int from "userBlock") as blocked,
-        (select avg((design+taste)::float8/2) from review) as "averageRating"`),
+        (select avg((design+taste)::float8/2) from review) as "averageRating",
+        (select count(*)::int from "activityDay" a where a.day=(now() at time zone 'Europe/Moscow')::date
+          and not exists(select 1 from "userBlock" b where b."userId"=a."userId")) as "activeToday",
+        (select count(distinct a."userId")::int from "activityDay" a where a.day>(now() at time zone 'Europe/Moscow')::date-7
+          and not exists(select 1 from "userBlock" b where b."userId"=a."userId")) as "activeWeek"`),
       db.query<{ day: string; count: number }>(`with days as (
         select generate_series((now() at time zone 'Europe/Moscow')::date-13, (now() at time zone 'Europe/Moscow')::date, interval '1 day')::date as day
       ), counts as (select ("createdAt" at time zone 'Europe/Moscow')::date as day, count(*)::int as count from "user"
@@ -67,7 +76,13 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
       select to_char(hours.hour at time zone 'Europe/Moscow', 'YYYY-MM-DD"T"HH24:00') as hour, coalesce(max(buckets.online), 0)::int as peak
       from hours left join buckets on buckets.bucket >= hours.hour and buckets.bucket < hours.hour + interval '1 hour'
       group by hours.hour order by hours.hour`),
+      db.query<{ day: string; count: number }>(`with days as (
+        select generate_series((now() at time zone 'Europe/Moscow')::date-13, (now() at time zone 'Europe/Moscow')::date, interval '1 day')::date as day
+      ), counts as (select a.day, count(*)::int as count from "activityDay" a
+        where a.day>=(now() at time zone 'Europe/Moscow')::date-13 and not exists(select 1 from "userBlock" b where b."userId"=a."userId") group by a.day)
+      select to_char(days.day,'YYYY-MM-DD') as day, coalesce(counts.count,0) as count from days left join counts using(day) order by days.day`),
     ]);
+    result.activity = activity.rows;
     result.onlineByHour = online.rows;
     result.metrics = metrics.rows[0] ?? null;
     result.registrations = registrations.rows;

@@ -38,6 +38,7 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
   const context = <><input type="hidden" name="query" value={query} /><input type="hidden" name="tab" value={tab} /><input type="hidden" name="page" value={data.page} /></>;
   const metrics = data.metrics;
   const maxRegistrations = Math.max(1, ...data.registrations.map(day => day.count));
+  const maxActivity = Math.max(1, ...data.activity.map(day => day.count));
   const maxOnline = Math.max(1, ...data.onlineByHour.map(hour => hour.peak));
   const onlinePeak = data.onlineByHour.reduce<(typeof data.onlineByHour)[number] | null>((best, hour) => hour.peak > 0 && hour.peak >= (best?.peak ?? 0) ? hour : best, null);
   return <AdminShell active={tab} email={admin.email} title={label} subtitle={SUBTITLES[tab]}>
@@ -48,6 +49,8 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
         <div className="admin-metrics">{[
           { label: 'Участники', value: metrics.users, delta: metrics.newUsers, note: 'за 30 дней', tab: 'users' },
           { label: 'В сети сейчас', value: metrics.online, delta: null, note: 'Активны за 2 минуты, без скрывших статус', tab: 'users', live: true },
+          { label: 'Активны сегодня', value: metrics.activeToday, delta: null, note: 'Заходили с входом с начала дня по Москве', tab: 'users' },
+          { label: 'Активны за неделю', value: metrics.activeWeek, delta: null, note: 'Разные участники за 7 дней, включая сегодня', tab: 'users' },
           { label: 'Отзывы', value: metrics.reviews, delta: metrics.newReviews, note: 'за 30 дней', tab: 'reviews' },
           { label: 'Тирлисты', value: metrics.tierLists, delta: metrics.newTierLists, note: 'за 30 дней', tab: 'tierlists' },
           { label: 'Комментарии стены', value: metrics.wall, delta: metrics.newWall, note: 'за 30 дней', tab: 'wall' },
@@ -60,6 +63,12 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
           {data.onlineByHour.map((hour, index) => <div className="admin-chart-column" key={hour.hour} title={`${hour.hour.slice(11)}–${hour.hour.slice(11, 13)}:59 · до ${hour.peak} в сети`} data-current={index === data.onlineByHour.length - 1 || undefined}><strong>{hour.peak}</strong><div className="admin-chart-track"><span style={{ height: `${hour.peak / maxOnline * 100}%` }} /></div><small>{hour.hour.slice(11, 13)}</small></div>)}
         </div>
         <p className="admin-chart-note">{onlinePeak ? 'Максимум участников, активных в одном 5-минутном окне за час. Скрывшие статус не учитываются.' : 'График заполнится, когда участники начнут заходить на сайт: история онлайна собирается с этого обновления.'}</p>
+      </section>
+      <section className="admin-data-panel" aria-labelledby="admin-activity-title"><div className="admin-panel-heading"><h2 id="admin-activity-title">Активные участники</h2><span>14 дней · МСК</span></div>
+        <div className="admin-registration-chart" role="img" aria-label={`Активные участники по дням: ${data.activity.map(day => `${day.day}: ${day.count}`).join('; ')}`}>
+          {data.activity.map(day => <div className="admin-chart-column" key={day.day} title={`${day.day}: ${day.count}`}><strong>{day.count}</strong><div className="admin-chart-track"><span style={{ height: `${day.count / maxActivity * 100}%` }} /></div><small>{day.day.slice(8)}</small></div>)}
+        </div>
+        <p className="admin-chart-note">{data.activity.some(day => day.count) ? 'Участники, которые хотя бы раз открыли сайт с входом в этот день. Учитываются и скрывшие статус, имён здесь нет.' : 'График заполнится с сегодняшнего дня: активность раньше не записывалась.'}</p>
       </section>
       <div className="admin-analytics-grid">
         <section className="admin-data-panel" aria-labelledby="admin-registrations-title"><div className="admin-panel-heading"><h2 id="admin-registrations-title">Регистрации</h2><span>14 дней · МСК</span></div>
