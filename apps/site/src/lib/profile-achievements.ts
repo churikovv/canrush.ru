@@ -2,7 +2,7 @@ export const ACHIEVEMENT_METRICS = [
   'listings', 'sales', 'reviews', 'detailedReviews', 'photoReviews', 'reviewLikes', 'brands', 'favorites', 'favoriteBrands',
   'tierLists', 'tierListLikes', 'friends', 'followers', 'whiteMonster', 'whiteMonsterFavorite', 'flash', 'flashDetailed',
   'burn', 'burnDetailed', 'burnFavorites', 'adrenaline', 'adrenalineDetailed', 'adrenalineFavorites',
-  'admin', 'telegram', 'monthlyTop', 'drinkLogs', 'drinkStreak', 'contestWin',
+  'admin', 'telegram', 'monthlyTop', 'drinkLogs', 'drinkStreak', 'contestWin', 'betaEngine',
 ] as const;
 export type AchievementMetric = typeof ACHIEVEMENT_METRICS[number];
 export type AchievementProgress = Record<AchievementMetric, number>;
@@ -24,6 +24,8 @@ export interface ProfileAchievement { key: string; label: string; rarity: Achiev
 
 // Earned keys are stored in "profileAchievement" forever, so raising goals never revokes an old tag.
 export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
+  { key: 'engine', label: 'Двигатель', rarity: 'special', description: 'Двигатель беты: один из первых 500 участников Canrush', steps: [
+    { metric: 'betaEngine', goal: 1, label: 'Зарегистрироваться среди первых 500 участников' }] },
   { key: 'energizer', label: 'Энерджайзер', rarity: 'special', description: 'Секретный тег победителя розыгрыша ящика энергетиков', steps: [
     { metric: 'contestWin', goal: 1, label: 'Выиграть розыгрыш ящика энергетиков' }] },
   { key: 'top', label: 'ТОП', rarity: 'legendary', description: 'Победить в гонке месяца', steps: [
@@ -125,7 +127,7 @@ export function profilePageNumber(value: unknown): number {
   return typeof page === 'number' && Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
 }
 
-const ACHIEVEMENT_ART = new Set(['energizer', 'top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven', 'drink-start', 'streak-7', 'streak-14', 'streak-30']);
+const ACHIEVEMENT_ART = new Set(['engine', 'energizer', 'top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven', 'drink-start', 'streak-7', 'streak-14', 'streak-30']);
 export function achievementImage(key: string): string {
   return ACHIEVEMENT_ART.has(key) ? `/brand/achievements/${key}.png` : '/brand/icons/achievement.svg';
 }

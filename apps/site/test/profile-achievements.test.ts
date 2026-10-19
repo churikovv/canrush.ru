@@ -18,6 +18,10 @@ describe('profile achievement and wall validation', () => {
     expect(eligibleAchievements(progress({ drinkLogs: 14, drinkStreak: 14 }))).toEqual(['streak-14', 'streak-7', 'drink-start']);
     expect(eligibleAchievements(progress({ drinkLogs: 40, drinkStreak: 30 }))).toContain('streak-30');
   });
+  it('grants the beta engine tag only with a beta number', () => {
+    expect(eligibleAchievements(progress({ betaEngine: 1 }))).toEqual(['engine']);
+    expect(visibleProfileAchievements(false).some(item => item.key === 'engine')).toBe(true);
+  });
   it('caps each step when computing completion', () => {
     expect(achievementCompletion(burner, progress({ burn: 50 }))).toBeCloseTo(5 / 9);
     expect(achievementCompletion(burner, progress({ burn: 5, burnDetailed: 3, burnFavorites: 1 }))).toBe(1);

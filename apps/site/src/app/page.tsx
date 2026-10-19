@@ -27,6 +27,8 @@ import { auth } from '@/lib/auth';
 import { ContestBanner } from '@/components/contest-banner';
 import { currentContest } from '@/lib/contest';
 import { getContestEntry } from '@/lib/contest-db';
+import { BetaEngineBanner } from '@/components/beta-engine-banner';
+import { BETA_ENGINE_PLACES, getBetaEngine } from '@/lib/beta-engine';
 export const dynamic = 'force-dynamic';
 const TOP_DRINKS = 100;
 const HOME_TIER_LISTS = 8;
@@ -38,8 +40,8 @@ export default async function HomePage() {
   const { groups, city } = await loadCatalogSnapshot();
   await settleMonthlyTop();
   const contest = currentContest(new Date());
-  const [summaries, monthly, listings, storePoints, session] = await Promise.all([getReviewSummaries(groups), getMonthlyTop(), getListings(1), listStorePoints(city.id), contest ? auth.api.getSession({ headers: await headers() }) : null]);
-  const contestEntry = contest && session ? await getContestEntry(contest.contest, session.user.id) : null;
+  const [summaries, monthly, listings, storePoints, session] = await Promise.all([getReviewSummaries(groups), getMonthlyTop(), getListings(1), listStorePoints(city.id), auth.api.getSession({ headers: await headers() })]);
+  const [contestEntry, engine] = await Promise.all([contest && session ? getContestEntry(contest.contest, session.user.id) : null, getBetaEngine(session?.user.id ?? null)]);
   const stores = storePoints.map(store => ({ id: store.id, name: store.name, address: store.address, station: storeStations(store, 1)[0]?.name ?? null, latitude: store.latitude, longitude: store.longitude, drinks: store.drinks }));
   const resolved = groups.filter(group => isResolvedFlavor(group.flavor));
   const ranked = filterCatalogGroups(resolved, { query: '', brand: '', flavor: '', sort: 'rating' }, summaries);
@@ -68,6 +70,8 @@ export default async function HomePage() {
     <div className="home-layout">
       <HomeHero data={hero} badge={badge} retailerBadges={retailerBadges} />
       {contest && <ContestBanner contest={contest.contest} entry={contestEntry} phase={contest.phase} />}
+      {/* Shown while places remain; holders keep their number and tag after it goes. */}
+      {engine.taken < BETA_ENGINE_PLACES && <BetaEngineBanner data={engine} signedIn={!!session} />}
       <HomeBento data={bento} retailerBadges={retailerBadges} />
       <section className="home-section" aria-labelledby="home-users"><div className="home-section-heading"><h2 id="home-users">Рейтинг пользователей</h2><Link href="/leaderboard">Все</Link></div>
         <MonthlyTop data={monthly} />

@@ -224,6 +224,11 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
 - Админка: `/admin/contest` — карточки всех конкурсов, `/admin/contest/[key]` — участники и розыгрыш (`contest-db.ts`). Розыгрыш доступен только после конца приёма, `crypto.randomInt` по пулу; в `contestDraw` (миграция `0072`) сохраняются победитель, id пула и фильтры, всё пишется в `adminAuditLog`. Статусы: `pending` (ждём ответа) → `confirmed` (связались, выдаётся тег) или `unreachable` (не ответил — сразу новый розыгрыш с теми же фильтрами, а все `unreachable` этого конкурса из пула исключаются). Открытый победитель у конкурса один (частичный уникальный индекс + advisory lock).
 - Тег `energizer` («Энерджайзер», `special`) выдаёт только подтверждение победителя; метрика `contestWin` лишь отражает выданный тег. Секретные теги видны только админам и получившим (`visibleProfileAchievements(viewerIsAdmin, earned)`). Тесты: `test/contest.test.ts`, `test/contest.integration.test.ts`.
 
+## Двигатель беты
+
+- Первые 500 участников получают личный номер и тег `engine` («Двигатель», `special`). Номера выдаёт триггер `beta_engine_member` на вставку в `user` через `assign_beta_engine` (миграция `0073_beta_engine.sql`, advisory lock против гонки); существующие участники пронумерованы по `createdAt`. Номер не переиспользуется: при удалении аккаунта строка `betaEngine` остаётся с `userId = null`, поэтому счётчик только растёт.
+- Баннер `BetaEngineBanner` (`src/components/beta-engine-banner.tsx`, данные — `getBetaEngine` в `src/lib/beta-engine.ts`) стоит на главной после баннера конкурса и пропадает, когда все 500 мест заняты. Метрика `betaEngine` лишь отражает строку `betaEngine`; на странице достижений тег не показывается закрытым. Тест: `test/beta-engine.integration.test.ts`.
+
 ## Топ месяца
 
 - Гонка — XP, набранный за календарный месяц по Москве (без самих наградных XP). Итоги подводит идемпотентная `settle_monthly_top()` (миграция `0050_monthly_top.sql`), её вызывают главная и `/leaderboard` через `settleMonthlyTop()`; первый подсчёт — за октябрь 2026. Топ-3 получают +500/+300/+150 XP (`reason='monthly-top'`), достижение и тег `top` («ТОП», легендарный) и уведомление `monthly-top`.
