@@ -161,6 +161,8 @@
     "feijoa",
     "lulo",
     "bubblegum",
+    "cotton_candy",
+    "gin_tonic",
     "grapefruit",
     "apricot",
     "plum",
@@ -397,6 +399,18 @@
     ],
     "lulo": [
       "луло"
+    ],
+    "cotton_candy": [
+      "сахарная вата",
+      "сахарной ваты",
+      "cotton candy"
+    ],
+    "gin_tonic": [
+      "джин-тоник",
+      "джин тоник",
+      "джин-тоника",
+      "gin tonic",
+      "gin-tonic"
     ],
     "bubblegum": [
       "баббл гам",

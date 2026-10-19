@@ -69,6 +69,8 @@ const FLAVOR_NAMES: Record<string, string> = {
   feijoa: 'Фейхоа',
   lulo: 'Луло',
   bubblegum: 'Жевательная резинка',
+  cotton_candy: 'Сахарная вата',
+  gin_tonic: 'Джин-тоник',
   grapefruit: 'Грейпфрут',
   apricot: 'Абрикос',
   plum: 'Слива',

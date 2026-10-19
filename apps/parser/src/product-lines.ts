@@ -87,7 +87,7 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
       [/(?:game fuel|г[еэ]йм фью[еэ]л|игровая энергия|игр энергия)/u, 'game_fuel'],
       [/(?:spicy|спайси|табаско)/u, 'spicy'],
       [/(?:breeze|бриз)/u, 'breeze'],
-      [/(?:таинственная энергия)/u, 'mystery'],
+      [/(?:таинственная энергия|мистическая энергия|mystic energy)/u, 'mystery'],
       [/(?:extra|экстра)/u, 'extra'],
       [/(?:juicy|джуси|апельсиновая энергия)/u, 'orange'],
       [/(?:red energy|ред энерджи|рэд энерджи|ягодная энергия|ягодная|ягод| раш ред )/u, 'berry'],

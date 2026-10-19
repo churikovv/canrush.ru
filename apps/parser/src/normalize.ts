@@ -111,6 +111,13 @@ export function canonicalizeFlavor(
 }
 
 /** Приводит данные конкретного источника к единой схеме Product. */
+const LATIN_LOOKALIKES: Record<string, string> = { A: 'А', B: 'В', C: 'С', E: 'Е', H: 'Н', K: 'К', M: 'М', O: 'О', P: 'Р', T: 'Т', X: 'Х', Y: 'У', a: 'а', c: 'с', e: 'е', o: 'о', p: 'р', x: 'х', y: 'у' };
+/** Retailers type Latin look-alikes inside Russian words ("Cахарная", "Mистическая"); such words read as Cyrillic. */
+export function fixMixedScript(text: string): string {
+  return text.replace(/[\p{L}]+/gu, word => /\p{Script=Cyrillic}/u.test(word) && /[A-Za-z]/.test(word) && [...word].every(char => /\p{Script=Cyrillic}/u.test(char) || char in LATIN_LOOKALIKES)
+    ? [...word].map(char => LATIN_LOOKALIKES[char] ?? char).join('') : word);
+}
+
 export function normalizeProduct(
   source: SourceName,
   raw: RawProductInput,
@@ -120,6 +127,7 @@ export function normalizeProduct(
   knownFlavors: string[] = [],
   flavorAliases: FlavorAliases = {},
 ): Product {
+  raw = { ...raw, name: fixMixedScript(raw.name) };
   const brand = detectBrand(raw.name, knownBrands, brandAliases) ?? (raw.brand ? canonicalizeBrand(raw.brand, knownBrands, brandAliases) : undefined);
   let flavor = raw.flavor ? canonicalizeFlavor(raw.flavor, knownFlavors, flavorAliases) : detectFlavor(raw.name, knownFlavors, flavorAliases);
   const name = normalizeBrandText(raw.name);

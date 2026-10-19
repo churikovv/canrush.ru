@@ -6,6 +6,7 @@ import {
   detectBrand,
   detectFlavor,
   extractVolumeMl,
+  fixMixedScript,
   normalizeProduct,
 } from '../src/normalize.js';
 import { loadProductsConfig } from '../src/config.js';
@@ -259,4 +260,15 @@ it('finds brands in Lavka titles, which carry no brand field', () => {
   for (const [name, brand] of cases) {
     expect(normalizeProduct('lavka', { sourceId: 'lavka', name, price: 80, url: 'https://lavka.yandex.ru/x' }, config.brands, '2026-10-19', config.brandAliases, config.flavors, config.flavorAliases).brand).toBe(brand);
   }
+});
+
+it('reads Russian words typed with Latin look-alike letters', () => {
+  const config = loadProductsConfig();
+  const flavor = (name: string) => normalizeProduct('edadeal', { sourceId: 'x', name, price: 100, url: 'https://example.com/x' }, config.brands, '2026-10-19', config.brandAliases, config.flavors, config.flavorAliases).flavor;
+  expect(flavor('Напиток энергетический Cахарная вата My Element 450мл 450 г')).toBe('cotton_candy');
+  expect(flavor('Энергетический Напиток Adrenaline Rush Mистическая Энергия Ж/Б 0,449Л')).toBe('mystery');
+  expect(flavor('Энергетический напиток Adrenaline Rush Mystic Energy газированный, 449мл')).toBe('mystery');
+  expect(flavor('Напиток энергетический Bombbar L-карнитин с гуараной со вкусом джин-тоник без сахара, 450 мл')).toBe('gin_tonic:sugarfree');
+  // Whole Latin words stay as they are.
+  expect(fixMixedScript('Red Bull Cola Mистика')).toBe('Red Bull Cola Мистика');
 });

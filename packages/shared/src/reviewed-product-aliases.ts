@@ -182,6 +182,15 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Tornado", "unresolved:a8dfc8f215a4a82ed09c9312", "Tornado", "tornado_lemoncake"], // Magnit offer of Tornado Max Energy Lemoncake
   ["Monster", "monster_vr46", "Monster", "monster_vr46:sugarfree"], // the only non-Doctor VR46 can is the blue Zero Sugar one
   ["Mix", "orange", "Burn", "orange"], // "Mix" is Edadeal's brand for Burn "Апельсиновый микс"
+  // Verified by retailer title and photo (October 2026).
+  ["Adrenaline Rush", "unresolved:788ec3c0fa3f02185b46d9d2", "Adrenaline Rush", "mystery"], // "Mystic Energy", the purple limited can
+  ["Adrenaline Rush", "unresolved:51389a77e8bb7f6f1fd3e3d7", "Adrenaline Rush", "mystery"], // "Mистическая Энергия" with a Latin M
+  ["BOMBBAR", "unresolved:cfa54864d41bcfc651f9417b", "BOMBBAR", "gin_tonic:sugarfree"], // "со вкусом джин-тоник без сахара"
+  ["Tornado", "unresolved:4d34814885aeed76ebbe4c33", "Tornado", "tornado_boost"], // "Tornado Max Energy 450мл", the photo is the Boost can
+  ["X-Turbo", "unresolved:210223d3b2fa9c0cc7b69564", "X-Turbo", "blend:berry+raspberry"], // "X-Turbo Active", the photo is the red Berry Boost can
+  ["Красная птица АШАН", "unresolved:9a6ed4c919a0e7a38a8b714d", "Красная птица АШАН", "original"], // the store brand's only drink
+  ["Red Bull", "unresolved:8688970ebadb429a9212a309", "Red Bull", "original"], // Metro "RED BULL арт. 355879 0,473 л", the classic can
+  ["My Element", "unresolved:e45481e1e9fd04a090e3575a", "My Element", "cotton_candy"], // "Cахарная вата" with a Latin C
   ["Mix", "blend:citrus+grapefruit+lemon+orange", "By Баста", "blend:grapefruit+lemon+orange"], // "BYБАСТА Цитрус микс", the same can
 ];
 export function reviewedProductIdentity(brand: string, flavor: string): { brand: string; flavor: string } {

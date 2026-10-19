@@ -57,6 +57,14 @@ it('points reported duplicate URLs at the live products', () => {
     ['mix-citrus-grapefruit-lemon-orange', catalogGroupSlug('By Баста', 'blend:grapefruit+lemon+orange')],
     ['mix-grapefruit', catalogGroupSlug('By Баста', 'blend:grapefruit+lemon+orange')],
     ['burn-peach', 'burn-mango-peach-zero'],
+    ['adrenaline-rush-unresolved-788ec3c0fa3f02185b46d9d2-tp8t4m3a23d3', catalogGroupSlug('Adrenaline Rush', 'mystery')],
+    ['adrenaline-rush-unresolved-51389a77e8bb7f6f1fd3e3d7-2697hiccjx9tz', catalogGroupSlug('Adrenaline Rush', 'mystery')],
+    ['bombbar-unresolved-cfa54864d41bcfc651f9417b', 'bombbar-gin-tonic-zero'],
+    ['tornado-unresolved-4d34814885aeed76ebbe4c33-3cg77xik7mcrb', catalogGroupSlug('Tornado', 'tornado_boost')],
+    ['x-turbo-unresolved-210223d3b2fa9c0cc7b69564', catalogGroupSlug('X-Turbo', 'blend:berry+raspberry')],
+    ['krasnaya-ptitsa-ashan-unresolved-9a6ed4c919a0e7a38a8b714d', catalogGroupSlug('Красная птица АШАН', 'original')],
+    ['red-bull-unresolved-8688970ebadb429a9212a309-11xdj09dxwto7', catalogGroupSlug('Red Bull', 'original')],
+    ['my-element-unresolved-e45481e1e9fd04a090e3575a', 'my-element-cotton-candy'],
   ]) {
     const identity = decodeCatalogGroupSlug(slug!);
     expect(identity).not.toBeNull();
