@@ -1,9 +1,7 @@
-import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { AvatarFrame } from '@/components/avatar-frame';
 import { LevelChip } from '@/components/level-badge';
-import { Pinned } from '@/components/search-pinned';
 import { experienceLevel } from '@/lib/experience-level';
 import { levelTier } from '@/lib/level-tier';
 import { searchPeople } from '@/lib/people-search';
@@ -15,18 +13,11 @@ const CANS = (count: number) => {
   return tens > 10 && tens < 20 ? 'банок' : ones === 1 ? 'банка' : ones >= 2 && ones <= 4 ? 'банки' : 'банок';
 };
 
-/** Member search for /community: the pinned field and switcher, then cards with frame, tag, description and stats. */
-export async function PeopleBrowser({ q, basePath, keep, scopes }: { q: string; basePath: string; keep: Record<string, string>; scopes: ReactNode }) {
+/** Members for /community, most experienced first (`q` still narrows by nick, name or description): framed avatar, tag, description, stats. */
+export async function PeopleBrowser({ q }: { q: string }) {
   const query = q.trim().slice(0, 64);
   const people = await searchPeople(query);
   return <div className="people-browser">
-    <Pinned scopes={scopes}><form className="market-search-form" action={basePath} method="get">
-      {Object.entries(keep).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
-      <div className="market-search-toolbar"><div className="catalog-search-field">
-        <button className="market-search-submit" type="submit" aria-label="Найти участников"><Image src="/brand/icons/catalog-search.svg" width={24} height={24} alt="" /></button>
-        <input key={query} type="search" name="q" defaultValue={query} maxLength={64} placeholder="Ник, имя или описание" aria-label="Поиск участников" />
-      </div></div>
-    </form></Pinned>
     <h2 className="people-heading">{query ? 'Участники' : 'Популярные участники'}</h2>
     {people.length ? <ol className="people-list">{people.map(person => {
       const { level } = experienceLevel(person.xp);

@@ -1,7 +1,5 @@
-import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
-import { Pinned } from '@/components/search-pinned';
 import { ShareTierListButton } from '@/components/share-tier-list-button';
 import { TierBoard } from '@/components/tier-board';
 import { TierListCard } from '@/components/tier-list-card';
@@ -12,10 +10,10 @@ import { buildOfficialTierList, getCommunityTierLists, tierListProductsForPlacem
 export type TierListSearchParams = { q?: string; metric?: string };
 
 /**
- * The official board and community tier lists. /community pins the search for tier lists with its switcher on top;
- * /tierlists keeps the search above the community lists.
+ * The official board and community tier lists, with the search above the community lists.
+ * /tierlists renders it as its page, /community under its own switcher with `basePath` and `keep`.
  */
-export async function TierListsBrowser({ params, basePath = '/tierlists', keep = {}, scopes }: { params: TierListSearchParams; basePath?: string; keep?: Record<string, string>; scopes?: ReactNode }) {
+export async function TierListsBrowser({ params, basePath = '/tierlists', keep = {} }: { params: TierListSearchParams; basePath?: string; keep?: Record<string, string> }) {
   const q = typeof params.q === 'string' ? params.q.trim().slice(0, 200) : '';
   const metric = params.metric === 'design' || params.metric === 'taste' ? params.metric : 'overall';
   const modes = { overall: 'Общий тирлист', design: 'По дизайну', taste: 'По вкусу' };
@@ -35,7 +33,6 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
     </form>
   );
   return (<>
-    {scopes && <Pinned scopes={scopes}>{form}</Pinned>}
     <div className="tierlists-layout">
       <header className="tierlists-hero">
         <div>
@@ -83,7 +80,7 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
           {community.length > 0 ? <span>{community.length} последних</span> : null}
         </div>
 
-        {!scopes && form}
+        {form}
         {q && <Link href={`${basePath}?${new URLSearchParams({ ...keep, metric })}`}>Сбросить поиск</Link>}
 
         {community.length > 0 ? (
