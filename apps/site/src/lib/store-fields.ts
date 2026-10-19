@@ -61,3 +61,17 @@ export function storeMapUrl(store: Pick<StoreInput,'latitude'|'longitude'|'addre
   return `https://yandex.ru/maps/?pt=${store.longitude},${store.latitude}&z=17&l=map`;
 }
 export const STOCK_LABELS: Record<StockStatus,string> = {available:'Есть в наличии',unavailable:'Нет в наличии',unknown:'Наличие не уточнено'};
+
+const STORE_ID = /[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}/i;
+/** Store id from a pasted store link (`…/market/stores/<id>`, also `/edit`) or the bare id. */
+export function parseStoreReference(value: string): string | null {
+  return value.trim().match(STORE_ID)?.[0]?.toLowerCase() ?? null;
+}
+export type StoreTransferTarget = { kind: 'email'; value: string } | { kind: 'username'; value: string };
+/** New store owner from an email, @username or profile link (canrush.ru/profile/<username>). */
+export function parseStoreTransferTarget(value: string): StoreTransferTarget | null {
+  const trimmed = value.trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(trimmed)) return trimmed.length <= 254 ? { kind: 'email', value: trimmed.toLowerCase() } : null;
+  const username = trimmed.replace(/^https?:\/\/[^/]+/i, '').replace(/^\/?profile\//i, '').replace(/^@+/, '').replace(/\/.*$/, '').toLowerCase();
+  return /^[a-z0-9_]{3,24}$/u.test(username) ? { kind: 'username', value: username } : null;
+}

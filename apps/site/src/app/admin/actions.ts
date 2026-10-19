@@ -8,6 +8,7 @@ import { requireSiteAdmin, type SiteAdminIdentity } from '@/lib/admin';
 import { normalizeAdminSearch, validateAdminEmail } from '@/lib/admin-fields';
 import { adminTab, adminPage, type AdminTab } from '@/lib/admin-tabs';
 import { catalogGroupSlug } from '@/lib/catalog-query';
+import { parseStoreReference, parseStoreTransferTarget } from '@/lib/store-fields';
 
 type AdminNotice =
   | 'report-reviewed'
@@ -285,4 +286,36 @@ export async function reviewProfileReportAction(formData: FormData): Promise<voi
   if (!updated) redirect(adminLocation('error','invalid-target',query));
   revalidatePath('/admin');
   redirect(adminLocation('notice','report-reviewed',query));
+}
+
+export interface StoreTransferState { error?: string; success?: string }
+/** Hands a store (and its editing) to another member found by email or username; the change is audited. */
+export async function transferStoreAction(_previous: StoreTransferState, formData: FormData): Promise<StoreTransferState> {
+  const admin = await requireSiteAdmin();
+  const storeId = parseStoreReference(String(formData.get('store') ?? ''));
+  if (!storeId) return { error: 'Вставьте ссылку на магазин или его ID.' };
+  const target = parseStoreTransferTarget(String(formData.get('owner') ?? ''));
+  if (!target) return { error: 'Укажите почту, @юзернейм или ссылку на профиль участника.' };
+  const db = getPool();
+  const store = (await db.query<{ name: string; ownerId: string; ownerUsername: string | null }>(
+    'select s.name, s."ownerId", u.username as "ownerUsername" from "marketStore" s join "user" u on u.id = s."ownerId" where s.id = $1', [storeId])).rows[0];
+  if (!store) return { error: 'Магазин не найден.' };
+  const owner = (await db.query<{ id: string; username: string | null; blocked: boolean }>(
+    `select u.id, u.username, exists(select 1 from "userBlock" b where b."userId" = u.id) as blocked from "user" u
+     where ${target.kind === 'email' ? 'lower(u.email) = $1' : 'u.username = $1'} limit 1`, [target.value])).rows[0];
+  if (!owner) return { error: target.kind === 'email' ? 'Участник с такой почтой не найден.' : 'Участник с таким юзернеймом не найден.' };
+  if (owner.blocked) return { error: 'Этот участник заблокирован — передать ему магазин нельзя.' };
+  if (owner.id === store.ownerId) return { error: 'Магазин уже принадлежит этому участнику.' };
+  let moved: string | null;
+  try {
+    moved = await auditedMutation(admin, 'transfer', 'store', `${storeId}:${owner.id}`, async client => {
+      const result = await client.query('update "marketStore" set "ownerId" = $2 where id = $1 and "ownerId" = $3 returning id', [storeId, owner.id, store.ownerId]);
+      return result.rowCount === 1 ? storeId : null;
+    });
+  } catch { return { error: 'Не удалось передать магазин. Попробуйте ещё раз.' }; }
+  if (!moved) return { error: 'Владелец магазина только что изменился. Обновите страницу.' };
+  revalidatePath('/market/stores', 'layout');
+  revalidatePath('/admin/stores');
+  const name = (username: string | null) => username ? `@${username}` : 'участник без юзернейма';
+  return { success: `Магазин «${store.name}» передан ${name(owner.username)}. Прежний владелец: ${name(store.ownerUsername)}.` };
 }

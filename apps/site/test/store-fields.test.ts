@@ -1,5 +1,5 @@
 import { expect,it } from 'vitest';
-import { parseStore,METRO,nearestStations,formatDistance,storeMapUrl,stationDistanceKm } from '../src/lib/store-fields';
+import { parseStore,METRO,nearestStations,formatDistance,storeMapUrl,stationDistanceKm,parseStoreReference,parseStoreTransferTarget } from '../src/lib/store-fields';
 function form(){const f=new FormData();for(const [key,value] of Object.entries({name:'Энергомаркет',city:'moscow',address:'Тверская, 1',latitude:'55.75',longitude:'37.61',catalog:'[]'}))f.set(key,value);return f;}
 it('accepts a store without catalog or metro and checks coordinates',()=>{
  expect(parseStore(form()).catalog).toEqual([]);
@@ -54,4 +54,17 @@ it('keeps catalog links and custom drinks, rejecting duplicates of either',()=>{
 it('links to the address search when the store has no point',()=>{
  expect(storeMapUrl({city:'moscow',address:'Тверская, 1',latitude:null,longitude:null})).toBe('https://yandex.ru/maps/?text='+encodeURIComponent('Москва, Тверская, 1'));
  expect(storeMapUrl({city:'moscow',address:'x',latitude:55.75,longitude:37.61})).toContain('pt=37.61,55.75');
+});
+it('reads a store id from a link or the bare id',()=>{
+ const id='954afd9c-1451-4aa8-9b67-75b5b60d55a3';
+ expect(parseStoreReference(`https://canrush.ru/market/stores/${id.toUpperCase()}/edit`)).toBe(id);
+ expect(parseStoreReference(` ${id} `)).toBe(id);
+ expect(parseStoreReference('https://canrush.ru/market/stores')).toBeNull();
+});
+it('reads the new store owner from an email, @username or profile link',()=>{
+ expect(parseStoreTransferTarget(' Owner@Example.com ')).toEqual({kind:'email',value:'owner@example.com'});
+ expect(parseStoreTransferTarget('@Raze')).toEqual({kind:'username',value:'raze'});
+ expect(parseStoreTransferTarget('https://canrush.ru/profile/raze/collection')).toEqual({kind:'username',value:'raze'});
+ expect(parseStoreTransferTarget('no spaces allowed')).toBeNull();
+ expect(parseStoreTransferTarget('ab')).toBeNull();
 });
