@@ -196,6 +196,23 @@
 /* Store editor: numbered step cards, then a submit bar. */
 .store-form { max-width: 960px; margin-top: 24px; }
 .store-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 16px; }
+.store-form .form-card[hidden] { display: none; }
+.store-form .form-card:focus { outline: none; }
+.store-form-progress { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin: 0 0 8px; padding: 0; list-style: none; }
+.store-form-progress button { display: grid; gap: 10px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: var(--color-muted-strong); font: inherit; font-size: .875rem; font-weight: 600; line-height: 1.3; text-align: left; cursor: pointer; }
+.store-form-progress button::before { content: ''; height: 4px; border-radius: 999px; background: var(--color-control); transition: background-color 200ms ease-out; }
+.store-form-progress [data-state=visited] button::before { background: color-mix(in srgb, var(--color-brand) 45%, transparent); }
+.store-form-progress [data-state=current] button { color: var(--color-text); }
+.store-form-progress [data-state=current] button::before { background: var(--color-brand); }
+.store-form-progress button:disabled { cursor: default; }
+.store-form-progress button:not(:disabled):hover .store-form-progress-label { color: var(--color-text); }
+.store-form-progress button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; border-radius: 4px; }
+.store-form-footer { justify-items: stretch; }
+.store-form-nav { display: flex; gap: 12px; }
+.store-form-nav .community-button[type=submit] { margin-left: auto; }
+.store-form .store-form-counter { color: var(--color-muted-strong); font-size: .875rem; }
+@media(min-width:640px) { .store-form .store-form-counter { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
+@media(max-width:639px) { .store-form-progress { gap: 6px; } .store-form-progress button { min-height: 24px; } .store-form-progress-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .store-form-nav .community-button { flex: 1 1 0; } }
 .form-card { display: grid; gap: 16px; min-width: 0; padding: 24px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 20px; background: var(--theme-panel, #fff); }
 /* Numbered form steps: store and listing editors (market.css) and the drink calendar (profile.css). */
 .form-step { display: flex; align-items: flex-start; gap: 14px; }

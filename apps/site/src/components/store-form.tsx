@@ -18,6 +18,9 @@ type GeoStatus = {kind:'idle'}|{kind:'searching'}|{kind:'found';address:string;p
 interface Row { id: string; name: string; price: string; availability: StockStatus; brand?: string; flavor?: string }
 const parse=(value:string)=>Number(value.replace(',','.'));
 function validPoint(lat:string,lng:string){const a=parse(lat),b=parse(lng);return lat.trim()&&lng.trim()&&Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a)<=90&&Math.abs(b)<=180?[a,b] as const:null;}
+const STEPS=[{id:'store-step-main',title:'О магазине'},{id:'store-step-map',title:'Точка и метро'},{id:'store-step-photos',title:'Фото'},{id:'store-step-stock',title:'Напитки и цены'}] as const;
+const LAST_STEP=STEPS.length-1;
+type Field=HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement;
 const nearestId=(city:string,point:readonly [number,number]|null)=>point?nearestStations(city,point[0],point[1],1)[0]?.station.id??'':'';
 
 export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial?:Store;cityId:string;apiKey:string;drinks:StoreDrinkOption[];geocoder?:boolean}){
@@ -37,6 +40,9 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
   const [items,setItems]=useState<Row[]>((initial?.catalog??[]).map((item,index)=>({...item,price:item.price===null?'':String(item.price/100),id:String(index)})));
   const [geoError,setGeoError]=useState('');
   const [state,action,pending]=useActionState(saveStoreAction.bind(null,initial?.id),{});
+  // One section at a time; all stay mounted so typed values survive. An edited store can jump to any step.
+  const [step,setStep]=useState(0);const [reached,setReached]=useState(initial?LAST_STEP:0);
+  const formRef=useRef<HTMLFormElement>(null);
   const location=findCity(city)??CITIES[0];
   const point=validPoint(lat,lng);
   const points=point?[{id:'new',latitude:point[0],longitude:point[1],label:''}]:[];
@@ -63,9 +69,32 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
     }catch{geocoded.current='';setGeo({kind:'error'});return null;}
   }
 
+  const sections=()=>[...formRef.current?.querySelectorAll<HTMLElement>('section.form-card')??[]];
+  function show(next:number){
+    setStep(next);setReached(value=>Math.max(value,next));
+    requestAnimationFrame(()=>{const section=sections()[next];formRef.current?.scrollIntoView({block:'start',behavior:'smooth'});section?.focus({preventScroll:true});});
+  }
+  /** Leaving a step forward checks its fields; leaving the address step also looks up the point for the map step. */
+  async function advance(target:number){
+    if(busy)return;
+    if(target>step){
+      const invalid=[...sections()[step]?.querySelectorAll<Field>('input,select,textarea')??[]].find(field=>!field.checkValidity());
+      if(invalid){invalid.reportValidity();return;}
+      if(step===0&&!point)await locate();
+    }
+    show(target);
+  }
+
   if(state.saved)return <section className="market-empty"><h2>Магазин отправлен на проверку</h2><p>После модерации он появится в списке и на карте.</p><div className="market-empty-actions"><Link href="/market/stores?mine=1" className="community-button">Мои магазины</Link></div></section>;
   const optional=<FormOptional/>;
-  return <form action={form=>{
+  const photoCount=photos.length+retained.length;
+  const nextLabel=step===2&&!photoCount?'Пропустить':'Далее';
+  return <form ref={formRef} noValidate onSubmit={event=>{
+    // Enter and the main button move forward until the last step; then any invalid field opens its own step.
+    if(step<LAST_STEP){event.preventDefault();void advance(step+1);return;}
+    const invalid=[...event.currentTarget.querySelectorAll<Field>('input,select,textarea')].find(field=>!field.checkValidity());
+    if(invalid){event.preventDefault();const index=sections().findIndex(section=>section.contains(invalid));if(index>=0&&index!==step)show(index);setTimeout(()=>invalid.reportValidity());}
+  }} action={form=>{
     if(busy)return;photos.forEach(photo=>form.append('photos',photo));
     if(point||!canGeocode){startTransition(()=>action(form));return;}
     // No point yet: geocode the address right before sending; the store may still be saved without a point.
@@ -75,7 +104,10 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
       startTransition(()=>action(form));
     });
   }} className="store-form"><fieldset disabled={pending}>
-    <section className="form-card" aria-labelledby="store-step-main">
+    <ol className="store-form-progress" aria-label="Этапы заявки">{STEPS.map((item,index)=><li key={item.id} data-state={index===step?'current':index<=reached?'visited':'upcoming'}>
+      <button type="button" disabled={index>reached} aria-current={index===step?'step':undefined} onClick={()=>{if(index!==step)void advance(index);}}><span className="store-form-progress-label">{index+1}. {item.title}</span></button>
+    </li>)}</ol>
+    <section className="form-card" aria-labelledby="store-step-main" tabIndex={-1} hidden={step!==0}>
       <FormStep n={1} id="store-step-main" title="О магазине" hint="Название и адрес, по которым его найдут покупатели. Точку на карте найдём по адресу."/>
       <label>Название магазина<input name="name" required maxLength={120} defaultValue={initial?.name} placeholder="Например, «Энергия у метро»"/></label>
       <div className="store-form-grid store-address-grid"><label>Город<select aria-label="Город" name="city" value={city} onChange={e=>{setCity(e.target.value);setMetro('');setMetroManual(false);setLat('');setLng('');setSource('');setGeo({kind:'idle'});geocoded.current='';}}>{CITIES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
@@ -84,9 +116,9 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
       <p className="store-geo-status" role="status">{geo.kind==='searching'?'Ищем адрес на карте…':geo.kind==='found'?`Точка найдена: ${geo.address}${geo.precise?'':' (примерно — уточните на карте)'}`:geo.kind==='missing'?'Адрес не найден на карте. Уточните его или поставьте точку вручную.':geo.kind==='error'?'Поиск по адресу сейчас недоступен. Нажмите на карту в месте входа или укажите координаты.':source==='manual'?'Точка указана вручную — она приоритетнее адреса.':''}</p>
       <label><span className="form-label">Описание {optional}</span><textarea name="description" maxLength={1500} rows={3} defaultValue={initial?.description} placeholder="Как найти вход, какие напитки продаются"/></label>
     </section>
-    <section className="form-card" aria-labelledby="store-step-map">
+    <section className="form-card" aria-labelledby="store-step-map" tabIndex={-1} hidden={step!==1}>
       <FormStep n={2} id="store-step-map" title="Точка и метро" hint={apiKey?'Проверьте точку: если вход в другом месте, нажмите на карту.':'Карта недоступна — укажите координаты вручную или оставьте их пустыми.'} optional/>
-      {apiKey&&<StoreMap apiKey={apiKey} center={[location.lat,location.lng]} points={points} onPick={(a,b)=>place([a,b],'manual')}/>}
+      {apiKey&&step===1&&<StoreMap apiKey={apiKey} center={[location.lat,location.lng]} points={points} onPick={(a,b)=>place([a,b],'manual')}/>}
       <input type="hidden" name="locationSource" value={source}/>
       <details className="store-coordinates" open={!apiKey||source==='manual'}><summary>Координаты вручную</summary>
         <div className="store-form-grid"><label>Широта<input name="latitude" inputMode="decimal" value={lat} onChange={e=>{setLat(e.target.value);setSource('manual');const next=validPoint(e.target.value,lng);if(!metroManual)setMetro(nearestId(city,next));}} placeholder={String(location.lat)}/></label><label>Долгота<input name="longitude" inputMode="decimal" value={lng} onChange={e=>{setLng(e.target.value);setSource('manual');const next=validPoint(lat,e.target.value);if(!metroManual)setMetro(nearestId(city,next));}} placeholder={String(location.lng)}/></label></div>
@@ -97,13 +129,13 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
       </div>}
       <input type="hidden" name="metro" value={metro}/>
     </section>
-    <section className="form-card store-photo-section" aria-labelledby="store-step-photos">
+    <section className="form-card store-photo-section" aria-labelledby="store-step-photos" tabIndex={-1} hidden={step!==2}>
       <FormStep n={3} id="store-step-photos" title="Фотографии" hint="Вход, витрина или холодильник с напитками — до 5 фото." optional/>
       {retained.map(id=><input key={id} type="hidden" name="retainedPhoto" value={id}/>)}
       {retained.length>0&&<div className="store-photo-previews">{retained.map((id,index)=><div key={id}><Image src={`/api/store-photos/${id}?size=thumbnail`} alt={`Фото магазина ${index+1}`} width={160} height={160} unoptimized/><button type="button" className="photo-delete-button" aria-label={`Удалить сохранённое фото ${index+1}`} onClick={()=>setRetained(retained.filter(v=>v!==id))}><PhotoDeleteIcon/></button></div>)}</div>}
       <MarketPhotoPicker compact crop={false} maxPhotos={5-retained.length} onChange={setPhotos} onBusyChange={setPhotosBusy} disabled={pending}/>
     </section>
-    <section className="form-card" aria-labelledby="store-step-stock">
+    <section className="form-card" aria-labelledby="store-step-stock" tabIndex={-1} hidden={step!==3}>
       <FormStep n={4} id="store-step-stock" title="Напитки и цены" hint="Выберите энергетики из каталога или впишите свой. Неизвестную цену можно оставить пустой." optional/>
       <input type="hidden" name="catalog" value={JSON.stringify(items.map(({name,price,availability,brand,flavor})=>({name,price:price.trim()?Math.round(parse(price)*100):null,availability,...(brand!==undefined?{brand,flavor}:{})})))}/>
       {items.length>0&&<div className="store-stock-editor">{items.map((item,index)=><div key={item.id} className="store-stock-row">
@@ -118,11 +150,15 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
           setItems([...items,{id:crypto.randomUUID(),price:'',availability:'available',...drink}]);
         }}/></div>:<p className="store-note">Добавлено максимум — 50 напитков.</p>}
     </section>
-    <div className="form-submit">
-      {initial&&<p>После изменения магазин снова пройдёт модерацию и временно исчезнет из публичного списка.</p>}
+    <div className="form-submit store-form-footer">
+      {initial&&step===LAST_STEP&&<p>После изменения магазин снова пройдёт модерацию и временно исчезнет из публичного списка.</p>}
       {geoError&&<p className="store-note" role="status">{geoError}</p>}
       {state.error&&<p className="field-error" role="alert">{state.error}</p>}
-      <button className="community-button" disabled={busy} type="submit">{pending?'Отправляем…':geo.kind==='searching'?'Ищем адрес…':'Отправить на проверку'}</button>
+      <div className="store-form-nav">
+        {step>0&&<button type="button" className="community-button community-button-secondary" disabled={busy} onClick={()=>show(step-1)}>Назад</button>}
+        <button className="community-button" disabled={busy} type="submit">{pending?'Отправляем…':geo.kind==='searching'?'Ищем адрес…':step<LAST_STEP?nextLabel:'Отправить на проверку'}</button>
+      </div>
+      <p className="store-form-counter" aria-live="polite">Шаг {step+1} из {STEPS.length}</p>
     </div>
   </fieldset></form>;
 }
