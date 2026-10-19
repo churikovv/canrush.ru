@@ -3061,7 +3061,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 .review-text-guidance-detailed { color: var(--theme-success, #237340); }
 .wall-empty-card p { margin: 8px 0 0; }
 .profile-settings, .profile-achievements { margin: 32px auto; width: 100%; }
-.home-layout { width: 100%; max-width: 1180px; margin: 0 auto; min-width: 0; display: grid; gap: 48px; }
+.home-layout { width: 100%; max-width: 1180px; margin: 0 auto; min-width: 0; display: grid; gap: 28px; }
 /* Giveaway banner: home page and /contest. Self-coloured like the campaign art, so it reads the same on every theme. */
 .contest-banner { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 380px); align-items: center; gap: 8px 24px; padding: 36px 32px 36px 40px; border-radius: 28px; color: #fff; background: radial-gradient(120% 90% at 85% 40%, #2b9bff 0%, transparent 55%), linear-gradient(135deg, #0a64ff 0%, #0046d6 55%, #0032a8 100%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12), 0 18px 40px rgb(0 70 214 / .25); }
 .contest-banner::before { content: ''; position: absolute; inset: 0; z-index: -1; background: repeating-linear-gradient(115deg, transparent 0 60px, rgb(255 255 255 / .05) 60px 140px); pointer-events: none; }
@@ -3158,14 +3158,14 @@ html[data-cookie-notice="visible"] .brand-footer {
 .contest-good-luck { margin: 20px 0 0; font-weight: 800; }
 .home-heading, .home-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .home-section { min-width: 0; }
-.home-section-heading { margin-bottom: 24px; }
+.home-section-heading { margin-bottom: 12px; }
 .home-section-heading h2 { margin: 0; font-size: 1.5rem; }
 .home-section-heading > a { color: var(--theme-link, #0058cc); min-height: 44px; display: inline-flex; align-items: center; }
 .home-drink-strip { display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 2px 20px; }
 .home-drink-item { flex: 0 0 220px; min-width: 0; scroll-snap-align: start; }
 @media (max-width: 639px) {
-  .home-layout { gap: 32px; }
-  .home-section-heading { gap: 4px 16px; margin-bottom: 16px; }
+  .home-layout { gap: 20px; }
+  .home-section-heading { gap: 4px 16px; margin-bottom: 10px; }
   .home-section-heading h2 { font-size: 1.25rem; }
   /* Two whole cards per screen; the strip bleeds to the viewport edges so the next card peeks in instead of a card being cut in half. */
   .home-drink-strip { gap: 12px; margin-inline: calc(50% - 50vw); padding-inline: 16px; scroll-padding-inline: 16px; scrollbar-width: none; }
@@ -3173,17 +3173,11 @@ html[data-cookie-notice="visible"] .brand-footer {
   .home-drink-item { flex-basis: calc((100vw - 32px - 12px) / 2.15); }
 }
 /* Tier lists scroll sideways like the drink shelf; cards keep a readable fixed width. */
-.home-tier-cards { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x proximity; padding: 2px 2px 16px; }
-.home-tier-cards > .tier-list-card { flex: 0 0 min(420px, 80%); scroll-snap-align: start; }
-.home-tier-cards .tier-letter { font-size: 2rem; font-weight: 800; }
 .home-drink-strip { margin-block: 0; list-style: none; }
 .home-drink-item { position: relative; }
 .home-drink-rank { position: absolute; top: 12px; left: 12px; z-index: 1; display: grid; place-items: center; min-width: 28px; height: 28px; padding: 0 8px; border-radius: 9px; background: var(--color-ink, #000); color: #fff; font-size: .8125rem; font-weight: 800; font-variant-numeric: tabular-nums; pointer-events: none; }
 .home-drink-item:nth-child(-n + 3) .home-drink-rank { background: var(--color-brand, #006eff); }
 @media (max-width: 639px) {
-  .home-tier-cards { gap: 12px; margin-inline: calc(50% - 50vw); padding-inline: 16px; scroll-padding-inline: 16px; scrollbar-width: none; }
-  .home-tier-cards::-webkit-scrollbar { display: none; }
-  .home-tier-cards > .tier-list-card { flex-basis: calc(100vw - 56px); }
 }
 @media (max-width: 639px) {
 /* Match the mobile prices page: 32 + 28 top, 24 + 16 side padding. */
@@ -3348,7 +3342,6 @@ html[data-cookie-notice="visible"] .brand-footer {
 @keyframes fx-spin { to { transform: rotate(360deg); } }
 /* Shared cover dimensions keep official and community lists aligned. */
 .tier-list-card-preview-official { justify-content: space-around; gap: 8px; padding-inline: 20px; background: linear-gradient(135deg, #f7fbff, #eaf3ff); }
-.home-tier-cards .tier-list-card-preview-official .tier-letter { font-size: clamp(1.5rem, 3.6vw, 3rem); }
 .tier-list-card-official .tier-list-card-preview-official .tier-letter { transition: transform 200ms ease-out; }
 .tier-list-card-official:hover .tier-letter { transform: translateY(-3px); }
 .tier-list-card-official:hover .tier-letter:nth-child(2n) { transform: translateY(-1px); }
@@ -3655,65 +3648,20 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
   .home-hero-perks { margin-top: 4px; gap: 8px; font-size: .9375rem; }
   .home-hero-price { font-size: .875rem; }
 }
-/* Home bento right after the hero: market (tall, brand blue), stores and prices, reviews. Each tile is a single link. */
-.home-bento { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
-.home-bento-tile { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-width: 0; min-height: 260px; padding: 28px; overflow: hidden; border-radius: 24px; background: var(--color-subtle); color: var(--color-ink); text-decoration: none; transition: transform 200ms ease-out; }
-.home-bento-tile:hover { transform: translateY(-3px); }
-.home-bento-tile:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
-.home-bento-tile[data-tile=market] { grid-row: 1 / 3; color: #fff; background: radial-gradient(120% 120% at 15% 10%, #3b93ff 0%, #006eff 45%, #0049b8 100%); }
-.home-bento-copy { display: grid; justify-items: start; gap: 10px; }
-.home-bento-copy h3 { max-width: 18ch; margin: 0; font-size: clamp(1.375rem, 2.2vw, 1.875rem); font-weight: 800; line-height: 1.12; letter-spacing: -.015em; text-wrap: balance; }
-.home-bento-text { max-width: 44ch; color: var(--color-text); font-size: .9375rem; line-height: 1.5; }
-.home-bento-cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; color: var(--theme-link, #0058cc); font-weight: 700; }
-.home-bento-cta svg { transition: transform 200ms ease-out; }
-.home-bento-tile:hover .home-bento-cta svg { transform: translateX(3px); }
-.home-bento-tile[data-tile=market] .home-bento-text { color: rgb(255 255 255 / .85); }
-.home-bento-tile[data-tile=market] .home-bento-cta { color: #fff; }
-.home-bento-visual { display: grid; gap: 12px; min-width: 0; }
-.home-bento-listing { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; border-radius: 16px; background: #fff; color: #111; box-shadow: 0 10px 24px rgb(0 20 80 / .22); }
-.home-bento-listing:nth-child(2) { margin-left: 20px; }
-.home-bento-listing:nth-child(3) { margin-left: 40px; }
-.home-bento-thumb { display: grid; place-items: center; width: 48px; height: 48px; overflow: hidden; border-radius: 12px; background: #f0f2f5; color: #656566; font-size: 1.25rem; font-weight: 800; }
-.home-bento-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.home-bento-listing-copy { display: grid; min-width: 0; }
-.home-bento-listing-copy b { overflow: hidden; font-size: .875rem; text-overflow: ellipsis; white-space: nowrap; }
-.home-bento-listing-copy small { color: #989898; font-size: .75rem; }
-.home-bento-listing-price { color: #0058cc; font-size: .9375rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.home-bento-listing-empty { border: 1px dashed rgb(255 255 255 / .55); background: rgb(255 255 255 / .12); color: #fff; box-shadow: none; }
-.home-bento-listing-empty .home-bento-thumb { background: rgb(255 255 255 / .2); color: #fff; }
-.home-bento-listing-empty small { color: rgb(255 255 255 / .75); }
-.home-bento-retailers { display: flex; flex-wrap: wrap; gap: 8px; }
-.home-bento-retailers .retailer-badge { width: 44px; height: 44px; border-radius: 12px; background: #fff; color: #3e3e3f; box-shadow: 0 4px 12px rgb(0 20 80 / .08); }
-.home-bento-figures { display: flex; flex-wrap: wrap; gap: 8px; }
-.home-bento-figures > span { padding: 8px 12px; border-radius: 12px; background: var(--color-surface); color: var(--color-text); font-size: .875rem; }
-.home-bento-figures b { color: var(--color-ink); font-size: 1.125rem; font-variant-numeric: tabular-nums; }
-.home-bento-cans { display: flex; gap: 10px; }
-.home-bento-can { display: grid; gap: 2px; width: 88px; min-width: 0; }
-.home-bento-can-tile { display: block; aspect-ratio: 1; margin-bottom: 4px; border: 1px solid var(--theme-line, #e3e6eb); border-radius: 14px; background: #fff; }
-.home-bento-can-tile img { display: block; width: 100%; height: 100%; padding: 6px; object-fit: contain; mix-blend-mode: multiply; -webkit-mask: radial-gradient(ellipse 50% 50%, #000 80%, transparent); mask: radial-gradient(ellipse 50% 50%, #000 80%, transparent); }
-.home-bento-can small { color: var(--color-muted-strong); font-size: .75rem; white-space: nowrap; }
-.home-bento-score { color: var(--color-brand, #006eff); font-size: .8125rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.home-bento-quote { display: grid; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--color-surface); }
-.home-bento-quote-text { display: -webkit-box; overflow: hidden; font-size: .875rem; line-height: 1.45; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
-.home-bento-quote-author { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: .75rem; }
-.home-bento-quote-author > span:nth-child(2) { display: grid; min-width: 0; }
-.home-bento-quote-author small { overflow: hidden; color: var(--color-muted-strong); text-overflow: ellipsis; white-space: nowrap; }
-.home-bento-quote-author .home-bento-score { margin-left: auto; }
-.home-bento-avatar { display: grid; flex: none; place-items: center; width: 26px; height: 26px; overflow: hidden; border-radius: 50%; background: var(--color-brand, #006eff); color: #fff; font-weight: 700; }
-.home-bento-avatar img { width: 100%; height: 100%; object-fit: cover; }
-@media (prefers-reduced-motion: reduce) { .home-bento-tile,.home-bento-cta svg { transition: none; } }
-@media (max-width: 959px) {
-  .home-bento { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .home-bento-tile[data-tile=market] { grid-column: 1 / -1; grid-row: auto; }
-}
-@media (max-width: 639px) {
-  .home-bento { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .home-bento-tile { min-height: 0; padding: 22px; border-radius: 20px; }
-  .home-bento-copy h3 { font-size: 1.375rem; }
-  .home-bento-listing:nth-child(n) { margin-left: 0; }
-  .home-bento-retailers { gap: 6px; }
-  .home-bento-retailers .retailer-badge { width: 34px; height: 34px; border-radius: 10px; }
-  .home-bento-can { width: calc((100% - 20px) / 3); }
+/* Home section tiles after the hero (Avito-style): label on top, the section's character in the corner. Each tile is one link. */
+.home-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.home-shortcut { position: relative; isolation: isolate; overflow: hidden; display: block; min-height: 132px; padding: 16px 18px; border-radius: 22px; background: var(--color-subtle); color: var(--color-ink); text-decoration: none; transition: transform 150ms ease-out, background-color 150ms ease-out; }
+.home-shortcut span { position: relative; z-index: 1; font-size: 1.125rem; font-weight: 700; line-height: 1.2; }
+.home-shortcut img { position: absolute; right: -8px; bottom: -14px; width: 104px; height: 104px; object-fit: contain; transition: transform 200ms ease-out; }
+.home-shortcut:hover img { transform: rotate(-6deg) scale(1.05); }
+.home-shortcut:active { transform: scale(.97); }
+.home-shortcut:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .home-shortcut, .home-shortcut img { transition: none; } }
+@media (max-width: 759px) {
+  .home-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .home-shortcut { min-height: 92px; padding: 12px 14px; border-radius: 18px; }
+  .home-shortcut span { font-size: 1rem; }
+  .home-shortcut img { right: -6px; bottom: -10px; width: 78px; height: 78px; }
 }
 /* Home: fresh market listings shelf, same rhythm as the drink and tier list shelves. */
 .home-market-strip { display: flex; gap: 20px; margin: 0; padding: 2px 2px 16px; overflow-x: auto; scroll-snap-type: x proximity; list-style: none; }
