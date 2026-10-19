@@ -44,6 +44,7 @@ export async function updateProfileAction(
     name: String(formData.get('name') ?? ''),
     telegramChannel: String(formData.get('telegramChannel') ?? ''),
     telegramUsername: String(formData.get('telegramUsername') ?? ''),
+    ...(formData.has('bio') ? { bio: String(formData.get('bio')) } : {}),
   });
 
   if (validation.errors) {

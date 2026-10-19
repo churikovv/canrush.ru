@@ -3,10 +3,11 @@ import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { joinedLabel } from '@/lib/last-seen';
 
-export function ProfileHeader({ name, username, createdAt, avatarSrc, bannerSrc, actions, status, tags, avatarControl, bannerControl, frame = 'none' }: {
+export function ProfileHeader({ name, username, bio, createdAt, avatarSrc, bannerSrc, actions, status, tags, avatarControl, bannerControl, frame = 'none' }: {
   frame?: import('@/lib/profile-appearance').ProfileAppearance['frame'];
   name: string;
   username: string;
+  bio?: string | null;
   createdAt: Date | string;
   avatarSrc?: string | null;
   bannerSrc?: string | null;
@@ -30,7 +31,7 @@ export function ProfileHeader({ name, username, createdAt, avatarSrc, bannerSrc,
         {avatarControl}
       </span>
       <div className="community-name"><div className="community-name-line"><h1>{name}</h1>{status}</div>
-        <p>@{username}<span className="community-joined">С нами с {date}</span></p>{tags}
+        <p>@{username}<span className="community-joined">С нами с {date}</span></p>{bio && <p className="community-bio">{bio}</p>}{tags}
       </div>
       <div className="community-hero-actions">{actions}</div>
     </div>

@@ -53,4 +53,12 @@ describe('profile fields', () => {
   it('личный Telegram необязателен', () => {
     expect(validateProfileInput({ username: 'sobikon', name: 'V', telegramChannel: '' }).data?.telegramUsername).toBeNull();
   });
+
+  it('описание: одна строка до 160 символов, пустое — null, без поля — не меняется', () => {
+    const base = { username: 'sobikon', name: 'V', telegramChannel: '' };
+    expect(validateProfileInput({ ...base, bio: '  Пью   Burn\nпо утрам ' }).data?.bio).toBe('Пью Burn по утрам');
+    expect(validateProfileInput({ ...base, bio: '   ' }).data?.bio).toBeNull();
+    expect(validateProfileInput(base).data && 'bio' in validateProfileInput(base).data!).toBe(false);
+    expect(validateProfileInput({ ...base, bio: 'a'.repeat(161) }).errors?.bio).toBeTruthy();
+  });
 });

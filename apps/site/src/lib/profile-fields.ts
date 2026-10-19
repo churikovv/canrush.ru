@@ -1,11 +1,16 @@
-export type ProfileField = 'username' | 'name' | 'telegramChannel' | 'telegramUsername';
+export type ProfileField = 'username' | 'name' | 'telegramChannel' | 'telegramUsername' | 'bio';
 
 export interface ProfileInput {
   username: string;
   name: string;
   telegramChannel: string | null;
   telegramUsername: string | null;
+  /** Profile description; undefined leaves the stored one as it is (forms without the field). */
+  bio?: string | null;
 }
+
+/** Longest profile description, in characters. */
+export const PROFILE_BIO_MAX = 160;
 
 export type ProfileFieldErrors = Partial<Record<ProfileField, string>>;
 
@@ -40,11 +45,14 @@ export function validateProfileInput(values: {
   name: string;
   telegramChannel: string;
   telegramUsername?: string;
+  bio?: string;
 }): ProfileValidationResult {
   const username = normalizeUsername(values.username);
   const name = values.name.trim().replace(/\s+/gu, ' ');
   const telegramChannel = normalizeTelegramChannel(values.telegramChannel);
   const telegramUsername = normalizeTelegramChannel(values.telegramUsername ?? '');
+  // One line: line breaks and runs of spaces collapse, as the description is shown under the name.
+  const bio = values.bio === undefined ? undefined : values.bio.trim().replace(/\s+/gu, ' ') || null;
   const errors: ProfileFieldErrors = {};
 
   if (!/^[a-z0-9_]{3,24}$/u.test(username)) {
@@ -65,6 +73,12 @@ export function validateProfileInput(values: {
     errors.telegramChannel = 'Укажите ссылку t.me или юзернейм канала длиной от 5 до 32 символов.';
   }
 
+  if (bio && bio.length > PROFILE_BIO_MAX) {
+    errors.bio = `Описание должно быть не длиннее ${PROFILE_BIO_MAX} символов.`;
+  } else if (bio && /[\u0000-\u001f\u007f]/u.test(bio)) {
+    errors.bio = 'Описание содержит недопустимые символы.';
+  }
+
   if (telegramUsername && !/^[a-z][a-z0-9_]{3,31}$/iu.test(telegramUsername)) {
     errors.telegramUsername = 'Укажите юзернейм Telegram: латинские буквы, цифры и подчёркивание, от 4 до 32 символов.';
   }
@@ -77,6 +91,7 @@ export function validateProfileInput(values: {
           name,
           telegramChannel,
           telegramUsername,
+          ...(bio === undefined ? {} : { bio }),
         },
       };
 }

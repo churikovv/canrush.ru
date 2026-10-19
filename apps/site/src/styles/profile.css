@@ -1003,3 +1003,13 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
   .brand-collection-filters { flex-wrap: nowrap; overflow-x: auto; margin-inline: -16px; padding: 2px 16px; scrollbar-width: none; }
   .brand-collection-filters button { flex: none; }
 }
+/* Profile description: a textarea styled like the editor inputs, shown under the name in the header. */
+.profile-editor .profile-edit-field textarea { width: 100%; min-height: 72px; resize: vertical; border: 1px solid var(--theme-line, #c6ccd4); border-radius: 8px; background: var(--theme-panel, #ffffff); color: var(--color-text); padding: 12px; font: inherit; font-size: 1rem; line-height: 1.4; }
+.profile-editor .profile-edit-field textarea:focus-visible { outline: none; border-color: var(--color-ink); }
+.profile-editor .profile-edit-field textarea[aria-invalid="true"] { border-color: var(--color-danger); background: var(--color-danger-soft); }
+.community-name .community-bio { margin: 6px 0 0; max-width: 60ch; color: var(--color-text); font-size: .9375rem; line-height: 1.4; }
+/* The banner spans the whole page surface, flush with its rounded top: out of the 1120px column and the surface padding. */
+.main-surface:has(> .community-profile > .community-hero) { padding-top: 0; }
+.main-surface > .community-profile:has(> .community-hero) { margin-top: 0; }
+.main-surface > .community-profile > .community-hero > .community-cover { margin-inline: calc(50% - 50vw); border-radius: 32px 32px 0 0; }
+.main-surface > .community-profile > .community-hero > .community-cover-custom { aspect-ratio: auto; height: clamp(120px, 25vw, 360px); }

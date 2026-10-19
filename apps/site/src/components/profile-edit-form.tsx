@@ -12,6 +12,7 @@ import { useFormStatus } from 'react-dom';
 import { deleteAccountAction, updateProfileAction, type ProfileFormState } from '@/app/profile/actions';
 import { ProfileImageCrop, type Crop, type CropSource } from '@/components/profile-image-crop';
 import { ProfileHeader } from '@/components/profile-header';
+import { PROFILE_BIO_MAX } from '@/lib/profile-fields';
 import type { ProfileBlockKey } from '@/lib/profile-layout';
 import type { ProfileData } from '@/lib/profile';
 
@@ -49,6 +50,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, tags }: { 
   const [username, setUsername] = useState(profile.username);
   const [channel, setChannel] = useState(profile.telegramChannel ?? '');
   const [telegram, setTelegram] = useState(profile.telegramUsername ?? '');
+  const [bio, setBio] = useState(profile.bio ?? '');
   const [images, setImages] = useState<Partial<Record<ImageKind, ImageSelection>>>({});
   const [cropSource, setCropSource] = useState<ProfileCropSource | null>(null);
   const [dragging, setDragging] = useState<ImageKind | null>(null);
@@ -132,7 +134,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, tags }: { 
       }
     }}>
       <div className="profile-editor-preview" data-profile-theme={appearance.theme}>
-      <ProfileHeader frame={appearance.frame} name={name.trim() || initialName} username={username.replace(/^@+/, '') || profile.username} createdAt={profile.createdAt}
+      <ProfileHeader frame={appearance.frame} name={name.trim() || initialName} username={username.replace(/^@+/, '') || profile.username} bio={bio.trim()} createdAt={profile.createdAt}
         avatarSrc={imageSource('avatar')} bannerSrc={imageSource('banner')} avatarControl={imageControl('avatar')} bannerControl={imageControl('banner')}
         actions={<div className="profile-editor-actions"><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>} />
       </div>
@@ -154,6 +156,10 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, tags }: { 
             <div className="profile-edit-field"><label htmlFor="username">Юзернейм</label>
               <PrefixedInput prefix="@" id="username" name="username" type="text" value={username} onChange={event => setUsername(event.target.value.replace(/^@+/, ''))} autoComplete="username" minLength={3} maxLength={25} pattern="@?[A-Za-z0-9_]{3,24}" title="От 3 до 24 латинских букв, цифр или символов подчёркивания" aria-invalid={Boolean(state.fieldErrors?.username)} aria-describedby={state.fieldErrors?.username ? 'username-error' : 'username-help'} required />
               <p className="field-help" id="username-help">Адрес профиля: canrush.ru/profile/{username.replace(/^@+/, '') || profile.username}</p><FieldError id="username-error" message={state.fieldErrors?.username} />
+            </div>
+            <div className="profile-edit-field"><label htmlFor="bio">Описание</label>
+              <textarea id="bio" name="bio" rows={2} value={bio} onChange={event => setBio(event.target.value)} maxLength={PROFILE_BIO_MAX} placeholder="Пара слов о себе: любимый бренд, сколько банок в неделю…" aria-invalid={Boolean(state.fieldErrors?.bio)} aria-describedby={state.fieldErrors?.bio ? 'bio-error' : 'bio-help'} />
+              <p className="field-help" id="bio-help">Показывается под именем в профиле и в поиске участников. {bio.length}/{PROFILE_BIO_MAX}</p><FieldError id="bio-error" message={state.fieldErrors?.bio} />
             </div>
           </fieldset>
         </section>
