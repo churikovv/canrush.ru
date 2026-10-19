@@ -1,8 +1,10 @@
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { findCity } from '@canrush/shared';
 import { METRO, STOCK_LABELS, formatDistance, nearestStations, storeMapUrl, type MetroStation } from '@/lib/store-fields';
 import type { StoreItemView, StoreView } from '@/lib/store-catalog';
+import { StoreGallery } from './store-gallery';
 
 interface StationGroup { name: string; lines: MetroStation[]; km: number | null }
 /** Chosen station first, then other nearby stations; transfer stations are grouped by name. */
@@ -33,15 +35,15 @@ function DrinkName({item}:{item:StoreItemView}){
   const body=<>{item.cover?<Image src={item.cover} width={36} height={36} alt="" className="store-drink-cover"/>:<span className="store-drink-cover store-drink-cover-empty" aria-hidden="true"/>}<span>{item.name}<small>{item.href?STOCK_LABELS[item.availability]:`Свой напиток · ${STOCK_LABELS[item.availability].toLocaleLowerCase('ru-RU')}`}</small></span></>;
   return item.href?<Link className="store-drink-name" href={item.href}>{body}</Link>:<span className="store-drink-name">{body}</span>;
 }
-export function StoreCard({store,own=false,index,detail=false}:{store:StoreView;own?:boolean;index?:number;detail?:boolean}){
+export function StoreCard({store,own=false,index}:{store:StoreView;own?:boolean;index?:number}){
  return <article className="store-card" id={`store-${store.id}`} tabIndex={-1}>
-  <h2>{index!==undefined&&<span className="store-map-number" aria-hidden="true">{index+1}</span>}{detail?store.name:<Link href={`/market/stores/${store.id}`}>{store.name}</Link>}</h2>
+  <h2>{index!==undefined&&<span className="store-map-number" aria-hidden="true">{index+1}</span>}<Link href={`/market/stores/${store.id}`}>{store.name}</Link></h2>
   <p className="store-address">{storeAddressLine(store)}</p>
-  <StoreMetro store={store} limit={detail?3:2}/>
-  {store.photos.length>0&&<div className="store-photo-gallery">{store.photos.map((id,index)=><a key={id} href={`/api/store-photos/${id}`} target="_blank" rel="noopener noreferrer" aria-label={`Открыть фото магазина ${index+1}`}><Image src={`/api/store-photos/${id}?size=thumbnail`} width={240} height={160} alt={`${store.name}, фото ${index+1}`} unoptimized/></a>)}</div>}
+  <StoreMetro store={store} limit={2}/>
+  <StoreGallery photos={store.photos} name={store.name} layout="strip"/>
   {store.description&&<p className="store-description">{store.description}</p>}
   {own&&<p className="store-status">{STATUS_LABELS[store.status]}{store.moderationNote&&`: ${store.moderationNote}`}</p>}
-  {store.catalog.length>0&&<details open={detail}><summary>Напитки и цены · {store.catalog.length}</summary><ul className="store-stock-list">{store.catalog.map((item,i)=><li key={i}><DrinkName item={item}/><strong>{item.price===null?'Цена не указана':rub(item.price)}</strong></li>)}</ul><p className="store-note">Обновлено {new Date(store.updatedAt).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow'})}. Наличие и цену уточняйте в магазине.</p></details>}
+  {store.catalog.length>0&&<details><summary>Напитки и цены · {store.catalog.length}</summary><ul className="store-stock-list">{store.catalog.map((item,i)=><li key={i}><DrinkName item={item}/><strong>{item.price===null?'Цена не указана':rub(item.price)}</strong></li>)}</ul><p className="store-note">Обновлено {new Date(store.updatedAt).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow'})}. Наличие и цену уточняйте в магазине.</p></details>}
   <div className="store-card-actions"><a className="community-button community-button-secondary" href={storeMapUrl(store)} target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах ↗</a>{own&&<Link href={`/market/stores/${store.id}/edit`} className="community-button community-button-secondary">Редактировать</Link>}</div>
  </article>;
 }
@@ -79,6 +81,52 @@ export function StoreListCard({store,index,own}:{store:StoreView;index:number;ow
       <Link className="community-button" href={href}>Подробнее</Link>
       <a className="community-button community-button-secondary" href={storeMapUrl(store)} target="_blank" rel="noopener noreferrer">Маршрут ↗</a>
       {own&&<Link href={`/market/stores/${store.id}/edit`} className="community-button community-button-secondary">Изменить</Link>}
+    </div>
+  </article>;
+}
+const STOCK_ORDER={available:0,unknown:1,unavailable:2} as const;
+/** In stock first, then by price; unknown prices go last within their group. */
+export function sortStoreCatalog(items:StoreItemView[]){
+  return [...items].sort((a,b)=>STOCK_ORDER[a.availability]-STOCK_ORDER[b.availability]||(a.price??Infinity)-(b.price??Infinity)||a.name.localeCompare(b.name,'ru'));
+}
+/** Body of the store page: photos and prices in the main column, map and metro in a sticky aside. */
+export function StoreDetail({store,own,apiKey,map}:{store:StoreView;own:boolean;apiKey:string;map:ReactNode}){
+  const cheapest=cheapestPrice(store);const items=sortStoreCatalog(store.catalog);
+  const updated=new Date(store.updatedAt).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow',day:'numeric',month:'long',year:'numeric'});
+  return <article className="store-detail-body">
+    <header className="store-detail-head">
+      <div>
+        {own&&<p className="store-status-chip" data-status={store.status}>{STATUS_LABELS[store.status]}</p>}
+        <h1>{store.name}</h1>
+        <p className="store-detail-address">{storeAddressLine(store)}</p>
+        {store.catalog.length>0&&<p className="store-detail-summary">{store.catalog.length} {plural(store.catalog.length,['напиток','напитка','напитков'])}{cheapest!==null&&<> · от <strong>{rub(cheapest)}</strong></>}</p>}
+      </div>
+      <div className="store-detail-actions">
+        <a className="community-button" href={storeMapUrl(store)} target="_blank" rel="noopener noreferrer">Маршрут ↗</a>
+        {own&&<Link href={`/market/stores/${store.id}/edit`} className="community-button community-button-secondary">Редактировать</Link>}
+      </div>
+    </header>
+    {own&&store.moderationNote&&<p className="store-detail-note" role="note">Комментарий модератора: {store.moderationNote}</p>}
+    <div className="store-detail-grid">
+      <div className="store-detail-main">
+        <StoreGallery photos={store.photos} name={store.name}/>
+        {store.description&&<section className="store-detail-section" aria-labelledby="store-about"><h2 id="store-about">О магазине</h2><p className="store-description">{store.description}</p></section>}
+        <section className="store-detail-section" aria-labelledby="store-prices">
+          <h2 id="store-prices">Напитки и цены{store.catalog.length>0&&<span className="store-detail-count">{store.catalog.length}</span>}</h2>
+          {items.length?<ul className="store-price-list">{items.map((item,i)=><li key={i} data-availability={item.availability}>
+            <DrinkName item={item}/><strong>{item.price===null?'—':rub(item.price)}</strong>
+          </li>)}</ul>:<p className="store-note">Участники пока не добавили напитки этого магазина.</p>}
+          <p className="store-note">Обновлено {updated}. Наличие и цену уточняйте в магазине.</p>
+        </section>
+      </div>
+      <aside className="store-detail-aside">
+        {store.latitude!==null&&store.longitude!==null&&apiKey?map:null}
+        <div className="store-detail-place">
+          <h2>Как добраться</h2>
+          <StoreMetro store={store} limit={3}/>
+          <a className="store-form-link" href={storeMapUrl(store)} target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах ↗</a>
+        </div>
+      </aside>
     </div>
   </article>;
 }

@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { ProfileBackButton } from '@/components/profile-back-button';
-import { StoreCard } from '@/components/store-card';
+import { StoreDetail } from '@/components/store-card';
 import { StoreMap } from '@/components/store-map';
 import { auth } from '@/lib/auth';
 import { getVisibleStore } from '@/lib/stores';
@@ -23,7 +23,6 @@ export default async function StorePage({params}:{params:Promise<{id:string}>}){
  const [store]=await withCatalogLinks([{...row,ownerId:own?row.ownerId:'',moderationNote:own?row.moderationNote:'',reviewedAt:null,reviewedBy:undefined}]);
  const apiKey=process.env.YANDEX_MAPS_API_KEY??'';
  return <BrandShell headerAction={<ProfileNavigation active="stores"/>}><div className="market-layout store-detail"><ProfileBackButton href={own?'/market/stores?mine=1':'/market/stores'} label={own?'Мои магазины':'Магазины'}/>
-  <StoreCard store={store!} own={own} detail/>
-  {store!.latitude!==null&&store!.longitude!==null&&apiKey&&<StoreMap apiKey={apiKey} center={[store!.latitude,store!.longitude]} points={[{id:store!.id,latitude:store!.latitude,longitude:store!.longitude,label:''}]}/>}
+  <StoreDetail store={store!} own={own} apiKey={apiKey} map={store!.latitude!==null&&store!.longitude!==null&&<StoreMap apiKey={apiKey} center={[store!.latitude,store!.longitude]} points={[{id:store!.id,latitude:store!.latitude,longitude:store!.longitude,label:''}]}/>}/>
  </div></BrandShell>;
 }
