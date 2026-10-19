@@ -3,13 +3,13 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { PriceFilterInput } from './price-filter-input';
 import { DELIVERY, type MarketFilters as Filters } from '@/lib/market-fields';
-export function MarketFilters({ brands, cities, initial, scope }: { brands:string[]; cities:string[]; initial:Filters; scope:Record<string,string> }) {
+export function MarketFilters({ brands, cities, initial, scope, basePath = '/market' }: { brands:string[]; cities:string[]; initial:Filters; scope:Record<string,string>; basePath?:string }) {
   const [open,setOpen]=useState(false);
   const [query,setQuery]=useState(initial.q??'');
   const [brand,setBrand]=useState(initial.brand??'');
   const [city,setCity]=useState(initial.city??'');
   const [delivery,setDelivery]=useState(initial.delivery??'');
-  return <form className="market-search-form" method="get" action="/market">
+  return <form className="market-search-form" method="get" action={basePath}>
     {Object.entries(scope).map(([key,value])=><input type="hidden" key={key} name={key} value={value}/>)}
     <div className="market-search-toolbar">
       <div className="catalog-search-field">
@@ -23,7 +23,7 @@ export function MarketFilters({ brands, cities, initial, scope }: { brands:strin
     <div><label htmlFor="market-city">Город</label><PriceFilterInput id="market-city" value={city} options={[...new Set([...cities,...(city?[city]:[])])].map(value=>({value,label:value}))} allLabel="Все города" onChange={setCity}/><input type="hidden" name="city" value={city}/></div>
     <div><label htmlFor="market-delivery">Доставка</label><PriceFilterInput id="market-delivery" value={delivery} options={Object.entries(DELIVERY).map(([value,label])=>({value,label}))} allLabel="Все способы" onChange={setDelivery}/><input type="hidden" name="delivery" value={delivery}/></div>
     <button type="submit" className="community-button">Показать</button>
-    {(brand||city||delivery||query)&&<a href={`/market?${new URLSearchParams(scope)}`}>Сбросить</a>}
+    {(brand||city||delivery||query)&&<a href={`${basePath}?${new URLSearchParams(scope)}`}>Сбросить</a>}
     </div>
   </form>;
 }

@@ -103,15 +103,15 @@ try {
     if (width === 390 || width === 1440) await publicPage.screenshot({ path: `/tmp/canrush-market-${width}.png`, fullPage: true });
   }
   // The loading screen covers slow client navigations only (no loading.tsx): start on a page that does not
-  // read listings, hold the listings table, then follow the tab bar link to the market.
+  // read listings, hold the listings table, then switch search to the market.
   await publicPage.setViewportSize({ width: 390, height: 844 });
-  await publicPage.goto(`${origin}/catalog`);
-  await publicPage.locator('.site-tab-bar a[href="/market"]').waitFor();
+  await publicPage.goto(`${origin}/search`);
+  await publicPage.locator('.search-scopes a[href="/search?type=market"]').waitFor();
   const blocker = await pool.connect();
   try {
     await blocker.query('begin');
     await blocker.query('lock table "marketListing" in access exclusive mode');
-    await publicPage.locator('.site-tab-bar a[href="/market"]').click();
+    await publicPage.locator('.search-scopes a[href="/search?type=market"]').click();
     await publicPage.locator('.site-loading:visible').waitFor();
     await publicPage.waitForFunction(() => [...document.querySelectorAll('.site-loading-grid rect')].some(element => element.getAnimations().length > 0));
     const initial = await publicPage.locator('.site-loading:visible .site-loading-grid rect').evaluateAll(elements => elements.map(element => getComputedStyle(element).transform));

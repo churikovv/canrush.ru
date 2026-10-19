@@ -16,12 +16,16 @@ interface CatalogControlsProps {
   brand: string;
   flavor: string;
   sort: string;
+  /** Page the controls navigate to: the catalog itself or the search page that embeds it. */
+  basePath?: string;
+  /** Extra query parameters kept on every navigation (the search scope). */
+  keep?: Record<string, string>;
 }
 
-function catalogHref(form: HTMLFormElement, query?: string): string {
+function catalogHref(form: HTMLFormElement, basePath: string, keep: Record<string, string>, query?: string): string {
   const data = new FormData(form);
   if (query !== undefined) data.set('q', query);
-  const params = new URLSearchParams();
+  const params = new URLSearchParams(keep);
   for (const name of CATALOG_PARAMS) {
     const entry = data.get(name);
     if (typeof entry !== 'string') continue;
@@ -30,10 +34,10 @@ function catalogHref(form: HTMLFormElement, query?: string): string {
     params.set(name, value);
   }
   const search = params.toString();
-  return search ? `/catalog?${search}` : '/catalog';
+  return search ? `${basePath}?${search}` : basePath;
 }
 
-export function CatalogControls({ brands, flavors, query, brand, flavor, sort }: CatalogControlsProps) {
+export function CatalogControls({ brands, flavors, query, brand, flavor, sort, basePath = '/catalog', keep = {} }: CatalogControlsProps) {
   const router = useRouter();
   const [selectedBrand, setSelectedBrand] = useState(brand);
   const [selectedFlavor, setSelectedFlavor] = useState(flavor);
@@ -42,6 +46,8 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort }:
     setPreviousFilters({ brand, flavor });
     setSelectedBrand(brand); setSelectedFlavor(flavor);
   }
+  // Brand, flavor and a sort other than the default «По наличию», shown on the filter button like the market's.
+  const active = [brand, flavor, sort !== 'stores' ? sort : ''].filter(Boolean).length;
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -66,7 +72,7 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort }:
 
   function navigate(form: HTMLFormElement, nextQuery?: string): void {
     clearTimer();
-    startTransition(() => router.replace(catalogHref(form, nextQuery), { scroll: false }));
+    startTransition(() => router.replace(catalogHref(form, basePath, keep, nextQuery), { scroll: false }));
   }
 
   function handleSearchChange(event: ChangeEvent<HTMLInputElement>): void {
@@ -91,12 +97,13 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort }:
   return (
     <form
       className="catalog-controls"
-      action="/catalog"
+      action={basePath}
       method="get"
       role="search"
       aria-busy={isPending}
       onSubmit={handleSubmit}
     >
+      {Object.entries(keep).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
       <label className="catalog-search-field">
         <span className="sr-only">Поиск по каталогу</span>
         <Image src="/brand/icons/catalog-search.svg" width={24} height={24} alt="" />
@@ -115,8 +122,9 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort }:
       </label>
 
       <details className="catalog-filter-disclosure">
-        <summary aria-label="Открыть фильтры">
+        <summary aria-label={active ? `Фильтры и сортировка, выбрано: ${active}` : 'Фильтры и сортировка'}>
           <Image src="/brand/icons/catalog-filter.svg" width={24} height={24} alt="" />
+          {active > 0 && <span className="catalog-filter-count">{active}</span>}
         </summary>
         <div className="catalog-filter-panel">
           <div>
@@ -129,32 +137,25 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort }:
             <input type="hidden" name="flavor" value={selectedFlavor} />
             <PriceFilterInput id="catalog-flavor" value={selectedFlavor} options={flavors} allLabel="Все вкусы" onChange={setSelectedFlavor} />
           </div>
+          <div>
+            <label htmlFor="catalog-sort">Сортировка</label>
+            <select id="catalog-sort" name="sort" defaultValue={sort}>
+              <option value="stores">По наличию</option>
+              <option value="deals">По стоимости</option>
+              <option value="discount">По скидке</option>
+              <option value="rating">По рейтингу</option>
+              <option value="comments">По обсуждаемости</option>
+              <option value="brand">По бренду</option>
+            </select>
+          </div>
           <div className="catalog-filter-actions">
-            <Link href="/catalog" onClick={handleReset}>
+            <Link href={Object.keys(keep).length ? `${basePath}?${new URLSearchParams(keep)}` : basePath} onClick={handleReset}>
               Сбросить
             </Link>
             <button type="submit">Применить</button>
           </div>
         </div>
       </details>
-
-      <label className="catalog-sort-field">
-        <span className="sr-only">Сортировка</span>
-        <select
-          name="sort"
-          defaultValue={sort}
-          onChange={(event) => event.currentTarget.form?.requestSubmit()}
-          aria-label="Сортировка каталога"
-        >
-          <option value="deals">По стоимости</option>
-          <option value="discount">По скидке</option>
-          <option value="rating">По рейтингу</option>
-          <option value="comments">По обсуждаемости</option>
-          <option value="brand">По бренду</option>
-          <option value="stores">По наличию</option>
-        </select>
-        <Image src="/brand/icons/chevron-down.svg" width={16} height={16} alt="" />
-      </label>
 
       <button className="sr-only" type="submit">
         Найти

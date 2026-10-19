@@ -14,47 +14,64 @@ function links(html: string) {
 }
 
 describe('site tab bar', () => {
-  it('lists six sections; orders live inside the market', () => {
-    const html = renderToStaticMarkup(createElement(SiteTabBar));
-    expect(links(html).map(({ href }) => href)).toEqual(['/catalog', '/prices', '/tierlists', '/feed', '/market', '/profile']);
-    for (const label of ['Каталог', 'Магазины', 'Тирлисты', 'Лента', 'Маркет', 'Профиль']) expect(html).toContain(`>${label}</span>`);
+  it('has five tabs with search in the middle', () => {
+    const html = renderToStaticMarkup(createElement(SiteTabBar, { signedIn: true }));
+    expect(links(html).map(({ href }) => href)).toEqual(['/', '/calendar', '/search', '/community', '/profile']);
+    for (const label of ['Главная', 'Календарь', 'Поиск', 'Сообщество', 'Профиль']) expect(html).toContain(`>${label}</span>`);
     expect(html).not.toContain('/messages');
-    expect(links(html).find(({ href }) => href === '/prices')?.label).toBe('Магазины и цены');
     expect(html).not.toContain('aria-current');
     expect(html).not.toContain('/profile/favorites');
   });
 
-  it('does not mark an unrelated tab on the homepage', () => {
+  it('offers sign-in instead of the profile to guests', () => {
+    const html = renderToStaticMarkup(createElement(SiteTabBar));
+    expect(links(html).at(-1)?.href).toBe('/sign-in');
+    expect(html).toContain('>Войти</span>');
+    expect(html).not.toContain('>Профиль</span>');
+  });
+
+  it('marks the home tab on the homepage', () => {
     const html = renderToStaticMarkup(createElement(SiteTabBar, { active: 'home' }));
-    expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual([]);
+    expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/']);
+  });
+
+  it('lights up search for the catalog, prices, stores and the market', () => {
+    for (const active of ['search', 'catalog', 'prices', 'stores', 'market'] as const) {
+      const html = renderToStaticMarkup(createElement(SiteTabBar, { active }));
+      expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/search']);
+    }
   });
 
   it('marks only the active section as the current page', () => {
-    const html = renderToStaticMarkup(createElement(SiteTabBar, { active: 'favorites' }));
+    const html = renderToStaticMarkup(createElement(SiteTabBar, { active: 'favorites', signedIn: true }));
     expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/profile']);
   });
 
-  it('marks the feed in the header and the tab bar', () => {
-    const html = renderToStaticMarkup(createElement(ProfileNavigation, { active: 'feed' }));
-    expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/feed', '/feed']);
-    expect(html.match(/data-motion="feed"/g)).toHaveLength(2);
+  it('lights up the community tab for tier lists and the feed', () => {
+    for (const active of ['community', 'tierlists', 'feed'] as const) {
+      const html = renderToStaticMarkup(createElement(SiteTabBar, { active }));
+      expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/community']);
+    }
   });
 
-  it('renders the header buttons and the tab bar with the same active section', () => {
-    const html = renderToStaticMarkup(createElement(ProfileNavigation, { active: 'tierlists' }));
+  it('marks the feed in the header and the community in the tab bar', async () => {
+    const html = renderToStaticMarkup(await ProfileNavigation({ active: 'feed', signedIn: true }));
+    expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/feed', '/community']);
+  });
+
+  it('renders the header buttons and the tab bar with the same active section', async () => {
+    const html = renderToStaticMarkup(await ProfileNavigation({ active: 'calendar', signedIn: true }));
     const tabBarStart = html.indexOf('<nav class="site-tab-bar"');
     expect(html.indexOf('<nav class="profile-navigation"')).toBe(0);
     expect(tabBarStart).toBeGreaterThan(0);
     expect(html).not.toContain('/profile/favorites');
-    for (const part of [html.slice(0, tabBarStart), html.slice(tabBarStart)]) {
-      expect(links(part).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/tierlists']);
-    }
+    expect(links(html.slice(tabBarStart)).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/calendar']);
   });
 });
 
 describe('header menus', () => {
-  it('groups the desktop header into community and stores menus plus the profile', () => {
-    const html = renderToStaticMarkup(createElement(ProfileNavigation));
+  it('groups the desktop header into community and stores menus plus the profile', async () => {
+    const html = renderToStaticMarkup(await ProfileNavigation({ signedIn: true }));
     const header = html.slice(0, html.indexOf('<nav class="site-tab-bar"'));
     // Each group label links to its first page, then the panel lists every page of the group.
     expect(links(header).map(({ href }) => href)).toEqual(['/tierlists', '/tierlists', '/market', '/feed', '/catalog', '/catalog', '/prices', '/market/stores', '/profile']);
@@ -62,11 +79,11 @@ describe('header menus', () => {
     expect(header.match(/aria-expanded="false"/g)).toHaveLength(2);
   });
 
-  it('marks the store finder in the header menu and «Магазины» in the tab bar', () => {
-    const html = renderToStaticMarkup(createElement(ProfileNavigation, { active: 'stores' }));
+  it('marks the store finder in the header menu and search in the tab bar', async () => {
+    const html = renderToStaticMarkup(await ProfileNavigation({ active: 'stores', signedIn: true }));
     const tabBarStart = html.indexOf('<nav class="site-tab-bar"');
     expect(links(html.slice(0, tabBarStart)).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/market/stores']);
-    expect(links(html.slice(tabBarStart)).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/prices']);
+    expect(links(html.slice(tabBarStart)).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/search']);
     expect(html.slice(0, tabBarStart).match(/data-current="true"/g)).toHaveLength(1);
   });
 });

@@ -14,8 +14,7 @@
   opacity: 0.55;
 }
 .catalog-search-field,
-.catalog-filter-disclosure > summary,
-.catalog-sort-field {
+.catalog-filter-disclosure > summary {
   min-height: 48px;
   border-radius: 16px;
   background: var(--color-subtle);

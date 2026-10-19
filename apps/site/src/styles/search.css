@@ -1,0 +1,49 @@
+/* /search: the catalog, stores and market with a pinned scope switcher. Loaded after shared, catalog and market CSS. */
+.search-layout { width: 100%; max-width: 1180px; margin: 0 auto; padding-bottom: calc(var(--site-tab-bar-offset, 0px) + 32px); color: var(--color-ink); }
+.search-layout > .catalog-layout { max-width: none; }
+.search-layout > .market-search-form, .search-layout > .search-pinned { margin-bottom: 16px; }
+/* The section's own search form and the switcher under it stay on screen while the results scroll. */
+.search-pinned { position: sticky; top: 0; z-index: 20; display: grid; gap: 10px; margin: 0 -16px 16px; padding: max(8px, env(safe-area-inset-top)) 16px 12px; background: var(--color-surface); box-shadow: 0 1px 0 var(--theme-line, rgb(0 0 0 / 8%)); }
+.search-pinned > .market-search-form { margin: 0; }
+.search-scopes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 4px; border-radius: 16px; background: var(--color-subtle); }
+.search-scopes a { display: grid; place-items: center; min-height: 40px; border-radius: 12px; color: var(--color-muted-strong); font-weight: 700; text-decoration: none; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.search-scopes a:hover { color: var(--color-ink); }
+.search-scopes a[aria-current="page"] { background: var(--color-brand); color: #fff; }
+.search-scopes a:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 1px; }
+@media (min-width: 960px) {
+  .search-pinned { margin-inline: 0; padding-inline: 0; box-shadow: none; }
+  .search-scopes { max-width: 480px; }
+}
+@media (prefers-reduced-motion: reduce) { .search-scopes a { transition: none; } }
+/* /community «Люди»: member cards — framed avatar, tag, description, stats and an XP shield in the level tier's colours. */
+.people-browser { color: var(--color-text); }
+.people-heading { margin: 4px 0 12px; font-size: 1rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--color-ink); }
+.people-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.people-card { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 14px 12px; border-radius: 20px; color: inherit; text-decoration: none; transition: background-color 150ms ease-out; }
+.people-card:hover { background: var(--color-subtle); }
+.people-card:focus-visible { outline: 3px solid var(--color-focus); outline-offset: -3px; }
+.people-avatar { position: relative; display: grid; place-items: center; width: 64px; height: 64px; margin: 4px; border-radius: 50%; background: var(--color-subtle); color: var(--color-brand); font-size: 1.5rem; font-weight: 800; }
+.people-avatar > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.people-main { display: grid; gap: 6px; min-width: 0; }
+.people-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0; }
+.people-name strong { overflow: hidden; color: var(--color-ink); font-size: 1.125rem; text-overflow: ellipsis; white-space: nowrap; }
+.people-engine-number { font-size: inherit; font-variant-numeric: tabular-nums; opacity: .85; }
+.people-bio { overflow: hidden; color: var(--color-muted-strong); font-size: .9375rem; text-overflow: ellipsis; white-space: nowrap; }
+.people-stats { display: flex; flex-wrap: wrap; gap: 6px; }
+.people-stats > span { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 10px; border-radius: 999px; background: var(--color-subtle); color: var(--color-text); font-size: .8125rem; font-weight: 700; }
+.people-stats > .profile-level { padding: 3px 10px; }
+.people-xp { display: grid; place-items: center; align-content: center; width: 76px; height: 84px; padding-bottom: 8px; color: var(--tier-ink, #fff); background: linear-gradient(160deg, var(--tier-light, #8ab4ff), var(--tier-mid, #3d7bff) 55%, var(--tier-dark, #1d4fd8)); clip-path: polygon(0 0, 100% 0, 100% 62%, 50% 100%, 0 62%); filter: drop-shadow(0 6px 14px var(--tier-glow, rgb(0 0 0 / .2))); }
+.people-xp strong { font-size: 1.25rem; font-weight: 900; line-height: 1; letter-spacing: -.02em; }
+.people-xp small { font-size: .6875rem; font-weight: 800; opacity: .8; }
+@media (max-width: 559px) {
+  .people-card { grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; padding: 12px 4px; }
+  .people-avatar { width: 52px; height: 52px; margin: 2px; font-size: 1.25rem; }
+  .people-name strong { font-size: 1rem; }
+  .people-bio { font-size: .875rem; }
+  .people-xp { width: 58px; height: 66px; padding-bottom: 6px; }
+  .people-xp strong { font-size: 1rem; }
+  .people-stats { gap: 4px; }
+  .people-stats > span { padding-inline: 8px; }
+  .people-stat-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) { .people-card { transition: none; } }

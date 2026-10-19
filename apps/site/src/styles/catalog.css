@@ -10,15 +10,17 @@
   display: grid;
   align-items: center;
   gap: 6px;
-  grid-template-columns: minmax(0, 1fr) 48px minmax(180px, 25%);
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 .catalog-filter-disclosure {
   position: static;
 }
 .catalog-filter-disclosure > summary {
   display: flex;
-  width: 48px;
+  gap: 6px;
+  min-width: 56px;
   height: 48px;
+  padding: 0 12px;
   align-items: center;
   justify-content: center;
   list-style: none;
@@ -57,30 +59,6 @@
   display: grid;
   gap: 8px;
   grid-template-columns: 1fr 1fr;
-}
-.catalog-sort-field {
-  position: relative;
-  display: flex;
-  min-width: 0;
-  align-items: center;
-}
-.catalog-sort-field select {
-  width: 100%;
-  min-width: 0;
-  min-height: 48px;
-  appearance: none;
-  border: 0;
-  border-radius: 16px;
-  outline: 0;
-  background: transparent;
-  color: var(--color-text);
-  padding: 11px 34px 11px 12px;
-  font-size: 0.875rem;
-  text-overflow: ellipsis;
-}
-.catalog-sort-field:focus-within {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
 }
 .catalog-grid {
   display: grid;
@@ -365,10 +343,9 @@
   }
 }
 .catalog-filter-panel label { margin-bottom: 8px; }
-@media (max-width: 639px) {
-  .catalog-controls { grid-template-columns: 48px minmax(0, 1fr); }
-  .catalog-sort-field { width: 100%; }
-}
+/* Sorting lives in the filter panel; the toolbar is the search field and the filter button, as in the market. */
+.catalog-controls .catalog-search-field { grid-column: auto; }
+.catalog-filter-count { color: var(--color-brand-deep); font-weight: 700; }
 .catalog-filter-panel { top: calc(100% + 8px); }
 @media (max-width: 639px) { .catalog-layout > .catalog-city-caption { display: none; } }
 .catalog-store-volume { border: 1px solid var(--color-control); border-radius: 16px; padding: 20px; gap: 16px; }

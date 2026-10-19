@@ -47,7 +47,7 @@ export default async function DrinkCalendarPage({ params, searchParams }: { para
     summary.priced ? `ушло ${formatPrice(summary.spent)}` : null,
     overview.best > 1 ? `рекордная серия — ${days(overview.best)}` : null].filter(Boolean).join(', ') + ' ⚡';
 
-  return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
+  return <BrandShell headerAction={<ProfileNavigation active={isOwn ? 'calendar' : 'profile'} />} surfaceClassName="profile-surface">
     <section className="community-directory drink-calendar-page" data-profile-theme={profile.profileAppearance?.theme ?? 'default'}>
       <ProfileBackButton href={isOwn ? '/profile' : `/profile/${profile.username}`} />
       <div className="profile-subpage-title"><h1>Календарь выпитого</h1>{!isOwn && <ProfileSubpageOwner profile={profile} />}</div>

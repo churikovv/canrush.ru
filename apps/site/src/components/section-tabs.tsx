@@ -29,10 +29,12 @@ export function StoreTabs({ active, signedIn }: { active: typeof STORE_TABS[numb
 }
 
 const FEED_TABS = [
-  { key: 'all', href: '/feed', label: 'Все записи' },
-  { key: 'following', href: '/feed?scope=following', label: 'Подписки', private: true },
+  { key: 'all', label: 'Все записи' },
+  { key: 'following', label: 'Подписки', private: true },
 ] as const;
 
-export function FeedTabs({ active, signedIn }: { active: typeof FEED_TABS[number]['key']; signedIn: boolean }) {
-  return <SectionTabs tabs={FEED_TABS} active={active} signedIn={signedIn} label="Лента" />;
+/** `basePath`/`keep` point the tabs at /community when the feed is shown there. */
+export function FeedTabs({ active, signedIn, basePath = '/feed', keep = {} }: { active: typeof FEED_TABS[number]['key']; signedIn: boolean; basePath?: string; keep?: Record<string, string> }) {
+  const href = (scope?: string) => { const search = new URLSearchParams({ ...keep, ...(scope ? { scope } : {}) }).toString(); return search ? `${basePath}?${search}` : basePath; };
+  return <SectionTabs tabs={FEED_TABS.map(tab => ({ ...tab, href: href(tab.key === 'all' ? undefined : tab.key) }))} active={active} signedIn={signedIn} label="Лента" />;
 }
