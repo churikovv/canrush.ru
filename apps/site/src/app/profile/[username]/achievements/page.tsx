@@ -20,10 +20,10 @@ export default async function AchievementsPage({ params }: { params: Promise<{ u
   const session = await auth.api.getSession({ headers: await headers() });
   const admin = session ? await isSiteAdminEmail(session.user.email) : false;
   const community = await getProfileCommunity(profile.id, session?.user.id);
-  const visible = visibleProfileAchievements(admin);
+  const visible = visibleProfileAchievements(admin, community.earned);
   const earned = visible.filter(item => community.earned.includes(item.key));
-  // "admin" cannot be worked towards, so it only appears once held.
-  const locked = visible.filter(item => item.key !== 'admin' && !community.earned.includes(item.key))
+  // "admin" and the giveaway tag cannot be worked towards, so they only appear once held.
+  const locked = visible.filter(item => item.key !== 'admin' && item.key !== 'energizer' && !community.earned.includes(item.key))
     .map(item => ({ item, completion: achievementCompletion(item, community.progress) }))
     .sort((a, b) => b.completion - a.completion);
   return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">

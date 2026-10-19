@@ -18,7 +18,7 @@ export function AchievementPicker({ earned, selected, progress, isOwn, viewerIsA
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0, maxHeight: 400 });
   const [state, action, pending] = useActionState(updateCommunityAction, {});
-  const items = visibleProfileAchievements(viewerIsAdmin);
+  const items = visibleProfileAchievements(viewerIsAdmin, earned);
   const matching = items.filter(item => [item.label, item.description, ACHIEVEMENT_RARITIES[item.rarity], ...item.steps.map(step => step.label)].join(' ').toLocaleLowerCase('ru').includes(query.trim().toLocaleLowerCase('ru')));
   const current = items.find(item => item.key === tag);
 

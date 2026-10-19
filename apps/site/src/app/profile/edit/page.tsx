@@ -37,7 +37,7 @@ export default async function ProfileEditPage() {
   const [ratings, wall, listings, experience, friends, followers, following, favorites, community, viewerIsAdmin] = await Promise.all([
     getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), getProfileCommunity(profile.id, profile.id), isSiteAdminEmail(session.user.email),
   ]);
-  const achievements = visibleProfileAchievements(viewerIsAdmin);
+  const achievements = visibleProfileAchievements(viewerIsAdmin, community.earned);
   const earned = community.earned.filter(key => achievements.some(item => item.key === key));
   const layoutPreviews = {
     favorites: favorites.length ? <div className="layout-listing-previews">{favorites.slice(0, 3).map(item => <div key={`${item.brand}:${item.flavor}`}>{item.coverImageUrl && <Image src={item.coverImageUrl} width={80} height={80} alt="" />}<strong>{item.brand}</strong></div>)}</div> : <p>Пока нет избранных напитков.</p>,

@@ -22,6 +22,11 @@ import { HomeBento, type HomeBentoData } from '@/components/home-bento';
 import { MonthlyTop } from '@/components/monthly-top';
 import { getMonthlyTop, settleMonthlyTop } from '@/lib/monthly-top';
 import { DEFAULT_DESCRIPTION, seoMetadata } from '@/lib/seo';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { ContestBanner } from '@/components/contest-banner';
+import { currentContest } from '@/lib/contest';
+import { getContestEntry } from '@/lib/contest-db';
 export const dynamic = 'force-dynamic';
 const TOP_DRINKS = 100;
 const HOME_TIER_LISTS = 8;
@@ -32,7 +37,9 @@ export const metadata = seoMetadata({ title: 'Энергетики, отзывы
 export default async function HomePage() {
   const { groups, city } = await loadCatalogSnapshot();
   await settleMonthlyTop();
-  const [summaries, monthly, listings, storePoints] = await Promise.all([getReviewSummaries(groups), getMonthlyTop(), getListings(1), listStorePoints(city.id)]);
+  const contest = currentContest(new Date());
+  const [summaries, monthly, listings, storePoints, session] = await Promise.all([getReviewSummaries(groups), getMonthlyTop(), getListings(1), listStorePoints(city.id), contest ? auth.api.getSession({ headers: await headers() }) : null]);
+  const contestEntry = contest && session ? await getContestEntry(contest.contest, session.user.id) : null;
   const stores = storePoints.map(store => ({ id: store.id, name: store.name, address: store.address, station: storeStations(store, 1)[0]?.name ?? null, latitude: store.latitude, longitude: store.longitude, drinks: store.drinks }));
   const resolved = groups.filter(group => isResolvedFlavor(group.flavor));
   const ranked = filterCatalogGroups(resolved, { query: '', brand: '', flavor: '', sort: 'rating' }, summaries);
@@ -60,6 +67,7 @@ export default async function HomePage() {
   return <BrandShell headerAction={<ProfileNavigation active="home" />} surfaceClassName="catalog-surface home-surface">
     <div className="home-layout">
       <HomeHero data={hero} badge={badge} retailerBadges={retailerBadges} />
+      {contest && <ContestBanner contest={contest.contest} entry={contestEntry} phase={contest.phase} />}
       <HomeBento data={bento} retailerBadges={retailerBadges} />
       <section className="home-section" aria-labelledby="home-users"><div className="home-section-heading"><h2 id="home-users">Рейтинг пользователей</h2><Link href="/leaderboard">Все</Link></div>
         <MonthlyTop data={monthly} />

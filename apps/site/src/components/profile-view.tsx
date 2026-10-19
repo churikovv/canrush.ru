@@ -50,7 +50,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
   const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
   const tierProducts = tierListProductsForPlacements(catalog, tierLists.flatMap(list => list.preview));
   const experience = (await getExperience([profile.username]))[profile.username];
-  const visibleAchievements = visibleProfileAchievements(viewerIsAdmin);
+  const visibleAchievements = visibleProfileAchievements(viewerIsAdmin, community.earned);
   const visibleEarned = community.earned.filter(key => visibleAchievements.some(item => item.key === key));
   const base = `/profile/${profile.username}`;
   const telegramHref = profile.telegramChannel ? `https://t.me/${profile.telegramChannel}` : undefined;
