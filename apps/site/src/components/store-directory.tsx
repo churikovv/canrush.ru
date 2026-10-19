@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { StoreMap } from './store-map';
-import { StoreCard, StoreMapPopup } from './store-card';
+import { StoreListCard, StoreMapPopup } from './store-card';
 import type { StoreView } from '@/lib/store-catalog';
 export function StoreDirectory({stores,center,apiKey,own}:{stores:StoreView[];center:[number,number];apiKey:string;own:boolean}){
  const [mode,setMode]=useState<'list'|'map'>('list');const [selected,setSelected]=useState<string|null>(null);
@@ -14,6 +14,6 @@ export function StoreDirectory({stores,center,apiKey,own}:{stores:StoreView[];ce
  </div></div>
  {mode==='map'&&<><StoreMap apiKey={apiKey} center={center} points={points} selected={selected} onSelect={setSelected}>{item&&<StoreMapPopup store={item} index={stores.indexOf(item)} onClose={()=>setSelected(null)}/>}</StoreMap>
   <p className="store-note">На карте показаны магазины текущей страницы. Нажмите на точку, чтобы увидеть адрес, метро и цены.{hidden>0&&` Без точки на карте: ${hidden} — они есть в списке.`}</p></>}
- {mode==='list'&&<div className="store-grid">{stores.map((s,i)=><StoreCard key={s.id} store={s} index={i} own={own}/>)}</div>}
+ {mode==='list'&&<div className="store-grid">{stores.map((s,i)=><StoreListCard key={s.id} store={s} index={i} own={own}/>)}</div>}
  </>;
 }

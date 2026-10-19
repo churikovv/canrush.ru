@@ -36,19 +36,56 @@ function DrinkName({item}:{item:StoreItemView}){
 export function StoreCard({store,own=false,index,detail=false}:{store:StoreView;own?:boolean;index?:number;detail?:boolean}){
  return <article className="store-card" id={`store-${store.id}`} tabIndex={-1}>
   <h2>{index!==undefined&&<span className="store-map-number" aria-hidden="true">{index+1}</span>}{detail?store.name:<Link href={`/market/stores/${store.id}`}>{store.name}</Link>}</h2>
-  <p className="store-address">{findCity(store.city)?.name} · {store.address}</p>
+  <p className="store-address">{storeAddressLine(store)}</p>
   <StoreMetro store={store} limit={detail?3:2}/>
   {store.photos.length>0&&<div className="store-photo-gallery">{store.photos.map((id,index)=><a key={id} href={`/api/store-photos/${id}`} target="_blank" rel="noopener noreferrer" aria-label={`Открыть фото магазина ${index+1}`}><Image src={`/api/store-photos/${id}?size=thumbnail`} width={240} height={160} alt={`${store.name}, фото ${index+1}`} unoptimized/></a>)}</div>}
   {store.description&&<p className="store-description">{store.description}</p>}
-  {own&&<p className="store-status">{{pending:'На проверке',published:'Опубликован',rejected:'Нужны исправления'}[store.status]}{store.moderationNote&&`: ${store.moderationNote}`}</p>}
+  {own&&<p className="store-status">{STATUS_LABELS[store.status]}{store.moderationNote&&`: ${store.moderationNote}`}</p>}
   {store.catalog.length>0&&<details open={detail}><summary>Напитки и цены · {store.catalog.length}</summary><ul className="store-stock-list">{store.catalog.map((item,i)=><li key={i}><DrinkName item={item}/><strong>{item.price===null?'Цена не указана':rub(item.price)}</strong></li>)}</ul><p className="store-note">Обновлено {new Date(store.updatedAt).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow'})}. Наличие и цену уточняйте в магазине.</p></details>}
   <div className="store-card-actions"><a className="community-button community-button-secondary" href={storeMapUrl(store)} target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах ↗</a>{own&&<Link href={`/market/stores/${store.id}/edit`} className="community-button community-button-secondary">Редактировать</Link>}</div>
  </article>;
 }
+/** City prefix only when the address does not already start with it. */
+export function storeAddressLine(store:Pick<StoreView,'city'|'address'>){
+  const city=findCity(store.city)?.name;
+  return city&&!store.address.toLocaleLowerCase('ru-RU').startsWith(city.toLocaleLowerCase('ru-RU'))?`${city} · ${store.address}`:store.address;
+}
+function cheapestPrice(store:StoreView){
+  return store.catalog.reduce<number|null>((min,item)=>item.price!==null&&item.availability!=='unavailable'&&(min===null||item.price<min)?item.price:min,null);
+}
+const STATUS_LABELS={pending:'На проверке',published:'Опубликован',rejected:'Нужны исправления'} as const;
+/** Card of the store list: cover photo, address, metro and a short price summary; full price list is on the store page. */
+export function StoreListCard({store,index,own}:{store:StoreView;index:number;own:boolean}){
+  const href=`/market/stores/${store.id}`;const cheapest=cheapestPrice(store);const cover=store.photos[0];
+  const covers=store.catalog.filter(item=>item.cover).slice(0,4);
+  return <article className="store-card store-list-card" id={`store-${store.id}`} tabIndex={-1}>
+    <Link className="store-list-cover" href={href} tabIndex={-1} aria-hidden="true">
+      {cover?<Image src={`/api/store-photos/${cover}?size=thumbnail`} width={320} height={180} alt="" unoptimized/>:<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M4 10v10h16V10M3 4h18l-1 6H4L3 4Zm6 16v-6h6v6"/></svg>}
+      {store.photos.length>1&&<span className="store-list-photo-count">{store.photos.length} фото</span>}
+    </Link>
+    <div className="store-list-body">
+      {own&&<p className="store-list-status" data-status={store.status}>{STATUS_LABELS[store.status]}</p>}
+      <h2><span className="store-map-number" aria-hidden="true">{index+1}</span><Link href={href}>{store.name}</Link></h2>
+      <p className="store-address">{storeAddressLine(store)}</p>
+      <StoreMetro store={store} limit={2}/>
+      {store.catalog.length>0&&<p className="store-list-stock">
+        {covers.length>0&&<span className="store-list-covers" aria-hidden="true">{covers.map((item,i)=><Image key={i} src={item.cover!} width={32} height={32} alt=""/>)}</span>}
+        <span>{store.catalog.length} {plural(store.catalog.length,['напиток','напитка','напитков'])}{cheapest!==null&&<> · от <strong>{rub(cheapest)}</strong></>}</span>
+      </p>}
+      {store.description&&<p className="store-list-description">{store.description}</p>}
+      {own&&store.moderationNote&&<p className="store-note">{store.moderationNote}</p>}
+    </div>
+    <div className="store-card-actions store-list-actions">
+      <Link className="community-button" href={href}>Подробнее</Link>
+      <a className="community-button community-button-secondary" href={storeMapUrl(store)} target="_blank" rel="noopener noreferrer">Маршрут ↗</a>
+      {own&&<Link href={`/market/stores/${store.id}/edit`} className="community-button community-button-secondary">Изменить</Link>}
+    </div>
+  </article>;
+}
 /** Compact card shown over the map after a click on a store point. */
 export function StoreMapPopup({store,index,onClose}:{store:StoreView;index:number;onClose:()=>void}){
   const priced=store.catalog.filter(item=>item.price!==null&&item.availability!=='unavailable').slice(0,3);
-  const cheapest=store.catalog.reduce<number|null>((min,item)=>item.price!==null&&item.availability!=='unavailable'&&(min===null||item.price<min)?item.price:min,null);
+  const cheapest=cheapestPrice(store);
   return <section className="store-map-popup" aria-label={`Магазин ${store.name}`} aria-live="polite">
     <button type="button" className="store-map-popup-close" aria-label="Закрыть карточку" onClick={onClose}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <h2><span className="store-map-number" aria-hidden="true">{index+1}</span>{store.name}</h2>
