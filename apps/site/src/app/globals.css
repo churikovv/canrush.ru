@@ -3061,7 +3061,8 @@ html[data-cookie-notice="visible"] .brand-footer {
 .review-text-guidance-detailed { color: var(--theme-success, #237340); }
 .wall-empty-card p { margin: 8px 0 0; }
 .profile-settings, .profile-achievements { margin: 32px auto; width: 100%; }
-.home-layout { width: 100%; max-width: 1180px; margin: 0 auto; min-width: 0; display: grid; gap: 28px; }
+/* One rhythm for every block: --home-gap between blocks, 12px from a heading to its content, nothing extra under shelves. */
+.home-layout { --home-gap: 32px; width: 100%; max-width: 1180px; margin: 0 auto; min-width: 0; display: grid; gap: var(--home-gap); }
 /* Giveaway banner: home page and /contest. Self-coloured like the campaign art, so it reads the same on every theme. */
 .contest-banner { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 380px); align-items: center; gap: 8px 24px; padding: 36px 32px 36px 40px; border-radius: 28px; color: #fff; background: radial-gradient(120% 90% at 85% 40%, #2b9bff 0%, transparent 55%), linear-gradient(135deg, #0a64ff 0%, #0046d6 55%, #0032a8 100%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12), 0 18px 40px rgb(0 70 214 / .25); }
 .contest-banner::before { content: ''; position: absolute; inset: 0; z-index: -1; background: repeating-linear-gradient(115deg, transparent 0 60px, rgb(255 255 255 / .05) 60px 140px); pointer-events: none; }
@@ -3159,18 +3160,22 @@ html[data-cookie-notice="visible"] .brand-footer {
 .home-heading, .home-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .home-section { min-width: 0; }
 .home-section-heading { margin-bottom: 12px; }
+/* Blocks reused from other pages bring their own margins; inside a home section the layout gap does the spacing. */
+.home-section > :is(.monthly-top, .community-empty) { margin: 0; }
+.home-section > .community-empty { padding: 16px; border-radius: 16px; background: var(--color-subtle); }
 .home-section-heading h2 { margin: 0; font-size: 1.5rem; }
 .home-section-heading > a { color: var(--theme-link, #0058cc); min-height: 44px; display: inline-flex; align-items: center; }
-.home-drink-strip { display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 2px 20px; }
+.home-drink-strip { display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 2px 12px; }
 .home-drink-item { flex: 0 0 220px; min-width: 0; scroll-snap-align: start; }
 @media (max-width: 639px) {
-  .home-layout { gap: 20px; }
-  .home-section-heading { gap: 4px 16px; margin-bottom: 10px; }
+  .home-layout { --home-gap: 24px; }
+  .home-section-heading { gap: 4px 16px; }
   .home-section-heading h2 { font-size: 1.25rem; }
-  /* Two whole cards per screen; the strip bleeds to the viewport edges so the next card peeks in instead of a card being cut in half. */
-  .home-drink-strip { gap: 12px; margin-inline: calc(50% - 50vw); padding-inline: 16px; scroll-padding-inline: 16px; scrollbar-width: none; }
+  /* Two whole cards per screen; the strip bleeds to the viewport edges so the next card peeks in instead of a card being
+     cut in half. Its inline padding equals the surface padding (12px), so the first card lines up with the content. */
+  .home-drink-strip { gap: 12px; margin-inline: calc(50% - 50vw); padding: 4px 12px; scroll-padding-inline: 12px; scrollbar-width: none; }
   .home-drink-strip::-webkit-scrollbar { display: none; }
-  .home-drink-item { flex-basis: calc((100vw - 32px - 12px) / 2.15); }
+  .home-drink-item { flex-basis: calc((100vw - 24px - 12px) / 2.15); }
 }
 /* Tier lists scroll sideways like the drink shelf; cards keep a readable fixed width. */
 .home-drink-strip { margin-block: 0; list-style: none; }
@@ -3180,8 +3185,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 @media (max-width: 639px) {
 }
 @media (max-width: 639px) {
-/* Match the mobile prices page: 32 + 28 top, 24 + 16 side padding. */
-  .main-surface.home-surface,
+/* Match the mobile prices page: 32 + 28 top, 24 + 16 side padding. The home page keeps the catalog's padding instead. */
   .main-surface.tierlists-surface:not(:has(.tier-editor)) {
     padding-top: 60px;
     padding-inline: 40px;
@@ -3664,7 +3668,7 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
   .home-shortcut img { right: -6px; bottom: -10px; width: 78px; height: 78px; }
 }
 /* Home: fresh market listings shelf, same rhythm as the drink and tier list shelves. */
-.home-market-strip { display: flex; gap: 20px; margin: 0; padding: 2px 2px 16px; overflow-x: auto; scroll-snap-type: x proximity; list-style: none; }
+.home-market-strip { display: flex; gap: 24px; margin: 0; padding: 4px 2px 12px; overflow-x: auto; scroll-snap-type: x proximity; list-style: none; }
 .home-market-card { flex: 0 0 220px; min-width: 0; scroll-snap-align: start; }
 .home-market-card > a { display: grid; gap: 4px; color: inherit; text-decoration: none; }
 .home-market-photo { display: grid; place-items: center; aspect-ratio: 1; margin-bottom: 8px; overflow: hidden; border-radius: 16px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: 2.5rem; font-weight: 800; transition: transform 200ms ease-out; }
@@ -3676,9 +3680,9 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
 .home-market-meta { overflow: hidden; color: var(--color-muted-strong); font-size: .8125rem; text-overflow: ellipsis; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .home-market-photo { transition: none; } }
 @media (max-width: 639px) {
-  .home-market-strip { gap: 12px; margin-inline: calc(50% - 50vw); padding-inline: 16px; scroll-padding-inline: 16px; scrollbar-width: none; }
+  .home-market-strip { gap: 12px; margin-inline: calc(50% - 50vw); padding: 4px 12px; scroll-padding-inline: 12px; scrollbar-width: none; }
   .home-market-strip::-webkit-scrollbar { display: none; }
-  .home-market-card { flex-basis: calc((100vw - 32px - 12px) / 2.15); }
+  .home-market-card { flex-basis: calc((100vw - 24px - 12px) / 2.15); }
 }
 /* Store map: shared by the home page and the store directory, so it lives here rather than in shared.css. */
 .store-map-shell { position: relative; }
