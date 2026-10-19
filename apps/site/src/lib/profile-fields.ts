@@ -1,9 +1,10 @@
-export type ProfileField = 'username' | 'name' | 'telegramChannel';
+export type ProfileField = 'username' | 'name' | 'telegramChannel' | 'telegramUsername';
 
 export interface ProfileInput {
   username: string;
   name: string;
   telegramChannel: string | null;
+  telegramUsername: string | null;
 }
 
 export type ProfileFieldErrors = Partial<Record<ProfileField, string>>;
@@ -38,10 +39,12 @@ export function validateProfileInput(values: {
   username: string;
   name: string;
   telegramChannel: string;
+  telegramUsername?: string;
 }): ProfileValidationResult {
   const username = normalizeUsername(values.username);
   const name = values.name.trim().replace(/\s+/gu, ' ');
   const telegramChannel = normalizeTelegramChannel(values.telegramChannel);
+  const telegramUsername = normalizeTelegramChannel(values.telegramUsername ?? '');
   const errors: ProfileFieldErrors = {};
 
   if (!/^[a-z0-9_]{3,24}$/u.test(username)) {
@@ -62,6 +65,10 @@ export function validateProfileInput(values: {
     errors.telegramChannel = 'Укажите ссылку t.me или юзернейм канала длиной от 5 до 32 символов.';
   }
 
+  if (telegramUsername && !/^[a-z][a-z0-9_]{3,31}$/iu.test(telegramUsername)) {
+    errors.telegramUsername = 'Укажите юзернейм Telegram: латинские буквы, цифры и подчёркивание, от 4 до 32 символов.';
+  }
+
   return Object.keys(errors).length > 0
     ? { errors }
     : {
@@ -69,6 +76,7 @@ export function validateProfileInput(values: {
           username,
           name,
           telegramChannel,
+          telegramUsername,
         },
       };
 }

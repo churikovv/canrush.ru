@@ -22,12 +22,14 @@ describe('profile fields', () => {
         username: '@sobikon',
         name: ' Vladimir   Churikov ',
         telegramChannel: 't.me/energyhub',
+        telegramUsername: 'https://t.me/Sobikon',
       }),
     ).toEqual({
       data: {
         username: 'sobikon',
         name: 'Vladimir Churikov',
         telegramChannel: 'energyhub',
+        telegramUsername: 'Sobikon',
       },
     });
   });
@@ -37,12 +39,18 @@ describe('profile fields', () => {
       username: 'edit',
       name: '',
       telegramChannel: 'not a channel',
+      telegramUsername: '@1abc',
     });
 
     expect(result.errors).toMatchObject({
       username: expect.any(String),
       name: expect.any(String),
       telegramChannel: expect.any(String),
+      telegramUsername: expect.any(String),
     });
+  });
+
+  it('личный Telegram необязателен', () => {
+    expect(validateProfileInput({ username: 'sobikon', name: 'V', telegramChannel: '' }).data?.telegramUsername).toBeNull();
   });
 });

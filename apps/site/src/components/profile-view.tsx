@@ -21,7 +21,7 @@ import type { ProfileData } from '@/lib/profile';
 import { COMMUNITY_PAGE_SIZE, getConnections, getLastSeen, getPresence, getProfileCommunity, getProfileRatings, getProfileWall } from '@/lib/profile-community';
 import { PROFILE_ACHIEVEMENTS, visibleProfileAchievements } from '@/lib/profile-achievements';
 import { WallPost, displayName } from '@/components/wall-post';
-import { AchievementPicker, FollowControl, PresenceSetting, WallComposer } from '@/components/profile-community-controls';
+import { FollowControl, PresenceSetting, WallComposer } from '@/components/profile-community-controls';
 import { ProfileHeader } from '@/components/profile-header';
 import { DrinkCalendarBlock } from '@/components/drink-calendar-block';
 import { BrandCollectionBlock } from '@/components/brand-collection';
@@ -37,6 +37,10 @@ interface ProfileViewProps {
   viewerId?: string;
   viewerIsAdmin?: boolean;
   wallPage?: number;
+}
+
+function TelegramGlyph() {
+  return <svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg>;
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
@@ -103,11 +107,6 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           </ProfileBlock><ProfileBlock block="favorites"><section className="community-panel"><div className="community-section-heading"><h2>Избранное</h2><Link href={favoritesHref}>Все ↗</Link></div>
           {favorites.length ? <div className="profile-favorites-block">{favorites.slice(0, 6).map(group => <Link key={`${group.brand}:${group.flavor}`} href={`/catalog/${catalogGroupSlug(group.brand, group.flavor)}`}>
           {group.coverImageUrl && <Image src={group.coverImageUrl} width={120} height={120} alt="" />}<strong>{group.brand}</strong><span>{flavorName(group.flavor)}</span></Link>)}</div> : <p className="community-muted">Пока нет избранных напитков.</p>}</section></ProfileBlock></ProfileBlocks>
-          {isOwn && <section className="community-panel" id="achievements" aria-labelledby="achievements-title">
-            <div className="community-section-heading"><h2 id="achievements-title">Теги за достижения</h2><span className="community-muted">{visibleEarned.length} / {visibleAchievements.length}</span></div>
-            {isOwn && <p className="community-section-note">Выберите один тег. Он появится в профиле и рядом с ником в отзывах.</p>}
-            <AchievementPicker key={community.tags.join(',')} earned={visibleEarned} selected={community.tags} progress={community.progress} isOwn={isOwn} viewerIsAdmin={viewerIsAdmin} />
-          </section>}
 
         </div>
 
@@ -120,6 +119,8 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           {compatibility && <ProfileCompatibility value={compatibility} />}
           </ProfileBlock><ProfileBlock block="about"><section className="community-panel profile-about" aria-labelledby="profile-about-title"><h2 id="profile-about-title">О профиле</h2>
             <div className="profile-about-list">
+            {profile.telegramUsername ? <a className="profile-about-row" href={`https://t.me/${profile.telegramUsername}`} target="_blank" rel="noopener noreferrer"><span className="profile-about-icon profile-about-icon-telegram"><TelegramGlyph /></span><span className="profile-about-text"><small>Telegram</small><strong>@{profile.telegramUsername}</strong></span><span className="profile-about-arrow" aria-hidden="true">↗</span></a>
+              : isOwn ? <Link className="profile-about-row is-muted" href="/profile/edit"><span className="profile-about-icon"><TelegramGlyph /></span><span className="profile-about-text"><small>Telegram</small><strong>Добавить личный профиль</strong></span><span className="profile-about-arrow" aria-hidden="true">→</span></Link> : null}
             {telegramHref ? <a className="profile-about-row" href={telegramHref} target="_blank" rel="noreferrer"><span className="profile-about-icon profile-about-icon-telegram"><svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg></span><span className="profile-about-text"><small>Telegram-канал</small><strong>@{profile.telegramChannel}</strong></span><span className="profile-about-arrow" aria-hidden="true">↗</span></a>
               : <div className="profile-about-row is-muted"><span className="profile-about-icon"><svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg></span><span className="profile-about-text"><small>Telegram-канал</small><strong>Не указан</strong></span></div>}
             {isOwn && <PresenceSetting key={String(community.showOnline)} visible={community.showOnline} />}

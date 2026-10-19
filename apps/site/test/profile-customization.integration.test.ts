@@ -13,7 +13,7 @@ const { GET } = await import('../src/app/api/profile-images/[id]/route');
 const ids = [randomUUID(), randomUUID()];
 const [a, b] = ids as [string, string];
 const username = (id: string) => `custom_${id.replaceAll('-', '').slice(0, 12)}`;
-const input = { username: username(a), name: 'Updated', telegramChannel: null };
+const input = { username: username(a), name: 'Updated', telegramChannel: null, telegramUsername: 'canrush_tester' };
 beforeAll(async () => {
   for (const id of ids) await pool.query(`insert into "user" (id, name, username, email, "emailVerified", "createdAt", "updatedAt") values ($1, 'Test', $2, $3, true, now(), now())`, [id, username(id), `${id}@example.com`]);
   await pool.query(`insert into review ("userId", brand, flavor, design, taste, composition, text) values ($1, 'Burn', 'one', 4, 5, 3, 'Test')`, [a]);
@@ -23,7 +23,7 @@ describe.sequential('profile image storage and displayed tags', () => {
   it('stores text and images together and serves only current images', async () => {
     await saveProfileCustomization(a, input, { avatar: Buffer.from('avatar fixture'), banner: Buffer.from('banner fixture') });
     const profile = (await getProfileByUserId(a))!;
-    expect(profile.name).toBe('Updated'); expect(profile.avatarId).toBeTruthy(); expect(profile.bannerId).toBeTruthy();
+    expect(profile.name).toBe('Updated'); expect(profile.telegramUsername).toBe('canrush_tester'); expect(profile.avatarId).toBeTruthy(); expect(profile.bannerId).toBeTruthy();
     const response = await GET(new Request('http://localhost'), { params: Promise.resolve({ id: profile.avatarId! }) });
     expect(response.headers.get('content-type')).toBe('image/webp'); expect(response.headers.get('cache-control')).toBe('no-store');
     expect(await response.text()).toBe('avatar fixture');

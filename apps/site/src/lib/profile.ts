@@ -11,6 +11,7 @@ interface ProfileRow extends QueryResultRow {
   email: string;
   createdAt: Date;
   telegramChannel: string | null;
+  telegramUsername: string | null;
   favoriteCount: number;
   reviewCount: number;
   tierListCount: number;
@@ -27,6 +28,7 @@ export interface ProfileData {
   email: string;
   createdAt: Date;
   telegramChannel: string | null;
+  telegramUsername: string | null;
   favoriteCount: number;
   reviewCount: number;
   tierListCount: number;
@@ -44,6 +46,7 @@ const PROFILE_SELECT = `
     u."email",
     u."createdAt",
     u."telegramChannel",
+    u."telegramUsername",
     u."profileLayout",
     u."profileAppearance",
     (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
@@ -65,6 +68,7 @@ function toProfile(row: ProfileRow): ProfileData | null {
     email: row.email,
     createdAt: row.createdAt,
     telegramChannel: row.telegramChannel,
+    telegramUsername: row.telegramUsername,
     avatarId: row.avatarId,
     bannerId: row.bannerId,
     favoriteCount: Number(row.favoriteCount),

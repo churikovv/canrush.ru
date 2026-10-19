@@ -16,7 +16,7 @@ it('requires authentication before decoding or saving images', async () => {
 });
 it('saves only the session owner and refreshes old usernames and review pages', async () => {
   await expect(updateProfileAction({}, form())).rejects.toThrow('REDIRECT:/profile');
-  expect(mocks.save).toHaveBeenCalledWith('actor', { username: 'updated', name: 'Updated', telegramChannel: null }, { avatar: Buffer.from('image') }, undefined, undefined);
+  expect(mocks.save).toHaveBeenCalledWith('actor', { username: 'updated', name: 'Updated', telegramChannel: null, telegramUsername: null }, { avatar: Buffer.from('image') }, undefined, undefined);
   expect(mocks.revalidate).toHaveBeenCalledWith('/profile/before');
   expect(mocks.revalidate).toHaveBeenCalledWith('/catalog', 'layout');
 });

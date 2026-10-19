@@ -7,7 +7,7 @@ import { ProfileBackButton } from '@/components/profile-back-button';
 
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
-import { useActionState, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useActionState, useEffect, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 import { deleteAccountAction, updateProfileAction, type ProfileFormState } from '@/app/profile/actions';
 import { ProfileImageCrop, type Crop, type CropSource } from '@/components/profile-image-crop';
@@ -31,14 +31,24 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? <p className="field-error" id={id}>{message}</p> : null;
 }
 
-export function ProfileEditForm({ profile, layoutPreviews, level = 1 }: { level?: number; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>> }) {
+function TelegramIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.7 3.3a1.6 1.6 0 0 0-1.7-.2L2.9 9.6c-1.2.5-1.1 2.2.1 2.6l3.9 1.2 1.5 4.8c.3.9 1.4 1.2 2.1.5l2.2-2.1 4.1 3c.9.7 2.2.2 2.4-.9l2.6-13.9c.1-.6-.1-1.2-.6-1.5ZM10 14.2l-.6 3.2-1.1-3.6 9.4-7.5-7.7 7.9Z"/></svg>;
+}
+function PrefixedInput({ prefix, ...props }: InputHTMLAttributes<HTMLInputElement> & { prefix: string }) {
+  return <span className="profile-input-prefix"><span aria-hidden="true">{prefix}</span><input {...props} /></span>;
+}
+/** Text fields accept a full t.me link or @name; the field shows only the name after the prefix. */
+const bareTelegram = (value: string) => value.trim().replace(/^https?:\/\//i, '').replace(/^(?:www\.)?(?:t\.me|telegram\.me)\//i, '').replace(/^@+/, '').replace(/\/$/, '');
+
+export function ProfileEditForm({ profile, layoutPreviews, level = 1, tags }: { level?: number; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { picker: ReactNode; earned: number; total: number } }) {
   const initialName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
   const [tab, setTab] = useState('details');
   const [appearance, setAppearance] = useState(profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE);
-  const tabs = [{ key: 'details', label: 'Данные' }, { key: 'appearance', label: 'Оформление' }, { key: 'blocks', label: 'Блоки' }];
+  const tabs = [{ key: 'details', label: 'Данные' }, { key: 'appearance', label: 'Оформление' }, ...(tags ? [{ key: 'tags', label: 'Теги' }] : []), { key: 'blocks', label: 'Блоки' }];
   const [name, setName] = useState(initialName);
   const [username, setUsername] = useState(profile.username);
-  const [channel, setChannel] = useState(profile.telegramChannel ? `t.me/${profile.telegramChannel}` : '');
+  const [channel, setChannel] = useState(profile.telegramChannel ?? '');
+  const [telegram, setTelegram] = useState(profile.telegramUsername ?? '');
   const [images, setImages] = useState<Partial<Record<ImageKind, ImageSelection>>>({});
   const [cropSource, setCropSource] = useState<ProfileCropSource | null>(null);
   const [dragging, setDragging] = useState<ImageKind | null>(null);
@@ -133,19 +143,30 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1 }: { level?
         event.preventDefault(); const next = tabs[target]!;
         setTab(next.key); document.getElementById(`profile-tab-${next.key}`)?.focus();
       }}>{item.label}</button>)}</div>
-      <div id="profile-panel-details" role="tabpanel" aria-labelledby="profile-tab-details" hidden={tab !== 'details'}>
-        <section className="community-panel" aria-labelledby="profile-fields-title">
-          <div className="community-section-heading"><h2 id="profile-fields-title">Данные профиля</h2></div>
+      <div id="profile-panel-details" role="tabpanel" aria-labelledby="profile-tab-details" hidden={tab !== 'details'} className="profile-editor-panel">
+        <section className="community-panel profile-editor-group" aria-labelledby="profile-fields-title">
+          <div className="profile-editor-group-heading"><h2 id="profile-fields-title">Основное</h2><p>Как вас видят в профиле, отзывах и тирлистах.</p></div>
           <fieldset className="profile-editor-fields" disabled={pending}>
-            <div className="profile-edit-field"><label htmlFor="username">Юзернейм</label>
-              <input id="username" name="username" type="text" value={username} onChange={event => setUsername(event.target.value)} autoComplete="username" minLength={3} maxLength={25} pattern="@?[A-Za-z0-9_]{3,24}" title="От 3 до 24 латинских букв, цифр или символов подчёркивания" aria-invalid={Boolean(state.fieldErrors?.username)} aria-describedby={state.fieldErrors?.username ? 'username-error' : 'username-help'} required />
-              <p className="field-help" id="username-help">Латинские буквы, цифры и подчёркивание.</p><FieldError id="username-error" message={state.fieldErrors?.username} />
-            </div>
             <div className="profile-edit-field"><label htmlFor="name">Имя</label>
-              <input id="name" name="name" type="text" value={name} onChange={event => setName(event.target.value)} autoComplete="name" maxLength={40} aria-invalid={Boolean(state.fieldErrors?.name)} aria-describedby={state.fieldErrors?.name ? 'name-error' : undefined} required /><FieldError id="name-error" message={state.fieldErrors?.name} />
+              <input id="name" name="name" type="text" value={name} onChange={event => setName(event.target.value)} autoComplete="name" maxLength={40} aria-invalid={Boolean(state.fieldErrors?.name)} aria-describedby={state.fieldErrors?.name ? 'name-error' : 'name-help'} required />
+              <p className="field-help" id="name-help">До 40 символов.</p><FieldError id="name-error" message={state.fieldErrors?.name} />
             </div>
-            <div className="profile-edit-field"><label htmlFor="telegramChannel">Телеграм-канал</label>
-              <input id="telegramChannel" name="telegramChannel" type="text" value={channel} onChange={event => setChannel(event.target.value)} placeholder="t.me/energyhub" autoComplete="url" maxLength={64} aria-invalid={Boolean(state.fieldErrors?.telegramChannel)} aria-describedby={state.fieldErrors?.telegramChannel ? 'telegram-error' : undefined} /><FieldError id="telegram-error" message={state.fieldErrors?.telegramChannel} />
+            <div className="profile-edit-field"><label htmlFor="username">Юзернейм</label>
+              <PrefixedInput prefix="@" id="username" name="username" type="text" value={username} onChange={event => setUsername(event.target.value.replace(/^@+/, ''))} autoComplete="username" minLength={3} maxLength={25} pattern="@?[A-Za-z0-9_]{3,24}" title="От 3 до 24 латинских букв, цифр или символов подчёркивания" aria-invalid={Boolean(state.fieldErrors?.username)} aria-describedby={state.fieldErrors?.username ? 'username-error' : 'username-help'} required />
+              <p className="field-help" id="username-help">Адрес профиля: canrush.ru/profile/{username.replace(/^@+/, '') || profile.username}</p><FieldError id="username-error" message={state.fieldErrors?.username} />
+            </div>
+          </fieldset>
+        </section>
+        <section className="community-panel profile-editor-group" aria-labelledby="profile-telegram-title">
+          <div className="profile-editor-group-heading"><h2 id="profile-telegram-title"><span className="profile-editor-group-icon"><TelegramIcon /></span>Telegram</h2><p>Необязательно. Ссылки появятся в блоке «О профиле» и будут видны всем.</p></div>
+          <fieldset className="profile-editor-fields" disabled={pending}>
+            <div className="profile-edit-field"><label htmlFor="telegramUsername">Личный профиль</label>
+              <PrefixedInput prefix="t.me/" id="telegramUsername" name="telegramUsername" type="text" value={telegram} onChange={event => setTelegram(bareTelegram(event.target.value))} placeholder="username" autoComplete="off" spellCheck={false} maxLength={64} aria-invalid={Boolean(state.fieldErrors?.telegramUsername)} aria-describedby={state.fieldErrors?.telegramUsername ? 'telegram-user-error' : 'telegram-user-help'} />
+              <p className="field-help" id="telegram-user-help">Чтобы вам могли написать напрямую. Можно вставить ссылку или @юзернейм.</p><FieldError id="telegram-user-error" message={state.fieldErrors?.telegramUsername} />
+            </div>
+            <div className="profile-edit-field"><label htmlFor="telegramChannel">Канал</label>
+              <PrefixedInput prefix="t.me/" id="telegramChannel" name="telegramChannel" type="text" value={channel} onChange={event => setChannel(bareTelegram(event.target.value))} placeholder="energyhub" autoComplete="off" spellCheck={false} maxLength={64} aria-invalid={Boolean(state.fieldErrors?.telegramChannel)} aria-describedby={state.fieldErrors?.telegramChannel ? 'telegram-error' : 'telegram-help'} />
+              <p className="field-help" id="telegram-help">Подписывается на ваших скриншотах тирлистов.</p><FieldError id="telegram-error" message={state.fieldErrors?.telegramChannel} />
             </div>
           </fieldset>
         </section>
@@ -178,8 +199,15 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1 }: { level?
       <div id="profile-panel-blocks" role="tabpanel" aria-labelledby="profile-tab-blocks" hidden={tab !== 'blocks'}>
         <div data-profile-theme={appearance.theme} className="profile-blocks-preview"><ProfileLayoutEditor initial={profile.profileLayout} disabled={pending} previews={layoutPreviews} /></div>
       </div>
-      <div className="profile-layout-save"><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>
+      <div className="profile-editor-savebar" hidden={tab === 'tags'}><p>{tab === 'blocks' ? 'Порядок и видимость блоков сохранятся вместе с профилем.' : 'Изменения применятся после сохранения.'}</p><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>
     </form>
+    {tags && <div id="profile-panel-tags" role="tabpanel" aria-labelledby="profile-tab-tags" hidden={tab !== 'tags'} className="profile-editor-panel">
+      <section className="community-panel profile-editor-group" id="achievements" aria-labelledby="achievements-title">
+        <div className="profile-editor-group-heading"><h2 id="achievements-title">Тег в профиле <span className="profile-editor-count">{tags.earned} / {tags.total}</span></h2><p>Выберите один из полученных тегов. Он появится рядом с именем в профиле, отзывах и тирлистах. Тег сохраняется отдельно от остальных данных.</p></div>
+        {tags.picker}
+        <Link className="community-button-text profile-editor-link" href={`/profile/${profile.username}/achievements`}>Все достижения и условия ↗</Link>
+      </section>
+    </div>}
     {cropSource && <ProfileImageCrop key={cropSource.src} source={cropSource} initial={images[cropSource.kind]?.source?.src === cropSource.src ? images[cropSource.kind]?.crop : undefined} onCancel={() => setCropSource(null)} onConfirm={(crop, preview) => { setImages(current => ({ ...current, [cropSource.kind]: { file: cropSource.file, crop, preview, source: cropSource } })); setCropSource(null); }} />}
     <section hidden={tab !== 'details'} className="profile-editor-danger" aria-labelledby="danger-zone-title"><div><h2 id="danger-zone-title">Удаление аккаунта</h2><p>Профиль и его данные будут удалены без возможности восстановления.</p></div>
       <form action={deleteAccountAction} onSubmit={event => { if (!window.confirm('Удалить аккаунт и все персональные данные? Это действие нельзя отменить.')) event.preventDefault(); }}><input type="hidden" name="confirmation" value="delete-account" /><DeleteButton /></form>

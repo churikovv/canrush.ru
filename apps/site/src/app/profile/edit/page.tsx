@@ -16,6 +16,10 @@ import { ProfileEditForm } from '@/components/profile-edit-form';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { auth } from '@/lib/auth';
 import { ensureOwnProfile } from '@/lib/profile';
+import { getProfileCommunity } from '@/lib/profile-community';
+import { isSiteAdminEmail } from '@/lib/admin';
+import { visibleProfileAchievements } from '@/lib/profile-achievements';
+import { AchievementPicker } from '@/components/profile-community-controls';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,9 +34,11 @@ export default async function ProfileEditPage() {
 
   const profile = await ensureOwnProfile(session.user);
 
-  const [ratings, wall, listings, experience, friends, followers, following, favorites] = await Promise.all([
-    getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id),
+  const [ratings, wall, listings, experience, friends, followers, following, favorites, community, viewerIsAdmin] = await Promise.all([
+    getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), getProfileCommunity(profile.id, profile.id), isSiteAdminEmail(session.user.email),
   ]);
+  const achievements = visibleProfileAchievements(viewerIsAdmin);
+  const earned = community.earned.filter(key => achievements.some(item => item.key === key));
   const layoutPreviews = {
     favorites: favorites.length ? <div className="layout-listing-previews">{favorites.slice(0, 3).map(item => <div key={`${item.brand}:${item.flavor}`}>{item.coverImageUrl && <Image src={item.coverImageUrl} width={80} height={80} alt="" />}<strong>{item.brand}</strong></div>)}</div> : <p>Пока нет избранных напитков.</p>,
     experience: <ProfileExperience username={profile.username} initial={experience[profile.username]} expanded />,
@@ -40,11 +46,12 @@ export default async function ProfileEditPage() {
     listings: listings.items.length ? <div className="layout-listing-previews">{listings.items.slice(0, 2).map(item => <div key={item.id}>{item.photos[0] && <Image src={`/api/market-photos/${item.photos[0]}?size=thumbnail`} width={80} height={80} unoptimized alt="" />}<strong>{item.title}</strong></div>)}</div> : <p>Вы пока не создавали объявлений.</p>,
     wall: <div><p>{wall.comments[0]?.text ?? 'Здесь пока тихо. Оставьте первый комментарий.'}</p><span className="community-muted">Записей: {wall.count}</span></div>,
     social: <ProfileConnections username={profile.username} groups={{ friends, followers, following }} />,
-    about: <p>{profile.telegramChannel ? `@${profile.telegramChannel}` : 'Канал не указан'}</p>,
+    about: <p>{[profile.telegramUsername && `Telegram @${profile.telegramUsername}`, profile.telegramChannel ? `Канал @${profile.telegramChannel}` : 'Канал не указан'].filter(Boolean).join(' · ')}</p>,
   };
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-      <ProfileEditForm level={experienceLevel(experience[profile.username]?.xp ?? 0).level} profile={profile} layoutPreviews={layoutPreviews} />
+      <ProfileEditForm level={experienceLevel(experience[profile.username]?.xp ?? 0).level} profile={profile} layoutPreviews={layoutPreviews}
+        tags={{ earned: earned.length, total: achievements.length, picker: <AchievementPicker key={community.tags.join(',')} earned={earned} selected={community.tags} progress={community.progress} isOwn viewerIsAdmin={viewerIsAdmin} /> }} />
     </BrandShell>
   );
 }

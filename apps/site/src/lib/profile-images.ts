@@ -64,7 +64,7 @@ export async function saveProfileCustomization(userId: string, input: ProfileInp
     }
     if (appearance) await client.query('update "user" set "profileAppearance" = $2::jsonb where id = $1', [userId, JSON.stringify(appearance)]);
     if (layout) await client.query('update "user" set "profileLayout" = $2::jsonb where id = $1', [userId, JSON.stringify(layout)]);
-    const user = await client.query(`update "user" set username = $2, name = $3, "telegramChannel" = $4, "updatedAt" = now() where id = $1 returning id`, [userId, input.username, input.name, input.telegramChannel]);
+    const user = await client.query(`update "user" set username = $2, name = $3, "telegramChannel" = $4, "telegramUsername" = $5, "updatedAt" = now() where id = $1 returning id`, [userId, input.username, input.name, input.telegramChannel, input.telegramUsername]);
     if (!user.rowCount) throw new Error('Profile not found');
     for (const kind of ['avatar', 'banner'] as const) {
       const data = images[kind];
