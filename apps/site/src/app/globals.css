@@ -3172,10 +3172,10 @@ html[data-cookie-notice="visible"] .brand-footer {
   .home-section-heading { gap: 4px 16px; }
   .home-section-heading h2 { font-size: 1.25rem; }
   /* Two whole cards per screen; the strip bleeds to the viewport edges so the next card peeks in instead of a card being
-     cut in half. Its inline padding equals the surface padding (12px), so the first card lines up with the content. */
-  .home-drink-strip { gap: 12px; margin-inline: calc(50% - 50vw); padding: 4px 12px; scroll-padding-inline: 12px; scrollbar-width: none; }
+     cut in half. Its inline padding equals the home surface padding (16px), so the first card lines up with the content. */
+  .home-drink-strip { gap: 12px; margin-inline: calc(50% - 50vw); padding: 4px 16px; scroll-padding-inline: 16px; scrollbar-width: none; }
   .home-drink-strip::-webkit-scrollbar { display: none; }
-  .home-drink-item { flex-basis: calc((100vw - 24px - 12px) / 2.15); }
+  .home-drink-item { flex-basis: calc((100vw - 32px - 12px) / 2.15); }
 }
 /* Tier lists scroll sideways like the drink shelf; cards keep a readable fixed width. */
 .home-drink-strip { margin-block: 0; list-style: none; }
@@ -3185,11 +3185,13 @@ html[data-cookie-notice="visible"] .brand-footer {
 @media (max-width: 639px) {
 }
 @media (max-width: 639px) {
-/* Match the mobile prices page: 32 + 28 top, 24 + 16 side padding. The home page keeps the catalog's padding instead. */
+/* Match the mobile prices page: 32 + 28 top, 24 + 16 side padding. */
   .main-surface.tierlists-surface:not(:has(.tier-editor)) {
     padding-top: 60px;
     padding-inline: 40px;
   }
+  /* Home on phones: a 16px gutter, so the hero text does not hug the screen edge, and room under the rounded top. */
+  .main-surface.home-surface { padding-top: 32px; padding-inline: 16px; }
   .home-section-heading { flex-wrap: nowrap; align-items: flex-start; }
   .home-section-heading h2 { min-width: 0; }
   .home-section-heading > a { flex-shrink: 0; min-height: 0; line-height: 1.5; }
@@ -3680,9 +3682,9 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
 .home-market-meta { overflow: hidden; color: var(--color-muted-strong); font-size: .8125rem; text-overflow: ellipsis; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .home-market-photo { transition: none; } }
 @media (max-width: 639px) {
-  .home-market-strip { gap: 12px; margin-inline: calc(50% - 50vw); padding: 4px 12px; scroll-padding-inline: 12px; scrollbar-width: none; }
+  .home-market-strip { gap: 12px; margin-inline: calc(50% - 50vw); padding: 4px 16px; scroll-padding-inline: 16px; scrollbar-width: none; }
   .home-market-strip::-webkit-scrollbar { display: none; }
-  .home-market-card { flex-basis: calc((100vw - 24px - 12px) / 2.15); }
+  .home-market-card { flex-basis: calc((100vw - 32px - 12px) / 2.15); }
 }
 /* Store map: shared by the home page and the store directory, so it lives here rather than in shared.css. */
 .store-map-shell { position: relative; }
