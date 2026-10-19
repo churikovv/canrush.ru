@@ -27,7 +27,11 @@
     "BOMBBAR",
     "Ashkudi",
     "Target",
-    "Scandalist"
+    "Scandalist",
+    "Wk Up",
+    "Genesis",
+    "Quantum",
+    "Из Лавки"
   ],
   "brandAliases": {
     "Red Bull": [
@@ -106,6 +110,16 @@
     "Ashkudi": [
       "Ашкуdи",
       "Ашкуди"
+    ],
+    "Wk Up": [
+      "WK UP",
+      "WKUP"
+    ],
+    "Quantum": [
+      "Quantum Motion"
+    ],
+    "Из Лавки": [
+      "изЛавки"
     ]
   },
   "flavors": [

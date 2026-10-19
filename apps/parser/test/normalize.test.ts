@@ -246,3 +246,17 @@ it('does not treat every zero-sugar Monster as Ultra White', async () => {
   expect(monsterFlavor('monster zero sugar 500 мл')).toBeUndefined();
   expect(monsterFlavor('monster zero ultra unknown edition 500 мл')).toBeUndefined();
 });
+
+it('finds brands in Lavka titles, which carry no brand field', () => {
+  const config = loadProductsConfig();
+  const cases: Array<[string, string]> = [
+    ['Энергетический напиток Из Лавки классический 450 мл', 'Из Лавки'],
+    ['Тоник из Лавки кокос-лайм 450 мл', 'Из Лавки'],
+    ['Напиток Fitness Food Factory WK UP черничный мохито тонизирующий безалкогольный 450 мл', 'Wk Up'],
+    ['Напиток тонизирующий энергетический Genesis со вкусом гуанабана-манго-лайм 450 мл', 'Genesis'],
+    ['Напиток безалкогольный тонизирующий Quantum Motion со вкусом лайма и мяты газированный 330 мл', 'Quantum'],
+  ];
+  for (const [name, brand] of cases) {
+    expect(normalizeProduct('lavka', { sourceId: 'lavka', name, price: 80, url: 'https://lavka.yandex.ru/x' }, config.brands, '2026-10-19', config.brandAliases, config.flavors, config.flavorAliases).brand).toBe(brand);
+  }
+});

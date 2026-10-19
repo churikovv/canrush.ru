@@ -52,6 +52,7 @@ export const BRAND_SEARCH_ALIASES: Readonly<Record<string, readonly string[]>> =
   'Tusa': ['Туса'],
   'White Shark': ['Уайт Шарк', 'Вайт Шарк'],
   'Wk Up': ['Вейк Ап', 'Вэйк Ап', 'Wake Up', 'Вейкап'],
+  'Из Лавки': ['Лавка', 'Яндекс Лавка', 'Iz Lavki'],
   'X-Turbo': ['Икс Турбо', 'Х-Турбо', 'Турбо'],
   'Байкал': ['Baikal', 'Baykal'],
   'Восторг': ['Vostorg', 'Reckful'],
