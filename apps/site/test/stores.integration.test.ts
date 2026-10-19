@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { randomUUID } from 'node:crypto';
 import { afterAll,beforeAll,expect,it,vi } from 'vitest';
 import { Pool } from 'pg';
@@ -37,7 +38,7 @@ it('requires a rejection reason and lets the owner correct their submission',asy
  expect((await api.getStore(id))?.moderationNote).toBe('');
 });
 it('keeps photos private until moderation and validates retained ownership atomically',async()=>{
- const photo={data:Buffer.from('webp fixture'),thumbnail:Buffer.from('thumbnail fixture')};
+ const photo={data:await sharp({create:{width:1600,height:1000,channels:3,background:'#006eff'}}).webp().toBuffer(),thumbnail:Buffer.from('thumbnail fixture')};
  await api.saveStore(owner,input,id,{retained:[],photos:[photo]});
  const row=(await api.getStore(id))!;
  const photoId=row.photos[0]!;
@@ -45,7 +46,10 @@ it('keeps photos private until moderation and validates retained ownership atomi
  expect(await api.getStorePhoto(photoId,null)).toBeNull();
  expect(await api.getStorePhoto(photoId,stranger)).toBeNull();
  expect(await api.getStorePhoto(photoId,owner)).toEqual(photo.data);
- expect(await api.getStorePhoto(photoId,admin,true)).toEqual(photo.thumbnail);
+ expect(await api.getStorePhoto(photoId,admin,'thumbnail')).toEqual(photo.thumbnail);
+ const card=await api.getStorePhoto(photoId,owner,'card');expect(card?.length).toBeGreaterThan(0);
+ expect((await pool.query('select preview from "storePhoto" where id=$1',[photoId])).rows[0].preview).toEqual(card);
+ expect(await api.getStorePhoto(photoId,owner,'card')).toEqual(card);
  await api.moderateStore(admin,id,'published','',row.updatedAt.toISOString());
  expect(await api.getStorePhoto(photoId,null)).toEqual(photo.data);
  await expect(api.saveStore(owner,input,id,{retained:[randomUUID()],photos:[]})).rejects.toThrow('не принадлежит');

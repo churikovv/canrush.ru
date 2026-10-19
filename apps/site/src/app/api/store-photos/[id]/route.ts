@@ -8,7 +8,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   if (!PHOTO_ID_PATTERN.test(id)) return new Response(null, { status: 404 });
   const session = await auth.api.getSession({ headers: await headers() });
-  const data = await getStorePhoto(id, session?.user.id ?? null, new URL(request.url).searchParams.get('size') === 'thumbnail');
+  const requested = new URL(request.url).searchParams.get('size');
+  const data = await getStorePhoto(id, session?.user.id ?? null, requested === 'thumbnail' || requested === 'card' ? requested : 'full');
   return new Response(data ? new Uint8Array(data) : null, {
     status: data ? 200 : 404,
     headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' },

@@ -62,7 +62,7 @@ export function StoreListCard({store,index,own}:{store:StoreView;index:number;ow
   const covers=store.catalog.filter(item=>item.cover).slice(0,4);
   return <article className="store-card store-list-card" id={`store-${store.id}`} tabIndex={-1}>
     <Link className="store-list-cover" href={href} tabIndex={-1} aria-hidden="true">
-      {cover?<Image src={`/api/store-photos/${cover}?size=thumbnail`} width={320} height={180} alt="" unoptimized/>:<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M4 10v10h16V10M3 4h18l-1 6H4L3 4Zm6 16v-6h6v6"/></svg>}
+      {cover?<Image src={`/api/store-photos/${cover}?size=card`} width={640} height={360} alt="" unoptimized/>:<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M4 10v10h16V10M3 4h18l-1 6H4L3 4Zm6 16v-6h6v6"/></svg>}
       {store.photos.length>1&&<span className="store-list-photo-count">{store.photos.length} фото</span>}
     </Link>
     <div className="store-list-body">

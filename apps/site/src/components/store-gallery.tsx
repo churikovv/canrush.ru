@@ -16,7 +16,7 @@ export function StoreGallery({ photos, name, layout = 'mosaic' }: { photos: stri
         const more = index === shown.length - 1 && rest > 0;
         return <button type="button" key={id} onClick={() => setActive(index)} aria-label={more ? `Открыть все фотографии магазина, ещё ${rest}` : `Открыть фото магазина ${index + 1} из ${photos.length}`}>
           {/* eslint-disable-next-line @next/next/no-img-element -- store photos are served already resized and must stay uncached */}
-          <img src={`/api/store-photos/${id}${layout === 'mosaic' && index === 0 ? '' : '?size=thumbnail'}`} alt={`${name}, фото ${index + 1}`} loading={index === 0 ? 'eager' : 'lazy'} />
+          <img src={`/api/store-photos/${id}${layout === 'strip' ? '?size=thumbnail' : index === 0 ? '' : '?size=card'}`} alt={`${name}, фото ${index + 1}`} loading={index === 0 ? 'eager' : 'lazy'} />
           {more && <span className="store-gallery-more" aria-hidden="true">+{rest}</span>}
         </button>;
       })}
