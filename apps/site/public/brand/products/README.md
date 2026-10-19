@@ -6,6 +6,7 @@ They are committed here so deployments and parser refreshes retain reviewed cove
 - adrenaline-rush-original.jpg: c5228630c8c72c80.jpg, product “Энергетический Напиток Adrenaline Rush Ж/Б 0,25Л”.
 - drive-me-original.jpg: 7d649760304fc2b0.jpg, product “Энергетический Напиток Drive Me Оригинальный Ж/Б 0,449Л”.
 - monster-vr46-zero.jpg: f1a3deac7e0fd30bc88e85b3110b678cc5e1129397c43c9d1aff02575a17efed.jpg, product “Энергетический напиток "MONSTER" Energy VR46 Zero sugar газ. 500 мл. ж/б.” (other offers carry the plain Zero Sugar can).
+- tornado-original.jpg: 4cfcf2983a5794af.jpg, Tornado Max Energy Original 0,45 л (Винлаб offer); the first offer of the group ("Ещё") carries a blurred photo.
 - monster-zero-sugar.jpg: b62ec780635b71e1.jpg, Monster Energy Original Zero Sugar (black can, green text); a marketplace offer of this identity carries an Ultra White photo.
 
 Applied only to the respective identities (`original`, and Monster `monster_vr46:sugarfree` and `sugarfree`), via catalog-covers.ts after canonical flavor resolution. These are representative group covers, not packaging guarantees for each volume/store offer. No offers, reviews or identities are changed.

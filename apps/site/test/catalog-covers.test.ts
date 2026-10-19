@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { catalogCover } from '../src/lib/catalog-covers';
 import { mergeCatalogAliases } from '../src/lib/catalog-files';
 it('pins reviewed original covers across changing parser snapshots without changing offers',()=>{
- for(const brand of ['Adrenaline Rush','Drive Me']) {
+ for(const brand of ['Adrenaline Rush','Drive Me','Tornado']) {
   const group={brand,flavor:'original',coverImageUrl:'/images/products/random.jpg',variants:[],minPrice:0};
   const result=mergeCatalogAliases([group])[0]!;
   expect(result.coverImageUrl).toBe(catalogCover(brand,'original'));
