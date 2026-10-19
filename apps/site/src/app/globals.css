@@ -3448,7 +3448,7 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
 .home-hero-badge-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .home-hero-badge-arrow { display: grid; flex: none; place-items: center; padding-left: 10px; border-left: 1px solid var(--theme-line, #d5dae1); transition: transform 200ms ease-out; }
 .home-hero-badge:hover .home-hero-badge-arrow { transform: translateX(3px); }
-.home-hero-title { max-width: 13ch; margin: 0; font-size: clamp(2.5rem, 5.4vw, 4.5rem); font-weight: 800; line-height: 1.02; letter-spacing: -.03em; text-wrap: balance; overflow-wrap: break-word; }
+.home-hero-title { max-width: 16ch; margin: 0; font-size: clamp(2.25rem, 4.4vw, 3.5rem); font-weight: 800; line-height: 1.02; letter-spacing: -.03em; text-wrap: balance; overflow-wrap: break-word; }
 .home-hero-lead { max-width: 42ch; margin: 0; color: var(--color-text); font-size: 1.125rem; line-height: 1.55; }
 .home-hero-search { display: flex; gap: 8px; width: min(100%, 460px); margin-top: 8px; padding: 7px; border: 1px solid var(--color-control); border-radius: 18px; background: var(--color-surface); }
 .home-hero-search:focus-within { outline: 3px solid var(--color-focus); outline-offset: 3px; }
@@ -3514,7 +3514,7 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
 @media (max-width: 639px) {
   .home-hero-copy { gap: 18px; }
   .home-hero-badge { font-size: .8125rem; }
-  .home-hero-title { font-size: clamp(2.125rem, 10vw, 2.75rem); }
+  .home-hero-title { font-size: clamp(1.75rem, 8.4vw, 2.5rem); }
   .home-hero-lead { font-size: 1rem; }
   .home-hero-search { width: 100%; padding: 5px; border-radius: 16px; }
   .home-hero-search label { gap: 8px; padding-left: 8px; }

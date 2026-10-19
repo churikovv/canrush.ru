@@ -67,7 +67,7 @@ export function HomeHero({ data, badge, retailerBadges }: { data: HomeHeroData; 
         <span className="home-hero-badge-text">{badge.text}</span>
         <span className="home-hero-badge-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
       </Link>}
-      <h1 id="home-title" className="home-hero-title">Энергетики: цены, оценки и&nbsp;отзывы</h1>
+      <h1 id="home-title" className="home-hero-title">Социальная сеть для энергокомьюнити</h1>
       <p className="home-hero-lead">Сравниваем цены в магазинах вашего города и собираем честные оценки сообщества — найдите свой вкус и купите дешевле.</p>
       <form className="home-hero-search" action="/catalog" method="get" role="search">
         <label>
