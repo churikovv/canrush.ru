@@ -43,3 +43,9 @@ it('adds the collection right after the calendar to layouts saved before it exis
   const parsed = parseProfileLayout({ order, hidden: [] });
   expect(parsed?.order.slice(parsed.order.indexOf('experience'), parsed.order.indexOf('experience') + 3)).toEqual(['experience', 'calendar', 'collection']);
 });
+it('keeps hidden rows of the about block and rejects unknown ones', () => {
+  expect(parseProfileLayout({ ...DEFAULT_PROFILE_LAYOUT, hiddenFields: ['telegramChannel'] })?.hiddenFields).toEqual(['telegramChannel']);
+  expect(parseProfileLayout({ ...DEFAULT_PROFILE_LAYOUT, hiddenFields: [] })).toEqual(DEFAULT_PROFILE_LAYOUT);
+  expect(parseProfileLayout({ ...DEFAULT_PROFILE_LAYOUT, hiddenFields: ['email'] })).toBeNull();
+  expect(parseProfileLayout({ ...DEFAULT_PROFILE_LAYOUT, hiddenFields: ['telegramChannel', 'telegramChannel'] })).toBeNull();
+});

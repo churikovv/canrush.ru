@@ -46,7 +46,6 @@ export default async function ProfileEditPage() {
     listings: listings.items.length ? <div className="layout-listing-previews">{listings.items.slice(0, 2).map(item => <div key={item.id}>{item.photos[0] && <Image src={`/api/market-photos/${item.photos[0]}?size=thumbnail`} width={80} height={80} unoptimized alt="" />}<strong>{item.title}</strong></div>)}</div> : <p>Вы пока не создавали объявлений.</p>,
     wall: <div><p>{wall.comments[0]?.text ?? 'Здесь пока тихо. Оставьте первый комментарий.'}</p><span className="community-muted">Записей: {wall.count}</span></div>,
     social: <ProfileConnections username={profile.username} groups={{ friends, followers, following }} />,
-    about: <p>{[profile.telegramUsername && `Telegram @${profile.telegramUsername}`, profile.telegramChannel ? `Канал @${profile.telegramChannel}` : 'Канал не указан'].filter(Boolean).join(' · ')}</p>,
   };
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">

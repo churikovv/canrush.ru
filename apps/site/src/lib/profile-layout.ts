@@ -11,7 +11,10 @@ export const PROFILE_BLOCKS = [
 ] as const;
 export type ProfileBlockKey = typeof PROFILE_BLOCKS[number]['key'];
 export function isRequiredProfileBlock(key: ProfileBlockKey): boolean { return key === 'experience' || key === 'social'; }
-export type ProfileLayout = { order: ProfileBlockKey[]; hidden: ProfileBlockKey[] };
+/** Rows inside a block that the owner can hide while the block itself stays visible. */
+export const PROFILE_BLOCK_FIELDS = { about: [{ key: 'telegramUsername', label: 'Личный Telegram' }, { key: 'telegramChannel', label: 'Telegram-канал' }] } as const;
+export type ProfileFieldKey = typeof PROFILE_BLOCK_FIELDS.about[number]['key'];
+export type ProfileLayout = { order: ProfileBlockKey[]; hidden: ProfileBlockKey[]; hiddenFields?: ProfileFieldKey[] };
 export const DEFAULT_PROFILE_LAYOUT: ProfileLayout = { order: PROFILE_BLOCKS.map(x => x.key), hidden: ['favorites', 'listings'] };
 /** Places `key` right before or after `target`; returns null when the order would not change. */
 export function placeProfileBlock(order: readonly ProfileBlockKey[], key: ProfileBlockKey, target: ProfileBlockKey, after: boolean): ProfileBlockKey[] | null {
@@ -22,9 +25,10 @@ export function placeProfileBlock(order: readonly ProfileBlockKey[], key: Profil
 }
 export function parseProfileLayout(value: unknown): ProfileLayout | null {
   if (!value || typeof value !== 'object') return null;
-  const { order, hidden } = value as ProfileLayout;
+  const { order, hidden, hiddenFields = [] } = value as ProfileLayout;
   const valid = (keys: unknown): keys is ProfileBlockKey[] => Array.isArray(keys) && keys.every(key => PROFILE_BLOCKS.some(block => block.key === key)) && new Set(keys).size === keys.length;
   if (!valid(order) || !valid(hidden)) return null;
+  if (!Array.isArray(hiddenFields) || !hiddenFields.every(key => PROFILE_BLOCK_FIELDS.about.some(field => field.key === key)) || new Set(hiddenFields).size !== hiddenFields.length) return null;
   // Layouts saved before a block existed only lack those later blocks: favorites joins hidden at the end,
   // the calendar right after the level and the collection right after the calendar.
   if (PROFILE_BLOCKS.some(block => !order.includes(block.key) && block.key !== 'favorites' && block.key !== 'calendar' && block.key !== 'collection')) return null;
@@ -32,5 +36,5 @@ export function parseProfileLayout(value: unknown): ProfileLayout | null {
   if (!nextOrder.includes('calendar')) nextOrder.splice(nextOrder.indexOf('experience') + 1, 0, 'calendar');
   if (!nextOrder.includes('collection')) nextOrder.splice(nextOrder.indexOf('calendar') + 1, 0, 'collection');
   if (!nextOrder.includes('favorites')) { nextOrder.push('favorites'); if (!nextHidden.includes('favorites')) nextHidden.push('favorites'); }
-  return { order: nextOrder, hidden: nextHidden.filter(key => !isRequiredProfileBlock(key)) };
+  return { order: nextOrder, hidden: nextHidden.filter(key => !isRequiredProfileBlock(key)), ...(hiddenFields.length ? { hiddenFields: [...hiddenFields] } : {}) };
 }

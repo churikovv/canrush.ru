@@ -403,6 +403,10 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 }
 .layout-live-preview { margin: 4px 0 6px; padding: 14px 16px; overflow: hidden; max-height: 260px; font-size: .875rem; border: 1px solid color-mix(in srgb, currentColor 10%, transparent); border-radius: 10px; background: color-mix(in srgb, currentColor 3%, transparent); animation: layout-preview-in .28s cubic-bezier(.2,.8,.2,1); }
 @keyframes layout-preview-in { from { opacity: 0; transform: translateY(-4px); } }
+/* The level panel is the one preview worth seeing whole: its rank road sits below the fold of 260px. */
+.layout-live-preview[data-block=experience] { max-height: none; }
+.layout-block-fields { display: grid; gap: 0; margin: 0 0 4px; padding: 0; border: 0; }
+.layout-block-fields label { min-height: 40px; }
 @media (prefers-reduced-motion: reduce) { .layout-live-preview { animation: none; } .profile-layout-block { transition: none; } }
 .layout-live-preview p { overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .layout-score { color: var(--color-brand); font-size: 28px; }

@@ -1,6 +1,6 @@
 'use client';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { DEFAULT_PROFILE_LAYOUT, PROFILE_BLOCKS, isRequiredProfileBlock, parseProfileLayout, placeProfileBlock, type ProfileLayout, type ProfileBlockKey } from '@/lib/profile-layout';
+import { DEFAULT_PROFILE_LAYOUT, PROFILE_BLOCKS, PROFILE_BLOCK_FIELDS, isRequiredProfileBlock, parseProfileLayout, placeProfileBlock, type ProfileLayout, type ProfileBlockKey } from '@/lib/profile-layout';
 
 const EASING = 'cubic-bezier(.2,.8,.2,1)';
 
@@ -74,7 +74,16 @@ export function ProfileLayoutEditor({ initial = DEFAULT_PROFILE_LAYOUT, disabled
             <strong>{block.label}</strong>
             <div className="layout-block-actions">{([-1, 1] as const).map(direction => <button type="button" key={direction} disabled={disabled || !keys[index + direction]} aria-label={`${block.label}: ${direction < 0 ? 'выше' : 'ниже'}`} onClick={() => { if (place(key, keys[index + direction]!, direction > 0, key)) setNotice(`${block.label}: ${direction < 0 ? 'выше' : 'ниже'}`); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={direction < 0 ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'} /></svg></button>)}</div>
           </header>
-          {!hidden && <div className="layout-live-preview" inert>{previews?.[key] ?? <p>{block.label}</p>}</div>}
+          {/* The about block is previewed by its own row switches below. */}
+          {!hidden && key !== 'about' && <div className="layout-live-preview" data-block={key} inert>{previews?.[key] ?? <p>{block.label}</p>}</div>}
+          {!hidden && key === 'about' && <fieldset className="layout-block-fields" disabled={disabled}><legend className="sr-only">Что показывать в блоке «{block.label}»</legend>{PROFILE_BLOCK_FIELDS.about.map(field => {
+            const shown = !layout.hiddenFields?.includes(field.key);
+            return <label key={field.key}><input type="checkbox" checked={shown} onChange={() => {
+              const rest = (layout.hiddenFields ?? []).filter(item => item !== field.key);
+              const hiddenFields = shown ? [...rest, field.key] : rest;
+              update({ order: layout.order, hidden: layout.hidden, ...(hiddenFields.length ? { hiddenFields } : {}) });
+            }} />{field.label}</label>;
+          })}</fieldset>}
           {isRequiredProfileBlock(key) ? <p className="community-muted layout-block-footer">Всегда отображается</p> : <label className="layout-block-footer"><input type="checkbox" checked={!hidden} disabled={disabled} onChange={() => update({ ...layout, hidden: hidden ? layout.hidden.filter(x => x !== key) : [...layout.hidden, key] })} />{hidden ? 'Скрыт в профиле' : 'Показывать в профиле'}</label>}
         </article>;
       })}</div></div>;
