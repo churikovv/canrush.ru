@@ -63,8 +63,9 @@ it('keeps archived and unresolved cards for saved lists but excludes them from t
 it('merges confirmed Burn aliases in the picker and does not guess from identical photos', async () => {
   const { readTierPickerGroups } = await import('../src/lib/catalog-files');
   put('regions/moscow.json', { cityId: 'moscow', groups: [group(99, 'peach:sugarfree'), group(100, 'blend:mango+peach')] });
-  put('regions/kazan.json', { cityId: 'kazan', groups: [group(129, 'blend:mango+peach:sugarfree'), group(130, 'peach')] });
-  expect((await readTierPickerGroups()).map(item => item.flavor)).toEqual(['blend:mango+peach:sugarfree', 'peach']);
+  // The archived "peach" is a reviewed alias of the same can; other flavors stay apart.
+  put('regions/kazan.json', { cityId: 'kazan', groups: [group(129, 'blend:mango+peach:sugarfree'), group(130, 'peach'), group(131, 'cherry')] });
+  expect((await readTierPickerGroups()).map(item => item.flavor)).toEqual(['blend:mango+peach:sugarfree', 'cherry']);
 });
 
 it('excludes unrecognized brands even with recognized flavors from the tier picker', async () => {

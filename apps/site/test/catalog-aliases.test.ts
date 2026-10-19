@@ -15,9 +15,11 @@ it('merges Burn aliases while retaining offers and an archived cover', () => {
   expect(mergeCatalogAliases([...groups, ...groups])[0]?.variants).toHaveLength(3);
 });
 
-it('does not conflate other brands or ordinary peach with sugarfree', () => {
+it('does not conflate other brands with the Burn Peach Mango Zero aliases', () => {
   expect(canonicalProductFlavor('Monster', 'blend:mango+peach')).toBe('blend:mango+peach');
-  expect(canonicalProductFlavor('Burn', 'peach')).toBe('peach');
+  expect(canonicalProductFlavor('Volt Energy', 'peach')).toBe('peach');
+  // Burn's archived "Персик" card showed the Peach Mango Zero Sugar can: there is no plain Burn peach.
+  expect(canonicalProductFlavor('Burn', 'peach')).toBe('blend:mango+peach:sugarfree');
 });
 
 it('consolidates Vulkan edition descriptions while keeping original and zero separate', () => {

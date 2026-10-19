@@ -56,6 +56,7 @@ it('points reported duplicate URLs at the live products', () => {
     ['mix-orange-3n7d5swpvat7d', catalogGroupSlug('Burn', 'orange')],
     ['mix-citrus-grapefruit-lemon-orange', catalogGroupSlug('By Баста', 'blend:grapefruit+lemon+orange')],
     ['mix-grapefruit', catalogGroupSlug('By Баста', 'blend:grapefruit+lemon+orange')],
+    ['burn-peach', 'burn-mango-peach-zero'],
   ]) {
     const identity = decodeCatalogGroupSlug(slug!);
     expect(identity).not.toBeNull();

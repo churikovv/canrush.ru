@@ -95,6 +95,7 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Burn", "apple", "Burn", "blend:apple+kiwi"],
   ["Burn", "watermelon", "Burn", "watermelon:sugarfree"],
   ["Burn", "citrus", "Burn", "citrus:sugarfree"],
+  ["Burn", "peach", "Burn", "blend:mango+peach:sugarfree"], // archived "Персик": its cover is the Peach Mango Zero Sugar 449 ml can
   ["Bizon", "original", "Bizon", "bizon_black"],
   ["Bizon", "mango", "Bizon", "blend:mango+passion_fruit"],
   ["Bizon", "passion_fruit", "Bizon", "blend:mango+passion_fruit"],
