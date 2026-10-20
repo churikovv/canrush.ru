@@ -131,7 +131,8 @@ export function isPlainOriginal(brand: string | undefined, name: string): boolea
   };
   const pattern = brands[brand ?? ''];
   if (!pattern || /(?:ассорт|ссорт|со вкусом|вкус)/u.test(name)) return false;
-  const generic = new Set('нап м напиток энергетический энергетик энергет энергетич энерг безалкогольный безалк газированный сильногазированный газ тонизирующий тониз витаминизированный витамин ароматизированный пастеризованный вода в жестяной банке металлическая банка бан пэт ж б а п к л мл г шт x х с кофеином и таурином консервантов без сахара сах sugarfree sugar free zero зеро шугар'.split(' '));
+  // «энергетики» is a category label some retailers prefix; «энергитический» a common misspelling (Ароматный мир).
+  const generic = new Set('нап м напиток энергетический энергетик энергетики энергитический энергет энергетич энерг безалкогольный безалк газированный сильногазированный газ тонизирующий тониз витаминизированный витамин ароматизированный пастеризованный вода в жестяной банке металлическая банка бан пэт ж б а п к л мл г шт x х с кофеином и таурином консервантов без сахара сах sugarfree sugar free zero зеро шугар'.split(' '));
   const remainder = name.replace(new RegExp(`(?:^| )(?:${pattern.source})(?= |$)`, 'gu'), ' ').replace(/\d+/gu, ' ').split(/\s+/u).filter(Boolean);
   return remainder.every(word => generic.has(word));
 }

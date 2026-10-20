@@ -272,3 +272,14 @@ it('reads Russian words typed with Latin look-alike letters', () => {
   // Whole Latin words stay as they are.
   expect(fixMixedScript('Red Bull Cola Mистика')).toBe('Red Bull Cola Мистика');
 });
+
+it('reads Pulse Up as Pulseup and its misspelled plain title as the original', () => {
+  const config = loadProductsConfig();
+  const product = (name: string, brand: string) => normalizeProduct('edadeal', { sourceId: 'edadeal', name, brand, price: 80, url: 'https://edadeal.ru/x' }, config.brands, '2026-10-20', config.brandAliases, config.flavors, config.flavorAliases);
+  // Ароматный мир: a category prefix and «Энергитический». The plain Pulseup is read as the original, which the reviewed
+  // alias turns into the Your Energy can.
+  expect(product('Энергетики Энергитический напиток Pulse Up Energy 0.45л.', 'Pulseup')).toMatchObject({ brand: 'Pulseup', flavor: 'pulse_your' });
+  // Edadeal spells the brand «Pulse Up» for the Berry Energy can only.
+  expect(product('Энергетический напиток PulseUP Berry Energy 0,45 л ж/б', 'Pulse Up')).toMatchObject({ brand: 'Pulseup', flavor: 'berry' });
+  expect(product('Энергетический напиток PulseUP Your Energy 0,45 л ж/б', 'Pulseup')).toMatchObject({ brand: 'Pulseup', flavor: 'pulse_your' });
+});

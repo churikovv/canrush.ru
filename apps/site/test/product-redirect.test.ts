@@ -65,6 +65,10 @@ it('points reported duplicate URLs at the live products', () => {
     ['krasnaya-ptitsa-ashan-unresolved-9a6ed4c919a0e7a38a8b714d', catalogGroupSlug('Красная птица АШАН', 'original')],
     ['red-bull-unresolved-8688970ebadb429a9212a309-11xdj09dxwto7', catalogGroupSlug('Red Bull', 'original')],
     ['my-element-unresolved-e45481e1e9fd04a090e3575a', 'my-element-cotton-candy'],
+    ['lit-energy-berry', 'lit-energy-original'],
+    ['flash-up-barberry', 'flash-up-ultra'],
+    ['pulseup-unresolved-9427ce79d3fe662f3f4cd6a6-105kk4pcwk301', 'pulseup-pulse-your'],
+    ['pulse-up-berry', 'pulseup-berry'],
   ]) {
     const identity = decodeCatalogGroupSlug(slug!);
     expect(identity).not.toBeNull();

@@ -192,6 +192,11 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Red Bull", "unresolved:8688970ebadb429a9212a309", "Red Bull", "original"], // Metro "RED BULL арт. 355879 0,473 л", the classic can
   ["My Element", "unresolved:e45481e1e9fd04a090e3575a", "My Element", "cotton_candy"], // "Cахарная вата" with a Latin C
   ["Mix", "blend:citrus+grapefruit+lemon+orange", "By Баста", "blend:grapefruit+lemon+orange"], // "BYБАСТА Цитрус микс", the same can
+  // Duplicates reported by members, checked against the cover (October 2026).
+  ["Lit Energy", "berry", "Lit Energy", "original"], // archived "Ягодный": its cover is the Lit Energy Classic can
+  ["Flash Up", "barberry", "Flash Up", "ultra"], // archived "Барбарис": its cover is the Flash Up Ultra Energy can
+  ["Pulseup", "unresolved:9427ce79d3fe662f3f4cd6a6", "Pulseup", "pulse_your"], // Ароматный мир "Энергитический напиток Pulse Up Energy 0.45л.", the Your Energy can
+  ["Pulse Up", "berry", "Pulseup", "berry"], // Edadeal spells the brand "Pulse Up" for Berry Energy only
 ];
 export function reviewedProductIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
   const alias = REVIEWED_PRODUCT_ALIASES.find(entry => entry[0] === brand && entry[1] === flavor);

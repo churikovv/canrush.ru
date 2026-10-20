@@ -31,7 +31,8 @@
     "Wk Up",
     "Genesis",
     "Quantum",
-    "Из Лавки"
+    "Из Лавки",
+    "Pulseup"
   ],
   "brandAliases": {
     "Red Bull": [
@@ -117,6 +118,11 @@
     ],
     "Quantum": [
       "Quantum Motion"
+    ],
+    "Pulseup": [
+      "Pulse Up",
+      "Пульсап",
+      "Пульс Ап"
     ],
     "Из Лавки": [
       "изЛавки"
