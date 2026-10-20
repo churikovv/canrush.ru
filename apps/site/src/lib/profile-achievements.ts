@@ -47,8 +47,9 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
   { key: 'streak-14', label: 'Серия 14', rarity: 'epic', description: 'Две недели на заряде', steps: [
     { metric: 'drinkStreak', goal: 14, label: 'Отмечать энергетик в календаре 14 дней подряд' }] },
   { key: 'deadinside', label: 'Deadinside', rarity: 'epic', description: 'Тирлисты, о которых говорят', steps: [
-    { metric: 'tierLists', goal: 5, label: 'Опубликовать 5 тирлистов' },
-    { metric: 'tierListLikes', goal: 10, label: 'Собрать 10 лайков на тирлистах' }] },
+    // Lowered from 5 tier lists and 10 likes (October 2026): there was too little activity to reach it.
+    { metric: 'tierLists', goal: 1, label: 'Опубликовать тирлист' },
+    { metric: 'tierListLikes', goal: 1, label: 'Получить лайк на тирлисте' }] },
   { key: 'streak-7', label: 'Серия 7', rarity: 'rare', description: 'Неделя, когда птица довольна', steps: [
     { metric: 'drinkStreak', goal: 7, label: 'Отмечать энергетик в календаре 7 дней подряд' }] },
   { key: 'seller', label: 'Селлер', rarity: 'rare', description: 'Довести сделки до конца', steps: [
