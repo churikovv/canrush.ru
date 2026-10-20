@@ -7,7 +7,11 @@ export interface CollectionOption { brand: string; flavor: string; cover?: strin
 export type TriedSource = 'review' | 'calendar';
 export interface TriedDrink { brand: string; flavor: string; source: TriedSource }
 export interface CollectionItem { brand: string; flavor: string; name: string; href: string; cover?: string; tried: TriedSource[] }
-export interface BrandCollection { brand: string; slug: string; items: CollectionItem[]; tried: number; total: number }
+export interface BrandCollection {
+  brand: string; slug: string; items: CollectionItem[]; tried: number; total: number;
+  /** Shares (25/50/75/100) already paid from the XP ledger; kept when the catalog grows, so hints skip them. */
+  paid?: number[];
+}
 export interface CollectionSummary { brands: BrandCollection[]; tried: number; total: number; started: number; completed: number }
 
 /** A brand with one drink is not a collection. */
@@ -102,11 +106,26 @@ export function collectionAwards(summary: CollectionSummary): CollectionAward[] 
     .map(step => ({ key: `${collection.brand}:${step.percent}`, points: step.points })));
 }
 
-export function nextMilestone(collection: { tried: number; total: number }): CollectionMilestone | undefined {
-  return brandMilestones(collection.total).find(step => collection.tried < step.needed);
+/** The next milestone that would still pay: a share paid before the catalog grew (say 100% of 3 flavors, now 3 of 4) is skipped. */
+export function nextMilestone(collection: { tried: number; total: number; paid?: readonly number[] }): CollectionMilestone | undefined {
+  return brandMilestones(collection.total).find(step => collection.tried < step.needed && !collection.paid?.includes(step.percent));
 }
 
-/** XP a brand has paid so far: every milestone already reached. */
-export function earnedCollectionXp(collection: { tried: number; total: number }): number {
+/** XP a brand has paid so far: the ledger's shares when known, otherwise every milestone already reached. */
+export function earnedCollectionXp(collection: { tried: number; total: number; paid?: readonly number[] }): number {
+  if (collection.paid) return COLLECTION_MILESTONES.filter(([percent]) => collection.paid!.includes(percent)).reduce((sum, [, points]) => sum + points, 0);
   return brandMilestones(collection.total).filter(step => collection.tried >= step.needed).reduce((sum, step) => sum + step.points, 0);
+}
+
+/** Shares paid per brand from ledger keys `<brand>:<percent>` (a brand name may itself contain a colon). */
+export function paidShares(keys: readonly string[]): Map<string, number[]> {
+  const paid = new Map<string, number[]>();
+  for (const key of keys) {
+    const at = key.lastIndexOf(':');
+    const percent = Number(key.slice(at + 1));
+    if (at < 1 || !COLLECTION_MILESTONES.some(([value]) => value === percent)) continue;
+    const brand = key.slice(0, at);
+    paid.set(brand, [...(paid.get(brand) ?? []), percent]);
+  }
+  return paid;
 }

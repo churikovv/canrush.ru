@@ -1,5 +1,5 @@
 import { getPool } from '@/db/pool';
-import { buildBrandCollections, collectionAwards, type CollectionSummary, type TriedDrink } from '@/lib/brand-collection-fields';
+import { buildBrandCollections, collectionAwards, paidShares, type CollectionSummary, type TriedDrink } from '@/lib/brand-collection-fields';
 import { storeDrinkOptions } from '@/lib/store-catalog';
 
 /** Drinks the member reviewed or logged from the catalog in the calendar. */
@@ -17,10 +17,12 @@ export async function getBrandCollections(userId: string): Promise<CollectionSum
   const [options, tried] = await Promise.all([storeDrinkOptions(), getTriedDrinks(userId)]);
   const summary = buildBrandCollections(options, tried);
   const awards = collectionAwards(summary);
-  if (!awards.length) return { ...summary, xp: 0 };
-  const paid = await getPool().query<{ points: number }>(`insert into "profileExperience" ("userId", reason, "sourceKey", points)
+  const paid = !awards.length ? { rows: [] } : await getPool().query<{ points: number }>(`insert into "profileExperience" ("userId", reason, "sourceKey", points)
     select $1, 'collection', a.key, a.points from unnest($2::text[], $3::int[]) as a(key, points)
     where not exists(select 1 from "userBlock" where "userId" = $1)
     on conflict do nothing returning points`, [userId, awards.map(item => item.key), awards.map(item => item.points)]);
-  return { ...summary, xp: paid.rows.reduce((sum, row) => sum + row.points, 0) };
+  // Every share ever paid, including ones the current catalog no longer has as a separate step, so hints never promise them again.
+  const ledger = await getPool().query<{ key: string }>(`select "sourceKey" as key from "profileExperience" where "userId" = $1 and reason = 'collection'`, [userId]);
+  const shares = paidShares(ledger.rows.map(row => row.key));
+  return { ...summary, brands: summary.brands.map(brand => ({ ...brand, paid: shares.get(brand.brand) ?? [] })), xp: paid.rows.reduce((sum, row) => sum + row.points, 0) };
 }

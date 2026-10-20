@@ -38,7 +38,9 @@ function BrandHeading({ collection }: { collection: BrandCollection }) {
     <Progress collection={collection} label={`Коллекция ${collection.brand}`} />
     {next
       ? <span className="brand-collection-next">Ещё {flavors(next.needed - collection.tried)} до {next.percent}% · +{next.points} XP</span>
-      : <span className="brand-collection-next">Все {flavors(collection.total)} в коллекции · получено +{earnedCollectionXp(collection)} XP</span>}
+      : done ? <span className="brand-collection-next">Все {flavors(collection.total)} в коллекции · получено +{earnedCollectionXp(collection)} XP</span>
+      // The catalog grew after the bonuses were paid: what is left still completes the set but pays nothing new.
+      : <span className="brand-collection-next">Ещё {flavors(collection.total - collection.tried)} до полной коллекции · бонусы уже получены (+{earnedCollectionXp(collection)} XP)</span>}
   </span>;
 }
 

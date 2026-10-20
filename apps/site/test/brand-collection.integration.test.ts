@@ -33,4 +33,5 @@ it('pays collection milestones once, whether settled by a can or by viewing', as
   const summary = await getBrandCollections(owner);
   expect(summary).toMatchObject({ tried: 2, completed: 1, xp: 0 });
   expect(await xp()).toEqual([{ key: 'Burn:50', points: 25 }, { key: 'Burn:100', points: 75 }]);
+  expect(summary.brands.find(brand => brand.brand === 'Burn')?.paid).toEqual(expect.arrayContaining([50, 100]));
 });

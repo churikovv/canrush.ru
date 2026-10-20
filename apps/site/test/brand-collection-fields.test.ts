@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { MIN_COLLECTION_SIZE, brandMilestones, buildBrandCollections, collectionAwards, flavors, nextMilestone } from '../src/lib/brand-collection-fields';
+import { MIN_COLLECTION_SIZE, brandMilestones, buildBrandCollections, collectionAwards, earnedCollectionXp, flavors, nextMilestone, paidShares } from '../src/lib/brand-collection-fields';
 
 const options = [
   { brand: 'Burn', flavor: 'original', cover: '/images/burn.jpg' },
@@ -61,6 +61,21 @@ it('pays each share of a brand once, merging shares small brands reach with one 
   expect(collectionAwards(summary)).toEqual([{ key: 'Tornado:50', points: 25 }, { key: 'Tornado:100', points: 75 }, { key: 'Burn:25', points: 15 }]);
   expect(nextMilestone(summary.brands.find(item => item.brand === 'Burn')!)).toEqual({ percent: 50, points: 25, needed: 2 });
   expect(nextMilestone(summary.brands.find(item => item.brand === 'Tornado')!)).toBeUndefined();
+});
+
+it('skips shares already paid when the catalog grows after completion', () => {
+  // 3/3 paid 25, 50 and the merged 100; a fourth flavor makes it 3/4: 75 is reached (and paid in the same settlement),
+  // and 100 must not be promised again.
+  expect(nextMilestone({ tried: 3, total: 4 })).toEqual({ percent: 100, points: 75, needed: 4 });
+  expect(nextMilestone({ tried: 3, total: 4, paid: [25, 50, 100] })).toBeUndefined();
+  expect(nextMilestone({ tried: 3, total: 4, paid: [25, 50, 75, 100] })).toBeUndefined();
+  expect(nextMilestone({ tried: 1, total: 4, paid: [25] })).toEqual({ percent: 50, points: 25, needed: 2 });
+  expect(earnedCollectionXp({ tried: 3, total: 4, paid: [25, 50, 75, 100] })).toBe(155);
+  expect(earnedCollectionXp({ tried: 3, total: 3 })).toBe(115);
+});
+
+it('reads paid shares from ledger keys, brand names with colons included', () => {
+  expect(Object.fromEntries(paidShares(['Burn:50', 'Burn:100', 'Red: Bull:25', 'Burn:33', 'broken']))).toEqual({ Burn: [50, 100], 'Red: Bull': [25] });
 });
 
 it('pluralises flavours in Russian', () => {
