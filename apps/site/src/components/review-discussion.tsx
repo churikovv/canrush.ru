@@ -1,5 +1,7 @@
 'use client';
+import { MediaAttachButton, MediaAttachmentPreviews, useMediaAttachments } from '@/components/media-attachments';
 import { MentionText } from '@/components/mention-text';
+import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import { MentionTextarea } from '@/components/mention-textarea';
 import { profileTagKey } from '@/lib/profile-achievements';
 import Link from '@/components/navigation-progress';
@@ -33,11 +35,12 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
   const composer = useRef<HTMLTextAreaElement>(null);
   const [more,setMore] = useState(false);
   const [text,setText] = useState('');
+  const media = useMediaAttachments('комментарию');
   const [error,setError] = useState('');
   const [signIn,setSignIn] = useState(false);
   const [pending,startTransition] = useTransition();
   const regionId = useId();
-  function run(action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string } | { text: string; replyToId: string }, append = false) {
+  function run(action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }, append = false) {
     setError(''); setSignIn(false);
     startTransition(async () => {
       try {
@@ -45,7 +48,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         if (result.error) { setError(result.error); setSignIn(Boolean(result.signIn)); return; }
         if (result.interaction) setStats(result.interaction);
         if (result.thread) { setComments(previous => append ? [...previous,...result.thread!.items.filter(item => !previous.some(old => old.id === item.id))] : result.thread!.items); setMore(result.thread.hasMore); setLoaded(true); }
-        if (action === 'comment') { setText(''); setReplyTo(null); }
+        if (action === 'comment') { setText(''); setReplyTo(null); media.clear(); }
         const edited = result.edited;
         if (edited) { setComments(previous => previous.map(item => item.id === edited.id ? { ...item, text: edited.text, editedAt: edited.editedAt } : item)); setEditing(null); }
       } catch { setError('Нет связи с сервером. Попробуйте ещё раз.'); }
@@ -63,6 +66,15 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
       else patch({ liked: result.liked, likes: result.likes });
     } catch { patch({ liked: comment.liked, likes: comment.likes }); setError('Нет связи с сервером. Попробуйте ещё раз.'); }
     finally { setLiking(null); }
+  }
+  /** Plain comments go as JSON; with attachments the comment is sent as a form so files reach the server action. */
+  function submitComment() {
+    if (!media.files.length) { run('comment', replyTo ? { text, replyToId: replyTo.id } : text); return; }
+    const form = new FormData();
+    form.set('text', text);
+    if (replyTo) form.set('replyToId', replyTo.id);
+    media.appendTo(form);
+    run('comment', form);
   }
   function answer(comment: Comment) {
     setReplyTo({ id: comment.id, label: authorLabel(comment) });
@@ -82,11 +94,13 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
     </div>
     {error && <p className="field-error" role="alert">{error} {signIn && <Link href="/sign-in">Войти</Link>}</p>}
     {commentsEnabled && open && <section id={regionId} className="review-thread" aria-label={target === 'wall' ? 'Комментарии к записи' : target === 'tierlist' ? 'Комментарии к тирлисту' : 'Комментарии к отзыву'} aria-busy={pending}>
-      {stats.authenticated ? <form className="review-comment-composer" onSubmit={event => { event.preventDefault(); run('comment', replyTo ? { text, replyToId: replyTo.id } : text); }}>
+      {stats.authenticated ? <form className="review-comment-composer" onSubmit={event => { event.preventDefault(); submitComment(); }}>
         <label htmlFor={`${regionId}-text`}>{replyTo ? 'Ваш ответ' : 'Ваш комментарий'}</label>
         {replyTo && <div className="review-reply-target"><span>Ответ <b>{replyTo.label}</b></span><button type="button" aria-label="Отменить ответ" title="Отменить ответ" onClick={() => setReplyTo(null)}>×</button></div>}
-        <MentionTextarea ref={composer} id={`${regionId}-text`} value={text} onValueChange={setText} maxLength={1000} required rows={3} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
-        <div><span>{text.length} / 1000</span><button className="community-button" type="submit" disabled={pending || !text.trim()}>{pending ? 'Подождите…' : 'Отправить'}</button></div>
+        <MentionTextarea ref={composer} id={`${regionId}-text`} value={text} onValueChange={setText} onPaste={media.onPaste} maxLength={1000} required rows={3} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
+        {media.error && <p role="alert" className="field-error">{media.error}</p>}
+        <MediaAttachmentPreviews media={media} />
+        <div><MediaAttachButton media={media} label="Добавить к комментарию фото, GIF или видео" /><span>{media.preparing ? 'Готовим видео…' : `${text.length} / 1000`}</span><button className="community-button" type="submit" disabled={pending || !text.trim() || media.preparing}>{pending ? 'Подождите…' : 'Отправить'}</button></div>
       </form> : <p><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
       {!loaded ? <p role="status">{pending ? 'Загружаем комментарии…' : 'Комментарии не загружены.'} {!pending && <button type="button" onClick={() => run('read')}>Повторить</button>}</p> : !comments.length ? <p className="review-thread-empty">Комментариев пока нет. Начните обсуждение.</p> : <ul className="review-thread-list">{comments.map(comment => <li key={comment.id}>
         <div className="review-comment-avatar" aria-hidden="true">{comment.avatarId ? <Image unoptimized src={`/api/profile-images/${comment.avatarId}`} alt="" width={32} height={32} /> : (comment.name || comment.username || '?').charAt(0)}</div>
@@ -100,6 +114,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
           <MentionTextarea id={`${regionId}-edit-${comment.id}`} value={draft} onValueChange={setDraft} maxLength={1000} rows={2} required autoFocus disabled={pending} onKeyDown={event => { if (event.key === 'Escape') setEditing(null); }} />
           <div><span>{draft.length} / 1000</span><button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => setEditing(null)}>Отмена</button><button className="community-button" type="submit" disabled={pending || !draft.trim() || draft.trim() === comment.text}>{pending ? 'Сохраняем…' : 'Сохранить'}</button></div>
         </form> : <p>{comment.replyTo && <>{comment.replyTo.username ? <Link className="review-reply-mention" href={`/profile/${comment.replyTo.username}`}>@{comment.replyTo.username}</Link> : <span className="review-reply-mention">{comment.replyTo.name.includes('@') ? 'Участник' : comment.replyTo.name}</span>}{' '}</>}<MentionText text={comment.text} /></p>}
+        {editing !== comment.id && comment.media?.length ? <ReviewPhotoGallery photos={comment.media.map(item => item.id)} kinds={comment.media.map(item => item.kind)} source="comment-media" /> : null}
         <div className="review-comment-footer">{typeof comment.likes === 'number' && <button className="review-comment-like" type="button" aria-pressed={Boolean(comment.liked)} aria-label={comment.canDelete ? `Лайков: ${comment.likes}` : comment.liked ? `Убрать лайк, лайков: ${comment.likes}` : `Нравится комментарий, лайков: ${comment.likes}`} disabled={comment.canDelete || liking === comment.id} onClick={() => void toggleLike(comment)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill={comment.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M12 20.5 4.6 13.3A4.6 4.6 0 0 1 11.1 6.8l.9.9.9-.9a4.6 4.6 0 0 1 6.5 6.5L12 20.5Z" /></svg><span>{comment.likes}</span>
         </button>}

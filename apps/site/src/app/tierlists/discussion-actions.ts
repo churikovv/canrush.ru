@@ -3,10 +3,12 @@ import { getPool } from '@/db/pool';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
+import { ReviewPhotoError } from '@/lib/review-photos';
+import { prepareWallMedia } from '@/lib/wall-media';
 import { isUserBlocked } from '@/lib/moderation';
 import { addTierComment, deleteTierComment, editTierComment, getTierComments, getTierInteractions, TierDiscussionError, tierListId, setTierReaction } from '@/lib/tier-discussions';
 
-export async function tierDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string } | { text: string; replyToId: string }) {
+export async function tierDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }) {
   try {
     tierListId(id);
     const session = await auth.api.getSession({ headers: await headers() });
@@ -26,6 +28,12 @@ export async function tierDiscussionAction(id: string, action: 'read' | 'vote' |
         await setTierReaction(viewer, id, value);
       } else if (action === 'comment') {
         if (typeof value === 'string') await addTierComment(viewer, id, value);
+        // With attachments the comment comes as a form: text, optional replyToId, `photos` and `videoPoster`.
+        else if (value instanceof FormData) {
+          const text = value.get('text'), replyToId = value.get('replyToId');
+          if (typeof text !== 'string' || (replyToId !== null && typeof replyToId !== 'string')) throw new TierDiscussionError('Напишите комментарий.');
+          await addTierComment(viewer, id, text, replyToId || undefined, await prepareWallMedia(value));
+        }
         else if (value && typeof value === 'object' && 'replyToId' in value && typeof value.text === 'string' && typeof value.replyToId === 'string') await addTierComment(viewer, id, value.text, value.replyToId);
         else throw new TierDiscussionError('Напишите комментарий.');
       } else if (action === 'edit') {
@@ -42,6 +50,6 @@ export async function tierDiscussionAction(id: string, action: 'read' | 'vote' |
     const thread = action === 'vote' || action === 'edit' ? undefined : await getTierComments(id, viewer, action === 'read' && typeof value === 'string' ? value : undefined);
     return { interaction, thread, edited };
   } catch(error) {
-    return { error: error instanceof TierDiscussionError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
+    return { error: error instanceof TierDiscussionError || error instanceof ReviewPhotoError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
   }
 }

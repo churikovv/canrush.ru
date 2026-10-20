@@ -2,10 +2,12 @@
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
+import { ReviewPhotoError } from '@/lib/review-photos';
+import { prepareWallMedia } from '@/lib/wall-media';
 import { isUserBlocked } from '@/lib/moderation';
 import { addWallComment, deleteWallComment, editWallComment, getWallComments, getWallInteractions, WallDiscussionError, wallPostId, setWallCommentLike, setWallReaction } from '@/lib/wall-discussions';
 
-export async function wallDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | { commentId: string; text: string } | { text: string; replyToId: string }) {
+export async function wallDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }) {
   try {
     wallPostId(id);
     const session = await auth.api.getSession({ headers: await headers() });
@@ -21,6 +23,12 @@ export async function wallDiscussionAction(id: string, action: 'read' | 'vote' |
         await setWallReaction(viewer, id, value);
       } else if (action === 'comment') {
         if (typeof value === 'string') await addWallComment(viewer, id, value);
+        // With attachments the comment comes as a form: text, optional replyToId, `photos` and `videoPoster`.
+        else if (value instanceof FormData) {
+          const text = value.get('text'), replyToId = value.get('replyToId');
+          if (typeof text !== 'string' || (replyToId !== null && typeof replyToId !== 'string')) throw new WallDiscussionError('Напишите комментарий.');
+          await addWallComment(viewer, id, text, replyToId || undefined, await prepareWallMedia(value));
+        }
         else if (value && typeof value === 'object' && 'replyToId' in value && typeof value.text === 'string' && typeof value.replyToId === 'string') await addWallComment(viewer, id, value.text, value.replyToId);
         else throw new WallDiscussionError('Напишите комментарий.');
       } else if (action === 'edit') {
@@ -37,7 +45,7 @@ export async function wallDiscussionAction(id: string, action: 'read' | 'vote' |
     const thread = action === 'vote' || action === 'edit' ? undefined : await getWallComments(id, viewer, action === 'read' && typeof value === 'string' ? value : undefined);
     return { interaction, thread, edited };
   } catch(error) {
-    return { error: error instanceof WallDiscussionError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
+    return { error: error instanceof WallDiscussionError || error instanceof ReviewPhotoError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
   }
 }
 

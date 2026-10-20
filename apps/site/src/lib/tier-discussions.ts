@@ -1,9 +1,11 @@
 import { getPool } from '@/db/pool';
+import { commentMediaColumn, saveCommentMedia, type CommentMedia } from '@/lib/comment-media';
+import type { PreparedWallMedia } from '@/lib/wall-media';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { profileTagLabel } from '@/lib/profile-achievements';
 export class TierDiscussionError extends Error {}
 export interface TierInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean }
-export interface TierCommentData { id: string; text: string; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; canDelete: boolean }
+export interface TierCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; canDelete: boolean }
 export function tierListId(value: unknown): string {
   if (typeof value !== 'string' || !PHOTO_ID_PATTERN.test(value)) throw new TierDiscussionError('Тирлист или комментарий не найден.');
   return value;
@@ -32,7 +34,7 @@ export async function setTierReaction(userId: string, id: string, value: number)
 }
 export async function getTierComments(id: string, viewer: string | null, before?: string) {
   tierListId(id); if (before) tierListId(before);
-  const { rows } = await getPool().query(`select c.id,c.text,c."createdAt",c."editedAt",u.name,u.username,ru.username as "replyToUsername",ru.name as "replyToName",
+  const { rows } = await getPool().query(`select c.id,c.text,c."createdAt",c."editedAt",${commentMediaColumn('tierlist')},u.name,u.username,ru.username as "replyToUsername",ru.name as "replyToName",
     c."userId"=$2 as "canDelete",
     (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
     case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
@@ -42,7 +44,7 @@ export async function getTierComments(id: string, viewer: string | null, before?
     order by c."createdAt" desc,c.id desc limit 21`, [id, viewer, before ?? null]);
   return { items: rows.slice(0,20).map(({ replyToUsername, replyToName, ...row }) => ({ ...row, createdAt: row.createdAt.toISOString(), editedAt: row.editedAt?.toISOString() ?? null, tag: profileTagLabel(row.tag) ?? null, replyTo: replyToName ? { username: replyToUsername, name: replyToName } : null, canDelete: Boolean(row.canDelete) }) as TierCommentData), hasMore: rows.length > 20 };
 }
-export async function addTierComment(userId: string, id: string, input: string, replyToId?: string) {
+export async function addTierComment(userId: string, id: string, input: string, replyToId?: string, media: readonly PreparedWallMedia[] = []) {
   if (replyToId) tierListId(replyToId);
   tierListId(id);
   const text = input.trim();
@@ -61,7 +63,8 @@ export async function addTierComment(userId: string, id: string, input: string, 
       if (!target.rows[0]) throw new TierDiscussionError('Комментарий, на который вы отвечаете, удалён.');
       replyToUserId = target.rows[0].userId;
     }
-    await client.query('insert into "tierListComment" ("tierListId","userId",text,"replyToId","replyToUserId") values ($1,$2,$3,$4,$5)', [id,userId,text,replyToId ?? null,replyToUserId]);
+    const inserted = await client.query<{ id: string }>('insert into "tierListComment" ("tierListId","userId",text,"replyToId","replyToUserId") values ($1,$2,$3,$4,$5) returning id', [id,userId,text,replyToId ?? null,replyToUserId]);
+    await saveCommentMedia(client, 'tierlist', inserted.rows[0]!.id, media);
     await client.query('commit');
   } catch(error) { await client.query('rollback'); throw error; }
   finally { client.release(); }

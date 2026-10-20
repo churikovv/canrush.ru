@@ -1,4 +1,5 @@
 'use client';
+import { pastedFiles, toFileList } from '@/lib/clipboard-files';
 import { PhotoDeleteIcon } from '@/components/photo-delete-icon';
 import { EditIcon, TrashIcon } from '@/components/action-icons';
 import { REVIEW_DELETE_EVENT, REVIEW_EDIT_EVENT } from '@/components/review-edit-shortcut';
@@ -182,7 +183,9 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
   }
 
   return (
-    <form className="review-form" id="review-form" ref={formRef} action={formAction}>
+    <form className="review-form" id="review-form" ref={formRef} action={formAction}
+      // A screenshot or copied photo pasted anywhere in the form joins the review photos.
+      onPaste={event => { const files = pastedFiles(event, file => file.type.startsWith('image/')); if (files.length) choosePhotos(toFileList(files)); }}>
       <input type="hidden" name="ratingScale" value="10" />
       <input type="hidden" name="brand" value={brand} />
       <input type="hidden" name="flavor" value={flavor} />

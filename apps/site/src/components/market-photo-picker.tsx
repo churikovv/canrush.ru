@@ -19,6 +19,18 @@ export function MarketPhotoPicker({ onChange, onBusyChange, disabled = false, cr
   const [dragging, setDragging] = useState<string | null>(null);
   const grid = useRef<HTMLOListElement>(null);
   useEffect(() => { const allocated = urls.current; return () => { for (const url of allocated) URL.revokeObjectURL(url); }; }, []);
+  // Pasting an image anywhere on the page (a listing, a store, the chat) adds it like the picker; text pastes as usual.
+  const addRef = useRef<(files: File[]) => Promise<void>>(async () => {});
+  useEffect(() => {
+    function paste(event: ClipboardEvent) {
+      const files = Array.from(event.clipboardData?.files ?? []).filter(file => file.type.startsWith('image/'));
+      if (!files.length || disabled) return;
+      event.preventDefault();
+      void addRef.current(files);
+    }
+    document.addEventListener('paste', paste);
+    return () => document.removeEventListener('paste', paste);
+  }, [disabled]);
   function update(next: Photo[]) { setPhotos(next); onChange(next.map(photo => photo.file)); }
   async function add(files: File[]) {
     if (disabled || adding.current) return;
@@ -42,6 +54,7 @@ export function MarketPhotoPicker({ onChange, onBusyChange, disabled = false, cr
     }
     finally { adding.current = false; setBusy(false); onBusyChange?.(false); }
   }
+  useEffect(() => { addRef.current = add; });
   function move(id: string, target: number) {
     if (disabled || busy) return;
     const next = [...photos], index = next.findIndex(photo => photo.id === id);
