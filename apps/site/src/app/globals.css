@@ -649,20 +649,39 @@ html[data-cookie-notice="visible"] .brand-footer {
   flex: 0 0 auto;
   color: var(--site-tab-bar-tint, currentColor);
 }
-/* «Поиск»: a raised round button in the middle of the tab bar. */
+/* «Поиск»: a raised round button in the middle of the tab bar. The circle is the link's ::before, not the icon's own
+   background: iOS WebKit clips the box painting (background, ring) of an outer <svg> that sticks out of its tab.
+   The label sits 6px from the bottom with a 12px line, like the centred labels of the other tabs, so the circle
+   can be placed from the bottom: 6 + 12 + 2px gap. */
+.site-tab-bar-item[data-tab="search"] {
+  position: relative;
+  justify-content: flex-end;
+  padding-bottom: 6px;
+}
+.site-tab-bar-item[data-tab="search"] .site-tab-bar-label { line-height: 12px; }
+.site-tab-bar-item[data-tab="search"]::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  bottom: 20px;
+  left: 50%;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  box-shadow: 0 0 0 4px var(--color-surface), 0 8px 18px rgb(0 70 214 / 30%);
+  translate: -50% 0;
+}
+.site-tab-bar-item[data-tab="search"]:is([aria-current="page"], :active)::before {
+  background: var(--color-brand-deep, var(--color-brand));
+}
 .site-tab-bar-item[data-tab="search"] > svg {
   box-sizing: border-box;
   width: 52px;
   height: 52px;
   margin-top: -24px;
   padding: 13px;
-  border-radius: 50%;
   color: #fff;
-  background: var(--color-brand);
-  box-shadow: 0 0 0 4px var(--color-surface), 0 8px 18px rgb(0 70 214 / 30%);
-}
-.site-tab-bar-item[data-tab="search"]:is([aria-current="page"], :active) > svg {
-  background: var(--color-brand-deep, var(--color-brand));
 }
 .site-tab-bar-label {
   max-width: 100%;
@@ -852,12 +871,16 @@ html[data-cookie-notice="visible"] .brand-footer {
   }
 }
 @media (min-width: 640px), (orientation: landscape) and (max-height: 560px) {
+  /* Row layout on wide or short screens: the icon sits inline on a plain circle, nothing sticks out. */
+  .site-tab-bar-item[data-tab="search"] { justify-content: center; padding-bottom: 0; }
+  .site-tab-bar-item[data-tab="search"]::before { display: none; }
   .site-tab-bar-item[data-tab="search"] > svg {
     width: 40px;
     height: 40px;
     margin-top: 0;
     padding: 9px;
-    box-shadow: none;
+    border-radius: 50%;
+    background: var(--color-brand);
   }
 }
 @media (orientation: landscape) and (max-height: 560px) {
