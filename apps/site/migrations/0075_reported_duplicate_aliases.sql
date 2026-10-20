@@ -1,7 +1,33 @@
 -- Duplicate cards reported by members, checked against their covers; the same pairs are in REVIEWED_PRODUCT_ALIASES.
-lock table review, favorite, "favoritePriceWatch", "tierListItem", "drinkLog" in exclusive mode;
+lock table review, "reviewComment", "reviewReaction", "reviewPhoto", favorite, "favoritePriceWatch", "tierListItem", "drinkLog" in exclusive mode;
 alter table review disable trigger review_prevent_blocked_contribution;
+alter table "reviewComment" disable trigger review_comment_guard;
+alter table "reviewReaction" disable trigger review_reaction_guard;
 alter table favorite disable trigger favorite_experience;
+
+-- A member who reviewed both cards of a pair (on production: en4rgy, the same 7/6 review on Lit «Ягодный» and
+-- «Оригинальный») keeps the review on the card that stays. The duplicate's comments, likes and photos move to it
+-- (photos up to the five-photo limit), then the duplicate is deleted, so the merge below meets no conflict.
+do $$
+declare r record;
+begin
+  for r in select a.id as dup, b.id as kept
+    from (values ('Lit Energy','berry','Lit Energy','original'), ('Flash Up','barberry','Flash Up','ultra'),
+      ('Pulseup','unresolved:9427ce79d3fe662f3f4cd6a6','Pulseup','pulse_your'), ('Pulse Up','berry','Pulseup','berry')) as p(fb, ff, tb, tf)
+    join review a on a.brand = p.fb and a.flavor = p.ff
+    join review b on b.brand = p.tb and b.flavor = p.tf and b."userId" = a."userId"
+  loop
+    update "reviewComment" set "reviewId" = r.kept where "reviewId" = r.dup;
+    update "reviewReaction" x set "reviewId" = r.kept where x."reviewId" = r.dup
+      and not exists(select 1 from "reviewReaction" y where y."reviewId" = r.kept and y."userId" = x."userId");
+    update "reviewPhoto" ph set "reviewId" = r.kept, position = s.pos
+      from (select id, (select coalesce(max(position) + 1, 0) from "reviewPhoto" where "reviewId" = r.kept)
+          + (row_number() over (order by position))::int - 1 as pos
+        from "reviewPhoto" where "reviewId" = r.dup) s
+      where ph.id = s.id and s.pos <= 4;
+    delete from review where id = r.dup;
+  end loop;
+end $$;
 
 -- Lit Energy: berry -> Lit Energy: original
 do $$ begin if exists(select 1 from review a join review b on a."userId"=b."userId" where a.brand='Lit Energy' and a.flavor='berry' and b.brand='Lit Energy' and b.flavor='original') then raise exception 'Alias merge requires manual review conflict resolution'; end if; end $$;
@@ -44,4 +70,6 @@ delete from "tierListItem" where brand='Pulse Up' and flavor='berry';
 update "drinkLog" set brand='Pulseup', flavor='berry' where brand='Pulse Up' and flavor='berry';
 
 alter table review enable trigger review_prevent_blocked_contribution;
+alter table "reviewComment" enable trigger review_comment_guard;
+alter table "reviewReaction" enable trigger review_reaction_guard;
 alter table favorite enable trigger favorite_experience;
