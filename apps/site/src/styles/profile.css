@@ -1013,3 +1013,6 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 .main-surface > .community-profile:has(> .community-hero) { margin-top: 0; }
 .main-surface > .community-profile > .community-hero > .community-cover { margin-inline: calc(50% - 50vw); border-radius: 32px 32px 0 0; }
 .main-surface > .community-profile > .community-hero > .community-cover-custom { aspect-ratio: auto; height: clamp(120px, 25vw, 360px); }
+[data-profile-theme] .mention-link { color: var(--profile-accent); background: color-mix(in srgb, var(--profile-accent) 14%, transparent); }
+[data-profile-theme] .mention-suggestions { background: var(--profile-panel); border-color: var(--profile-line); }
+[data-profile-theme] .mention-suggestions li { color: var(--profile-ink); }

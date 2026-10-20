@@ -49,9 +49,9 @@ const NOTIFICATION_SELECT = `select n.*,u.name,u.username,r.brand,r.flavor,c.tex
       wo.username as "replyWallOwner" from notification n
       left join "user" u on u.id=n."actorId" left join review r on r.id=n."reviewId"
       left join "reviewComment" c on c.id=n."commentId" left join "profileComment" w on w.id=n."wallId"
-      left join review rr on n.kind='comment-reply' and rr.id=(n.payload->>'reviewId')::uuid
-      left join "tierList" rt on n.kind='comment-reply' and rt.id=(n.payload->>'tierListId')::uuid
-      left join "profileComment" rw on n.kind='comment-reply' and rw.id=(n.payload->>'wallId')::uuid
+      left join review rr on n.kind in ('comment-reply','mention') and rr.id=(n.payload->>'reviewId')::uuid
+      left join "tierList" rt on n.kind in ('comment-reply','mention') and rt.id=(n.payload->>'tierListId')::uuid
+      left join "profileComment" rw on n.kind in ('comment-reply','mention') and rw.id=(n.payload->>'wallId')::uuid
       left join "user" wo on wo.id=rw."profileId"
       join "user" owner on owner.id=n."userId"`;
 
@@ -66,9 +66,10 @@ function describeNotification(row: any): NotificationItem {
     } else if (row.kind==='wall-comment') {
       title = `${actor} оставил запись на вашей стене`; detail = row.wall?.slice(0,160) ?? '';
       href = row.ownerUsername ? `/profile/${encodeURIComponent(row.ownerUsername)}#wall` : '/profile#wall';
-    } else if (row.kind==='comment-reply') {
+    } else if (row.kind==='comment-reply' || row.kind==='mention') {
+      // Both point at a discussion (or a wall/feed record); payload says where it lives.
       const p = row.payload;
-      title = `${actor} ответил на ваш комментарий`;
+      title = row.kind==='mention' ? `${actor} упомянул вас` : `${actor} ответил на ваш комментарий`;
       if (p.target==='review' && row.replyBrand) {
         detail = `${row.replyBrand} · ${flavorName(row.replyFlavor)}`;
         href = `/catalog/${catalogGroupSlug(row.replyBrand,row.replyFlavor)}?tab=reviews#review-${p.reviewId}`;

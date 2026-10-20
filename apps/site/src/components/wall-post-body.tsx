@@ -1,5 +1,7 @@
 'use client';
 
+import { MentionText } from '@/components/mention-text';
+import { MentionTextarea } from '@/components/mention-textarea';
 import { useId, useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { editWallPostAction } from '@/app/profile/community-actions';
@@ -45,14 +47,14 @@ export function WallPostBody({ id, text: initial, heading, canEdit, canDelete, c
     </header>
     {editing ? <form className="wall-post-edit" onSubmit={event => { event.preventDefault(); save(); }}>
       <label htmlFor={fieldId} className="sr-only">Текст записи</label>
-      <textarea id={fieldId} value={draft} onChange={event => setDraft(event.target.value)} maxLength={1000} rows={3} required autoFocus disabled={pending}
+      <MentionTextarea id={fieldId} value={draft} onValueChange={setDraft} maxLength={1000} rows={3} required autoFocus disabled={pending}
         onKeyDown={event => { if (event.key === 'Escape') setEditing(false); }} />
       {error && <p className="field-error" role="alert">{error}</p>}
       <div className="community-form-footer"><span className="community-muted">{draft.length} / 1000</span><span className="wall-post-edit-buttons">
         <button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => setEditing(false)}>Отмена</button>
         <button className="community-button" type="submit" disabled={pending || !draft.trim() || draft.trim() === text}>{pending ? 'Сохраняем…' : 'Сохранить'}</button>
       </span></div>
-    </form> : <p>{text}</p>}
+    </form> : <p><MentionText text={text} /></p>}
     {children}
   </>;
 }

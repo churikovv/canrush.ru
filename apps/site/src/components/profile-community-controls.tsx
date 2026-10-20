@@ -1,4 +1,5 @@
 'use client';
+import { MentionTextarea } from '@/components/mention-textarea';
 import { PhotoDeleteIcon } from '@/components/photo-delete-icon';
 import { TrashIcon } from '@/components/action-icons';
 
@@ -111,7 +112,7 @@ export function WallComposer({ targetId, label = 'Комментарий на с
     <fieldset disabled={pending}>
       <label htmlFor="wall-text" className="sr-only">{label}</label>
       <div className="review-text-composer">
-        <textarea id="wall-text" name="text" value={text} onChange={event => setText(event.target.value)} placeholder={placeholder} maxLength={1000} rows={3} required />
+        <MentionTextarea id="wall-text" name="text" value={text} onValueChange={setText} placeholder={placeholder} maxLength={1000} rows={3} required />
         <div className="review-composer-toolbar">
           <span className="review-photo-picker review-photo-icon" title="Добавить фото, GIF или видео">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/></svg>

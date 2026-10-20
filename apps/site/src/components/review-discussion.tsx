@@ -1,4 +1,6 @@
 'use client';
+import { MentionText } from '@/components/mention-text';
+import { MentionTextarea } from '@/components/mention-textarea';
 import { profileTagKey } from '@/lib/profile-achievements';
 import Link from '@/components/navigation-progress';
 import Image from 'next/image';
@@ -83,7 +85,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
       {stats.authenticated ? <form className="review-comment-composer" onSubmit={event => { event.preventDefault(); run('comment', replyTo ? { text, replyToId: replyTo.id } : text); }}>
         <label htmlFor={`${regionId}-text`}>{replyTo ? 'Ваш ответ' : 'Ваш комментарий'}</label>
         {replyTo && <div className="review-reply-target"><span>Ответ <b>{replyTo.label}</b></span><button type="button" aria-label="Отменить ответ" title="Отменить ответ" onClick={() => setReplyTo(null)}>×</button></div>}
-        <textarea ref={composer} id={`${regionId}-text`} value={text} onChange={event => setText(event.target.value)} maxLength={1000} required rows={3} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
+        <MentionTextarea ref={composer} id={`${regionId}-text`} value={text} onValueChange={setText} maxLength={1000} required rows={3} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
         <div><span>{text.length} / 1000</span><button className="community-button" type="submit" disabled={pending || !text.trim()}>{pending ? 'Подождите…' : 'Отправить'}</button></div>
       </form> : <p><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
       {!loaded ? <p role="status">{pending ? 'Загружаем комментарии…' : 'Комментарии не загружены.'} {!pending && <button type="button" onClick={() => run('read')}>Повторить</button>}</p> : !comments.length ? <p className="review-thread-empty">Комментариев пока нет. Начните обсуждение.</p> : <ul className="review-thread-list">{comments.map(comment => <li key={comment.id}>
@@ -95,9 +97,9 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
           </span>}</header>
         {editing === comment.id ? <form className="review-comment-edit" onSubmit={event => { event.preventDefault(); run('edit', { commentId: comment.id, text: draft }); }}>
           <label htmlFor={`${regionId}-edit-${comment.id}`} className="sr-only">Текст комментария</label>
-          <textarea id={`${regionId}-edit-${comment.id}`} value={draft} onChange={event => setDraft(event.target.value)} maxLength={1000} rows={2} required autoFocus disabled={pending} onKeyDown={event => { if (event.key === 'Escape') setEditing(null); }} />
+          <MentionTextarea id={`${regionId}-edit-${comment.id}`} value={draft} onValueChange={setDraft} maxLength={1000} rows={2} required autoFocus disabled={pending} onKeyDown={event => { if (event.key === 'Escape') setEditing(null); }} />
           <div><span>{draft.length} / 1000</span><button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => setEditing(null)}>Отмена</button><button className="community-button" type="submit" disabled={pending || !draft.trim() || draft.trim() === comment.text}>{pending ? 'Сохраняем…' : 'Сохранить'}</button></div>
-        </form> : <p>{comment.replyTo && <>{comment.replyTo.username ? <Link className="review-reply-mention" href={`/profile/${comment.replyTo.username}`}>@{comment.replyTo.username}</Link> : <span className="review-reply-mention">{comment.replyTo.name.includes('@') ? 'Участник' : comment.replyTo.name}</span>}{' '}</>}{comment.text}</p>}
+        </form> : <p>{comment.replyTo && <>{comment.replyTo.username ? <Link className="review-reply-mention" href={`/profile/${comment.replyTo.username}`}>@{comment.replyTo.username}</Link> : <span className="review-reply-mention">{comment.replyTo.name.includes('@') ? 'Участник' : comment.replyTo.name}</span>}{' '}</>}<MentionText text={comment.text} /></p>}
         <div className="review-comment-footer">{typeof comment.likes === 'number' && <button className="review-comment-like" type="button" aria-pressed={Boolean(comment.liked)} aria-label={comment.canDelete ? `Лайков: ${comment.likes}` : comment.liked ? `Убрать лайк, лайков: ${comment.likes}` : `Нравится комментарий, лайков: ${comment.likes}`} disabled={comment.canDelete || liking === comment.id} onClick={() => void toggleLike(comment)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill={comment.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M12 20.5 4.6 13.3A4.6 4.6 0 0 1 11.1 6.8l.9.9.9-.9a4.6 4.6 0 0 1 6.5 6.5L12 20.5Z" /></svg><span>{comment.likes}</span>
         </button>}
