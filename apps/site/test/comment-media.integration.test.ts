@@ -30,3 +30,14 @@ it('stores comment attachments in order, lists them with the thread, serves them
   await walls.deleteWallComment(reader, post, comment!.id);
   expect((await pool.query('select count(*)::int as n from "commentMedia" where id = any($1::uuid[])', [[photoId, videoId]])).rows[0].n).toBe(0);
 });
+
+it('accepts a comment that is only an attachment and refuses an empty one, in the app and in the database', async () => {
+  const image = { kind: 'image' as const, mime: 'image/webp' as const, data: Buffer.from('only-photo'), thumbnail: Buffer.from('t') };
+  await pool.query('update "user" set "lastWallReplyAt" = null where id = $1', [reader]); // the first test's comment started the 30 s pause
+  await expect(walls.addWallComment(reader, post, '   ')).rejects.toThrow('прикрепите');
+  await walls.addWallComment(reader, post, '  ', undefined, [image]);
+  const [comment] = (await walls.getWallComments(post, reader)).items;
+  expect(comment).toMatchObject({ text: '', media: [{ kind: 'image' }] });
+  // The deferred check runs at commit: an empty comment without attachments never lands.
+  await expect(pool.query(`insert into "wallReply" ("wallPostId","userId",text) values ($1,$2,'')`, [post, owner])).rejects.toThrow('text or an attachment');
+});

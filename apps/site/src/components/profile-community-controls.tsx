@@ -47,7 +47,7 @@ export function WallComposer({ targetId, label = 'Комментарий на с
     <fieldset disabled={pending}>
       <label htmlFor="wall-text" className="sr-only">{label}</label>
       <div className="review-text-composer">
-        <MentionTextarea id="wall-text" name="text" value={text} onValueChange={setText} onPaste={media.onPaste} placeholder={placeholder} maxLength={1000} rows={3} required />
+        <MentionTextarea id="wall-text" name="text" value={text} onValueChange={setText} onPaste={media.onPaste} placeholder={placeholder} maxLength={1000} rows={3} required={!media.files.length} />
         <div className="review-composer-toolbar">
           <MediaAttachButton media={media} label="Добавить фото, GIF или видео на стену" />
           <span>{media.preparing ? 'Готовим видео…' : `${media.files.length} / ${MAX_WALL_MEDIA} · фото, GIF, видео`}</span>
@@ -55,7 +55,7 @@ export function WallComposer({ targetId, label = 'Комментарий на с
       </div>
       {media.error && <p role="alert" className="field-error">{media.error}</p>}
       <MediaAttachmentPreviews media={media} />
-      <div className="community-form-footer"><span className="community-muted">{text.length} / 1000</span><Submit disabled={!text.trim() || media.preparing}>Отправить</Submit></div>
+      <div className="community-form-footer"><span className="community-muted">{text.length} / 1000</span><Submit disabled={(!text.trim() && !media.files.length) || media.preparing}>Отправить</Submit></div>
     </fieldset>
     <p role={state.error ? 'alert' : 'status'} className={state.error ? 'field-error' : 'community-feedback'}>{state.error ?? state.success}</p>
   </form>;

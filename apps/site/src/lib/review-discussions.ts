@@ -48,7 +48,9 @@ export async function addReviewComment(userId: string, id: string, input: string
   if (replyToId) reviewId(replyToId);
   reviewId(id);
   const text = input.trim();
-  if (!text || text.length > 1000) throw new ReviewDiscussionError('Напишите от 1 до 1000 символов.');
+  // A comment may be just an attachment; edits still need text (they cannot change attachments).
+  if (text.length > 1000) throw new ReviewDiscussionError('Комментарий должен быть не длиннее 1000 символов.');
+  if (!text && !media.length) throw new ReviewDiscussionError('Напишите комментарий или прикрепите фото, GIF или видео.');
   const client = await getPool().connect();
   try {
     await client.query('begin');

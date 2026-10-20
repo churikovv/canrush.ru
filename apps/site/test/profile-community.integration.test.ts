@@ -59,7 +59,7 @@ describe.sequential('community profile storage', () => {
     await expect(community.addProfileComment(a, b, 'too soon')).rejects.toThrow('30 секунд');
     const own = await community.addProfileComment(c, b, 'author removes this');
     await community.deleteProfileComment(c, own);
-    await expect(community.addProfileComment(b, a, '   ')).rejects.toThrow('1000');
+    await expect(community.addProfileComment(b, a, '   ')).rejects.toThrow('прикрепите');
   });
   it('stores wall photos atomically and removes them with the post', async () => {
     await pool.query('update "user" set "lastWallPostAt"=null where id=$1', [b]);

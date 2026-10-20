@@ -2951,6 +2951,8 @@ html[data-cookie-notice="visible"] .brand-footer {
 .review-comment-composer textarea { width: 100%; resize: vertical; padding: 12px; border: 1px solid var(--theme-line, #c7ccd3); border-radius: 12px; font: inherit; color: var(--color-ink); }
 .review-comment-composer > div { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .review-comment-composer > div > span { color: var(--color-muted-strong); font-size: .75rem; }
+/* The attachment button and the counter sit together on the left, the send button on the right. */
+.review-comment-composer > div > .review-photo-picker + span { margin-right: auto; }
 .review-thread-list { padding: 0; margin: 20px 0 0; list-style: none; }
 .review-thread-list > li { display: flex; align-items: flex-start; gap: 10px; padding: 16px 0; border-top: 1px solid var(--color-control); }
 .review-comment-avatar { flex: 0 0 32px; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--color-subtle); overflow: hidden; }

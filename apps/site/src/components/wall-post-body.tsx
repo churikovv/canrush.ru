@@ -54,7 +54,7 @@ export function WallPostBody({ id, text: initial, heading, canEdit, canDelete, c
         <button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => setEditing(false)}>Отмена</button>
         <button className="community-button" type="submit" disabled={pending || !draft.trim() || draft.trim() === text}>{pending ? 'Сохраняем…' : 'Сохранить'}</button>
       </span></div>
-    </form> : <p><MentionText text={text} /></p>}
+    </form> : text ? <p><MentionText text={text} /></p> : null}
     {children}
   </>;
 }

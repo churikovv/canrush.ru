@@ -149,8 +149,9 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
 
 export async function addProfileComment(userId: string, profileId: string, input: unknown, photos: PreparedWallMedia[] = []) {
   if (photos.length > 5) throw new CommunityError('Можно добавить не более 5 вложений.');
-  const text = validateWallText(input);
-  if (!text) throw new CommunityError('Напишите от 1 до 1000 символов.');
+  // A record may be just attachments; then its text is empty.
+  const text = typeof input === 'string' && !input.trim() && photos.length ? '' : validateWallText(input);
+  if (text === null) throw new CommunityError(photos.length ? 'Запись должна быть не длиннее 1000 символов.' : 'Напишите запись или прикрепите фото, GIF или видео.');
   const client = await getPool().connect();
   try {
     await client.query('begin');
