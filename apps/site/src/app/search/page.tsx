@@ -8,6 +8,7 @@ import Link from '@/components/navigation-progress';
 import { BrandShell } from '@/components/brand-shell';
 import { CatalogBrowser } from '@/components/catalog-browser';
 import { MarketBrowser } from '@/components/market-browser';
+import { NavigationIcon } from '@/components/navigation-icon';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { StoreBrowser } from '@/components/store-browser';
 import { auth } from '@/lib/auth';
@@ -17,9 +18,9 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { ...seoMetadata({ title: 'Поиск', description: 'Поиск энергетиков, магазинов и объявлений CanRush.', path: '/search' }), robots: { index: false } };
 
 const SCOPES = [
-  { key: 'catalog', label: 'Каталог' },
-  { key: 'stores', label: 'Магазины' },
-  { key: 'market', label: 'Маркет' },
+  { key: 'catalog', label: 'Каталог', icon: 'can' },
+  { key: 'stores', label: 'Магазины', icon: 'stores' },
+  { key: 'market', label: 'Маркет', icon: 'market' },
 ] as const;
 type Scope = typeof SCOPES[number]['key'];
 
@@ -33,7 +34,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const scopeHref = (key: Scope) => `/search?${new URLSearchParams({ ...(key === 'catalog' ? {} : { type: key }), ...(query ? { q: query } : {}) })}`;
   const keep: Record<string, string> = scope === 'catalog' ? {} : { type: scope };
   const scopes = <nav className="search-scopes" aria-label="Где искать">
-    {SCOPES.map(item => <Link key={item.key} href={scopeHref(item.key)} aria-current={item.key === scope ? 'page' : undefined} replace scroll={false}>{item.label}</Link>)}
+    {SCOPES.map(item => <Link key={item.key} href={scopeHref(item.key)} aria-current={item.key === scope ? 'page' : undefined} replace scroll={false}><NavigationIcon section={item.icon} />{item.label}</Link>)}
   </nav>;
   const browser = scope === 'catalog' ? <CatalogBrowser params={params} basePath="/search" scopes={scopes} />
     : scope === 'stores' ? <StoreBrowser params={{ q: text('q'), page: text('page') }} basePath="/search" keep={keep} scopes={scopes} />

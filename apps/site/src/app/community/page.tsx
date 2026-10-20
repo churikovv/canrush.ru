@@ -8,6 +8,7 @@ import { headers } from 'next/headers';
 import Link from '@/components/navigation-progress';
 import { BrandShell } from '@/components/brand-shell';
 import { FeedBrowser } from '@/components/feed-browser';
+import { NavigationIcon } from '@/components/navigation-icon';
 import { PeopleBrowser } from '@/components/people-browser';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { TierListsBrowser } from '@/components/tier-lists-browser';
@@ -18,9 +19,9 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { ...seoMetadata({ title: 'Сообщество', description: 'Тирлисты, лента и участники CanRush.', path: '/community' }), robots: { index: false } };
 
 const SCOPES = [
-  { key: 'tierlists', label: 'Тирлисты' },
-  { key: 'feed', label: 'Лента' },
-  { key: 'people', label: 'Люди' },
+  { key: 'tierlists', label: 'Тирлисты', icon: 'tierlists' },
+  { key: 'feed', label: 'Лента', icon: 'feed' },
+  { key: 'people', label: 'Люди', icon: 'community' },
 ] as const;
 type Scope = typeof SCOPES[number]['key'];
 
@@ -30,7 +31,7 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
   const scope: Scope = SCOPES.find(item => item.key === params.type)?.key ?? 'tierlists';
   const text = (name: string) => typeof params[name] === 'string' ? params[name] : undefined;
   const scopes = <nav className="search-scopes" aria-label="Раздел сообщества">
-    {SCOPES.map(item => <Link key={item.key} href={item.key === 'tierlists' ? '/community' : `/community?type=${item.key}`} aria-current={item.key === scope ? 'page' : undefined} replace scroll={false}>{item.label}</Link>)}
+    {SCOPES.map(item => <Link key={item.key} href={item.key === 'tierlists' ? '/community' : `/community?type=${item.key}`} aria-current={item.key === scope ? 'page' : undefined} replace scroll={false}><NavigationIcon section={item.icon} />{item.label}</Link>)}
   </nav>;
   const viewerId = scope === 'feed' ? (await auth.api.getSession({ headers: await headers() }))?.user.id ?? null : null;
   // One surface and one pinned switcher for every tab, so it looks and sits the same everywhere (as on /search).

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export type NavigationSection = 'home' | 'search' | 'community' | 'calendar' | 'catalog' | 'prices' | 'stores' | 'tierlists' | 'favorites' | 'profile' | 'market' | 'feed';
 /** Header groups have their own glyphs; they are not pages. */
-export type NavigationIconName = NavigationSection | 'sign-in';
+export type NavigationIconName = NavigationSection | 'sign-in' | 'can';
 
 const GLYPHS: Record<NavigationIconName, ReactNode> = {
   market: <path d="M3 3h18l1 6a3 3 0 0 1-5 2 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-5-2l1-6Zm1 10h5v8H4v-8Zm7 0h9v8h-9v-8Z" />,
@@ -20,6 +20,8 @@ const GLYPHS: Record<NavigationIconName, ReactNode> = {
       <path className="nav-icon-part" d="M10.6 11.8 9 16h2.2l-.7 3.4 3.9-5h-2.3l1.1-2.6h-2.6Z" />
     </>
   ),
+  // A can with a bolt cut out: the catalog's drinks (the catalog page itself keeps the magnifier).
+  can: <path fillRule="evenodd" d="M8 2h8l1 2.2V6H7V4.2L8 2Zm-1 5.5h10v12.3L16 22H8l-1-2.2V7.5Zm4.4 2.7-2 4.6h2.2l-.8 3.7 3.8-5.1h-2.3l1.3-3.2h-2.2Z" />,
   home: <path d="M12 2.5 2 11h2.5v10h5v-6h5v6h5V11H22L12 2.5Z" />,
   stores: <path d="M12 2a7.5 7.5 0 0 0-7.5 7.5c0 5.4 6.2 11.6 6.9 12.2a.9.9 0 0 0 1.2 0c.7-.6 6.9-6.8 6.9-12.2A7.5 7.5 0 0 0 12 2Zm0 10.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Z" />,
   community: <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7.5 0a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5ZM9 12.75c-3.6 0-6.5 2-6.5 4.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2.65c0-2.6-2.9-4.6-6.5-4.6Zm7.5.5c-.55 0-1.07.05-1.57.15a5.6 5.6 0 0 1 1.82 3.95V21h3.75a1 1 0 0 0 1-1v-2.2c0-2.5-2.2-4.55-5-4.55Z" />,
