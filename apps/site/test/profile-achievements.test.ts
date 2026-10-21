@@ -28,7 +28,7 @@ describe('profile achievement and wall validation', () => {
   });
   it('gives every tag a rarity and at least one step', () => {
     for (const item of PROFILE_ACHIEVEMENTS) expect(item.steps.length).toBeGreaterThan(0);
-    expect(PROFILE_ACHIEVEMENTS.filter(item => item.rarity === 'epic').map(item => item.key)).toEqual(['burner', 'adrenaline', 'streak-14', 'deadinside']);
+    expect(PROFILE_ACHIEVEMENTS.filter(item => item.rarity === 'epic').map(item => item.key)).toEqual(['burner', 'adrenaline', 'monster', 'streak-14', 'deadinside']);
   });
   it('hides administrative options from regular viewers', () => {
     expect(visibleProfileAchievements(false).some(item => item.key === 'admin')).toBe(false);

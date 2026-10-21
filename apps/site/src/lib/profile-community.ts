@@ -2,7 +2,7 @@ import type { PreparedWallMedia } from '@/lib/wall-media';
 import type { WallMediaKind } from '@/lib/wall-media-limits';
 import type { RankUpTier } from '@/lib/level-tier';
 import { getPool } from '@/db/pool';
-import { ACHIEVEMENT_METRICS, DETAILED_REVIEW_CHARS, PROFILE_ACHIEVEMENTS, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
+import { ACHIEVEMENT_METRICS, DETAILED_REVIEW_CHARS, FAN_XP_SINCE, PROFILE_ACHIEVEMENTS, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
 
 export const COMMUNITY_PAGE_SIZE = 20;
 export type ConnectionKind = 'friends' | 'followers' | 'following';
@@ -38,6 +38,12 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(*)::int from fav where b in ('adrenaline', 'adrenaline rush')) as "adrenalineFavorites",
     (select count(*)::int from r where b = 'monster' and split_part(flavor, ':', 1) = 'monster_ultra_white') as "whiteMonster",
     (select count(*)::int from fav where b = 'monster' and split_part(flavor, ':', 1) = 'monster_ultra_white') as "whiteMonsterFavorite",
+    (select count(*)::int from r where b = 'monster') as monster,
+    (select count(*)::int from r where b = 'monster' and detailed) as "monsterDetailed",
+    -- Best 7-day run of XP: a window ending at each award sums everything earned in the 7 days before it.
+    (select coalesce(max(w), 0)::int from (select sum(points) over (order by "createdAt" range between interval '7 days' preceding and current row) as w
+      from "profileExperience" where "userId" = u.id and reason not in ('monthly-top', 'achievement') and "createdAt" >= $4::timestamptz) x) as "weeklyXp",
+    (select count(*)::int from "marketStore" where "ownerId" = u.id and status = 'published') as "publishedStores",
     (select count(*)::int from r where b = 'flash up') as flash,
     (select count(*)::int from r where b = 'flash up' and detailed) as "flashDetailed",
     (case when exists(select 1 from "siteAdmin" where email = lower(u.email)) then 1 else 0 end) as admin,
@@ -54,7 +60,7 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(*)::int from "drinkLog" where "userId" = u.id) as "drinkLogs",
     (select coalesce(max(n), 0)::int from (select count(*) as n from (select day - (row_number() over (order by day))::int as run
       from (select distinct day from "drinkLog" where "userId" = u.id) d) s group by run) t) as "drinkStreak"
-    from "user" u where u.id = $1`, [userId, viewerId ?? null, DETAILED_REVIEW_CHARS]);
+    from "user" u where u.id = $1`, [userId, viewerId ?? null, DETAILED_REVIEW_CHARS, `${FAN_XP_SINCE}T00:00:00+03:00`]);
   const row = result.rows[0];
   if (!row) throw new CommunityError('Профиль не найден.');
   const progress = Object.fromEntries(ACHIEVEMENT_METRICS.map(metric => [metric, row[metric]])) as AchievementProgress;

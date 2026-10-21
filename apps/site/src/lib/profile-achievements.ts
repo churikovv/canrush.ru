@@ -3,12 +3,17 @@ export const ACHIEVEMENT_METRICS = [
   'tierLists', 'tierListLikes', 'friends', 'followers', 'whiteMonster', 'whiteMonsterFavorite', 'flash', 'flashDetailed',
   'burn', 'burnDetailed', 'burnFavorites', 'adrenaline', 'adrenalineDetailed', 'adrenalineFavorites',
   'admin', 'telegram', 'monthlyTop', 'drinkLogs', 'drinkStreak', 'contestWin', 'betaEngine',
+  'monster', 'monsterDetailed', 'weeklyXp', 'publishedStores',
 ] as const;
 export type AchievementMetric = typeof ACHIEVEMENT_METRICS[number];
 export type AchievementProgress = Record<AchievementMetric, number>;
 
 /** A review counts as detailed once its trimmed text reaches this length. */
 export const DETAILED_REVIEW_CHARS = 150;
+/** «Фан»: XP within any 7 days in a row. Rewards for the monthly top and for tags themselves do not count. */
+export const FAN_WEEKLY_XP = 300;
+/** XP before this day came partly from bulk backfills stamped with one moment, so «Фан» only counts later awards. */
+export const FAN_XP_SINCE = '2026-10-21';
 
 export const ACHIEVEMENT_RARITIES = {
   common: 'Обычный',
@@ -44,6 +49,9 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
     { metric: 'adrenaline', goal: 5, label: 'Оценить 5 вкусов Adrenaline или Adrenaline Rush' },
     { metric: 'adrenalineDetailed', goal: 3, label: `Написать 3 развёрнутых отзыва на Adrenaline (от ${DETAILED_REVIEW_CHARS} символов)` },
     { metric: 'adrenalineFavorites', goal: 1, label: 'Добавить Adrenaline в избранное' }] },
+  { key: 'monster', label: 'Монстр', rarity: 'epic', description: 'Выпустить зверя из линейки Monster Energy', steps: [
+    { metric: 'monster', goal: 3, label: 'Оценить 3 вкуса Monster Energy' },
+    { metric: 'monsterDetailed', goal: 3, label: `Написать 3 развёрнутых отзыва на Monster (от ${DETAILED_REVIEW_CHARS} символов)` }] },
   { key: 'streak-14', label: 'Серия 14', rarity: 'epic', description: 'Две недели на заряде', steps: [
     { metric: 'drinkStreak', goal: 14, label: 'Отмечать энергетик в календаре 14 дней подряд' }] },
   { key: 'deadinside', label: 'Deadinside', rarity: 'epic', description: 'Тирлисты, о которых говорят', steps: [
@@ -52,6 +60,8 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
     { metric: 'tierListLikes', goal: 1, label: 'Получить лайк на тирлисте' }] },
   { key: 'streak-7', label: 'Серия 7', rarity: 'rare', description: 'Неделя, когда птица довольна', steps: [
     { metric: 'drinkStreak', goal: 7, label: 'Отмечать энергетик в календаре 7 дней подряд' }] },
+  { key: 'fan', label: 'Фан', rarity: 'rare', description: 'Неделя, когда Canrush не отпускал', steps: [
+    { metric: 'weeklyXp', goal: FAN_WEEKLY_XP, label: `Набрать ${FAN_WEEKLY_XP} XP за 7 дней подряд` }] },
   { key: 'seller', label: 'Селлер', rarity: 'rare', description: 'Довести сделки до конца', steps: [
     { metric: 'listings', goal: 1, label: 'Опубликовать товар в маркете' },
     { metric: 'sales', goal: 3, label: 'Завершить 3 продажи' }] },
@@ -82,6 +92,8 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
     { metric: 'drinkLogs', goal: 1, label: 'Отметить первый энергетик в календаре' }] },
   { key: 'kitty', label: 'Котик', rarity: 'common', description: 'Начать собирать любимое', steps: [
     { metric: 'favorites', goal: 5, label: 'Добавить 5 напитков в избранное' }] },
+  { key: 'shopper', label: 'Шоппер', rarity: 'common', description: 'Показать всем, где купить энергетики', steps: [
+    { metric: 'publishedStores', goal: 1, label: 'Поделиться магазином: после проверки он виден всем' }] },
   { key: 'telegram', label: 'Телега', rarity: 'common', description: 'Связь с автором', steps: [
     { metric: 'telegram', goal: 1, label: 'Указать Telegram в настройках профиля' }] },
   { key: 'admin', label: 'Админ', rarity: 'special', description: 'Только для действующих администраторов', steps: [
@@ -128,7 +140,7 @@ export function profilePageNumber(value: unknown): number {
   return typeof page === 'number' && Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
 }
 
-const ACHIEVEMENT_ART = new Set(['engine', 'energizer', 'top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven', 'drink-start', 'streak-7', 'streak-14', 'streak-30']);
+const ACHIEVEMENT_ART = new Set(['engine', 'energizer', 'top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven', 'drink-start', 'streak-7', 'streak-14', 'streak-30', 'monster', 'fan', 'shopper']);
 export function achievementImage(key: string): string {
   return ACHIEVEMENT_ART.has(key) ? `/brand/achievements/${key}.png` : '/brand/icons/achievement.svg';
 }
