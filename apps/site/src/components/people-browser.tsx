@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { AvatarFrame } from '@/components/avatar-frame';
 import { LevelChip } from '@/components/level-badge';
-import { experienceLevel } from '@/lib/experience-level';
+import { experienceLevel, shortXp } from '@/lib/experience-level';
 import { levelTier } from '@/lib/level-tier';
 import { searchPeople } from '@/lib/people-search';
 import { profileTagLabel } from '@/lib/profile-achievements';
@@ -38,7 +38,7 @@ export async function PeopleBrowser({ q }: { q: string }) {
           </span>
         </span>
         <span className="people-xp" data-level-tier={levelTier(level).tier.key} title={`${person.xp.toLocaleString('ru-RU')} XP · место ${person.rank}`}>
-          <strong>{compact.format(person.xp)}</strong><small>XP</small>
+          <strong>{shortXp(person.xp)}</strong><small>XP</small>
         </span>
       </Link></li>;
     })}</ol> : <p className="community-empty">Никого не нашли. Искать можно по нику, имени и описанию.</p>}

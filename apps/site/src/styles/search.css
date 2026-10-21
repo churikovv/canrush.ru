@@ -36,8 +36,8 @@
 .people-engine-number { font-size: inherit; font-variant-numeric: tabular-nums; opacity: .85; }
 .people-bio { overflow: hidden; color: var(--color-muted-strong); font-size: .9375rem; text-overflow: ellipsis; white-space: nowrap; }
 .people-stats { display: flex; flex-wrap: wrap; gap: 6px; }
-.people-stats > span { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 10px; border-radius: 999px; background: var(--color-subtle); color: var(--color-text); font-size: .8125rem; font-weight: 700; }
-.people-stats > .profile-level { padding: 3px 10px; }
+.people-stats > span:not(.profile-level) { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 10px; border-radius: 999px; background: var(--color-subtle); color: var(--color-text); font-size: .8125rem; font-weight: 700; }
+.people-stats > .profile-level { min-height: 28px; padding: 3px 10px; }
 .people-xp { display: grid; place-items: center; align-content: center; width: 76px; height: 84px; padding-bottom: 8px; color: var(--tier-ink, #fff); background: linear-gradient(160deg, var(--tier-light, #8ab4ff), var(--tier-mid, #3d7bff) 55%, var(--tier-dark, #1d4fd8)); clip-path: polygon(0 0, 100% 0, 100% 62%, 50% 100%, 0 62%); filter: drop-shadow(0 6px 14px var(--tier-glow, rgb(0 0 0 / .2))); }
 .people-xp strong { font-size: 1.25rem; font-weight: 900; line-height: 1; letter-spacing: -.02em; }
 .people-xp small { font-size: .6875rem; font-weight: 800; opacity: .8; }

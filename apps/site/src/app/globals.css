@@ -2815,7 +2815,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 /* Profile experience, identity and image framing. */
 /* Level tiers: one palette drives the chip, the emblem and the progress fill. */
 [data-level-tier=rookie] { --tier-light: #eef2f7; --tier-mid: #c9d1dc; --tier-dark: #8e99a8; --tier-ink: #344050; --tier-glow: rgb(120 135 155 / .18); }
-[data-level-tier=bronze] { --tier-light: #ffd2a6; --tier-mid: #d0854a; --tier-dark: #85461c; --tier-ink: #fff8f0; --tier-glow: rgb(208 133 74 / .4); }
+[data-level-tier=bronze] { --tier-light: #ffd2a6; --tier-mid: #d0854a; --tier-dark: #85461c; --tier-ink: #3d1c06; --tier-glow: rgb(208 133 74 / .4); }
 [data-level-tier=silver] { --tier-light: #ffffff; --tier-mid: #cdd6e0; --tier-dark: #7f8c9d; --tier-ink: #26303c; --tier-glow: rgb(150 170 200 / .45); }
 [data-level-tier=gold] { --tier-light: #fff3b0; --tier-mid: #f6bb24; --tier-dark: #b0700c; --tier-ink: #4d2d00; --tier-glow: rgb(246 170 20 / .55); }
 [data-level-tier=platinum] { --tier-light: #effffd; --tier-mid: #79e6e2; --tier-dark: #2a86b5; --tier-ink: #06324a; --tier-glow: rgb(60 210 225 / .55); }
@@ -3272,7 +3272,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 .level-emblem-bevel { stroke: var(--tier-light); stroke-width: 1.5; stroke-linejoin: round; opacity: .7; }
 .level-emblem-facets { stroke: rgb(255 255 255 / .4); stroke-width: 1; }
 .level-emblem-number { fill: var(--tier-ink); font-weight: 800; letter-spacing: -.03em; }
-.level-emblem[data-level-tier=bronze] .level-emblem-number,.level-emblem[data-level-tier=legend] .level-emblem-number { paint-order: stroke; stroke: rgb(40 10 60 / .35); stroke-width: 3px; }
+.level-emblem[data-level-tier=legend] .level-emblem-number { paint-order: stroke; stroke: rgb(40 10 60 / .35); stroke-width: 3px; }
 .level-emblem-sheen { animation: level-sheen 5.5s cubic-bezier(.4,0,.2,1) infinite; }
 .level-emblem[data-level-tier=gold] .level-emblem-sheen { animation-duration: 4.2s; }
 .level-emblem[data-level-tier=platinum] .level-emblem-sheen { animation-duration: 3.4s; }
