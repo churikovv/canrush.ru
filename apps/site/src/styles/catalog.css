@@ -284,6 +284,123 @@
   line-height: 1.65;
   overflow-wrap: anywhere;
 }
+/* «Сгенерировано ИИ»: the only text on the card nobody read off a label. */
+.catalog-ingredients-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.catalog-ingredients-heading h2 {
+  margin: 0;
+}
+.catalog-ai-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #efe7ff, #e3edff);
+  box-shadow: inset 0 0 0 1px #c9b8f5;
+  color: #4a2a9c;
+  font-size: .8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.catalog-ai-chip svg {
+  flex: none;
+  color: #7b4dff;
+}
+:root[data-site-theme=graphite] .catalog-ai-chip {
+  background: linear-gradient(120deg, #2a2145, #1f2a45);
+  box-shadow: inset 0 0 0 1px #5b48a0;
+  color: #dccfff;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-site-theme=system] .catalog-ai-chip {
+    background: linear-gradient(120deg, #2a2145, #1f2a45);
+    box-shadow: inset 0 0 0 1px #5b48a0;
+    color: #dccfff;
+  }
+}
+/* Nutrition read from the shop page: caffeine and taurine as tiles, the usual values as one row. */
+.catalog-nutrition {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-control);
+}
+.catalog-nutrition-title {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.catalog-nutrition-title span {
+  color: var(--color-muted-strong);
+  font-weight: 600;
+}
+.catalog-nutrition dl {
+  display: grid;
+  margin: 0;
+}
+.catalog-nutrition dt {
+  color: var(--color-muted-strong);
+  font-size: .8125rem;
+  line-height: 1.4;
+}
+.catalog-nutrition dd {
+  margin: 0;
+  color: var(--color-ink);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.catalog-nutrition dd span {
+  color: var(--color-muted-strong);
+  font-size: .8125rem;
+  font-weight: 700;
+}
+.catalog-nutrition-active {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+.catalog-nutrition-active > div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--color-subtle);
+}
+.catalog-nutrition-active dd {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+.catalog-nutrition-table {
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  border: 1px solid var(--color-control);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.catalog-nutrition-table > div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  padding: 10px 14px;
+  box-shadow: -1px 0 0 var(--color-control);
+}
+.catalog-nutrition-table dd {
+  font-size: 1.0625rem;
+}
+.catalog-nutrition-note {
+  margin: 0;
+  color: var(--color-muted-strong);
+  font-size: .8125rem;
+}
 /* Reviews */
 .catalog-reviews {
   gap: 32px;

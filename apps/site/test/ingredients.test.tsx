@@ -42,4 +42,50 @@ describe('site compositions', () => {
     expect(renderToStaticMarkup(createElement(CatalogProductIngredients, { data: null }))).toContain('пока не добавлен');
     expect(renderToStaticMarkup(createElement(CatalogProductIngredients, { data: { ...record, ingredients: '<script>unsafe</script>' } }))).not.toContain('<script>');
   });
+  it('shows label numbers as caffeine and taurine tiles plus a nutrition row, and rejects implausible ones', () => {
+    const nutrition = { per: '100g' as const, energyKcal: 60, protein: 0.2, carbs: 14, taurineMg: 230, caffeineMg: 30, method: 'gigachat' as const, model: 'GigaChat-2-Pro', extractedAt: '2026-10-21T00:00:00Z' };
+    const withNutrition: PublishedIngredients = { ...record, nutrition };
+    expect(selectIngredients({ version: 1, products: [withNutrition] }, 'Burn', 'tropical')).toEqual(withNutrition);
+    for (const change of [{ caffeineMg: 300 }, { per: '250ml' }, { method: 'guess' }, { taurineMg: '230' }, { extra: 1 }]) {
+      expect(selectIngredients({ version: 1, products: [{ ...withNutrition, nutrition: { ...nutrition, ...change } }] }, 'Burn', 'tropical')).toBeNull();
+    }
+    expect(selectIngredients({ version: 1, products: [{ ...withNutrition, nutrition: { per: '100ml', method: 'gigachat', model: 'm', extractedAt: nutrition.extractedAt } }] }, 'Burn', 'tropical')).toBeNull();
+    const html = renderToStaticMarkup(createElement(CatalogProductIngredients, { data: withNutrition }));
+    expect(html).toContain('Пищевая ценность <span>на 100 г</span>');
+    expect(html).toMatch(/Кофеин<\/dt><dd>30<span> мг/);
+    expect(html).toMatch(/Таурин<\/dt><dd>230<span> мг/);
+    expect(html).toMatch(/Белки<\/dt><dd>0,2<span> г/);
+    expect(html).not.toContain('Жиры');
+    expect(html).toContain('распознаны автоматически');
+    expect(html).toContain('Сверяйте состав и пищевую ценность с этикеткой вашей банки.');
+  });
+  it('accepts store card numbers without a model and labels them as the shop card', () => {
+    const nutrition = { per: '100g' as const, energyKcal: 46, taurineMg: 400, method: 'store' as const, extractedAt: '2026-10-21T00:00:00Z' };
+    const lavka: PublishedIngredients = { ...record, status: 'unverified', reviewNote: 'Из карточки Яндекс Лавки, ещё не сверено.', nutrition };
+    expect(selectIngredients({ version: 1, products: [lavka] }, 'Burn', 'tropical')).toEqual(lavka);
+    expect(selectIngredients({ version: 1, products: [{ ...lavka, nutrition: { ...nutrition, model: 'GigaChat-2-Pro' } }] }, 'Burn', 'tropical')).toBeNull();
+    expect(selectIngredients({ version: 1, products: [{ ...lavka, nutrition: { ...nutrition, method: 'gigachat' } }] }, 'Burn', 'tropical')).toBeNull();
+    const html = renderToStaticMarkup(createElement(CatalogProductIngredients, { data: lavka }));
+    expect(html).toContain('Данные из карточки товара в магазине.');
+    expect(html).not.toContain('распознаны автоматически');
+    expect(html).not.toContain(lavka.reviewNote);
+  });
+  it('marks a model-written composition with the «ИИ» chip and keeps it apart from sourced records', () => {
+    const nutrition = { per: '100ml' as const, energyKcal: 38, caffeineMg: 32, method: 'ai' as const, model: 'GigaChat-2-Pro', extractedAt: '2026-10-21T00:00:00Z' };
+    const { sourceUrl: _sourceUrl, ...withoutSource } = record;
+    const ai: PublishedIngredients = { ...withoutSource, sourceName: 'GigaChat', status: 'ai_generated', model: 'GigaChat-2-Pro', nutrition };
+    expect(selectIngredients({ version: 1, products: [ai] }, 'Burn', 'tropical')).toEqual(ai);
+    for (const change of [{ sourceUrl: record.sourceUrl }, { model: undefined }, { nutrition: { ...nutrition, method: 'store', model: undefined } }]) {
+      expect(selectIngredients({ version: 1, products: [{ ...ai, ...change }] }, 'Burn', 'tropical')).toBeNull();
+    }
+    // A sourced record can never carry model-written numbers or a model name.
+    expect(selectIngredients({ version: 1, products: [{ ...record, nutrition }] }, 'Burn', 'tropical')).toBeNull();
+    expect(selectIngredients({ version: 1, products: [{ ...record, model: 'GigaChat-2-Pro' }] }, 'Burn', 'tropical')).toBeNull();
+    const html = renderToStaticMarkup(createElement(CatalogProductIngredients, { data: ai }));
+    expect(html).toContain('catalog-ai-chip');
+    expect(html).toContain('Сгенерировано ИИ');
+    expect(html).toContain('Числа написал ИИ');
+    expect(html).toContain('без этикетки и без проверки');
+    expect(renderToStaticMarkup(createElement(CatalogProductIngredients, { data: record }))).not.toContain('catalog-ai-chip');
+  });
 });

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import path from 'node:path';
-import { CITIES, isPublishedIngredients, isResolvedFlavor, type PublishedIngredients } from '@canrush/shared';
+import { CITIES, isIngredientNutrition, isPublishedIngredients, isResolvedFlavor, type IngredientNutrition, type PublishedIngredients } from '@canrush/shared';
 import { extractIngredients, sourceForUrl, type IngredientSource } from './core.js';
 
 export interface IngredientBinding {
@@ -14,6 +14,59 @@ export interface IngredientBinding {
   ingredientsSha256: string;
   status?: PublishedIngredients['status'];
   reviewNote?: string;
+}
+
+/** Label numbers read by GigaChat (nutrition-cli.ts), keyed by product; publication only attaches them. */
+export const nutritionFile = (parserRoot: string) => path.resolve(parserRoot, '../../data/ingredients/nutrition.json');
+export interface NutritionSnapshot {
+  version: 1;
+  /** `reply` is the model's raw answer, kept so verification can be rerun without new requests. */
+  items: Record<string, { sourceUrl: string; excerptSha256: string; model: string; extractedAt: string; reply: string; nutrition: IngredientNutrition | null; dropped: string[] }>;
+}
+export const nutritionKey = (brand: string, flavor: string) => JSON.stringify([brand, flavor]);
+
+/** Cards of the big Yandex Lavka (lavka-cli.ts): «Полный состав» and the card's nutrition fields, keyed by product. */
+export const lavkaFile = (parserRoot: string) => path.resolve(parserRoot, '../../data/ingredients/lavka.json');
+export interface LavkaSnapshot {
+  version: 1;
+  items: Record<string, { sourceUrl: string; title: string; volumeMl: number | null; fetchedAt: string; ingredients: string | null; nutrition: IngredientNutrition | null }>;
+}
+/** Compositions and numbers GigaChat wrote from general knowledge (ai-cli.ts), for products with no source at all. */
+export const aiFile = (parserRoot: string) => path.resolve(parserRoot, '../../data/ingredients/ai.json');
+export interface AiSnapshot {
+  version: 1;
+  items: Record<string, { title: string; volumeMl: number; model: string; generatedAt: string; reply: string; ingredients: string | null; nutrition: IngredientNutrition | null; dropped: string[] }>;
+}
+
+/**
+ * The last resort: shown with an «ИИ» chip and replaced as soon as a reviewed binding or a Lavka card exists.
+ * Only the ingredient list is published. The model's numbers stay in the snapshot: a blind check against known drinks
+ * matched 14 of 33, and the full run gave the same defaults to most brands (taurine 80 mg, 23–31 kcal).
+ */
+export function aiRecord(brand: string, flavor: string, item: AiSnapshot['items'][string]): PublishedIngredients | null {
+  if (!isResolvedFlavor(flavor) || !item.ingredients) return null;
+  const record = {
+    brand, flavor, productTitle: item.title, volumeMl: item.volumeMl, market: 'RU' as const, ingredients: item.ingredients,
+    sourceName: 'GigaChat', fetchedAt: item.generatedAt, status: 'ai_generated' as const, model: item.model,
+  };
+  return isPublishedIngredients(record) ? record : null;
+}
+
+export const LAVKA_REVIEW_NOTE = 'Состав и пищевая ценность взяты из карточки Яндекс Лавки и ещё не сверены вручную.';
+
+/**
+ * A preliminary record from a Lavka card, for a product without a reviewed binding. The parser already matched the
+ * card to the catalog by brand and flavor; the record still needs a catalog volume and no sugar conflict.
+ */
+export function lavkaRecord(brand: string, flavor: string, item: LavkaSnapshot['items'][string]): PublishedIngredients | null {
+  if (!isResolvedFlavor(flavor) || !item.ingredients || !item.volumeMl) return null;
+  if (extractIngredients(`Состав: ${item.ingredients}`, item.title).warnings.includes('possible_sugar_conflict')) return null;
+  const record = {
+    brand, flavor, productTitle: item.title, volumeMl: item.volumeMl, market: 'RU' as const, ingredients: item.ingredients,
+    sourceName: 'Яндекс Лавка', sourceUrl: item.sourceUrl, fetchedAt: item.fetchedAt, status: 'unverified' as const, reviewNote: LAVKA_REVIEW_NOTE,
+    ...(isIngredientNutrition(item.nutrition) ? { nutrition: item.nutrition } : {}),
+  };
+  return isPublishedIngredients(record) ? record : null;
 }
 
 export function publishCandidate(binding: IngredientBinding, candidate: unknown, sources: IngredientSource[]): PublishedIngredients | null {
@@ -53,6 +106,9 @@ export async function publishIngredients(parserRoot: string, bundled = false): P
     }
   }
   if (!groups.length) throw new Error('Нет каталогов для проверки привязок');
+  let nutrition: NutritionSnapshot['items'] = {};
+  try { nutrition = (JSON.parse(await readFile(nutritionFile(parserRoot), 'utf8')) as NutritionSnapshot).items ?? {}; }
+  catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
   const records: PublishedIngredients[] = [];
   const keys = new Set<string>();
   // Fail without replacing the existing snapshot if any binding no longer matches its evidence.
@@ -65,7 +121,30 @@ export async function publishIngredients(parserRoot: string, bundled = false): P
     const report = JSON.parse(await readFile(path.resolve(parserRoot, '../../data/ingredients/runs', binding.reportId, 'report.json'), 'utf8')) as { candidates: unknown[] };
     const record = report.candidates.map((c) => publishCandidate(binding, c, sources)).find((c) => c !== null);
     if (!record) throw new Error(`Состав не соответствует выбранному источнику: ${binding.brand}/${binding.flavor}`);
-    records.push(record);
+    // Numbers belong to the page the composition came from; a rebound source drops them until the next extraction.
+    const extracted = nutrition[key];
+    records.push(extracted?.sourceUrl === binding.sourceUrl && isIngredientNutrition(extracted.nutrition) ? { ...record, nutrition: extracted.nutrition } : record);
+  }
+  // Lavka fills only products without a reviewed binding, and only versions the catalogs still carry.
+  let lavka: LavkaSnapshot['items'] = {};
+  try { lavka = (JSON.parse(await readFile(lavkaFile(parserRoot), 'utf8')) as LavkaSnapshot).items ?? {}; }
+  catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+  for (const [key, item] of Object.entries(lavka)) {
+    if (keys.has(key)) continue;
+    const [brand, flavor] = JSON.parse(key) as [string, string];
+    if (!groups.some((g) => g.brand === brand && g.flavor === flavor && g.variants.some((v) => v.volumeMl === item.volumeMl))) continue;
+    const record = lavkaRecord(brand, flavor, item);
+    if (record) { keys.add(key); records.push(record); }
+  }
+  let ai: AiSnapshot['items'] = {};
+  try { ai = (JSON.parse(await readFile(aiFile(parserRoot), 'utf8')) as AiSnapshot).items ?? {}; }
+  catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+  for (const [key, item] of Object.entries(ai)) {
+    if (keys.has(key)) continue;
+    const [brand, flavor] = JSON.parse(key) as [string, string];
+    if (!groups.some((g) => g.brand === brand && g.flavor === flavor && g.variants.some((v) => v.volumeMl === item.volumeMl))) continue;
+    const record = aiRecord(brand, flavor, item);
+    if (record) { keys.add(key); records.push(record); }
   }
   const directory = bundled ? path.resolve(parserRoot, '../site/src/content') : siteData;
   await mkdir(directory, { recursive: true });

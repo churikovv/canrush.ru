@@ -13,6 +13,9 @@
     "test": "vitest run",
     "ingredients": "tsx src/ingredients/cli.ts",
     "ingredients:publish": "tsx src/ingredients/publish-cli.ts",
+    "ingredients:nutrition": "tsx src/ingredients/nutrition-cli.ts",
+    "ingredients:lavka": "tsx src/ingredients/lavka-cli.ts",
+    "ingredients:ai": "tsx src/ingredients/ai-cli.ts",
     "registry:restore": "tsx src/restore-product-registry.ts"
   },
   "dependencies": {

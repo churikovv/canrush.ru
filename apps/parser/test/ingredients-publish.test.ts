@@ -63,9 +63,18 @@ it('publishes a regional-only product to the Git bundle and preserves it on evid
     expect(result.file).toBe(path.join(root, 'apps/site/src/content/ingredients.json'));
     const before = await readFile(result.file, 'utf8');
     expect(JSON.parse(before).products[0]).toMatchObject({ flavor: 'tropical', volumeMl: 449 });
+    expect(JSON.parse(before).products[0].nutrition).toBeUndefined();
+    // Extracted numbers ride along only for the page the composition came from.
+    const nutrition = { per: '100ml', taurineMg: 230, method: 'gigachat', model: 'GigaChat-2-Pro', extractedAt: '2026-10-21T00:00:00Z' };
+    const item = { excerptSha256: 'x', model: 'GigaChat-2-Pro', extractedAt: nutrition.extractedAt, reply: '{}', nutrition, dropped: [] };
+    await put('data/ingredients/nutrition.json', { version: 1, items: { '["Burn","tropical"]': { ...item, sourceUrl: binding.sourceUrl } } });
+    expect(JSON.parse(await readFile((await publishIngredients(parserRoot, true)).file, 'utf8')).products[0].nutrition).toEqual(nutrition);
+    await put('data/ingredients/nutrition.json', { version: 1, items: { '["Burn","tropical"]': { ...item, sourceUrl: 'https://example.com/product/9' } } });
+    expect(JSON.parse(await readFile((await publishIngredients(parserRoot, true)).file, 'utf8')).products[0].nutrition).toBeUndefined();
+    const published = await readFile(result.file, 'utf8');
     await put(evidence, { candidates: [{ ...candidate, ingredients: 'Изменённый состав' }] });
     await expect(publishIngredients(parserRoot, true)).rejects.toThrow('Состав не соответствует');
-    expect(await readFile(result.file, 'utf8')).toBe(before);
+    expect(await readFile(result.file, 'utf8')).toBe(published);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

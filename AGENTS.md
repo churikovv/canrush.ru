@@ -26,6 +26,19 @@ data/              # выходные данные парсера (latest.json, 
 | Едадил       | `edadeal.ts`    | `http_api` (открытый JSON `search.edadeal.io`, без браузера; только акции; `regionId` = Yandex geoid) |
 | Яндекс Лавка | `lavka.ts`      | `http_api` (SSR-страница каталога большой лавки + cookie `lastGeoCoordinate`; полный прайс; города — `sources.lavka.cities`) |
 
+Пищевая ценность (таурин, кофеин, КБЖУ): `npm -w apps/parser run ingredients:nutrition` → GigaChat
+(`src/ingredients/gigachat.ts`, `nutrition.ts`) переносит числа из сохранённой страницы состава. Модели не доверяем:
+`verifyNutrition` оставляет только число, стоящее вплотную к своей подписи в тексте, и в допустимом диапазоне
+(`NUTRITION_RANGES` в `@canrush/shared`). Не ослабляй эту проверку и не проси модель «знать» состав без текста источника.
+Ключ — `GIGACHAT_AUTH_KEY` в `apps/parser/.env`, сертификат Минцифры — только для запросов к GigaChat
+(`certs/russian_trusted_root_ca.pem`). На сайте блок «Пищевая ценность» в карточке состава.
+Временно (до ручной сверки) составы и КБЖУ товаров без проверенной привязки берутся из карточек Лавки:
+`npm -w apps/parser run ingredients:lavka` (`src/ingredients/lavka.ts`) → `status: unverified`, `nutrition.method: 'store'`.
+«Краткий состав» Лавки сделан ИИ — не используй его; GigaChat для Лавки не нужен.
+Последний вариант — `ingredients:ai`: GigaChat по памяти → `status: ai_generated` (без `sourceUrl`, с `model`), на сайте
+плашка «Сгенерировано ИИ». Публикуется только перечень: числа модели (`method: 'ai'`) были шаблонными — не возвращай их без нового контроля. Записи с источником не могут нести `method: 'ai'` или `model`
+(`isPublishedIngredients`). Перед массовым прогоном запускай `--control`: в октябре 2026 числа совпадали плохо.
+
 Антибот: `src/browser/challenge.ts` (детект), `src/browser/session.ts`
 (переиспользование сессий в `.sessions/<source>/`). Разблокировка —
 `npm run session:unlock -- --source=<name>` (см. `apps/parser/README.md`).
