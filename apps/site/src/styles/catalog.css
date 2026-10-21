@@ -298,32 +298,18 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 28px;
-  padding: 4px 10px;
+  min-height: 26px;
+  padding: 3px 10px;
   border-radius: 999px;
-  background: linear-gradient(120deg, #efe7ff, #e3edff);
-  box-shadow: inset 0 0 0 1px #c9b8f5;
-  color: #4a2a9c;
+  background: var(--color-subtle);
+  color: var(--color-muted-strong);
   font-size: .8125rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
 }
 .catalog-ai-chip svg {
   flex: none;
-  color: #7b4dff;
-}
-:root[data-site-theme=graphite] .catalog-ai-chip {
-  background: linear-gradient(120deg, #2a2145, #1f2a45);
-  box-shadow: inset 0 0 0 1px #5b48a0;
-  color: #dccfff;
-}
-@media (prefers-color-scheme: dark) {
-  :root[data-site-theme=system] .catalog-ai-chip {
-    background: linear-gradient(120deg, #2a2145, #1f2a45);
-    box-shadow: inset 0 0 0 1px #5b48a0;
-    color: #dccfff;
-  }
 }
 /* Nutrition read from the shop page: caffeine and taurine as tiles, the usual values as one row. */
 .catalog-nutrition {
@@ -379,6 +365,22 @@
 .catalog-nutrition-active dd {
   font-size: 1.5rem;
   line-height: 1.2;
+}
+.catalog-nutrition dt span {
+  white-space: nowrap;
+}
+.catalog-nutrition-active > div {
+  flex-direction: column;
+}
+.catalog-nutrition-active dt {
+  order: 1;
+}
+.catalog-nutrition-active .catalog-nutrition-can {
+  order: 2;
+  color: var(--color-muted-strong);
+  font-size: .8125rem;
+  font-weight: 600;
+  line-height: 1.4;
 }
 .catalog-nutrition-table {
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));

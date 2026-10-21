@@ -52,8 +52,10 @@ describe('site compositions', () => {
     expect(selectIngredients({ version: 1, products: [{ ...withNutrition, nutrition: { per: '100ml', method: 'gigachat', model: 'm', extractedAt: nutrition.extractedAt } }] }, 'Burn', 'tropical')).toBeNull();
     const html = renderToStaticMarkup(createElement(CatalogProductIngredients, { data: withNutrition }));
     expect(html).toContain('Пищевая ценность <span>на 100 г</span>');
-    expect(html).toMatch(/Кофеин<\/dt><dd>30<span> мг/);
-    expect(html).toMatch(/Таурин<\/dt><dd>230<span> мг/);
+    expect(html).toMatch(/Кофеин <span>на 100 мл<\/span><\/dt><dd>30<span> мг/);
+    expect(html).toContain('≈ 135 мг в банке 449 мл');
+    expect(html).toMatch(/Таурин <span>на 100 мл<\/span><\/dt><dd>230<span> мг/);
+    expect(html).toContain('≈ 1033 мг в банке 449 мл');
     expect(html).toMatch(/Белки<\/dt><dd>0,2<span> г/);
     expect(html).not.toContain('Жиры');
     expect(html).toContain('распознаны автоматически');
@@ -84,8 +86,9 @@ describe('site compositions', () => {
     const html = renderToStaticMarkup(createElement(CatalogProductIngredients, { data: ai }));
     expect(html).toContain('catalog-ai-chip');
     expect(html).toContain('Сгенерировано ИИ');
-    expect(html).toContain('Числа написал ИИ');
-    expect(html).toContain('без этикетки и без проверки');
+    expect(html).toContain('Числа сгенерированы ИИ');
+    expect(html).not.toContain('GigaChat');
+    expect(html).not.toContain('Сверяйте состав');
     expect(renderToStaticMarkup(createElement(CatalogProductIngredients, { data: record }))).not.toContain('catalog-ai-chip');
   });
 });
