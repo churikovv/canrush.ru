@@ -1,5 +1,6 @@
 import Link from '@/components/navigation-progress';
 import { WallComposer } from '@/components/profile-community-controls';
+import { RankUpCard } from '@/components/rank-up-card';
 import { FeedTabs } from '@/components/section-tabs';
 import { WallPost } from '@/components/wall-post';
 import { profilePageNumber } from '@/lib/profile-achievements';
@@ -35,7 +36,8 @@ export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = 
         {viewerId ? <WallComposer targetId={viewerId} label="Новая запись в ленте и на вашей стене" placeholder="Что нового? Запись появится и на вашей стене…" /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы написать в ленту.</p>}
       </section>
       <section className="feed-posts" aria-label="Записи">
-        {feed.posts.length ? <div className="wall-comments">{feed.posts.map(post => <WallPost key={post.id} post={post} owner={{ username: post.ownerUsername, name: post.ownerName, avatarId: post.ownerAvatarId }} interaction={interactions.get(post.id)} canDelete={viewerId === post.userId || viewerId === post.profileId} canEdit={viewerId === post.userId} />)}</div>
+        {feed.items.length ? <div className="wall-comments">{feed.items.map(item => item.kind === 'rank-up' ? <RankUpCard key={item.rankUp.id} rankUp={item.rankUp} />
+          : <WallPost key={item.post.id} post={item.post} owner={{ username: item.post.ownerUsername, name: item.post.ownerName, avatarId: item.post.ownerAvatarId }} interaction={interactions.get(item.post.id)} canDelete={viewerId === item.post.userId || viewerId === item.post.profileId} canEdit={viewerId === item.post.userId} />)}</div>
           : <div className="wall-empty-card">{scope === 'following'
             ? <><strong>Подписок пока нет</strong><p>Подпишитесь на участников из <Link href="/leaderboard">рейтинга</Link>, чтобы видеть их записи здесь.</p></>
             : <><strong>Здесь пока тихо</strong><p>Напишите первую запись — она появится и на вашей стене.</p></>}</div>}

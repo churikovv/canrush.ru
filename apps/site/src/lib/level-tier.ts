@@ -12,3 +12,7 @@ export function levelTier(level: number): { tier: LevelTier; next: LevelTier | n
   const index = Math.max(0, LEVEL_TIERS.filter(tier => level >= tier.min).length - 1);
   return { tier: LEVEL_TIERS[index]!, next: LEVEL_TIERS[index + 1] ?? null };
 }
+
+/** Tiers whose reaching is announced in the feed (the "rankUp" table, migration 0079). */
+export const RANK_UP_TIERS = ['gold', 'platinum', 'legend'] as const satisfies readonly LevelTier['key'][];
+export type RankUpTier = typeof RANK_UP_TIERS[number];
