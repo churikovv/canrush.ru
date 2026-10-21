@@ -26,3 +26,6 @@ apps/site/data/
 apps/apps/site/public/images/
 
 __pycache__/
+
+# Файлы для продвижения или маркетинга
+marketing/

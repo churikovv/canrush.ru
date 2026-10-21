@@ -69,6 +69,10 @@ it('points reported duplicate URLs at the live products', () => {
     ['flash-up-barberry', 'flash-up-ultra'],
     ['pulseup-unresolved-9427ce79d3fe662f3f4cd6a6-105kk4pcwk301', 'pulseup-pulse-your'],
     ['pulse-up-berry', 'pulseup-berry'],
+    ['flash-up-mango', 'flash-up-mango-pineapple'],
+    ['adrenaline-game-fuel-mango', 'adrenaline-rush-mango'],
+    ['ninja-peach', 'ninja-star-peach'],
+    ['ninja-cherry', 'ninja-star-cherry'],
   ]) {
     const identity = decodeCatalogGroupSlug(slug!);
     expect(identity).not.toBeNull();

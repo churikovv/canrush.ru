@@ -11,7 +11,7 @@ const options = [
   { brand: 'Tornado', flavor: 'tornado_black' },
   { brand: 'Tornado', flavor: 'tornado_storm' },
   { brand: 'Adrenaline Rush', flavor: 'original' },
-  { brand: 'Adrenaline Game Fuel', flavor: 'mango' },
+  { brand: 'Adrenaline Game Fuel', flavor: 'lime' },
 ];
 
 it('groups catalog drinks by brand and skips single-drink brands', () => {
@@ -44,9 +44,9 @@ it('matches reviews saved under an older product identity', () => {
 });
 
 it('collects product lines together with their parent brand', () => {
-  const summary = buildBrandCollections(options, [{ brand: 'Adrenaline Game Fuel', flavor: 'mango', source: 'review' }]);
+  const summary = buildBrandCollections(options, [{ brand: 'Adrenaline Game Fuel', flavor: 'lime', source: 'review' }]);
   const rush = summary.brands.find(item => item.brand === 'Adrenaline Rush')!;
-  expect(rush.items[0]).toMatchObject({ brand: 'Adrenaline Game Fuel', flavor: 'mango', name: 'Game Fuel · Манго', tried: ['review'] });
+  expect(rush.items[0]).toMatchObject({ brand: 'Adrenaline Game Fuel', flavor: 'lime', name: 'Game Fuel · Лайм', tried: ['review'] });
   expect(summary.brands.some(item => item.brand === 'Adrenaline Game Fuel')).toBe(false);
 });
 

@@ -31,7 +31,6 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Flesh", "bubblegum", "Flash Up", "bubblegum"],
   ["Flash Up", "strawberry", "Flash Up", "bubblegum"],
   ["Flash Up", "blend:blueberry+peach", "Flash Up", "blend:blueberry+peach:sugarfree"],
-  ["Adrenaline Rush", "mango", "Adrenaline Game Fuel", "mango"],
   ["Adrenaline", "strawberry", "Adrenaline Rush", "blend:calamansi+strawberry+yuzu"],
   ["Adrenaline", "calamansi", "Adrenaline Rush", "blend:calamansi+strawberry+yuzu"],
   ["Adrenaline", "orange", "Adrenaline Rush", "orange"],
@@ -197,6 +196,10 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Flash Up", "barberry", "Flash Up", "ultra"], // archived "Барбарис": its cover is the Flash Up Ultra Energy can
   ["Pulseup", "unresolved:9427ce79d3fe662f3f4cd6a6", "Pulseup", "pulse_your"], // Ароматный мир "Энергитический напиток Pulse Up Energy 0.45л.", the Your Energy can
   ["Pulse Up", "berry", "Pulseup", "berry"], // Edadeal spells the brand "Pulse Up" for Berry Energy only
+  ["Flash Up", "mango", "Flash Up", "blend:mango+pineapple"], // Близнецы "Флэш Энергия манго", the old design of the mango + pineapple can
+  ["Adrenaline Game Fuel", "mango", "Adrenaline Rush", "mango"], // the mango can moved from Game Fuel to Vitamin Power; retailers sell it as both
+  ["Ninja", "peach", "Ninja Star", "peach"], // Пятёрочка "Ninja Star Energy Персик-Личи" under Edadeal's brand "Ninja"
+  ["Ninja", "cherry", "Ninja Star", "cherry"], // Пятёрочка "Нинджа Стар Энерджи (Ninja Star Energy) Вишня" under Edadeal's brand "Ninja"
 ];
 export function reviewedProductIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
   const alias = REVIEWED_PRODUCT_ALIASES.find(entry => entry[0] === brand && entry[1] === flavor);
