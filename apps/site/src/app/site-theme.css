@@ -62,9 +62,6 @@
 :root[data-site-theme=graphite] .community-button-text { color: var(--theme-link); background: transparent; }
 :root[data-site-theme=graphite] .community-button-secondary:hover { background: var(--theme-subtle); }
 :root[data-site-theme=graphite] .community-shortcut > img { filter: brightness(0) invert(1); }
-:root[data-site-theme=graphite] .appearance-option { border-color: var(--theme-line); }
-:root[data-site-theme=graphite] .appearance-option:has(input:checked) { background: var(--theme-panel); }
-:root[data-site-theme=graphite] .appearance-option > span:last-child { color: var(--theme-muted); }
 /* An uncustomized profile follows the visitor's theme. Explicit presets stay independent. */
 :root[data-site-theme=graphite] [data-profile-theme=default] {
   --profile-bg: #14171e; --profile-panel: #1d222c; --profile-soft: #282f3c;
@@ -77,16 +74,15 @@
   --theme-muted: var(--profile-muted); --theme-link: var(--profile-accent);
   --color-ink: var(--profile-ink);
 }
-[data-profile-theme=lavender],[data-profile-theme=mint] { color-scheme: light; --theme-danger: #a61b14; --theme-success: #146c43; }
-:root[data-site-theme=graphite] [data-profile-theme=lavender] .community-shortcut > img,
-:root[data-site-theme=graphite] [data-profile-theme=mint] .community-shortcut > img { filter: none; }
+[data-profile-tone=light] { color-scheme: light; --theme-danger: #a61b14; --theme-success: #146c43; }
+[data-profile-tone=dark] { color-scheme: dark; --theme-danger: #ffb5b5; --theme-success: #7adb9a; }
+:root[data-site-theme=graphite] [data-profile-tone=light] .community-shortcut > img { filter: none; }
 :root[data-site-theme=graphite] :is(.catalog-search-field,.home-hero-search label,.catalog-filter-disclosure > summary,.market-search-submit,.market-filter-toggle) > img { filter: brightness(0) invert(1); }
 :root[data-site-theme=graphite] .brand-header :focus-visible { outline-color: #fff; }
 :root[data-site-theme=graphite] .primary-button { border-color: var(--color-control); }
 @media (max-width: 359px) { .site-theme-options { grid-template-columns: 1fr; } }
 :root[data-site-theme=graphite] .community-avatar:not(.community-avatar-custom) > img { filter: brightness(0) invert(1); }
-:root[data-site-theme=graphite] [data-profile-theme=lavender] .community-avatar:not(.community-avatar-custom) > img,
-:root[data-site-theme=graphite] [data-profile-theme=mint] .community-avatar:not(.community-avatar-custom) > img { filter: none; }
+:root[data-site-theme=graphite] [data-profile-tone=light] .community-avatar:not(.community-avatar-custom) > img { filter: none; }
 :root[data-site-theme=system] { color-scheme: light; }
 .site-theme-options { grid-template-columns: repeat(3,minmax(0,1fr)); max-width: 720px; }
 .site-theme-sample[data-sample-theme=system] { background: linear-gradient(90deg,#fff 50%,#14171e 50%); }
@@ -133,20 +129,15 @@
 :root[data-site-theme=system] .community-button-text { color: var(--theme-link); background: transparent; }
 :root[data-site-theme=system] .community-button-secondary:hover { background: var(--theme-subtle); }
 :root[data-site-theme=system] .community-shortcut > img { filter: brightness(0) invert(1); }
-:root[data-site-theme=system] .appearance-option { border-color: var(--theme-line); }
-:root[data-site-theme=system] .appearance-option:has(input:checked) { background: var(--theme-panel); }
-:root[data-site-theme=system] .appearance-option > span:last-child { color: var(--theme-muted); }
 :root[data-site-theme=system] [data-profile-theme=default] {
   --profile-bg: #14171e; --profile-panel: #1d222c; --profile-soft: #282f3c;
   --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #414c5e;
   --profile-accent: #4d94ff; --profile-banner: #006eff; color-scheme: dark;
 }
-:root[data-site-theme=system] [data-profile-theme=lavender] .community-shortcut > img,
-:root[data-site-theme=system] [data-profile-theme=mint] .community-shortcut > img { filter: none; }
+:root[data-site-theme=system] [data-profile-tone=light] .community-shortcut > img { filter: none; }
 :root[data-site-theme=system] :is(.catalog-search-field,.home-hero-search label,.catalog-filter-disclosure > summary,.market-search-submit,.market-filter-toggle) > img { filter: brightness(0) invert(1); }
 :root[data-site-theme=system] .brand-header :focus-visible { outline-color: #fff; }
 :root[data-site-theme=system] .primary-button { border-color: var(--color-control); }
 :root[data-site-theme=system] .community-avatar:not(.community-avatar-custom) > img { filter: brightness(0) invert(1); }
-:root[data-site-theme=system] [data-profile-theme=lavender] .community-avatar:not(.community-avatar-custom) > img,
-:root[data-site-theme=system] [data-profile-theme=mint] .community-avatar:not(.community-avatar-custom) > img { filter: none; }
+:root[data-site-theme=system] [data-profile-tone=light] .community-avatar:not(.community-avatar-custom) > img { filter: none; }
 }

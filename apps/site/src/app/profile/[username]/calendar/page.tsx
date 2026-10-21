@@ -1,4 +1,5 @@
 import '@/styles/shared.css';
+import { profileThemeAttributes } from '@/lib/profile-appearance';
 import '@/styles/profile.css';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
@@ -48,7 +49,7 @@ export default async function DrinkCalendarPage({ params, searchParams }: { para
     overview.best > 1 ? `рекордная серия — ${days(overview.best)}` : null].filter(Boolean).join(', ') + ' ⚡';
 
   return <BrandShell headerAction={<ProfileNavigation active={isOwn ? 'calendar' : 'profile'} />} surfaceClassName="profile-surface">
-    <section className="community-directory drink-calendar-page" data-profile-theme={profile.profileAppearance?.theme ?? 'default'}>
+    <section className="community-directory drink-calendar-page" {...profileThemeAttributes(profile.profileAppearance?.theme)}>
       <ProfileBackButton href={isOwn ? '/profile' : `/profile/${profile.username}`} />
       <div className="profile-subpage-title"><h1>Календарь выпитого</h1>{!isOwn && <ProfileSubpageOwner profile={profile} />}</div>
 

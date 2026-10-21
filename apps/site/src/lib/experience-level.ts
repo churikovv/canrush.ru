@@ -1,3 +1,8 @@
+/** Total XP at which `level` starts (inverse of `experienceLevel`). */
+export function experienceForLevel(level: number): number {
+  const target = Math.max(1, Math.floor(level));
+  return 50 * target * (target - 1);
+}
 export function experienceLevel(xp: number) {
   const total = Math.max(0, Math.floor(Number.isFinite(xp) ? xp : 0));
   const level = Math.floor((1 + Math.sqrt(1 + total / 12.5)) / 2);

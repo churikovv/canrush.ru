@@ -2,8 +2,9 @@
 import Image from 'next/image';
 import { achievementImage } from '@/lib/profile-achievements';
 
-import { useActionState, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useActionState, useId, useRef, useState } from 'react';
 import { AchievementSteps } from '@/components/achievement-steps';
+import { useAnchoredPopover } from '@/lib/use-anchored-popover';
 import { updateCommunityAction } from '@/app/profile/community-actions';
 import { ACHIEVEMENT_RARITIES, achievementCompletion, profileTagLabel, visibleProfileAchievements, type AchievementProgress } from '@/lib/profile-achievements';
 
@@ -11,46 +12,15 @@ export function AchievementPicker({ earned, selected, progress, isOwn, viewerIsA
   earned: string[]; selected: string[]; progress: AchievementProgress; isOwn: boolean; viewerIsAdmin?: boolean;
 }) {
   const id = useId();
-  const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const [tag, setTag] = useState(selected[0] ?? '');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0, width: 0, maxHeight: 400 });
+  const { trigger, position, place: placePanel } = useAnchoredPopover<HTMLButtonElement>(open);
   const [state, action, pending] = useActionState(updateCommunityAction, {});
   const items = visibleProfileAchievements(viewerIsAdmin, earned);
   const matching = items.filter(item => [item.label, item.description, ACHIEVEMENT_RARITIES[item.rarity], ...item.steps.map(step => step.label)].join(' ').toLocaleLowerCase('ru').includes(query.trim().toLocaleLowerCase('ru')));
   const current = items.find(item => item.key === tag);
-
-  const placePanel = useCallback(() => {
-    const rect = trigger.current?.getBoundingClientRect();
-    if (!rect) return;
-    const viewport = window.visualViewport;
-    const height = viewport?.height ?? window.innerHeight;
-    const offset = viewport?.offsetTop ?? 0;
-    // The CSS offset contains calc()/safe-area values; measure the actual bar instead of parsing it.
-    const tabBar = document.querySelector('.site-tab-bar')?.getBoundingClientRect().height ?? 0;
-    const below = height + offset - rect.bottom - tabBar - 20;
-    const above = rect.top - offset - 20;
-    const upwards = below < 260 && above > below;
-    const maxHeight = Math.max(140, Math.min(420, upwards ? above : below));
-    setPosition({ top: upwards ? rect.top - maxHeight - 8 : rect.bottom + 8,
-      left: Math.max(12, Math.min(rect.left, window.innerWidth - rect.width - 12)),
-      width: Math.min(rect.width, window.innerWidth - 24), maxHeight });
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    const reposition = () => placePanel();
-    window.addEventListener('resize', reposition);
-    window.addEventListener('scroll', reposition, true);
-    window.visualViewport?.addEventListener('resize', reposition);
-    return () => {
-      window.removeEventListener('resize', reposition);
-      window.removeEventListener('scroll', reposition, true);
-      window.visualViewport?.removeEventListener('resize', reposition);
-    };
-  }, [open, placePanel]);
 
   function choose(value: string) {
     setTag(value);

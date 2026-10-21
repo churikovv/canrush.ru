@@ -3340,6 +3340,38 @@ html[data-cookie-notice="visible"] .brand-footer {
   --profile-ink: #203d30; --profile-muted: #496757; --profile-line: #bfd6c8;
   --profile-accent: #14653f; --profile-banner: #23825a;
 }
+[data-profile-theme=gold] {
+  --profile-bg: #faf5e8; --profile-panel: #fffdf7; --profile-soft: #f1e8d2;
+  --profile-ink: #3d3220; --profile-muted: #6b5a3c; --profile-line: #e2d4b2;
+  --profile-accent: #8a5a00; --profile-banner: linear-gradient(120deg, #b97a0d, #e2a93b);
+}
+[data-profile-theme=ocean] {
+  --profile-bg: #07121f; --profile-panel: #0d1b2c; --profile-soft: #15283e;
+  --profile-ink: #e8f3ff; --profile-muted: #a3b8cf; --profile-line: #24405e;
+  --profile-accent: #5cc8ff; --profile-banner: linear-gradient(135deg, #0a3f73, #0f8fb3);
+}
+[data-profile-theme=platinum] {
+  --profile-bg: #eef1f5; --profile-panel: #fbfcfd; --profile-soft: #e2e7ee;
+  --profile-ink: #1f2833; --profile-muted: #505c6b; --profile-line: #cdd5df;
+  --profile-accent: #3c5a7a; --profile-banner: linear-gradient(135deg, #6f8097, #c3ccd8 50%, #6f8097);
+}
+/* Drenched: the page itself is the brand blue, panels sit deeper in it. */
+[data-profile-theme=cobalt] {
+  --profile-bg: #0050c8; --profile-panel: #003c99; --profile-soft: #0a4bb0;
+  --profile-ink: #fff; --profile-muted: #c9dbff; --profile-line: #2a63c4;
+  --profile-accent: #ffd23f; --profile-banner: #00276e;
+}
+[data-profile-theme=ember] {
+  --profile-bg: #140806; --profile-panel: #1e0e0b; --profile-soft: #2e1611;
+  --profile-ink: #fff1ea; --profile-muted: #d6b2a6; --profile-line: #4d2a21;
+  --profile-accent: #ff7a45; --profile-banner: linear-gradient(135deg, #7a1408, #e0451b 60%, #ff9a3d);
+}
+/* Legend borrows the rank emblem's indigo (--tier-dark of [data-level-tier=legend]). */
+[data-profile-theme=legend] {
+  --profile-bg: #120a2e; --profile-panel: #1b1142; --profile-soft: #281a5c;
+  --profile-ink: #f4f0ff; --profile-muted: #c3b8ec; --profile-line: #3d2a80;
+  --profile-accent: #d29bff; --profile-banner: #4a18c8;
+}
 [data-profile-theme]:not(.appearance-swatch) {
   --color-text: var(--profile-ink); --color-muted-strong: var(--profile-muted);
   --color-subtle: var(--profile-soft); --color-control: var(--profile-line);
@@ -3351,6 +3383,12 @@ html[data-cookie-notice="visible"] .brand-footer {
 .main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=dark]) { --profile-page: #000; }
 .main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=lavender]) { --profile-page: #f3effa; }
 .main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=mint]) { --profile-page: #eef7f3; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=gold]) { --profile-page: #faf5e8; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=ocean]) { --profile-page: #07121f; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=platinum]) { --profile-page: #eef1f5; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=cobalt]) { --profile-page: #0050c8; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=ember]) { --profile-page: #140806; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=legend]) { --profile-page: #120a2e; }
 .main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme]:not([data-profile-theme=default])) { background: var(--profile-page); }
 :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme]:not([data-profile-theme=default]) { background: transparent; }
 [data-profile-theme] :is(.community-panel,.community-shortcut,.profile-social-counts,.profile-layout-block) { background: var(--profile-panel); border-color: var(--profile-line); color: var(--profile-ink); }
@@ -3364,14 +3402,13 @@ html[data-cookie-notice="visible"] .brand-footer {
 [data-profile-theme] :is(.wall-composer textarea,.review-text-composer,.review-comment-form textarea) { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
 [data-profile-theme] textarea::placeholder { color: var(--profile-muted); }
 [data-profile-theme] .profile-presence--online { color: #258347; }
-[data-profile-theme=dark] .profile-presence--online { color: #7adb9a; }
-[data-profile-theme=dark] :is(.wall-comment,.profile-social-counts > a + a,.review-discussion,.review-comment) { border-color: var(--profile-line); }
-[data-profile-theme=dark] :is(.community-feedback,.field-error) { color: #ffb5b5; }
-[data-profile-theme=dark] .community-feedback { color: #7adb9a; }
-.appearance-option:has(input:checked) { border-color: #006eff; box-shadow: inset 0 0 0 1px #006eff; background: #f5f9ff; }
+[data-profile-tone=dark] .profile-presence--online { color: #7adb9a; }
+[data-profile-tone=dark] :is(.wall-comment,.profile-social-counts > a + a,.review-discussion,.review-comment) { border-color: var(--profile-line); }
+[data-profile-tone=dark] :is(.community-feedback,.field-error) { color: #ffb5b5; }
+[data-profile-tone=dark] .community-feedback { color: #7adb9a; }
 [data-profile-theme] :is(.review-reactions button,.review-comment-composer textarea,.wall-empty-card) { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
 [data-profile-theme] .review-reactions button[aria-pressed=true] { background: var(--profile-soft); color: var(--profile-accent); border-color: var(--profile-accent); }
-[data-profile-theme=dark] .review-comment-delete:hover:not(:disabled) { color: #ffb5b5; }
+[data-profile-tone=dark] .review-comment-delete:hover:not(:disabled) { color: #ffb5b5; }
 [data-profile-theme] :is(.tag-picker-trigger,.tag-picker-popover) { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
 [data-profile-theme] :is(.tag-picker-trigger > svg,.tag-picker-search,.tag-picker-search input::placeholder,.achievement-copy > span,.achievement-progress,.tag-picker-empty) { color: var(--profile-muted); }
 @keyframes fx-spin { to { transform: rotate(360deg); } }

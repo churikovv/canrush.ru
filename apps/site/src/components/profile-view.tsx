@@ -1,4 +1,5 @@
 import { ProfileCompatibility } from '@/components/profile-compatibility';
+import { profileThemeAttributes } from '@/lib/profile-appearance';
 import { getProfileCompatibility } from '@/lib/profile-compatibility-data';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { getWallInteractions } from '@/lib/wall-discussions';
@@ -59,7 +60,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
   const pages = Math.ceil(wall.count / COMMUNITY_PAGE_SIZE);
 
   return (
-    <div data-profile-theme={profile.profileAppearance?.theme ?? 'default'} className={`community-profile${isOwn ? ' ym-hide-content' : ''}`}>
+    <div {...profileThemeAttributes(profile.profileAppearance?.theme)} className={`community-profile${isOwn ? ' ym-hide-content' : ''}`}>
       <ProfileHeader frame={profile.profileAppearance?.frame} name={displayName(profile)} username={profile.username} bio={profile.bio} createdAt={profile.createdAt}
         avatarSrc={profile.avatarId ? `/api/profile-images/${profile.avatarId}` : null}
         bannerSrc={profile.bannerId ? `/api/profile-images/${profile.bannerId}` : null}

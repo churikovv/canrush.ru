@@ -1,7 +1,7 @@
 'use client';
 import { PhotoDeleteIcon } from '@/components/photo-delete-icon';
 import { ProfileAppearanceEditor } from '@/components/profile-appearance-editor';
-import { DEFAULT_PROFILE_APPEARANCE, PROFILE_FRAMES, PROFILE_THEMES } from '@/lib/profile-appearance';
+import { DEFAULT_PROFILE_APPEARANCE, PROFILE_FRAMES, PROFILE_THEMES, profileThemeAttributes } from '@/lib/profile-appearance';
 import { ProfileLayoutEditor } from '@/components/profile-layout-editor';
 import { ProfileBackButton } from '@/components/profile-back-button';
 
@@ -60,7 +60,7 @@ function PrefixedInput({ prefix, ...props }: InputHTMLAttributes<HTMLInputElemen
 /** Text fields accept a full t.me link or @name; the field shows only the name after the prefix. */
 const bareTelegram = (value: string) => value.trim().replace(/^https?:\/\//i, '').replace(/^(?:www\.)?(?:t\.me|telegram\.me)\//i, '').replace(/^@+/, '').replace(/\/$/, '');
 
-export function ProfileEditForm({ profile, layoutPreviews, level = 1, tags }: { level?: number; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { picker: ReactNode; earned: number; total: number; selected?: string } }) {
+export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags }: { level?: number; xp?: number; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { picker: ReactNode; earned: number; total: number; selected?: string } }) {
   const initialName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
   // The open section lives in ?section= (native history, synced with useSearchParams), so the phone's back gesture
   // returns to the list of sections instead of leaving the editor.
@@ -207,7 +207,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, tags }: { 
         requestAnimationFrame(() => form.reportValidity());
       }
     }}>
-      <div className="profile-editor-preview" data-profile-theme={appearance.theme}>
+      <div className="profile-editor-preview" {...profileThemeAttributes(appearance.theme)}>
       <ProfileHeader frame={appearance.frame} name={name.trim() || initialName} username={username.replace(/^@+/, '') || profile.username} bio={bio.trim()} createdAt={profile.createdAt}
         avatarSrc={imageSource('avatar')} bannerSrc={imageSource('banner')} avatarControl={imageControl('avatar')} bannerControl={imageControl('banner')}
         actions={<div className="profile-editor-actions"><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>} />
@@ -260,7 +260,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, tags }: { 
         </section>
       </div>
       <div id="profile-panel-appearance" tabIndex={-1} aria-label="Оформление" hidden={tab !== 'appearance'} className="profile-editor-panel">
-        <ProfileAppearanceEditor level={level} current={profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE} value={appearance} onChange={setAppearance} disabled={pending} />
+        <ProfileAppearanceEditor level={level} xp={xp} current={profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE} value={appearance} onChange={setAppearance} disabled={pending} />
       </div>
       <div id="profile-panel-images" tabIndex={-1} aria-label="Аватар и баннер" hidden={tab !== 'images'} className="profile-editor-panel">
         <section className="community-panel profile-editor-images" aria-labelledby="profile-images-title">
@@ -287,7 +287,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, tags }: { 
         </section>
       </div>
       <div id="profile-panel-blocks" tabIndex={-1} aria-label="Блоки профиля" hidden={tab !== 'blocks'} className="profile-editor-panel">
-        <div data-profile-theme={appearance.theme} className="profile-blocks-preview"><ProfileLayoutEditor initial={profile.profileLayout} disabled={pending} previews={layoutPreviews} /></div>
+        <div {...profileThemeAttributes(appearance.theme)} className="profile-blocks-preview"><ProfileLayoutEditor initial={profile.profileLayout} disabled={pending} previews={layoutPreviews} /></div>
       </div>
       <div className="profile-editor-savebar" hidden={tab === null || tab === 'tags' || tab === 'account'}><p>{tab === 'blocks' ? 'Порядок и видимость блоков сохранятся вместе с профилем.' : 'Изменения применятся после сохранения.'}</p><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>
     </form>

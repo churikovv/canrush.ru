@@ -49,7 +49,7 @@ export default async function ProfileEditPage() {
   };
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-      <ProfileEditForm level={experienceLevel(experience[profile.username]?.xp ?? 0).level} profile={profile} layoutPreviews={layoutPreviews}
+      <ProfileEditForm level={experienceLevel(experience[profile.username]?.xp ?? 0).level} xp={experience[profile.username]?.xp ?? 0} profile={profile} layoutPreviews={layoutPreviews}
         tags={{ earned: earned.length, total: achievements.length, selected: profileTagLabel(community.tags[0]), picker: <AchievementPicker key={community.tags.join(',')} earned={earned} selected={community.tags} progress={community.progress} isOwn viewerIsAdmin={viewerIsAdmin} /> }} />
     </BrandShell>
   );

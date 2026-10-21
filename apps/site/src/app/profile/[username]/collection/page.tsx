@@ -1,4 +1,5 @@
 import '@/styles/shared.css';
+import { profileThemeAttributes } from '@/lib/profile-appearance';
 import '@/styles/profile.css';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
@@ -23,7 +24,7 @@ export default async function BrandCollectionPage({ params }: { params: Promise<
   const summary = await getBrandCollections(profile.id);
 
   return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-    <section className="community-directory brand-collection-page" data-profile-theme={profile.profileAppearance?.theme ?? 'default'}>
+    <section className="community-directory brand-collection-page" {...profileThemeAttributes(profile.profileAppearance?.theme)}>
       <ProfileBackButton href={isOwn ? '/profile' : `/profile/${profile.username}`} />
       <div className="profile-subpage-title"><h1>Коллекция вкусов</h1>{!isOwn && <ProfileSubpageOwner profile={profile} />}</div>
       <div className="community-panel brand-collection-intro">

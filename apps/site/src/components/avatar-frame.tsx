@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { HeavyAvatarFrame, isHeavyFrame } from '@/components/avatar-frame-heavy';
 import type { ProfileAppearance } from '@/lib/profile-appearance';
 
 type Spark = { x: number; y: number; scale: number; delay: number; embers?: [number, number][] };
@@ -39,6 +40,7 @@ function SparkGlint({ delay }: { delay?: number }) {
 // Stable preset keys preserve previously saved selections.
 export function AvatarFrame({ frame }: { frame: ProfileAppearance['frame'] }) {
   if (frame === 'none') return null;
+  if (isHeavyFrame(frame)) return <HeavyAvatarFrame frame={frame} />;
   const ring = frame === 'abyss' || frame === 'nova';
   return <>
     {ring && <span className={`avatar-ring avatar-ring-${frame}`} aria-hidden="true"><span className="avatar-ring-band" /></span>}

@@ -90,6 +90,10 @@ describe.sequential('profile image storage and displayed tags', () => {
       await saveProfileCustomization(a, input, {}, undefined, { theme: 'dark', frame });
       expect((await getProfileByUserId(a))?.profileAppearance).toEqual({ theme: 'dark', frame });
     }
+    await saveProfileCustomization(a, input, {}, undefined, { theme: 'gold', frame: 'orbit' });
+    expect((await getProfileByUserId(a))?.profileAppearance?.theme).toBe('gold');
+    await expect(saveProfileCustomization(a, input, {}, undefined, { theme: 'ocean', frame: 'orbit' })).rejects.toThrow('пока закрыто');
+    await saveProfileCustomization(a, input, {}, undefined, { theme: 'dark', frame: 'orbit' });
     await expect(saveProfileCustomization(a, { ...input, username: username(b) }, {}, undefined, { theme: 'mint', frame: 'pulse' })).rejects.toMatchObject({ code: '23505' });
     expect((await getProfileByUserId(a))?.profileAppearance).toEqual({ theme: 'dark', frame: 'orbit' });
     expect((await getProfileByUserId(b))?.profileAppearance).toEqual({ theme: 'default', frame: 'none' });
