@@ -18,7 +18,7 @@ import { auth } from '@/lib/auth';
 import { ensureOwnProfile } from '@/lib/profile';
 import { getProfileCommunity } from '@/lib/profile-community';
 import { isSiteAdminEmail } from '@/lib/admin';
-import { visibleProfileAchievements } from '@/lib/profile-achievements';
+import { profileTagLabel, visibleProfileAchievements } from '@/lib/profile-achievements';
 import { AchievementPicker } from '@/components/profile-community-controls';
 
 export const dynamic = 'force-dynamic';
@@ -50,7 +50,7 @@ export default async function ProfileEditPage() {
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
       <ProfileEditForm level={experienceLevel(experience[profile.username]?.xp ?? 0).level} profile={profile} layoutPreviews={layoutPreviews}
-        tags={{ earned: earned.length, total: achievements.length, picker: <AchievementPicker key={community.tags.join(',')} earned={earned} selected={community.tags} progress={community.progress} isOwn viewerIsAdmin={viewerIsAdmin} /> }} />
+        tags={{ earned: earned.length, total: achievements.length, selected: profileTagLabel(community.tags[0]), picker: <AchievementPicker key={community.tags.join(',')} earned={earned} selected={community.tags} progress={community.progress} isOwn viewerIsAdmin={viewerIsAdmin} /> }} />
     </BrandShell>
   );
 }

@@ -2853,7 +2853,6 @@ html[data-cookie-notice="visible"] .brand-footer {
 .leaderboard-name small { display: block; color: var(--theme-muted, #666); margin-top: 4px; font-weight: 400; }
 .leaderboard-xp { flex: none; display: inline-flex; align-items: baseline; gap: 4px; color: var(--theme-text, #1a1a1a); font-size: 1rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .leaderboard-xp small { color: var(--theme-muted, #666); font-size: .75rem; font-weight: 700; }
-.profile-drop-target:focus-within, .profile-drop-target.is-dragging { outline: 3px solid #006eff; outline-offset: -3px; background: #006eff22; }
 .profile-crop-dialog > p { font-size: 13px; color: var(--theme-muted, #666); line-height: 1.5; }
 @media (max-width: 480px) { .experience-leaderboard a { gap: 10px; padding: 10px 14px 10px 10px; font-size: 13px; } .leaderboard-xp { font-size: .875rem; } }
 /* City selection belongs to the header on desktop and above the mobile tab bar. */
@@ -3369,8 +3368,6 @@ html[data-cookie-notice="visible"] .brand-footer {
 [data-profile-theme=dark] :is(.wall-comment,.profile-social-counts > a + a,.review-discussion,.review-comment) { border-color: var(--profile-line); }
 [data-profile-theme=dark] :is(.community-feedback,.field-error) { color: #ffb5b5; }
 [data-profile-theme=dark] .community-feedback { color: #7adb9a; }
-.profile-editor-tabs button[aria-selected=true] { color: #0058cc; border-bottom-color: #006eff; font-weight: 700; }
-.profile-editor-tabs button:hover { background: #edf4ff; border-radius: 8px 8px 0 0; }
 .appearance-option:has(input:checked) { border-color: #006eff; box-shadow: inset 0 0 0 1px #006eff; background: #f5f9ff; }
 [data-profile-theme] :is(.review-reactions button,.review-comment-composer textarea,.wall-empty-card) { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
 [data-profile-theme] .review-reactions button[aria-pressed=true] { background: var(--profile-soft); color: var(--profile-accent); border-color: var(--profile-accent); }

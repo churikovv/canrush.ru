@@ -9,19 +9,19 @@
   --color-surface: #14171e;
   --color-subtle: #282f3c;
   --color-control: #414c5e;
-  --color-brand-deep: #8bbcff;
+  --color-brand-deep: #4d94ff;
   --color-danger: #ffb5b5;
   --color-danger-soft: #3c232a;
   --color-success: #7adb9a;
   --color-success-soft: #20362e;
-  --color-focus: #8bbcff;
+  --color-focus: #4d94ff;
   --color-action: #090d13;
   --theme-panel: #1d222c;
   --theme-subtle: #282f3c;
   --theme-line: #414c5e;
   --theme-text: #f1f4fa;
   --theme-muted: #b5bfce;
-  --theme-link: #8bbcff;
+  --theme-link: #4d94ff;
   --theme-danger: #ffb5b5;
   --theme-success: #7adb9a;
 }
@@ -62,9 +62,6 @@
 :root[data-site-theme=graphite] .community-button-text { color: var(--theme-link); background: transparent; }
 :root[data-site-theme=graphite] .community-button-secondary:hover { background: var(--theme-subtle); }
 :root[data-site-theme=graphite] .community-shortcut > img { filter: brightness(0) invert(1); }
-:root[data-site-theme=graphite] .profile-editor-tabs button { color: var(--theme-muted); }
-:root[data-site-theme=graphite] .profile-editor-tabs button[aria-selected=true] { color: var(--theme-link); }
-:root[data-site-theme=graphite] .profile-editor-tabs button:hover { background: var(--theme-subtle); }
 :root[data-site-theme=graphite] .appearance-option { border-color: var(--theme-line); }
 :root[data-site-theme=graphite] .appearance-option:has(input:checked) { background: var(--theme-panel); }
 :root[data-site-theme=graphite] .appearance-option > span:last-child { color: var(--theme-muted); }
@@ -72,7 +69,7 @@
 :root[data-site-theme=graphite] [data-profile-theme=default] {
   --profile-bg: #14171e; --profile-panel: #1d222c; --profile-soft: #282f3c;
   --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #414c5e;
-  --profile-accent: #8bbcff; --profile-banner: #006eff; color-scheme: dark;
+  --profile-accent: #4d94ff; --profile-banner: #006eff; color-scheme: dark;
 }
 [data-profile-theme]:not(.appearance-swatch) {
   --theme-panel: var(--profile-panel); --theme-subtle: var(--profile-soft);
@@ -112,19 +109,19 @@
   --color-surface: #14171e;
   --color-subtle: #282f3c;
   --color-control: #414c5e;
-  --color-brand-deep: #8bbcff;
+  --color-brand-deep: #4d94ff;
   --color-danger: #ffb5b5;
   --color-danger-soft: #3c232a;
   --color-success: #7adb9a;
   --color-success-soft: #20362e;
-  --color-focus: #8bbcff;
+  --color-focus: #4d94ff;
   --color-action: #090d13;
   --theme-panel: #1d222c;
   --theme-subtle: #282f3c;
   --theme-line: #414c5e;
   --theme-text: #f1f4fa;
   --theme-muted: #b5bfce;
-  --theme-link: #8bbcff;
+  --theme-link: #4d94ff;
   --theme-danger: #ffb5b5;
   --theme-success: #7adb9a;
 }
@@ -136,16 +133,13 @@
 :root[data-site-theme=system] .community-button-text { color: var(--theme-link); background: transparent; }
 :root[data-site-theme=system] .community-button-secondary:hover { background: var(--theme-subtle); }
 :root[data-site-theme=system] .community-shortcut > img { filter: brightness(0) invert(1); }
-:root[data-site-theme=system] .profile-editor-tabs button { color: var(--theme-muted); }
-:root[data-site-theme=system] .profile-editor-tabs button[aria-selected=true] { color: var(--theme-link); }
-:root[data-site-theme=system] .profile-editor-tabs button:hover { background: var(--theme-subtle); }
 :root[data-site-theme=system] .appearance-option { border-color: var(--theme-line); }
 :root[data-site-theme=system] .appearance-option:has(input:checked) { background: var(--theme-panel); }
 :root[data-site-theme=system] .appearance-option > span:last-child { color: var(--theme-muted); }
 :root[data-site-theme=system] [data-profile-theme=default] {
   --profile-bg: #14171e; --profile-panel: #1d222c; --profile-soft: #282f3c;
   --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #414c5e;
-  --profile-accent: #8bbcff; --profile-banner: #006eff; color-scheme: dark;
+  --profile-accent: #4d94ff; --profile-banner: #006eff; color-scheme: dark;
 }
 :root[data-site-theme=system] [data-profile-theme=lavender] .community-shortcut > img,
 :root[data-site-theme=system] [data-profile-theme=mint] .community-shortcut > img { filter: none; }
