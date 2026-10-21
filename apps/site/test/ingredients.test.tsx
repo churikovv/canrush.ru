@@ -42,7 +42,7 @@ describe('site compositions', () => {
     expect(renderToStaticMarkup(createElement(CatalogProductIngredients, { data: null }))).toContain('пока не добавлен');
     expect(renderToStaticMarkup(createElement(CatalogProductIngredients, { data: { ...record, ingredients: '<script>unsafe</script>' } }))).not.toContain('<script>');
   });
-  it('shows label numbers as caffeine and taurine tiles plus a nutrition row, and rejects implausible ones', () => {
+  it('keeps valid label numbers in the data, rejects implausible ones and hides them on the page for now', () => {
     const nutrition = { per: '100g' as const, energyKcal: 60, protein: 0.2, carbs: 14, taurineMg: 230, caffeineMg: 30, method: 'gigachat' as const, model: 'GigaChat-2-Pro', extractedAt: '2026-10-21T00:00:00Z' };
     const withNutrition: PublishedIngredients = { ...record, nutrition };
     expect(selectIngredients({ version: 1, products: [withNutrition] }, 'Burn', 'tropical')).toEqual(withNutrition);
@@ -50,26 +50,20 @@ describe('site compositions', () => {
       expect(selectIngredients({ version: 1, products: [{ ...withNutrition, nutrition: { ...nutrition, ...change } }] }, 'Burn', 'tropical')).toBeNull();
     }
     expect(selectIngredients({ version: 1, products: [{ ...withNutrition, nutrition: { per: '100ml', method: 'gigachat', model: 'm', extractedAt: nutrition.extractedAt } }] }, 'Burn', 'tropical')).toBeNull();
+    // Numbers are validated and kept, but hidden on the site until they are checked by hand (SHOW_NUTRITION).
     const html = renderToStaticMarkup(createElement(CatalogProductIngredients, { data: withNutrition }));
-    expect(html).toContain('Пищевая ценность <span>на 100 г</span>');
-    expect(html).toMatch(/Кофеин <span>на 100 мл<\/span><\/dt><dd>30<span> мг/);
-    expect(html).toContain('≈ 135 мг в банке 449 мл');
-    expect(html).toMatch(/Таурин <span>на 100 мл<\/span><\/dt><dd>230<span> мг/);
-    expect(html).toContain('≈ 1033 мг в банке 449 мл');
-    expect(html).toMatch(/Белки<\/dt><dd>0,2<span> г/);
-    expect(html).not.toContain('Жиры');
-    expect(html).toContain('распознаны автоматически');
-    expect(html).toContain('Сверяйте состав и пищевую ценность с этикеткой вашей банки.');
+    expect(html).toContain(record.ingredients);
+    for (const text of ['catalog-nutrition', 'Пищевая ценность', 'в банке', 'Кофеин']) expect(html).not.toContain(text);
+    expect(html).toContain('Сверяйте состав с этикеткой вашей банки.');
   });
-  it('accepts store card numbers without a model and labels them as the shop card', () => {
+  it('accepts store card numbers without a model and keeps them off the page for now', () => {
     const nutrition = { per: '100g' as const, energyKcal: 46, taurineMg: 400, method: 'store' as const, extractedAt: '2026-10-21T00:00:00Z' };
     const lavka: PublishedIngredients = { ...record, status: 'unverified', reviewNote: 'Из карточки Яндекс Лавки, ещё не сверено.', nutrition };
     expect(selectIngredients({ version: 1, products: [lavka] }, 'Burn', 'tropical')).toEqual(lavka);
     expect(selectIngredients({ version: 1, products: [{ ...lavka, nutrition: { ...nutrition, model: 'GigaChat-2-Pro' } }] }, 'Burn', 'tropical')).toBeNull();
     expect(selectIngredients({ version: 1, products: [{ ...lavka, nutrition: { ...nutrition, method: 'gigachat' } }] }, 'Burn', 'tropical')).toBeNull();
     const html = renderToStaticMarkup(createElement(CatalogProductIngredients, { data: lavka }));
-    expect(html).toContain('Данные из карточки товара в магазине.');
-    expect(html).not.toContain('распознаны автоматически');
+    expect(html).not.toContain('catalog-nutrition');
     expect(html).not.toContain(lavka.reviewNote);
   });
   it('marks a model-written composition with the «ИИ» chip and keeps it apart from sourced records', () => {
@@ -86,7 +80,7 @@ describe('site compositions', () => {
     const html = renderToStaticMarkup(createElement(CatalogProductIngredients, { data: ai }));
     expect(html).toContain('catalog-ai-chip');
     expect(html).toContain('Сгенерировано ИИ');
-    expect(html).toContain('Числа сгенерированы ИИ');
+    expect(html).not.toContain('catalog-nutrition');
     expect(html).not.toContain('GigaChat');
     expect(html).not.toContain('Сверяйте состав');
     expect(renderToStaticMarkup(createElement(CatalogProductIngredients, { data: record }))).not.toContain('catalog-ai-chip');

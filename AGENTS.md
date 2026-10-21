@@ -31,7 +31,9 @@ data/              # выходные данные парсера (latest.json, 
 `verifyNutrition` оставляет только число, стоящее вплотную к своей подписи в тексте, и в допустимом диапазоне
 (`NUTRITION_RANGES` в `@canrush/shared`). Не ослабляй эту проверку и не проси модель «знать» состав без текста источника.
 Ключ — `GIGACHAT_AUTH_KEY` в `apps/parser/.env`, сертификат Минцифры — только для запросов к GigaChat
-(`certs/russian_trusted_root_ca.pem`). На сайте блок «Пищевая ценность» в карточке состава.
+(`certs/russian_trusted_root_ca.pem`). Блок «Пищевая ценность» на сайте временно скрыт (`SHOW_NUTRITION` в
+`catalog-product-ingredients.tsx`): числа хранятся, но показываются только после ручной сверки — источник Red Bull
+Original давал 250 мг таурина вместо 400.
 Временно (до ручной сверки) составы и КБЖУ товаров без проверенной привязки берутся из карточек Лавки:
 `npm -w apps/parser run ingredients:lavka` (`src/ingredients/lavka.ts`) → `status: unverified`, `nutrition.method: 'store'`.
 «Краткий состав» Лавки сделан ИИ — не используй его; GigaChat для Лавки не нужен.

@@ -1,5 +1,11 @@
 import type { IngredientNutrition, NutritionField, PublishedIngredients } from '@canrush/shared';
 
+/**
+ * Nutrition numbers stay in the data but are hidden until they are checked by hand: one source gave Red Bull
+ * 250 mg of taurine per 100 ml against 400 everywhere else. Only compositions are shown meanwhile.
+ */
+const SHOW_NUTRITION = false;
+
 const number = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 /**
  * The two values people look up for an energy drink go first, as tiles: labels state them per 100 ml, and the tile
@@ -62,8 +68,8 @@ export function CatalogProductIngredients({ data }: { data: PublishedIngredients
       <p className="catalog-ingredients-text">
         {data?.ingredients ?? 'Состав для этого напитка пока не добавлен.'}
       </p>
-      {data?.nutrition && <Nutrition data={data.nutrition} volumeMl={data.volumeMl} />}
-      {data?.status !== 'ai_generated' && <p className="catalog-product-note">Сверяйте состав{data?.nutrition ? ' и пищевую ценность' : ''} с этикеткой вашей банки.</p>}
+      {SHOW_NUTRITION && data?.nutrition && <Nutrition data={data.nutrition} volumeMl={data.volumeMl} />}
+      {data?.status !== 'ai_generated' && <p className="catalog-product-note">Сверяйте состав{SHOW_NUTRITION && data?.nutrition ? ' и пищевую ценность' : ''} с этикеткой вашей банки.</p>}
     </section>
   );
 }
