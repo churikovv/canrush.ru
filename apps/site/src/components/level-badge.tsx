@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { levelTier, type LevelTier } from '@/lib/level-tier';
+import { levelRank, levelTier, romanNumeral, type LevelTier } from '@/lib/level-tier';
 
 function star(points: number, outer: number, inner: number) {
   return Array.from({ length: points * 2 }, (_, index) => {
@@ -21,13 +21,16 @@ const FACETS: Partial<Record<LevelTier['key'], string>> = { platinum: 'M8 50h84M
 const SPARKLE = 'M0-10Q1-1 10 0Q1 1 0 10Q-1 1-10 0Q-1-1 0-10Z';
 const TWINKLES = [{ x: 86, y: 14, scale: .55, delay: 0 }, { x: 12, y: 82, scale: .38, delay: -1.4 }, { x: 93, y: 74, scale: .3, delay: -2.6 }];
 
-/** Large emblem: the shape, material and motion grow with the level tier. */
+/** Large emblem: the shape, material and motion grow with the level tier; a ribbon carries the degree. */
 export function LevelEmblem({ level }: { level: number }) {
   const id = useId().replace(/:/g, '');
-  const { tier } = levelTier(level);
+  const rank = levelRank(level);
+  const { tier } = rank;
+  const numeral = rank.label === tier.label ? null : romanNumeral(rank.degree);
+  const ribbon = numeral ? 16 + numeral.length * 9 : 0;
   const shape = SHAPES[tier.key];
   const rich = tier.key === 'gold' || tier.key === 'platinum' || tier.key === 'legend';
-  return <svg className="level-emblem" data-level-tier={tier.key} viewBox="0 0 100 100" role="img" aria-label={`Уровень ${level}, ранг «${tier.label}»`}>
+  return <svg className="level-emblem" data-level-tier={tier.key} viewBox="0 0 100 100" role="img" aria-label={`Уровень ${level}, ранг «${rank.label}»`}>
     <defs>
       <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" className="level-stop-light" /><stop offset=".55" className="level-stop-mid" /><stop offset="1" className="level-stop-dark" />
@@ -46,6 +49,10 @@ export function LevelEmblem({ level }: { level: number }) {
     <path d={shape} transform="translate(50 50) scale(.84) translate(-50 -50)" className="level-emblem-bevel" fill="none" />
     {tier.key !== 'rookie' && <g clipPath={`url(#${id}-clip)`}><g transform="rotate(20 50 50)"><rect className="level-emblem-sheen" x="-40" y="-30" width="28" height="160" fill={`url(#${id}-sheen)`} /></g></g>}
     <text x="50" y="52" className="level-emblem-number" textAnchor="middle" dominantBaseline="central" fontSize={level >= 100 ? 30 : 38}>{level}</text>
+    {numeral && <g className="level-degree">
+      <rect x={50 - ribbon / 2} y="80" width={ribbon} height="20" rx="10" />
+      <text x="50" y="90.5" textAnchor="middle" dominantBaseline="central">{numeral}</text>
+    </g>}
     {rich && TWINKLES.map(item => <g key={item.x} transform={`translate(${item.x} ${item.y}) scale(${item.scale})`}>
       <path className="level-twinkle" d={SPARKLE} style={{ animationDelay: `${item.delay}s` }} />
     </g>)}
@@ -53,8 +60,8 @@ export function LevelEmblem({ level }: { level: number }) {
 }
 
 export function LevelChip({ level }: { level: number }) {
-  const { tier } = levelTier(level);
-  return <span className="profile-level" data-level-tier={tier.key} title={tier.label}><LevelChipContent level={level} /></span>;
+  const rank = levelRank(level);
+  return <span className="profile-level" data-level-tier={rank.tier.key} title={rank.label}><LevelChipContent level={level} /></span>;
 }
 
 export function LevelTierGlyph({ tier }: { tier: LevelTier['key'] }) {

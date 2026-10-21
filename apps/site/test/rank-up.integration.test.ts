@@ -6,14 +6,16 @@ if (new URL(databaseUrl).pathname !== '/canrush_site_test') throw new Error('Onl
 const pool = new Pool({ connectionString: databaseUrl, max: 4, allowExitOnIdle: true });
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
 const { getFeed, setFollowing } = await import('../src/lib/profile-community');
+const { experienceLevel } = await import('../src/lib/experience-level');
+const { levelRank, RANK_UP_TIERS } = await import('../src/lib/level-tier');
 
 const ids: string[] = [randomUUID(), randomUUID(), randomUUID()];
 const [a, b, c] = ids as [string, string, string];
 const username = (id: string) => `rank_${id.replaceAll('-', '').slice(0, 12)}`;
 const gain = (id: string, key: string, points: number) =>
   pool.query(`insert into "profileExperience" ("userId",reason,"sourceKey",points) values ($1,'review',$2,$3)`, [id, key, points]);
-const tiers = async (id: string) => (await pool.query<{ tier: string }>('select tier from "rankUp" where "userId"=$1 order by "createdAt", tier', [id])).rows.map(row => row.tier);
-const rankUps = (items: Awaited<ReturnType<typeof getFeed>>['items']) => items.flatMap(item => item.kind === 'rank-up' && ids.includes(item.rankUp.userId) ? [`${item.rankUp.username}:${item.rankUp.tier}`] : []);
+const tiers = async (id: string) => (await pool.query<{ tier: string; degree: number }>('select tier, degree from "rankUp" where "userId"=$1 order by "createdAt", tier, degree', [id])).rows.map(row => row.degree > 1 ? `${row.tier}:${row.degree}` : row.tier);
+const rankUps = (items: Awaited<ReturnType<typeof getFeed>>['items']) => items.flatMap(item => item.kind === 'rank-up' && ids.includes(item.rankUp.userId) ? [`${item.rankUp.username}:${item.rankUp.tier}${item.rankUp.degree > 1 ? `:${item.rankUp.degree}` : ''}`] : []);
 
 beforeAll(async () => { for (const id of ids) await pool.query(`insert into "user" (id,name,username,email,"emailVerified","createdAt","updatedAt") values ($1,'Rank test',$2,$3,true,now(),now())`, [id, username(id), `${id}@example.com`]); });
 afterAll(async () => { await pool.query('delete from "user" where id=any($1::text[])', [ids]); await pool.end(); });
@@ -31,10 +33,25 @@ describe.sequential('rank-up feed events', () => {
     expect(await tiers(b)).toEqual(['platinum']);
     await gain(b, 'b2', 12000);
     expect(await tiers(b)).toEqual(['platinum', 'legend']);
+    await gain(b, 'b3', 5000);
+    expect(await tiers(b)).toEqual(['platinum', 'legend']);
+    await gain(b, 'b4', 6000);
+    expect(await tiers(b)).toEqual(['platinum', 'legend', 'legend:2']);
+  });
+  it('matches the announced ranks of level-tier.ts at every level up to 60', async () => {
+    const xp = Array.from({ length: 60 }, (_, index) => 50 * (index + 1) * index);
+    const { rows } = await pool.query<{ xp: number; level: number; tier: string | null; degree: number | null }>('select x as xp, experience_level(x) as level, s.tier, s.degree from unnest($1::int[]) x, rank_up_step(experience_level(x)) s', [xp]);
+    for (const row of rows) {
+      const rank = levelRank(experienceLevel(row.xp).level);
+      expect(row.level).toBe(experienceLevel(row.xp).level);
+      expect([row.tier, row.degree]).toEqual((RANK_UP_TIERS as readonly string[]).includes(rank.tier.key) ? [rank.tier.key, rank.tier.key === 'legend' ? rank.degree : 1] : [null, null]);
+    }
   });
   it('mixes rank-ups into the feed, newest first, and filters them by follows', async () => {
     const all = await getFeed(null);
-    expect(rankUps(all.items)).toEqual([`${username(b)}:legend`, `${username(b)}:platinum`, `${username(a)}:gold`]);
+    expect(all.pages).toBeGreaterThanOrEqual(1);
+    expect((await getFeed(null, 'all', all.pages + 1)).items).toEqual([]);
+    expect(rankUps(all.items)).toEqual([`${username(b)}:legend:2`, `${username(b)}:legend`, `${username(b)}:platinum`, `${username(a)}:gold`]);
     expect(all.items.find(item => item.kind === 'rank-up' && item.rankUp.userId === a)).toMatchObject({ rankUp: { xp: 2900, name: 'Rank test', avatarId: null } });
     expect(rankUps((await getFeed(c, 'following')).items)).toEqual([]);
     await setFollowing(c, a, true);

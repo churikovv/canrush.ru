@@ -3293,6 +3293,13 @@ html[data-cookie-notice="visible"] .brand-footer {
 .experience-level-copy { display: flex; flex-direction: column; gap: 8px; }
 .experience-level-copy strong { font-size: 1.25rem; }
 .experience-level-copy span { color: var(--color-muted-strong); font-size: .875rem; line-height: 1.5; }
+.level-degree rect { fill: var(--tier-dark); stroke: var(--tier-light); stroke-width: 1.5; }
+.level-degree text { fill: #fff; font-size: 12.5px; font-weight: 800; letter-spacing: .04em; }
+.level-emblem[data-level-tier=silver] .level-degree text, .level-emblem[data-level-tier=platinum] .level-degree text { fill: var(--tier-light); }
+.experience-rank { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.experience-level-copy .experience-degrees { display: inline-flex; align-items: center; gap: 4px; }
+.experience-degrees i { width: 18px; height: 6px; border-radius: 3px; background: var(--profile-soft, var(--theme-subtle, #eef0f3)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tier-mid) 45%, transparent); }
+.experience-degrees i[data-filled] { background: linear-gradient(90deg, var(--tier-dark), var(--tier-mid)); box-shadow: 0 0 6px var(--tier-glow); }
 .experience-panel .experience-track { height: 10px; border-radius: 5px; }
 @media (max-width: 639px) { .experience-summary { gap: 20px; } }
 .profile-layout-block.is-hidden { background: var(--color-subtle); }

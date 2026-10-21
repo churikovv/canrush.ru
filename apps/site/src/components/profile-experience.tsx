@@ -4,7 +4,7 @@ import Link from '@/components/navigation-progress';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { experienceLevel, type Experience } from '@/lib/experience-level';
 import { LevelChipContent, LevelEmblem, LevelTierGlyph } from '@/components/level-badge';
-import { LEVEL_TIERS, levelTier } from '@/lib/level-tier';
+import { LEVEL_TIERS, levelRank, nextLevelRank } from '@/lib/level-tier';
 
 // One batched request for all visible authors, including repeated review authors.
 const listeners = new Map<string, Set<(value: Experience) => void>>();
@@ -37,24 +37,33 @@ export function ProfileExperience({ username, initial = { xp: 0, rank: null }, e
     };
   }, [username]);
   const progress = experienceLevel(value.xp);
-  const { tier, next } = levelTier(progress.level);
-  if (!expanded) return <Link className="profile-level" data-level-tier={tier.key} href={`/profile/${username}#experience`} title={`${tier.label} · ${value.xp} XP${value.rank ? ` · № ${value.rank} в рейтинге` : ''}`}><LevelChipContent level={progress.level} /></Link>;
+  const rank = levelRank(progress.level);
+  const { tier } = rank;
+  if (!expanded) return <Link className="profile-level" data-level-tier={tier.key} href={`/profile/${username}#experience`} title={`${rank.label} · ${value.xp} XP${value.rank ? ` · № ${value.rank} в рейтинге` : ''}`}><LevelChipContent level={progress.level} /></Link>;
   const number = (n: number) => n.toLocaleString('ru-RU');
   const tierIndex = LEVEL_TIERS.findIndex(item => item.key === tier.key);
+  const next = LEVEL_TIERS[tierIndex + 1];
   // Position on the rank road: whole tiers passed plus the share of levels inside the current one.
   const road = next ? (tierIndex + (progress.level - tier.min) / (next.min - tier.min)) / (LEVEL_TIERS.length - 1) : 1;
-  const levelsToNext = next ? next.min - progress.level : 0;
+  // The next degree is the nearer goal; Legend keeps adding degrees, so there is always one.
+  const step = nextLevelRank(progress.level);
+  const levelsToNext = step.min - progress.level;
   const stats = [
     achievements && { value: `${achievements.earned} / ${achievements.total}`, label: 'достижений' },
     value.aheadPercent ? { value: `${value.aheadPercent}%`, label: 'участников позади' } : null,
-    next ? { value: `${levelsToNext} ${levelsToNext === 1 ? 'уровень' : levelsToNext < 5 ? 'уровня' : 'уровней'}`, label: `до ранга «${next.label}»` } : { value: 'Максимум', label: 'высший ранг' },
+    { value: `${levelsToNext} ${levelsToNext === 1 ? 'уровень' : levelsToNext < 5 ? 'уровня' : 'уровней'}`, label: `до «${step.label}»` },
   ].filter(Boolean) as { value: string; label: string }[];
   return <section className="community-panel experience-panel" id="experience" data-level-tier={tier.key} aria-labelledby="experience-title">
     <div className="experience-heading"><h2 id="experience-title">Уровень</h2><Link href="/leaderboard">{value.rank ? `№ ${value.rank} в рейтинге ↗` : 'Рейтинг ↗'}</Link></div>
     <div className="experience-summary" data-level-tier={tier.key}>
       <LevelEmblem level={progress.level} />
       <div className="experience-level-copy">
-        <span className="experience-tier">{tier.label}</span>
+        <div className="experience-rank">
+          <span className="experience-tier">{rank.label}</span>
+          {rank.degrees !== null && rank.degrees > 1 && <span className="experience-degrees" role="img" aria-label={`Степень ${rank.degree} из ${rank.degrees}`}>
+            {Array.from({ length: rank.degrees }, (_, index) => <i key={index} data-filled={index < rank.degree ? '' : undefined} />)}
+          </span>}
+        </div>
         <strong className="experience-xp">{number(value.xp)}<span> XP</span></strong>
         <div className="experience-level-progress">
           <div className="experience-level-ends" aria-hidden="true"><span>Ур. {progress.level}</span><b>{number(progress.current)} / {number(progress.required)} XP</b><span>Ур. {progress.level + 1}</span></div>

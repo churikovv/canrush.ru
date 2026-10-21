@@ -1,5 +1,6 @@
 import Link from '@/components/navigation-progress';
 import { WallComposer } from '@/components/profile-community-controls';
+import { PagePagination } from '@/components/page-pagination';
 import { RankUpCard } from '@/components/rank-up-card';
 import { FeedTabs } from '@/components/section-tabs';
 import { WallPost } from '@/components/wall-post';
@@ -41,7 +42,7 @@ export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = 
           : <div className="wall-empty-card">{scope === 'following'
             ? <><strong>Подписок пока нет</strong><p>Подпишитесь на участников из <Link href="/leaderboard">рейтинга</Link>, чтобы видеть их записи здесь.</p></>
             : <><strong>Здесь пока тихо</strong><p>Напишите первую запись — она появится и на вашей стене.</p></>}</div>}
-        {(page > 1 || feed.hasMore) && <nav className="community-pagination" aria-label="Страницы ленты">{page > 1 ? <Link href={pageHref(page - 1)}>← Новее</Link> : <span />}<span>{page}</span>{feed.hasMore ? <Link href={pageHref(page + 1)}>Старее →</Link> : <span />}</nav>}
+        <PagePagination page={page} pages={feed.pages} href={pageHref} label="Страницы ленты" previousLabel="Новее" nextLabel="Старее" />
       </section>
     </div>
   );

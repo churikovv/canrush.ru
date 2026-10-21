@@ -115,7 +115,7 @@ export interface WallPostRow { id: string; profileId: string; userId: string; te
 export interface FeedPostRow extends WallPostRow { ownerUsername: string | null; ownerName: string; ownerAvatarId: string | null }
 export type FeedScope = 'all' | 'following';
 
-export interface RankUpRow { id: string; userId: string; tier: RankUpTier; createdAt: Date; username: string; name: string; avatarId: string | null; tag: string | null; xp: number }
+export interface RankUpRow { id: string; userId: string; tier: RankUpTier; degree: number; createdAt: Date; username: string; name: string; avatarId: string | null; tag: string | null; xp: number }
 /** A feed entry: a wall record or the moment a member reached a high level tier (migration 0079). */
 export type FeedItem = { kind: 'post'; post: FeedPostRow } | { kind: 'rank-up'; rankUp: RankUpRow };
 
@@ -144,7 +144,7 @@ export async function getProfileWall(profileId: string, page = 1) {
  */
 export async function getFeed(viewerId: string | null, scope: FeedScope = 'all', page = 1) {
   const following = scope === 'following' && viewerId !== null;
-  const { rows: entries } = await getPool().query<{ id: string; kind: FeedItem['kind'] }>(`select id, kind from (
+  const { rows: entries } = await getPool().query<{ id: string; kind: FeedItem['kind']; total: number }>(`select id, kind, count(*) over()::int as total from (
         select c.id::text, 'post' as kind, c."createdAt" from "profileComment" c
         where not $1::boolean or c."userId" = $2 or c."profileId" = $2
           or exists(select 1 from "userFollow" f where f."userId" = $2 and f."targetId" in (c."userId", c."profileId"))
@@ -153,25 +153,26 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
         where u.username is not null and not exists(select 1 from "userBlock" b where b."userId" = u.id)
           and (not $1::boolean or r."userId" = $2 or exists(select 1 from "userFollow" f where f."userId" = $2 and f."targetId" = r."userId"))
       ) entry order by "createdAt" desc, id desc limit $3 offset $4`,
-  [following, viewerId, COMMUNITY_PAGE_SIZE + 1, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE]);
-  const pageEntries = entries.slice(0, COMMUNITY_PAGE_SIZE);
-  const idsOf = (kind: FeedItem['kind']) => pageEntries.filter(entry => entry.kind === kind).map(entry => entry.id);
+  [following, viewerId, COMMUNITY_PAGE_SIZE, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE]);
+  const total = entries[0]?.total ?? 0;
+  const idsOf = (kind: FeedItem['kind']) => entries.filter(entry => entry.kind === kind).map(entry => entry.id);
   const [posts, rankUps] = await Promise.all([
     getPool().query<FeedPostRow>(`select ${WALL_POST_COLUMNS}, o.username as "ownerUsername", o.name as "ownerName",
       (select id::text from "profileImage" where "userId"=o.id and kind='avatar') as "ownerAvatarId"
       from "profileComment" c join "user" u on u.id = c."userId" join "user" o on o.id = c."profileId" where c.id = any($1::uuid[])`, [idsOf('post')]),
-    getPool().query<RankUpRow>(`select r.id, r."userId", r.tier, r."createdAt", ${AUTHOR_COLUMNS}
+    getPool().query<RankUpRow>(`select r.id, r."userId", r.tier, r.degree, r."createdAt", ${AUTHOR_COLUMNS}
       from "rankUp" r join "user" u on u.id = r."userId" where r.id = any($1::uuid[])`, [idsOf('rank-up')]),
   ]);
   const postById = new Map(posts.rows.map(post => [post.id, post]));
   const rankUpById = new Map(rankUps.rows.map(rankUp => [rankUp.id, rankUp]));
-  const items = pageEntries.flatMap((entry): FeedItem[] => {
+  const items = entries.flatMap((entry): FeedItem[] => {
     const post = entry.kind === 'post' ? postById.get(entry.id) : undefined;
     if (post) return [{ kind: 'post', post }];
     const rankUp = entry.kind === 'rank-up' ? rankUpById.get(entry.id) : undefined;
     return rankUp ? [{ kind: 'rank-up', rankUp }] : [];
   });
-  return { items, posts: items.flatMap(item => item.kind === 'post' ? [item.post] : []), hasMore: entries.length > COMMUNITY_PAGE_SIZE };
+  const pages = Math.ceil(total / COMMUNITY_PAGE_SIZE);
+  return { items, posts: items.flatMap(item => item.kind === 'post' ? [item.post] : []), pages, hasMore: profilePageNumber(page) < pages };
 }
 
 export async function addProfileComment(userId: string, profileId: string, input: unknown, photos: PreparedWallMedia[] = []) {

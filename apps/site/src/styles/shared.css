@@ -576,3 +576,25 @@ a.wall-post-author:hover { color: var(--theme-link, #0058cc); }
 .mention-suggestion-name { display: grid; min-width: 0; line-height: 1.25; }
 .mention-suggestion-name strong, .mention-suggestion-name small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mention-suggestion-name small { color: var(--color-muted-strong); font-size: .75rem; }
+/* Numbered pager (PagePagination): previous/next buttons around page numbers. */
+.page-pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0 0; font-size: .9375rem; font-weight: 600; }
+.page-pagination-pages { display: flex; align-items: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.page-pagination-page, .page-pagination-gap { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; height: 44px; padding: 0 6px; border-radius: 12px; color: var(--color-text); font-variant-numeric: tabular-nums; text-decoration: none; }
+a.page-pagination-page { transition: background-color 150ms ease-out, color 150ms ease-out; }
+a.page-pagination-page:hover { background: var(--theme-subtle, #eef3fa); color: var(--theme-link, #0058cc); }
+.page-pagination-page[aria-current=page] { background: var(--color-brand, #006eff); color: #fff; }
+.page-pagination-gap { min-width: 24px; padding: 0; color: var(--theme-muted, #59616b); }
+.page-pagination-step { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 12px; color: var(--color-text); text-decoration: none; transition: border-color 150ms ease-out, color 150ms ease-out; }
+a.page-pagination-step:hover { border-color: var(--color-brand, #006eff); color: var(--theme-link, #0058cc); }
+.page-pagination-step[aria-disabled=true] { opacity: .4; }
+.page-pagination a:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+@media (max-width: 520px) {
+  /* At most seven slots (pageWindow) plus two arrows must fit a 343px column. */
+  .page-pagination { gap: 4px; justify-content: space-between; }
+  .page-pagination-pages { gap: 0; }
+  .page-pagination-step { width: 40px; height: 40px; padding: 0; justify-content: center; }
+  .page-pagination-step > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .page-pagination-page { min-width: 32px; height: 40px; padding: 0 4px; border-radius: 10px; }
+  .page-pagination-gap { min-width: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .page-pagination a { transition: none; } }
