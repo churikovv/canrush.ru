@@ -3,7 +3,6 @@ import { PhotoDeleteIcon } from '@/components/photo-delete-icon';
 import { ProfileAppearanceEditor } from '@/components/profile-appearance-editor';
 import { DEFAULT_PROFILE_APPEARANCE, PROFILE_FRAMES, PROFILE_THEMES, profileThemeAttributes } from '@/lib/profile-appearance';
 import { ProfileLayoutEditor } from '@/components/profile-layout-editor';
-import { ProfileBackButton } from '@/components/profile-back-button';
 
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
@@ -204,7 +203,6 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, 
     { key: 'account', title: 'Аккаунт', rows: [...accountRows, { key: 'account', title: 'Удаление аккаунта', value: 'Без возможности восстановления', tone: 'danger' }] },
   ];
   return <div className="community-profile profile-editor ym-hide-content">
-    <ProfileBackButton />
     <form className="profile-customization-form" action={formAction} noValidate onSubmit={event => {
       if (!event.currentTarget.checkValidity()) {
         event.preventDefault();

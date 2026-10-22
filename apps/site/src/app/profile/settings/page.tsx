@@ -5,7 +5,6 @@ import type { ReactNode } from 'react';
 import { cookies, headers } from 'next/headers';
 import { getBlockedMembers } from '@/lib/member-blocks';
 import { BlockMemberButton } from '@/components/block-member-button';
-import { ProfileBackButton } from '@/components/profile-back-button';
 import { ThemeSettings } from '@/components/theme-settings';
 import { parseSiteTheme, SITE_THEME_COOKIE, type SiteTheme } from '@/lib/site-theme';
 import Link from '@/components/navigation-progress';
@@ -61,7 +60,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const session = await auth.api.getSession({ headers: await headers() });
   const theme = parseSiteTheme((await cookies()).get(SITE_THEME_COOKIE)?.value) ?? 'system';
   if (!session) return <BrandShell headerAction={<ProfileNavigation />} surfaceClassName="profile-surface">
-    <section className="community-directory profile-settings"><ProfileBackButton /><h1>Настройки</h1>
+    <section className="community-directory profile-settings"><h1>Настройки</h1>
       <ThemeSettings theme={theme} />
       <section className="community-panel"><h2>Аккаунт и уведомления</h2><p>Войдите, чтобы настроить профиль, уведомления и посмотреть данные аккаунта.</p><Link className="community-button" href="/sign-in">Войти</Link></section>
     </section>
