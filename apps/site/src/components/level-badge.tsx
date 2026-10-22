@@ -9,51 +9,71 @@ function star(points: number, outer: number, inner: number) {
   }).join('') + 'Z';
 }
 
+/** Every rank has its own silhouette, growing more elaborate toward Legend's sixteen-point star. */
 const SHAPES: Record<LevelTier['key'], string> = {
-  rookie: 'M50 9a41 41 0 1 1 0 82a41 41 0 1 1 0-82Z',
-  bronze: 'M50 6 87 19v29c0 23-15 39-37 47C28 87 13 71 13 48V19Z',
-  silver: 'M50 5 89 27.5v45L50 95 11 72.5v-45Z',
-  gold: star(12, 47, 40),
-  platinum: 'M50 4 92 50 50 96 8 50Z',
+  rookie: 'M50 5.5 89 28v44L50 94.5 11 72V28Z',
+  bronze: 'M50 4 87 17v31c0 24-15 40-37 48C28 88 13 72 13 48V17Z',
+  silver: star(8, 49, 41),
+  gold: star(10, 49, 38),
+  platinum: star(6, 50, 37),
   legend: star(16, 49, 39),
 };
-const FACETS: Partial<Record<LevelTier['key'], string>> = { platinum: 'M8 50h84M50 4 33 50l17 46M50 4l17 46-17 46' };
+const BOLT = 'M15 0 3 17h8L6 32l16-20h-8.5L20 0Z';
 const SPARKLE = 'M0-10Q1-1 10 0Q1 1 0 10Q-1 1-10 0Q-1-1 0-10Z';
 const TWINKLES = [{ x: 86, y: 14, scale: .55, delay: 0 }, { x: 12, y: 82, scale: .38, delay: -1.4 }, { x: 93, y: 74, scale: .3, delay: -2.6 }];
 
-/** Large emblem: the shape, material and motion grow with the level tier; a ribbon carries the degree. */
-export function LevelEmblem({ level }: { level: number }) {
+/** Effects grow with the rank, Legend on top: sheen from Bronze, sparkles from Silver, a spinning aura from Gold. */
+const AURA: Partial<Record<LevelTier['key'], 1 | 2>> = { gold: 1, platinum: 2, legend: 2 };
+const TWINKLE_COUNT: Partial<Record<LevelTier['key'], number>> = { silver: 1, gold: 2, platinum: 3, legend: 3 };
+
+/**
+ * Large emblem: a metallic hexagon in the rank's colours with the level in white; Legend keeps its star. Older
+ * ranks add effects (AURA, TWINKLE_COUNT). A ribbon carries the degree; `wings` adds lightning bolts (experience panel).
+ */
+export function LevelEmblem({ level, wings = false }: { level: number; wings?: boolean }) {
   const id = useId().replace(/:/g, '');
   const rank = levelRank(level);
   const { tier } = rank;
+  const legend = tier.key === 'legend';
   const numeral = rank.label === tier.label ? null : romanNumeral(rank.degree);
   const ribbon = numeral ? 16 + numeral.length * 9 : 0;
   const shape = SHAPES[tier.key];
-  const rich = tier.key === 'gold' || tier.key === 'platinum' || tier.key === 'legend';
-  return <svg className="level-emblem" data-level-tier={tier.key} viewBox="0 0 100 100" role="img" aria-label={`Уровень ${level}, ранг «${rank.label}»`}>
+  const aura = AURA[tier.key] ?? 0;
+  const twinkles = TWINKLES.slice(0, TWINKLE_COUNT[tier.key] ?? 0);
+  return <svg className={`level-emblem${wings ? ' has-wings' : ''}`} data-level-tier={tier.key} viewBox={wings ? '-38 0 176 100' : '0 0 100 100'} role="img" aria-label={`Уровень ${level}, ранг «${rank.label}»`}>
     <defs>
       <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" className="level-stop-light" /><stop offset=".55" className="level-stop-mid" /><stop offset="1" className="level-stop-dark" />
+      </linearGradient>
+      <linearGradient id={`${id}-metal`} x1=".15" y1="0" x2=".85" y2="1">
+        <stop offset="0" className="level-stop-light" /><stop offset=".38" className="level-stop-mid" /><stop offset="1" className="level-stop-dark" />
       </linearGradient>
       <linearGradient id={`${id}-sheen`} x1="0" y1="0" x2="1" y2="0">
         <stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset=".5" stopColor="#fff" stopOpacity=".7" /><stop offset="1" stopColor="#fff" stopOpacity="0" />
       </linearGradient>
       <clipPath id={`${id}-clip`}><path d={shape} /></clipPath>
     </defs>
-    {tier.key === 'legend' && <g className="level-aura" fill="none" stroke={`url(#${id}-fill)`}>
-      <circle cx="50" cy="50" r="49" strokeWidth="2.5" strokeDasharray="16 9" />
-      <circle className="level-aura-reverse" cx="50" cy="50" r="53" strokeWidth="1.2" strokeDasharray="3 12" />
+    {wings && <g className="level-emblem-wings">
+      <path d={BOLT} transform="translate(4 22) rotate(22) scale(-1.25 1.25)" />
+      <path d={BOLT} transform="translate(-18 42) rotate(12) scale(-.8 .8)" />
+      <path d={BOLT} transform="translate(96 22) rotate(-22) scale(1.25)" />
+      <path d={BOLT} transform="translate(118 42) rotate(-12) scale(.8)" />
     </g>}
-    <path d={shape} fill={`url(#${id}-fill)`} className="level-emblem-body" />
-    {FACETS[tier.key] && <path d={FACETS[tier.key]} className="level-emblem-facets" fill="none" />}
-    <path d={shape} transform="translate(50 50) scale(.84) translate(-50 -50)" className="level-emblem-bevel" fill="none" />
+    {aura > 0 && <g className="level-aura" fill="none" stroke={`url(#${id}-fill)`}>
+      <circle cx="50" cy="50" r={legend ? 49 : 51} strokeWidth="2.5" strokeDasharray="16 9" />
+      {aura > 1 && <circle className="level-aura-reverse" cx="50" cy="50" r={legend ? 53 : 55} strokeWidth="1.2" strokeDasharray="3 12" />}
+    </g>}
+    <path d={shape} className="level-emblem-glow" fill="none" />
+    <path d={shape} fill={`url(#${id}-${legend ? 'fill' : 'metal'})`} className="level-emblem-body" />
+    {!legend && <rect x="0" y="0" width="100" height="47" clipPath={`url(#${id}-clip)`} className="level-emblem-facet" />}
+    <path d={shape} transform="translate(50 50) scale(.82) translate(-50 -50)" className="level-emblem-bevel" fill="none" />
     {tier.key !== 'rookie' && <g clipPath={`url(#${id}-clip)`}><g transform="rotate(20 50 50)"><rect className="level-emblem-sheen" x="-40" y="-30" width="28" height="160" fill={`url(#${id}-sheen)`} /></g></g>}
-    <text x="50" y="52" className="level-emblem-number" textAnchor="middle" dominantBaseline="central" fontSize={level >= 100 ? 30 : 38}>{level}</text>
+    <text x="50" y="51" className="level-emblem-number" textAnchor="middle" dominantBaseline="central" fontSize={level >= 100 ? 30 : 40}>{level}</text>
     {numeral && <g className="level-degree">
       <rect x={50 - ribbon / 2} y="80" width={ribbon} height="20" rx="10" />
       <text x="50" y="90.5" textAnchor="middle" dominantBaseline="central">{numeral}</text>
     </g>}
-    {rich && TWINKLES.map(item => <g key={item.x} transform={`translate(${item.x} ${item.y}) scale(${item.scale})`}>
+    {twinkles.map(item => <g key={item.x} transform={`translate(${item.x} ${item.y}) scale(${item.scale})`}>
       <path className="level-twinkle" d={SPARKLE} style={{ animationDelay: `${item.delay}s` }} />
     </g>)}
   </svg>;

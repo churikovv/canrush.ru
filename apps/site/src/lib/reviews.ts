@@ -267,10 +267,3 @@ export async function getFeaturedReviews(products: Array<{ brand: string; flavor
   );
   return new Map(rows.map(({ brand, flavor, ...review }) => [`${brand}\u0000${flavor}`, { ...review, score: Number(review.score) }]));
 }
-
-export async function getLatestReviewPreview(userId: string): Promise<string | null> {
-  const { rows } = await getPool().query<{ text: string }>(
-    `select left(text, 240) as text from review where "userId" = $1 and length(trim(text)) > 0 order by "createdAt" desc, id desc limit 1`, [userId],
-  );
-  return rows[0]?.text ?? null;
-}

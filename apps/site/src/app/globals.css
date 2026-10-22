@@ -2716,7 +2716,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 .profile-editor-danger p { font-size: .8125rem; color: var(--theme-muted, #59616b); margin: 8px 0 0; max-width: 60ch; line-height: 1.5; }
 /* Profile experience, identity and image framing. */
 /* Level tiers: one palette drives the chip, the emblem and the progress fill. */
-[data-level-tier=rookie] { --tier-light: #eef2f7; --tier-mid: #c9d1dc; --tier-dark: #8e99a8; --tier-ink: #344050; --tier-glow: rgb(120 135 155 / .18); }
+[data-level-tier=rookie] { --tier-light: #dfe5ee; --tier-mid: #a4afbf; --tier-dark: #5f6c80; --tier-ink: #344050; --tier-glow: rgb(120 135 155 / .18); }
 [data-level-tier=bronze] { --tier-light: #ffd2a6; --tier-mid: #d0854a; --tier-dark: #85461c; --tier-ink: #3d1c06; --tier-glow: rgb(208 133 74 / .4); }
 [data-level-tier=silver] { --tier-light: #ffffff; --tier-mid: #cdd6e0; --tier-dark: #7f8c9d; --tier-ink: #26303c; --tier-glow: rgb(150 170 200 / .45); }
 [data-level-tier=gold] { --tier-light: #fff3b0; --tier-mid: #f6bb24; --tier-dark: #b0700c; --tier-ink: #4d2d00; --tier-glow: rgb(246 170 20 / .55); }
@@ -3197,23 +3197,29 @@ html[data-cookie-notice="visible"] .brand-footer {
 .experience-heading h2 { margin: 0; }
 .experience-heading a { font-size: .8125rem; min-height: 44px; display: inline-flex; align-items: center; }
 .experience-summary { display: flex; align-items: center; gap: 24px; margin: 16px 0 24px; }
-.level-emblem { width: 104px; height: 104px; flex: none; overflow: visible; filter: drop-shadow(0 6px 14px var(--tier-glow)); }
+.level-emblem { width: 104px; height: 104px; flex: none; overflow: visible; filter: drop-shadow(0 0 12px var(--tier-glow)); }
+.level-emblem.has-wings { width: auto; aspect-ratio: 176 / 100; }
+.level-emblem-glow { stroke: var(--tier-mid); stroke-width: 11; stroke-linejoin: round; opacity: .3; }
+.level-emblem-facet { fill: #fff; opacity: .22; }
+.level-emblem-wings path { fill: var(--tier-mid); stroke: var(--tier-light); stroke-width: 1.2; stroke-linejoin: round; }
 .level-stop-light { stop-color: var(--tier-light); }
 .level-stop-mid { stop-color: var(--tier-mid); }
 .level-stop-dark { stop-color: var(--tier-dark); }
-.level-emblem-body { stroke: var(--tier-dark); stroke-width: 2; stroke-linejoin: round; }
+.level-emblem-body { stroke: var(--tier-light); stroke-width: 3; stroke-linejoin: round; }
+.level-emblem[data-level-tier=legend] .level-emblem-body { stroke-width: 2.5; }
 .level-emblem-bevel { stroke: var(--tier-light); stroke-width: 1.5; stroke-linejoin: round; opacity: .7; }
-.level-emblem-facets { stroke: rgb(255 255 255 / .4); stroke-width: 1; }
-.level-emblem-number { fill: var(--tier-ink); font-weight: 800; letter-spacing: -.03em; }
-.level-emblem[data-level-tier=legend] .level-emblem-number { paint-order: stroke; stroke: rgb(40 10 60 / .35); stroke-width: 3px; }
+.level-emblem[data-level-tier=legend] .level-emblem-bevel { opacity: .7; }
+.level-emblem-number { fill: #fff; font-weight: 800; letter-spacing: -.03em; }
+.level-emblem-number { paint-order: stroke; stroke: color-mix(in srgb, var(--tier-dark) 80%, #000); stroke-width: 4px; stroke-linejoin: round; }
+.level-emblem[data-level-tier=legend] .level-emblem-number { stroke: rgb(40 10 60 / .35); stroke-width: 3px; }
 .level-emblem-sheen { animation: level-sheen 5.5s cubic-bezier(.4,0,.2,1) infinite; }
 .level-emblem[data-level-tier=gold] .level-emblem-sheen { animation-duration: 4.2s; }
 .level-emblem[data-level-tier=platinum] .level-emblem-sheen { animation-duration: 3.4s; }
 .level-emblem[data-level-tier=legend] .level-emblem-sheen { animation-duration: 2.8s; }
 .level-twinkle { fill: var(--tier-mid); stroke: var(--tier-dark); stroke-width: .8; transform-box: fill-box; transform-origin: center; animation: level-twinkle 3.6s cubic-bezier(.16,1,.3,1) infinite both; }
-.level-aura,.level-aura-reverse { transform-box: view-box; transform-origin: 50% 50%; animation: fx-spin 14s linear infinite; }
+.level-aura,.level-aura-reverse { transform-box: fill-box; transform-origin: center; animation: fx-spin 14s linear infinite; }
 .level-aura-reverse { animation-duration: 9s; animation-direction: reverse; }
-.level-emblem[data-level-tier=platinum],.level-emblem[data-level-tier=legend] { animation: level-glow 3.2s ease-in-out infinite; }
+.level-emblem[data-level-tier=gold],.level-emblem[data-level-tier=platinum],.level-emblem[data-level-tier=legend] { animation: level-glow 3.2s ease-in-out infinite; }
 @keyframes level-sheen { 0%,55% { transform: translateX(0); } 100% { transform: translateX(190px); } }
 @keyframes level-twinkle { 0% { opacity: 0; transform: scale(0) rotate(-45deg); } 10% { opacity: 1; transform: scale(1.15) rotate(0deg); } 30% { opacity: 1; transform: scale(1) rotate(15deg); } 45%,100% { opacity: 0; transform: scale(.2) rotate(40deg); } }
 @keyframes level-glow { 0%,100% { filter: drop-shadow(0 6px 14px var(--tier-glow)); } 50% { filter: drop-shadow(0 6px 22px var(--tier-glow)) drop-shadow(0 0 6px var(--tier-glow)); } }
@@ -3544,8 +3550,13 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
 /* Experience panel: tier-tinted glow, a level bar with both ends, the rank road and quick stats. */
 .experience-panel { isolation: isolate; }
 .experience-panel::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(440px 240px at 0 0, var(--tier-glow), transparent 70%); opacity: .6; }
-.experience-panel .experience-summary { align-items: center; gap: 24px; margin: 12px 0 24px; }
-.experience-panel .experience-level-copy { flex: 1; min-width: 0; gap: 6px; }
+.experience-hero { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 4px 0 20px; text-align: center; }
+.experience-hero .level-emblem { height: 120px; margin-bottom: 4px; }
+.experience-hero .experience-rank { justify-content: center; }
+.experience-hero .experience-tier { padding: 3px 12px; border-radius: 999px; background: linear-gradient(135deg, var(--tier-light), var(--tier-mid)); color: var(--tier-ink); font-size: .8125rem; font-weight: 800; line-height: 1.4; }
+.experience-hero[data-level-tier=rookie] .experience-tier { background: var(--profile-soft, var(--theme-subtle, #eef1f5)); color: var(--profile-ink, var(--color-muted-strong)); }
+.experience-hero .experience-level-progress { width: 100%; text-align: left; }
+.experience-hero .experience-remaining { color: var(--profile-muted, var(--color-muted-strong)); text-align: center; }
 .experience-panel .experience-xp { font-size: 2rem; line-height: 1.1; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--profile-ink, var(--color-text)); }
 .experience-panel .experience-xp span { font-size: 1rem; font-weight: 700; color: var(--profile-muted, var(--color-muted-strong)); }
 .experience-level-progress { display: grid; gap: 6px; margin-top: 6px; }
@@ -3559,23 +3570,41 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
 .experience-road::before { right: calc(100% / 12); background: var(--profile-soft, var(--theme-subtle, #eef0f3)); }
 .experience-road::after { width: calc((100% - 100% / 6) * var(--road, 0)); background: linear-gradient(90deg, #c9d1dc, var(--tier-mid)); }
 .experience-road li { position: relative; z-index: 1; display: grid; justify-items: center; gap: 4px; min-width: 0; text-align: center; }
-.level-tier-glyph { width: 26px; height: 26px; overflow: visible; fill: var(--tier-mid); stroke: var(--tier-dark); stroke-width: 6; stroke-linejoin: round; }
+.level-tier-glyph { width: 26px; height: 26px; overflow: visible; fill: var(--tier-mid); stroke: var(--tier-dark); stroke-width: 7; stroke-linejoin: round; }
 .experience-road li span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .75rem; font-weight: 700; color: var(--profile-ink, var(--color-text)); }
 .experience-road li small { font-size: .6875rem; color: var(--profile-muted, var(--color-muted-strong)); }
 .experience-road li[data-state=locked] .level-tier-glyph { fill: var(--profile-soft, #eef0f3); stroke: color-mix(in srgb, var(--profile-muted, #59616b) 55%, transparent); }
 .experience-road li[data-state=locked] span { font-weight: 500; color: var(--profile-muted, var(--color-muted-strong)); }
 .experience-road li[data-state=current] .level-tier-glyph { transform: scale(1.3); filter: drop-shadow(0 0 6px var(--tier-glow)); }
-.experience-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin: 0; }
-.experience-stats div { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--profile-soft, var(--theme-subtle, #f3f5f8)); }
-.experience-stats dd { margin: 0; font-size: 1.125rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--profile-ink, var(--color-text)); }
-.experience-stats dt { font-size: .75rem; color: var(--profile-muted, var(--color-muted-strong)); }
+.experience-panel .experience-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.experience-stats li > * { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; column-gap: 10px; height: 100%; padding: 12px; border-radius: 16px; background: var(--profile-soft, var(--theme-subtle, #f3f5f8)); color: inherit; text-decoration: none; transition: background-color 150ms ease-out; }
+.experience-stats li > a:hover { background: color-mix(in srgb, var(--profile-soft, var(--theme-subtle, #f3f5f8)) 80%, var(--tier-mid) 20%); }
+.experience-stat-icon { display: grid; grid-row: 1 / 3; width: 38px; height: 38px; place-items: center; border-radius: 12px; background: color-mix(in srgb, var(--tier-mid) 22%, transparent); color: var(--tier-dark); }
+[data-level-tier=rookie] .experience-stat-icon { color: var(--color-brand); background: color-mix(in srgb, var(--color-brand) 12%, transparent); }
+[data-profile-tone=dark] .experience-stat-icon, [data-level-tier=legend] .experience-stat-icon { color: var(--tier-light); }
+.experience-stats strong { font-size: 1.0625rem; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--profile-ink, var(--color-text)); white-space: nowrap; }
+.experience-stats li span:last-child { font-size: .75rem; line-height: 1.3; color: var(--profile-muted, var(--color-muted-strong)); }
+.experience-rewards { margin-top: 20px; }
+.experience-rewards-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.experience-rewards h3 { margin: 0; font-size: 1rem; color: var(--profile-ink, var(--color-text)); }
+.experience-rewards-heading span { flex: none; white-space: nowrap; font-size: .8125rem; color: var(--profile-muted, var(--color-muted-strong)); }
+.experience-panel .experience-rewards ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.experience-rewards li { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 10px; border: 1px solid color-mix(in srgb, var(--tier-mid) 35%, transparent); border-radius: 16px; background: var(--profile-soft, var(--theme-subtle, #f3f5f8)); text-align: center; }
+.experience-reward-icon { display: grid; width: 40px; height: 40px; margin-bottom: 2px; place-items: center; border-radius: 12px; background: color-mix(in srgb, var(--tier-mid) 22%, transparent); color: var(--tier-dark); }
+[data-profile-tone=dark] .experience-reward-icon, [data-level-tier=legend] .experience-reward-icon { color: var(--tier-light); }
+.experience-reward-icon .level-tier-glyph { width: 24px; height: 24px; }
+.experience-rewards strong { font-size: .875rem; line-height: 1.25; color: var(--profile-ink, var(--color-text)); }
+.experience-rewards li span:last-child { font-size: .75rem; line-height: 1.3; color: var(--profile-muted, var(--color-muted-strong)); }
+@media (prefers-reduced-motion: reduce) { .experience-stats li > * { transition: none; } }
 @media (max-width: 479px) {
-  .experience-panel .experience-summary { gap: 16px; }
-  .experience-panel .level-emblem { width: 76px; height: 76px; }
+  .experience-hero .level-emblem { height: 100px; }
   .experience-panel .experience-xp { font-size: 1.625rem; }
   .experience-road li span { font-size: .6875rem; }
-  .experience-stats div { padding: 10px 12px; }
-  .experience-stats dd { font-size: 1rem; }
+  .experience-panel .experience-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .experience-stats li > * { padding: 10px; column-gap: 8px; }
+  .experience-stat-icon { width: 34px; height: 34px; border-radius: 10px; }
+  .experience-stats strong { font-size: 1rem; }
+  .experience-panel .experience-rewards ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* Home hero (after Tailark hero-section-6): copy on the page background over a carousel of drinks and reviews
    that fades into the background on the left. Product JPEGs sit on white tiles only (multiply + radial mask). */

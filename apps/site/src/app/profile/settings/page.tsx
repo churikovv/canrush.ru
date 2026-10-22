@@ -96,8 +96,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const profile = await ensureOwnProfile(session.user);
   const telegram = getTelegramEnv();
   const telegramOnly = isTelegramPlaceholderEmail(session.user.email);
-  const [ratings, wall, listings, experience, friends, followers, following, favorites, community, viewerIsAdmin, preferenceRows, telegramLinked, blocked] = await Promise.all([
-    getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), getProfileCommunity(profile.id, profile.id), isSiteAdminEmail(session.user.email),
+  const [ratings, wall, listings, experience, friends, favorites, community, viewerIsAdmin, preferenceRows, telegramLinked, blocked] = await Promise.all([
+    getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getFavoriteGroups(profile.id), getProfileCommunity(profile.id, profile.id), isSiteAdminEmail(session.user.email),
     getPool().query<{ kind: string; enabled: boolean }>('select kind,enabled from "notificationPreference" where "userId"=$1', [session.user.id]).then(result => result.rows),
     getPool().query('select 1 from "account" where "userId" = $1 and "providerId" = $2 limit 1', [session.user.id, TELEGRAM_PROVIDER_ID]).then(result => (result.rowCount ?? 0) > 0),
     getBlockedMembers(session.user.id),
@@ -114,7 +114,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     ratings: <div><strong className="layout-score">{ratings.overall.toLocaleString('ru-RU', { maximumFractionDigits: 1 })} / 10</strong><p>Средняя оценка · {ratings.count} отзывов</p></div>,
     listings: listings.items.length ? <div className="layout-listing-previews">{listings.items.slice(0, 2).map(item => <div key={item.id}>{item.photos[0] && <Image src={`/api/market-photos/${item.photos[0]}?size=thumbnail`} width={80} height={80} unoptimized alt="" />}<strong>{item.title}</strong></div>)}</div> : <p>Вы пока не создавали объявлений.</p>,
     wall: <div><p>{wall.comments[0]?.text ?? 'Здесь пока тихо. Оставьте первый комментарий.'}</p><span className="community-muted">Записей: {wall.count}</span></div>,
-    social: <ProfileConnections username={profile.username} groups={{ friends, followers, following }} />,
+    social: <ProfileConnections username={profile.username} friends={friends} />,
   };
 
   const enabledNotifications = NOTIFICATION_OPTIONS.filter(option => preferences.get(option.kind) ?? true).length;

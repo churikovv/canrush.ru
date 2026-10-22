@@ -1,21 +1,26 @@
 import { AvatarFrame } from '@/components/avatar-frame';
+import { ProfileAvatarViewer } from '@/components/profile-avatar-viewer';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { joinedLabel } from '@/lib/last-seen';
 
 const META_ICON = { width: 15, height: 15, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
 
-export function ProfileHeader({ name, username, bio, createdAt, avatarSrc, bannerSrc, actions, status, tags, avatarControl, bannerControl, frame = 'none' }: {
+export function ProfileHeader({ name, username, bio, createdAt, avatarSrc, avatarId, bannerSrc, actions, status, tags, level, avatarControl, bannerControl, frame = 'none' }: {
   frame?: import('@/lib/profile-appearance').ProfileAppearance['frame'];
   name: string;
   username: string;
   bio?: string | null;
   createdAt: Date | string;
   avatarSrc?: string | null;
+  /** With an uploaded avatar, tapping it opens the full-size photo (not in the editor). */
+  avatarId?: string | null;
   bannerSrc?: string | null;
   actions?: ReactNode;
   status?: ReactNode;
   tags?: ReactNode;
+  /** Level chip pinned to the avatar's corner. */
+  level?: ReactNode;
   avatarControl?: ReactNode;
   bannerControl?: ReactNode;
 }) {
@@ -28,8 +33,11 @@ export function ProfileHeader({ name, username, bio, createdAt, avatarSrc, banne
     </div>
     <div className="community-identity">
       <span data-frame={frame} className={`community-avatar${avatarSrc ? ' community-avatar-custom' : ''}`}>
-        <Image src={avatarSrc ?? '/brand/icons/profile-avatar.svg'} width={avatarSrc ? 80 : 32} height={avatarSrc ? 80 : 32} unoptimized={Boolean(avatarSrc)} alt={avatarSrc ? `Аватар ${name}` : ''} />
+        {avatarId && avatarSrc
+          ? <ProfileAvatarViewer avatarId={avatarId} name={name}><Image src={avatarSrc} width={128} height={128} unoptimized alt={`Аватар ${name}`} /></ProfileAvatarViewer>
+          : <Image src={avatarSrc ?? '/brand/icons/profile-avatar.svg'} width={avatarSrc ? 128 : 40} height={avatarSrc ? 128 : 40} unoptimized={Boolean(avatarSrc)} alt={avatarSrc ? `Аватар ${name}` : ''} />}
         <AvatarFrame frame={frame} />
+        {level && <span className="community-avatar-level">{level}</span>}
         {avatarControl}
       </span>
       <div className="community-name"><div className="community-name-line"><h1>{name}</h1>{status}</div>

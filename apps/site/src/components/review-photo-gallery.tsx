@@ -94,7 +94,8 @@ function VideoCanvas({ id, label, source, onClose }: { id: string; label: string
   </div>;
 }
 
-export function PhotoViewer({ photos, kinds, initialIndex, onClose, source }: { photos: string[]; kinds?: WallMediaKind[]; initialIndex: number; onClose: () => void; source: string }) {
+/** Full-screen viewer with zoom and swipe; `label` names the dialog and a single photo (the profile avatar). */
+export function PhotoViewer({ photos, kinds, initialIndex, onClose, source, label }: { photos: string[]; kinds?: WallMediaKind[]; initialIndex: number; onClose: () => void; source: string; label?: string }) {
   const [index, setIndex] = useState(initialIndex);
   const dialog = useRef<HTMLDialogElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -108,7 +109,7 @@ export function PhotoViewer({ photos, kinds, initialIndex, onClose, source }: { 
     return () => { element?.close(); document.body.style.overflow = overflow; focused?.focus(); };
   }, []);
   return (
-    <dialog ref={dialog} className="review-photo-dialog" aria-label="Просмотр фотографий публикации" onCancel={onClose}
+    <dialog ref={dialog} className="review-photo-dialog" aria-label={label ?? 'Просмотр фотографий публикации'} onCancel={onClose}
       onClick={event => { if (event.target === event.currentTarget || (event.target instanceof Element && event.target.matches('.review-photo-toolbar, .review-photo-dots'))) onClose(); }}
       onKeyDown={event => {
         if (event.key === 'ArrowRight') { event.preventDefault(); setIndex(current => Math.min(photos.length - 1, current + 1)); }
@@ -120,7 +121,7 @@ export function PhotoViewer({ photos, kinds, initialIndex, onClose, source }: { 
       </div>
       {kinds?.[index] === 'video'
         ? <VideoCanvas source={source} key={photos[index]} id={photos[index]!} label={`Видео публикации ${index + 1} из ${photos.length}`} onClose={onClose} />
-        : <PhotoCanvas onClose={onClose} onSwipe={direction => setIndex(current => Math.max(0, Math.min(photos.length - 1, current + direction)))} source={source} key={photos[index]} id={photos[index]!} label={`${kinds?.[index] === 'gif' ? 'GIF' : 'Фотография'} публикации ${index + 1} из ${photos.length}`} />}
+        : <PhotoCanvas onClose={onClose} onSwipe={direction => setIndex(current => Math.max(0, Math.min(photos.length - 1, current + direction)))} source={source} key={photos[index]} id={photos[index]!} label={label ?? `${kinds?.[index] === 'gif' ? 'GIF' : 'Фотография'} публикации ${index + 1} из ${photos.length}`} />}
       {photos.length > 1 && <>
         <button type="button" className="review-photo-arrow" data-side="prev" disabled={index === 0} onClick={() => setIndex(index - 1)} aria-label="Предыдущее вложение"><Icon path="m15 6-6 6 6 6" size={26} /></button>
         <button type="button" className="review-photo-arrow" data-side="next" disabled={index === photos.length - 1} onClick={() => setIndex(index + 1)} aria-label="Следующее вложение"><Icon path="m9 6 6 6-6 6" size={26} /></button>

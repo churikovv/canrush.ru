@@ -63,7 +63,6 @@
 :root[data-site-theme=graphite] .community-button-secondary { color: var(--theme-text); background: var(--theme-panel); }
 :root[data-site-theme=graphite] .community-button-text { color: var(--theme-link); background: transparent; }
 :root[data-site-theme=graphite] .community-button-secondary:hover { background: var(--theme-subtle); }
-:root[data-site-theme=graphite] .community-shortcut > img { filter: brightness(0) invert(1); }
 /* An uncustomized profile follows the visitor's theme. Explicit presets stay independent. */
 :root[data-site-theme=graphite] [data-profile-theme=default] {
   --profile-bg: #14171e; --profile-panel: #1d222c; --profile-soft: #282f3c;
@@ -78,7 +77,6 @@
 }
 [data-profile-tone=light] { color-scheme: light; --theme-danger: #a61b14; --theme-success: #146c43; }
 [data-profile-tone=dark] { color-scheme: dark; --theme-danger: #ffb5b5; --theme-success: #7adb9a; }
-:root[data-site-theme=graphite] [data-profile-tone=light] .community-shortcut > img { filter: none; }
 :root[data-site-theme=graphite] :is(.catalog-search-field,.home-hero-search label,.catalog-filter-disclosure > summary,.market-search-submit,.market-filter-toggle) > img { filter: brightness(0) invert(1); }
 :root[data-site-theme=graphite] .brand-header :focus-visible { outline-color: #fff; }
 :root[data-site-theme=graphite] .primary-button { border-color: var(--color-control); }
@@ -132,13 +130,11 @@
 :root[data-site-theme=system] .community-button-secondary { color: var(--theme-text); background: var(--theme-panel); }
 :root[data-site-theme=system] .community-button-text { color: var(--theme-link); background: transparent; }
 :root[data-site-theme=system] .community-button-secondary:hover { background: var(--theme-subtle); }
-:root[data-site-theme=system] .community-shortcut > img { filter: brightness(0) invert(1); }
 :root[data-site-theme=system] [data-profile-theme=default] {
   --profile-bg: #14171e; --profile-panel: #1d222c; --profile-soft: #282f3c;
   --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #2b3240;
   --profile-accent: #4d94ff; --profile-banner: #006eff; color-scheme: dark;
 }
-:root[data-site-theme=system] [data-profile-tone=light] .community-shortcut > img { filter: none; }
 :root[data-site-theme=system] :is(.catalog-search-field,.home-hero-search label,.catalog-filter-disclosure > summary,.market-search-submit,.market-filter-toggle) > img { filter: brightness(0) invert(1); }
 :root[data-site-theme=system] .brand-header :focus-visible { outline-color: #fff; }
 :root[data-site-theme=system] .primary-button { border-color: var(--color-control); }

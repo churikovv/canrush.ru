@@ -6,10 +6,7 @@ import { getProfileCompatibility } from '@/lib/profile-compatibility-data';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { getWallInteractions } from '@/lib/wall-discussions';
 import { ProfileBlock, ProfileBlocks } from '@/components/profile-blocks';
-import { getLatestReviewPreview } from '@/lib/reviews';
-import { achievementImage } from '@/lib/profile-achievements';
-import { getFavoriteGroups, loadAllCatalogGroups } from '@/lib/catalog';
-import { getTierListsForOwner, getPublishedTierListsForUser, tierListProductsForPlacements } from '@/lib/tier-lists';
+import { getFavoriteGroups } from '@/lib/catalog';
 import { ProfileConnections } from '@/components/profile-connections';
 import { getListings } from '@/lib/market';
 import { formatPrice } from '@/lib/market-fields';
@@ -18,6 +15,7 @@ import { ProfileRatingStats } from '@/components/profile-rating-stats';
 import { getExperience } from '@/lib/profile-experience';
 import { ProfileExperience } from '@/components/profile-experience';
 import Image from 'next/image';
+import type { CSSProperties } from 'react';
 import Link from '@/components/navigation-progress';
 import { SignOutButton } from '@/components/sign-out-button';
 import type { ProfileData } from '@/lib/profile';
@@ -42,17 +40,18 @@ interface ProfileViewProps {
   wallPage?: number;
 }
 
+const count = new Intl.NumberFormat('ru-RU');
+
 function TelegramGlyph() {
   return <svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg>;
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, lastSeen, friends, listings, followers, following, favorites, tierLists, catalog, reviewPreview, compatibility, collection] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id),
+  const [community, ratings, wall, presence, lastSeen, friends, listings, favorites, compatibility, collection] = await Promise.all([
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getFavoriteGroups(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id),
   ]);
   const blockedByViewer = !isOwn && viewerId ? await isBlockedByViewer(viewerId, profile.id) : false;
   const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
-  const tierProducts = tierListProductsForPlacements(catalog, tierLists.flatMap(list => list.preview));
   const experience = (await getExperience([profile.username]))[profile.username];
   const visibleAchievements = visibleProfileAchievements(viewerIsAdmin, community.earned);
   const visibleEarned = community.earned.filter(key => visibleAchievements.some(item => item.key === key));
@@ -64,23 +63,32 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
 
   return (
     <div {...profileThemeAttributes(profile.profileAppearance?.theme)} className={`community-profile${isOwn ? ' ym-hide-content' : ''}`}>
-      <ProfileHeader frame={profile.profileAppearance?.frame} name={displayName(profile)} username={profile.username} bio={profile.bio} createdAt={profile.createdAt}
+      <ProfileHeader frame={profile.profileAppearance?.frame} name={displayName(profile)} username={profile.username} createdAt={profile.createdAt}
         avatarSrc={profile.avatarId ? `/api/profile-images/${profile.avatarId}` : null}
+        avatarId={profile.avatarId}
         bannerSrc={profile.bannerId ? `/api/profile-images/${profile.bannerId}` : null}
         status={<ProfilePresence userId={profile.id} initial={presence} lastSeen={lastSeen} />}
-        tags={<div className="profile-tags"><ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} />{community.tags.map(tag => <a key={tag} href={`${base}/achievements`} className="profile-tag" data-tag={tag}>{PROFILE_ACHIEVEMENTS.find(item => item.key === tag)?.label}</a>)}</div>}
+        level={<ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} />}
+        tags={community.tags.length > 0 && <div className="profile-tags">{community.tags.map(tag => <a key={tag} href={`${base}/achievements`} className="profile-tag" data-tag={tag}>{PROFILE_ACHIEVEMENTS.find(item => item.key === tag)?.label}</a>)}</div>}
         actions={isOwn ? undefined
           : viewerId ? <FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
           : <Link className="community-button" href="/sign-in">Войти и подписаться</Link>} />
 
 
       <nav className="community-shortcuts" aria-label="Активность пользователя">
-        {[{ href: favoritesHref, label: 'Избранное', count: profile.favoriteCount, icon: 'stat-favorites', images: favorites.slice(0, 3).map(group => group.coverImageUrl).filter((src): src is string => Boolean(src)) },
-          { href: `${base}/reviews`, label: 'Отзывы', count: profile.reviewCount, icon: 'stat-reviews', images: [] },
-          { href: tierListsHref, label: 'Тирлисты', count: profile.tierListCount, icon: 'stat-tierlists', images: tierProducts.slice(0, 3).map(product => product.imageUrl).filter((src): src is string => Boolean(src)) },
-          { href: `${base}/achievements`, label: 'Достижения', count: visibleEarned.length, icon: 'stat-achievements', images: visibleEarned.slice(0, 3).map(achievementImage) }].map(item =>
-          <Link href={item.href} key={item.label} className="community-shortcut" data-category={item.icon}><Image src={`/brand/icons/${item.icon}.svg`} width={20} height={20} alt="" /><span>{item.label}<b className="community-shortcut-count">{item.count}</b></span><span className="community-shortcut-arrow" aria-hidden="true">↗</span>{item.icon === 'stat-reviews' && <span className="community-shortcut-review">{reviewPreview ?? 'Пока нет отзывов'}</span>}{item.images.length > 0 && <span className="community-shortcut-preview" aria-hidden="true">{item.images.map((src, index) => <Image key={`${src}:${index}`} src={src} width={40} height={40} sizes="40px" alt="" />)}</span>}</Link>)}
+        {[{ href: `${base}/reviews`, label: 'Отзывы', count: profile.reviewCount, icon: 'stat-reviews' },
+          { href: tierListsHref, label: 'Тирлисты', count: profile.tierListCount, icon: 'stat-tierlists' },
+          { href: favoritesHref, label: 'Избранное', count: profile.favoriteCount, icon: 'stat-favorites' },
+          { href: `${base}/achievements`, label: 'Достижения', count: visibleEarned.length, icon: 'stat-achievements' }].map(item =>
+          <Link href={item.href} key={item.label} className="community-shortcut" data-category={item.icon}>
+            <span className="community-shortcut-icon" style={{ '--shortcut-icon': `url(/brand/icons/${item.icon}.svg)` } as CSSProperties} aria-hidden="true" />
+            <strong>{count.format(item.count)}</strong>
+            <span>{item.label}</span>
+          </Link>)}
       </nav>
+
+      {profile.bio ? <section className="community-panel profile-bio-block" aria-labelledby="profile-bio-title"><h2 id="profile-bio-title">О себе</h2><p>{profile.bio}</p></section>
+        : isOwn ? <Link className="community-panel profile-bio-block is-empty" href="/profile/settings?section=details"><h2>О себе</h2><p>Расскажите, какие энергетики любите</p><span aria-hidden="true">›</span></Link> : null}
 
       <div className="community-columns">
         <div className="community-main profile-arranged-main"><ProfileBlocks layout={profile.profileLayout}>
@@ -117,11 +125,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         </div>
 
         <aside className="community-sidebar profile-arranged-sidebar"><ProfileBlocks layout={profile.profileLayout}><ProfileBlock block="social">
-          <ProfileConnections username={profile.username} groups={{
-            followers: { count: followers.count, users: followers.users.slice(0, 6) },
-            following: { count: following.count, users: following.users.slice(0, 6) },
-            friends: { count: friends.count, users: friends.users.slice(0, 8) },
-          }} />
+          <ProfileConnections username={profile.username} friends={{ count: friends.count, users: friends.users.slice(0, 8) }} />
           {compatibility && <ProfileCompatibility value={compatibility} />}
           </ProfileBlock><ProfileBlock block="about"><section className="community-panel profile-about" aria-labelledby="profile-about-title"><h2 id="profile-about-title">О профиле</h2>
             <div className="profile-about-list">
