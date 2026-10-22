@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Быстрые действия по долгому нажатию на иконку. Ссылку открывает MainActivity.openSiteLink. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="drink"
+        android:enabled="true"
+        android:icon="@drawable/shortcut_drink"
+        android:shortcutShortLabel="@string/shortcut_drink_short"
+        android:shortcutLongLabel="@string/shortcut_drink_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="https://canrush.ru/calendar"
+            android:targetPackage="ru.canrush.app"
+            android:targetClass="ru.canrush.app.MainActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="search"
+        android:enabled="true"
+        android:icon="@drawable/shortcut_search"
+        android:shortcutShortLabel="@string/shortcut_search_short"
+        android:shortcutLongLabel="@string/shortcut_search_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="https://canrush.ru/search"
+            android:targetPackage="ru.canrush.app"
+            android:targetClass="ru.canrush.app.MainActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="prices"
+        android:enabled="true"
+        android:icon="@drawable/shortcut_prices"
+        android:shortcutShortLabel="@string/shortcut_prices_short"
+        android:shortcutLongLabel="@string/shortcut_prices_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="https://canrush.ru/prices"
+            android:targetPackage="ru.canrush.app"
+            android:targetClass="ru.canrush.app.MainActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="market"
+        android:enabled="true"
+        android:icon="@drawable/shortcut_market"
+        android:shortcutShortLabel="@string/shortcut_market_short"
+        android:shortcutLongLabel="@string/shortcut_market_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="https://canrush.ru/market"
+            android:targetPackage="ru.canrush.app"
+            android:targetClass="ru.canrush.app.MainActivity" />
+    </shortcut>
+</shortcuts>
