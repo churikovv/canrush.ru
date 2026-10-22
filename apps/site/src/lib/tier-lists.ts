@@ -5,6 +5,7 @@ import { catalogGroupSlug, catalogRetailerCount, flavorName } from '@/lib/catalo
 import { getReviewSummaries, type ReviewSummary } from '@/lib/reviews';
 import {
   TIER_KEYS,
+  TIER_PREVIEW_PER_TIER,
   type TierKey,
   type TierListData,
   type TierListPlacement,
@@ -24,6 +25,7 @@ interface TierListRow extends QueryResultRow {
   userId: string;
   slug: string;
   title: string;
+  emoji: string | null;
   status: TierListStatus;
   tiers: TierKey[];
   reactionsEnabled: boolean;
@@ -56,7 +58,7 @@ export interface PublishedTierListSitemapEntry extends QueryResultRow {
 }
 
 const TIER_LIST_SELECT = `
-  select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers", tl."reactionsEnabled", tl."commentsEnabled",
+  select tl."id", tl."userId", tl."slug", tl."title", tl."emoji", tl."status", tl."tiers", tl."reactionsEnabled", tl."commentsEnabled",
          tl."createdAt", tl."updatedAt", tl."publishedAt",
          u."username", u."name", u."telegramChannel",
          (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
@@ -86,6 +88,7 @@ function toTierList(row: TierListRow, items: TierListPlacement[]): TierListData 
     userId: row.userId,
     slug: row.slug,
     title: row.title,
+    emoji: row.emoji,
     status: row.status,
     tiers: TIER_KEYS.filter(tier => row.tiers.includes(tier)),
     reactionsEnabled: row.reactionsEnabled,
@@ -136,7 +139,7 @@ export async function getTierListBySlug(slug: string): Promise<TierListData | nu
 
 async function getTierListSummaries(where: string, values: unknown[], limit: number): Promise<TierListSummary[]> {
   const result = await getPool().query<TierListSummaryRow>(
-    `select tl."id", tl."userId", tl."slug", tl."title", tl."status", tl."tiers", tl."reactionsEnabled", tl."commentsEnabled",
+    `select tl."id", tl."userId", tl."slug", tl."title", tl."emoji", tl."status", tl."tiers", tl."reactionsEnabled", tl."commentsEnabled",
             tl."createdAt", tl."updatedAt", tl."publishedAt",
             u."username", u."name", u."telegramChannel",
          (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
@@ -157,13 +160,20 @@ async function getTierListSummaries(where: string, values: unknown[], limit: num
   );
   const itemsByList = await getItemsForLists(result.rows.map((row) => row.id));
 
-  return result.rows.map((row) => ({
-    ...toTierList(row, []),
-    itemCount: Number(row.itemCount),
-    likes: Number(row.likes),
-    comments: Number(row.comments),
-    preview: (itemsByList.get(row.id) ?? []).sort((a, b) => TIER_KEYS.indexOf(a.tier) - TIER_KEYS.indexOf(b.tier) || a.position - b.position).slice(0, 8),
-  }));
+  return result.rows.map((row) => {
+    const items = itemsByList.get(row.id) ?? [];
+    // Items come ordered by tier and position, so each tier keeps its first few.
+    const tierCounts: Partial<Record<TierKey, number>> = {};
+    const preview = items.filter((item) => (tierCounts[item.tier] = (tierCounts[item.tier] ?? 0) + 1) <= TIER_PREVIEW_PER_TIER);
+    return {
+      ...toTierList(row, []),
+      itemCount: Number(row.itemCount),
+      likes: Number(row.likes),
+      comments: Number(row.comments),
+      preview,
+      tierCounts,
+    };
+  });
 }
 
 export function getCommunityTierLists(limit = 12, query = ''): Promise<TierListSummary[]> {

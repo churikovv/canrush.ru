@@ -1,13 +1,15 @@
-import { TIER_KEYS, type TierKey, type TierListPlacement } from '@/lib/tier-list-types';
+import { TIER_KEYS, TIER_LIST_EMOJIS, type TierKey, type TierListPlacement } from '@/lib/tier-list-types';
 
 export interface TierListFieldErrors {
   title?: string;
+  emoji?: string;
   items?: string;
   tiers?: string;
 }
 
 export interface TierListInput {
   title: string;
+  emoji: string | null;
   items: TierListPlacement[];
   tiers: TierKey[];
 }
@@ -68,10 +70,11 @@ export function parseTierListSections(value: string): TierKey[] | null {
   } catch { return null; }
 }
 
-export function validateTierListInput(values: { title: string; items: string; tiers?: string }):
+export function validateTierListInput(values: { title: string; emoji?: string; items: string; tiers?: string }):
   | { data: TierListInput; errors?: never }
   | { data?: never; errors: TierListFieldErrors } {
   const title = normalizeTitle(values.title);
+  const emoji = values.emoji?.trim() || null;
   const items = parseTierListItems(values.items);
   const tiers = values.tiers === undefined ? [...TIER_KEYS] : parseTierListSections(values.tiers);
   const errors: TierListFieldErrors = {};
@@ -79,9 +82,10 @@ export function validateTierListInput(values: { title: string; items: string; ti
   if (!title) errors.title = 'Введите название тирлиста.';
   else if (title.length > 80) errors.title = 'Название должно быть короче 80 символов.';
 
+  if (emoji && !(TIER_LIST_EMOJIS as readonly string[]).includes(emoji)) errors.emoji = 'Выберите эмодзи из списка.';
   if (!tiers) errors.tiers = 'Выберите от одной до шести разных секций.';
   if (items && tiers && items.some(item => !tiers.includes(item.tier))) errors.items = 'Восстановите секцию или переместите из неё напитки.';
   if (!items) errors.items = 'Не удалось прочитать расположение товаров.';
 
-  return Object.keys(errors).length > 0 ? { errors } : { data: { title, items: items ?? [], tiers: tiers ?? [] } };
+  return Object.keys(errors).length > 0 ? { errors } : { data: { title, emoji, items: items ?? [], tiers: tiers ?? [] } };
 }

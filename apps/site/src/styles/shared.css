@@ -71,6 +71,37 @@
   display: grid;
   gap: 12px;
 }
+/* Tier list card: emoji, title and author, likes; a miniature of the filled sections; the open button. */
+.tier-list-card { display: flex; min-width: 0; flex-direction: column; gap: 14px; padding: 16px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 20px; background: var(--theme-panel, #fff); transition: border-color 150ms ease-out, box-shadow 150ms ease-out; }
+.tier-list-card:hover { border-color: color-mix(in srgb, var(--color-brand, #006eff) 45%, var(--theme-line, #dfe3e8)); box-shadow: 0 12px 28px -14px rgb(0 40 120 / .35); }
+.tier-list-card-head { display: flex; align-items: flex-start; gap: 10px; }
+.tier-list-card-emoji { flex: none; font-size: 1.75rem; line-height: 1.2; }
+.tier-list-card-title { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
+.tier-list-card h3 { margin: 0; color: var(--color-ink); font-size: 1.0625rem; line-height: 1.3; overflow-wrap: anywhere; }
+.tier-list-card h3 a { color: inherit; text-decoration: none; }
+.tier-list-card h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.tier-list-card-author { display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; max-width: 100%; color: var(--color-muted-strong); font-size: .8125rem; text-decoration: none; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tier-list-card-author:hover { color: var(--color-ink); }
+.tier-list-card-author img, .tier-list-card-author > span { display: grid; flex: none; width: 20px; height: 20px; place-items: center; border-radius: 50%; object-fit: cover; background: var(--color-subtle); font-size: .6875rem; font-weight: 700; }
+.tier-list-card-stats { display: flex; flex: none; align-items: center; gap: 12px; color: var(--color-muted-strong); font-size: .9375rem; font-weight: 600; }
+.tier-list-card-stats > * { display: inline-flex; align-items: center; gap: 5px; color: inherit; text-decoration: none; }
+.tier-list-card-stats a { min-height: 32px; }
+.tier-list-card-stats a:hover { color: var(--color-brand); }
+.tier-list-card-likes svg { color: #e5484d; }
+.tier-list-card-board { display: flex; flex-direction: column; gap: 4px; overflow: hidden; border-radius: 14px; color: inherit; text-decoration: none; }
+.tier-list-card-row { display: flex; min-height: 56px; gap: 4px; }
+.tier-list-card-tier { display: grid; flex: none; width: 44px; place-items: center; color: var(--color-ink); font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.tier-list-card-items { display: flex; flex: 1; min-width: 0; align-items: center; gap: 6px; padding: 4px; border-radius: 8px; background: var(--color-subtle); }
+/* Product photos are JPEGs on white, so every can sits on a white tile in both themes. */
+.tier-list-card-item { display: grid; flex: 0 1 44px; min-width: 0; height: 48px; place-items: center; overflow: hidden; border-radius: 6px; box-sizing: border-box; border: 2px solid color-mix(in srgb, var(--color-ink) 22%, transparent); background: #fff; color: #59616b; font-size: .6875rem; font-weight: 700; }
+.tier-list-card-item img { width: 100%; height: 42px; object-fit: contain; mix-blend-mode: multiply; filter: brightness(1.06) contrast(1.05); }
+.tier-list-card-more { border: 0; background: transparent; color: var(--color-muted-strong); font-size: .8125rem; }
+.tier-list-card-board-empty { display: grid; min-height: 72px; place-items: center; border-radius: 14px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .875rem; }
+.tier-list-card-open { display: flex; min-height: 48px; align-items: center; justify-content: center; gap: 6px; margin-top: auto; border-radius: 14px; background: var(--color-brand); color: #fff; font-weight: 700; text-decoration: none; transition: background-color 150ms ease-out; }
+.tier-list-card-open:hover { background: color-mix(in srgb, var(--color-brand) 88%, #000); }
+.tier-list-card-open svg { transition: transform 150ms ease-out; }
+.tier-list-card-open:hover svg { transform: translateX(3px); }
+@media (prefers-reduced-motion: reduce) { .tier-list-card, .tier-list-card-open, .tier-list-card-open svg { transition: none; } .tier-list-card-open:hover svg { transform: none; } }
 .tier-editor-title-field input,
 .tier-editor-filters input,
 .tier-editor-filters select {

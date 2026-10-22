@@ -70,10 +70,6 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
       ) : null}
 
       <div className="tierlists-main-actions">
-        <Link className="tier-primary-action" href="/tierlists/new">
-          Создать свой
-          <Image src="/brand/icons/tierlists.svg" width={22} height={22} alt="" />
-        </Link>
         <ShareTierListButton title={title} />
         <TierScreenshotButton boardId="tier-capture-board" title={title} official />
       </div>
@@ -87,6 +83,12 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
           {community.length > 0 ? <span>{community.length} последних</span> : null}
         </div>
 
+        <Link className="tier-create-banner" href="/tierlists/new">
+          <span className="tier-create-banner-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg></span>
+          <span className="tier-create-banner-copy"><strong>Создай свой тирлист</strong><span>Покажи свои фавориты и поделись с сообществом!</span></span>
+          <svg className="tier-create-banner-arrow" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+        </Link>
+
         {form}
         {q && <Link href={`${basePath}?${new URLSearchParams({ ...keep, metric })}`}>Сбросить поиск</Link>}
 
@@ -98,7 +100,6 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
           <div className="tierlists-community-empty">
             <strong>{q ? 'Тирлисты не найдены' : 'Первый тирлист может быть вашим'}</strong>
             <p>{q ? 'Попробуйте другое название или имя автора.' : 'Разложите знакомые энергетики по категориям и поделитесь результатом.'}</p>
-            <Link href="/tierlists/new">Создать первый тирлист</Link>
           </div>
         )}
       </section>

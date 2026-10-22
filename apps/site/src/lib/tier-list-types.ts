@@ -1,6 +1,16 @@
 export const TIER_KEYS = ['SS', 'S', 'A', 'B', 'C', 'D'] as const;
 
 export type TierKey = (typeof TIER_KEYS)[number];
+
+/** Эмодзи, которые можно поставить тирлисту; сервер принимает только их. */
+export const TIER_LIST_EMOJIS = [
+  '🔥', '⚡', '👑', '🏆', '💯', '💎', '🚀', '🎮',
+  '😋', '🤤', '😎', '🤩', '😍', '🤯', '🥶', '😴',
+  '💀', '🤢', '👍', '👎', '❤️', '💙', '💚', '🧪',
+  '🍓', '🍋', '🍑', '🥭', '🍒', '🫐', '🍉', '🍏',
+] as const;
+export const TIER_PREVIEW_PER_TIER = 5;
+
 export type TierListStatus = 'draft' | 'published';
 
 export interface TierListProduct {
@@ -36,6 +46,7 @@ export interface TierListData {
   userId: string;
   slug: string;
   title: string;
+  emoji: string | null;
   status: TierListStatus;
   author: TierListAuthor;
   createdAt: Date;
@@ -51,5 +62,8 @@ export interface TierListSummary extends Omit<TierListData, 'items'> {
   likes: number;
   comments: number;
   itemCount: number;
+  /** Первые `TIER_PREVIEW_PER_TIER` напитков каждой секции. */
   preview: TierListPlacement[];
+  /** Сколько напитков в каждой секции, чтобы превью показало «+N». */
+  tierCounts: Partial<Record<TierKey, number>>;
 }

@@ -60,7 +60,7 @@ export default async function TierListPage({ params }: { params: TierListParams 
               {list.status === 'draft' ? <span className="tier-list-status tier-list-status-draft">Черновик</span> : null}
 
             </div>
-            <h1>{list.title}</h1>
+            <h1>{list.emoji ? <span className="tier-list-emoji" aria-hidden="true">{list.emoji} </span> : null}{list.title}</h1>
             <TierListAuthor author={list.author} />
           </div>
           {telegramHref ? (

@@ -1,6 +1,7 @@
 'use client';
 
 import { PriceFilterInput } from '@/components/price-filter-input';
+import { TierEmojiPicker } from '@/components/tier-emoji-picker';
 import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import { compareTierProducts, type TierProductSort } from '@/lib/tier-product-sort';
 import Image from 'next/image';
@@ -22,7 +23,7 @@ type EditorColumns = Record<EditorLane, string[]>;
 
 interface TierListEditorProps {
   products: TierListProduct[];
-  initialList?: Pick<TierListData, 'slug' | 'title' | 'status' | 'items' | 'tiers' | 'reactionsEnabled' | 'commentsEnabled'>;
+  initialList?: Pick<TierListData, 'slug' | 'title' | 'emoji' | 'status' | 'items' | 'tiers' | 'reactionsEnabled' | 'commentsEnabled'>;
   saved?: boolean;
   telegramChannel?: string | null;
   authorUsername?: string;
@@ -295,6 +296,8 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
 
       <div className="tier-editor-title-field">
         <label htmlFor="tier-list-title">Название тирлиста</label>
+        <div className="tier-editor-title-row">
+        <TierEmojiPicker initial={initialList?.emoji ?? null} onChange={() => setDirty(true)} />
         <input
           id="tier-list-title"
           name="title"
@@ -306,6 +309,7 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
           onChange={() => setDirty(true)}
           required
         />
+        </div>
         {state.fieldErrors?.title ? (
           <p className="field-error" id="tier-list-title-error">{state.fieldErrors.title}</p>
         ) : null}

@@ -14,6 +14,7 @@ describe('tier list fields', () => {
     expect(result).toEqual({
       data: {
         title: 'Мои любимые',
+        emoji: null,
         tiers: ['SS', 'S', 'A', 'B', 'C', 'D'],
         items: [
           { brand: 'Volt Energy', flavor: 'original', tier: 'S', position: 0 },
@@ -25,7 +26,7 @@ describe('tier list fields', () => {
 
   it('разрешает сохранить пустой черновик', () => {
     expect(validateTierListInput({ title: 'Черновик', items: '[]' })).toEqual({
-      data: { title: 'Черновик', items: [], tiers: ['SS', 'S', 'A', 'B', 'C', 'D'] },
+      data: { title: 'Черновик', emoji: null, items: [], tiers: ['SS', 'S', 'A', 'B', 'C', 'D'] },
     });
   });
 
@@ -55,4 +56,10 @@ it('normalizes section rank order including SS and rejects removed or duplicate 
   for (const tiers of ['[]', '["S","S"]', '["X"]', 'null', '{']) {
     expect(validateTierListInput({ title: 'Custom', items: '[]', tiers }).errors?.tiers).toBeTruthy();
   }
+});
+
+it('принимает эмодзи только из набора', () => {
+  expect(validateTierListInput({ title: 'Огонь', emoji: '🔥', items: '[]' }).data?.emoji).toBe('🔥');
+  expect(validateTierListInput({ title: 'Огонь', emoji: '', items: '[]' }).data?.emoji).toBeNull();
+  expect(validateTierListInput({ title: 'Огонь', emoji: '🐍', items: '[]' }).errors?.emoji).toBeTruthy();
 });
