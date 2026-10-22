@@ -7,6 +7,8 @@ import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import { buildOfficialTierList, getCommunityTierLists, tierListProductsForPlacements } from '@/lib/tier-lists';
 
+const count = new Intl.NumberFormat('ru-RU');
+
 export type TierListSearchParams = { q?: string; metric?: string };
 
 /**
@@ -22,6 +24,7 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
   const groups = await loadAllCatalogGroups();
   const [official, community] = await Promise.all([buildOfficialTierList(groups, metric), getCommunityTierLists(48, q)]);
   const communityProducts = tierListProductsForPlacements(groups, community.flatMap((list) => list.preview));
+  const ratedShare = official.eligibleCount > 0 ? Math.min(100, Math.round(official.ratedCount / official.eligibleCount * 100)) : 0;
 
   const form = (
     <form className="market-search-form" action={basePath} method="get">
@@ -42,10 +45,14 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
             В рейтинге участвуют напитки, доступные хотя бы в одном магазине и получившие минимум три отзыва.
           </p>
         </div>
-        <dl className="tierlists-facts">
-          <div><dt>Есть в продаже</dt><dd>{official.eligibleCount}</dd></div>
-          <div><dt>Получили оценку</dt><dd>{official.ratedCount}</dd></div>
-        </dl>
+        <div className="tierlists-facts">
+          <dl>
+            <div><dt>Есть в продаже</dt><dd>{count.format(official.eligibleCount)}</dd></div>
+            <div><dt>Получили оценку</dt><dd>{count.format(official.ratedCount)}</dd></div>
+          </dl>
+          <div className="tierlists-progress" aria-hidden="true">{ratedShare > 0 && <span style={{ width: `${Math.max(ratedShare, 2)}%` }} />}</div>
+          <p>{official.ratedCount > 0 ? `В рейтинге ${ratedShare}% напитков в продаже` : 'Пока ни у одного напитка нет трёх отзывов'}</p>
+        </div>
       </header>
 
       <nav className="catalog-volume-tabs tier-ranking-tabs" aria-label="Критерий рейтинга">

@@ -32,3 +32,13 @@ export function lastSeenLabel(value: Date | string, now: Date = new Date()): str
   if (days === 1) return `вчера в ${a.time}`;
   return `${a.day} ${MONTHS_GENITIVE[a.month - 1]}${a.year === b.year ? '' : ` ${a.year} г.`}`;
 }
+
+/** When a record was posted, relative to `now`: «только что», «5 минут назад», «2 часа назад», «вчера в 14:20», «3 октября». */
+export function postedLabel(value: Date | string, now: Date = new Date()): string {
+  const posted = new Date(value);
+  const minutes = Math.max(0, Math.floor((now.getTime() - posted.getTime()) / 60_000));
+  if (minutes < 60) return lastSeenLabel(posted, now);
+  const hours = Math.floor(minutes / 60);
+  if (hours < 12) return `${hours} ${plural(hours, 'час', 'часа', 'часов')} назад`;
+  return lastSeenLabel(posted, now);
+}

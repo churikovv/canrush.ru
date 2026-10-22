@@ -4,6 +4,7 @@ import { ProfileExperience } from '@/components/profile-experience';
 import { ReviewDiscussion } from '@/components/review-discussion';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import { WallPostBody } from '@/components/wall-post-body';
+import { postedLabel } from '@/lib/last-seen';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import type { WallPostRow } from '@/lib/profile-community';
 import type { WallInteraction } from '@/lib/wall-discussions';
@@ -27,10 +28,10 @@ interface WallPostProps {
 
 /** A wall record. The same row is rendered on the owner's wall and in the feed. */
 export function WallPost({ post, interaction, canDelete, canEdit, owner }: WallPostProps) {
-  const time = <time dateTime={post.createdAt.toISOString()}>{postTime.format(post.createdAt)}</time>;
+  const time = <time dateTime={post.createdAt.toISOString()} title={postTime.format(post.createdAt)}>{postedLabel(post.createdAt)}</time>;
   const onOtherWall = owner && post.profileId !== post.userId;
   const profileHref = post.username ? `/profile/${post.username}` : undefined;
-  const avatar = post.avatarId ? <Image src={`/api/profile-images/${post.avatarId}`} width={40} height={40} unoptimized alt="" /> : (post.username ?? post.name).slice(0, 1).toUpperCase();
+  const avatar = post.avatarId ? <Image src={`/api/profile-images/${post.avatarId}`} width={48} height={48} unoptimized alt="" /> : (post.username ?? post.name).slice(0, 1).toUpperCase();
   const ownerAvatar = owner?.avatarId ? <Image src={`/api/profile-images/${owner.avatarId}`} width={20} height={20} unoptimized alt="" /> : (owner?.username ?? owner?.name ?? '').slice(0, 1).toUpperCase();
   return <article id={`wall-post-${post.id}`} className={`wall-comment${onOtherWall ? ' is-on-other-wall' : ''}`}>
     {onOtherWall && owner.username && <Link className="wall-post-target" href={`/profile/${owner.username}#wall`}>
@@ -48,8 +49,7 @@ export function WallPost({ post, interaction, canDelete, canEdit, owner }: WallP
           {post.username && <ProfileExperience username={post.username} initial={{ xp: post.xp, rank: null }} />}
         </div>
         <div className="wall-post-sub">
-          {profileHref && <Link href={profileHref}>@{post.username}</Link>}
-          {owner?.username ? <Link href={`/profile/${owner.username}#wall`} title="Открыть стену">{time}</Link> : <a href={`#wall-post-${post.id}`} title="Ссылка на запись">{time}</a>}
+          {owner?.username ? <Link href={`/profile/${owner.username}#wall`}>{time}</Link> : <a href={`#wall-post-${post.id}`}>{time}</a>}
           {post.editedAt && <span title={`Изменено ${postTime.format(post.editedAt)}`}>изменено</span>}
         </div>
       </div>

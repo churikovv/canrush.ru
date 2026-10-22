@@ -6,6 +6,8 @@
 /* Bleeds to the surface edges: its inline margin matches .catalog-surface padding (12px, 24px from 640px). */
 .search-pinned { position: sticky; top: 0; z-index: 20; display: grid; gap: 10px; margin: 0 -12px 16px; padding: max(8px, env(safe-area-inset-top)) 12px 12px; background: var(--color-surface); box-shadow: 0 1px 0 var(--theme-line, rgb(0 0 0 / 8%)); }
 .search-pinned > .market-search-form { margin: 0; }
+/* The bar is square and full-bleed: clip the surface to its rounded top so the bar never covers the corners next to the header. overflow: clip keeps sticky working. */
+.main-surface:has(.search-pinned) { overflow: clip; }
 /* Scope switcher: separate round pills; the chosen one is filled with the brand blue. */
 .search-scopes { display: flex; gap: 8px; padding: 0; overflow-x: auto; scrollbar-width: none; }
 .search-scopes::-webkit-scrollbar { display: none; }

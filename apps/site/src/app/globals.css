@@ -1861,16 +1861,6 @@ html[data-cookie-notice="visible"] .brand-footer {
   line-height: 1.5;
   text-wrap: pretty;
 }
-.tierlists-facts > div {
-  display: flex;
-  min-height: 72px;
-  flex-direction: column-reverse;
-  justify-content: center;
-  gap: 2px;
-  border-radius: 12px;
-  background: var(--color-subtle);
-  padding: 12px;
-}
 /* Game8-inspired metallic rank palette; D extends it with neutral silver. */
 .tier-letter {
   display: inline-block;

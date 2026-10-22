@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { joinedLabel, lastSeenLabel } from '../src/lib/last-seen';
+import { joinedLabel, lastSeenLabel, postedLabel } from '../src/lib/last-seen';
 
 const now = new Date('2026-10-14T12:00:00+03:00');
 
@@ -20,4 +20,15 @@ describe('lastSeenLabel', () => {
 
 it('puts the join month in the genitive case', () => {
   expect(joinedLabel('2026-09-10T00:00:00+03:00')).toBe('сентября 2026 г.');
+});
+
+describe('postedLabel', () => {
+  it('counts hours for the last half a day, then falls back to calendar days', () => {
+    expect(postedLabel(new Date('2026-10-14T11:48:00+03:00'), now)).toBe('12 минут назад');
+    expect(postedLabel(new Date('2026-10-14T11:00:00+03:00'), now)).toBe('1 час назад');
+    expect(postedLabel(new Date('2026-10-14T09:30:00+03:00'), now)).toBe('2 часа назад');
+    expect(postedLabel(new Date('2026-10-14T06:59:00+03:00'), now)).toBe('5 часов назад');
+    expect(postedLabel(new Date('2026-10-13T23:30:00+03:00'), now)).toBe('вчера в 23:30');
+    expect(postedLabel(new Date('2026-10-03T10:00:00+03:00'), now)).toBe('3 октября');
+  });
 });
