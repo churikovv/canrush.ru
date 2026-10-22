@@ -30,7 +30,7 @@ export default async function ContestPage() {
         <ol>
           <li><strong>Приз.</strong> {contest.lead}</li>
           <li><strong>Как участвовать.</strong> Хотя бы раз отметить банку в <Link href={entry?.username ? `/profile/${entry.username}/calendar` : '/sign-in'}>календаре выпитого</Link> до {contest.lastDayLabel} включительно. Больше отметок — шанс тот же: один участник, один билет.</li>
-          <li><strong>Связь.</strong> Укажите свой Telegram в <Link href="/profile/edit">настройках профиля</Link>, чтобы мы могли написать победителю напрямую.</li>
+          <li><strong>Связь.</strong> Укажите свой Telegram в <Link href="/profile/settings?section=telegram">настройках профиля</Link>, чтобы мы могли написать победителю напрямую.</li>
           <li><strong>Канал.</strong> Желательно подписаться на наш <a href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer">Telegram-канал @canrushoff</a>.</li>
           <li><strong>Не бот.</strong> Заполните профиль хотя бы минимально — например, поставьте аватар.</li>
           <li><strong>Возраст.</strong> Участвовать могут только совершеннолетние (18+): возраст проверим при вручении приза.</li>

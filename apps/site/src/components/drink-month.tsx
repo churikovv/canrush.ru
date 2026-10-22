@@ -35,7 +35,7 @@ export function DrinkMonth({ weeks, entries, streaks, today, isOwn }: { weeks: (
         const items = entries[day] ?? [];
         const run = streakOn(streaks, day);
         const streakDay = run && run.length > 1 ? dayDiff(run.start, day) + 1 : 0;
-        const covers = items.filter(item => item.cover).slice(0, 3);
+        const covers = items.filter(item => item.cover).slice(0, 4);
         return <span key={day} className="drink-month-cell">
           <button type="button" className="drink-month-day" data-level={heatLevel(items.length)} data-future={day > today || undefined} data-today={day === today || undefined}
             data-streak={streakDay ? '' : undefined}
@@ -43,7 +43,7 @@ export function DrinkMonth({ weeks, entries, streaks, today, isOwn }: { weeks: (
             onPointerEnter={event => { if (event.pointerType === 'mouse') setHovered(day); }} onFocus={() => setHovered(null)} onClick={() => setSelected(day)}>
             <span className="drink-month-number">{Number(day.slice(8))}</span>
             {items.length > 0 && <span className="drink-month-covers" aria-hidden="true">{covers.length
-              ? covers.map((item, position) => <Image key={item.id} src={item.cover!} width={22} height={22} alt="" style={{ zIndex: 3 - position }} />)
+              ? covers.map((item, position) => <Image key={item.id} src={item.cover!} width={30} height={30} alt="" style={{ zIndex: 4 - position }} />)
               : <span className="drink-month-can">⚡</span>}{items.length > covers.length && covers.length > 0 && <small>+{items.length - covers.length}</small>}</span>}
             {streakDay > 0 && <span className="drink-month-streak" aria-hidden="true">{streakDay}</span>}
           </button>

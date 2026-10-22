@@ -443,7 +443,7 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
             <h2 id="tier-editor-pool-title">Энергетики</h2>
             <p>{filteredPool.length} из {columns.pool.length} не распределены</p>
           </div>
-          <Link href="/profile/edit">Telegram автора</Link>
+          <Link href="/profile/settings?section=telegram">Telegram автора</Link>
         </div>
 
         <div className="tier-editor-filters">

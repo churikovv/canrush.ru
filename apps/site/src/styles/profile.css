@@ -211,7 +211,8 @@ a.profile-about-row:hover .profile-about-arrow { color: var(--theme-link, #0058c
   .community-identity { flex-wrap: wrap; gap: 12px; padding-left: 12px; padding-right: 12px; }
   /* Full card width with breathing room above, so the button lines up with the shortcut cards instead of crowding the tags. */
   .community-hero-actions { flex-basis: calc(100% + 24px); margin: 8px -12px 0; padding-top: 0; }
-  .profile-edit-action { width: 100%; justify-content: center; }
+  /* Follow / «Войти и подписаться» span the card on phones and tablets. */
+  .community-hero-actions form, .community-hero-actions .community-button { width: 100%; justify-content: center; }
   .community-shortcut { padding: 16px; }
   .profile-rating-summary { grid-template-columns: 1fr; gap: 24px; }
 }
@@ -846,8 +847,9 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 .drink-month { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
 .drink-month-grid { display: grid; gap: 4px; }
 .drink-month-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+/* A day with marks grows to fit its covers (they wrap instead of overlapping); the whole week row grows with it. */
 .drink-month-weekdays span { padding-bottom: 4px; color: var(--theme-muted, #59616b); font-size: .75rem; text-align: center; }
-.drink-month-cell { display: block; min-width: 0; padding: 0 2px; }
+.drink-month-cell { display: grid; min-width: 0; padding: 0 2px; }
 .drink-month-day { position: relative; display: grid; grid-template-rows: auto 1fr auto; justify-items: center; width: 100%; min-height: 72px; padding: 6px 2px; border: 1px solid transparent; border-radius: 12px; background: var(--heat-0); color: var(--theme-text, #111); font: inherit; cursor: pointer; transition: transform 120ms ease-out, border-color 120ms ease-out; }
 .drink-month-day.is-outside { background: transparent; cursor: default; }
 .drink-month-day[data-level='1'] { background: color-mix(in srgb, var(--heat-1) 55%, var(--theme-panel, #fff)); }
@@ -867,9 +869,8 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 .drink-month-legend .drink-month-streak { align-self: auto; }
 .drink-month-swatch { width: 14px; height: 14px; margin-left: 10px; border-radius: 4px; background: linear-gradient(90deg, color-mix(in srgb, var(--heat-1) 55%, var(--theme-panel, #fff)), color-mix(in srgb, var(--heat-3) 45%, var(--theme-panel, #fff))); }
 .drink-month-number { font-size: .8125rem; font-weight: 700; line-height: 20px; font-variant-numeric: tabular-nums; }
-.drink-month-covers { display: flex; align-items: center; padding: 4px 0; }
-.drink-month-covers img { width: 22px; height: 22px; margin-left: -8px; border-radius: 6px; object-fit: contain; background: #fff; box-shadow: 0 0 0 2px var(--theme-panel, #fff); position: relative; }
-.drink-month-covers img:first-child { margin-left: 0; }
+.drink-month-covers { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 3px; max-width: 100%; padding: 4px 2px; }
+.drink-month-covers img { width: 30px; height: 30px; border-radius: 8px; object-fit: contain; background: #fff; box-shadow: 0 0 0 1px var(--theme-line, #e3e7ec); position: relative; }
 .drink-month-covers small { margin-left: 3px; font-size: .6875rem; font-weight: 700; }
 .drink-month-can { font-size: 1rem; }
 .drink-day-panel { position: sticky; top: 16px; display: grid; gap: 10px; padding: 16px; border-radius: 12px; background: var(--theme-subtle, #f5f7fa); }
@@ -946,9 +947,10 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 @media (max-width: 759px) {
   .drink-month { grid-template-columns: minmax(0, 1fr); }
   .drink-day-panel { position: static; }
-  .drink-month-day { min-height: 60px; border-radius: 10px; }
+  .drink-month-day { min-height: 60px; padding-inline: 0; border-radius: 10px; }
   .drink-month-cell { padding: 0 1px; }
-  .drink-month-covers img { width: 18px; height: 18px; }
+  .drink-month-covers { gap: 2px; padding-inline: 0; }
+  .drink-month-covers img { width: 16px; height: 16px; border-radius: 4px; }
 }
 @media (max-width: 559px) {
   .drink-calendar-hero, .drink-calendar-hero.is-large { flex-direction: column; align-items: flex-start; }
@@ -1132,3 +1134,21 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
   .appearance-level .level-emblem { width: 60px; height: 60px; }
 }
 @media (prefers-reduced-motion: reduce) { .appearance-trigger { transition: none; } }
+/* /profile/favorites: two cards per row on phones, product photo on a white square tile, brand above the flavor,
+   the delete button spans the card. */
+.favorites-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px; }
+.favorite-card { gap: 6px; padding: 0; align-items: stretch; }
+.favorite-card-product { gap: 4px; }
+.favorite-card-product .favorite-card-image { margin-bottom: 6px; background: #fff; }
+.favorite-card-product .favorite-card-image img { padding: 8%; object-fit: contain; mix-blend-mode: multiply; }
+.favorite-card-product .favorite-card-image-empty { background: var(--color-subtle); }
+.favorite-card-brand { text-align: left; font-size: .8125rem; }
+.favorite-card h2 { font-size: .9375rem; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.favorite-card-price strong { font-size: 1.0625rem; }
+.favorite-card-retailers { gap: 4px; }
+.favorite-card-actions { padding-top: 6px; }
+.favorite-card-actions form { width: 100%; }
+.favorite-card-actions button { width: 100%; justify-content: center; margin: 0; }
+@media (min-width: 640px) { .favorites-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 20px; } .favorite-card-actions form, .favorite-card-actions button { width: auto; } }
+@media (min-width: 960px) { .favorites-list { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 359px) { .favorites-list { grid-template-columns: minmax(0, 1fr); } }

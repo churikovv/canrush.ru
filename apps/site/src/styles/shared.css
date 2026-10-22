@@ -176,6 +176,10 @@
 .market-search-form { margin: 24px 0 32px; }
 .market-search-toolbar { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: stretch; }
 .market-search-toolbar .catalog-search-field { grid-column: auto; }
+.market-search-toolbar.has-add { grid-template-columns: minmax(0,1fr) auto auto; }
+.store-add-button { color: var(--color-ink); text-decoration: none; }
+.store-add-button:hover { background: color-mix(in srgb, var(--color-subtle) 70%, var(--color-ink) 8%); }
+.store-add-button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .market-search-submit { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .photo-delete-overlay, .review-photo-preview .photo-delete-overlay { position: absolute; top: 4px; right: 4px; display: grid; place-items: center; width: 36px; height: 36px; min-height: 36px; padding: 0; border: 1px solid #dfe3e8; border-radius: 8px; background: #fff; color: #30343b; cursor: pointer; text-decoration: none; }
 .photo-delete-overlay:hover { background: #fff0f0; color: #a52332; }
@@ -612,7 +616,33 @@ a.page-pagination-step:hover { border-color: var(--color-brand, #006eff); color:
 .content-report-block p { margin: 0; font-size: .875rem; line-height: 1.5; }
 .block-member { display: grid; gap: 8px; }
 .block-member p { margin: 0; }
-.block-member button { width: 100%; }
+.block-member button { width: 100%; gap: 8px; }
 .block-member.is-compact button { width: auto; }
-.blocked-members { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.blocked-members li { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* Not blocked yet: a quiet danger action. */
+.block-member .community-button.block-member-action { color: var(--color-danger, #c62828); }
+.block-member .community-button.block-member-action:hover:not(:disabled) { border-color: currentColor; }
+/* The site's dark danger tone is pale pink; light profile themes need the deep red. */
+[data-profile-tone=light] .block-member .community-button.block-member-action { color: #c62828; }
+/* Blocked: a notice row — ban icon, what it means, and a small «Разблокировать». */
+.block-member-notice { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; background: color-mix(in srgb, #e5484d 9%, var(--theme-panel, var(--color-surface, #fff))); }
+.block-member-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: color-mix(in srgb, #e5484d 18%, transparent); color: #e5484d; }
+.block-member-text { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.block-member-text strong { color: var(--theme-text, var(--color-ink)); font-size: .9375rem; overflow-wrap: anywhere; }
+.block-member-text small { color: var(--theme-muted, var(--color-muted-strong)); font-size: .8125rem; line-height: 1.4; }
+.block-member-notice button { flex: none; width: auto; }
+@media (max-width: 559px) { .block-member-notice { flex-wrap: wrap; } .block-member-notice button { width: 100%; } }
+/* Settings → Заблокированные: rows with avatar, name and date, divided by hairlines. */
+.blocked-members { display: grid; margin: 0; padding: 0; list-style: none; }
+.blocked-members li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--theme-line, #e6e9ee); }
+.blocked-members li:first-child { border-top: 0; padding-top: 0; }
+.blocked-member { display: flex; align-items: center; gap: 12px; min-width: 0; color: inherit; text-decoration: none; }
+a.blocked-member:hover strong { color: var(--theme-link, var(--color-brand)); }
+.blocked-member-avatar { display: grid; place-items: center; flex: none; width: 44px; height: 44px; overflow: hidden; border-radius: 50%; background: var(--theme-subtle, var(--color-subtle)); color: var(--theme-link, var(--color-brand)); font-weight: 700; filter: grayscale(1); opacity: .8; }
+.blocked-member-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.blocked-member-text { display: grid; gap: 2px; min-width: 0; }
+.blocked-member-text strong { overflow: hidden; color: var(--theme-text, var(--color-ink)); text-overflow: ellipsis; white-space: nowrap; }
+.blocked-member-text small { color: var(--theme-muted, var(--color-muted-strong)); font-size: .8125rem; }
+.blocked-members .block-member button { margin: 0; min-height: 40px; padding-inline: 14px; }
+.blocked-members-empty { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--theme-subtle, var(--color-subtle)); color: var(--theme-muted, var(--color-muted-strong)); }
+.blocked-members-empty svg { width: 22px; height: 22px; }
+.blocked-members-empty p { margin: 0; font-size: .875rem; line-height: 1.45; }

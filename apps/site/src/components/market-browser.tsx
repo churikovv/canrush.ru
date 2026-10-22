@@ -24,7 +24,7 @@ export async function MarketBrowser({ query, viewerId, basePath = '/market', kee
   const filterSuffix = '&' + new URLSearchParams(filters).toString();
   const filtered = Boolean(filters.q || filters.brand || filters.city || filters.delivery);
   return <>
-    <Pinned scopes={scopes}><MarketFilters key={JSON.stringify([filters,scope])} brands={filterOptions.brands} cities={filterOptions.cities} initial={filters} scope={scope} basePath={basePath}/></Pinned>
+    <Pinned scopes={scopes}><MarketFilters key={JSON.stringify([filters,scope])} brands={filterOptions.brands} cities={filterOptions.cities} initial={filters} scope={scope} basePath={basePath} addHref={basePath === '/market' ? undefined : '/market/new'}/></Pinned>
     {items.length ? <div className="market-grid">{items.map(listing => <article className="market-card" key={listing.id}>
       <Link href={`/market/${listing.id}`} className="market-card-link">
         {listing.photos[0] && <div className="market-card-image"><Image src={`/api/market-photos/${listing.photos[0]}`} alt={listing.title} width={480} height={480} unoptimized />{listing.photos.length > 1 && <span>{listing.photos.length} фото</span>}</div>}

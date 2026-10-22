@@ -36,10 +36,14 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 function TelegramIcon() {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.7 3.3a1.6 1.6 0 0 0-1.7-.2L2.9 9.6c-1.2.5-1.1 2.2.1 2.6l3.9 1.2 1.5 4.8c.3.9 1.4 1.2 2.1.5l2.2-2.1 4.1 3c.9.7 2.2.2 2.4-.9l2.6-13.9c.1-.6-.1-1.2-.6-1.5ZM10 14.2l-.6 3.2-1.1-3.6 9.4-7.5-7.7 7.9Z"/></svg>;
 }
-type Section = 'details' | 'telegram' | 'tags' | 'appearance' | 'images' | 'blocks' | 'account';
-const SECTIONS: readonly Section[] = ['details', 'telegram', 'tags', 'appearance', 'images', 'blocks', 'account'];
+type ProfileSection = 'details' | 'telegram' | 'tags' | 'appearance' | 'images' | 'blocks' | 'account';
+const SECTIONS: readonly ProfileSection[] = ['details', 'telegram', 'tags', 'appearance', 'images', 'blocks', 'account'];
+/** Site settings shown in the same hub: each row opens its own panel with its own forms (outside the profile form). */
+export type SettingsRow = { key: string; title: string; value?: string; tone?: string; icon: ReactNode; panel: ReactNode };
+export type SettingsGroup = { key: string; title: string; rows: SettingsRow[] };
+type Section = ProfileSection | (string & {});
 const ICON = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
-const SECTION_ICONS: Record<Section, ReactNode> = {
+const SECTION_ICONS: Record<ProfileSection, ReactNode> = {
   details: <svg {...ICON}><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>,
   telegram: <TelegramIcon />,
   images: <svg {...ICON}><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="2" /><path d="m21 16-5-5-9 9" /></svg>,
@@ -60,13 +64,15 @@ function PrefixedInput({ prefix, ...props }: InputHTMLAttributes<HTMLInputElemen
 /** Text fields accept a full t.me link or @name; the field shows only the name after the prefix. */
 const bareTelegram = (value: string) => value.trim().replace(/^https?:\/\//i, '').replace(/^(?:www\.)?(?:t\.me|telegram\.me)\//i, '').replace(/^@+/, '').replace(/\/$/, '');
 
-export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags }: { level?: number; xp?: number; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { picker: ReactNode; earned: number; total: number; selected?: string } }) {
+export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, settings = [], accountRows = [] }: { level?: number; xp?: number; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { picker: ReactNode; earned: number; total: number; selected?: string }; settings?: SettingsGroup[]; accountRows?: SettingsRow[] }) {
   const initialName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
   // The open section lives in ?section= (native history, synced with useSearchParams), so the phone's back gesture
   // returns to the list of sections instead of leaving the editor.
   const pathname = usePathname();
   const requested = useSearchParams().get('section');
-  const tab: Section | null = SECTIONS.find(key => key === requested && (key !== 'tags' || tags)) ?? null;
+  const settingsRows = [...settings.flatMap(group => group.rows), ...accountRows];
+  const tab: Section | null = SECTIONS.find(key => key === requested && (key !== 'tags' || tags)) ?? settingsRows.find(row => row.key === requested)?.key ?? null;
+  const settingsOpen = settingsRows.some(row => row.key === tab);
   const pushed = useRef(false);
   const sectionsRef = useRef<HTMLDivElement>(null);
   function openSection(key: Section | null, replace = false) {
@@ -183,7 +189,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags }
   }
   const visibleBlocks = (() => { const layout = profile.profileLayout ?? DEFAULT_PROFILE_LAYOUT; return layout.order.length - layout.hidden.length; })();
   const imageState = (kind: ImageKind, label: string) => images[kind]?.remove ? `${label}: удалится` : images[kind] ? `${label}: новое` : imageSource(kind) ? `${label} есть` : `Без ${kind === 'avatar' ? 'аватара' : 'баннера'}`;
-  const sectionGroups: { key: string; title: string; rows: { key: Section; title: string; value?: string; tone?: string }[] }[] = [
+  const sectionGroups: { key: string; title: string; rows: { key: Section; title: string; value?: string; tone?: string; icon?: ReactNode }[] }[] = [
     { key: 'profile', title: 'Профиль', rows: [
       { key: 'details', title: 'Имя, ник и описание', value: `${name.trim() || initialName} · @${username.replace(/^@+/, '') || profile.username}` },
       { key: 'telegram', title: 'Telegram', value: [telegram && `t.me/${telegram}`, channel && `канал t.me/${channel}`].filter(Boolean).join(' · ') || 'Не указан', tone: 'telegram' },
@@ -194,7 +200,8 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags }
       { key: 'images', title: 'Аватар и баннер', value: `${imageState('avatar', 'Аватар')} · ${imageState('banner', 'баннер').replace(/^Без/, 'без')}` },
       { key: 'blocks', title: 'Блоки профиля', value: `Показано ${visibleBlocks} из ${PROFILE_BLOCKS.length}` },
     ] },
-    { key: 'account', title: 'Аккаунт', rows: [{ key: 'account', title: 'Удаление аккаунта', value: 'Без возможности восстановления', tone: 'danger' }] },
+    ...settings,
+    { key: 'account', title: 'Аккаунт', rows: [...accountRows, { key: 'account', title: 'Удаление аккаунта', value: 'Без возможности восстановления', tone: 'danger' }] },
   ];
   return <div className="community-profile profile-editor ym-hide-content">
     <ProfileBackButton />
@@ -207,18 +214,18 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags }
         requestAnimationFrame(() => form.reportValidity());
       }
     }}>
-      <div className="profile-editor-preview" {...profileThemeAttributes(appearance.theme)}>
+      <div className="profile-editor-preview" hidden={settingsOpen} {...profileThemeAttributes(appearance.theme)}>
       <ProfileHeader frame={appearance.frame} name={name.trim() || initialName} username={username.replace(/^@+/, '') || profile.username} bio={bio.trim()} createdAt={profile.createdAt}
         avatarSrc={imageSource('avatar')} bannerSrc={imageSource('banner')} avatarControl={imageControl('avatar')} bannerControl={imageControl('banner')}
         actions={<div className="profile-editor-actions"><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>} />
       </div>
       {state.message && <div className="profile-form-error" ref={errorSummaryRef} role="alert" tabIndex={-1}><h2>Не удалось сохранить профиль</h2><p>{state.message}</p></div>}
-      <div className="profile-sections" ref={sectionsRef}>{tab === null ? <nav className="profile-hub" aria-label="Разделы профиля">
+      <div className="profile-sections" ref={sectionsRef}>{tab === null ? <nav className="profile-hub" aria-label="Профиль и настройки">
         {sectionGroups.map(group => <section key={group.title} className="profile-hub-island" aria-labelledby={`profile-hub-${group.key}`}>
           <h2 id={`profile-hub-${group.key}`}>{group.title}</h2>
           <ul>{group.rows.map(row => <li key={row.key}>
             <button id={`profile-section-row-${row.key}`} type="button" className="profile-hub-row" data-tone={row.tone} onClick={() => openSection(row.key)}>
-              <span className="profile-hub-icon" aria-hidden="true">{SECTION_ICONS[row.key]}</span>
+              <span className="profile-hub-icon" aria-hidden="true">{row.icon ?? SECTION_ICONS[row.key as ProfileSection]}</span>
               <span className="profile-hub-text"><strong>{row.title}</strong>{row.value && <small>{row.value}</small>}</span>
               <Chevron />
             </button>
@@ -289,7 +296,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags }
       <div id="profile-panel-blocks" tabIndex={-1} aria-label="Блоки профиля" hidden={tab !== 'blocks'} className="profile-editor-panel">
         <div {...profileThemeAttributes(appearance.theme)} className="profile-blocks-preview"><ProfileLayoutEditor initial={profile.profileLayout} disabled={pending} previews={layoutPreviews} /></div>
       </div>
-      <div className="profile-editor-savebar" hidden={tab === null || tab === 'tags' || tab === 'account'}><p>{tab === 'blocks' ? 'Порядок и видимость блоков сохранятся вместе с профилем.' : 'Изменения применятся после сохранения.'}</p><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>
+      <div className="profile-editor-savebar" hidden={tab === null || tab === 'tags' || tab === 'account' || settingsOpen}><p>{tab === 'blocks' ? 'Порядок и видимость блоков сохранятся вместе с профилем.' : 'Изменения применятся после сохранения.'}</p><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>
     </form>
     {tags && <div id="profile-panel-tags" tabIndex={-1} aria-label="Тег в профиле" hidden={tab !== 'tags'} className="profile-editor-panel">
       <section className="community-panel profile-editor-group" id="achievements" aria-labelledby="achievements-title">
@@ -298,6 +305,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags }
         <Link className="community-button-text profile-editor-link" href={`/profile/${profile.username}/achievements`}>Все достижения и условия ↗</Link>
       </section>
     </div>}
+    {settingsRows.map(row => <div key={row.key} id={`profile-panel-${row.key}`} tabIndex={-1} aria-label={row.title} hidden={tab !== row.key} className="profile-editor-panel profile-settings-panel">{row.panel}</div>)}
     {cropSource && <ProfileImageCrop key={cropSource.src} source={cropSource} initial={images[cropSource.kind]?.source?.src === cropSource.src ? images[cropSource.kind]?.crop : undefined} onCancel={() => setCropSource(null)} onConfirm={(crop, preview) => { setImages(current => ({ ...current, [cropSource.kind]: { file: cropSource.file, crop, preview, source: cropSource } })); setCropSource(null); }} />}
     <section id="profile-panel-account" tabIndex={-1} hidden={tab !== 'account'} className="community-panel profile-editor-danger" aria-labelledby="danger-zone-title"><div><h2 id="danger-zone-title">Удаление аккаунта</h2><p>Профиль и его данные будут удалены без возможности восстановления.</p></div>
       <form action={deleteAccountAction} onSubmit={event => { if (!window.confirm('Удалить аккаунт и все персональные данные? Это действие нельзя отменить.')) event.preventDefault(); }}><input type="hidden" name="confirmation" value="delete-account" /><DeleteButton /></form>

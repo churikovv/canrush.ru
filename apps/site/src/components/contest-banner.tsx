@@ -15,8 +15,8 @@ function Check({ done }: { done: boolean | null }) {
 function nextAction(entry: NonNullable<Entry>) {
   const calendar = entry.username ? `/profile/${entry.username}/calendar` : '/profile';
   if (!entry.cans) return { href: calendar, label: 'Отметить банку в календаре' };
-  if (!entry.telegram) return { href: '/profile/edit', label: 'Указать свой Telegram' };
-  if (!entry.avatar) return { href: '/profile/edit', label: 'Поставить аватар' };
+  if (!entry.telegram) return { href: '/profile/settings?section=telegram', label: 'Указать свой Telegram' };
+  if (!entry.avatar) return { href: '/profile/settings?section=images', label: 'Поставить аватар' };
   return null;
 }
 

@@ -7,6 +7,10 @@ import { setMemberBlockAction } from '@/app/profile/block-actions';
  * «Заблокировать» / «Разблокировать» a member. A blocked member cannot comment on, reply to, follow, order from
  * or message the viewer, and the viewer stops seeing their posts, comments and reviews.
  */
+function BanIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m5.6 5.6 12.8 12.8" /></svg>;
+}
+
 export function BlockMemberButton({ userId, name, initiallyBlocked = false, compact = false }: { userId: string; name: string; initiallyBlocked?: boolean; compact?: boolean }) {
   const router = useRouter();
   const [blocked, setBlocked] = useState(initiallyBlocked);
@@ -24,11 +28,16 @@ export function BlockMemberButton({ userId, name, initiallyBlocked = false, comp
       } catch { setError('Нет связи с сервером. Попробуйте ещё раз.'); }
     });
   }
-  return <div className={`block-member${compact ? ' is-compact' : ''}`}>
-    {!compact && blocked && <p className="community-muted" role="status">Вы заблокировали {name}.</p>}
-    <button className="community-button community-button-secondary" type="button" disabled={pending} onClick={toggle}>
-      {pending ? 'Сохраняем…' : blocked ? 'Разблокировать' : `Заблокировать ${name}`}
-    </button>
+  const button = <button className={`community-button community-button-secondary${blocked ? '' : ' block-member-action'}`} type="button" disabled={pending} onClick={toggle}>
+    {!blocked && <BanIcon />}{pending ? 'Сохраняем…' : blocked ? 'Разблокировать' : `Заблокировать ${name}`}
+  </button>;
+  // Blocked: a notice with what the block does and a small «Разблокировать» beside it (stacked on phones).
+  return <div className={`block-member${compact ? ' is-compact' : ''}${blocked && !compact ? ' is-blocked' : ''}`}>
+    {!compact && blocked ? <div className="block-member-notice" role="status">
+      <span className="block-member-icon" aria-hidden="true"><BanIcon /></span>
+      <span className="block-member-text"><strong>Вы заблокировали {name}</strong><small>Записи, комментарии и отзывы участника скрыты, он не может писать вам и заказывать у вас.</small></span>
+      {button}
+    </div> : button}
     {error && <p className="field-error" role="alert">{error}</p>}
   </div>;
 }

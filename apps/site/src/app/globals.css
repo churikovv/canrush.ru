@@ -2930,12 +2930,11 @@ html[data-cookie-notice="visible"] .brand-footer {
 .review-edit-fields[data-locked] textarea { color: var(--color-text); opacity: 1; background: transparent; resize: none; cursor: default; }
 .review-discussion { margin-top: 16px; border-top: 1px solid var(--color-control); padding-top: 12px; }
 .review-reactions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
-/* Reactions are plain icon + count (no chips): the heart is always red, the bookmark sits at the far end. */
+/* Reactions are plain icon + count (no chips): the heart turns red only once liked, the bookmark sits at the far end. */
 .review-reactions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 40px; min-height: 40px; padding: 6px 8px; border: 0; background: transparent; border-radius: 999px; font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; color: var(--color-muted-strong); transition: background-color 150ms ease-out, color 150ms ease-out; }
 .review-reactions button:hover:not(:disabled) { background: color-mix(in srgb, currentColor 10%, transparent); }
 .review-reactions button[aria-pressed="true"] { color: var(--color-brand-deep); }
-.review-reactions .review-like { color: #e5484d; }
-.review-reactions .review-like[aria-pressed="true"] { color: #e5484d; }
+.review-reactions .review-like:hover:not(:disabled), .review-reactions .review-like[aria-pressed="true"] { color: #e5484d; }
 .review-reactions .review-save { margin-left: auto; }
 .review-reactions .review-save[aria-pressed="true"] { color: var(--color-brand); }
 @media (prefers-reduced-motion: reduce) { .review-reactions button { transition: none; } }
@@ -3438,7 +3437,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 [data-profile-tone=dark] :is(.community-feedback,.field-error) { color: #ffb5b5; }
 [data-profile-tone=dark] .community-feedback { color: #7adb9a; }
 [data-profile-theme] :is(.review-comment-composer textarea,.wall-empty-card) { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
-[data-profile-theme] .review-reactions button:not(.review-like) { color: var(--profile-muted); }
+[data-profile-theme] .review-reactions button:not(.review-like[aria-pressed="true"]) { color: var(--profile-muted); }
 [data-profile-theme] .review-reactions button[aria-pressed="true"]:not(.review-like) { color: var(--profile-accent); }
 [data-profile-theme] .review-reactions button[aria-pressed=true] { background: var(--profile-soft); color: var(--profile-accent); border-color: var(--profile-accent); }
 [data-profile-tone=dark] .review-comment-delete:hover:not(:disabled) { color: #ffb5b5; }

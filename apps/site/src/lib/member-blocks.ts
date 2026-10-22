@@ -41,10 +41,10 @@ export async function isBlockedByViewer(viewerId: string | null, userId: string)
   return Boolean((await getPool().query('select 1 from "memberBlock" where "blockerId"=$1 and "blockedId"=$2', [viewerId, userId])).rowCount);
 }
 
-export interface BlockedMember { id: string; name: string; username: string | null; blockedAt: Date }
+export interface BlockedMember { id: string; name: string; username: string | null; avatarId: string | null; blockedAt: Date }
 
 export async function getBlockedMembers(viewerId: string): Promise<BlockedMember[]> {
-  const { rows } = await getPool().query<BlockedMember>(`select u.id, u.name, u.username, b."createdAt" as "blockedAt"
+  const { rows } = await getPool().query<BlockedMember>(`select u.id, u.name, u.username, (select p.id::text from "profileImage" p where p."userId" = u.id and p.kind = 'avatar') as "avatarId", b."createdAt" as "blockedAt"
     from "memberBlock" b join "user" u on u.id = b."blockedId" where b."blockerId" = $1 order by b."createdAt" desc`, [viewerId]);
   return rows;
 }

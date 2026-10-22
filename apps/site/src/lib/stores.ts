@@ -3,11 +3,16 @@ import type { PreparedReviewPhoto } from './review-photos';
 import { getPool } from '@/db/pool';
 import { StoreError, type StoreInput } from './store-fields';
 export interface Store extends StoreInput { id: string; photos: string[]; ownerId: string; status: 'pending'|'published'|'rejected'; moderationNote: string; updatedAt: Date; reviewedAt: Date | null }
-export async function listStores(city: string, query: string, page: number, ownerId?: string, pending=false) {
+/** `metro`: the stations of one name (one per line) — a store matches by its chosen station or by being within walking distance of one. */
+export interface StoreFilters { brand?: string; metro?: { ids: string[]; lat: number[]; lng: number[]; km: number } }
+export async function listStores(city: string, query: string, page: number, ownerId?: string, pending=false, filters: StoreFilters = {}) {
   const result = await getPool().query<Store>(`select s.*, array(select p.id::text from "storePhoto" p where p."storeId"=s.id order by p.position) as photos from "marketStore" s where
     ($1::text='' or s.city=$1) and ($2::text='' or concat_ws(' ',s.name,s.address,s.description,s.catalog::text) ilike '%' || $2 || '%')
     and ($3::text is null or s."ownerId"=$3) and (case when $4::boolean then s.status='pending' when $3::text is not null then true else s.status='published' and not exists(select 1 from "userBlock" b where b."userId"=s."ownerId") end)
-    order by s."updatedAt" desc,s.id limit 25 offset $5`,[city,query,ownerId??null,pending,(page-1)*24]);
+    and ($6::text='' or exists(select 1 from jsonb_array_elements(s.catalog) item where item->>'brand'=$6))
+    and ($7::text[] is null or s.metro=any($7) or (s.latitude is not null and exists(select 1 from unnest($8::float8[],$9::float8[]) st(lat,lng)
+      where 12742*asin(least(1,sqrt(sin(radians(st.lat-s.latitude)/2)^2+cos(radians(s.latitude))*cos(radians(st.lat))*sin(radians(st.lng-s.longitude)/2)^2)))<=$10)))
+    order by s."updatedAt" desc,s.id limit 25 offset $5`,[city,query,ownerId??null,pending,(page-1)*24,filters.brand??'',filters.metro?.ids??null,filters.metro?.lat??[],filters.metro?.lng??[],filters.metro?.km??0]);
   return {items:result.rows.slice(0,24),hasMore:result.rows.length>24};
 }
 export interface StorePoint { id: string; name: string; city: string; address: string; metro: string | null; latitude: number; longitude: number; drinks: number }
@@ -18,6 +23,14 @@ export async function listStorePoints(city: string, limit = 300): Promise<StoreP
       and not exists(select 1 from "userBlock" b where b."userId"=s."ownerId")
     order by s."updatedAt" desc, s.id limit $2`, [city, limit]);
   return rows.map(row => ({ ...row, latitude: Number(row.latitude), longitude: Number(row.longitude) }));
+}
+/** Filter choices for a city's published stores: brands from linked drinks and the stations stores are assigned to. */
+export async function getStoreFilterOptions(city: string): Promise<{ brands: string[]; metro: string[]; points: { lat: number; lng: number }[] }> {
+  const { rows } = await getPool().query<{ brands: string[] | null; metro: string[] | null; points: { lat: number; lng: number }[] | null }>(`select
+      array(select distinct item->>'brand' from "marketStore" s, jsonb_array_elements(s.catalog) item where s.city=$1 and s.status='published' and item->>'brand' is not null order by 1) as brands,
+      array(select distinct s.metro from "marketStore" s where s.city=$1 and s.status='published' and s.metro is not null) as metro,
+      array(select jsonb_build_object('lat',s.latitude,'lng',s.longitude) from "marketStore" s where s.city=$1 and s.status='published' and s.latitude is not null) as points`, [city]);
+  return { brands: rows[0]?.brands ?? [], metro: rows[0]?.metro ?? [], points: (rows[0]?.points ?? []).map(point => ({ lat: Number(point.lat), lng: Number(point.lng) })) };
 }
 export async function getStore(id: string) {
   if(!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(id))return null;

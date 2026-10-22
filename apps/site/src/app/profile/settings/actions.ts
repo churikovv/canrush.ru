@@ -19,7 +19,7 @@ export async function saveNotificationSettings(form: FormData) {
     select $1, unnest($2::text[]), unnest($3::boolean[])
     on conflict ("userId",kind) do update set enabled=excluded.enabled`,
     [session.user.id, NOTIFICATION_OPTIONS.map(x => x.kind), NOTIFICATION_OPTIONS.map(x => form.get(x.kind) === 'on')]);
-  redirect('/profile/settings?saved=1');
+  redirect('/profile/settings?section=notifications&saved=1');
 }
 
 export type TelegramLinkResult = { url: string } | { error: string };
@@ -49,7 +49,7 @@ export async function unlinkTelegram() {
   if (!isTelegramPlaceholderEmail(session.user.email)) {
     await getPool().query('delete from "account" where "userId" = $1 and "providerId" = $2', [session.user.id, TELEGRAM_PROVIDER_ID]);
   }
-  redirect('/profile/settings');
+  redirect('/profile/settings?section=telegram-bot');
 }
 
 export async function saveTelegramBotSettings(form: FormData) {
@@ -62,5 +62,5 @@ export async function saveTelegramBotSettings(form: FormData) {
   await getPool().query(`update "telegramChat" c set ${TELEGRAM_BOT_OPTIONS.map((option, index) => `"${option.column}" = coalesce($${index + 3}, c."${option.column}")`).join(', ')}, city = coalesce($2, c.city)
     from account a where a."userId" = $1 and a."providerId" = 'telegram' and a."accountId" = c."telegramId"::text`,
     [session.user.id, city, ...values]);
-  redirect('/profile/settings?saved=telegram');
+  redirect('/profile/settings?section=telegram-bot&saved=telegram');
 }

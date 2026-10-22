@@ -90,7 +90,7 @@ export function SiteFooter() {
         </div>
 
         <div className="footer-bottom">
-          <p className="footer-copyright">CanRush.ru © 2026</p>
+          <p className="footer-copyright">canrush.ru © 2026</p>
           <div className="footer-legal"><p>Используя сайт, вы подтверждаете своё совершеннолетие. Если вам нет 18 лет, покиньте сайт.</p>
           <p>
             Сайт не аффилирован и не одобрен производителями или ретейлерами. Информация представлена

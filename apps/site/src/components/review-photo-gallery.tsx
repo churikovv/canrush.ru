@@ -17,8 +17,10 @@ function zoom(view: View, factor: number, anchor = { x: 0, y: 0 }): View {
   return { scale, x: anchor.x - (anchor.x - view.x) * ratio, y: anchor.y - (anchor.y - view.y) * ratio };
 }
 
-function PhotoCanvas({ id, label, source, onSwipe }: { id: string; label: string; source: string; onSwipe: (direction: number) => void }) {
+function PhotoCanvas({ id, label, source, onSwipe, onClose }: { id: string; label: string; source: string; onSwipe: (direction: number) => void; onClose: () => void }) {
   const swipe = useRef<{ x: number; y: number } | null>(null);
+  // A single tap on the empty stage (not the photo, no drag or pinch) closes the viewer.
+  const tap = useRef<{ x: number; y: number } | null>(null);
   const [view, setView] = useState(INITIAL_VIEW);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -62,14 +64,16 @@ function PhotoCanvas({ id, label, source, onSwipe }: { id: string; label: string
         <button type="button" aria-label="Увеличить" disabled={view.scale === MAX_SCALE || !loaded} onClick={() => setView(current => zoom(current, 1.5))}><Icon path="M12 5v14M5 12h14" /></button>
       </div>
       <div className="review-photo-stage" ref={stage}
-        onPointerDown={event => { swipe.current = pointers.current.size === 0 && view.scale === 1 ? { x: event.clientX, y: event.clientY } : null; event.currentTarget.setPointerCapture(event.pointerId); pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY }); }}
+        onPointerDown={event => { tap.current = pointers.current.size === 0 && event.target === event.currentTarget ? { x: event.clientX, y: event.clientY } : null; swipe.current = pointers.current.size === 0 && view.scale === 1 ? { x: event.clientX, y: event.clientY } : null; event.currentTarget.setPointerCapture(event.pointerId); pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY }); }}
         onPointerMove={move}
         onPointerUp={event => {
           const start = swipe.current;
           if (start && view.scale === 1 && Math.abs(event.clientX - start.x) > 60 && Math.abs(event.clientX - start.x) > Math.abs(event.clientY - start.y) * 1.5) onSwipe(event.clientX < start.x ? 1 : -1);
-          swipe.current = null; pointers.current.delete(event.pointerId);
+          const tapped = tap.current && pointers.current.size === 1 && Math.hypot(event.clientX - tap.current.x, event.clientY - tap.current.y) < 10;
+          swipe.current = null; tap.current = null; pointers.current.delete(event.pointerId);
+          if (tapped) onClose();
         }}
-        onPointerCancel={event => { swipe.current = null; pointers.current.delete(event.pointerId); }}
+        onPointerCancel={event => { swipe.current = null; tap.current = null; pointers.current.delete(event.pointerId); }}
         onLostPointerCapture={event => pointers.current.delete(event.pointerId)}
         onDoubleClick={() => setView(current => current.scale > 1 ? INITIAL_VIEW : zoom(current, 2))}>
         {!loaded && !failed ? <span className="review-photo-spinner" role="status" aria-label="Загружаем фотографию" /> : null}
@@ -84,8 +88,8 @@ function PhotoCanvas({ id, label, source, onSwipe }: { id: string; label: string
 }
 
 /** Wall videos play in the viewer with native controls; swipe and zoom stay with photos. */
-function VideoCanvas({ id, label, source }: { id: string; label: string; source: string }) {
-  return <div className="review-photo-stage review-video-stage">
+function VideoCanvas({ id, label, source, onClose }: { id: string; label: string; source: string; onClose: () => void }) {
+  return <div className="review-photo-stage review-video-stage" onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
     <video src={`/api/${source}/${id}`} poster={`/api/${source}/${id}?size=thumbnail`} controls autoPlay playsInline preload="metadata" aria-label={label} />
   </div>;
 }
@@ -105,6 +109,7 @@ export function PhotoViewer({ photos, kinds, initialIndex, onClose, source }: { 
   }, []);
   return (
     <dialog ref={dialog} className="review-photo-dialog" aria-label="Просмотр фотографий публикации" onCancel={onClose}
+      onClick={event => { if (event.target === event.currentTarget || (event.target instanceof Element && event.target.matches('.review-photo-toolbar, .review-photo-dots'))) onClose(); }}
       onKeyDown={event => {
         if (event.key === 'ArrowRight') { event.preventDefault(); setIndex(current => Math.min(photos.length - 1, current + 1)); }
         if (event.key === 'ArrowLeft') { event.preventDefault(); setIndex(current => Math.max(0, current - 1)); }
@@ -114,8 +119,8 @@ export function PhotoViewer({ photos, kinds, initialIndex, onClose, source }: { 
         <button type="button" className="review-photo-close" ref={closeButton} onClick={onClose} aria-label="Закрыть просмотр"><Icon path="M6 6l12 12M18 6 6 18" /></button>
       </div>
       {kinds?.[index] === 'video'
-        ? <VideoCanvas source={source} key={photos[index]} id={photos[index]!} label={`Видео публикации ${index + 1} из ${photos.length}`} />
-        : <PhotoCanvas onSwipe={direction => setIndex(current => Math.max(0, Math.min(photos.length - 1, current + direction)))} source={source} key={photos[index]} id={photos[index]!} label={`${kinds?.[index] === 'gif' ? 'GIF' : 'Фотография'} публикации ${index + 1} из ${photos.length}`} />}
+        ? <VideoCanvas source={source} key={photos[index]} id={photos[index]!} label={`Видео публикации ${index + 1} из ${photos.length}`} onClose={onClose} />
+        : <PhotoCanvas onClose={onClose} onSwipe={direction => setIndex(current => Math.max(0, Math.min(photos.length - 1, current + direction)))} source={source} key={photos[index]} id={photos[index]!} label={`${kinds?.[index] === 'gif' ? 'GIF' : 'Фотография'} публикации ${index + 1} из ${photos.length}`} />}
       {photos.length > 1 && <>
         <button type="button" className="review-photo-arrow" data-side="prev" disabled={index === 0} onClick={() => setIndex(index - 1)} aria-label="Предыдущее вложение"><Icon path="m15 6-6 6 6 6" size={26} /></button>
         <button type="button" className="review-photo-arrow" data-side="next" disabled={index === photos.length - 1} onClick={() => setIndex(index + 1)} aria-label="Следующее вложение"><Icon path="m9 6 6 6-6 6" size={26} /></button>

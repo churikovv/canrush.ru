@@ -37,7 +37,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     {SCOPES.map(item => <Link key={item.key} href={scopeHref(item.key)} aria-current={item.key === scope ? 'page' : undefined} replace scroll={false}><NavigationIcon section={item.icon} />{item.label}</Link>)}
   </nav>;
   const browser = scope === 'catalog' ? <CatalogBrowser params={params} basePath="/search" scopes={scopes} />
-    : scope === 'stores' ? <StoreBrowser params={{ q: text('q'), page: text('page') }} basePath="/search" keep={keep} scopes={scopes} />
+    : scope === 'stores' ? <StoreBrowser params={{ q: text('q'), page: text('page'), brand: text('brand'), metro: text('metro') }} basePath="/search" keep={keep} scopes={scopes} />
     : <MarketBrowser query={{ q: text('q'), page: text('page'), brand: text('brand'), city: text('city'), delivery: text('delivery') }} viewerId={(await auth.api.getSession({ headers: await headers() }))?.user.id ?? null} basePath="/search" keep={keep} scopes={scopes} />;
   return <BrandShell headerAction={<ProfileNavigation active="search" />} surfaceClassName="catalog-surface">
     <div className="search-layout" data-scope={scope}>

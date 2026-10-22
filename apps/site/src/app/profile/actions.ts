@@ -82,7 +82,7 @@ export async function updateProfileAction(
 
   revalidatePath('/profile', 'layout');
   revalidatePath('/catalog', 'layout');
-  revalidatePath('/profile/edit');
+  revalidatePath('/profile/settings');
   revalidatePath(`/profile/${validation.data.username}`);
   if (previousProfile?.username && previousProfile.username !== validation.data.username) {
     revalidatePath(`/profile/${previousProfile.username}`);
@@ -92,7 +92,7 @@ export async function updateProfileAction(
 
 export async function deleteAccountAction(formData: FormData): Promise<never> {
   const user = await currentUser();
-  if (formData.get('confirmation') !== 'delete-account') redirect('/profile/edit');
+  if (formData.get('confirmation') !== 'delete-account') redirect('/profile/settings?section=account');
 
   const requestHeaders = await headers();
   const signOutResponse = await auth.api.signOut({

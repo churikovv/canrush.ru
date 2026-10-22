@@ -8,6 +8,8 @@
   --color-muted-strong: #b5bfce;
   --color-surface: #14171e;
   --color-subtle: #282f3c;
+  --color-header: #15171f;
+  --color-header-active: var(--color-subtle);
   --color-control: #414c5e;
   --color-brand-deep: #4d94ff;
   --color-danger: #ffb5b5;
@@ -18,7 +20,7 @@
   --color-action: #090d13;
   --theme-panel: #1d222c;
   --theme-subtle: #282f3c;
-  --theme-line: #414c5e;
+  --theme-line: #2b3240;
   --theme-text: #f1f4fa;
   --theme-muted: #b5bfce;
   --theme-link: #4d94ff;
@@ -55,7 +57,7 @@
 @media (min-width: 1200px) and (max-width: 1399px) { .profile-navigation { gap: 2px; } .profile-navigation-item { padding-inline: 8px; } .header-action { gap: 8px; } }
 /* Preserve artwork and the brand's white-on-blue/black surfaces. */
 :root[data-site-theme=graphite] .brand-footer { background: #090d13; color: #fff; }
-:root[data-site-theme=graphite] .site-tab-bar { box-shadow: inset 0 1px 0 #414c5e; }
+:root[data-site-theme=graphite] .site-tab-bar { box-shadow: inset 0 1px 0 #2b3240; }
 :root[data-site-theme=graphite] :is(.catalog-card-image,.catalog-product-visual,.favorite-card-image,.tier-editor-product-image) { background: #f3f4f6; color: #59616b; }
 :root[data-site-theme=graphite] .community-button { border-color: #414c5e; }
 :root[data-site-theme=graphite] .community-button-secondary { color: var(--theme-text); background: var(--theme-panel); }
@@ -65,7 +67,7 @@
 /* An uncustomized profile follows the visitor's theme. Explicit presets stay independent. */
 :root[data-site-theme=graphite] [data-profile-theme=default] {
   --profile-bg: #14171e; --profile-panel: #1d222c; --profile-soft: #282f3c;
-  --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #414c5e;
+  --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #2b3240;
   --profile-accent: #4d94ff; --profile-banner: #006eff; color-scheme: dark;
 }
 [data-profile-theme]:not(.appearance-swatch) {
@@ -104,6 +106,8 @@
   --color-muted-strong: #b5bfce;
   --color-surface: #14171e;
   --color-subtle: #282f3c;
+  --color-header: #15171f;
+  --color-header-active: var(--color-subtle);
   --color-control: #414c5e;
   --color-brand-deep: #4d94ff;
   --color-danger: #ffb5b5;
@@ -114,7 +118,7 @@
   --color-action: #090d13;
   --theme-panel: #1d222c;
   --theme-subtle: #282f3c;
-  --theme-line: #414c5e;
+  --theme-line: #2b3240;
   --theme-text: #f1f4fa;
   --theme-muted: #b5bfce;
   --theme-link: #4d94ff;
@@ -122,7 +126,7 @@
   --theme-success: #7adb9a;
 }
 :root[data-site-theme=system] .brand-footer { background: #090d13; color: #fff; }
-:root[data-site-theme=system] .site-tab-bar { box-shadow: inset 0 1px 0 #414c5e; }
+:root[data-site-theme=system] .site-tab-bar { box-shadow: inset 0 1px 0 #2b3240; }
 :root[data-site-theme=system] :is(.catalog-card-image,.catalog-product-visual,.favorite-card-image,.tier-editor-product-image) { background: #f3f4f6; color: #59616b; }
 :root[data-site-theme=system] .community-button { border-color: #414c5e; }
 :root[data-site-theme=system] .community-button-secondary { color: var(--theme-text); background: var(--theme-panel); }
@@ -131,7 +135,7 @@
 :root[data-site-theme=system] .community-shortcut > img { filter: brightness(0) invert(1); }
 :root[data-site-theme=system] [data-profile-theme=default] {
   --profile-bg: #14171e; --profile-panel: #1d222c; --profile-soft: #282f3c;
-  --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #414c5e;
+  --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #2b3240;
   --profile-accent: #4d94ff; --profile-banner: #006eff; color-scheme: dark;
 }
 :root[data-site-theme=system] [data-profile-tone=light] .community-shortcut > img { filter: none; }
@@ -142,14 +146,14 @@
 :root[data-site-theme=system] [data-profile-tone=light] .community-avatar:not(.community-avatar-custom) > img { filter: none; }
 }
 
-/* Header on a neutral backing instead of the brand blue; the page surface keeps its rounded top over it.
+/* Header on a neutral backing instead of the brand blue (dark themes: their own --color-header, current item on --color-subtle); the page surface keeps its rounded top over it.
    Last in the cascade so it wins over the theme rules above. The logo keeps its files (mask),
    the mark is brand blue and the controls take the theme's ink. */
-.site-shell { background: var(--color-subtle); }
+.site-shell { background: var(--color-header, var(--color-subtle)); }
 .brand-home .brand-mark { background: var(--color-brand); -webkit-mask: url('/brand/logo-mark.svg') center / contain no-repeat; mask: url('/brand/logo-mark.svg') center / contain no-repeat; }
 .brand-home .brand-wordmark { background: var(--color-ink); -webkit-mask: url('/brand/logo-wordmark-white.svg') center / contain no-repeat; mask: url('/brand/logo-wordmark-white.svg') center / contain no-repeat; }
 .brand-header :is(.city-header-button, .city-header-placeholder, .notification-bell, .settings-header-link, .profile-navigation-item, .header-menu-toggle) { color: var(--color-ink); }
-.brand-header :is(.profile-navigation-item[aria-current="page"], .header-menu[data-current], .settings-header-link[aria-current=page]) { background: var(--color-surface); }
-.brand-header :is(.header-menu:hover, .header-menu[data-open], .settings-header-link:hover, .notification-bell:hover, .city-header-button:hover, .profile-navigation-item:hover) { background: color-mix(in srgb, var(--color-surface) 70%, transparent); }
+.brand-header :is(.profile-navigation-item[aria-current="page"], .header-menu[data-current], .settings-header-link[aria-current=page]) { background: var(--color-header-active, var(--color-surface)); }
+.brand-header :is(.header-menu:hover, .header-menu[data-open], .settings-header-link:hover, .notification-bell:hover, .city-header-button:hover, .profile-navigation-item:hover) { background: color-mix(in srgb, var(--color-header-active, var(--color-surface)) 70%, transparent); }
 .brand-header .notification-count { background: var(--color-brand); color: #fff; }
 :root .brand-header :focus-visible, :root[data-site-theme] .brand-header :focus-visible { outline-color: var(--color-focus); }
