@@ -14,6 +14,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(TelegramLinksPlugin.class);
         registerPlugin(CanrushPushPlugin.class);
         registerPlugin(CanrushBarsPlugin.class);
+        registerPlugin(CanrushImagePlugin.class);
         super.onCreate(savedInstanceState);
         getBridge().getWebView().setWebChromeClient(new MediaChooserChromeClient(getBridge()));
         openSiteLink(getIntent());

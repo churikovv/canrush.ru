@@ -15,6 +15,11 @@ export interface NativePushPlugin {
 }
 /** The shell's own plugin (apps/android CanrushPushPlugin): Firebase config in this build and the RuStore Push token. */
 interface CanrushPushPlugin { status(): Promise<{ fcm: boolean }>; rustoreToken(): Promise<{ token: string }> }
+/** The shell's CanrushImagePlugin (app 1.2+): saves a PNG to Pictures/CanRush or opens the share sheet with it. */
+interface CanrushImagePlugin {
+  save(options: { data: string; fileName: string }): Promise<void>;
+  share(options: { data: string; fileName: string; title?: string }): Promise<void>;
+}
 interface CapacitorBridge {
   getPlatform?: () => string;
   Plugins?: {
@@ -24,6 +29,7 @@ interface CapacitorBridge {
     SplashScreen?: { hide(options?: { fadeOutDuration?: number }): Promise<void> };
     SystemBars?: { setStyle(options: { style: 'LIGHT' | 'DARK' | 'DEFAULT'; bar?: string }): Promise<void> };
     CanrushBars?: { setColors(options: { top: string; bottom: string }): Promise<void> };
+    CanrushImage?: CanrushImagePlugin;
   };
 }
 
@@ -36,6 +42,28 @@ export async function setSystemBars(dark: boolean, colors: { top: string; bottom
   const plugins = bridge()?.Plugins;
   await plugins?.SystemBars?.setStyle({ style: dark ? 'DARK' : 'LIGHT' }).catch(() => {});
   await plugins?.CanrushBars?.setColors(colors).catch(() => {});
+}
+
+/**
+ * Screenshots in the app: the WebView can neither download a blob link nor copy an image, so the PNG goes to the
+ * shell as base64. Null outside the app or in an app version without the module.
+ */
+export function nativeImage(): { save(blob: Blob, fileName: string): Promise<void>; share(blob: Blob, fileName: string, title?: string): Promise<void> } | null {
+  const plugin = bridge()?.Plugins?.CanrushImage;
+  if (!plugin) return null;
+  return {
+    save: async (blob, fileName) => plugin.save({ data: await base64(blob), fileName }),
+    share: async (blob, fileName, title) => plugin.share({ data: await base64(blob), fileName, title }),
+  };
+}
+
+function base64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).replace(/^data:[^,]*,/u, ''));
+    reader.onerror = () => reject(reader.error ?? new Error('Не удалось прочитать изображение'));
+    reader.readAsDataURL(blob);
+  });
 }
 
 /** Removes the blue launch screen once the page is painted (otherwise it stays up to launchShowDuration). */

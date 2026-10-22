@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { isNativeApp, nativeImage } from '@/lib/native-app';
 import { renderTierScreenshot, renderTierStory } from '@/lib/tier-screenshot';
 
 export interface ScreenshotLabels { title: string; alt: string; file: string }
@@ -26,6 +27,15 @@ export function ScreenshotPreview({ blob, url, renderStory, onClose, labels = TI
   const storyUrl = useRef<string | null>(null);
   useEffect(() => () => { if (storyUrl.current) URL.revokeObjectURL(storyUrl.current); }, []);
   const current = format === 'story' && story ? story : { blob, url };
+  const fileName = format === 'story' ? `${labels.file}-tiktok.png` : `${labels.file}.png`;
+  // In the app the WebView cannot copy an image or download a blob link: save and share go through the shell.
+  // The dialog opens only after a tap, on the client, so the shell can be checked right away.
+  const [app] = useState(isNativeApp);
+  const [image] = useState(nativeImage);
+  async function run(action: () => Promise<void>, failure: string) {
+    setPending(true);
+    try { await action(); } catch { notify(failure, true); } finally { setPending(false); }
+  }
   async function chooseStory() {
     setFormat('story');
     if (story || storyPending) return;
@@ -42,7 +52,7 @@ export function ScreenshotPreview({ blob, url, renderStory, onClose, labels = TI
   }, []);
   return createPortal(<dialog ref={dialog} className="tier-screenshot-dialog" aria-labelledby="tier-screenshot-title" onCancel={onClose}>
     <div className="tier-screenshot-heading">
-      <div><h2 id="tier-screenshot-title">{labels.title}</h2><p>Выберите формат и нажмите «Копировать» или «Скачать PNG».</p></div>
+      <div><h2 id="tier-screenshot-title">{labels.title}</h2><p>{app ? 'Выберите формат и сохраните скриншот в галерею или поделитесь им.' : 'Выберите формат и нажмите «Копировать» или «Скачать PNG».'}</p></div>
       <button type="button" className="community-button community-button-secondary tier-screenshot-close" onClick={onClose} aria-label="Закрыть скриншот"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
     </div>
     <div className="tier-screenshot-formats" role="radiogroup" aria-label="Формат скриншота">
@@ -55,14 +65,21 @@ export function ScreenshotPreview({ blob, url, renderStory, onClose, labels = TI
         : <img src={current.url} alt={format === 'story' ? `${labels.alt} в вертикальном формате 9:16` : labels.alt} />}
     </div>
     <div className="tier-screenshot-actions">
-      <button type="button" className="tier-primary-action" disabled={pending || (format === 'story' && !story)} onClick={async () => {
-        setPending(true);
-        try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': current.blob })]); notify(format === 'story' ? 'Вертикальный скриншот скопирован' : 'Скриншот скопирован в буфер обмена'); }
-        catch { notify('Не удалось скопировать изображение. Скачайте PNG.', true); }
-        finally { setPending(false); }
-      }}>{pending ? 'Копируем…' : 'Копировать'}</button>
-      {format === 'story' && !story ? <span className="tier-secondary-action" aria-disabled="true">Скачать PNG</span>
-        : <a className="tier-secondary-action" href={current.url} download={format === 'story' ? `${labels.file}-tiktok.png` : `${labels.file}.png`}>Скачать PNG</a>}
+      {app ? <>
+        <button type="button" className="tier-primary-action" disabled={!image || pending || (format === 'story' && !story)} onClick={() => run(async () => {
+          await image!.save(current.blob, fileName); notify('Сохранено в галерею, альбом CanRush');
+        }, 'Не удалось сохранить. Попробуйте «Поделиться».')}>{pending ? 'Сохраняем…' : 'Сохранить в галерею'}</button>
+        <button type="button" className="tier-secondary-action" disabled={!image || pending || (format === 'story' && !story)} onClick={() => run(async () => {
+          await image!.share(current.blob, fileName, labels.title);
+        }, 'Не удалось открыть меню «Поделиться».')}>Поделиться</button>
+        {!image && <p className="tier-screenshot-update" role="status">Обновите приложение CanRush, чтобы сохранять скриншоты.</p>}
+      </> : <>
+        <button type="button" className="tier-primary-action" disabled={pending || (format === 'story' && !story)} onClick={() => run(async () => {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': current.blob })]); notify(format === 'story' ? 'Вертикальный скриншот скопирован' : 'Скриншот скопирован в буфер обмена');
+        }, 'Не удалось скопировать изображение. Скачайте PNG.')}>{pending ? 'Копируем…' : 'Копировать'}</button>
+        {format === 'story' && !story ? <span className="tier-secondary-action" aria-disabled="true">Скачать PNG</span>
+          : <a className="tier-secondary-action" href={current.url} download={fileName}>Скачать PNG</a>}
+      </>}
     </div>
     {notice && <div className={`share-toast tier-screenshot-toast${notice.error ? ' share-toast-error' : ''}`}>
       <span key={notice.id} role={notice.error ? 'alert' : 'status'}>{notice.message}</span>

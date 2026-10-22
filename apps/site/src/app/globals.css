@@ -3766,6 +3766,8 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
 html[data-native-app] { overscroll-behavior-y: none; }
 /* No site footer in the app: its documents and contacts live in Settings → «Документы и связь». */
 html[data-native-app] .brand-footer { display: none; }
+/* The footer used to clear the tab bar; without it every page keeps the same room at the bottom. */
+html[data-native-app] .main-surface.main-surface { padding-bottom: calc(var(--site-tab-bar-offset, 0px) + 32px); }
 html[data-native-app] .pull-refresh {
   --pull: 0;
   position: fixed;

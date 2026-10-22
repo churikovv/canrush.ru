@@ -579,6 +579,7 @@ a.wall-post-author:hover { color: var(--theme-link, #0058cc); }
 .tier-screenshot-preview.is-story img { width: auto; max-width: 100%; max-height: calc(55dvh - 24px); border-radius: 12px; }
 .tier-screenshot-pending { margin: 0; padding: 48px 16px; color: var(--color-muted-strong); text-align: center; }
 .tier-screenshot-actions [aria-disabled="true"] { opacity: .5; pointer-events: none; }
+.tier-screenshot-update { flex-basis: 100%; margin: 0; color: var(--color-muted-strong); font-size: .875rem; }
 @media (max-width: 639px) {
   .tier-screenshot-dialog { padding: 16px; }
   .tier-screenshot-heading { align-items: flex-start; }
