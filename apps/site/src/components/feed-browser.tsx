@@ -11,13 +11,14 @@ import { getWallInteractions } from '@/lib/wall-discussions';
 export type FeedSearchParams = { scope?: string; page?: string };
 
 /**
- * Every wall as one timeline. /feed shows its heading and the «Все / Подписки / Сохранённые» tabs; `embedded` (/community,
- * under its own switcher) shows everyone's records only.
+ * Every wall as one timeline. /feed shows its heading and the «Все / Подписки / Сохранённые» tabs; `embedded` (the home
+ * page, under its own heading) shows everyone's records only, the first `limit` of them, with a link to /feed.
  */
-export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = {}, embedded = false }: { query: FeedSearchParams; viewerId: string | null; basePath?: string; keep?: Record<string, string>; embedded?: boolean }) {
+export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = {}, embedded = false, limit }: { query: FeedSearchParams; viewerId: string | null; basePath?: string; keep?: Record<string, string>; embedded?: boolean; limit?: number }) {
   const scope: FeedScope = !embedded && viewerId && (query.scope === 'following' || query.scope === 'saved') ? query.scope : 'all';
   const page = profilePageNumber(query.page);
   const feed = await getFeed(viewerId, scope, page);
+  const items = limit ? feed.items.slice(0, limit) : feed.items;
   const interactions = await getWallInteractions(feed.posts.map(post => post.id), viewerId);
   const pageHref = (target: number) => {
     const params = new URLSearchParams({ ...keep, ...(scope !== 'all' ? { scope } : {}) });
@@ -37,14 +38,15 @@ export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = 
         {viewerId ? <WallComposer targetId={viewerId} label="Новая запись в ленте и на вашей стене" placeholder="Что нового? Запись появится и на вашей стене…" /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы написать в ленту.</p>}
       </section>
       <section className="feed-posts" aria-label="Записи">
-        {feed.items.length ? <div className="wall-comments">{feed.items.map(item => item.kind === 'rank-up' ? <RankUpCard key={item.rankUp.id} rankUp={item.rankUp} />
+        {items.length ? <div className="wall-comments">{items.map(item => item.kind === 'rank-up' ? <RankUpCard key={item.rankUp.id} rankUp={item.rankUp} />
           : <WallPost key={item.post.id} post={item.post} owner={{ username: item.post.ownerUsername, name: item.post.ownerName, avatarId: item.post.ownerAvatarId }} interaction={interactions.get(item.post.id)} canDelete={viewerId === item.post.userId || viewerId === item.post.profileId} canEdit={viewerId === item.post.userId} />)}</div>
           : <div className="wall-empty-card">{scope === 'saved'
             ? <><strong>Сохранённых записей нет</strong><p>Нажмите на закладку под записью, чтобы вернуться к ней здесь.</p></>
             : scope === 'following'
             ? <><strong>Подписок пока нет</strong><p>Подпишитесь на участников из <Link href="/leaderboard">рейтинга</Link>, чтобы видеть их записи здесь.</p></>
             : <><strong>Здесь пока тихо</strong><p>Напишите первую запись — она появится и на вашей стене.</p></>}</div>}
-        <PagePagination page={page} pages={feed.pages} href={pageHref} label="Страницы ленты" previousLabel="Новее" nextLabel="Старее" />
+        {limit ? feed.items.length > limit || feed.pages > 1 ? <Link className="feed-more" href="/feed">Вся лента</Link> : null
+          : <PagePagination page={page} pages={feed.pages} href={pageHref} label="Страницы ленты" previousLabel="Новее" nextLabel="Старее" />}
       </section>
     </div>
   );

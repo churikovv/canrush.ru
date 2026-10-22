@@ -77,7 +77,7 @@
 }
 [data-profile-tone=light] { color-scheme: light; --theme-danger: #a61b14; --theme-success: #146c43; }
 [data-profile-tone=dark] { color-scheme: dark; --theme-danger: #ffb5b5; --theme-success: #7adb9a; }
-:root[data-site-theme=graphite] :is(.catalog-search-field,.home-hero-search label,.catalog-filter-disclosure > summary,.market-search-submit,.market-filter-toggle) > img { filter: brightness(0) invert(1); }
+:root[data-site-theme=graphite] :is(.catalog-search-field,.catalog-filter-disclosure > summary,.market-search-submit,.market-filter-toggle) > img { filter: brightness(0) invert(1); }
 :root[data-site-theme=graphite] .brand-header :focus-visible { outline-color: #fff; }
 :root[data-site-theme=graphite] .primary-button { border-color: var(--color-control); }
 @media (max-width: 359px) { .site-theme-options { grid-template-columns: 1fr; } }
@@ -135,7 +135,7 @@
   --profile-ink: #f1f4fa; --profile-muted: #b5bfce; --profile-line: #2b3240;
   --profile-accent: #4d94ff; --profile-banner: #006eff; color-scheme: dark;
 }
-:root[data-site-theme=system] :is(.catalog-search-field,.home-hero-search label,.catalog-filter-disclosure > summary,.market-search-submit,.market-filter-toggle) > img { filter: brightness(0) invert(1); }
+:root[data-site-theme=system] :is(.catalog-search-field,.catalog-filter-disclosure > summary,.market-search-submit,.market-filter-toggle) > img { filter: brightness(0) invert(1); }
 :root[data-site-theme=system] .brand-header :focus-visible { outline-color: #fff; }
 :root[data-site-theme=system] .primary-button { border-color: var(--color-control); }
 :root[data-site-theme=system] .community-avatar:not(.community-avatar-custom) > img { filter: brightness(0) invert(1); }
