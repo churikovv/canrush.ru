@@ -65,11 +65,24 @@ async function grantDateTag(userId: string): Promise<SwipeReward['tag']> {
   return inserted.rowCount ? { key: DATE_TAG.key, label: DATE_TAG.label } : null;
 }
 
-/** How many swipes still pay XP for the member. */
-export async function swipeXpLeft(userId: string): Promise<number> {
-  const { rows } = await getPool().query<{ paid: number }>(`select count(*)::int as paid from "profileExperience" where "userId" = $1 and reason = 'swipe'`, [userId]);
-  return Math.max(0, SWIPE_XP_LIMIT - (rows[0]?.paid ?? 0));
+/** The member's way to the dating rewards: swipes and matches so far, swipes that still pay XP, «Люблю <3» earned. */
+export interface DatingProgress { swipes: number; likes: number; xpLeft: number; hasTag: boolean }
+export async function getDatingProgress(userId: string): Promise<DatingProgress> {
+  const { rows } = await getPool().query<{ swipes: number; likes: number; paid: number; hasTag: boolean }>(`select
+    (select count(*)::int from "drinkSwipe" where "userId" = $1) as swipes,
+    (select count(*)::int from "drinkSwipe" where "userId" = $1 and liked) as likes,
+    (select count(*)::int from "profileExperience" where "userId" = $1 and reason = 'swipe') as paid,
+    exists(select 1 from "profileAchievement" where "userId" = $1 and key = 'date') as "hasTag"`, [userId]);
+  const row = rows[0];
+  return { swipes: row?.swipes ?? 0, likes: row?.likes ?? 0, xpLeft: Math.max(0, SWIPE_XP_LIMIT - (row?.paid ?? 0)), hasTag: row?.hasTag ?? false };
 }
+
+/** What the deck shows about the rewards: XP per swipe and the goals of «Люблю <3». */
+export function datingRewards() {
+  const goal = (metric: string) => DATE_TAG?.steps.find(step => step.metric === metric)?.goal ?? 0;
+  return { xp: SWIPE_XP, xpLimit: SWIPE_XP_LIMIT, tag: { key: DATE_TAG?.key ?? 'date', label: DATE_TAG?.label ?? '' }, swipeGoal: goal('swipes'), likeGoal: goal('swipeLikes') };
+}
+export type DatingRewards = ReturnType<typeof datingRewards>;
 
 /** «Вернуть»: forgets the decision so the card comes back. */
 export async function undoSwipe(userId: string, brand: string, flavor: string): Promise<void> {

@@ -56,5 +56,5 @@ it('pays 2 XP for each of the first 30 drinks once and gives «Люблю <3» f
   }
   expect(tags).toEqual(['19:Люблю <3']);
   expect(await xp()).toEqual(expect.arrayContaining([{ reason: 'swipe', points: 60 }, { reason: 'achievement', points: 20 }]));
-  expect(await swipes.swipeXpLeft(dater)).toBe(0);
+  expect(await swipes.getDatingProgress(dater)).toEqual({ swipes: 34, likes: 5, xpLeft: 0, hasTag: true });
 });

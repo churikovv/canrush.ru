@@ -2,10 +2,12 @@
 .dating { display: grid; gap: 16px; width: min(100%, 520px); margin: 0 auto; }
 .dating-head h1 { margin: 0 0 6px; font-size: clamp(1.5rem, 6vw, 2rem); }
 .dating-head p { margin: 0; color: var(--color-muted-strong); line-height: 1.45; }
+/* On a phone the deck needs the room: the second sentence waits for a wider screen. */
+@media (max-width: 639px) { .dating-head p span { display: none; } }
 
 .swipe { position: relative; display: grid; gap: 14px; outline: none; }
 /* Card and buttons fit one phone screen under the switcher and above the tab bar. */
-.swipe-stack { position: relative; height: clamp(360px, calc(100dvh - 420px - var(--site-tab-bar-offset, 0px)), 600px); }
+.swipe-stack { position: relative; height: clamp(320px, calc(100dvh - 460px - var(--site-tab-bar-offset, 0px)), 600px); }
 .swipe-card { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 28px; background: var(--theme-panel, #fff); box-shadow: 0 18px 40px -20px rgb(10 20 50 / .45), 0 0 0 1px var(--theme-line, #dfe3e8); touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .swipe-card[data-depth="1"] { transform: translateY(14px) scale(.95); opacity: .9; }
 .swipe-card[data-depth="2"] { transform: translateY(28px) scale(.9); opacity: .6; }
@@ -52,9 +54,16 @@
 .dating-matches strong { font-size: .8125rem; }
 .dating-matches a > span:last-child { overflow: hidden; color: var(--color-muted-strong); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
 /* +XP for the first swipes: floats up from the buttons and fades. */
-.swipe-xp { position: absolute; z-index: 4; bottom: 70px; left: 50%; padding: 4px 10px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .875rem; font-weight: 800; pointer-events: none; transform: translateX(-50%); animation: swipe-xp 1.2s ease-out forwards; }
+.swipe-xp { position: absolute; z-index: 4; bottom: 16px; left: 50%; padding: 4px 10px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .875rem; font-weight: 800; pointer-events: none; transform: translateX(-50%); animation: swipe-xp 1.2s ease-out forwards; }
 @keyframes swipe-xp { from { opacity: 0; translate: 0 10px; } 20% { opacity: 1; translate: 0 0; } 70% { opacity: 1; } to { opacity: 0; translate: 0 -24px; } }
-.dating-head .dating-reward { margin-top: 8px; font-size: .875rem; }
-.dating-reward .profile-tag { vertical-align: middle; }
+/* Rewards island over the deck: XP for the first swipes and the way to «Люблю <3», each with its own bar. */
+.dating-rewards { display: grid; grid-auto-columns: 1fr; grid-auto-flow: column; gap: 8px; }
+.dating-reward { display: grid; align-content: start; gap: 6px; min-width: 0; padding: 10px 12px; border-radius: 16px; background: var(--color-subtle); }
+.dating-reward-title { display: flex; align-items: center; gap: 8px; min-height: 26px; font-size: .875rem; font-weight: 800; white-space: nowrap; }
+.dating-reward-icon { display: grid; flex: none; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--color-brand); color: #fff; }
+.dating-reward small { overflow: hidden; color: var(--color-muted-strong); font-size: .75rem; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+.dating-reward-bar { display: block; height: 6px; overflow: hidden; border-radius: 999px; background: var(--color-control); }
+.dating-reward-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--color-brand); transition: width 300ms ease-out; }
+.dating-reward.is-tag .dating-reward-bar > span { background: #e5487f; }
 .swipe-notice .profile-tag { vertical-align: middle; }
-@media (prefers-reduced-motion: reduce) { .swipe-card.is-resting, .swipe-card.is-leaving, .swipe-button { transition: none; } .swipe-notice.is-match, .swipe-xp { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .swipe-card.is-resting, .swipe-card.is-leaving, .swipe-button { transition: none; } .swipe-notice.is-match, .swipe-xp { animation: none; } .dating-reward-bar > span { transition: none; } }

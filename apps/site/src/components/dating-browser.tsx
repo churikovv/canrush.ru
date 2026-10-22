@@ -4,7 +4,7 @@ import Link from '@/components/navigation-progress';
 import { SwipeDeck } from '@/components/swipe-deck';
 import { auth } from '@/lib/auth';
 import { loadCatalogSnapshot } from '@/lib/catalog';
-import { SWIPE_XP, SWIPE_XP_LIMIT, getLikedSwipes, getSwipeDeck, swipeXpLeft } from '@/lib/drink-swipes';
+import { datingRewards, getDatingProgress, getLikedSwipes, getSwipeDeck } from '@/lib/drink-swipes';
 
 /**
  * «Дейтинг» in the community: a deck of drinks to swipe right («нравится») or left («пропустить»). Signed in, the
@@ -13,14 +13,13 @@ import { SWIPE_XP, SWIPE_XP_LIMIT, getLikedSwipes, getSwipeDeck, swipeXpLeft } f
 export async function DatingBrowser() {
   const [session, { groups }] = await Promise.all([auth.api.getSession({ headers: await headers() }), loadCatalogSnapshot()]);
   const viewerId = session?.user.id ?? null;
-  const [deck, liked, xpLeft] = await Promise.all([getSwipeDeck(viewerId, groups), viewerId ? getLikedSwipes(viewerId, groups) : [], viewerId ? swipeXpLeft(viewerId) : SWIPE_XP_LIMIT]);
+  const [deck, liked, progress] = await Promise.all([getSwipeDeck(viewerId, groups), viewerId ? getLikedSwipes(viewerId, groups) : [], viewerId ? getDatingProgress(viewerId) : null]);
   return <div className="dating">
     <header className="dating-head">
       <h1>Дейтинг напитков</h1>
-      <p>Вправо — нравится, влево — пропустить. Свайпы улучшают «Тебе понравится» и видны в каталоге.</p>
-      {xpLeft > 0 && <p className="dating-reward">+{SWIPE_XP} XP за каждый из первых {SWIPE_XP_LIMIT} свайпов{xpLeft < SWIPE_XP_LIMIT ? ` · осталось ${xpLeft}` : ''}. 20 свайпов и 5 мэтчей — тег <span className="profile-tag" data-tag="date">Люблю &lt;3</span></p>}
+      <p>Вправо — нравится, влево — пропустить. <span>Чем больше свайпов, тем точнее «Тебе понравится».</span></p>
     </header>
-    <SwipeDeck cards={deck} signedIn={Boolean(viewerId)} />
+    <SwipeDeck cards={deck} signedIn={Boolean(viewerId)} rewards={datingRewards()} progress={progress} />
     {liked.length > 0 && <section className="dating-matches" aria-labelledby="dating-matches-title">
       <h2 id="dating-matches-title">Твои мэтчи</h2>
       <ul>{liked.map(item => <li key={`${item.brand}:${item.flavor}`}><Link href={item.href}>
