@@ -1,4 +1,5 @@
 import { getSessionCookie } from 'better-auth/cookies';
+import { PushRegistration } from '@/components/push-registration';
 import { headers } from 'next/headers';
 import Link from '@/components/navigation-progress';
 import { HeaderMenu } from '@/components/header-menu';
@@ -43,6 +44,7 @@ export async function ProfileNavigation({ active, signedIn }: ProfileNavigationP
         </Link>
       </nav>
       <SiteTabBar active={active} signedIn={member} />
+      <PushRegistration signedIn={member} />
     </>
   );
 }

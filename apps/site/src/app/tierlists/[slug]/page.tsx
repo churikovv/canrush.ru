@@ -12,6 +12,7 @@ import { notFound } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { ShareTierListButton } from '@/components/share-tier-list-button';
+import { ContentReportButton } from '@/components/content-report-button';
 import { TierBoard } from '@/components/tier-board';
 import { auth } from '@/lib/auth';
 import { loadAllCatalogGroups } from '@/lib/catalog';
@@ -85,6 +86,7 @@ export default async function TierListPage({ params }: { params: TierListParams 
             </Link>
           )}
           {list.status === 'published' ? <ShareTierListButton title={list.title} /> : null}
+          {list.status === 'published' && session && !isOwn ? <ContentReportButton kind="tier-list" id={list.id} variant="text" /> : null}
           <TierScreenshotButton boardId="tier-capture-board" title={list.title} telegramChannel={list.author.telegramChannel} authorUsername={list.author.username} />
         </div>
         {interaction && (list.reactionsEnabled || list.commentsEnabled) && <div id="tier-discussion"><ReviewDiscussion target="tierlist" reactionsEnabled={list.reactionsEnabled} commentsEnabled={list.commentsEnabled} reviewId={list.id} initial={interaction} /></div>}

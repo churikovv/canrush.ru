@@ -6,6 +6,8 @@ import { useId, useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { editWallPostAction } from '@/app/profile/community-actions';
 import { EditIcon } from '@/components/action-icons';
+import { ContentReportButton } from '@/components/content-report-button';
+import { MoreActions } from '@/components/more-actions';
 import { DeleteWallComment } from '@/components/profile-community-controls';
 
 interface WallPostBodyProps {
@@ -14,11 +16,13 @@ interface WallPostBodyProps {
   heading: ReactNode;
   canEdit: boolean;
   canDelete: boolean;
+  /** Signed-in viewer who is not the author: offer «Пожаловаться». */
+  canReport?: boolean;
   children?: ReactNode;
 }
 
 /** Heading actions and text of a wall record; the author switches the text into an inline editor. */
-export function WallPostBody({ id, text: initial, heading, canEdit, canDelete, children }: WallPostBodyProps) {
+export function WallPostBody({ id, text: initial, heading, canEdit, canDelete, canReport = false, children }: WallPostBodyProps) {
   const router = useRouter();
   const fieldId = useId();
   const [text, setText] = useState(initial);
@@ -40,9 +44,12 @@ export function WallPostBody({ id, text: initial, heading, canEdit, canDelete, c
   return <>
     <header className="wall-comment-heading">
       {heading}
-      {(canEdit || canDelete) && <div className="wall-post-actions">
-        {canEdit && !editing && <button className="wall-action-button" type="button" aria-label="Редактировать запись" title="Редактировать запись" onClick={() => { setDraft(text); setError(''); setEditing(true); }}><EditIcon /></button>}
-        {canDelete && <DeleteWallComment id={id} />}
+      {(canEdit || canDelete || canReport) && <div className="wall-post-actions">
+        <MoreActions label="Действия с записью">
+          {canEdit && !editing && <button className="more-actions-item" type="button" role="menuitem" onClick={() => { setDraft(text); setError(''); setEditing(true); }}><EditIcon /><span>Редактировать</span></button>}
+          {canDelete && <DeleteWallComment id={id} variant="menuitem" />}
+          {canReport && <ContentReportButton kind="wall-post" id={id} variant="menuitem" />}
+        </MoreActions>
       </div>}
     </header>
     {editing ? <form className="wall-post-edit" onSubmit={event => { event.preventDefault(); save(); }}>

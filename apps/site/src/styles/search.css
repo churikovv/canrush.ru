@@ -6,13 +6,15 @@
 /* Bleeds to the surface edges: its inline margin matches .catalog-surface padding (12px, 24px from 640px). */
 .search-pinned { position: sticky; top: 0; z-index: 20; display: grid; gap: 10px; margin: 0 -12px 16px; padding: max(8px, env(safe-area-inset-top)) 12px 12px; background: var(--color-surface); box-shadow: 0 1px 0 var(--theme-line, rgb(0 0 0 / 8%)); }
 .search-pinned > .market-search-form { margin: 0; }
-.search-scopes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 4px; border-radius: 16px; background: var(--color-subtle); }
-.search-scopes a { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 40px; padding-inline: 6px; border-radius: 12px; color: var(--color-muted-strong); font-weight: 700; text-decoration: none; transition: background-color 150ms ease-out, color 150ms ease-out; }
-.search-scopes a:hover { color: var(--color-ink); }
+/* Scope switcher: separate round pills; the chosen one is filled with the brand blue. */
+.search-scopes { display: flex; gap: 8px; padding: 0; overflow-x: auto; scrollbar-width: none; }
+.search-scopes::-webkit-scrollbar { display: none; }
+.search-scopes a { display: flex; flex: 1 0 auto; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 44px; padding-inline: 16px; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font-weight: 700; text-decoration: none; white-space: nowrap; transition: background-color 150ms ease-out, color 150ms ease-out, box-shadow 150ms ease-out; }
+.search-scopes a:hover { color: var(--color-ink); background: color-mix(in srgb, var(--color-subtle) 70%, var(--color-ink) 8%); }
 .search-scopes svg { flex: none; width: 18px; height: 18px; }
-/* On the narrowest phones the three labels need the room. */
-@media (max-width: 359px) { .search-scopes svg { display: none; } }
-.search-scopes a[aria-current="page"] { background: var(--color-brand); color: #fff; }
+/* On phones the pills carry text only, so all three fit side by side. */
+@media (max-width: 479px) { .search-scopes svg { display: none; } .search-scopes a { padding-inline: 12px; } }
+.search-scopes a[aria-current="page"] { background: var(--color-brand); color: #fff; box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--color-brand) 80%, transparent); }
 .search-scopes a:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 1px; }
 @media (min-width: 640px) and (max-width: 959px) {
   .search-pinned { margin-inline: -24px; padding-inline: 24px; }

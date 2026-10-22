@@ -1,5 +1,4 @@
 import { SettingsHeaderLink } from '@/components/settings-header-link';
-import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { Suspense, type ReactNode } from 'react';
 import { CityHeader } from '@/components/city-header';
@@ -19,15 +18,9 @@ export function BrandShell({ children, headerAction, surfaceClassName }: BrandSh
       <header className="brand-header" data-motion-scope="header">
         <TapMotion />
         <Link className="brand-home" href="/" aria-label="CanRush, на главную">
-          <Image className="brand-mark" src="/brand/logo-mark.svg" width={36} height={30} alt="" priority />
-          <Image
-            className="brand-wordmark"
-            src="/brand/logo-wordmark-white.svg"
-            width={63}
-            height={18}
-            alt=""
-            priority
-          />
+          {/* The original logo files, recoloured with a CSS mask: the mark in brand blue, the wordmark in the theme's ink. */}
+          <span className="brand-mark" aria-hidden="true" />
+          <span className="brand-wordmark" aria-hidden="true" />
         </Link>
         <Suspense fallback={<span className="city-header-placeholder">Город</span>}><CityHeader /></Suspense>
         <div className="header-action">{headerAction}<NotificationBell /><SettingsHeaderLink /></div>

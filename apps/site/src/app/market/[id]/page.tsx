@@ -1,4 +1,5 @@
 import '@/styles/shared.css';
+import { ContentReportButton } from '@/components/content-report-button';
 import '@/styles/market.css';
 import { isSiteAdminEmail } from '@/lib/admin';
 import type { Metadata } from 'next';
@@ -37,6 +38,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
       <div className="market-seller-card"><span className="market-seller-avatar" aria-hidden="true">{listing.sellerName.slice(0, 1).toUpperCase()}</span><span className="market-seller-text"><small>Продавец</small>{listing.username ? <Link href={`/profile/${listing.username}`}>{listing.sellerName}</Link> : <strong>{listing.sellerName}</strong>}</span>{listing.username && <Link className="community-button community-button-secondary" href={`/market?seller=${encodeURIComponent(listing.username)}`}>Все объявления</Link>}</div>
       <section className="market-detail-section"><h2>Доставка</h2><div className="market-delivery-chips">{listing.delivery.map(key => <span key={key}>{DELIVERY[key]}</span>)}</div></section>
       <section className="market-detail-section"><h2>Описание</h2><p className="market-full-description">{listing.description}</p></section>
+      {session && listing.sellerId !== session.user.id && <div className="market-report"><ContentReportButton kind="market-listing" id={listing.id} variant="text" /></div>}
     </section></div>
   </div></BrandShell>;
 }

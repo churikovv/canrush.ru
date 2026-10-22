@@ -1,4 +1,6 @@
 import { ProfileCompatibility } from '@/components/profile-compatibility';
+import { isBlockedByViewer } from '@/lib/member-blocks';
+import { BlockMemberButton } from '@/components/block-member-button';
 import { profileThemeAttributes } from '@/lib/profile-appearance';
 import { getProfileCompatibility } from '@/lib/profile-compatibility-data';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
@@ -46,8 +48,9 @@ function TelegramGlyph() {
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
   const [community, ratings, wall, presence, lastSeen, friends, listings, followers, following, favorites, tierLists, catalog, reviewPreview, compatibility, collection] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id),
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getConnections(profile.id, 'followers'), getConnections(profile.id, 'following'), getFavoriteGroups(profile.id), isOwn ? getTierListsForOwner(profile.id, 2) : getPublishedTierListsForUser(profile.id, 2), loadAllCatalogGroups(), getLatestReviewPreview(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id),
   ]);
+  const blockedByViewer = !isOwn && viewerId ? await isBlockedByViewer(viewerId, profile.id) : false;
   const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
   const tierProducts = tierListProductsForPlacements(catalog, tierLists.flatMap(list => list.preview));
   const experience = (await getExperience([profile.username]))[profile.username];
@@ -132,6 +135,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           </section>
           </ProfileBlock></ProfileBlocks>
           {!isOwn && viewerId && <ProfileReportForm targetId={profile.id} />}
+          {!isOwn && viewerId && <div className="profile-report"><BlockMemberButton userId={profile.id} name={`@${profile.username}`} initiallyBlocked={blockedByViewer} /></div>}
           {isOwn && <SignOutButton />}
         </aside>
       </div>

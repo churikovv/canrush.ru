@@ -29,8 +29,9 @@ export function StoreTabs({ active, signedIn }: { active: typeof STORE_TABS[numb
 }
 
 const FEED_TABS = [
-  { key: 'all', label: 'Все записи' },
+  { key: 'all', label: 'Все' },
   { key: 'following', label: 'Подписки', private: true },
+  { key: 'saved', label: 'Сохранённые', private: true },
 ] as const;
 
 /** `basePath`/`keep` point the tabs at /community when the feed is shown there. */

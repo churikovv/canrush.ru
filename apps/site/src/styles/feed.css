@@ -5,15 +5,17 @@
 .feed-heading .community-section-note { margin: 6px 0 0; }
 .feed-layout > .market-filters { margin: 0; }
 .feed-posts { display: grid; gap: 12px; }
-.feed-posts > .wall-comments { display: grid; gap: 12px; margin-top: 0; }
-/* Each record is its own card in the feed; on the wall they are rows of one panel. */
-.feed-posts .wall-comment, .feed-posts .wall-comment:last-child { padding: 20px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 16px; }
+.feed-posts > .wall-comments { display: grid; gap: 0; margin-top: 0; }
+/* Records are rows divided by hairlines, like a social feed (no cards); rank-up events stay cards. */
+.feed-posts .wall-comment, .feed-posts .wall-comment:last-child { padding: 18px 0; border: 0; border-top: 1px solid var(--theme-line, #e6e9ee); border-radius: 0; }
+.feed-posts .wall-comment:first-child { border-top: 0; }
+.feed-posts .rank-up-card { margin: 12px 0; }
 .feed-posts > .wall-empty-card { margin-top: 0; }
 @media (max-width: 700px) {
   .feed-layout { margin-top: 0; gap: 12px; }
   .feed-heading h1 { font-size: 1.375rem; }
 }
-@media (max-width: 700px) { .feed-posts .wall-comment, .feed-posts .wall-comment:last-child { padding: 16px; } }
+@media (max-width: 700px) { .feed-posts .wall-comment, .feed-posts .wall-comment:last-child { padding: 16px 0; } }
 .feed-composer > .community-empty { margin: 0; padding: 0; }
 
 /* Rank-up events (RankUpCard): gold → platinum → legend, each tier adds to the effect. Palette — [data-level-tier] in globals.css. */

@@ -53,9 +53,11 @@
 .market-heading p { margin: 8px 0 0; color: var(--color-muted-strong); }
 .market-layout :is(a, button, input, textarea, summary):focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
 .market-layout .community-button { min-height: 48px; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
-.market-filters a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 10px; color: var(--color-muted-strong); font-weight: 600; text-decoration: none; transition: background-color 150ms ease-out, color 150ms ease-out; }
-.market-filters a:hover { background: var(--color-subtle); color: var(--color-ink); }
+/* Section tabs (feed, market, stores): round pills like the /search and /community switchers. */
+.market-filters a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font-weight: 600; text-decoration: none; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.market-filters a:hover { background: color-mix(in srgb, var(--color-subtle) 70%, var(--color-ink) 8%); color: var(--color-ink); }
 .market-filters a[aria-current] { background: var(--color-brand); color: #fff; }
+@media (max-width: 479px) { .market-filters a { padding-inline: 14px; } }
 .market-card-image { position: relative; overflow: hidden; border-radius: 16px; background: var(--color-subtle); aspect-ratio: 1; }
 .market-card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .market-card-image > span { position: absolute; bottom: 12px; right: 12px; padding: 4px 8px; border-radius: 8px; background: var(--color-surface); font-size: .75rem; }
@@ -2937,9 +2939,16 @@ html[data-cookie-notice="visible"] .brand-footer {
 .review-edit-fields[data-locked] .review-text-composer { background: var(--color-subtle); }
 .review-edit-fields[data-locked] textarea { color: var(--color-text); opacity: 1; background: transparent; resize: none; cursor: default; }
 .review-discussion { margin-top: 16px; border-top: 1px solid var(--color-control); padding-top: 12px; }
-.review-reactions { display: flex; flex-wrap: wrap; gap: 8px; }
-.review-reactions button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--color-control); background: var(--theme-panel, #ffffff); border-radius: 12px; font: inherit; font-size: .875rem; cursor: pointer; color: var(--color-text); }
-.review-reactions button[aria-pressed="true"] { color: var(--color-brand-deep); border-color: var(--theme-line, #b8d5ff); background: var(--theme-subtle, #edf4ff); }
+.review-reactions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+/* Reactions are plain icon + count (no chips): the heart is always red, the bookmark sits at the far end. */
+.review-reactions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 40px; min-height: 40px; padding: 6px 8px; border: 0; background: transparent; border-radius: 999px; font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; color: var(--color-muted-strong); transition: background-color 150ms ease-out, color 150ms ease-out; }
+.review-reactions button:hover:not(:disabled) { background: color-mix(in srgb, currentColor 10%, transparent); }
+.review-reactions button[aria-pressed="true"] { color: var(--color-brand-deep); }
+.review-reactions .review-like { color: #e5484d; }
+.review-reactions .review-like[aria-pressed="true"] { color: #e5484d; }
+.review-reactions .review-save { margin-left: auto; }
+.review-reactions .review-save[aria-pressed="true"] { color: var(--color-brand); }
+@media (prefers-reduced-motion: reduce) { .review-reactions button { transition: none; } }
 .review-reactions button:disabled { opacity: .6; cursor: wait; }
 .review-reactions button:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 .review-thread { margin-top: 16px; }
@@ -2948,8 +2957,21 @@ html[data-cookie-notice="visible"] .brand-footer {
 .review-comment-composer { display: flex; flex-direction: column; gap: 8px; }
 .review-comment-composer label { font-size: .875rem; font-weight: 600; }
 .review-comment-composer textarea { width: 100%; resize: vertical; padding: 12px; border: 1px solid var(--theme-line, #c7ccd3); border-radius: 12px; font: inherit; color: var(--color-ink); }
-.review-comment-composer > div { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.review-comment-composer > div > span { color: var(--color-muted-strong); font-size: .75rem; }
+/* Comment and wall composers: one themed field with attach + counter inside, the send button under it
+   (full width on phones). */
+.review-comment-composer { gap: 10px; }
+:is(.review-comment-composer, .wall-composer) .review-text-composer { border-color: transparent; border-radius: 18px; background: var(--color-subtle); transition: border-color 150ms ease-out, box-shadow 150ms ease-out; }
+:is(.review-comment-composer, .wall-composer) .review-text-composer:focus-within { border-color: var(--color-brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 18%, transparent); }
+:is(.review-comment-composer, .wall-composer) .review-text-composer textarea { min-height: 64px; padding: 14px 16px 6px; border: 0; background: transparent; color: var(--color-ink); font-size: .9375rem; line-height: 1.5; }
+:is(.review-comment-composer, .wall-composer) .review-text-composer textarea::placeholder { color: var(--color-muted-strong); }
+:is(.review-comment-composer, .wall-composer) .review-composer-toolbar { padding: 0 8px 6px 6px; }
+.review-composer-count { margin-left: auto; font-variant-numeric: tabular-nums; }
+.review-composer-submit { align-self: flex-end; min-width: 140px; border-color: transparent; background: var(--color-brand); color: #fff; }
+.review-composer-submit:hover:not(:disabled) { background: var(--color-brand-deep, #0058cc); }
+.review-composer-submit:disabled { opacity: .45; }
+.wall-composer-footer { justify-content: flex-end; }
+@media (max-width: 639px) { .review-composer-submit { align-self: stretch; width: 100%; } .wall-composer-footer .review-composer-submit { flex: 1; } }
+@media (prefers-reduced-motion: reduce) { :is(.review-comment-composer, .wall-composer) .review-text-composer { transition: none; } }
 /* The attachment button and the counter sit together on the left, the send button on the right. */
 .review-comment-composer > div > .review-photo-picker + span { margin-right: auto; }
 .review-thread-list { padding: 0; margin: 20px 0 0; list-style: none; }
@@ -2966,7 +2988,26 @@ html[data-cookie-notice="visible"] .brand-footer {
 .review-comment-action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .review-comment-action:disabled { opacity: .5; cursor: wait; }
 .review-comment-delete:hover:not(:disabled) { background: color-mix(in srgb, #e5484d 12%, transparent); color: #e5484d; }
-.review-thread-empty { color: var(--color-muted-strong); }
+/* No comments yet: a quiet centred note with an icon instead of a bare line. */
+.review-thread-empty { display: grid; justify-items: center; gap: 4px; margin: 16px 0 4px; padding: 24px 16px; border-radius: 18px; background: color-mix(in srgb, var(--color-subtle) 60%, transparent); color: var(--color-muted-strong); text-align: center; }
+.review-thread-empty-icon { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 6px; border-radius: 50%; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); }
+.review-thread-empty strong { color: var(--color-ink); font-size: .9375rem; }
+.review-thread-empty > span:last-child { max-width: 32ch; font-size: .8125rem; line-height: 1.45; }
+
+/* «⋯» menu of a post or comment (MoreActions): edit, delete, report. */
+.more-actions { position: relative; display: inline-flex; }
+.more-actions .more-actions-trigger { border-radius: 50%; }
+.more-actions-panel { position: absolute; z-index: 40; top: calc(100% + 4px); right: 0; display: grid; gap: 2px; min-width: 210px; padding: 6px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 16px; background: var(--theme-panel, #fff); box-shadow: 0 16px 36px -14px rgb(10 25 60 / .35); animation: header-menu-in .14s ease-out; }
+.more-actions-panel[hidden] { display: none; }
+.more-actions-panel .community-form { display: block; margin: 0; }
+.more-actions-panel .community-form > p:empty { display: none; }
+.more-actions-item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--theme-text, var(--color-ink)); font: inherit; font-size: .9375rem; font-weight: 500; text-align: left; cursor: pointer; }
+.more-actions-item svg { flex: none; width: 18px; height: 18px; color: var(--theme-muted, #59616b); }
+.more-actions-item:hover:not(:disabled), .more-actions-item:focus-visible { background: var(--theme-subtle, var(--color-subtle)); outline: none; }
+.more-actions-item:disabled { opacity: .5; cursor: default; }
+.more-actions-item.is-danger, .more-actions-item.is-danger svg { color: #e5484d; }
+.review-comment-actions .more-actions-trigger { width: 32px; height: 32px; }
+@media (prefers-reduced-motion: reduce) { .more-actions-panel { animation: none; } }
 .header-action { gap: 18px; }
 .notification-slot { display: inline-block; flex: 0 0 44px; width: 44px; height: 44px; }
 .notification-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: #ffffff; cursor: pointer; }
@@ -3075,9 +3116,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 .review-author-channel .review-item-channel span { overflow-wrap: anywhere; }
 .review-reactions button svg { flex-shrink: 0; }
 @media (max-width: 420px) {
-  .review-reactions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .review-reactions button { min-width: 0; padding-inline: 8px; }
-  .review-comments-label { display: none; }
+  .review-reactions { gap: 4px 10px; }
 }
 .review-text-guidance { line-height: 1.5; }
 .review-text-guidance-short { color: var(--theme-danger, #b42332); }
@@ -3400,13 +3439,17 @@ html[data-cookie-notice="visible"] .brand-footer {
 [data-profile-theme] .community-button-secondary { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
 [data-profile-theme] :is(.community-button-secondary,.community-shortcut):hover { background: var(--profile-soft); }
 [data-profile-theme] :is(.wall-composer textarea,.review-text-composer,.review-comment-form textarea) { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
+[data-profile-theme] :is(.review-comment-composer, .wall-composer) .review-text-composer { background: var(--profile-soft); border-color: transparent; }
+[data-profile-theme] :is(.review-comment-composer, .wall-composer) .review-text-composer textarea { background: transparent; }
 [data-profile-theme] textarea::placeholder { color: var(--profile-muted); }
 [data-profile-theme] .profile-presence--online { color: #258347; }
 [data-profile-tone=dark] .profile-presence--online { color: #7adb9a; }
 [data-profile-tone=dark] :is(.wall-comment,.profile-social-counts > a + a,.review-discussion,.review-comment) { border-color: var(--profile-line); }
 [data-profile-tone=dark] :is(.community-feedback,.field-error) { color: #ffb5b5; }
 [data-profile-tone=dark] .community-feedback { color: #7adb9a; }
-[data-profile-theme] :is(.review-reactions button,.review-comment-composer textarea,.wall-empty-card) { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
+[data-profile-theme] :is(.review-comment-composer textarea,.wall-empty-card) { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
+[data-profile-theme] .review-reactions button:not(.review-like) { color: var(--profile-muted); }
+[data-profile-theme] .review-reactions button[aria-pressed="true"]:not(.review-like) { color: var(--profile-accent); }
 [data-profile-theme] .review-reactions button[aria-pressed=true] { background: var(--profile-soft); color: var(--profile-accent); border-color: var(--profile-accent); }
 [data-profile-tone=dark] .review-comment-delete:hover:not(:disabled) { color: #ffb5b5; }
 [data-profile-theme] :is(.tag-picker-trigger,.tag-picker-popover) { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
@@ -3802,4 +3845,52 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
   .telegram-promo h2 { font-size: 1.375rem; }
   .telegram-promo p { font-size: .875rem; }
   .telegram-promo-button { flex-basis: 100%; }
+}
+
+/* Android app (NativeAppShell): pull-to-refresh. The indicator follows the finger via --pull (px after resistance),
+   the ring fills up to the trigger point, then spins with the Canrush mark while router.refresh() runs. */
+.pull-refresh { display: none; }
+html[data-native-app] { overscroll-behavior-y: none; }
+html[data-native-app] .pull-refresh {
+  --pull: 0;
+  position: fixed;
+  z-index: 60;
+  top: 0;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  border-radius: 50%;
+  background: var(--theme-panel, #ffffff);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+  color: var(--color-brand);
+  opacity: min(1, calc(var(--pull) / 36));
+  transform: translateY(calc(var(--pull) * 1px - 52px));
+  pointer-events: none;
+}
+html[data-native-app] .pull-refresh:not([data-state="pulling"]) { transition: transform 220ms ease-out, opacity 220ms ease-out; }
+.pull-refresh svg { overflow: visible; transform: rotate(calc(var(--pull) * 3deg)); }
+.pull-refresh-track { fill: none; stroke: color-mix(in srgb, currentColor 16%, transparent); stroke-width: 3; }
+.pull-refresh-ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: calc(100 - min(100, var(--pull) * 100 / 72));
+  transform: rotate(-90deg);
+  transform-origin: 20px 20px;
+}
+.pull-refresh-mark { fill: currentColor; transform-box: fill-box; transform-origin: center; transition: transform 150ms ease-out; }
+.pull-refresh[data-state="ready"] .pull-refresh-mark { transform: scale(1.15); }
+.pull-refresh[data-state="refreshing"] svg { animation: pull-refresh-spin 800ms linear infinite; }
+.pull-refresh[data-state="refreshing"] .pull-refresh-ring { stroke-dasharray: 28 72; stroke-dashoffset: 0; }
+@keyframes pull-refresh-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  html[data-native-app] .pull-refresh:not([data-state="pulling"]) { transition: opacity 220ms ease-out; }
+  .pull-refresh svg { transform: none; }
+  .pull-refresh[data-state="refreshing"] svg { animation: pull-refresh-pulse 1.2s ease-in-out infinite; }
+  @keyframes pull-refresh-pulse { 50% { opacity: 0.45; } }
 }
