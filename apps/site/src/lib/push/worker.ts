@@ -9,7 +9,14 @@ const globalForWorker = globalThis as typeof globalThis & { canrushPushWorker?: 
 
 /** Runs inside the site process next to the Telegram worker; off until FCM or RuStore Push is configured. */
 export function startPushWorker(): void {
-  const env = getPushEnv();
+  // A broken key file must not take the site down: push stays off and the error is logged.
+  let env: ReturnType<typeof getPushEnv>;
+  try {
+    env = getPushEnv();
+  } catch (error) {
+    console.error('Push is off: bad push configuration', error instanceof Error ? error.message : error);
+    return;
+  }
   if ((!env.fcm && !env.rustore) || globalForWorker.canrushPushWorker) return;
   globalForWorker.canrushPushWorker = true;
   const pool = getPool();
