@@ -8,7 +8,7 @@ import { CITIES, findCity } from '@canrush/shared';
 import { PriceFilterInput } from '@/components/price-filter-input';
 import { StoreMap, geocodeAddress } from '@/components/store-map';
 import { StoreDrinkPicker } from '@/components/store-drink-picker';
-import { METRO, STOCK_LABELS, formatDistance, nearestStations, type LocationSource, type StockStatus } from '@/lib/store-fields';
+import { METRO, STOCK_LABELS, STORE_XP, formatDistance, nearestStations, type LocationSource, type StockStatus } from '@/lib/store-fields';
 import type { Store } from '@/lib/stores';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
 import { geocodeStoreAction, saveStoreAction } from '@/app/market/stores/actions';
@@ -85,7 +85,7 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
     show(target);
   }
 
-  if(state.saved)return <section className="market-empty"><h2>Магазин отправлен на проверку</h2><p>После модерации он появится в списке и на карте.</p><div className="market-empty-actions"><Link href="/market/stores?mine=1" className="community-button">Мои магазины</Link></div></section>;
+  if(state.saved)return <section className="market-empty"><h2>Магазин отправлен на проверку</h2><p>После модерации он появится в списке и на карте{initial ? '' : <>, а вы получите <strong>+{STORE_XP} XP</strong></>}.</p><div className="market-empty-actions"><Link href="/market/stores?mine=1" className="community-button">Мои магазины</Link></div></section>;
   const optional=<FormOptional/>;
   const photoCount=photos.length+retained.length;
   const nextLabel=step===2&&!photoCount?'Пропустить':'Далее';

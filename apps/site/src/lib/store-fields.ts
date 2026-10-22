@@ -3,6 +3,8 @@ import metroData from './stores/metro.json';
 /** Metro, МЦК and МЦД stations from api.hh.ru/metro (`npm -w apps/site run metro:update`). */
 export interface MetroStation { id: string; name: string; line: string; color: string; lat: number; lng: number }
 export const METRO = metroData as Record<string, MetroStation[]>;
+/** XP for a store that passes moderation, once per store and for up to 20 stores (migration 0089 pays it). */
+export const STORE_XP = 75;
 export type StockStatus = 'available' | 'unavailable' | 'unknown';
 export type LocationSource = 'manual' | 'geocoded';
 /** `brand`+`flavor` link the drink to a catalog group; without them it is a drink the author typed in. */
