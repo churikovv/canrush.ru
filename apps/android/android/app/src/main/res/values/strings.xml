@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Canrush</string>
+    <string name="title_activity_main">Canrush</string>
+    <string name="package_name">ru.canrush.app</string>
+    <string name="custom_url_scheme">ru.canrush.app</string>
+    <string name="media_chooser_title">Добавить фото</string>
+    <string name="shortcut_drink_short">Отметить банку</string>
+    <string name="shortcut_drink_long">Отметить выпитую банку</string>
+    <string name="shortcut_search_short">Поиск</string>
+    <string name="shortcut_search_long">Поиск энергетиков</string>
+    <string name="shortcut_prices_short">Цены</string>
+    <string name="shortcut_prices_long">Цены в магазинах</string>
+    <string name="shortcut_market_short">Маркет</string>
+    <string name="shortcut_market_long">Объявления маркета</string>
+    <string name="push_channel_name">Уведомления Canrush</string>
+    <string name="push_channel_description">Ответы, упоминания, лайки, заказы и сообщения маркета</string>
+</resources>

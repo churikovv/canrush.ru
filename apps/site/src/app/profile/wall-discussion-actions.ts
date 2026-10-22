@@ -1,18 +1,19 @@
 'use server';
 import { headers } from 'next/headers';
+import { isMemberBlockedError, MEMBER_BLOCKED_MESSAGE } from '@/lib/member-blocks';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { ReviewPhotoError } from '@/lib/review-photos';
 import { prepareWallMedia } from '@/lib/wall-media';
 import { isUserBlocked } from '@/lib/moderation';
-import { addWallComment, deleteWallComment, editWallComment, getWallComments, getWallInteractions, WallDiscussionError, wallPostId, setWallCommentLike, setWallReaction } from '@/lib/wall-discussions';
+import { addWallComment, deleteWallComment, editWallComment, getWallComments, getWallInteractions, WallDiscussionError, wallPostId, setWallCommentLike, setWallReaction, setWallSaved } from '@/lib/wall-discussions';
 
-export async function wallDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }) {
+export async function wallDiscussionAction(id: string, action: 'read' | 'vote' | 'save' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }) {
   try {
     wallPostId(id);
     const session = await auth.api.getSession({ headers: await headers() });
     const viewer = session?.user.id ?? null;
-    if (!['read','vote','comment','delete','edit'].includes(action)) throw new WallDiscussionError('Неизвестное действие.');
+    if (!['read','vote','save','comment','delete','edit'].includes(action)) throw new WallDiscussionError('Неизвестное действие.');
     if (!(await getWallInteractions([id], viewer)).has(id)) return { error: 'Запись недоступна.' };
     let edited: { id: string; text: string; editedAt: string } | undefined;
     if (action !== 'read') {
@@ -21,6 +22,11 @@ export async function wallDiscussionAction(id: string, action: 'read' | 'vote' |
       if (action === 'vote') {
         if (typeof value !== 'number') throw new WallDiscussionError('Некорректная реакция.');
         await setWallReaction(viewer, id, value);
+      } else if (action === 'save') {
+        // A bookmark is private: it only refreshes the viewer's saved list, not the walls.
+        await setWallSaved(viewer, id, value === 1);
+        revalidatePath('/feed');
+        return { interaction: (await getWallInteractions([id], viewer)).get(id) };
       } else if (action === 'comment') {
         if (typeof value === 'string') await addWallComment(viewer, id, value);
         // With attachments the comment comes as a form: text, optional replyToId, `photos` and `videoPoster`.
@@ -45,7 +51,7 @@ export async function wallDiscussionAction(id: string, action: 'read' | 'vote' |
     const thread = action === 'vote' || action === 'edit' ? undefined : await getWallComments(id, viewer, action === 'read' && typeof value === 'string' ? value : undefined);
     return { interaction, thread, edited };
   } catch(error) {
-    return { error: error instanceof WallDiscussionError || error instanceof ReviewPhotoError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
+    return { error: isMemberBlockedError(error) ? MEMBER_BLOCKED_MESSAGE : error instanceof WallDiscussionError || error instanceof ReviewPhotoError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
   }
 }
 
@@ -58,6 +64,6 @@ export async function wallCommentLikeAction(id: string, commentId: string, liked
     if (await isUserBlocked(session.user.id)) return { error: 'Ваш аккаунт заблокирован для публикаций.' };
     return await setWallCommentLike(session.user.id, id, commentId, liked);
   } catch (error) {
-    return { error: error instanceof WallDiscussionError ? error.message : 'Не удалось поставить лайк. Попробуйте ещё раз.' };
+    return { error: isMemberBlockedError(error) ? MEMBER_BLOCKED_MESSAGE : error instanceof WallDiscussionError ? error.message : 'Не удалось поставить лайк. Попробуйте ещё раз.' };
   }
 }

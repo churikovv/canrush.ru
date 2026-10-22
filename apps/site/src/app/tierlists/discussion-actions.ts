@@ -1,5 +1,6 @@
 'use server';
 import { getPool } from '@/db/pool';
+import { isMemberBlockedError, MEMBER_BLOCKED_MESSAGE } from '@/lib/member-blocks';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
@@ -50,6 +51,6 @@ export async function tierDiscussionAction(id: string, action: 'read' | 'vote' |
     const thread = action === 'vote' || action === 'edit' ? undefined : await getTierComments(id, viewer, action === 'read' && typeof value === 'string' ? value : undefined);
     return { interaction, thread, edited };
   } catch(error) {
-    return { error: error instanceof TierDiscussionError || error instanceof ReviewPhotoError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
+    return { error: isMemberBlockedError(error) ? MEMBER_BLOCKED_MESSAGE : error instanceof TierDiscussionError || error instanceof ReviewPhotoError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
   }
 }

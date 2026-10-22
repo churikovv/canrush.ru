@@ -40,7 +40,7 @@ export function WallPost({ post, interaction, canDelete, canEdit, owner }: WallP
       <span className="wall-post-target-avatar" aria-hidden="true">{ownerAvatar}</span>
       <strong>{displayName(owner)}</strong>
     </Link>}
-    <WallPostBody id={post.id} text={post.text} canEdit={canEdit} canDelete={canDelete} heading={<>
+    <WallPostBody id={post.id} text={post.text} canEdit={canEdit} canDelete={canDelete} canReport={Boolean(interaction?.authenticated) && !canEdit} heading={<>
       {profileHref ? <Link className="wall-avatar" href={profileHref} tabIndex={-1} aria-hidden="true">{avatar}</Link> : <span className="wall-avatar">{avatar}</span>}
       <div className="wall-post-meta">
         <div className="wall-post-name">

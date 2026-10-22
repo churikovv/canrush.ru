@@ -226,3 +226,6 @@
   .market-message-bubble { max-width: 88%; }
 }
 @media (prefers-reduced-motion: reduce) { .market-order-steps::after, .market-compose-send { transition: none; } }
+/* «Пожаловаться» under a listing or a store; in the chat beside the partner's message. */
+.market-report { display: flex; justify-content: flex-end; margin-top: 16px; }
+.market-message .content-report-button { width: 32px; height: 32px; align-self: center; opacity: .7; }

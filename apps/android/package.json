@@ -1,0 +1,25 @@
+{
+  "name": "@canrush/android",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Android-оболочка Capacitor для canrush.ru (RuStore, позже Google Play)",
+  "scripts": {
+    "sync": "cap sync android",
+    "open": "cap open android",
+    "apk:debug": "cap sync android && cd android && ./gradlew assembleDebug",
+    "bundle:release": "cap sync android && cd android && ./gradlew bundleRelease assembleRelease",
+    "icons": "node scripts/icons.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/push-notifications": "8.1.3",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
+  }
+}

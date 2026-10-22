@@ -1,4 +1,4 @@
-import type { ReportReason } from '@/lib/profile-report-fields';
+import type { ContentReportKind, ReportReason } from '@/lib/profile-report-fields';
 import { getPool } from '@/db/pool';
 import type { WallMediaKind } from '@/lib/wall-media-limits';
 import { normalizeAdminSearch } from '@/lib/admin-fields';
@@ -20,7 +20,7 @@ export interface AdminMetrics {
   /** Members with signed-in activity today (Moscow day) and in the last 7 days including today, hidden status included. */
   activeToday: number; activeWeek: number;
 }
-export interface AdminReportEntry { id: string; reason: ReportReason; comment: string; status: 'open' | 'resolved' | 'dismissed'; createdAt: Date; authorName: string; authorUsername: string | null; targetName: string; targetUsername: string | null }
+export interface AdminReportEntry { id: string; reason: ReportReason; comment: string; status: 'open' | 'resolved' | 'dismissed'; createdAt: Date; authorName: string; authorUsername: string | null; targetName: string; targetUsername: string | null; contentKind: ContentReportKind | null; excerpt: string; pagePath: string | null }
 export interface AdminMarketEntry { id: string; title: string; sellerId: string; sellerName: string; sellerEmail: string; username: string | null; closed: boolean; deletedAt: Date | null; blockedAt: Date | null; isAdmin: boolean; createdAt: Date }
 export interface AdminDashboardData {
   market: AdminMarketEntry[];
@@ -92,7 +92,7 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
   const pattern = query ? `%${query}%` : null;
   const fragments = {
     market: `from "marketListing" l join "user" u on u.id=l."sellerId" left join "userBlock" b on b."userId"=u.id left join "siteAdmin" sa on sa.email=lower(u.email) where ($1::text is null or l.title ilike $1 or l.description ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1)`,
-    reports: `from "profileReport" r join "user" u on u.id=r."userId" join "user" p on p.id=r."targetId" where ($1::text is null or r.comment ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1 or p.name ilike $1 or p.email ilike $1 or coalesce(p.username,'') ilike $1)`,
+    reports: `from "profileReport" r join "user" u on u.id=r."userId" join "user" p on p.id=r."targetId" where ($1::text is null or r.comment ilike $1 or r.excerpt ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1 or p.name ilike $1 or p.email ilike $1 or coalesce(p.username,'') ilike $1)`,
     comments: `from (select c.id,c."reviewId",c."userId",c.text,c."createdAt",r.brand,r.flavor,'review'::text as kind,null::text as "profileUsername" from "reviewComment" c join review r on r.id=c."reviewId"
       union all select c.id,c."wallPostId",c."userId",c.text,c."createdAt",'Стена','', 'wall',p.username from "wallReply" c join "profileComment" w on w.id=c."wallPostId" join "user" p on p.id=w."profileId") c join "user" u on u.id=c."userId" where ($1::text is null or c.text ilike $1 or u.name ilike $1 or u.email ilike $1 or coalesce(u.username,'') ilike $1 or c.brand ilike $1)`,
     users: `from "user" u left join "userBlock" ub on ub."userId"=u.id left join "siteAdmin" sa on sa.email=lower(u.email)
@@ -108,7 +108,7 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
   const params = [pattern, ADMIN_PAGE_SIZE, (result.page - 1) * ADMIN_PAGE_SIZE];
   const pagination = 'limit $2 offset $3';
   if (tab === 'market') result.market = (await db.query<AdminMarketEntry>(`select l.id,l.title,l."sellerId",l.closed,l."deletedAt",l."createdAt",u.name as "sellerName",u.email as "sellerEmail",u.username,b."createdAt" as "blockedAt",(sa.email is not null) as "isAdmin" ${from} order by l."createdAt" desc,l.id ${pagination}`,params)).rows;
-  if (tab === 'reports') result.reports = (await db.query<AdminReportEntry>(`select r.id,r.reason,r.comment,r.status,r."createdAt",u.name as "authorName",u.username as "authorUsername",p.name as "targetName",p.username as "targetUsername" ${from} order by (r.status='open') desc,r."createdAt" desc,r.id ${pagination}`,params)).rows;
+  if (tab === 'reports') result.reports = (await db.query<AdminReportEntry>(`select r.id,r.reason,r.comment,r.status,r."createdAt",r."contentKind",r.excerpt,r."pagePath",u.name as "authorName",u.username as "authorUsername",p.name as "targetName",p.username as "targetUsername" ${from} order by (r.status='open') desc,r."createdAt" desc,r.id ${pagination}`,params)).rows;
   if (tab === 'users') result.users = (await db.query<AdminUserEntry>(`select u.id,u.name,u.email,u.username,u."createdAt", ub."createdAt" as "blockedAt",(sa.email is not null) as "isAdmin",
     (select count(*)::int from review where "userId"=u.id) as "reviewCount",
     (select count(*)::int from "tierList" where "userId"=u.id) as "tierListCount" ${from} order by u."createdAt" desc,u.id ${pagination}`,params)).rows;

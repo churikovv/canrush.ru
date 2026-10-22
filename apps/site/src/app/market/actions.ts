@@ -1,6 +1,7 @@
 'use server';
 
 import { headers } from 'next/headers';
+import { isMemberBlockedError, MEMBER_BLOCKED_MESSAGE } from '@/lib/member-blocks';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { isUserBlocked } from '@/lib/moderation';
@@ -17,7 +18,7 @@ async function currentUser() {
   return session.user;
 }
 function failure(error: unknown): MarketActionState {
-  return { error: error instanceof MarketError || error instanceof ReviewPhotoError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
+  return { error: isMemberBlockedError(error) ? MEMBER_BLOCKED_MESSAGE : error instanceof MarketError || error instanceof ReviewPhotoError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
 }
 export async function createListingAction(form: FormData): Promise<MarketActionState> {
   try {

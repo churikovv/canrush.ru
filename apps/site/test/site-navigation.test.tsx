@@ -1,9 +1,10 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { SiteTabBar } from '@/components/site-tab-bar';
 import { FeedTabs, MarketTabs, StoreTabs } from '@/components/section-tabs';
+vi.mock('../src/app/notifications/push-actions', () => ({ registerPushDeviceAction: vi.fn(), unregisterPushDeviceAction: vi.fn() }));
 
 function links(html: string) {
   return [...html.matchAll(/<a\s([^>]*)>/g)].map(([, attributes = '']) => ({

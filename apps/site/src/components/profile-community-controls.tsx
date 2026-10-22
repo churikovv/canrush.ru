@@ -51,23 +51,27 @@ export function WallComposer({ targetId, label = 'Комментарий на с
         <div className="review-composer-toolbar">
           <MediaAttachButton media={media} label="Добавить фото, GIF или видео на стену" />
           <span>{media.preparing ? 'Готовим видео…' : `${media.files.length} / ${MAX_WALL_MEDIA} · фото, GIF, видео`}</span>
+          <span className="review-composer-count">{text.length} / 1000</span>
         </div>
       </div>
       {media.error && <p role="alert" className="field-error">{media.error}</p>}
       <MediaAttachmentPreviews media={media} />
-      <div className="community-form-footer"><span className="community-muted">{text.length} / 1000</span><Submit disabled={(!text.trim() && !media.files.length) || media.preparing}>Отправить</Submit></div>
+      <div className="community-form-footer wall-composer-footer"><Submit className="review-composer-submit" disabled={(!text.trim() && !media.files.length) || media.preparing}>Отправить</Submit></div>
     </fieldset>
     <p role={state.error ? 'alert' : 'status'} className={state.error ? 'field-error' : 'community-feedback'}>{state.error ?? state.success}</p>
   </form>;
 }
 
-export function DeleteWallComment({ id }: { id: string }) {
-  return <CommunityForm className="wall-delete"><input type="hidden" name="operation" value="delete-comment" /><input type="hidden" name="commentId" value={id} /><DeleteWallButton /></CommunityForm>;
+/** `menuitem` — an item of the «⋯» menu (MoreActions) instead of an icon button. */
+export function DeleteWallComment({ id, variant = 'icon' }: { id: string; variant?: 'icon' | 'menuitem' }) {
+  return <CommunityForm className="wall-delete"><input type="hidden" name="operation" value="delete-comment" /><input type="hidden" name="commentId" value={id} /><DeleteWallButton variant={variant} /></CommunityForm>;
 }
 
-function DeleteWallButton() {
+function DeleteWallButton({ variant }: { variant: 'icon' | 'menuitem' }) {
   const { pending } = useFormStatus();
-  return <button className="wall-action-button wall-delete-button" type="submit" disabled={pending} aria-label="Удалить запись" title="Удалить запись" onClick={event => { if (!window.confirm('Удалить запись?')) event.preventDefault(); }}>
+  const confirm = (event: { preventDefault(): void }) => { if (!window.confirm('Удалить запись?')) event.preventDefault(); };
+  if (variant === 'menuitem') return <button className="more-actions-item is-danger" type="submit" role="menuitem" disabled={pending} onClick={confirm}><TrashIcon /><span>Удалить</span></button>;
+  return <button className="wall-action-button wall-delete-button" type="submit" disabled={pending} aria-label="Удалить запись" title="Удалить запись" onClick={confirm}>
     <TrashIcon />
   </button>;
 }

@@ -10,6 +10,7 @@ import { ActivityHeartbeat } from '@/components/profile-presence';
 import { CookieNotice } from '@/components/cookie-notice';
 import { SiteMotionProvider } from '@/components/site-motion-provider';
 import { TelegramMiniApp } from '@/components/telegram-mini-app';
+import { NativeAppShell } from '@/components/native-app-shell';
 import { YandexMetrika } from '@/components/yandex-metrika';
 import { GoogleAnalytics } from '@/components/google-analytics';
 import { googleAnalyticsId } from '@/lib/google-analytics';
@@ -99,6 +100,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <CookieNotice />
           <ActivityHeartbeat />
           <TelegramMiniApp />
+          <NativeAppShell />
           {analyticsId && <GoogleAnalytics id={analyticsId} />}
           <Suspense fallback={null}>
             <YandexMetrika />

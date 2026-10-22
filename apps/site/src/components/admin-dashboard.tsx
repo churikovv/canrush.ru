@@ -1,4 +1,4 @@
-import { REPORT_REASONS } from '@/lib/profile-report-fields';
+import { CONTENT_REPORT_KINDS, REPORT_REASONS } from '@/lib/profile-report-fields';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import Link from '@/components/navigation-progress';
 import type { ReactNode } from 'react';
@@ -20,7 +20,7 @@ const SUBTITLES: Record<AdminTab, string> = {
   comments: 'Комментарии к отзывам и записям стены',
   wall: 'Записи на стенах профилей',
   market: 'Объявления участников и продавцы',
-  reports: 'Жалобы участников на профили',
+  reports: 'Жалобы участников на профили и контент',
   admins: 'Доступ к админ-панели',
 };
 const formatDate = (value: Date) => new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Europe/Moscow' }).format(value);
@@ -98,7 +98,8 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
           <td>{formatDate(listing.createdAt)}</td><td>{listing.deletedAt ? 'Удалено владельцем' : listing.closed ? 'В архиве' : 'Опубликовано'}{listing.blockedAt && <div className="admin-status admin-status-blocked">Продавец заблокирован</div>}</td>
           <td>{listing.isAdmin ? <span className="admin-table-muted">Администратор защищён</span> : <form action={listing.blockedAt ? unblockUserAction : blockUserAction}>{context}<input type="hidden" name="userId" value={listing.sellerId} /><AdminActionButton pendingLabel="Сохраняем…" variant={listing.blockedAt ? 'secondary' : 'danger'} confirmMessage={listing.blockedAt ? undefined : `Заблокировать пользователя ${listing.sellerEmail}?`}>{listing.blockedAt ? 'Разблокировать' : 'Заблокировать пользователя'}</AdminActionButton></form>}</td>
         </tr>)}</DataTable>}
-        {tab === 'reports' && <DataTable label="Жалобы на профили" columns={['Профиль', 'Автор жалобы', 'Причина', 'Комментарий', 'Дата', 'Статус', 'Действия']}>{data.reports.map(report => <tr key={report.id}>
+        {tab === 'reports' && <DataTable label="Жалобы на профили и контент" columns={['На что', 'Автор контента', 'Автор жалобы', 'Причина', 'Комментарий', 'Дата', 'Статус', 'Действия']}>{data.reports.map(report => <tr key={report.id}>
+          <td>{report.contentKind ? <>{report.pagePath ? <Link href={report.pagePath}>{CONTENT_REPORT_KINDS[report.contentKind]}</Link> : CONTENT_REPORT_KINDS[report.contentKind]}{report.excerpt && <RecordText text={report.excerpt} />}</> : 'Профиль'}</td>
           <td>{report.targetUsername ? <Link href={`/profile/${report.targetUsername}`}>@{report.targetUsername}</Link> : report.targetName}</td>
           <td>{report.authorUsername ? <Link href={`/profile/${report.authorUsername}`}>@{report.authorUsername}</Link> : report.authorName}</td>
           <td>{REPORT_REASONS[report.reason]}</td><td><RecordText text={report.comment} /></td><td>{formatDate(report.createdAt)}</td>

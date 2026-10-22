@@ -9,6 +9,8 @@ import Image from 'next/image';
 import { useId, useRef, useState, useTransition } from 'react';
 import { wallCommentLikeAction, wallDiscussionAction } from '@/app/profile/wall-discussion-actions';
 import { EditIcon, TrashIcon } from '@/components/action-icons';
+import { ContentReportButton } from '@/components/content-report-button';
+import { MoreActions } from '@/components/more-actions';
 import { tierDiscussionAction } from '@/app/tierlists/discussion-actions';
 import { reviewDiscussionAction } from '@/app/catalog/discussion-actions';
 import type { ReviewCommentData, ReviewInteraction } from '@/lib/review-discussions';
@@ -17,14 +19,22 @@ import type { WallCommentData } from '@/lib/wall-discussions';
 /** Wall comments also carry likes; review and tier list comments do not. */
 type Comment = ReviewCommentData & Partial<Pick<WallCommentData, 'likes' | 'liked'>>;
 
+function Heart({ filled }: { filled: boolean }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M12 20.5 4.6 13.3A4.6 4.6 0 0 1 11.1 6.8l.9.9.9-.9a4.6 4.6 0 0 1 6.5 6.5L12 20.5Z" /></svg>;
+}
+function Bookmark({ filled }: { filled: boolean }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-6-4.2-6 4.2v-17Z" /></svg>;
+}
 function Thumb({ down = false }: { down?: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={down ? { transform: 'rotate(180deg)' } : undefined}><path d="M7 10v11H3V10h4Zm0 0 5-8c3 0 3 3 2 7h5a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7" /></svg>;
 }
 function authorLabel(comment: Pick<Comment, 'name' | 'username'>): string {
   return comment.username ? `@${comment.username}` : comment.name.includes('@') ? 'Участник' : comment.name;
 }
-export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 'review', reactionsEnabled = true, commentsEnabled = true }: { reviewId: string; initial?: ReviewInteraction; telegramChannel?: string | null; target?: 'review' | 'tierlist' | 'wall'; reactionsEnabled?: boolean; commentsEnabled?: boolean }) {
-  const [stats,setStats] = useState(initial ?? { likes: 0, dislikes: 0, comments: 0, vote: 0, authenticated: false });
+/** Wall records also carry the viewer's bookmark (savedPost). */
+type Interaction = ReviewInteraction & { saved?: boolean };
+export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 'review', reactionsEnabled = true, commentsEnabled = true }: { reviewId: string; initial?: Interaction; telegramChannel?: string | null; target?: 'review' | 'tierlist' | 'wall'; reactionsEnabled?: boolean; commentsEnabled?: boolean }) {
+  const [stats,setStats] = useState<Interaction>(initial ?? { likes: 0, dislikes: 0, comments: 0, vote: 0, authenticated: false });
   const [open,setOpen] = useState(false);
   const [loaded,setLoaded] = useState(false);
   const [comments,setComments] = useState<Comment[]>([]);
@@ -40,11 +50,13 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
   const [signIn,setSignIn] = useState(false);
   const [pending,startTransition] = useTransition();
   const regionId = useId();
-  function run(action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }, append = false) {
+  function run(action: 'read' | 'vote' | 'save' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }, append = false) {
     setError(''); setSignIn(false);
     startTransition(async () => {
       try {
-        const result = await (target === 'wall' ? wallDiscussionAction : target === 'tierlist' ? tierDiscussionAction : reviewDiscussionAction)(reviewId, action, value);
+        // Only wall records can be bookmarked.
+        const result = action === 'save' ? await wallDiscussionAction(reviewId, action, value)
+          : await (target === 'wall' ? wallDiscussionAction : target === 'tierlist' ? tierDiscussionAction : reviewDiscussionAction)(reviewId, action, value);
         if (result.error) { setError(result.error); setSignIn(Boolean(result.signIn)); return; }
         if (result.interaction) setStats(result.interaction);
         if (result.thread) { setComments(previous => append ? [...previous,...result.thread!.items.filter(item => !previous.some(old => old.id === item.id))] : result.thread!.items); setMore(result.thread.hasMore); setLoaded(true); }
@@ -86,29 +98,39 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         <Image src="/brand/icons/telegram.svg" width={18} height={18} alt="" /><span>@{telegramChannel}</span>
       </a></div>}
     <div className="review-reactions">
-      {reactionsEnabled && <button type="button" disabled={pending} aria-label={target === 'wall' ? 'Нравится запись' : target === 'tierlist' ? 'Нравится тирлист' : 'Нравится отзыв'} aria-pressed={stats.vote===1} onClick={() => run('vote',stats.vote===1 ? 0 : 1)}><Thumb /><span>{stats.likes}</span></button>}
+      {reactionsEnabled && <button type="button" disabled={pending} aria-label={target === 'wall' ? 'Нравится запись' : target === 'tierlist' ? 'Нравится тирлист' : 'Нравится отзыв'} aria-pressed={stats.vote===1} className="review-like" onClick={() => run('vote',stats.vote===1 ? 0 : 1)}><Heart filled={stats.vote===1} /><span>{stats.likes}</span></button>}
       {reactionsEnabled && <button type="button" disabled={pending} aria-label={target === 'wall' ? 'Не нравится запись' : target === 'tierlist' ? 'Не нравится тирлист' : 'Не нравится отзыв'} aria-pressed={stats.vote===-1} onClick={() => run('vote',stats.vote===-1 ? 0 : -1)}><Thumb down /><span>{stats.dislikes}</span></button>}
       {commentsEnabled && <button type="button" className="review-comments-toggle" aria-label={`Комментарии к ${target === 'wall' ? 'записи' : target === 'tierlist' ? 'тирлисту' : 'отзыву'}: ${stats.comments}`} aria-expanded={open} aria-controls={regionId} onClick={() => { setOpen(!open); if (!open && !loaded) run('read'); }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M20 16a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10Z" /></svg><span className="review-comments-label">Комментарии</span><span>{stats.comments}</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M20 16a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10Z" /></svg><span>{stats.comments}</span>
       </button>}
+      {target === 'wall' && stats.authenticated && <button type="button" className="review-save" disabled={pending} aria-pressed={Boolean(stats.saved)} aria-label={stats.saved ? 'Убрать запись из сохранённых' : 'Сохранить запись'} title={stats.saved ? 'Убрать из сохранённых' : 'Сохранить'} onClick={() => run('save', stats.saved ? 0 : 1)}><Bookmark filled={Boolean(stats.saved)} /></button>}
     </div>
     {error && <p className="field-error" role="alert">{error} {signIn && <Link href="/sign-in">Войти</Link>}</p>}
     {commentsEnabled && open && <section id={regionId} className="review-thread" aria-label={target === 'wall' ? 'Комментарии к записи' : target === 'tierlist' ? 'Комментарии к тирлисту' : 'Комментарии к отзыву'} aria-busy={pending}>
       {stats.authenticated ? <form className="review-comment-composer" onSubmit={event => { event.preventDefault(); submitComment(); }}>
         <label htmlFor={`${regionId}-text`}>{replyTo ? 'Ваш ответ' : 'Ваш комментарий'}</label>
         {replyTo && <div className="review-reply-target"><span>Ответ <b>{replyTo.label}</b></span><button type="button" aria-label="Отменить ответ" title="Отменить ответ" onClick={() => setReplyTo(null)}>×</button></div>}
-        <MentionTextarea ref={composer} id={`${regionId}-text`} value={text} onValueChange={setText} onPaste={media.onPaste} maxLength={1000} required={!media.files.length} rows={3} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
+        {/* Attach and the counter sit inside the field, so the composer takes one block plus the button. */}
+        <div className="review-text-composer">
+          <MentionTextarea ref={composer} id={`${regionId}-text`} value={text} onValueChange={setText} onPaste={media.onPaste} maxLength={1000} required={!media.files.length} rows={2} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
+          <div className="review-composer-toolbar"><MediaAttachButton media={media} label="Добавить к комментарию фото, GIF или видео" /><span className="review-composer-count">{media.preparing ? 'Готовим видео…' : `${text.length} / 1000`}</span></div>
+        </div>
         {media.error && <p role="alert" className="field-error">{media.error}</p>}
         <MediaAttachmentPreviews media={media} />
-        <div><MediaAttachButton media={media} label="Добавить к комментарию фото, GIF или видео" /><span>{media.preparing ? 'Готовим видео…' : `${text.length} / 1000`}</span><button className="community-button" type="submit" disabled={pending || (!text.trim() && !media.files.length) || media.preparing}>{pending ? 'Подождите…' : 'Отправить'}</button></div>
+        <button className="community-button review-composer-submit" type="submit" disabled={pending || (!text.trim() && !media.files.length) || media.preparing}>{pending ? 'Подождите…' : 'Отправить'}</button>
       </form> : <p><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
-      {!loaded ? <p role="status">{pending ? 'Загружаем комментарии…' : 'Комментарии не загружены.'} {!pending && <button type="button" onClick={() => run('read')}>Повторить</button>}</p> : !comments.length ? <p className="review-thread-empty">Комментариев пока нет. Начните обсуждение.</p> : <ul className="review-thread-list">{comments.map(comment => <li key={comment.id}>
+      {!loaded ? <p role="status">{pending ? 'Загружаем комментарии…' : 'Комментарии не загружены.'} {!pending && <button type="button" onClick={() => run('read')}>Повторить</button>}</p> : !comments.length ? <div className="review-thread-empty" role="status">
+        <span className="review-thread-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"><path d="M20 16a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10Z" /><path d="M8 9h8M8 13h5" strokeLinecap="round" /></svg></span>
+        <strong>Пока без комментариев</strong>
+        <span>{stats.authenticated ? 'Напишите первым — с этого начинаются лучшие обсуждения.' : 'Здесь появятся ответы участников.'}</span>
+      </div> : <ul className="review-thread-list">{comments.map(comment => <li key={comment.id}>
         <div className="review-comment-avatar" aria-hidden="true">{comment.avatarId ? <Image unoptimized src={`/api/profile-images/${comment.avatarId}`} alt="" width={32} height={32} /> : (comment.name || comment.username || '?').charAt(0)}</div>
         <div className="review-comment-body"><header>{comment.username ? <Link href={`/profile/${comment.username}`}>{comment.name.includes('@') ? `@${comment.username}` : comment.name}</Link> : <strong>{comment.name.includes('@') ? 'Участник' : comment.name}</strong>}{comment.tag && <span className="profile-tag" data-tag={profileTagKey(comment.tag)}>{comment.tag}</span>}<time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleDateString('ru-RU')}</time>{comment.editedAt && <span className="review-comment-edited" title={`Изменено ${new Date(comment.editedAt).toLocaleString('ru-RU')}`}>изменено</span>}
-          {comment.canDelete && <span className="review-comment-actions">
-            {editing !== comment.id && <button className="review-comment-action" type="button" disabled={pending} aria-label="Редактировать комментарий" title="Редактировать комментарий" onClick={() => { setEditing(comment.id); setDraft(comment.text); setError(''); }}><EditIcon size={16} /></button>}
-            <button className="review-comment-action review-comment-delete" type="button" disabled={pending} aria-label="Удалить комментарий" title="Удалить комментарий" onClick={() => { if(window.confirm('Удалить комментарий?')) run('delete',comment.id); }}><TrashIcon size={16} /></button>
-          </span>}</header>
+          {(comment.canDelete || stats.authenticated) && <span className="review-comment-actions"><MoreActions label="Действия с комментарием">
+            {comment.canDelete && editing !== comment.id && <button className="more-actions-item" type="button" role="menuitem" disabled={pending} onClick={() => { setEditing(comment.id); setDraft(comment.text); setError(''); }}><EditIcon /><span>Редактировать</span></button>}
+            {comment.canDelete && <button className="more-actions-item is-danger" type="button" role="menuitem" disabled={pending} onClick={() => { if(window.confirm('Удалить комментарий?')) run('delete',comment.id); }}><TrashIcon /><span>Удалить</span></button>}
+            {!comment.canDelete && <ContentReportButton kind={target === 'wall' ? 'wall-reply' : target === 'tierlist' ? 'tier-comment' : 'review-comment'} id={comment.id} variant="menuitem" />}
+          </MoreActions></span>}</header>
         {editing === comment.id ? <form className="review-comment-edit" onSubmit={event => { event.preventDefault(); run('edit', { commentId: comment.id, text: draft }); }}>
           <label htmlFor={`${regionId}-edit-${comment.id}`} className="sr-only">Текст комментария</label>
           <MentionTextarea id={`${regionId}-edit-${comment.id}`} value={draft} onValueChange={setDraft} maxLength={1000} rows={2} required autoFocus disabled={pending} onKeyDown={event => { if (event.key === 'Escape') setEditing(null); }} />

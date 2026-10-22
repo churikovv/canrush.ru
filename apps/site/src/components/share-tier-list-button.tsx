@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { nativeShare } from '@/lib/native-app';
 
 /** Shares a link (with optional text) through the system sheet on touch devices, the clipboard elsewhere; confirms in a toast. */
 export function ShareTierListButton({ title, text, path, label = 'Поделиться' }: { title: string; text?: string; path?: string; label?: string }) {
@@ -21,6 +22,12 @@ export function ShareTierListButton({ title, text, path, label = 'Поделит
     const url = path ? new URL(path, window.location.origin).toString() : window.location.href;
     setPending(true);
     try {
+      const native = await nativeShare({ title, text, url, dialogTitle: title });
+      if (native === 'cancelled') return;
+      if (native === 'shared') {
+        notify('Ссылка отправлена');
+        return;
+      }
       // On desktop, make the action predictable: copy and confirm visibly.
       if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
         try {

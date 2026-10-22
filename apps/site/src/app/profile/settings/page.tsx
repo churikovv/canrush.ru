@@ -1,4 +1,6 @@
 import '@/styles/shared.css';
+import { getBlockedMembers } from '@/lib/member-blocks';
+import { BlockMemberButton } from '@/components/block-member-button';
 import '@/styles/profile.css';
 import { ProfileBackButton } from '@/components/profile-back-button';
 import { ThemeSettings } from '@/components/theme-settings';
@@ -30,6 +32,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const botChat = session && telegram && telegramLinked ? (await getPool().query<Record<string, boolean> & { city: string | null; blocked: boolean }>(`select c.*, c."blockedAt" is not null as blocked from "telegramChat" c
     join account a on a."providerId" = $2 and a."accountId" = c."telegramId"::text where a."userId" = $1`, [session.user.id, TELEGRAM_PROVIDER_ID])).rows[0] : undefined;
   const isAdmin = session && botChat ? await isSiteAdminEmail(session.user.email) : false;
+  const blocked = session ? await getBlockedMembers(session.user.id) : [];
   const query = await searchParams;
   return <BrandShell headerAction={<ProfileNavigation />} surfaceClassName="profile-surface">
     <section className="community-directory profile-settings"><ProfileBackButton /><h1>Настройки</h1>
@@ -43,6 +46,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <button className="community-button" type="submit">Сохранить настройки</button>
         {query.saved === '1' && <p role="status">Настройки сохранены.</p>}
       </form>
+      <section className="community-panel" id="blocked"><h2>Заблокированные участники</h2>
+        <p className="community-section-note">Заблокированные не могут вам отвечать, писать на вашей стене, подписываться и заказывать у вас, а их записи, комментарии и отзывы скрыты от вас.</p>
+        {blocked.length ? <ul className="blocked-members">{blocked.map(member => <li key={member.id}>
+          {member.username ? <Link href={`/profile/${member.username}`}>@{member.username}</Link> : <span>{member.name.includes('@') ? 'Участник' : member.name}</span>}
+          <BlockMemberButton userId={member.id} name={member.username ? `@${member.username}` : 'участника'} initiallyBlocked compact />
+        </li>)}</ul> : <p className="community-muted">Вы никого не блокировали.</p>}
+      </section>
       {telegram && <section className="community-panel telegram-settings" id="telegram"><h2>Telegram</h2>
         {telegramLinked ? <>
           <p className="community-section-note">Telegram привязан: мини-приложение CanRush открывает этот аккаунт без письма.</p>

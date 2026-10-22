@@ -10,7 +10,8 @@ import {
   emailRateLimitKey,
 } from '@/lib/email-rate-limit';
 import { sendMagicLinkEmail } from '@/lib/email';
-import { getAuthEnv, getTelegramEnv } from '@/lib/env';
+import { getAuthEnv, getReviewLoginEnv, getTelegramEnv, type ReviewLoginEnv } from '@/lib/env';
+import { reviewLogin } from '@/lib/review-login';
 import { telegramMiniApp } from '@/lib/telegram-auth';
 
 interface RateLimitRecord {
@@ -28,6 +29,8 @@ export interface CreateAuthOptions {
   telegramBotToken?: string | null;
   /** Overrides the bot username from TELEGRAM_MINI_APP_URL; `null` disables website sign-in via the bot. */
   telegramBotUsername?: string | null;
+  /** Overrides REVIEW_LOGIN_EMAIL/REVIEW_LOGIN_PASSWORD_HASH; `null` disables the store-review password sign-in. */
+  reviewLogin?: ReviewLoginEnv | null;
 }
 
 function requestOrigin(value: string | null): string | undefined {
@@ -169,6 +172,7 @@ export function createAuth(options: CreateAuthOptions = {}) {
         sendMagicLink: async ({ email, token }) => sendMagicLink(email, token),
       }),
       telegramMiniApp({ botToken: telegramBotToken, botUsername: options.telegramBotUsername !== undefined ? options.telegramBotUsername : (getTelegramEnv()?.botUsername ?? null), trustedOrigin: env.authUrl }),
+      reviewLogin({ account: options.reviewLogin !== undefined ? options.reviewLogin : getReviewLoginEnv(), trustedOrigin: env.authUrl }),
     ],
   });
 }

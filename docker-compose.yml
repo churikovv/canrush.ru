@@ -50,7 +50,17 @@ services:
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       TELEGRAM_API_URL: ${TELEGRAM_API_URL:-}
       TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
+      # Android app: store-reviewer sign-in, push (FCM key file from ./secrets, RuStore), extra App Links keys
+      REVIEW_LOGIN_EMAIL: ${REVIEW_LOGIN_EMAIL:-}
+      REVIEW_LOGIN_PASSWORD_HASH: ${REVIEW_LOGIN_PASSWORD_HASH:-}
+      FCM_SERVICE_ACCOUNT_FILE: ${FCM_SERVICE_ACCOUNT_FILE:-}
+      RUSTORE_PUSH_PROJECT_ID: ${RUSTORE_PUSH_PROJECT_ID:-}
+      RUSTORE_PUSH_TOKEN: ${RUSTORE_PUSH_TOKEN:-}
+      ANDROID_APP_SHA256: ${ANDROID_APP_SHA256:-}
+      PUSH_WORKER: ${PUSH_WORKER:-}
     volumes:
+      # Server-only key files (Firebase service account), not in git: FCM_SERVICE_ACCOUNT_FILE=/run/secrets/canrush/<file>.json
+      - ./secrets:/run/secrets/canrush:ro
       # Shared catalog data (parser writes to /app/apps/site/data, site reads from cwd/data)
       # Next.js standalone server sets cwd to /app/apps/site, so mount there
       - parser-data:/app/price-history:ro

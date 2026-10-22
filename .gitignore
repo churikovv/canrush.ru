@@ -29,3 +29,6 @@ __pycache__/
 
 # Файлы для продвижения или маркетинга
 marketing/
+
+# Server-only key files (Firebase service account), mounted into the site container
+/secrets/

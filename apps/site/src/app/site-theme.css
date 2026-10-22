@@ -141,3 +141,15 @@
 :root[data-site-theme=system] .community-avatar:not(.community-avatar-custom) > img { filter: brightness(0) invert(1); }
 :root[data-site-theme=system] [data-profile-tone=light] .community-avatar:not(.community-avatar-custom) > img { filter: none; }
 }
+
+/* Header on a neutral backing instead of the brand blue; the page surface keeps its rounded top over it.
+   Last in the cascade so it wins over the theme rules above. The logo keeps its files (mask),
+   the mark is brand blue and the controls take the theme's ink. */
+.site-shell { background: var(--color-subtle); }
+.brand-home .brand-mark { background: var(--color-brand); -webkit-mask: url('/brand/logo-mark.svg') center / contain no-repeat; mask: url('/brand/logo-mark.svg') center / contain no-repeat; }
+.brand-home .brand-wordmark { background: var(--color-ink); -webkit-mask: url('/brand/logo-wordmark-white.svg') center / contain no-repeat; mask: url('/brand/logo-wordmark-white.svg') center / contain no-repeat; }
+.brand-header :is(.city-header-button, .city-header-placeholder, .notification-bell, .settings-header-link, .profile-navigation-item, .header-menu-toggle) { color: var(--color-ink); }
+.brand-header :is(.profile-navigation-item[aria-current="page"], .header-menu[data-current], .settings-header-link[aria-current=page]) { background: var(--color-surface); }
+.brand-header :is(.header-menu:hover, .header-menu[data-open], .settings-header-link:hover, .notification-bell:hover, .city-header-button:hover, .profile-navigation-item:hover) { background: color-mix(in srgb, var(--color-surface) 70%, transparent); }
+.brand-header .notification-count { background: var(--color-brand); color: #fff; }
+:root .brand-header :focus-visible, :root[data-site-theme] .brand-header :focus-visible { outline-color: var(--color-focus); }

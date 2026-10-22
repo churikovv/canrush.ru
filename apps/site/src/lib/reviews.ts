@@ -1,4 +1,5 @@
 import { getReviewInteractions, type ReviewInteraction } from './review-discussions';
+import { notBlockedBy } from '@/lib/member-blocks';
 import type { QueryResultRow } from 'pg';
 import type { PreparedReviewPhoto } from './review-photos';
 import { MAX_REVIEW_PHOTOS, PHOTO_ID_PATTERN } from './review-photo-limits';
@@ -99,8 +100,8 @@ function toReview(row: ReviewRow): ReviewData {
 
 export async function getReviewsForProduct(brand: string, flavor: string, viewer: string | null = null): Promise<ReviewData[]> {
   const result = await getPool().query<ReviewRow>(
-    `${REVIEW_SELECT} where r."brand" = $1 and r."flavor" = $2 order by r."createdAt" desc`,
-    [brand, flavor],
+    `${REVIEW_SELECT} where r."brand" = $1 and r."flavor" = $2 and ${notBlockedBy('$3::text', 'r."userId"')} order by r."createdAt" desc`,
+    [brand, flavor, viewer],
   );
   const interactions = await getReviewInteractions(result.rows.map(row => row.id), viewer);
   return result.rows.map(row => ({ ...toReview(row), interaction: interactions.get(row.id) }));

@@ -162,6 +162,9 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.review-sign-in-toggle {
+  align-self: center;
+}
 /* Inside Telegram the magic link would open in an external browser, so only Telegram sign-in stays. */
 html[data-telegram-app] .sign-in-card :is(.sign-in-divider, .sign-in-email) {
   display: none;

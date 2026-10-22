@@ -1,3 +1,5 @@
+vi.mock('../src/app/profile/block-actions', () => ({ setMemberBlockAction: vi.fn() }));
+vi.mock('../src/app/profile/report-actions', () => ({ reportContentAction: vi.fn(), reportProfileAction: vi.fn() }));
 vi.mock('../src/app/profile/wall-discussion-actions', () => ({ wallDiscussionAction: vi.fn() }));
 vi.mock('../src/app/tierlists/discussion-actions', () => ({ tierDiscussionAction: vi.fn() }));
 vi.mock('../src/app/catalog/review-actions', () => ({ deleteReviewAction: vi.fn(), submitReviewAction: vi.fn() }));

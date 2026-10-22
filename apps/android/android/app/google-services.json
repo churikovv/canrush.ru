@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "802883984069",
+    "project_id": "canrush-47704",
+    "storage_bucket": "canrush-47704.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:802883984069:android:5394a4be2c61f14dbe6eac",
+        "android_client_info": {
+          "package_name": "ru.canrush.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCRWRnbocRrz04P8-MoO3FLRyzPJamyJ8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

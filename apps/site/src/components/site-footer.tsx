@@ -83,6 +83,7 @@ export function SiteFooter() {
                 <Link href="/prices">Цены по магазинам</Link>
                 <Link href="/terms">Пользовательское соглашение</Link>
                 <Link href="/privacy">Политика обработки данных</Link>
+                <Link href="/account-deletion">Удаление аккаунта</Link>
               </nav>
             </div>
           </div>

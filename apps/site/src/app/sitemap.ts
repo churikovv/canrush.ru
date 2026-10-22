@@ -28,6 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/feed`, changeFrequency: 'hourly', priority: 0.6 },
     { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE_URL}/account-deletion`, changeFrequency: 'yearly', priority: 0.2 },
   ];
   const products: MetadataRoute.Sitemap = groups.map((group) => ({
     url: `${SITE_URL}/catalog/${catalogGroupSlug(group.brand, group.flavor)}`,

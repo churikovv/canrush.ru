@@ -4,10 +4,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { signInWithTelegram, useTelegramApp } from '@/components/telegram-mini-app';
 import { authClient } from '@/lib/auth-client';
+import { isNativeApp } from '@/lib/native-app';
 import type { TelegramLoginPollResult, TelegramLoginStartResult } from '@/lib/telegram-auth';
 import { setTelegramAppState } from '@/lib/telegram-web-app';
 
 const POLL_INTERVAL_MS = 2_000;
+const POLL_TIMEOUT_MS = 10_000;
 const LOGIN_TTL_MS = 5 * 60 * 1_000;
 
 type Waiting = { token: string; url: string; startedAt: number };
@@ -42,18 +44,33 @@ export function TelegramSignIn() {
     if (!waiting) return;
     cancelled.current = false;
     let timer: number | undefined;
+    let inFlight = false;
+    const schedule = (delay: number) => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(poll, delay);
+    };
     const poll = async () => {
-      if (cancelled.current) return;
+      if (cancelled.current || inFlight) return;
       if (Date.now() - waiting.startedAt > LOGIN_TTL_MS) {
         setWaiting(null);
         setError('Время на подтверждение вышло. Попробуйте ещё раз.');
         return;
       }
-      const { data, error: requestError } = await authClient.$fetch<TelegramLoginPollResult>('/telegram/login/poll', {
+      inFlight = true;
+      const response = await authClient.$fetch<TelegramLoginPollResult>('/telegram/login/poll', {
         method: 'POST',
         body: { token: waiting.token },
-      });
+        timeout: POLL_TIMEOUT_MS,
+      }).catch(() => null);
+      inFlight = false;
       if (cancelled.current) return;
+      // A thrown request is a network failure — usually the tab or the app was suspended
+      // while the member confirmed in Telegram — so keep waiting instead of stopping the loop.
+      if (!response) {
+        schedule(POLL_INTERVAL_MS);
+        return;
+      }
+      const { data, error: requestError } = response;
       if (requestError || !data || data.status === 'expired') {
         setWaiting(null);
         setError(requestError?.message || 'Время на подтверждение вышло. Попробуйте ещё раз.');
@@ -68,12 +85,18 @@ export function TelegramSignIn() {
         finish();
         return;
       }
-      timer = window.setTimeout(poll, POLL_INTERVAL_MS);
+      schedule(POLL_INTERVAL_MS);
     };
-    timer = window.setTimeout(poll, POLL_INTERVAL_MS);
+    // Coming back from Telegram: check at once instead of waiting for a timer the suspended page may have lost.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') schedule(0);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    schedule(POLL_INTERVAL_MS);
     return () => {
       cancelled.current = true;
       window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisible);
     };
     // finish() only touches stable router/store references.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,7 +116,10 @@ export function TelegramSignIn() {
     }
 
     // Open the tab during the click, otherwise browsers block it as a popup.
-    const tab = window.open('', '_blank');
+    // The Android app has no tabs: an empty window.open would launch an external browser,
+    // so it navigates to t.me instead and the shell hands the link to Telegram, keeping this page.
+    const native = isNativeApp();
+    const tab = native ? null : window.open('', '_blank');
     const { data, error: requestError } = await authClient.$fetch<TelegramLoginStartResult>('/telegram/login/start', { method: 'POST', body: {} });
     setPending(false);
     if (requestError || !data) {
@@ -101,7 +127,8 @@ export function TelegramSignIn() {
       setError(requestError?.message || 'Не удалось начать вход через Telegram.');
       return;
     }
-    if (tab) tab.location.href = data.url;
+    if (native) window.location.href = data.url;
+    else if (tab) tab.location.href = data.url;
     setWaiting({ token: data.token, url: data.url, startedAt: Date.now() });
   }
 

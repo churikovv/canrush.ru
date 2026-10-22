@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, useTransition, type CSSProperties } from 'react';
+import { ContentReportButton } from '@/components/content-report-button';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import type { MarketMessage, MarketOrder } from '@/lib/market';
@@ -147,6 +148,7 @@ export function MarketChat({ initialOrder, initialMessages, initialHasMore, user
               {message.photos.length > 0 && <div className="market-message-photos">{message.photos.map((id, index) => <a href={`/api/market-photos/${id}`} key={id} target="_blank" rel="noreferrer" aria-label={`Открыть фотографию ${index + 1}`}><Image src={`/api/market-photos/${id}?size=thumbnail`} alt={`Вложение ${index + 1}`} width={200} height={200} unoptimized /></a>)}</div>}
               <time dateTime={message.createdAt}>{new Date(message.createdAt).toLocaleTimeString('ru-RU', TIME)}</time>
             </div>
+            {!own && <ContentReportButton kind="market-message" id={message.id} />}
           </li>;
         })}</ol> : <div className="market-chat-empty"><strong>Заказ создан</strong><p>{isBuyer ? 'Напишите продавцу: как удобнее получить банки и как оплатить.' : 'Напишите покупателю, когда и как передадите банки.'}</p></div>}
         <div ref={bottom} />

@@ -7,10 +7,11 @@ import Image from 'next/image';
 import { BrandShell } from '@/components/brand-shell';
 import Link from '@/components/navigation-progress';
 import { ProfileNavigation } from '@/components/profile-navigation';
+import { ReviewSignIn } from '@/components/review-sign-in';
 import { SignInForm } from '@/components/sign-in-form';
 import { TelegramSignIn } from '@/components/telegram-sign-in';
 import { auth } from '@/lib/auth';
-import { getTelegramEnv } from '@/lib/env';
+import { getReviewLoginEnv, getTelegramEnv } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,7 @@ export default async function SignInPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (session) redirect('/profile');
   const telegram = getTelegramEnv() !== null;
+  const reviewLogin = getReviewLoginEnv() !== null;
 
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />}>
@@ -36,6 +38,7 @@ export default async function SignInPage() {
           <p className="sign-in-divider"><span>или по почте</span></p>
         </> : null}
         <div className="sign-in-email"><SignInForm /></div>
+        {reviewLogin ? <ReviewSignIn /> : null}
         <p className="privacy-note">
           Входя, вы принимаете <Link href="/terms">Соглашение</Link> и <Link href="/privacy">Политику обработки данных</Link>.
         </p>

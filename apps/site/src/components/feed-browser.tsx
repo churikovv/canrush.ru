@@ -11,16 +11,16 @@ import { getWallInteractions } from '@/lib/wall-discussions';
 export type FeedSearchParams = { scope?: string; page?: string };
 
 /**
- * Every wall as one timeline. /feed shows its heading and the «Все записи / Подписки» tabs; `embedded` (/community,
+ * Every wall as one timeline. /feed shows its heading and the «Все / Подписки / Сохранённые» tabs; `embedded` (/community,
  * under its own switcher) shows everyone's records only.
  */
 export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = {}, embedded = false }: { query: FeedSearchParams; viewerId: string | null; basePath?: string; keep?: Record<string, string>; embedded?: boolean }) {
-  const scope: FeedScope = !embedded && query.scope === 'following' && viewerId ? 'following' : 'all';
+  const scope: FeedScope = !embedded && viewerId && (query.scope === 'following' || query.scope === 'saved') ? query.scope : 'all';
   const page = profilePageNumber(query.page);
   const feed = await getFeed(viewerId, scope, page);
   const interactions = await getWallInteractions(feed.posts.map(post => post.id), viewerId);
   const pageHref = (target: number) => {
-    const params = new URLSearchParams({ ...keep, ...(scope === 'following' ? { scope } : {}) });
+    const params = new URLSearchParams({ ...keep, ...(scope !== 'all' ? { scope } : {}) });
     if (target > 1) params.set('page', String(target));
     const search = params.toString();
     return search ? `${basePath}?${search}` : basePath;
@@ -39,7 +39,9 @@ export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = 
       <section className="feed-posts" aria-label="Записи">
         {feed.items.length ? <div className="wall-comments">{feed.items.map(item => item.kind === 'rank-up' ? <RankUpCard key={item.rankUp.id} rankUp={item.rankUp} />
           : <WallPost key={item.post.id} post={item.post} owner={{ username: item.post.ownerUsername, name: item.post.ownerName, avatarId: item.post.ownerAvatarId }} interaction={interactions.get(item.post.id)} canDelete={viewerId === item.post.userId || viewerId === item.post.profileId} canEdit={viewerId === item.post.userId} />)}</div>
-          : <div className="wall-empty-card">{scope === 'following'
+          : <div className="wall-empty-card">{scope === 'saved'
+            ? <><strong>Сохранённых записей нет</strong><p>Нажмите на закладку под записью, чтобы вернуться к ней здесь.</p></>
+            : scope === 'following'
             ? <><strong>Подписок пока нет</strong><p>Подпишитесь на участников из <Link href="/leaderboard">рейтинга</Link>, чтобы видеть их записи здесь.</p></>
             : <><strong>Здесь пока тихо</strong><p>Напишите первую запись — она появится и на вашей стене.</p></>}</div>}
         <PagePagination page={page} pages={feed.pages} href={pageHref} label="Страницы ленты" previousLabel="Новее" nextLabel="Старее" />

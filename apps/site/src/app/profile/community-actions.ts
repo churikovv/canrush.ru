@@ -1,6 +1,7 @@
 'use server';
 
 import { ReviewPhotoError } from '@/lib/review-photos';
+import { isMemberBlockedError, MEMBER_BLOCKED_MESSAGE } from '@/lib/member-blocks';
 import { prepareWallMedia } from '@/lib/wall-media';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
@@ -45,7 +46,7 @@ export async function updateCommunityAction(_state: CommunityActionState, form: 
     if (operation === 'tags') revalidatePath('/catalog', 'layout');
     return { success: operation === 'comment' ? 'Комментарий опубликован.' : operation === 'delete-comment' ? 'Комментарий удалён.' : 'Сохранено.' };
   } catch (error) {
-    return { error: error instanceof CommunityError || error instanceof ReviewPhotoError ? error.message : 'Не удалось сохранить изменения. Попробуйте ещё раз.' };
+    return { error: isMemberBlockedError(error) ? MEMBER_BLOCKED_MESSAGE : error instanceof CommunityError || error instanceof ReviewPhotoError ? error.message : 'Не удалось сохранить изменения. Попробуйте ещё раз.' };
   }
 }
 
