@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer';
+import { readFileSync } from 'node:fs';
 
 export interface AuthEnv {
   authSecret: string;
@@ -91,6 +92,50 @@ export function getTelegramEnv(): TelegramEnv | null {
     throw new Error('TELEGRAM_WEBHOOK_SECRET must be 32-256 characters of A-Z, a-z, 0-9, _ or -');
   }
   return { botToken, miniAppUrl: url.toString(), botUsername, webhookSecret };
+}
+
+export interface ReviewLoginEnv {
+  email: string;
+  /** `scrypt:<salt>:<key>` from `npm -w apps/site run review:password`; the password itself is never stored. */
+  passwordHash: string;
+}
+
+/**
+ * Password sign-in for one store-review account (Google Play / RuStore reviewers cannot use magic links
+ * or Telegram). Optional: without both variables the endpoint answers 404 and the form is hidden.
+ */
+export function getReviewLoginEnv(): ReviewLoginEnv | null {
+  const email = process.env.REVIEW_LOGIN_EMAIL?.trim().toLowerCase();
+  const passwordHash = process.env.REVIEW_LOGIN_PASSWORD_HASH?.trim();
+  if (!email || !passwordHash) return null;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)) throw new Error('REVIEW_LOGIN_EMAIL must be an email address');
+  if (!/^scrypt:[A-Za-z0-9_-]{22,}:[A-Za-z0-9_-]{43}$/u.test(passwordHash)) {
+    throw new Error('REVIEW_LOGIN_PASSWORD_HASH must come from npm -w apps/site run review:password');
+  }
+  return { email, passwordHash };
+}
+
+export interface FcmAccount { projectId: string; clientEmail: string; privateKey: string }
+export interface RuStorePushEnv { projectId: string; token: string }
+export interface PushEnv { fcm: FcmAccount | null; rustore: RuStorePushEnv | null }
+
+/**
+ * Android push senders, each optional: FCM_SERVICE_ACCOUNT_FILE — path to the Firebase service account JSON
+ * (kept as a file, not in the environment); RUSTORE_PUSH_PROJECT_ID + RUSTORE_PUSH_TOKEN from the RuStore console.
+ */
+export function getPushEnv(): PushEnv {
+  let fcm: FcmAccount | null = null;
+  const file = process.env.FCM_SERVICE_ACCOUNT_FILE?.trim();
+  if (file) {
+    const raw = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+    if (typeof raw.project_id !== 'string' || typeof raw.client_email !== 'string' || typeof raw.private_key !== 'string') {
+      throw new Error('FCM_SERVICE_ACCOUNT_FILE must be a Firebase service account JSON');
+    }
+    fcm = { projectId: raw.project_id, clientEmail: raw.client_email, privateKey: raw.private_key };
+  }
+  const projectId = process.env.RUSTORE_PUSH_PROJECT_ID?.trim();
+  const token = process.env.RUSTORE_PUSH_TOKEN?.trim();
+  return { fcm, rustore: projectId && token ? { projectId, token } : null };
 }
 
 export const DEFAULT_TELEGRAM_API_URL = 'https://api.telegram.org';

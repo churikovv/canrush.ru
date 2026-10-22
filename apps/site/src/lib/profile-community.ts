@@ -1,4 +1,5 @@
 import type { PreparedWallMedia } from '@/lib/wall-media';
+import { notBlockedBy } from '@/lib/member-blocks';
 import type { WallMediaKind } from '@/lib/wall-media-limits';
 import type { RankUpTier } from '@/lib/level-tier';
 import { getPool } from '@/db/pool';
@@ -119,7 +120,8 @@ export type ProfileRatings = Awaited<ReturnType<typeof getProfileRatings>>;
 
 export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; editedAt: Date | null; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; photos: string[]; mediaKinds: WallMediaKind[] }
 export interface FeedPostRow extends WallPostRow { ownerUsername: string | null; ownerName: string; ownerAvatarId: string | null }
-export type FeedScope = 'all' | 'following';
+/** `saved` — records the viewer bookmarked (savedPost), without rank-up events. */
+export type FeedScope = 'all' | 'following' | 'saved';
 
 export interface RankUpRow { id: string; userId: string; tier: RankUpTier; degree: number; createdAt: Date; username: string; name: string; avatarId: string | null; tag: string | null; xp: number }
 /** A feed entry: a wall record or the moment a member reached a high level tier (migration 0079). */
@@ -134,12 +136,12 @@ const AUTHOR_COLUMNS = `u.username, u.name,
 // One record serves both the wall it was written on and the feed, so both views select the same columns.
 const WALL_POST_COLUMNS = `c.id, c."profileId", c."userId", c.text, c."createdAt", c."editedAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, coalesce((select array_agg(p.kind order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as "mediaKinds", ${AUTHOR_COLUMNS}`;
 
-export async function getProfileWall(profileId: string, page = 1) {
+export async function getProfileWall(profileId: string, page = 1, viewerId: string | null = null) {
   const [count, comments] = await Promise.all([
     getPool().query<{ count: number }>('select count(*)::int as count from "profileComment" where "profileId" = $1', [profileId]),
     getPool().query<WallPostRow>(`select ${WALL_POST_COLUMNS}
-      from "profileComment" c join "user" u on u.id = c."userId" where c."profileId" = $1 order by c."createdAt" desc, c.id desc limit $2 offset $3`,
-    [profileId, COMMUNITY_PAGE_SIZE, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE]),
+      from "profileComment" c join "user" u on u.id = c."userId" where c."profileId" = $1 and ${notBlockedBy('$4::text', 'c."userId"')} order by c."createdAt" desc, c.id desc limit $2 offset $3`,
+    [profileId, COMMUNITY_PAGE_SIZE, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE, viewerId]),
   ]);
   return { count: count.rows[0]?.count ?? 0, comments: comments.rows };
 }
@@ -150,16 +152,19 @@ export async function getProfileWall(profileId: string, page = 1) {
  */
 export async function getFeed(viewerId: string | null, scope: FeedScope = 'all', page = 1) {
   const following = scope === 'following' && viewerId !== null;
+  const saved = scope === 'saved' && viewerId !== null;
   const { rows: entries } = await getPool().query<{ id: string; kind: FeedItem['kind']; total: number }>(`select id, kind, count(*) over()::int as total from (
         select c.id::text, 'post' as kind, c."createdAt" from "profileComment" c
-        where not $1::boolean or c."userId" = $2 or c."profileId" = $2
-          or exists(select 1 from "userFollow" f where f."userId" = $2 and f."targetId" in (c."userId", c."profileId"))
+        where (not $1::boolean or c."userId" = $2 or c."profileId" = $2
+          or exists(select 1 from "userFollow" f where f."userId" = $2 and f."targetId" in (c."userId", c."profileId")))
+          and ${notBlockedBy('$2::text', 'c."userId"')}
+          and (not $5::boolean or exists(select 1 from "savedPost" s where s."postId" = c.id and s."userId" = $2))
         union all
         select r.id::text, 'rank-up', r."createdAt" from "rankUp" r join "user" u on u.id = r."userId"
-        where u.username is not null and not exists(select 1 from "userBlock" b where b."userId" = u.id)
+        where not $5::boolean and u.username is not null and not exists(select 1 from "userBlock" b where b."userId" = u.id) and ${notBlockedBy('$2::text', 'r."userId"')}
           and (not $1::boolean or r."userId" = $2 or exists(select 1 from "userFollow" f where f."userId" = $2 and f."targetId" = r."userId"))
       ) entry order by "createdAt" desc, id desc limit $3 offset $4`,
-  [following, viewerId, COMMUNITY_PAGE_SIZE, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE]);
+  [following, viewerId, COMMUNITY_PAGE_SIZE, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE, saved]);
   const total = entries[0]?.total ?? 0;
   const idsOf = (kind: FeedItem['kind']) => entries.filter(entry => entry.kind === kind).map(entry => entry.id);
   const [posts, rankUps] = await Promise.all([

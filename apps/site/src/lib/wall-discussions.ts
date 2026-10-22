@@ -1,10 +1,12 @@
 import { getPool } from '@/db/pool';
+import { notBlockedBy } from '@/lib/member-blocks';
 import { commentMediaColumn, saveCommentMedia, type CommentMedia } from '@/lib/comment-media';
 import type { PreparedWallMedia } from '@/lib/wall-media';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { profileTagLabel } from '@/lib/profile-achievements';
 export class WallDiscussionError extends Error {}
-export interface WallInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean }
+/** `saved` — the viewer bookmarked the record (savedPost). */
+export interface WallInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean; saved: boolean }
 export interface WallCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; canDelete: boolean; likes: number; liked: boolean }
 export function wallPostId(value: unknown): string {
   if (typeof value !== 'string' || !PHOTO_ID_PATTERN.test(value)) throw new WallDiscussionError('Запись или комментарий не найден.');
@@ -16,9 +18,16 @@ export async function getWallInteractions(ids: string[], viewer: string | null =
     (select count(*)::int from "wallReaction" where "wallPostId"=r.id and value=1) as likes,
     (select count(*)::int from "wallReaction" where "wallPostId"=r.id and value=-1) as dislikes,
     (select count(*)::int from "wallReply" where "wallPostId"=r.id) as comments,
-    coalesce((select value from "wallReaction" where "wallPostId"=r.id and "userId"=$2),0)::int as vote
+    coalesce((select value from "wallReaction" where "wallPostId"=r.id and "userId"=$2),0)::int as vote,
+    exists(select 1 from "savedPost" where "postId"=r.id and "userId"=$2) as saved
     from "profileComment" r where r.id=any($1::uuid[])`, [ids, viewer]);
-  return new Map(rows.map(row => [row.id, { likes: row.likes, dislikes: row.dislikes, comments: row.comments, vote: row.vote, authenticated: Boolean(viewer) }]));
+  return new Map(rows.map(row => [row.id, { likes: row.likes, dislikes: row.dislikes, comments: row.comments, vote: row.vote, authenticated: Boolean(viewer), saved: Boolean(row.saved) }]));
+}
+/** Bookmarks a wall record for the member (own records too); `saved=false` removes the bookmark. */
+export async function setWallSaved(userId: string, id: string, saved: boolean) {
+  wallPostId(id);
+  if (saved) await getPool().query(`insert into "savedPost" ("userId","postId") select $2,id from "profileComment" where id=$1 on conflict do nothing`, [id, userId]);
+  else await getPool().query('delete from "savedPost" where "postId"=$1 and "userId"=$2', [id, userId]);
 }
 export async function setWallReaction(userId: string, id: string, value: number) {
   wallPostId(id);
@@ -42,7 +51,7 @@ export async function getWallComments(id: string, viewer: string | null, before?
     case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
       when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
     from "wallReply" c join "user" u on u.id=c."userId" left join "user" ru on ru.id=c."replyToUserId"
-    where c."wallPostId"=$1 and exists(select 1 from "profileComment" where id=$1) and ($3::uuid is null or (c."createdAt",c.id)<(select "createdAt",id from "wallReply" where id=$3 and "wallPostId"=$1))
+    where ${notBlockedBy('$2', 'c."userId"')} and c."wallPostId"=$1 and exists(select 1 from "profileComment" where id=$1) and ($3::uuid is null or (c."createdAt",c.id)<(select "createdAt",id from "wallReply" where id=$3 and "wallPostId"=$1))
     order by c."createdAt" desc,c.id desc limit 21`, [id, viewer, before ?? null]);
   return { items: rows.slice(0,20).map(({ replyToUsername, replyToName, ...row }) => ({ ...row, createdAt: row.createdAt.toISOString(), editedAt: row.editedAt?.toISOString() ?? null, tag: profileTagLabel(row.tag) ?? null, replyTo: replyToName ? { username: replyToUsername, name: replyToName } : null, canDelete: Boolean(row.canDelete), liked: Boolean(row.liked) }) as WallCommentData), hasMore: rows.length > 20 };
 }

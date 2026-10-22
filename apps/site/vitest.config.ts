@@ -22,7 +22,7 @@ export default defineConfig({
       'test/profile-customization.integration.test.ts',
       'test/profile-community.integration.test.ts',
       'test/review-photos.integration.test.ts',
-      'test/auth.integration.test.ts',
+      'test/auth.integration.test.ts', 'test/review-login.integration.test.ts', 'test/push.integration.test.ts', 'test/member-blocks.integration.test.ts', 'test/saved-posts.integration.test.ts',
       'test/admin.integration.test.ts',
       'node_modules/**',
       '.next/**',

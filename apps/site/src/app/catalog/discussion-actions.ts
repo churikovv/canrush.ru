@@ -1,5 +1,6 @@
 'use server';
 import { headers } from 'next/headers';
+import { isMemberBlockedError, MEMBER_BLOCKED_MESSAGE } from '@/lib/member-blocks';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { ReviewPhotoError } from '@/lib/review-photos';
@@ -44,6 +45,6 @@ export async function reviewDiscussionAction(id: string, action: 'read' | 'vote'
     const thread = action === 'vote' || action === 'edit' ? undefined : await getReviewComments(id, viewer, action === 'read' && typeof value === 'string' ? value : undefined);
     return { interaction, thread, edited };
   } catch(error) {
-    return { error: error instanceof ReviewDiscussionError || error instanceof ReviewPhotoError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
+    return { error: isMemberBlockedError(error) ? MEMBER_BLOCKED_MESSAGE : error instanceof ReviewDiscussionError || error instanceof ReviewPhotoError ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
   }
 }

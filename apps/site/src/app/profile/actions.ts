@@ -100,6 +100,9 @@ export async function deleteAccountAction(formData: FormData): Promise<never> {
     asResponse: true,
   });
 
+  // The bot chat is keyed by Telegram id, not by the account: remove it while the link still exists.
+  await getPool().query(`delete from "telegramChat" where "telegramId"::text in
+    (select "accountId" from account where "userId" = $1 and "providerId" = 'telegram')`, [user.id]);
   await getPool().query('delete from "user" where "id" = $1', [user.id]);
   await applyResponseCookies(signOutResponse);
   redirect('/sign-in?account=deleted');

@@ -4,6 +4,7 @@ import { MarketError, marketId, canTransitionOrder, parseQuantity, type MarketFi
 import type { PreparedReviewPhoto } from './review-photos';
 import type { MarketEvent } from './telegram-bot/format';
 import { enqueueTelegram, type MarketPayload } from './telegram-bot/outbox';
+import { enqueuePush } from './push/outbox';
 
 export interface Listing extends ListingInput { id: string; sellerId: string; sellerName: string; username: string | null; closed: boolean; createdAt: string; photos: string[] }
 export interface MarketOrder { id: string; listingId: string; buyerId: string; sellerId: string; status: OrderStatus; title: string; price: number; unitPrice: number; quantity: number; city: string; delivery: Delivery[]; closed: boolean; buyerName: string; sellerName: string; buyerUsername: string | null; sellerUsername: string | null; photoId: string | null; updatedAt: string; unread: number }
@@ -80,6 +81,7 @@ async function notifyMarket(db: PoolClient, recipientId: string, actorId: string
   const payload: MarketPayload = { event, orderId, title: row.title, counterpart: row.actor, ...(message ? { message } : {}) };
   const dedupe = event === 'message' ? `market:message:${orderId}:${recipientId}:${Math.floor(Date.now() / 600_000)}` : `market:${event}:${orderId}`;
   await enqueueTelegram(db, recipientId, 'market', payload, dedupe);
+  await enqueuePush(db, recipientId, 'market', payload, dedupe);
 }
 export async function startOrder(userId: string, listingId: string, requestedQuantity = 1) {
   marketId(listingId);
