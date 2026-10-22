@@ -3840,6 +3840,8 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
    the ring fills up to the trigger point, then spins with the Canrush mark while router.refresh() runs. */
 .pull-refresh { display: none; }
 html[data-native-app] { overscroll-behavior-y: none; }
+/* No site footer in the app: its documents and contacts live in Settings → «Документы и связь». */
+html[data-native-app] .brand-footer { display: none; }
 html[data-native-app] .pull-refresh {
   --pull: 0;
   position: fixed;

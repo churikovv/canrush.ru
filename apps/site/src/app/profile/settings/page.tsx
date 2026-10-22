@@ -31,6 +31,8 @@ import { ensureOwnProfile } from '@/lib/profile';
 import { profileTagLabel, visibleProfileAchievements } from '@/lib/profile-achievements';
 import { CITIES, DEFAULT_CITY } from '@canrush/shared';
 import { TELEGRAM_BOT_OPTIONS } from '@/lib/telegram-bot/settings';
+import { LEGAL_DETAILS } from '@/lib/legal';
+import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
 import { saveNotificationSettings, saveTelegramBotSettings, unlinkTelegram } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +45,7 @@ const ICONS = {
   telegram: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.7 3.3a1.6 1.6 0 0 0-1.7-.2L2.9 9.6c-1.2.5-1.1 2.2.1 2.6l3.9 1.2 1.5 4.8c.3.9 1.4 1.2 2.1.5l2.2-2.1 4.1 3c.9.7 2.2.2 2.4-.9l2.6-13.9c.1-.6-.1-1.2-.6-1.5ZM10 14.2l-.6 3.2-1.1-3.6 9.4-7.5-7.7 7.9Z" /></svg>,
   blocked: <svg {...ICON}><circle cx="12" cy="12" r="9" /><path d="m5.6 5.6 12.8 12.8" /></svg>,
   email: <svg {...ICON}><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></svg>,
+  about: <svg {...ICON}><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>,
 };
 const blockedDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' });
 const THEME_LABELS: Record<SiteTheme, string> = { system: 'Системная', light: 'Светлая', graphite: 'Тёмная' };
@@ -55,6 +58,28 @@ function Panel({ id, title, note, children }: { id: string; title: string; note?
   </section>;
 }
 
+const ARROW = <svg {...ICON} width={16} height={16}><path d="m9 6 6 6-6 6" /></svg>;
+const EXTERNAL = <svg {...ICON} width={16} height={16}><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" /></svg>;
+
+/**
+ * Documents and contacts. The site shows them in the footer; the Android app hides the footer, so the stores'
+ * reviewers (and members) find the policy and account deletion here.
+ */
+function AboutLinks() {
+  const { contactEmail } = LEGAL_DETAILS;
+  return <>
+    <ul className="settings-about-links">
+      <li><Link href="/terms"><span>Пользовательское соглашение</span>{ARROW}</Link></li>
+      <li><Link href="/privacy"><span>Политика обработки данных</span>{ARROW}</Link></li>
+      <li><Link href="/account-deletion"><span>Удаление аккаунта</span>{ARROW}</Link></li>
+      <li><a href={`mailto:${contactEmail}`}><span>Написать нам<small>{contactEmail}</small></span>{EXTERNAL}</a></li>
+      <li><a href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer"><span>Telegram-канал CanRush</span>{EXTERNAL}</a></li>
+      <li><a href={TELEGRAM_BOT_URL} target="_blank" rel="noopener noreferrer"><span>Telegram-бот CanRush</span>{EXTERNAL}</a></li>
+    </ul>
+    <p className="settings-about-note">Используя CanRush, вы подтверждаете своё совершеннолетие. Сервис не аффилирован и не одобрен производителями или ретейлерами; информация представлена в ознакомительных целях. canrush.ru © 2026</p>
+  </>;
+}
+
 /** Profile editing and site settings in one place (the header's gear): islands of rows, each opening its panel. */
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -63,6 +88,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     <section className="community-directory profile-settings"><h1>Настройки</h1>
       <ThemeSettings theme={theme} />
       <section className="community-panel"><h2>Аккаунт и уведомления</h2><p>Войдите, чтобы настроить профиль, уведомления и посмотреть данные аккаунта.</p><Link className="community-button" href="/sign-in">Войти</Link></section>
+      <Panel id="about" title="О CanRush"><AboutLinks /></Panel>
     </section>
   </BrandShell>;
 
@@ -138,6 +164,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </li>;
         })}</ul> : <div className="blocked-members-empty"><span aria-hidden="true">{ICONS.blocked}</span><p>Вы никого не блокировали. Заблокировать участника можно на его профиле или после жалобы.</p></div>}
       </Panel> },
+  ] }, { key: 'about', title: 'О CanRush', rows: [
+    { key: 'about', title: 'Документы и связь', value: 'Соглашение, политика, удаление аккаунта', icon: ICONS.about, panel:
+      <Panel id="about" title="Документы и связь"><AboutLinks /></Panel> },
   ] }];
   const accountRows: SettingsRow[] = [{ key: 'email', title: 'Почта для входа', value: telegramOnly ? 'Вход через Telegram' : session.user.email, icon: ICONS.email, panel:
     <Panel id="email" title="Почта для входа">
