@@ -1,13 +1,26 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useTransition } from 'react';
-import { hideSplash, isNativeApp } from '@/lib/native-app';
+import { hideSplash, isNativeApp, setSystemBars } from '@/lib/native-app';
 
 /** Pull distance (px, after resistance) that triggers a refresh, and the furthest the indicator travels. */
 const THRESHOLD = 72;
 const MAX_PULL = 120;
 /** The spinner stays at least this long, so a fast refresh does not flash. */
 const MIN_SPIN_MS = 600;
+
+/** `rgb(r, g, b)` from getComputedStyle → `#rrggbb` for the shell; transparent or unknown → null. */
+function hexColor(value: string): string | null {
+  const match = /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/u.exec(value);
+  if (!match || match[4] === '0') return null;
+  return `#${match.slice(1, 4).map(part => Number(part).toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** Bar icons go light on a dark backing: decided by the colour actually painted, whatever set it (site theme, system). */
+function isDarkColor(hex: string): boolean {
+  const [r, g, b] = [1, 3, 5].map(index => parseInt(hex.slice(index, index + 2), 16) / 255);
+  return 0.2126 * (r ?? 1) + 0.7152 * (g ?? 1) + 0.0722 * (b ?? 1) < 0.5;
+}
 
 /** A touch inside these never pulls: open dialogs, maps, horizontal carousels and anything scrolled down. */
 function startsBlocked(target: EventTarget | null): boolean {
@@ -32,10 +45,35 @@ export function NativeAppShell() {
 
   useEffect(() => {
     if (!isNativeApp()) return;
-    document.documentElement.dataset.nativeApp = '';
+    const root = document.documentElement;
+    root.dataset.nativeApp = '';
     requestAnimationFrame(() => hideSplash());
+
+    // The page draws under the system bars (viewport-fit=cover in the layout); on older WebViews the shell paints
+    // them with the page's colours. Re-synced when the site theme (server-rendered attribute) or the phone's changes.
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const syncBars = () => {
+      // After the theme's styles apply: the colours are read from the page itself.
+      requestAnimationFrame(() => {
+        const surface = hexColor(getComputedStyle(document.body).backgroundColor) ?? '#ffffff';
+        const top = hexColor(getComputedStyle(document.querySelector('.site-shell') ?? document.body).backgroundColor) ?? surface;
+        const tabBar = document.querySelector('.site-tab-bar');
+        const bottom = (tabBar && hexColor(getComputedStyle(tabBar).backgroundColor)) ?? surface;
+        void setSystemBars(isDarkColor(top), { top, bottom });
+      });
+    };
+    syncBars();
+    const themeObserver = new MutationObserver(syncBars);
+    themeObserver.observe(root, { attributes: true, attributeFilter: ['data-site-theme'] });
+    // A phone theme switch also restyles the bars natively (SystemBars resets the window background after us),
+    // so the colours are sent again once that settles.
+    let resync = 0;
+    const onSystemTheme = () => { syncBars(); window.clearTimeout(resync); resync = window.setTimeout(syncBars, 400); };
+    systemDark.addEventListener('change', onSystemTheme);
+    const stopBars = () => { themeObserver.disconnect(); systemDark.removeEventListener('change', onSystemTheme); window.clearTimeout(resync); };
+
     const element = indicator.current;
-    if (!element) return;
+    if (!element) return stopBars;
 
     let startX = 0, startY = 0, distance = 0, tracking = false;
     const show = (pull: number, state: 'idle' | 'pulling' | 'ready' | 'refreshing') => {
@@ -72,6 +110,7 @@ export function NativeAppShell() {
     document.addEventListener('touchend', onEnd);
     document.addEventListener('touchcancel', onEnd);
     return () => {
+      stopBars();
       document.removeEventListener('touchstart', onStart);
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onEnd);

@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { parseSiteTheme, SITE_THEME_COOKIE } from '@/lib/site-theme';
 import { CampaignTracker } from '@/components/campaign-tracker';
 import { NavigationProgressProvider } from '@/components/navigation-progress';
@@ -79,12 +79,23 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
+const VIEWPORT: Viewport = {
   colorScheme: 'light dark',
   themeColor: '#006eff',
   width: 'device-width',
   initialScale: 1,
 };
+
+/**
+ * In the Android app (User-Agent «CanrushApp/») the page draws under the status and navigation bars
+ * (viewport-fit=cover → Capacitor SystemBars passes the insets through): the header backing and the tab bar
+ * colour them, and env(safe-area-inset-*) keeps content clear. Browsers keep the default viewport.
+ * The layout already reads cookies, so reading headers here does not make anything dynamic that was not.
+ */
+export async function generateViewport(): Promise<Viewport> {
+  const app = (await headers()).get('user-agent')?.includes('CanrushApp/');
+  return app ? { ...VIEWPORT, viewportFit: 'cover' } : VIEWPORT;
+}
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   const theme = parseSiteTheme((await cookies()).get(SITE_THEME_COOKIE)?.value) ?? 'system';

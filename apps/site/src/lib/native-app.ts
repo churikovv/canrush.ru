@@ -22,7 +22,20 @@ interface CapacitorBridge {
     PushNotifications?: NativePushPlugin;
     CanrushPush?: CanrushPushPlugin;
     SplashScreen?: { hide(options?: { fadeOutDuration?: number }): Promise<void> };
+    SystemBars?: { setStyle(options: { style: 'LIGHT' | 'DARK' | 'DEFAULT'; bar?: string }): Promise<void> };
+    CanrushBars?: { setColors(options: { top: string; bottom: string }): Promise<void> };
   };
+}
+
+/**
+ * Status and navigation bars: icons light on a dark site theme (`DARK` = dark bar background), dark otherwise;
+ * `colors` (#rrggbb) fill the bars on old WebViews that cannot draw under them. SystemBars resets the window
+ * background when it restyles, so the colours go second.
+ */
+export async function setSystemBars(dark: boolean, colors: { top: string; bottom: string }): Promise<void> {
+  const plugins = bridge()?.Plugins;
+  await plugins?.SystemBars?.setStyle({ style: dark ? 'DARK' : 'LIGHT' }).catch(() => {});
+  await plugins?.CanrushBars?.setColors(colors).catch(() => {});
 }
 
 /** Removes the blue launch screen once the page is painted (otherwise it stays up to launchShowDuration). */
