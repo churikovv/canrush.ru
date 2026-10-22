@@ -2,6 +2,7 @@ import '@/styles/shared.css';
 import '@/styles/profile.css';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
+import { getTierCardViewer } from '@/lib/tier-discussions';
 import { notFound } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
@@ -26,23 +27,13 @@ export default async function PublicTierListsPage({ params }: { params: Promise<
   ]);
   if (!profile) notFound();
 
-  if (session?.user.id === profile.id) {
-    const lists = await getPublishedTierListsForUser(profile.id);
-    const products = tierListProductsForPlacements(groups, lists.flatMap((list) => list.preview));
-    const ownerName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
-    return (
-      <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-        <ProfileTierLists profileHref={`/profile/${profile.username}`} lists={lists} products={products} ownerName={ownerName} isOwn={false} />
-      </BrandShell>
-    );
-  }
-
   const lists = await getPublishedTierListsForUser(profile.id);
   const products = tierListProductsForPlacements(groups, lists.flatMap((list) => list.preview));
   const ownerName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
+  const viewer = await getTierCardViewer(lists.map((list) => list.id), session?.user.id ?? null);
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-      <ProfileTierLists profileHref={`/profile/${profile.username}`} lists={lists} products={products} ownerName={ownerName} isOwn={false} />
+      <ProfileTierLists profileHref={`/profile/${profile.username}`} lists={lists} products={products} ownerName={ownerName} isOwn={false} viewer={viewer} />
     </BrandShell>
   );
 }

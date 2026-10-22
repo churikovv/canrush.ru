@@ -88,6 +88,13 @@
 .tier-list-card-stats a { min-height: 32px; }
 .tier-list-card-stats a:hover { color: var(--color-brand); }
 .tier-list-card-likes svg { color: #e5484d; }
+button.tier-list-card-likes { min-height: 36px; margin: -6px -8px; padding: 6px 8px; border: 0; border-radius: 999px; background: none; font: inherit; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
+button.tier-list-card-likes:hover:not(:disabled) { background: color-mix(in srgb, #e5484d 12%, transparent); color: var(--color-ink); }
+button.tier-list-card-likes[aria-pressed="true"] { color: var(--color-ink); }
+button.tier-list-card-likes:disabled { cursor: wait; }
+button.tier-list-card-likes[aria-pressed="true"] svg { animation: tier-like-pop 260ms ease-out; }
+@keyframes tier-like-pop { 50% { transform: scale(1.25); } }
+@media (prefers-reduced-motion: reduce) { button.tier-list-card-likes, button.tier-list-card-likes svg { transition: none; animation: none; } }
 .tier-list-card-board { display: flex; flex-direction: column; gap: 4px; overflow: hidden; border-radius: 14px; color: inherit; text-decoration: none; }
 .tier-list-card-row { display: flex; min-height: 56px; gap: 4px; }
 .tier-list-card-tier { display: grid; flex: none; width: 44px; place-items: center; color: var(--color-ink); font-size: 1.5rem; font-weight: 700; line-height: 1; }

@@ -1,6 +1,6 @@
 import { ProfileBackButton } from '@/components/profile-back-button';
 import Link from '@/components/navigation-progress';
-import { TierListCard } from '@/components/tier-list-card';
+import { TierListCard, type TierCardViewer } from '@/components/tier-list-card';
 import type { TierListProduct, TierListSummary } from '@/lib/tier-list-types';
 
 interface ProfileTierListsProps {
@@ -10,9 +10,10 @@ interface ProfileTierListsProps {
   isOwn: boolean;
   notice?: string;
   profileHref?: string;
+  viewer?: TierCardViewer;
 }
 
-export function ProfileTierLists({ lists, products, ownerName, isOwn, notice, profileHref }: ProfileTierListsProps) {
+export function ProfileTierLists({ lists, products, ownerName, isOwn, notice, profileHref, viewer }: ProfileTierListsProps) {
   return (
     <div className={`profile-tierlists-layout${isOwn ? ' ym-hide-content' : ''}`}>
       <ProfileBackButton href={profileHref} />
@@ -28,7 +29,7 @@ export function ProfileTierLists({ lists, products, ownerName, isOwn, notice, pr
 
       {lists.length > 0 ? (
         <div className="tier-list-cards">
-          {lists.map((list) => <TierListCard list={list} products={products} showStatus={isOwn} key={list.id} />)}
+          {lists.map((list) => <TierListCard list={list} products={products} showStatus={isOwn} viewer={viewer} key={list.id} />)}
         </div>
       ) : (
         <div className="profile-tierlists-empty">

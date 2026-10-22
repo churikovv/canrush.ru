@@ -1,10 +1,13 @@
 import Image from 'next/image';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
 import Link from '@/components/navigation-progress';
 import { ShareTierListButton } from '@/components/share-tier-list-button';
 import { TierBoard } from '@/components/tier-board';
 import { TierListCard } from '@/components/tier-list-card';
 import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import { loadAllCatalogGroups } from '@/lib/catalog';
+import { getTierCardViewer } from '@/lib/tier-discussions';
 import { buildOfficialTierList, getCommunityTierLists, tierListProductsForPlacements } from '@/lib/tier-lists';
 
 const count = new Intl.NumberFormat('ru-RU');
@@ -22,7 +25,8 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
   const title = metric === 'overall' ? 'Тирлист энергетиков CanRush' : `Тирлист энергетиков CanRush — ${modes[metric].toLowerCase()}`;
 
   const groups = await loadAllCatalogGroups();
-  const [official, community] = await Promise.all([buildOfficialTierList(groups, metric), getCommunityTierLists(48, q)]);
+  const [official, community, session] = await Promise.all([buildOfficialTierList(groups, metric), getCommunityTierLists(48, q), auth.api.getSession({ headers: await headers() })]);
+  const viewer = await getTierCardViewer(community.map((list) => list.id), session?.user.id ?? null);
   const communityProducts = tierListProductsForPlacements(groups, community.flatMap((list) => list.preview));
   const ratedShare = official.eligibleCount > 0 ? Math.min(100, Math.round(official.ratedCount / official.eligibleCount * 100)) : 0;
 
@@ -94,7 +98,7 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
 
         {community.length > 0 ? (
           <div className="tier-list-cards">
-            {community.map((list) => <TierListCard list={list} products={communityProducts} key={list.id} />)}
+            {community.map((list) => <TierListCard list={list} products={communityProducts} viewer={viewer} key={list.id} />)}
           </div>
         ) : (
           <div className="tierlists-community-empty">

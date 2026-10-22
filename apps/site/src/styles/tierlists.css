@@ -488,3 +488,20 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .tier-create-banner-arrow { flex: none; color: var(--color-muted-strong); transition: transform 150ms ease-out; }
 .tier-create-banner:hover .tier-create-banner-arrow { transform: translateX(3px); }
 @media (prefers-reduced-motion: reduce) { .tier-create-banner, .tier-create-banner-arrow { transition: none; } }
+
+/* Actions under a board: round pills like the site's switchers, the main one in brand blue; report sits in «⋯». */
+.tierlists-main-actions { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tierlists-main-actions > * { width: auto; min-width: 0; }
+.tierlists-main-actions :is(.tier-primary-action, .tier-secondary-action) { width: auto; min-height: 44px; gap: 8px; padding: 10px 18px; border: 0; border-radius: 999px; font-size: .9375rem; font-weight: 700; }
+.tierlists-main-actions .tier-primary-action { background: var(--color-brand); color: #fff; }
+.tierlists-main-actions .tier-primary-action:hover:not(:disabled) { background: color-mix(in srgb, var(--color-brand) 88%, #000); }
+.tierlists-main-actions .tier-secondary-action { background: var(--color-subtle); color: var(--color-ink); }
+.tierlists-main-actions .tier-secondary-action:hover:not(:disabled) { background: color-mix(in srgb, var(--color-subtle) 82%, var(--color-ink) 10%); }
+.tierlists-main-actions :is(.tier-primary-action, .tier-secondary-action) :is(svg, img) { width: 20px; height: 20px; }
+.tierlists-main-actions .more-actions { margin-left: auto; }
+.tierlists-main-actions .more-actions-trigger { width: 44px; height: 44px; background: var(--color-subtle); color: var(--color-ink); }
+@media (max-width: 639px) {
+  .tierlists-main-actions > .tier-primary-action { flex: 1 1 100%; }
+  .tierlists-main-actions > :is(.tier-secondary-action, :has(> .tier-secondary-action)) { flex: 1 1 0; }
+  .tierlists-main-actions :is(.tier-secondary-action) { width: 100%; padding-inline: 12px; }
+}

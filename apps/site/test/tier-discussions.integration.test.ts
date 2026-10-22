@@ -24,6 +24,13 @@ it('keeps one vote per person, switches or removes it, forbids self votes and in
   await expect(api.setTierReaction(owner,review,1)).rejects.toThrow();
   await expect(api.setTierReaction(reader,review,2)).rejects.toThrow();
 });
+it('gives cards the viewer\'s own votes only', async () => {
+  await api.setTierReaction(reader, review, 1);
+  expect((await api.getTierCardViewer([review], reader)).votes.get(review)).toBe(1);
+  expect((await api.getTierCardViewer([review], other)).votes.size).toBe(0);
+  expect(await api.getTierCardViewer([review], null)).toEqual({ id: null, votes: new Map() });
+  await api.setTierReaction(reader, review, 0);
+});
 it('limits concurrent comments, protects author deletion, and exposes them in admin search',async()=>{
   const attempts=await Promise.allSettled([api.addTierComment(reader,review,'Comment '+reader),api.addTierComment(reader,review,'Comment '+reader)]);
   expect(attempts.filter(x=>x.status==='fulfilled')).toHaveLength(1);

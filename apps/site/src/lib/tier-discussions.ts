@@ -21,6 +21,13 @@ export async function getTierInteractions(ids: string[], viewer: string | null =
     from "tierList" r where r.status='published' and r.id=any($1::uuid[])`, [ids, viewer]);
   return new Map(rows.map(row => [row.id, { likes: row.likes, dislikes: row.dislikes, comments: row.comments, vote: row.vote, authenticated: Boolean(viewer) }]));
 }
+/** The viewer's votes on these tier lists (for the like on cards); a guest gets an empty map. */
+export async function getTierCardViewer(ids: string[], viewer: string | null): Promise<{ id: string | null; votes: Map<string, number> }> {
+  if (!viewer || !ids.length) return { id: viewer, votes: new Map() };
+  const { rows } = await getPool().query<{ tierListId: string; value: number }>(
+    'select "tierListId", value from "tierListReaction" where "userId"=$1 and "tierListId"=any($2::uuid[])', [viewer, ids]);
+  return { id: viewer, votes: new Map(rows.map(row => [row.tierListId, row.value])) };
+}
 export async function setTierReaction(userId: string, id: string, value: number) {
   tierListId(id);
   if (![0, 1, -1].includes(value)) throw new TierDiscussionError('Некорректная реакция.');

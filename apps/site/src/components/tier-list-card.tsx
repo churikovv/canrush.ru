@@ -1,12 +1,17 @@
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
+import { TierLikeButton } from '@/components/tier-like-button';
 import { TIER_KEYS, type TierListProduct, type TierListSummary } from '@/lib/tier-list-types';
 
 interface TierListCardProps {
   list: TierListSummary;
   products: TierListProduct[];
   showStatus?: boolean;
+  /** Who is looking and their votes by list id, for the like button (a guest has no id). */
+  viewer?: TierCardViewer;
 }
+
+export interface TierCardViewer { id: string | null; votes: Map<string, number> }
 
 function itemKey(brand: string, flavor: string): string {
   return `${brand}\u0000${flavor}`;
@@ -15,7 +20,7 @@ function itemKey(brand: string, flavor: string): string {
 const count = new Intl.NumberFormat('ru-RU', { notation: 'compact', maximumFractionDigits: 1 });
 
 /** A tier list in a grid: emoji and title, author, likes, a miniature of the filled sections and the open button. */
-export function TierListCard({ list, products, showStatus = false }: TierListCardProps) {
+export function TierListCard({ list, products, showStatus = false, viewer }: TierListCardProps) {
   const productByKey = new Map(products.map((product) => [itemKey(product.brand, product.flavor), product]));
   const published = list.status === 'published';
   const href = published ? `/tierlists/${list.slug}` : `/tierlists/${list.slug}/edit`;
@@ -39,10 +44,7 @@ export function TierListCard({ list, products, showStatus = false }: TierListCar
           <span className={`tier-list-status tier-list-status-${list.status}`}>{published ? 'Опубликован' : 'Черновик'}</span>
         ) : published && (list.reactionsEnabled || list.comments > 0) ? (
           <span className="tier-list-card-stats">
-            {list.reactionsEnabled && <span className="tier-list-card-likes" aria-label={`Лайки: ${list.likes}`}>
-              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.5.8-1.3 2.3-2.5 4.4-2.5 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21Z" /></svg>
-              {count.format(list.likes)}
-            </span>}
+            {list.reactionsEnabled && <TierLikeButton id={list.id} likes={list.likes} vote={viewer?.votes.get(list.id) ?? 0} signedIn={Boolean(viewer?.id)} own={viewer?.id === list.userId} />}
             {list.commentsEnabled && list.comments > 0 && <Link href={`${href}#tier-discussion`} aria-label={`Комментарии: ${list.comments}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M20 16a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10Z" /></svg>
               {count.format(list.comments)}
