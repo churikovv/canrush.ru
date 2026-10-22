@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { MarketFilters } from '@/components/market-filters';
-import { MarketListingControls } from '@/components/market-listing-controls';
 import { Pinned } from '@/components/search-pinned';
 import { getListings, getMarketFilterOptions } from '@/lib/market';
 import { DELIVERY, formatPrice } from '@/lib/market-fields';
@@ -26,12 +25,11 @@ export async function MarketBrowser({ query, viewerId, basePath = '/market', kee
   return <>
     <Pinned scopes={scopes}><MarketFilters key={JSON.stringify([filters,scope])} brands={filterOptions.brands} cities={filterOptions.cities} initial={filters} scope={scope} basePath={basePath} addHref={basePath === '/market' ? undefined : '/market/new'}/></Pinned>
     {items.length ? <div className="market-grid">{items.map(listing => <article className="market-card" key={listing.id}>
+      {/* The list shows what tells listings apart; stock, delivery and ordering are on the listing page. */}
       <Link href={`/market/${listing.id}`} className="market-card-link">
         {listing.photos[0] && <div className="market-card-image"><Image src={`/api/market-photos/${listing.photos[0]}`} alt={listing.title} width={480} height={480} unoptimized />{listing.photos.length > 1 && <span>{listing.photos.length} фото</span>}</div>}
-        <p className="market-city">{listing.city} · В наличии: {listing.quantity} шт.</p><h2>{listing.title}</h2>{listing.brand && <p className="market-city">{listing.brand}</p>}<p className="market-card-description">{listing.description}</p>
-        <div className="market-card-delivery" title={listing.delivery.map(key => DELIVERY[key]).join(', ')}>{listing.delivery.map(key => <span key={key}>{DELIVERY[key]}</span>)}</div>
+        <div className="market-card-copy"><strong className="market-card-price">{formatPrice(listing.price)}<small> / шт.</small></strong><h2>{listing.title}</h2><p className="market-city">{listing.city}</p>{listing.description && <p className="market-card-description">{listing.description}</p>}</div>
       </Link>
-      <div className="market-card-bottom"><strong>{formatPrice(listing.price)}<small> / шт.</small></strong><MarketListingControls id={listing.id} own={listing.sellerId === viewerId} closed={listing.closed} authenticated={Boolean(viewerId)} available={listing.quantity} unitPrice={listing.price} compact /></div>
     </article>)}</div> : <section className="market-empty"><h2>{filtered ? 'Ничего не найдено' : mine ? 'Ваши объявления появятся здесь' : 'Пока нет объявлений'}</h2><p>{filtered ? 'Измените поисковый запрос, бренд, город или способ доставки.' : 'Предложите свою коллекцию или редкий вкус другим участникам.'}</p><div className="market-empty-actions">{filtered && <Link className="community-button community-button-secondary" href="/market">Сбросить фильтры</Link>}<Link className="community-button" href="/market/new">Создать объявление</Link></div></section>}
     <nav className="market-pagination" aria-label="Страницы объявлений">{page > 1 && <Link href={`${basePath}?page=${page - 1}${suffix}${filterSuffix}`}>Назад</Link>}{hasMore && <Link href={`${basePath}?page=${page + 1}${suffix}${filterSuffix}`}>Следующая страница</Link>}</nav>
     <p className="market-note">CanRush не принимает оплату и не оформляет доставку. Обсуждайте условия с продавцом и проверяйте товар перед покупкой.</p>

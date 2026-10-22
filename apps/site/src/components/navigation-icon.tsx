@@ -2,9 +2,16 @@ import type { ReactNode } from 'react';
 
 export type NavigationSection = 'home' | 'search' | 'community' | 'calendar' | 'catalog' | 'prices' | 'stores' | 'tierlists' | 'favorites' | 'profile' | 'market' | 'feed';
 /** Header groups have their own glyphs; they are not pages. */
-export type NavigationIconName = NavigationSection | 'sign-in' | 'can';
+export type NavigationIconName = NavigationSection | 'sign-in' | 'can' | 'dating';
 
 const GLYPHS: Record<NavigationIconName, ReactNode> = {
+  // Two stacked cards with a heart: drink dating in the community.
+  dating: (
+    <>
+      <path className="nav-icon-part" d="M6.6 4.3 14.4 2.2a2 2 0 0 1 2.45 1.41l.33 1.24H8.9a3.4 3.4 0 0 0-3.33 2.7L5.2 7.7l-.04-.15a2 2 0 0 1 1.44-3.25Z" />
+      <path fillRule="evenodd" d="M9 6.5h9a3 3 0 0 1 3 3v9.5a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V9.5a3 3 0 0 1 3-3Zm4.5 11.6s-3.9-2.3-3.9-5a2.1 2.1 0 0 1 3.9-1.1 2.1 2.1 0 0 1 3.9 1.1c0 2.7-3.9 5-3.9 5Z" />
+    </>
+  ),
   market: <path d="M3 3h18l1 6a3 3 0 0 1-5 2 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-5-2l1-6Zm1 10h5v8H4v-8Zm7 0h9v8h-9v-8Z" />,
   feed: (
     <>

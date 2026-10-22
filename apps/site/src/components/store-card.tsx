@@ -102,7 +102,11 @@ export function StoreDetail({store,own,apiKey,map}:{store:StoreView;own:boolean;
         {store.catalog.length>0&&<p className="store-detail-summary">{store.catalog.length} {plural(store.catalog.length,['напиток','напитка','напитков'])}{cheapest!==null&&<> · от <strong>{rub(cheapest)}</strong></>}</p>}
       </div>
       <div className="store-detail-actions">
-        <a className="community-button" href={storeMapUrl(store)} target="_blank" rel="noopener noreferrer">Маршрут ↗</a>
+        {/* On phones this button floats above the tab bar, so the route is one tap away while scrolling the prices. */}
+        <a className="community-button store-route-button" href={storeMapUrl(store)} target="_blank" rel="noopener noreferrer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" /><circle cx="12" cy="10" r="2.4" /></svg>
+          Открыть в Яндекс Картах
+        </a>
         {own&&<Link href={`/market/stores/${store.id}/edit`} className="community-button community-button-secondary">Редактировать</Link>}
       </div>
     </header>

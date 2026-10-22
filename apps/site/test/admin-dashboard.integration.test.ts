@@ -77,3 +77,18 @@ it('counts members active today and this week, hidden status included and blocke
   expect((await pool.query(`select 1 from "activityDay" where "userId"=$1 and day<(now() at time zone 'Europe/Moscow')::date-400`, [earlier])).rowCount).toBe(0);
   await pool.query('delete from "userBlock" where "userId"=$1', [blocked]);
 });
+it('counts dating swipes and swipers, blocked members excluded', async () => {
+  const data = async () => getAdminDashboardData('', 'analytics');
+  const [fan, other, blocked] = [ids[12]!, ids[13]!, ids[14]!];
+  const before = await data();
+  await pool.query(`insert into "drinkSwipe" ("userId",brand,flavor,liked) values ($1,'Dash','a',true),($1,'Dash','b',false),($2,'Dash','a',true),($3,'Dash','a',true)`, [fan, other, blocked]);
+  await pool.query(`insert into "userBlock" ("userId") values ($1)`, [blocked]);
+  const after = await data();
+  expect(after.metrics!.swipes - before.metrics!.swipes).toBe(3);
+  expect(after.metrics!.swipeLikes - before.metrics!.swipeLikes).toBe(2);
+  expect(after.metrics!.swipers - before.metrics!.swipers).toBe(2);
+  expect(after.metrics!.swipersWeek - before.metrics!.swipersWeek).toBe(2);
+  expect(after.swipesByDay).toHaveLength(14);
+  expect(after.swipesByDay.at(-1)!.count - before.swipesByDay.at(-1)!.count).toBe(3);
+  await pool.query('delete from "userBlock" where "userId"=$1', [blocked]);
+});

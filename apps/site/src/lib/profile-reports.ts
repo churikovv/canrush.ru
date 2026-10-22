@@ -22,6 +22,7 @@ const CONTENT_SOURCES: Record<ContentReportKind, string> = {
     join "marketOrder" o on o.id=m."orderId" join "marketListing" l on l.id=o."listingId"
     where m.id=$1 and $2 in (o."buyerId", l."sellerId")`,
   store: 'select "ownerId" as author, name || E\'\\n\' || description as excerpt from "marketStore" where id=$1',
+  story: 'select "userId" as author, case when caption = \'\' then \'История без подписи\' else caption end as excerpt from "story" where id=$1',
 };
 
 async function submit(

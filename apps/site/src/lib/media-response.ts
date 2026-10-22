@@ -6,10 +6,10 @@ const NO_STORE = { 'Cache-Control': 'no-store' };
 const missing = () => new Response(null, { status: 404, headers: NO_STORE });
 
 /**
- * Serves a stored wall or comment attachment: `?size=thumbnail` for the preview, the full file otherwise,
+ * Serves a stored wall or comment attachment or a story: `?size=thumbnail` for the preview, the full file otherwise,
  * and byte ranges for videos (Safari does not play them without).
  */
-export async function serveStoredMedia(request: Request, table: 'wallPhoto' | 'commentMedia', id: string): Promise<Response> {
+export async function serveStoredMedia(request: Request, table: 'wallPhoto' | 'commentMedia' | 'story', id: string): Promise<Response> {
   if (!PHOTO_ID_PATTERN.test(id)) return missing();
   const db = getPool();
   const common = { 'X-Content-Type-Options': 'nosniff', 'Content-Disposition': 'inline', ...NO_STORE };

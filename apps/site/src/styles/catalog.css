@@ -481,3 +481,20 @@
 .review-sort button[aria-pressed="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
 .review-sort button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .review-sort button { transition: none; } }
+
+/* Dating counts under the drink name: hearts from right swipes, crosses from left ones. */
+/* «В дейтинге»: its own card island under the name, like the other panels of the product. */
+.catalog-swipe-card { display: grid; gap: 12px; margin: 8px 0 16px; padding: 16px 20px; border: 1px solid var(--color-control); border-radius: 16px; background: var(--color-surface); }
+.catalog-swipe-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.catalog-swipe-head strong { font-size: 1rem; }
+.catalog-swipe-head a { padding: 6px 12px; border-radius: 999px; background: var(--color-subtle); color: var(--theme-link, #0058cc); font-size: .875rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.catalog-swipe-head a:hover { background: var(--color-control); }
+.catalog-swipe-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.catalog-swipe-stats > span { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .8125rem; }
+.catalog-swipe-stats svg { grid-row: span 2; }
+.catalog-swipe-stats b { color: var(--color-ink); font-size: 1.375rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.catalog-swipe-stats .is-liked svg { color: #e5484d; }
+.catalog-swipe-stats .is-skipped svg { color: var(--color-muted-strong); }
+/* Share of «нравится» among all decisions; the rest of the track is «пропустили». */
+.catalog-swipe-bar { display: block; height: 6px; overflow: hidden; border-radius: 999px; background: var(--color-control); }
+.catalog-swipe-bar > span { display: block; height: 100%; border-radius: inherit; background: #e5484d; }

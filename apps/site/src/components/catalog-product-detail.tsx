@@ -3,6 +3,8 @@ import { CatalogVolumeTabs } from '@/components/catalog-volume-tabs';
 import { CatalogPriceHistory } from '@/components/catalog-price-history';
 import type { PriceSeries } from '@/lib/price-history';
 import Image from 'next/image';
+import Link from '@/components/navigation-progress';
+import type { SwipeCounts } from '@/lib/drink-swipes';
 import type { CatalogGroup, PublishedIngredients } from '@canrush/shared';
 import { CatalogProductIngredients } from '@/components/catalog-product-ingredients';
 import { CatalogFavoriteButton } from '@/components/catalog-favorite-button';
@@ -29,9 +31,11 @@ interface CatalogProductDetailProps {
   summary: ReviewSummary;
   userReview: ReviewData | null;
   activeTab: ProductTab;
+  /** Dating in the community: how many swiped the drink right («нравится») and left («пропустить»). */
+  swipes?: SwipeCounts;
 }
 
-export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, activeTab }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, activeTab, swipes }: CatalogProductDetailProps) {
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
   const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
 
@@ -64,6 +68,17 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
         </div>
 
         <h1>{flavorName(group.flavor)}</h1>
+        {swipes && (swipes.liked > 0 || swipes.skipped > 0) && <section className="catalog-swipe-card" aria-label={`В дейтинге: свайпнули ${swipes.liked}, пропустили ${swipes.skipped}`}>
+          <div className="catalog-swipe-head">
+            <strong>В дейтинге</strong>
+            <Link href="/community?type=dating">Свайпать ↗</Link>
+          </div>
+          <div className="catalog-swipe-stats">
+            <span className="is-liked"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.5.8-1.3 2.3-2.5 4.4-2.5 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21Z" /></svg><b>{swipes.liked}</b>Свайпнули</span>
+            <span className="is-skipped"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg><b>{swipes.skipped}</b>Пропустили</span>
+          </div>
+          <span className="catalog-swipe-bar" aria-hidden="true"><span style={{ width: `${Math.round(swipes.liked / (swipes.liked + swipes.skipped) * 100)}%` }} /></span>
+        </section>}
         {isAssortmentFlavor(group.flavor) && <p className="catalog-product-note">В источнике указано несколько напитков в ассортименте. Конкретный вкус и фотография отдельной банки не предоставлены.</p>}
 
         <CatalogProductTabs active={activeTab} reviewCount={summary.count} />

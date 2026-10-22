@@ -40,6 +40,7 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
   const maxRegistrations = Math.max(1, ...data.registrations.map(day => day.count));
   const maxActivity = Math.max(1, ...data.activity.map(day => day.count));
   const maxOnline = Math.max(1, ...data.onlineByHour.map(hour => hour.peak));
+  const maxSwipes = Math.max(1, ...data.swipesByDay.map(day => day.count));
   const onlinePeak = data.onlineByHour.reduce<(typeof data.onlineByHour)[number] | null>((best, hour) => hour.peak > 0 && hour.peak >= (best?.peak ?? 0) ? hour : best, null);
   return <AdminShell active={tab} email={admin.email} title={label} subtitle={SUBTITLES[tab]}>
     {notice && <div className="admin-feedback admin-feedback-success" role="status">{notice}</div>}
@@ -80,6 +81,21 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
         <section className="admin-data-panel" aria-labelledby="admin-state-title"><div className="admin-panel-heading"><h2 id="admin-state-title">Контент и модерация</h2></div><dl className="admin-summary-list">
           <div><dt>Опубликованные тирлисты</dt><dd>{number(metrics.published)}</dd></div><div><dt>Черновики</dt><dd>{number(metrics.drafts)}</dd></div>
           <div><dt>Заблокированные участники</dt><dd>{number(metrics.blocked)}</dd></div><div><dt>Средняя оценка напитков</dt><dd>{metrics.averageRating === null ? 'Нет оценок' : `${number(metrics.averageRating)} / 10`}</dd></div>
+        </dl></section>
+      </div>
+      <div className="admin-analytics-grid">
+        <section className="admin-data-panel" aria-labelledby="admin-swipes-title"><div className="admin-panel-heading"><h2 id="admin-swipes-title">Свайпы в дейтинге</h2><span>14 дней · МСК</span></div>
+          <div className="admin-registration-chart" role="img" aria-label={`Свайпы по дням: ${data.swipesByDay.map(day => `${day.day}: ${day.count}, участников ${day.members}`).join('; ')}`}>
+            {data.swipesByDay.map(day => <div className="admin-chart-column" key={day.day} title={`${day.day}: ${day.count} свайпов (♥ ${day.likes}, ✕ ${day.count - day.likes}) · участников ${day.members}`}><strong>{day.count}</strong><div className="admin-chart-track"><span style={{ height: `${day.count / maxSwipes * 100}%` }} /></div><small>{day.day.slice(8)}</small></div>)}
+          </div>
+          <p className="admin-chart-note">{data.swipesByDay.some(day => day.count) ? 'По дню последнего решения: повторный свайп переносит его на новый день, «Вернуть» удаляет.' : 'За последние 14 дней свайпов нет.'}</p>
+        </section>
+        <section className="admin-data-panel" aria-labelledby="admin-dating-title"><div className="admin-panel-heading"><h2 id="admin-dating-title">Дейтинг</h2></div><dl className="admin-summary-list">
+          <div><dt>Свайпов всего</dt><dd>{number(metrics.swipes)}</dd></div>
+          <div><dt>Нравится / Пропущено</dt><dd>{number(metrics.swipeLikes)} / {number(metrics.swipes - metrics.swipeLikes)}</dd></div>
+          <div><dt>Свайпали участников</dt><dd>{number(metrics.swipers)}</dd></div>
+          <div><dt>Из них за 7 дней</dt><dd>{number(metrics.swipersWeek)}</dd></div>
+          <div><dt>Топ лайков</dt><dd className="admin-summary-wrap">{metrics.topSwipe ? `${metrics.topSwipe.brand}, ${flavorName(metrics.topSwipe.flavor)} · ${number(metrics.topSwipe.likes)}` : 'Пока нет'}</dd></div>
         </dl></section>
       </div>
     </>}

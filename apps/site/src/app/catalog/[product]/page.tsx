@@ -9,6 +9,7 @@ import { BrandShell } from '@/components/brand-shell';
 import { CatalogProductDetail } from '@/components/catalog-product-detail';
 import type { ProductTab } from '@/components/catalog-product-tabs';
 import { ProfileNavigation } from '@/components/profile-navigation';
+import { getSwipeCounts } from '@/lib/drink-swipes';
 import { getProductIngredients } from '@/lib/ingredients';
 import { auth } from '@/lib/auth';
 import { getCatalogGroup, isFavorite, loadAllCatalogGroups } from '@/lib/catalog';
@@ -67,12 +68,13 @@ export default async function CatalogProductPage({
   ]);
   if (!group) notFound();
 
-  const [favorite, reviews, summary, userReview, ingredients] = await Promise.all([
+  const [favorite, reviews, summary, userReview, ingredients, swipes] = await Promise.all([
     session ? isFavorite(session.user.id, group.brand, group.flavor) : Promise.resolve(false),
     getReviewsForProduct(group.brand, group.flavor, session?.user.id ?? null),
     getReviewSummary(group.brand, group.flavor),
     session ? getUserReview(session.user.id, group.brand, group.flavor) : Promise.resolve(null),
     getProductIngredients(group.brand, group.flavor),
+    getSwipeCounts(group.brand, group.flavor),
   ]);
 
   const priceHistory=activeTab==='prices'?await getPriceHistory((await selectedCity()).id,group.brand,group.flavor):[];
@@ -89,6 +91,7 @@ export default async function CatalogProductPage({
         summary={summary}
         userReview={userReview}
         activeTab={activeTab}
+        swipes={swipes}
       />
     </BrandShell>
   );

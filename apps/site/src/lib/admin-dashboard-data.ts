@@ -19,6 +19,9 @@ export interface AdminMetrics {
   published: number; drafts: number; blocked: number; averageRating: number | null;
   /** Members with signed-in activity today (Moscow day) and in the last 7 days including today, hidden status included. */
   activeToday: number; activeWeek: number;
+  /** Dating: decisions kept now (a repeat swipe replaces one, «вернуть» deletes it), without blocked members. */
+  swipes: number; swipeLikes: number; swipers: number; swipersWeek: number;
+  topSwipe: { brand: string; flavor: string; likes: number } | null;
 }
 export interface AdminReportEntry { id: string; reason: ReportReason; comment: string; status: 'open' | 'resolved' | 'dismissed'; createdAt: Date; authorName: string; authorUsername: string | null; targetName: string; targetUsername: string | null; contentKind: ContentReportKind | null; excerpt: string; pagePath: string | null }
 export interface AdminMarketEntry { id: string; title: string; sellerId: string; sellerName: string; sellerEmail: string; username: string | null; closed: boolean; deletedAt: Date | null; blockedAt: Date | null; isAdmin: boolean; createdAt: Date }
@@ -33,16 +36,18 @@ export interface AdminDashboardData {
   onlineByHour: { hour: string; peak: number }[];
   /** Last 14 Moscow days, oldest first: members with signed-in activity that day. */
   activity: { day: string; count: number }[];
+  /** Last 14 Moscow days, oldest first: swipes by the day of the decision and the members who made them. */
+  swipesByDay: { day: string; count: number; likes: number; members: number }[];
 }
 
 export async function getAdminDashboardData(search: string, tab: AdminTab, requestedPage = 1): Promise<AdminDashboardData> {
   const db = getPool();
-  const result: AdminDashboardData = { market: [], reports: [], comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [], activity: [] };
+  const result: AdminDashboardData = { market: [], reports: [], comments: [], users: [], tierLists: [], reviews: [], admins: [], wall: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [], activity: [], swipesByDay: [] };
   if (tab === 'campaigns') return result;
   if (tab === 'analytics') {
     await db.query(`delete from "presenceSample" where bucket < now() - interval '8 days'`);
     await db.query(`delete from "activityDay" where day < (now() at time zone 'Europe/Moscow')::date - 400`);
-    const [metrics, registrations, online, activity] = await Promise.all([
+    const [metrics, registrations, online, activity, swipes] = await Promise.all([
       db.query<AdminMetrics>(`select
         (select count(*)::int from "user") as users,
         -- Same rule as the profile status (getPresence): a heartbeat within 2 minutes and a live session.
@@ -64,7 +69,15 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
         (select count(*)::int from "activityDay" a where a.day=(now() at time zone 'Europe/Moscow')::date
           and not exists(select 1 from "userBlock" b where b."userId"=a."userId")) as "activeToday",
         (select count(distinct a."userId")::int from "activityDay" a where a.day>(now() at time zone 'Europe/Moscow')::date-7
-          and not exists(select 1 from "userBlock" b where b."userId"=a."userId")) as "activeWeek"`),
+          and not exists(select 1 from "userBlock" b where b."userId"=a."userId")) as "activeWeek",
+        (select count(*)::int from "drinkSwipe" s where not exists(select 1 from "userBlock" b where b."userId"=s."userId")) as swipes,
+        (select count(*)::int from "drinkSwipe" s where liked and not exists(select 1 from "userBlock" b where b."userId"=s."userId")) as "swipeLikes",
+        (select count(distinct s."userId")::int from "drinkSwipe" s where not exists(select 1 from "userBlock" b where b."userId"=s."userId")) as swipers,
+        (select count(distinct s."userId")::int from "drinkSwipe" s where s."createdAt">=now()-interval '7 days'
+          and not exists(select 1 from "userBlock" b where b."userId"=s."userId")) as "swipersWeek",
+        (select json_build_object('brand', brand, 'flavor', flavor, 'likes', count(*)::int) from "drinkSwipe" s
+          where liked and not exists(select 1 from "userBlock" b where b."userId"=s."userId")
+          group by brand, flavor order by count(*) desc, brand, flavor limit 1) as "topSwipe"`),
       db.query<{ day: string; count: number }>(`with days as (
         select generate_series((now() at time zone 'Europe/Moscow')::date-13, (now() at time zone 'Europe/Moscow')::date, interval '1 day')::date as day
       ), counts as (select ("createdAt" at time zone 'Europe/Moscow')::date as day, count(*)::int as count from "user"
@@ -81,7 +94,16 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
       ), counts as (select a.day, count(*)::int as count from "activityDay" a
         where a.day>=(now() at time zone 'Europe/Moscow')::date-13 and not exists(select 1 from "userBlock" b where b."userId"=a."userId") group by a.day)
       select to_char(days.day,'YYYY-MM-DD') as day, coalesce(counts.count,0) as count from days left join counts using(day) order by days.day`),
+      db.query<{ day: string; count: number; likes: number; members: number }>(`with days as (
+        select generate_series((now() at time zone 'Europe/Moscow')::date-13, (now() at time zone 'Europe/Moscow')::date, interval '1 day')::date as day
+      ), counts as (select (s."createdAt" at time zone 'Europe/Moscow')::date as day, count(*)::int as count, count(*) filter (where s.liked)::int as likes,
+          count(distinct s."userId")::int as members from "drinkSwipe" s
+        where s."createdAt">=(((now() at time zone 'Europe/Moscow')::date-13)::timestamp at time zone 'Europe/Moscow')
+          and not exists(select 1 from "userBlock" b where b."userId"=s."userId") group by 1)
+      select to_char(days.day,'YYYY-MM-DD') as day, coalesce(counts.count,0) as count, coalesce(counts.likes,0) as likes, coalesce(counts.members,0) as members
+      from days left join counts using(day) order by days.day`),
     ]);
+    result.swipesByDay = swipes.rows;
     result.activity = activity.rows;
     result.onlineByHour = online.rows;
     result.metrics = metrics.rows[0] ?? null;

@@ -22,6 +22,7 @@ export const CONTENT_REPORT_KINDS = {
   'market-listing': 'Объявление',
   'market-message': 'Сообщение в заказе',
   store: 'Магазин',
+  story: 'История',
 } as const;
 export type ContentReportKind = keyof typeof CONTENT_REPORT_KINDS;
 export function contentReportKind(value: string): ContentReportKind | null {

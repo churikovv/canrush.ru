@@ -31,6 +31,8 @@
 .admin-summary-list { margin: 0; display: grid; }
 .admin-summary-list > div:last-child { border-bottom: 0; }
 .admin-summary-list dd { margin: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* A drink name is longer than a number: let it wrap to the right instead of squeezing its label. */
+.admin-summary-list dd.admin-summary-wrap { white-space: normal; text-align: right; }
 .admin-table-search { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .admin-table-search input { max-width: 420px; }
 .admin-table-search input::placeholder, .admin-invite-form input::placeholder { color: var(--theme-muted, #59616b); }

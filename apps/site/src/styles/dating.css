@@ -1,0 +1,60 @@
+/* «Дейтинг» in the community: a stack of drink cards to swipe, round action buttons, the member's matches. */
+.dating { display: grid; gap: 16px; width: min(100%, 520px); margin: 0 auto; }
+.dating-head h1 { margin: 0 0 6px; font-size: clamp(1.5rem, 6vw, 2rem); }
+.dating-head p { margin: 0; color: var(--color-muted-strong); line-height: 1.45; }
+
+.swipe { position: relative; display: grid; gap: 14px; outline: none; }
+/* Card and buttons fit one phone screen under the switcher and above the tab bar. */
+.swipe-stack { position: relative; height: clamp(360px, calc(100dvh - 420px - var(--site-tab-bar-offset, 0px)), 600px); }
+.swipe-card { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 28px; background: var(--theme-panel, #fff); box-shadow: 0 18px 40px -20px rgb(10 20 50 / .45), 0 0 0 1px var(--theme-line, #dfe3e8); touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.swipe-card[data-depth="1"] { transform: translateY(14px) scale(.95); opacity: .9; }
+.swipe-card[data-depth="2"] { transform: translateY(28px) scale(.9); opacity: .6; }
+.swipe-card.is-top { z-index: 2; cursor: grab; transform: translateX(var(--dx, 0)) rotate(var(--rot, 0deg)); }
+.swipe-card.is-top:active { cursor: grabbing; }
+.swipe-card.is-resting, .swipe-card.is-leaving { transition: transform 260ms cubic-bezier(.2, .8, .2, 1), opacity 260ms ease-out; }
+.swipe-card.is-leaving { opacity: 0; }
+.swipe-cover { display: grid; flex: 1; min-height: 0; place-items: center; padding: 16px; background: #fff; }
+.swipe-cover img { width: auto; max-width: 78%; height: 100%; max-height: 100%; object-fit: contain; mix-blend-mode: multiply; pointer-events: none; }
+.swipe-copy { display: grid; gap: 4px; padding: 16px 20px 20px; }
+.swipe-copy small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.swipe-copy h2 { margin: 0; font-size: 1.625rem; line-height: 1.15; overflow-wrap: anywhere; }
+.swipe-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0; }
+.swipe-facts span { padding: 5px 10px; border-radius: 999px; background: var(--color-subtle); color: var(--color-ink); font-size: .8125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.swipe-facts .is-price { background: var(--color-brand); color: #fff; }
+.swipe-reason { margin: 4px 0 0; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.4; }
+.swipe-more { justify-self: start; margin-top: 4px; color: var(--theme-link, #0058cc); font-size: .875rem; font-weight: 700; }
+.swipe-stamp { position: absolute; z-index: 3; top: 26px; padding: 6px 14px; border: 4px solid currentColor; border-radius: 12px; font-size: 1.5rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; pointer-events: none; }
+.swipe-stamp.is-like { left: 22px; color: #16a34a; opacity: var(--like, 0); rotate: -14deg; }
+.swipe-stamp.is-skip { right: 22px; color: #e5484d; opacity: var(--skip, 0); rotate: 14deg; }
+.swipe-empty { display: grid; place-content: center; gap: 10px; height: 100%; padding: 24px; border: 2px dashed var(--theme-line, #dfe3e8); border-radius: 28px; text-align: center; }
+.swipe-empty strong { font-size: 1.375rem; }
+.swipe-empty p { margin: 0; color: var(--color-muted-strong); line-height: 1.45; }
+.swipe-empty .community-button { justify-self: center; }
+
+.swipe-actions { display: flex; align-items: center; justify-content: center; gap: 22px; }
+.swipe-button { display: grid; place-items: center; width: 68px; height: 68px; padding: 0; border: 0; border-radius: 50%; background: var(--theme-panel, #fff); box-shadow: 0 10px 24px -10px rgb(10 20 50 / .45), 0 0 0 1px var(--theme-line, #dfe3e8); cursor: pointer; transition: transform 150ms ease-out; }
+.swipe-button:active:not(:disabled) { transform: scale(.92); }
+.swipe-button:disabled { opacity: .4; cursor: default; }
+.swipe-button.is-skip { color: #e5484d; }
+.swipe-button.is-like { color: #fff; background: linear-gradient(135deg, #ff4e8a, #e5484d); box-shadow: 0 12px 26px -10px rgb(229 72 77 / .7); }
+.swipe-button.is-undo { width: 48px; height: 48px; color: var(--color-muted-strong); }
+/* Over the top of the deck, where the eye is while swiping. */
+.swipe-notice { position: absolute; z-index: 5; top: 12px; left: 50%; width: max-content; max-width: calc(100% - 24px); margin: 0; padding: 10px 16px; border-radius: 18px; background: var(--color-ink); color: var(--color-surface); font-weight: 700; line-height: 1.35; text-align: center; transform: translateX(-50%); box-shadow: 0 12px 28px -12px rgb(0 0 0 / .5); }
+.swipe-notice a { color: inherit; }
+.swipe-notice.is-match { background: linear-gradient(135deg, #ff4e8a, #8b5cf6); color: #fff; animation: swipe-pop 420ms cubic-bezier(.2, .9, .3, 1.4); }
+@keyframes swipe-pop { from { transform: translateX(-50%) scale(.7); opacity: 0; } }
+
+.dating-matches h2 { margin: 0 0 10px; font-size: 1.25rem; }
+.dating-matches ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.dating-matches a { display: grid; gap: 2px; color: inherit; text-decoration: none; }
+.dating-match-cover { display: grid; place-items: center; aspect-ratio: 1; margin-bottom: 4px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--theme-line, #dfe3e8); }
+.dating-match-cover img { width: 80%; height: 80%; object-fit: contain; mix-blend-mode: multiply; }
+.dating-matches strong { font-size: .8125rem; }
+.dating-matches a > span:last-child { overflow: hidden; color: var(--color-muted-strong); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+/* +XP for the first swipes: floats up from the buttons and fades. */
+.swipe-xp { position: absolute; z-index: 4; bottom: 70px; left: 50%; padding: 4px 10px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .875rem; font-weight: 800; pointer-events: none; transform: translateX(-50%); animation: swipe-xp 1.2s ease-out forwards; }
+@keyframes swipe-xp { from { opacity: 0; translate: 0 10px; } 20% { opacity: 1; translate: 0 0; } 70% { opacity: 1; } to { opacity: 0; translate: 0 -24px; } }
+.dating-head .dating-reward { margin-top: 8px; font-size: .875rem; }
+.dating-reward .profile-tag { vertical-align: middle; }
+.swipe-notice .profile-tag { vertical-align: middle; }
+@media (prefers-reduced-motion: reduce) { .swipe-card.is-resting, .swipe-card.is-leaving, .swipe-button { transition: none; } .swipe-notice.is-match, .swipe-xp { animation: none; } }

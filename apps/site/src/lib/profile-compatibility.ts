@@ -8,7 +8,8 @@ const key = (item: Preference) => JSON.stringify([item.brand, canonicalProductFl
 const unique = <T extends Preference>(items: T[]) => [...new Map(items.filter(item => isResolvedFlavor(canonicalProductFlavor(item.brand, item.flavor))).map(item => [key(item), item])).values()];
 // Only explicit flavor tokens; an edition name or “original” is not a taste family.
 const flavors = new Set(['apple', 'mango', 'peach', 'pear', 'lychee', 'cherry', 'berry', 'blueberry', 'raspberry', 'strawberry', 'watermelon', 'grapefruit', 'lemon', 'lime', 'citrus', 'orange', 'pineapple', 'guava', 'passion_fruit', 'pomegranate', 'grape', 'coconut']);
-function tasteTokens(item: Preference) {
+/** Fruit and flavour families named in a flavour key (no editions, no «original»); shared with recommendations. */
+export function tasteTokens(item: Preference) {
   const flavor = canonicalProductFlavor(item.brand, item.flavor).replace(':sugarfree', '').replace('passion_fruit', 'passionfruit');
   return [...new Set(flavor.split(/[^a-z]+/).map(token => token === 'passionfruit' ? 'passion_fruit' : token).filter(token => flavors.has(token)))];
 }

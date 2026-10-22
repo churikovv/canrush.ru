@@ -229,3 +229,30 @@
 /* «Пожаловаться» under a listing or a store; in the chat beside the partner's message. */
 .market-report { display: flex; justify-content: flex-end; margin-top: 16px; }
 .market-message .content-report-button { width: 32px; height: 32px; align-self: center; opacity: .7; }
+
+/* Store page: «Открыть в Яндекс Картах» sits in the header on desktop and floats above the tab bar on phones. */
+.store-detail-actions .store-route-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+@media (max-width: 639px) {
+  .store-detail { padding-bottom: calc(var(--site-tab-bar-offset, 0px) + 104px); }
+  .store-detail-actions .store-route-button { position: fixed; z-index: 30; left: 16px; right: 16px; bottom: calc(var(--site-tab-bar-offset, 0px) + 24px); min-height: 52px; border: 0; border-radius: 999px; background: var(--color-brand); color: #fff; font-weight: 700; box-shadow: 0 10px 28px -8px rgb(0 60 160 / .55); }
+  .store-detail-actions .store-route-button:hover { background: color-mix(in srgb, var(--color-brand) 88%, #000); }
+  /* The site's cookie notice sits at the same spot until it is accepted. */
+  html[data-cookie-notice="visible"] .store-detail-actions .store-route-button { bottom: calc(var(--site-tab-bar-offset, 0px) + 112px); }
+}
+
+/* Listing card in the list: photo, then title, city and two lines of description with an even rhythm. */
+.market-card { gap: 0; padding: 8px; }
+.market-card-link { display: flex; flex: 1; flex-direction: column; gap: 12px; color: inherit; text-decoration: none; }
+.market-card-copy { display: grid; gap: 4px; padding: 6px; }
+.market-card-copy h2 { margin: 0; overflow-wrap: anywhere; }
+.market-card-price { color: var(--color-ink); font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.market-card-price small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 500; }
+.market-card-copy .market-city { margin: 0; }
+.market-card-copy .market-card-description { min-height: 0; margin: 4px 0 0; color: var(--color-text); }
+@media (max-width: 639px) {
+  .market-card { padding: 6px; border-radius: 18px; }
+  .market-card-link { gap: 10px; }
+  .market-card-copy { padding: 6px 4px 4px; }
+  .market-card-copy h2 { font-size: 1rem; }
+  .market-card-price { font-size: 1.125rem; }
+}
