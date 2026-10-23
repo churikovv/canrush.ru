@@ -116,6 +116,16 @@
 .feed-review-criteria { color: var(--color-muted-strong); font-size: .8125rem; }
 .feed-review-criteria b { color: var(--color-ink); font-variant-numeric: tabular-nums; }
 .feed-review-text { display: -webkit-box; overflow: hidden; margin-top: 2px; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow-wrap: anywhere; }
+/* The like sits over the card's top-right corner, outside its link. */
+.feed-review-item { position: relative; }
+.feed-review-item .feed-review-copy { padding-right: 56px; }
+.feed-review-like { position: absolute; top: 12px; right: 14px; display: inline-flex; color: var(--color-muted-strong); font-size: .9375rem; font-weight: 700; }
+.feed-review-like .tier-list-card-likes { display: inline-flex; align-items: center; gap: 5px; }
+/* Infinite home feed: the loader, the «Показать ещё» button after auto pages and the end of the feed. */
+.feed-more-status { display: grid; justify-items: center; padding: 16px 0 4px; }
+button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.feed-more-loading, .feed-more-end { color: var(--color-muted-strong); font-size: .875rem; }
+.feed-more-end { text-decoration: none; }
 @media (max-width: 639px) { .feed-review { grid-template-columns: 88px minmax(0, 1fr); gap: 12px; } .feed-review-cover { min-height: 120px; } }
 .feed-event-more { justify-self: start; color: var(--theme-link, #0058cc); font-size: .875rem; font-weight: 700; text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { .feed-review { transition: none; } }

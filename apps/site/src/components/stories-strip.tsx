@@ -12,6 +12,8 @@ import type { StoryRecommendation, WeeklyDigest } from '@/lib/story-digest';
 import { nativeImage, nativeShare } from '@/lib/native-app';
 import { pickReason } from '@/lib/pick-reason';
 import { MAX_STORY_CAPTION } from '@/lib/story-limits';
+import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
+import { NRJ_PARTY } from '@/lib/partners';
 import { renderWeekShare } from '@/lib/week-share-image';
 import type { StoryAuthor, StoryItem, StoryLiker } from '@/lib/stories';
 import { WALL_MEDIA_ACCEPT } from '@/lib/wall-media-limits';
@@ -19,10 +21,12 @@ import { WALL_MEDIA_ACCEPT } from '@/lib/wall-media-limits';
 export type StorySlide =
   | { kind: 'media'; story: StoryItem }
   | { kind: 'digest'; digest: WeeklyDigest; page: DigestPage }
-  | { kind: 'pick'; item: StoryRecommendation; basis: 'similar' | 'community' };
+  | { kind: 'pick'; item: StoryRecommendation; basis: 'similar' | 'community' }
+  | { kind: 'promo'; page: 'channel' | 'bot'; miniApp?: string | null }
+  | { kind: 'partner' };
 /** Slides of «Твоя неделя», in the order they play. */
 export type DigestPage = 'empty' | 'intro' | 'cans' | 'drink' | 'progress' | 'discover' | 'summary';
-export interface StoryGroupView { key: string; kind: 'user' | 'week' | 'picks'; title: string; author?: StoryAuthor; own?: boolean; seen?: boolean; slides: StorySlide[] }
+export interface StoryGroupView { key: string; kind: 'user' | 'week' | 'picks' | 'telegram' | 'partner'; title: string; author?: StoryAuthor; own?: boolean; seen?: boolean; slides: StorySlide[] }
 
 /** A photo, GIF or a system card stays this long; a video plays to its end. */
 const SLIDE_MS = 5000;
@@ -87,6 +91,8 @@ function ago(iso: string) {
 function Avatar({ group, size = 56 }: { group: StoryGroupView; size?: number }) {
   if (group.kind === 'week') return <span className="story-avatar story-avatar-week" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="m12.8 12-2.3 3.2h3l-2.3 3.3" /></svg></span>;
   if (group.kind === 'picks') return <span className="story-avatar story-avatar-picks" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5 14 9l5.5 2-5.5 2-2 5.5-2-5.5-5.5-2L10 9l2-5.5Z" /><path d="M19 3v3M17.5 4.5h3" /></svg></span>;
+  if (group.kind === 'telegram') return <span className="story-avatar story-avatar-telegram" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M21.4 4.3 2.9 11.5c-1.3.5-1.3 1.2-.2 1.6l4.7 1.5 1.8 5.6c.2.6.4.8.8.8s.6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.6c.3-1.3-.5-1.9-1.4-1.5ZM9.3 14.2l8.6-5.4c.4-.3.8-.1.5.2l-7.1 6.4-.3 3.1-1.7-4.3Z" /></svg></span>;
+  if (group.kind === 'partner') return <span className="story-avatar story-avatar-partner" aria-hidden="true"><Image src={NRJ_PARTY.logo} width={size} height={size} alt="" /></span>;
   const author = group.author!;
   return <span className="story-avatar" aria-hidden="true">{author.avatarId
     ? <Image src={`/api/profile-images/${author.avatarId}`} width={size} height={size} unoptimized alt="" />
@@ -218,6 +224,40 @@ function PickCard({ item, basis }: { item: StoryRecommendation; basis: 'similar'
   </div>;
 }
 
+/** «CanRush в Telegram»: the channel, then the bot and its Mini App, with their buttons. Links leave in a new tab. */
+function PromoCard({ page, miniApp }: { page: 'channel' | 'bot'; miniApp?: string | null }) {
+  const channel = page === 'channel';
+  return <div className="story-card story-card-telegram" data-page={page}>
+    {/* eslint-disable-next-line @next/next/no-img-element -- brand sticker */}
+    <img className="story-telegram-art" src="/brand/achievements/telegram.png" alt="" />
+    <small>{channel ? 'Telegram · @canrushoff' : 'Бот · @canrush_bot'}</small>
+    <strong>{channel ? 'CanRush в Telegram' : 'Бот найдёт, где дешевле'}</strong>
+    {channel
+      ? <p>Новости проекта, новые вкусы, розыгрыши и подборки — первыми.</p>
+      : <ul className="story-telegram-list"><li>Поиск напитка и цен в магазинах</li><li>Акции на избранное каждое утро</li><li>Подборка недели по понедельникам</li>{miniApp && <li><b>Mini App</b> — весь CanRush прямо в Telegram, вход в один тап</li>}</ul>}
+    {channel
+      ? <a className="story-card-cta" href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer">Подписаться на канал</a>
+      : <span className="story-telegram-actions">
+          {miniApp && <a className="story-card-cta" href={miniApp} target="_blank" rel="noopener noreferrer">Открыть Mini App</a>}
+          <a className={`story-card-cta${miniApp ? ' is-secondary' : ''}`} href={TELEGRAM_BOT_URL} target="_blank" rel="noopener noreferrer">Открыть бота</a>
+        </span>}
+  </div>;
+}
+
+/** The weekly NRJ PARTY story: the community that supports CanRush, what they post and where to follow them. */
+function PartnerCard() {
+  return <div className="story-card story-card-partner">
+    <span className="story-partner-logo"><Image src={NRJ_PARTY.logo} width={180} height={180} alt={NRJ_PARTY.name} /></span>
+    <small>При поддержке сообщества</small>
+    <strong>{NRJ_PARTY.name}</strong>
+    <p>🔥 {NRJ_PARTY.description}</p>
+    <span className="story-telegram-actions">
+      <a className="story-card-cta" href={NRJ_PARTY.telegram.url} target="_blank" rel="noopener noreferrer">Telegram {NRJ_PARTY.telegram.handle}</a>
+      <a className="story-card-cta is-secondary" href={NRJ_PARTY.tiktok.url} target="_blank" rel="noopener noreferrer">TikTok {NRJ_PARTY.tiktok.handle}</a>
+    </span>
+  </div>;
+}
+
 function StoryViewer({ groups, start, startSlide, signedIn, onClose, onSeen }: { groups: StoryGroupView[]; start: number; startSlide: number; signedIn: boolean; onClose: () => void; onSeen: (group: StoryGroupView, slide: StorySlide) => void }) {
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -282,6 +322,8 @@ function StoryViewer({ groups, start, startSlide, signedIn, onClose, onSeen }: {
       let result: string;
       if (slide.kind === 'digest') result = await shareImage(await renderWeekShare(slide.digest), `canrush-week-${slide.digest.to}.png`, 'Моя неделя в CanRush');
       else if (slide.kind === 'pick') result = await shareLink(new URL(slide.item.href, window.location.origin).toString(), `${slide.item.brand} ${slide.item.name} — CanRush`);
+      else if (slide.kind === 'partner') result = await shareLink(NRJ_PARTY.telegram.url, `${NRJ_PARTY.name} в Telegram`);
+      else if (slide.kind === 'promo') result = await shareLink(slide.page === 'channel' ? TELEGRAM_CHANNEL_URL : TELEGRAM_BOT_URL, slide.page === 'channel' ? 'CanRush в Telegram' : 'Бот CanRush в Telegram');
       else result = await shareLink(new URL(`/?story=${slide.story.id}`, window.location.origin).toString(), `История @${group.author?.username ?? ''} в CanRush`);
       if (result !== 'cancelled') setNotice(result === 'copied' ? 'Ссылка скопирована' : result === 'saved' ? 'Картинка сохранена' : 'Отправлено');
     } catch { setNotice('Не удалось поделиться. Попробуйте ещё раз.'); }
@@ -354,6 +396,8 @@ function StoryViewer({ groups, start, startSlide, signedIn, onClose, onSeen }: {
           : <img key={slide.story.id} src={`/api/story-media/${slide.story.id}`} alt={slide.story.caption || `История ${title}`} draggable={false} />)}
         {slide.kind === 'digest' && <DigestCard digest={slide.digest} page={slide.page} />}
         {slide.kind === 'pick' && <PickCard item={slide.item} basis={slide.basis} />}
+        {slide.kind === 'promo' && <PromoCard page={slide.page} miniApp={slide.miniApp} />}
+        {slide.kind === 'partner' && <PartnerCard />}
       </div>
       {slide.kind === 'media' && heart && <footer className="story-foot">
         {slide.story.caption && <p className="story-caption">{slide.story.caption}</p>}

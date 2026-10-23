@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
+import { NRJ_PARTY } from '@/lib/partners';
 import { useRef, useSyncExternalStore } from 'react';
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react';
 
@@ -48,7 +49,22 @@ export function SiteFooter() {
               <Image src="/brand/logo-wordmark-white.svg" width={63} height={18} alt="" />
             </div>
             <p className="footer-description">Первая социальная сеть для любителей энергетических напитков</p>
-            <p className="footer-about">Сравнивайте цены на энергетики, читайте отзывы о вкусе и дизайне, составляйте тирлисты и находите редкие банки в маркете сообщества.</p>
+            <div className="footer-partner">
+              <span className="footer-partner-logo"><Image src={NRJ_PARTY.logo} width={64} height={64} alt={NRJ_PARTY.name} /></span>
+              <div className="footer-partner-copy">
+                <p><span className="footer-label">При поддержке сообщества</span><strong>{NRJ_PARTY.name}</strong></p>
+                <div className="footer-partner-socials">
+                  <a href={NRJ_PARTY.telegram.url} target="_blank" rel="noopener noreferrer" aria-label={`Telegram ${NRJ_PARTY.name} ${NRJ_PARTY.telegram.handle} (откроется в новой вкладке)`}>
+                    <span className="footer-social-icon" aria-hidden="true"><Image src="/brand/icons/telegram.svg" width={24} height={24} alt="" /></span>
+                    <span>Telegram</span>
+                  </a>
+                  <a href={NRJ_PARTY.tiktok.url} target="_blank" rel="noopener noreferrer" aria-label={`TikTok ${NRJ_PARTY.name} ${NRJ_PARTY.tiktok.handle} (откроется в новой вкладке)`}>
+                    <span className="footer-social-icon" aria-hidden="true"><Image src="/brand/icons/tiktok-mark.svg" width={24} height={24} alt="" /></span>
+                    <span>TikTok</span>
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="footer-navigation">

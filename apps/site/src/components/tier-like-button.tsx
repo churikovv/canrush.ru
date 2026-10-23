@@ -1,15 +1,16 @@
 'use client';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { reviewDiscussionAction } from '@/app/catalog/discussion-actions';
 import { tierDiscussionAction } from '@/app/tierlists/discussion-actions';
 
 const count = new Intl.NumberFormat('ru-RU', { notation: 'compact', maximumFractionDigits: 1 });
 
 /**
- * Like on a tier list card, without opening the list: the same `vote` as the discussion under the list
- * (a like replaces a dislike). A guest is sent to sign in; the author's own list shows only the count.
+ * Like on a tier list card or a review in the feed, without opening it: the same `vote` as the discussion under it
+ * (a like replaces a dislike). A guest is sent to sign in; the author's own one shows only the count.
  */
-export function TierLikeButton({ id, likes, vote, signedIn, own }: { id: string; likes: number; vote: number; signedIn: boolean; own: boolean }) {
+export function TierLikeButton({ id, likes, vote, signedIn, own, kind = 'tierlist' }: { id: string; likes: number; vote: number; signedIn: boolean; own: boolean; kind?: 'tierlist' | 'review' }) {
   const router = useRouter();
   const pathname = usePathname();
   const [state, setState] = useState({ likes, vote });
@@ -27,7 +28,7 @@ export function TierLikeButton({ id, likes, vote, signedIn, own }: { id: string;
     setError('');
     setState({ vote: next, likes: state.likes + (liked ? -1 : 1) });
     startTransition(async () => {
-      const result = await tierDiscussionAction(id, 'vote', next);
+      const result = await (kind === 'review' ? reviewDiscussionAction : tierDiscussionAction)(id, 'vote', next);
       if ('interaction' in result && result.interaction) setState({ likes: result.interaction.likes, vote: result.interaction.vote });
       else { setState(previous); setError(result.error ?? 'Не удалось поставить лайк.'); }
     });

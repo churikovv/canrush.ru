@@ -3,10 +3,22 @@ import { StoriesStrip, type DigestPage, type StoryGroupView } from '@/components
 import { getRecommendations, getWeeklyDigest } from '@/lib/story-digest';
 import { getPool } from '@/db/pool';
 import { getStoryGroups } from '@/lib/stories';
+import { getTelegramEnv } from '@/lib/env';
+
+/** The Mini App link for the «Telegram» story; without the bot set up (or with it misconfigured) the story only shows the bot. */
+function moscowWeekStart(now = new Date()): string {
+  const day = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
+  day.setDate(day.getDate() - ((day.getDay() + 6) % 7));
+  return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+}
+
+function miniAppUrl(): string | null {
+  try { return getTelegramEnv()?.miniAppUrl ?? null; } catch { return null; }
+}
 
 /**
  * Stories at the top of the home page: for a signed-in member their «Твоя неделя» digest and «Тебе понравится»
- * picks first (built on the fly, nothing stored), then members' own stories of the last 24 hours.
+ * picks first (built on the fly, nothing stored), the «Telegram» promo for everyone, then members' stories of 24 hours.
  */
 export async function HomeStories({ viewerId, groups, openStory }: { viewerId: string | null; groups: CatalogGroup[]; openStory?: string }) {
   const viewer = viewerId ? (await getPool().query<{ id: string; username: string | null; avatarId: string | null }>(
@@ -29,6 +41,10 @@ export async function HomeStories({ viewerId, groups, openStory }: { viewerId: s
     key: `picks:${digest?.to ?? ''}`, kind: 'picks', title: 'Тебе понравится',
     slides: recommendations.items.map(item => ({ kind: 'pick', item, basis: recommendations.basis })),
   });
+  // For everyone, guests too: the channel and the bot. The key is versioned so a new campaign lights the ring again.
+  // The partner's story comes back every Monday (Moscow): its key is the week, so the ring lights up again.
+  system.push({ key: `nrj:${moscowWeekStart()}`, kind: 'partner', title: 'NRJ PARTY', slides: [{ kind: 'partner' }] });
+  system.push({ key: 'telegram:v1', kind: 'telegram', title: 'Telegram', slides: [{ kind: 'promo', page: 'channel' }, { kind: 'promo', page: 'bot', miniApp: miniAppUrl() }] });
   const people: StoryGroupView[] = stories.map(group => ({
     key: `user:${group.author.id}`, kind: 'user', title: group.own ? 'Вы' : group.author.username, author: group.author, own: group.own, seen: group.seen,
     slides: group.stories.map(story => ({ kind: 'media', story })),

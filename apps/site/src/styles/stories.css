@@ -17,6 +17,9 @@
 .story-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .story-avatar-week { background: linear-gradient(135deg, #3b1782, #a855f7); color: #fff; }
 .story-avatar-picks { background: linear-gradient(135deg, #0050c8, #22d3ee); color: #fff; }
+.story-avatar-telegram { background: #2aabee; color: #fff; }
+.story-avatar-partner { background: #fff; }
+.story-avatar-partner img { width: 82%; height: 82%; object-fit: contain; }
 .story-label { max-width: 72px; overflow: hidden; font-size: .75rem; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .story-add-badge { position: absolute; right: 0; bottom: 0; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 3px solid var(--color-surface); border-radius: 50%; background: var(--color-brand); color: #fff; line-height: 0; }
 .story-add-badge svg { display: block; }
@@ -79,6 +82,23 @@
 .story-card p { margin: 0; font-size: 1.125rem; line-height: 1.4; }
 .story-card-note { opacity: .85; font-size: .9375rem !important; }
 .story-card-pick > strong { font-size: 1.75rem; line-height: 1.15; }
+/* «Telegram»: Telegram blue (the bot page a shade deeper), the brand sticker and one button. */
+.story-card-telegram { position: relative; align-items: flex-start; overflow: hidden; background: #229ed9; color: #fff; }
+.story-card-telegram[data-page=bot] { background: #1677b8; }
+.story-card-telegram > strong { position: relative; font-size: 2rem; line-height: 1.1; }
+.story-card-telegram > small, .story-card-telegram > p, .story-telegram-list { position: relative; }
+.story-telegram-art { width: min(62%, 240px); height: auto; margin-bottom: 4px; transform: rotate(-6deg); }
+.story-card-telegram[data-page=bot] .story-telegram-art { transform: rotate(6deg); }
+.story-telegram-list { display: grid; gap: 10px; margin: 4px 0 0; padding: 0; list-style: none; font-size: 1.0625rem; }
+.story-telegram-list li { padding-left: 26px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 4.5 4.5L19 7'/%3E%3C/svg%3E") left .2em / 18px no-repeat; }
+/* NRJ PARTY: the partner's red, their logo on a white tile, the description and two buttons. */
+.story-card-partner { position: relative; align-items: flex-start; overflow: hidden; background: #c8101e; color: #fff; }
+.story-partner-logo { display: grid; place-items: center; width: min(46%, 180px); aspect-ratio: 1; margin-bottom: 8px; border-radius: 28px; background: #fff; box-shadow: 0 18px 40px -18px rgb(0 0 0 / .5); transform: rotate(-4deg); }
+.story-partner-logo img { width: 84%; height: 84%; object-fit: contain; }
+.story-card-partner > strong { font-size: 2rem; line-height: 1.1; }
+.story-telegram-actions { position: relative; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.story-telegram-actions .story-card-cta { margin-top: 0; }
+.story-card-cta.is-secondary { background: transparent; color: #fff; box-shadow: inset 0 0 0 2px rgb(255 255 255 / .8); }
 .story-pick-cover { display: grid; place-items: center; width: min(70%, 260px); aspect-ratio: 1; margin-bottom: 8px; overflow: hidden; border-radius: 28px; background: #fff; }
 .story-pick-cover img { width: 82%; height: 82%; object-fit: contain; mix-blend-mode: multiply; }
 .story-card-cta { position: relative; z-index: 2; align-self: flex-start; margin-top: 12px; padding: 12px 20px; border-radius: 999px; background: #fff; color: #111; font-weight: 800; text-decoration: none; }

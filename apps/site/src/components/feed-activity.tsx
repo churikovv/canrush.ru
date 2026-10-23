@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { TierListCard, type TierCardViewer } from '@/components/tier-list-card';
+import { TierLikeButton } from '@/components/tier-like-button';
+import type { ReviewInteraction } from '@/lib/review-discussions';
 import { displayName } from '@/components/wall-post';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { profileTagKey, profileTagLabel } from '@/lib/profile-achievements';
@@ -9,7 +11,7 @@ import type { TierListProduct, TierListSummary } from '@/lib/tier-list-types';
 
 const eventTime = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' });
 /** Shown in a «оценил напитки» event; the rest are one link away on the profile. */
-const REVIEWS_SHOWN = 3;
+export const REVIEWS_SHOWN = 3;
 
 /** `tag` — the selected tag as a key or a label (reviews carry the label). */
 interface EventAuthor { username: string; name: string; avatarId: string | null; tag: string | null }
@@ -42,8 +44,9 @@ function Star() {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.3l6.5-.9z" /></svg>;
 }
 
-/** «Оценил напитки»: a member's reviews of one day, each a drink with its score and the start of the text. */
-export function FeedReviewsEvent({ group, covers }: { group: FeedReviewGroup; covers: Map<string, string> }) {
+/** «Оценил напитки»: a member's reviews of one day, each a drink with its score, the start of the text and a like. */
+export function FeedReviewsEvent({ group, covers, votes, viewerId }: { group: FeedReviewGroup; covers: Map<string, string>; votes: Map<string, ReviewInteraction>; viewerId: string | null }) {
+  const authorId = group.key.split('|')[0];
   const first = group.reviews[0]!;
   const author = { username: first.author.username, name: first.author.name, avatarId: first.author.avatarId, tag: first.author.tag };
   const count = group.reviews.length;
@@ -54,7 +57,8 @@ export function FeedReviewsEvent({ group, covers }: { group: FeedReviewGroup; co
       {group.reviews.slice(0, REVIEWS_SHOWN).map(review => {
         const cover = covers.get(`${review.brand}\u0000${review.flavor}`);
         const overall = (review.design + review.taste) / 2;
-        return <li key={review.id}><Link className="feed-review" href={`/catalog/${catalogGroupSlug(review.brand, review.flavor)}?tab=reviews#review-${review.id}`}>
+        const vote = votes.get(review.id);
+        return <li key={review.id} className="feed-review-item"><Link className="feed-review" href={`/catalog/${catalogGroupSlug(review.brand, review.flavor)}?tab=reviews#review-${review.id}`}>
           <span className="feed-review-cover">{cover ? <Image src={cover} width={112} height={144} sizes="112px" alt="" /> : review.brand.slice(0, 2).toLocaleUpperCase('ru-RU')}</span>
           <span className="feed-review-copy">
             <span className="feed-review-brand">{review.brand}</span>
@@ -65,7 +69,9 @@ export function FeedReviewsEvent({ group, covers }: { group: FeedReviewGroup; co
             </span>
             <span className="feed-review-text">{review.text}</span>
           </span>
-        </Link></li>;
+        </Link>
+        <span className="feed-review-like"><TierLikeButton kind="review" id={review.id} likes={vote?.likes ?? 0} vote={vote?.vote ?? 0} signedIn={Boolean(viewerId)} own={viewerId === authorId} /></span>
+        </li>;
       })}
     </ul>
     {count > REVIEWS_SHOWN && <Link className="feed-event-more" href={`/profile/${author.username}/reviews`}>Ещё {count - REVIEWS_SHOWN} — все отзывы</Link>}
