@@ -3597,10 +3597,12 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
 .feed-more { display: flex; min-height: 48px; align-items: center; justify-content: center; margin-top: 8px; border-radius: 999px; background: var(--color-subtle); color: var(--color-ink); font-weight: 700; text-decoration: none; }
 .feed-more:hover { background: color-mix(in srgb, var(--color-subtle) 84%, var(--color-brand) 12%); }
 @media (max-width: 639px) {
-  .home-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .home-metrics a { min-height: 150px; padding: 14px 14px 16px; border-radius: 24px; }
-  .home-metrics strong { font-size: 2.25rem; }
-  .home-metrics a > span { max-width: 70%; font-size: .9375rem; }
+  /* Phone: all four in one row — a compact number and word on top, the sticker filling the lower half. */
+  .home-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .home-metrics a { min-height: 132px; padding: 10px 8px; border-radius: 18px; }
+  .home-metrics strong { font-size: clamp(1.125rem, 5.4vw, 1.5rem); letter-spacing: -.03em; }
+  .home-metrics a > span { max-width: 100%; margin-top: 2px; font-size: .6875rem; line-height: 1.15; }
+  .home-metric-art { right: -14%; bottom: -10%; width: 92%; }
   .home-events { display: flex; gap: 8px; margin-inline: -16px; padding-inline: 16px; scroll-padding-inline: 16px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .home-events::-webkit-scrollbar { display: none; }
   .home-event { flex: 0 0 min(86%, 340px); scroll-snap-align: start; }
