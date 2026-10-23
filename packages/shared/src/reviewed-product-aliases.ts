@@ -84,7 +84,7 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ...['386f0d7bb336e65555044ddd', 'fb3c91b19ef226609d8a37b1'].map(id => ['Red Bull', `unresolved:${id}`, 'Red Bull', 'sugarfree'] as const),
   ['Red Bull', 'unresolved:6a738d5df477296f241eafcf', 'Red Bull', 'redbull_winter_ice_gummies'],
   ['Red Bull', 'unresolved:f6ab5fd1cd3a2b54599c05aa', 'Red Bull', 'watermelon'],
-  ...['da30249c14de0adb913924fc', 'b9e32f17430fe6d77c37120e'].map(id => ['Doma By Guf', `unresolved:${id}`, 'Doma By Guf', 'doma_tangerine_puer'] as const),
+  ...['da30249c14de0adb913924fc', 'b9e32f17430fe6d77c37120e'].map(id => ['Doma By Guf', `unresolved:${id}`, 'By Баста', 'basta_tangerine_puer'] as const),
   ...['12c04198f8cb45dec71c17b2', 'ac4db0be477bb333af104606'].map(id => ['Sangaria', `unresolved:${id}`, 'Sangaria', 'sangaria_miracle'] as const),
   ['Plan B', 'unresolved:873f12c312f04ad672606e88', 'Plan B', 'plan_b_vitamin'],
   ['White', 'unresolved:567f71a9d9c21511e12d9538', 'White Shark', 'original'],
@@ -200,6 +200,22 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Adrenaline Game Fuel", "mango", "Adrenaline Rush", "mango"], // the mango can moved from Game Fuel to Vitamin Power; retailers sell it as both
   ["Ninja", "peach", "Ninja Star", "peach"], // Пятёрочка "Ninja Star Energy Персик-Личи" under Edadeal's brand "Ninja"
   ["Ninja", "cherry", "Ninja Star", "cherry"], // Пятёрочка "Нинджа Стар Энерджи (Ninja Star Energy) Вишня" under Edadeal's brand "Ninja"
+  // The puer can says «by БАСТА ГУФ»: it is By Баста's, the «Гуф» in titles had filed it under Doma By Guf (October 2026).
+  ["Doma By Guf", "doma_tangerine_puer", "By Баста", "basta_tangerine_puer"],
+  ["By Баста", "unknown", "By Баста", "basta_tangerine_puer"], // archived card with the puer can on the cover
+  ["Doma By Guf", "unknown", "Doma By Guf", "original"], // archived card with the Doma original can on the cover
+  ["By Баста", "unresolved:bc2be25b394e530618946df8", "By Баста", "sugarfree"], // Ароматный мир "Бай Баста зеро Вакуленко В. М."
+  ...['f7bd5f2b797a66d9e250bbb4', '6a0fe75d299110a452c24040', '2217aad3f2b82eb77e4f2007'].map(id => ['By Баста', `unresolved:${id}`, 'By Баста', 'original'] as const), // "Ориджинал"/"классический", the orange classic can
+  // HQD Energy was renamed Ashkudi in 2025 (Роспотребнадзор banned energy drinks under the vape brand): the same cans and covers.
+  ...['original', 'blackcurrant', 'blend:lemon+raspberry', 'blend:pineapple+pomelo', 'cherry', 'grape', 'orange', 'pomegranate', 'raspberry'].map(flavor => ['HQD Energy', flavor, 'Ashkudi', flavor] as const),
+  ...['450e4fd85501e99911bd3df0', '26bcf023d50941e56668cc7e'].map(id => ['HQD Energy', `unresolved:${id}`, 'Ashkudi', 'ashkudi_golden_bears'] as const), // "Мармеладные мишки"
+  ...['9d9d0b3f7a4bc6b815a9cf2f', 'a1c327dbc47ee82b75900565'].map(id => ['HQD Energy', `unresolved:${id}`, 'Ashkudi', 'ashkudi_sour'] as const), // "Кислое драже"
+  ["HQD Energy", "unresolved:5269426748e5bbfd9aa04f6e", "Ashkudi", "ashkudi_pink_lemonade"], // "розовый лимонад"
+  ["HQD Energy", "unresolved:e88e51ba96f265eaaac3e1c9", "Ashkudi", "ashkudi_belarus_apples"], // "Белорусские яблочки"
+  ["HQD Energy", "unknown", "Ashkudi", "ashkudi_voltage"], // archived card with the blue Voltage can on the cover
+  ["Ashkudi", "unresolved:8ee5cd706b59f0c6ac18da05", "Ashkudi", "ashkudi_sour"], // "АШКУДИ Кислое Драже"
+  ...['7652380e773a72f6d8361b9d', '7dee97fa9bcdf10c765323aa'].map(id => ['Ashkudi', `unresolved:${id}`, 'Ashkudi', 'ashkudi_dynamo:sugarfree'] as const), // "Сила Динамо без сахара (Dynamo Power)"
+  ["Ashkudi", "unresolved:1fc1008675af7843b3fc0fd0", "Ashkudi", "blackcurrant"], // the Surgut Currant can on the cover
 ];
 export function reviewedProductIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
   const alias = REVIEWED_PRODUCT_ALIASES.find(entry => entry[0] === brand && entry[1] === flavor);

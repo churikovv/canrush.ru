@@ -97,6 +97,7 @@ export default async function CatalogProductPage({
         activeTab={activeTab}
         swipes={swipes}
         addedBy={added && group.variants.length === 0 ? added : undefined}
+        fullName={added?.fullName || undefined}
       />
     </BrandShell>
   );

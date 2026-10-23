@@ -12,7 +12,7 @@ export function StoreDrinkPicker({id,options,taken,disabled,placeholder='Най�
   const input=useRef<HTMLInputElement>(null);
   const trimmed=query.trim();
   // Russian and transliterated brand spellings, so «ашкуди» finds Ashkudi.
-  const searchText=useMemo(()=>new Map(options.map(option=>[option,`${option.label} ${brandSearchTerms(option.brand).join(' ')}`])),[options]);
+  const searchText=useMemo(()=>new Map(options.map(option=>[option,`${option.label} ${option.fullName??''} ${brandSearchTerms(option.brand).join(' ')}`])),[options]);
   const matches=useMemo(()=>{
     const free=options.filter(option=>!taken.has(JSON.stringify([option.brand,option.flavor])));
     return (trimmed?free.filter(option=>searchMatches(searchText.get(option)??option.label,trimmed)):free).slice(0,LIMIT);

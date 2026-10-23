@@ -4,8 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { requireSiteAdmin } from '@/lib/admin';
 import { BASIC_FLAVORS } from '@/lib/catalog-query';
-import { CatalogDrinkError, parseCatalogDrink } from '@/lib/catalog-drink-fields';
-import { CatalogDrinkDuplicate, moderateCatalogDrink, submitCatalogDrink } from '@/lib/catalog-drinks';
+import { CatalogDrinkError, parseCatalogDrink, parseCatalogDrinkEdit } from '@/lib/catalog-drink-fields';
+import { CatalogDrinkDuplicate, deleteCatalogDrink, moderateCatalogDrink, submitCatalogDrink, updateCatalogDrink } from '@/lib/catalog-drinks';
 import { ensureOwnProfile } from '@/lib/profile';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 
@@ -39,5 +39,38 @@ export async function moderateCatalogDrinkAction(id: string, version: string, _p
     return { saved: true };
   } catch (error) {
     return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось сохранить решение.' };
+  }
+}
+
+function revalidateDrinks() {
+  revalidatePath('/admin/drinks');
+  revalidatePath('/catalog', 'layout');
+  revalidatePath('/catalog/new');
+}
+
+/** An admin's correction of a request or a published drink, optionally with a new can photo. */
+export async function updateCatalogDrinkAction(id: string, version: string, _previous: CatalogDrinkState, form: FormData): Promise<CatalogDrinkState> {
+  const admin = await requireSiteAdmin();
+  try {
+    const edit = parseCatalogDrinkEdit(form);
+    const { photos } = await prepareReviewPhotos(form);
+    if (photos.length > 1) return { error: 'Выберите одно фото банки.' };
+    await updateCatalogDrink(admin.userId, admin.email, id, version, edit, photos[0]);
+    revalidateDrinks();
+    return { saved: true };
+  } catch (error) {
+    if (error instanceof CatalogDrinkDuplicate) return { error: error.message, duplicate: error.href };
+    return { error: error instanceof CatalogDrinkError || error instanceof ReviewPhotoError ? error.message : 'Не удалось сохранить напиток.' };
+  }
+}
+
+export async function deleteCatalogDrinkAction(id: string, _previous: CatalogDrinkState): Promise<CatalogDrinkState> {
+  const admin = await requireSiteAdmin();
+  try {
+    await deleteCatalogDrink(admin.userId, admin.email, id);
+    revalidateDrinks();
+    return { saved: true };
+  } catch (error) {
+    return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось удалить напиток.' };
   }
 }

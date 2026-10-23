@@ -37,9 +37,11 @@ interface CatalogProductDetailProps {
   swipes?: SwipeCounts;
   /** A drink a member added (catalogDrink) that shops do not have yet: who added it, when, and the volumes they gave. */
   addedBy?: Pick<CatalogDrink, 'author' | 'volumes' | 'createdAt'>;
+  /** The full name a member gave the drink («Monster Ultra Paradise»), shown under the flavour. */
+  fullName?: string;
 }
 
-export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, activeTab, swipes, addedBy }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, activeTab, swipes, addedBy, fullName }: CatalogProductDetailProps) {
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
   const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
 
@@ -72,6 +74,7 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
         </div>
 
         <h1>{flavorName(group.flavor)}</h1>
+        {fullName && <p className="catalog-full-name">{fullName}</p>}
         {addedBy && <ul className="catalog-added-facts" aria-label="О напитке">
           <li className="catalog-added-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M16 11h6" /></svg>От участника</li>
           {addedBy.volumes.map(volume => <li key={volume}>{volumeLabel(volume)}</li>)}

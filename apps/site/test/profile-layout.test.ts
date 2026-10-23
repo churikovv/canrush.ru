@@ -17,7 +17,7 @@ it('restores mandatory blocks in saved or submitted layouts without changing ord
 it('keeps existing arrangements and adds a hidden favorites block', () => {
   const order = DEFAULT_PROFILE_LAYOUT.order.filter(key => key !== 'favorites');
   expect(parseProfileLayout({ order, hidden: ['wall'] })).toEqual({ order: [...order, 'favorites'], hidden: ['wall', 'favorites'] });
-  expect(DEFAULT_PROFILE_LAYOUT.hidden).toEqual(['favorites', 'listings']);
+  expect(DEFAULT_PROFILE_LAYOUT.hidden).toEqual(['favorites', 'listings', 'drinks']);
 });
 
 it('adds the calendar right after the level to layouts saved before it existed', () => {
@@ -28,6 +28,13 @@ it('adds the calendar right after the level to layouts saved before it existed',
 });
 
 it('places the wall last by default', () => { expect(DEFAULT_PROFILE_LAYOUT.order.at(-1)).toBe('wall'); });
+
+it('adds the optional «Добавленные напитки» hidden, right before the wall, to older layouts', () => {
+  const order = DEFAULT_PROFILE_LAYOUT.order.filter(key => key !== 'drinks');
+  const parsed = parseProfileLayout({ order, hidden: [] });
+  expect(parsed?.order.at(-2)).toBe('drinks');
+  expect(parsed?.hidden).toEqual(['drinks']);
+});
 
 it('moves a block before or after a target and reports no-op moves', () => {
   const order = ['experience', 'ratings', 'listings', 'social'] as const;

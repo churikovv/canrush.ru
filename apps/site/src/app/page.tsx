@@ -9,6 +9,7 @@ import { ProfileNavigation } from '@/components/profile-navigation';
 import { HomeMetrics } from '@/components/home-metrics';
 import { HomeStories } from '@/components/home-stories';
 import { loadCatalogSnapshot } from '@/lib/catalog';
+import { withCatalogDrinks } from '@/lib/catalog-drinks';
 import { catalogMetrics, getHomeCounts } from '@/lib/home-metrics';
 import { getMonthlyTop, settleMonthlyTop } from '@/lib/monthly-top';
 import { DEFAULT_DESCRIPTION, seoMetadata } from '@/lib/seo';
@@ -34,7 +35,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   return <BrandShell headerAction={<ProfileNavigation active="home" />} surfaceClassName="catalog-surface home-surface">
     <div className="home-layout">
       <h1 className="sr-only">CanRush — социальная сеть для энергокомьюнити: лента, цены и рейтинги энергетиков</h1>
-      <HomeStories viewerId={session?.user.id ?? null} groups={resolved} openStory={typeof story === 'string' ? story : undefined} />
+      <HomeStories viewerId={session?.user.id ?? null} groups={await withCatalogDrinks(resolved)} openStory={typeof story === 'string' ? story : undefined} />
       <HomeMetrics data={{ ...counts, ...catalogMetrics(resolved) }} />
       <HomeEvents monthly={{ month: monthly.month, leader: monthly.leaders[0]?.username ?? null }} contest={contest} joined={Boolean(contestEntry?.cans)} engine={engine} signedIn={Boolean(session)} />
       <section aria-labelledby="home-feed" className="home-section home-feed">

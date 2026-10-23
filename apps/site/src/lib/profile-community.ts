@@ -49,6 +49,7 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
       from "profileExperience" where "userId" = u.id and reason not in ('monthly-top', 'achievement') and "createdAt" >= $4::timestamptz) x) as "weeklyXp",
     (select count(*)::int from "marketStore" where "ownerId" = u.id and status = 'published') as "publishedStores",
     (select count(*)::int from "drinkSwipe" where "userId" = u.id) as swipes,
+    (select count(*)::int from "catalogDrink" where "ownerId" = u.id and status = 'published') as "publishedDrinks",
     (select count(*)::int from "drinkSwipe" where "userId" = u.id and liked) as "swipeLikes",
     (select count(*)::int from r where b = 'flash up') as flash,
     (select count(*)::int from r where b = 'flash up' and detailed) as "flashDetailed",

@@ -80,3 +80,21 @@ it('points reported duplicate URLs at the live products', () => {
     expect(canonical).not.toBe(slug);
   }
 });
+
+it('points HQD Energy cards at Ashkudi and the puer at By Баста', () => {
+  for (const [slug, canonical] of [
+    ['hqd-energy-cherry', 'ashkudi-cherry'],
+    ['hqd-energy-lemon-raspberry', 'ashkudi-lemon-raspberry'],
+    ['hqd-energy-blackcurrant', 'ashkudi-blackcurrant'],
+    ['hqd-energy-grape-ckokem45ltqp', 'ashkudi-grape'],
+    ['hqd-energy-unresolved-9d9d0b3f7a4bc6b815a9cf2f', 'ashkudi-sour'],
+    ['ashkudi-unresolved-8ee5cd706b59f0c6ac18da05', 'ashkudi-sour'],
+    ['ashkudi-unresolved-7652380e773a72f6d8361b9d', 'ashkudi-dynamo-zero'],
+    ['doma-by-guf-tangerine-puer', 'by-basta-tangerine-puer'],
+    ['doma-by-guf-unresolved-da30249c14de0adb913924fc', 'by-basta-tangerine-puer'],
+    ['by-basta-unresolved-f7bd5f2b797a66d9e250bbb4', 'by-basta-original'],
+  ] as const) {
+    const response = proxy(new NextRequest(`https://canrush.ru/catalog/${slug}`));
+    expect([slug, response.status, response.headers.get('location')]).toEqual([slug, 301, `https://canrush.ru/catalog/${canonical}`]);
+  }
+});

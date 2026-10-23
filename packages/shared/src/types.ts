@@ -206,4 +206,6 @@ export interface CatalogGroup {
   minPrice: number;
   /** Обложка карточки (imageUrl первого варианта, где есть изображение) */
   coverImageUrl?: string;
+  /** Полное название с банки, если его дал участник («Monster Ultra Paradise») — по нему ищет каталог */
+  fullName?: string;
 }

@@ -27,6 +27,7 @@ import { ProfileHeader } from '@/components/profile-header';
 import { DrinkCalendarBlock } from '@/components/drink-calendar-block';
 import { BrandCollectionBlock } from '@/components/brand-collection';
 import { getBrandCollections } from '@/lib/brand-collection';
+import { listPublishedDrinksByOwner } from '@/lib/catalog-drinks';
 import { ProfilePresence } from '@/components/profile-presence';
 
 interface ProfileViewProps {
@@ -34,7 +35,6 @@ interface ProfileViewProps {
   isOwn: boolean;
   favoritesHref: string;
   tierListsHref: string;
-  adminHref?: string;
   viewerId?: string;
   viewerIsAdmin?: boolean;
   wallPage?: number;
@@ -46,9 +46,9 @@ function TelegramGlyph() {
   return <svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg>;
 }
 
-export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, adminHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, lastSeen, friends, listings, favorites, compatibility, collection] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getFavoriteGroups(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id),
+export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
+  const [community, ratings, wall, presence, lastSeen, friends, listings, favorites, compatibility, collection, addedDrinks] = await Promise.all([
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getFavoriteGroups(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id), listPublishedDrinksByOwner(profile.id),
   ]);
   const blockedByViewer = !isOwn && viewerId ? await isBlockedByViewer(viewerId, profile.id) : false;
   const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
@@ -120,7 +120,11 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           </section>
           </ProfileBlock><ProfileBlock block="favorites"><section className="community-panel"><div className="community-section-heading"><h2>Избранное</h2><Link href={favoritesHref}>Все ↗</Link></div>
           {favorites.length ? <div className="profile-favorites-block">{favorites.slice(0, 6).map(group => <Link key={`${group.brand}:${group.flavor}`} href={`/catalog/${catalogGroupSlug(group.brand, group.flavor)}`}>
-          {group.coverImageUrl && <Image src={group.coverImageUrl} width={120} height={120} alt="" />}<strong>{group.brand}</strong><span>{flavorName(group.flavor)}</span></Link>)}</div> : <p className="community-muted">Пока нет избранных напитков.</p>}</section></ProfileBlock></ProfileBlocks>
+          {group.coverImageUrl && <Image src={group.coverImageUrl} width={120} height={120} alt="" />}<strong>{group.brand}</strong><span>{flavorName(group.flavor)}</span></Link>)}</div> : <p className="community-muted">Пока нет избранных напитков.</p>}</section></ProfileBlock>
+          <ProfileBlock block="drinks"><section className="community-panel" aria-labelledby="profile-drinks-title"><div className="community-section-heading"><h2 id="profile-drinks-title">Добавленные напитки {addedDrinks.total > 0 && <span>{addedDrinks.total}</span>}</h2>{isOwn && <Link href="/catalog/new">Добавить ↗</Link>}</div>
+          {addedDrinks.items.length ? <div className="profile-favorites-block">{addedDrinks.items.map(drink => <Link key={drink.id} href={drink.href}>
+          <Image src={drink.photo} width={120} height={120} alt="" /><strong>{drink.brand}</strong><span>{drink.name}</span></Link>)}</div>
+          : <div className="community-empty"><p>{isOwn ? 'Не нашли энергетик в каталоге? Добавьте его — после проверки он появится здесь и у всех в каталоге.' : 'Пользователь пока не добавлял напитки в каталог.'}</p>{isOwn && <Link href="/catalog/new">Добавить напиток ↗</Link>}</div>}</section></ProfileBlock></ProfileBlocks>
 
         </div>
 
@@ -134,7 +138,6 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             {showChannel && (telegramHref ? <a className="profile-about-row" href={telegramHref} target="_blank" rel="noreferrer"><span className="profile-about-icon profile-about-icon-telegram"><svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg></span><span className="profile-about-text"><small>Telegram-канал</small><strong>@{profile.telegramChannel}</strong></span><span className="profile-about-arrow" aria-hidden="true">↗</span></a>
               : <div className="profile-about-row is-muted"><span className="profile-about-icon"><svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg></span><span className="profile-about-text"><small>Telegram-канал</small><strong>Не указан</strong></span></div>)}
             {isOwn && <PresenceSetting key={String(community.showOnline)} visible={community.showOnline} />}
-            {adminHref && <Link className="profile-about-row" href={adminHref}><span className="profile-about-icon profile-about-icon-admin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm-3 10 2 2 4-4" /></svg></span><span className="profile-about-text"><small>Доступ</small><strong>Админ-панель</strong></span><span className="profile-about-arrow" aria-hidden="true">→</span></Link>}
             </div>
           </section>
           </ProfileBlock></ProfileBlocks>

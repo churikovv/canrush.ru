@@ -22,6 +22,7 @@
 .price-results-actions { display: flex; align-items: flex-end; gap: 12px; max-width: 100%; }
 .price-sort { display: grid; gap: 6px; color: var(--theme-text, #596060); font-size: .75rem; min-width: 0; }
 .price-sort select { font-size: .875rem; }
+@media (pointer: coarse) { .price-sort select { font-size: 1rem; } } /* iOS zooms into fields under 16px on focus */
 .price-reset:hover { text-decoration: underline; }
 .price-table-scroll { overflow-x: auto; border: 1px solid var(--theme-line, #e0e4e4); border-radius: 12px; }
 .price-chart-table { width: 100%; border-collapse: collapse; font-size: .875rem; }

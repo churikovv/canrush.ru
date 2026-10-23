@@ -24,3 +24,9 @@ it('replaces the plain Zero Sugar photo retailers attach to Monster VR46 Zero', 
   expect(catalogCover('Monster', 'sugarfree', '/images/products/ultra-white.jpg')).toBe('/brand/products/monster-zero-sugar.jpg');
   for (const file of ['monster-vr46-zero.jpg', 'monster-zero-sugar.jpg']) expect(existsSync(`public/brand/products/${file}`)).toBe(true);
 });
+
+it('pins the sharp Scandalist Adder Terror cover over the blurred retailer photo', () => {
+  expect(catalogCover('Scandalist', 'scandalist_adder_terror', '/images/products/eff81b529f94cb32.jpg')).toBe('/brand/products/scandalist-adder-terror.jpg');
+  expect(catalogCover('Scandalist', 'scandalist_geneve', '/images/products/c62c243c5e45c780.jpg')).toBe('/images/products/c62c243c5e45c780.jpg');
+  expect(existsSync('public/brand/products/scandalist-adder-terror.jpg')).toBe(true);
+});

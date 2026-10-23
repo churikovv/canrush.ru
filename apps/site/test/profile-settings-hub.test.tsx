@@ -31,4 +31,10 @@ describe('profile and settings hub', () => {
     expect(html).toMatch(/class="profile-editor-preview"[^>]*hidden|hidden=""[^>]*class="profile-editor-preview"/);
     expect(html).toContain('Все разделы');
   });
+  it('renders a link row (the admin panel) as a link to its page, without a panel', () => {
+    section = null;
+    const html = renderToStaticMarkup(createElement(ProfileEditForm, { profile, settings: [{ key: 'admin', title: 'Администрирование', rows: [{ key: 'admin', title: 'Админ-панель', icon: null, href: '/admin' }] }] }));
+    expect(html).toMatch(/<a[^>]*id="profile-section-row-admin"[^>]*href="\/admin"|<a[^>]*href="\/admin"[^>]*id="profile-section-row-admin"/);
+    expect(html).not.toContain('id="profile-panel-admin"');
+  });
 });

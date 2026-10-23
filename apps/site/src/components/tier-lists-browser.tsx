@@ -46,16 +46,16 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
           <p className="tierlists-kicker">Рейтинг CanRush</p>
           <h1>Тирлист энергетиков</h1>
           <p>
-            В рейтинге участвуют напитки, доступные хотя бы в одном магазине и получившие минимум три отзыва.
+            В рейтинге участвуют все напитки каталога, у которых минимум три отзыва — и те, что сейчас в магазинах, и добавленные участниками.
           </p>
         </div>
         <div className="tierlists-facts">
           <dl>
-            <div><dt>Есть в продаже</dt><dd>{count.format(official.eligibleCount)}</dd></div>
+            <div><dt>В каталоге</dt><dd>{count.format(official.eligibleCount)}</dd></div>
             <div><dt>Получили оценку</dt><dd>{count.format(official.ratedCount)}</dd></div>
           </dl>
           <div className="tierlists-progress" aria-hidden="true">{ratedShare > 0 && <span style={{ width: `${Math.max(ratedShare, 2)}%` }} />}</div>
-          <p>{official.ratedCount > 0 ? `В рейтинге ${ratedShare}% напитков в продаже` : 'Пока ни у одного напитка нет трёх отзывов'}</p>
+          <p>{official.ratedCount > 0 ? `В рейтинге ${ratedShare}% напитков каталога` : 'Пока ни у одного напитка нет трёх отзывов'}</p>
         </div>
       </header>
 

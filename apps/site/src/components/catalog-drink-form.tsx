@@ -6,7 +6,7 @@ import { FormOptional, FormStep } from '@/components/form-step';
 import { MarketPhotoPicker } from '@/components/market-photo-picker';
 import { submitCatalogDrinkAction } from '@/app/catalog/new/actions';
 import { CatalogDrinkBrandInput, CatalogDrinkFlavorInput, type PickedFlavor } from '@/components/catalog-drink-flavor-input';
-import { DRINK_VOLUME_PRESETS, MAX_DRINK_FLAVORS, MAX_DRINK_INGREDIENTS, MAX_DRINK_VOLUMES, volumeLabel } from '@/lib/catalog-drink-fields';
+import { DRINK_SUGAR_NAME, DRINK_VOLUME_PRESETS, MAX_DRINK_FLAVORS, MAX_DRINK_FULL_NAME, MAX_DRINK_INGREDIENTS, MAX_DRINK_VOLUMES, volumeLabel, type DrinkSugar } from '@/lib/catalog-drink-fields';
 
 const STEPS = [
   { id: 'drink-step-name', title: 'Бренд и вкус' },
@@ -15,6 +15,12 @@ const STEPS = [
   { id: 'drink-step-check', title: 'Проверка' },
 ] as const;
 const LAST_STEP = STEPS.length - 1;
+/** A version with a sweetener is a drink of its own, so it can sit next to the regular can in the catalog. */
+const SUGAR_OPTIONS: { value: DrinkSugar; title: string; hint: string }[] = [
+  { value: 'regular', title: 'С сахаром', hint: 'Обычная банка' },
+  { value: 'free', title: 'Без сахара', hint: 'Zero, Sugar Free, Light' },
+  { value: 'sweetener', title: 'С сахарозаменителем', hint: 'Часть сахара заменена подсластителем' },
+];
 
 /**
  * «Добавить напиток»: four steps like the store form — brand and flavour, a can photo, volumes and the label text,
@@ -27,7 +33,8 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
   const [problem, setProblem] = useState('');
   const [brand, setBrand] = useState('');
   const [picked, setPicked] = useState<PickedFlavor[]>([]);
-  const [sugarFree, setSugarFree] = useState(false);
+  const [sugar, setSugar] = useState<DrinkSugar>('regular');
+  const [fullName, setFullName] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [photosBusy, setPhotosBusy] = useState(false);
   const [volumes, setVolumes] = useState<number[]>([]);
@@ -39,7 +46,7 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
   // The same name the catalog will show (flavorName on the key the server builds).
   // Parts in the server's order (sorted keys and own names), shown by their labels.
   const baseName = [...picked].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).map(item => item.label).join(' + ');
-  const drinkName = baseName ? `${baseName}${sugarFree ? ' · без сахара' : ''}` : '';
+  const drinkName = baseName ? `${baseName}${DRINK_SUGAR_NAME[sugar]}` : '';
   const photoUrl = useMemo(() => photos[0] ? URL.createObjectURL(photos[0]) : '', [photos]);
   useEffect(() => () => { if (photoUrl) URL.revokeObjectURL(photoUrl); }, [photoUrl]);
 
@@ -108,11 +115,18 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
         <CatalogDrinkFlavorInput inputId="catalog-drink-flavor" flavors={flavors} value={picked} onChange={setPicked} onProblem={setProblem} />
         <p className="store-note">Выберите из подсказок или добавьте свой. Для микса — до {MAX_DRINK_FLAVORS} вкусов, в каталоге он будет называться как «Манго + Маракуйя».</p>
       </div>
-      <label className="catalog-drink-toggle">
-        <span className="catalog-drink-toggle-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="m4 8 8-4 8 4-8 4-8-4Zm0 0v8l8 4 8-4V8M12 12v8" /><path d="M3 3l18 18" /></svg></span>
-        <span className="catalog-drink-toggle-copy"><b>Без сахара</b><small>Zero, Sugar Free, Light — в названии появится «без сахара»</small></span>
-        <input type="checkbox" role="switch" name="sugarFree" checked={sugarFree} onChange={event => setSugarFree(event.target.checked)} />
-      </label>
+      <fieldset className="catalog-drink-sugar">
+        <legend className="catalog-flavor-label">Сахар</legend>
+        {SUGAR_OPTIONS.map(option => <label key={option.value} className="catalog-drink-sugar-option">
+          <input type="radio" name="sugar" value={option.value} checked={sugar === option.value} onChange={() => setSugar(option.value)} />
+          <span><b>{option.title}</b><small>{option.hint}</small></span>
+        </label>)}
+      </fieldset>
+      <div className="form-field">
+        <label htmlFor="catalog-drink-full-name"><span className="form-label">Полное название {<FormOptional />}</span></label>
+        <input id="catalog-drink-full-name" type="text" name="fullName" maxLength={MAX_DRINK_FULL_NAME} autoComplete="off" value={fullName} onChange={event => setFullName(event.target.value)} placeholder="Monster Ultra Paradise" aria-describedby="catalog-drink-full-name-note" />
+        <p className="store-note" id="catalog-drink-full-name-note">Как напиток называют целиком, с линейкой. По этому названию его тоже найдут в поиске.</p>
+      </div>
       {brand.trim() && drinkName && <p className="catalog-drink-name" role="status">В каталоге: <b>{brand.trim()} · {drinkName}</b></p>}
     </section>
 
@@ -147,13 +161,14 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
         <div>
           <small>{brand.trim()}</small>
           <strong>{drinkName}</strong>
+          {fullName.trim() && <p>{fullName.trim()}</p>}
           <p>{volumes.map(volumeLabel).join(' · ')}</p>
           <p className="catalog-drink-preview-text">{ingredients.trim() || 'Состав не указан — его можно будет дополнить позже.'}</p>
         </div>
       </div>
       <ul className="catalog-drink-rules">
         <li>Цен у нового напитка пока нет — они появятся, когда его найдут в магазинах.</li>
-        <li>Отзывы, избранное, календарь, тирлисты и дейтинг заработают сразу после публикации.</li>
+        <li>Отзывы, избранное, календарь, коллекции, тирлисты, дейтинг и рекомендации заработают сразу после публикации.</li>
       </ul>
     </section>
 

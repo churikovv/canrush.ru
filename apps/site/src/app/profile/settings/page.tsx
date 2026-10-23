@@ -46,6 +46,7 @@ const ICONS = {
   blocked: <svg {...ICON}><circle cx="12" cy="12" r="9" /><path d="m5.6 5.6 12.8 12.8" /></svg>,
   email: <svg {...ICON}><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></svg>,
   about: <svg {...ICON}><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>,
+  admin: <svg {...ICON}><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm-3 10 2 2 4-4" /></svg>,
 };
 const blockedDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' });
 const THEME_LABELS: Record<SiteTheme, string> = { system: 'Системная', light: 'Светлая', graphite: 'Тёмная' };
@@ -164,7 +165,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </li>;
         })}</ul> : <div className="blocked-members-empty"><span aria-hidden="true">{ICONS.blocked}</span><p>Вы никого не блокировали. Заблокировать участника можно на его профиле или после жалобы.</p></div>}
       </Panel> },
-  ] }, { key: 'about', title: 'О CanRush', rows: [
+  ] }, ...(viewerIsAdmin ? [{ key: 'admin', title: 'Администрирование', rows: [
+    { key: 'admin', title: 'Админ-панель', value: 'Аналитика, жалобы, модерация', tone: 'admin', icon: ICONS.admin, href: '/admin' } satisfies SettingsRow,
+  ] }] : []), { key: 'about', title: 'О CanRush', rows: [
     { key: 'about', title: 'Документы и связь', value: 'Соглашение, политика, удаление аккаунта', icon: ICONS.about, panel:
       <Panel id="about" title="Документы и связь"><AboutLinks /></Panel> },
   ] }];

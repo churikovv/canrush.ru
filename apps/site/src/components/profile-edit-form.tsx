@@ -38,7 +38,8 @@ function TelegramIcon() {
 type ProfileSection = 'details' | 'telegram' | 'tags' | 'appearance' | 'images' | 'blocks' | 'account';
 const SECTIONS: readonly ProfileSection[] = ['details', 'telegram', 'tags', 'appearance', 'images', 'blocks', 'account'];
 /** Site settings shown in the same hub: each row opens its own panel with its own forms (outside the profile form). */
-export type SettingsRow = { key: string; title: string; value?: string; tone?: string; icon: ReactNode; panel: ReactNode };
+/** A settings row opens its panel in place, or with `href` leads to another page (the admin panel). */
+export type SettingsRow = { key: string; title: string; value?: string; tone?: string; icon: ReactNode } & ({ panel: ReactNode; href?: never } | { href: string; panel?: never });
 export type SettingsGroup = { key: string; title: string; rows: SettingsRow[] };
 type Section = ProfileSection | (string & {});
 const ICON = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
@@ -69,7 +70,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, 
   // returns to the list of sections instead of leaving the editor.
   const pathname = usePathname();
   const requested = useSearchParams().get('section');
-  const settingsRows = [...settings.flatMap(group => group.rows), ...accountRows];
+  const settingsRows = [...settings.flatMap(group => group.rows), ...accountRows].filter(row => !row.href);
   const tab: Section | null = SECTIONS.find(key => key === requested && (key !== 'tags' || tags)) ?? settingsRows.find(row => row.key === requested)?.key ?? null;
   const settingsOpen = settingsRows.some(row => row.key === tab);
   const pushed = useRef(false);
@@ -188,7 +189,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, 
   }
   const visibleBlocks = (() => { const layout = profile.profileLayout ?? DEFAULT_PROFILE_LAYOUT; return layout.order.length - layout.hidden.length; })();
   const imageState = (kind: ImageKind, label: string) => images[kind]?.remove ? `${label}: удалится` : images[kind] ? `${label}: новое` : imageSource(kind) ? `${label} есть` : `Без ${kind === 'avatar' ? 'аватара' : 'баннера'}`;
-  const sectionGroups: { key: string; title: string; rows: { key: Section; title: string; value?: string; tone?: string; icon?: ReactNode }[] }[] = [
+  const sectionGroups: { key: string; title: string; rows: { key: Section; title: string; value?: string; tone?: string; icon?: ReactNode; href?: string }[] }[] = [
     { key: 'profile', title: 'Профиль', rows: [
       { key: 'details', title: 'Имя, ник и описание', value: `${name.trim() || initialName} · @${username.replace(/^@+/, '') || profile.username}` },
       { key: 'telegram', title: 'Telegram', value: [telegram && `t.me/${telegram}`, channel && `канал t.me/${channel}`].filter(Boolean).join(' · ') || 'Не указан', tone: 'telegram' },
@@ -221,13 +222,17 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, 
       <div className="profile-sections" ref={sectionsRef}>{tab === null ? <nav className="profile-hub" aria-label="Профиль и настройки">
         {sectionGroups.map(group => <section key={group.title} className="profile-hub-island" aria-labelledby={`profile-hub-${group.key}`}>
           <h2 id={`profile-hub-${group.key}`}>{group.title}</h2>
-          <ul>{group.rows.map(row => <li key={row.key}>
-            <button id={`profile-section-row-${row.key}`} type="button" className="profile-hub-row" data-tone={row.tone} onClick={() => openSection(row.key)}>
+          <ul>{group.rows.map(row => {
+            const content = <>
               <span className="profile-hub-icon" aria-hidden="true">{row.icon ?? SECTION_ICONS[row.key as ProfileSection]}</span>
               <span className="profile-hub-text"><strong>{row.title}</strong>{row.value && <small>{row.value}</small>}</span>
               <Chevron />
-            </button>
-          </li>)}</ul>
+            </>;
+            return <li key={row.key}>{row.href
+              ? <Link id={`profile-section-row-${row.key}`} className="profile-hub-row" data-tone={row.tone} href={row.href}>{content}</Link>
+              : <button id={`profile-section-row-${row.key}`} type="button" className="profile-hub-row" data-tone={row.tone} onClick={() => openSection(row.key)}>{content}</button>}
+            </li>;
+          })}</ul>
         </section>)}
       </nav> : <button type="button" className="profile-section-back" onClick={() => openSection(null)}><BackIcon />Все разделы</button>}</div>
       <div id="profile-panel-details" tabIndex={-1} aria-label="Основное" hidden={tab !== 'details'} className="profile-editor-panel">

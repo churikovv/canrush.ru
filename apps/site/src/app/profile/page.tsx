@@ -37,7 +37,6 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         wallPage={profilePageNumber((await searchParams).wallPage)}
         favoritesHref="/profile/favorites"
         tierListsHref="/profile/tierlists"
-        adminHref={isAdmin ? '/admin' : undefined}
       />
     </BrandShell>
   );

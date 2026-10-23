@@ -76,10 +76,10 @@ describe.sequential('profile image storage and displayed tags', () => {
     expect((await getReviewsForUser(b))[0]?.author.tag).toBe('Флэш');
   });
   it('saves layout with profile changes and isolates it from other users', async () => {
-    const layout = { order: ['listings', 'experience', 'calendar', 'collection', 'ratings', 'wall', 'social', 'about', 'favorites'] as const, hidden: ['wall', 'ratings'] as const };
+    const layout = { order: ['listings', 'experience', 'calendar', 'collection', 'ratings', 'drinks', 'wall', 'social', 'about', 'favorites'] as const, hidden: ['wall', 'ratings', 'drinks'] as const };
     await saveProfileCustomization(a, input, {}, { order: [...layout.order], hidden: [...layout.hidden] });
     expect((await getProfileByUserId(a))?.profileLayout).toEqual(layout);
-    expect((await getProfileByUserId(b))?.profileLayout?.hidden).toEqual(['favorites', 'listings']);
+    expect((await getProfileByUserId(b))?.profileLayout?.hidden).toEqual(['favorites', 'listings', 'drinks']);
   });
   it('persists appearance, isolates users and rolls it back with failed profile updates', async () => {
     expect((await getProfileByUserId(b))?.profileAppearance).toEqual({ theme: 'default', frame: 'none' });

@@ -521,18 +521,15 @@
 .catalog-drink-chips button { min-height: 38px; padding: 6px 14px; border: 1px solid var(--color-control); border-radius: 999px; background: var(--color-surface); color: var(--color-text); font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out; }
 .catalog-drink-chips button[aria-pressed=true] { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
 .catalog-drink-chips button:disabled { opacity: .45; cursor: default; }
-/* «Без сахара»: a card-like row with a switch, the whole row toggles it. */
-.store-form .catalog-drink-toggle { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border: 1px solid var(--color-control); border-radius: 16px; background: var(--color-surface); cursor: pointer; transition: border-color 150ms ease-out, background-color 150ms ease-out; }
-.store-form .catalog-drink-toggle:has(input:checked) { border-color: color-mix(in srgb, var(--color-brand) 60%, transparent); background: color-mix(in srgb, var(--color-brand) 8%, var(--color-surface)); }
-.catalog-drink-toggle-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--color-subtle); color: var(--color-muted-strong); }
-.catalog-drink-toggle:has(input:checked) .catalog-drink-toggle-icon { background: var(--color-brand); color: #fff; }
-.catalog-drink-toggle-copy { display: grid; gap: 2px; min-width: 0; }
-.catalog-drink-toggle-copy small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 500; line-height: 1.35; }
-.store-form .catalog-drink-toggle input { appearance: none; position: relative; flex: none; width: 46px; height: 28px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 999px; background: var(--color-control); cursor: pointer; transition: background-color 150ms ease-out; }
-.store-form .catalog-drink-toggle input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .25); transition: transform 150ms ease-out; }
-.store-form .catalog-drink-toggle input:checked { background: var(--color-brand); }
-.store-form .catalog-drink-toggle input:checked::after { transform: translateX(18px); }
-.store-form .catalog-drink-toggle input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+/* Sugar: three choice cards (с сахаром / без сахара / с сахарозаменителем), the chosen one in the brand colour. */
+.store-form .catalog-drink-sugar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.catalog-drink-sugar legend { grid-column: 1 / -1; margin-bottom: 8px; padding: 0; }
+.store-form .catalog-drink-sugar-option { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); cursor: pointer; transition: border-color 150ms ease-out, background-color 150ms ease-out; }
+.store-form .catalog-drink-sugar-option:has(input:checked) { border-color: color-mix(in srgb, var(--color-brand) 60%, transparent); background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface)); }
+.store-form .catalog-drink-sugar-option input { flex: none; width: 18px; height: 18px; min-height: 0; margin: 2px 0 0; accent-color: var(--color-brand); }
+.catalog-drink-sugar-option span { display: grid; gap: 2px; min-width: 0; }
+.catalog-drink-sugar-option small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 500; line-height: 1.3; }
+@media (max-width: 639px) { .store-form .catalog-drink-sugar { grid-template-columns: 1fr; } }
 .catalog-drink-name { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--color-subtle); color: var(--color-muted-strong); }
 .catalog-drink-name b { color: var(--color-text); }
 .catalog-drink-volume { display: flex; gap: 8px; margin-top: 10px; }
@@ -569,6 +566,7 @@
 .catalog-add-button:hover { background: var(--color-control); }
 .catalog-add-button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 /* A member's drink on its page: a badge and the volumes under the name, a calm empty price state, the author card. */
+.catalog-full-name { margin: -4px 0 12px; color: var(--color-muted-strong, #5b6472); font-size: 1rem; font-weight: 600; }
 .catalog-added-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 16px; padding: 0; list-style: none; }
 .catalog-added-facts li { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; background: var(--color-subtle); color: var(--color-text); font-size: .8125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .catalog-added-facts .catalog-added-badge { background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); }
@@ -579,7 +577,8 @@
 .catalog-added-empty .community-button { grid-column: 2; justify-self: start; }
 .catalog-drink-author { margin-top: 24px; }
 .catalog-drink-author h2 { grid-column: 1 / -1; margin: 0; }
-.catalog-drink-author-card { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 14px 16px; align-items: center; padding: 18px; border: 1px solid var(--color-control); border-radius: 18px; background: var(--color-surface); }
+/* Desktop: heading, then avatar · name · «Профиль» from the left (not pushed to the far edge), then the stats. */
+.catalog-drink-author-card { display: grid; grid-template-columns: 64px minmax(0, max-content) auto; justify-content: start; gap: 14px 16px; align-items: center; padding: 18px; border: 1px solid var(--color-control); border-radius: 18px; background: var(--color-surface); }
 .catalog-drink-author-avatar { display: grid; place-items: center; width: 64px; height: 64px; overflow: hidden; border-radius: 50%; background: var(--color-brand); color: #fff; font-size: 1.5rem; font-weight: 800; text-decoration: none; }
 .catalog-drink-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .catalog-drink-author-who { display: grid; gap: 6px; min-width: 0; }
@@ -587,16 +586,17 @@
 .catalog-drink-author-name strong { overflow: hidden; font-size: 1.0625rem; text-overflow: ellipsis; white-space: nowrap; }
 .catalog-drink-author-name span { color: var(--color-muted-strong); font-size: .875rem; }
 .catalog-drink-author-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.catalog-drink-author-stats { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
+.catalog-drink-author-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(160px, 240px)); gap: 8px; margin: 0; }
 .catalog-drink-author-stats div { padding: 10px 12px; border-radius: 12px; background: var(--color-subtle); }
 .catalog-drink-author-stats dt { color: var(--color-muted-strong); font-size: .75rem; }
 .catalog-drink-author-stats dd { margin: 2px 0 0; font-weight: 800; }
-.catalog-drink-author-open { grid-column: 3; grid-row: 1; }
+.catalog-drink-author-open { grid-column: 3; grid-row: 2; justify-self: start; margin-left: 8px; }
 @media (max-width: 639px) {
   .catalog-drink-author-card { grid-template-columns: 56px minmax(0, 1fr); }
   .catalog-drink-author-avatar { width: 56px; height: 56px; }
   .catalog-drink-author-open { grid-column: 1 / -1; grid-row: auto; justify-self: stretch; text-align: center; }
+  .catalog-drink-author-stats { grid-template-columns: 1fr 1fr; }
   .catalog-added-empty { grid-template-columns: 1fr; }
   .catalog-added-empty .community-button { grid-column: auto; justify-self: stretch; text-align: center; }
 }
-@media (prefers-reduced-motion: reduce) { .catalog-flavor-chip { animation: none; } .catalog-drink-chips button, .catalog-add-button, .store-form .catalog-drink-toggle, .store-form .catalog-drink-toggle input, .store-form .catalog-drink-toggle input::after { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .catalog-flavor-chip { animation: none; } .catalog-drink-chips button, .catalog-add-button, .store-form .catalog-drink-sugar-option { transition: none; } }

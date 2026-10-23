@@ -226,6 +226,8 @@ button.tier-list-card-likes[aria-pressed="true"] svg { animation: tier-like-pop 
 .store-search { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr) auto; align-items: end; gap: 16px; margin: 24px 0; }
 .store-search label, .store-form label, .store-moderation label { display: grid; gap: 8px; min-width: 0; font-size: .875rem; }
 .store-search input, .store-search select, .store-form input:not([type=hidden]), .store-form select, .store-form textarea, .store-moderation textarea { width: 100%; min-height: 44px; border: 1px solid var(--color-control); border-radius: 8px; padding: 10px 12px; color: var(--color-ink); background: var(--theme-panel,#fff); font: inherit; }
+/* These fields inherit the label's 14px; touch screens need 16px, or iOS Safari zooms in on focus. */
+@media (pointer: coarse) { :is(.store-search input, .store-search select, .store-form input:not([type=hidden]), .store-form select, .store-form textarea, .store-moderation textarea) { font-size: 1rem; } }
 .store-search input:focus-visible, .store-search select:focus-visible, .store-form input:focus-visible, .store-form select:focus-visible, .store-form textarea:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .store-view-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 20px 0; }
 .store-view-toolbar > div { display: flex; gap: 4px; }
@@ -494,6 +496,8 @@ a.wall-post-author:hover { color: var(--theme-link, #0058cc); }
 .wall-action-button:disabled { opacity: .5; cursor: wait; }
 .wall-post-edit { margin-top: 12px; }
 .wall-post-edit textarea { width: 100%; min-height: 96px; max-height: 400px; resize: vertical; border: 1px solid var(--theme-line, #c6ccd4); border-radius: 8px; padding: 12px; background: var(--theme-panel, #ffffff); color: var(--theme-text, #3e3e3f); font: inherit; font-size: .9375rem; }
+/* Touch screens: 16px, or iOS Safari zooms into the field on focus and the page pans sideways. */
+@media (pointer: coarse) { :is(.review-comment-edit, .wall-post-edit) textarea { font-size: 1rem; } }
 .wall-post-edit .community-form-footer { margin-top: 10px; }
 .wall-post-edit-buttons { display: flex; gap: 8px; }
 .wall-comment > p { margin-top: 14px; font-size: .9375rem; line-height: 1.55; }

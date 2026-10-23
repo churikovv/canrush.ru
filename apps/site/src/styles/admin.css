@@ -208,3 +208,22 @@
 .admin-drink dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
 .admin-drink code { margin-left: 6px; color: var(--color-muted-strong); font-size: .75rem; }
 @media (max-width: 639px) { .admin-drink { grid-template-columns: 1fr; } .admin-drink-cover { max-width: 180px; } }
+.admin-drink-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.admin-drink-toolbar .market-filters { margin: 0; }
+.admin-drink-search { display: flex; gap: 8px; flex: 1 1 280px; max-width: 420px; }
+.admin-drink-search input { flex: 1; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--color-control); border-radius: 8px; background: var(--color-surface); color: var(--color-ink); font: inherit; }
+.admin-drink-manage { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-control); }
+.admin-drink-edit { flex: 1 1 320px; min-width: 0; }
+.admin-drink-edit summary { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 999px; background: var(--color-subtle); color: var(--color-ink); font-weight: 600; cursor: pointer; list-style: none; }
+.admin-drink-edit summary::-webkit-details-marker { display: none; }
+.admin-drink-edit[open] summary { margin-bottom: 12px; }
+.admin-drink-edit-form fieldset { display: grid; gap: 12px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.admin-drink-edit-photo { display: flex; align-items: center; gap: 16px; }
+.admin-drink-edit-photo img { flex-shrink: 0; width: 96px; height: 120px; object-fit: contain; border-radius: 10px; background: #fff; }
+.admin-drink-edit-photo input[type=file] { min-height: 0; padding: 8px; }
+.admin-drink-edit-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.admin-drink-edit-row .field-help { grid-column: 1 / -1; margin: -4px 0 0; }
+.admin-drink-edit code { font-size: .8125rem; }
+.admin-drink-delete { display: grid; gap: 8px; justify-items: end; }
+@media (max-width: 639px) { .admin-drink-edit-row { grid-template-columns: 1fr; } .admin-drink-delete { justify-items: start; } }
+@media (pointer: coarse) { .admin-drink-search input { font-size: 1rem; } }

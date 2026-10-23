@@ -5,10 +5,12 @@ export const DRINK_VOLUME_PRESETS = [250, 330, 450, 500] as const;
 export const MAX_DRINK_VOLUMES = 6;
 export const MAX_DRINK_FLAVORS = 3;
 export const MAX_DRINK_INGREDIENTS = 1500;
+/** The optional full name from the can, «Monster Ultra Paradise»: search finds the drink by it. */
+export const MAX_DRINK_FULL_NAME = 80;
 /** Pending requests one member may have at once. */
 export const MAX_PENDING_DRINKS = 10;
 
-export interface CatalogDrinkInput { brand: string; flavor: string; volumes: number[]; ingredients: string }
+export interface CatalogDrinkInput { brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string }
 
 const collapse = (value: string) => value.replace(/\s+/gu, ' ').trim();
 const capitalise = (value: string) => value.charAt(0).toLocaleUpperCase('ru-RU') + value.slice(1);
@@ -23,10 +25,16 @@ export function ownFlavorName(value: string): string {
  * member's own names alike (`flavorName` shows an unknown part as written); `:sugarfree` marks a zero-sugar can, as in
  * the parser's keys, so `flavorName` shows «… · без сахара».
  */
-export function drinkFlavorKey({ flavors, custom = [], sugarFree }: { flavors: string[]; custom?: string[]; sugarFree: boolean }): string {
+/** Sugar of the can: `free` — zero sugar (`:sugarfree`), `sweetener` — part of it swapped for a sweetener (`:sweetener`). */
+export type DrinkSugar = 'regular' | 'free' | 'sweetener';
+export const DRINK_SUGAR_SUFFIX: Record<DrinkSugar, string> = { regular: '', free: ':sugarfree', sweetener: ':sweetener' };
+export const DRINK_SUGAR_NAME: Record<DrinkSugar, string> = { regular: '', free: ' · без сахара', sweetener: ' · с сахарозаменителем' };
+export const isDrinkSugar = (value: unknown): value is DrinkSugar => value === 'regular' || value === 'free' || value === 'sweetener';
+
+export function drinkFlavorKey({ flavors, custom = [], sugar }: { flavors: string[]; custom?: string[]; sugar: DrinkSugar }): string {
   const parts = [...new Set([...flavors, ...custom.map(ownFlavorName).filter(Boolean)])].sort();
   const base = parts.length > 1 ? `blend:${parts.join('+')}` : parts[0] ?? '';
-  return base && sugarFree ? `${base}:sugarfree` : base;
+  return base ? `${base}${DRINK_SUGAR_SUFFIX[sugar]}` : base;
 }
 
 /** Checks the own flavour name: free text, but without the characters the catalog keys are built from. */
@@ -34,7 +42,7 @@ export function customFlavorProblem(value: string): string | null {
   const name = collapse(value);
   if (!name) return null;
   if (name.length < 2 || name.length > 60) return 'Название вкуса — от 2 до 60 символов.';
-  if (/[:+]/u.test(name) || /^(?:blend|unknown|unresolved|sugarfree)$/iu.test(name)) return 'Название вкуса не должно содержать «:» и «+».';
+  if (/[:+]/u.test(name) || /^(?:blend|unknown|unresolved|sugarfree|sweetener)$/iu.test(name)) return 'Название вкуса не должно содержать «:» и «+».';
   return null;
 }
 
@@ -49,14 +57,50 @@ export function parseCatalogDrink(form: FormData, knownFlavors: ReadonlySet<stri
   if (flavors.some(key => !knownFlavors.has(key))) throw new CatalogDrinkError('Неизвестный вкус в списке. Обновите страницу.');
   if (flavors.length + custom.length > MAX_DRINK_FLAVORS) throw new CatalogDrinkError(`Можно указать до ${MAX_DRINK_FLAVORS} вкусов.`);
   if (!custom.length && !flavors.length) throw new CatalogDrinkError('Укажите вкус: выберите из подсказок или впишите свой.');
-  const flavor = drinkFlavorKey({ flavors, custom, sugarFree: form.get('sugarFree') === 'on' });
-  const volumes = [...new Set(form.getAll('volume').map(value => Number(value)))].sort((a, b) => a - b);
+  const sugar = form.get('sugar') ?? 'regular';
+  if (!isDrinkSugar(sugar)) throw new CatalogDrinkError('Выберите, есть ли в напитке сахар.');
+  const flavor = drinkFlavorKey({ flavors, custom, sugar });
+  const fullName = parseFullName(form);
+  return { brand, flavor, fullName, volumes: parseVolumes(form), ingredients: parseIngredients(form) };
+}
+
+function parseFullName(form: FormData): string {
+  const fullName = collapse(String(form.get('fullName') ?? ''));
+  if (fullName && (fullName.length < 2 || fullName.length > MAX_DRINK_FULL_NAME)) throw new CatalogDrinkError(`Полное название — от 2 до ${MAX_DRINK_FULL_NAME} символов.`);
+  return fullName;
+}
+
+/** Volumes from `volume` fields, or one comma-separated `volumes` field (the admin form). */
+function parseVolumes(form: FormData): number[] {
+  const raw = form.has('volumes') ? String(form.get('volumes')).split(/[\s,;]+/u).filter(Boolean) : form.getAll('volume').map(String);
+  const volumes = [...new Set(raw.map(value => Number(value)))].sort((a, b) => a - b);
   if (!volumes.length || volumes.length > MAX_DRINK_VOLUMES || volumes.some(volume => !Number.isInteger(volume) || volume < 100 || volume > 2000)) {
     throw new CatalogDrinkError(`Укажите от 1 до ${MAX_DRINK_VOLUMES} объёмов от 100 до 2000 мл.`);
   }
+  return volumes;
+}
+
+function parseIngredients(form: FormData): string {
   const ingredients = String(form.get('ingredients') ?? '').replace(/\r\n?/gu, '\n').replace(/[ \t]+/gu, ' ').replace(/\n{3,}/gu, '\n\n').trim();
   if (ingredients.length > MAX_DRINK_INGREDIENTS) throw new CatalogDrinkError(`Состав — не длиннее ${MAX_DRINK_INGREDIENTS} символов.`);
-  return { brand, flavor, volumes, ingredients };
+  return ingredients;
+}
+
+/**
+ * An admin's correction of a drink. Brand and the flavour key come only for drinks that are not published yet: a
+ * published drink's identity carries reviews, the calendar and tier lists, so it stays as it is.
+ */
+export interface CatalogDrinkEdit { brand?: string; flavor?: string; fullName: string; volumes: number[]; ingredients: string }
+export function parseCatalogDrinkEdit(form: FormData): CatalogDrinkEdit {
+  const edit: CatalogDrinkEdit = { fullName: parseFullName(form), volumes: parseVolumes(form), ingredients: parseIngredients(form) };
+  if (form.has('brand')) {
+    const brand = collapse(String(form.get('brand')));
+    if (brand.length < 2 || brand.length > 40) throw new CatalogDrinkError('Укажите бренд — от 2 до 40 символов.');
+    const flavor = collapse(String(form.get('flavor') ?? ''));
+    if (!flavor || flavor.length > 120) throw new CatalogDrinkError('Укажите ключ вкуса — до 120 символов.');
+    Object.assign(edit, { brand, flavor });
+  }
+  return edit;
 }
 
 export function volumeLabel(volume: number): string {

@@ -5,7 +5,7 @@ import { activeOffers, readCityCatalog, readAllCatalogGroups, readTierPickerGrou
 import type { CatalogGroup, FlavorVariant } from '@canrush/shared';
 import type { QueryResultRow } from 'pg';
 import { getPool } from '@/db/pool';
-import { catalogDrinkGroups } from '@/lib/catalog-drinks';
+import { withCatalogDrinks } from '@/lib/catalog-drinks';
 
 interface FavoriteRow extends QueryResultRow {
   brand: string;
@@ -26,13 +26,9 @@ export async function loadCatalogGroups(): Promise<CatalogGroup[]> { return (awa
  * Every product identity: the parser's files plus drinks members added and moderators published (catalogDrink).
  * A file group wins over a member's drink with the same identity; the database being away leaves the files alone.
  */
-export const loadAllCatalogGroups = cache(async (): Promise<CatalogGroup[]> => {
-  const files = await readAllCatalogGroups();
-  const added = await catalogDrinkGroups().catch(() => []);
-  const known = new Set(files.map(group => JSON.stringify([group.brand, group.flavor])));
-  return [...files, ...added.filter(group => !known.has(JSON.stringify([group.brand, group.flavor])))];
-});
-export const loadTierPickerGroups = cache(readTierPickerGroups);
+export const loadAllCatalogGroups = cache(async (): Promise<CatalogGroup[]> => withCatalogDrinks(await readAllCatalogGroups()));
+/** Drinks in shops of any city plus member-added ones, which have no offers yet. */
+export const loadTierPickerGroups = cache(async (): Promise<CatalogGroup[]> => withCatalogDrinks(await readTierPickerGroups()));
 
 function groupKey(brand: string, flavor: string): string {
   return `${brand}\u0000${flavor}`;

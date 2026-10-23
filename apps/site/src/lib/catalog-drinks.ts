@@ -3,12 +3,12 @@ import { cache } from 'react';
 import { getPool } from '@/db/pool';
 import { readAllCatalogGroups } from '@/lib/catalog-files';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
-import { CatalogDrinkError, MAX_PENDING_DRINKS, type CatalogDrinkInput } from '@/lib/catalog-drink-fields';
+import { CatalogDrinkError, MAX_PENDING_DRINKS, type CatalogDrinkEdit, type CatalogDrinkInput } from '@/lib/catalog-drink-fields';
 import type { PreparedReviewPhoto } from '@/lib/review-photos';
 
 export type CatalogDrinkStatus = 'pending' | 'published' | 'rejected';
 export interface CatalogDrink {
-  id: string; brand: string; flavor: string; name: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus;
+  id: string; brand: string; flavor: string; name: string; /** The full name from the can, '' when not given. */ fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus;
   moderationNote: string; createdAt: Date; updatedAt: Date; href: string; photo: string;
   /** Avatar, tag and XP as every author row shows them; `drinks` — how many of their drinks are published. */
   author: { id: string; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; drinks: number };
@@ -18,17 +18,17 @@ export class CatalogDrinkDuplicate extends CatalogDrinkError {
   constructor(message: string, readonly href: string) { super(message); }
 }
 
-const COLUMNS = `d.id, d.brand, d.flavor, d.volumes, d.ingredients, d.status, d."moderationNote", d."createdAt", d."updatedAt",
+const COLUMNS = `d.id, d.brand, d.flavor, d."fullName", d.volumes, d.ingredients, d.status, d."moderationNote", d."createdAt", d."updatedAt",
   d."ownerId", u.username, u.name, (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
   coalesce((select xp from "profileRanking" where id = u.id), 0) as xp,
   case when u."profileTags"[1] = 'admin' then case when exists(select 1 from "siteAdmin" where email = lower(u.email)) then 'admin' end
     when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
   (select count(*)::int from "catalogDrink" o where o."ownerId" = d."ownerId" and o.status = 'published') as drinks`;
-interface Row { id: string; brand: string; flavor: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number }
+interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number }
 const toDrink = (row: Row): CatalogDrink => ({
-  id: row.id, brand: row.brand, flavor: row.flavor, name: flavorName(row.flavor), volumes: row.volumes, ingredients: row.ingredients,
+  id: row.id, brand: row.brand, flavor: row.flavor, name: flavorName(row.flavor), fullName: row.fullName, volumes: row.volumes, ingredients: row.ingredients,
   status: row.status, moderationNote: row.moderationNote, createdAt: row.createdAt, updatedAt: row.updatedAt,
-  href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: `/api/catalog-drinks/${row.id}`,
+  href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: `/api/catalog-drinks/${row.id}?v=${row.updatedAt.getTime()}`,
   author: { id: row.ownerId, username: row.username, name: row.name, avatarId: row.avatarId, tag: row.tag, xp: Number(row.xp), drinks: row.drinks },
 });
 const VISIBLE_AUTHOR = 'not exists(select 1 from "userBlock" b where b."userId" = d."ownerId")';
@@ -42,7 +42,17 @@ export const getPublishedCatalogDrinks = cache(async (): Promise<CatalogDrink[]>
 
 /** The same drinks as catalog groups: no offers yet, the member's photo as the cover. */
 export async function catalogDrinkGroups(): Promise<CatalogGroup[]> {
-  return (await getPublishedCatalogDrinks()).map(drink => ({ brand: drink.brand, flavor: drink.flavor, variants: [], minPrice: 0, coverImageUrl: drink.photo }));
+  return (await getPublishedCatalogDrinks()).map(drink => ({ brand: drink.brand, flavor: drink.flavor, variants: [], minPrice: 0, coverImageUrl: drink.photo, ...(drink.fullName ? { fullName: drink.fullName } : {}) }));
+}
+
+/**
+ * `groups` plus the published member drinks they do not already have — for lists that otherwise take only drinks in
+ * shops (the tier list picker, the dating deck, «Тебе понравится»).
+ */
+export async function withCatalogDrinks(groups: CatalogGroup[]): Promise<CatalogGroup[]> {
+  const added = await catalogDrinkGroups().catch(() => []);
+  const known = new Set(groups.map(group => JSON.stringify([group.brand, group.flavor])));
+  return [...groups, ...added.filter(group => !known.has(JSON.stringify([group.brand, group.flavor])))];
 }
 
 export async function getCatalogDrink(brand: string, flavor: string): Promise<CatalogDrink | null> {
@@ -71,7 +81,7 @@ export async function submitCatalogDrink(userId: string, input: CatalogDrinkInpu
   const brand = [...files, ...published].find(group => lower(group.brand) === lower(input.brand))?.brand ?? input.brand;
   const identity = reviewedProductIdentity(brand, canonicalProductFlavor(brand, input.flavor));
   const existing = [...files, ...published].find(group => lower(group.brand) === lower(identity.brand) && lower(group.flavor) === lower(identity.flavor));
-  if (existing) throw new CatalogDrinkDuplicate('Такой напиток уже есть в каталоге.', `/catalog/${catalogGroupSlug(existing.brand, existing.flavor)}`);
+  if (existing) throw new CatalogDrinkDuplicate('Такой напиток уже есть в каталоге. Если в вашей банке часть сахара заменена подсластителем, выберите «С сахарозаменителем» на первом шаге.', `/catalog/${catalogGroupSlug(existing.brand, existing.flavor)}`);
   const db = await getPool().connect();
   try {
     await db.query('begin');
@@ -82,8 +92,8 @@ export async function submitCatalogDrink(userId: string, input: CatalogDrinkInpu
     if (counts.rows[0]!.pending >= MAX_PENDING_DRINKS || counts.rows[0]!.recent) {
       throw new CatalogDrinkError(`Подождите минуту между заявками. Одновременно на проверке может быть до ${MAX_PENDING_DRINKS} напитков.`);
     }
-    const result = await db.query<{ id: string }>(`insert into "catalogDrink"("ownerId", brand, flavor, volumes, ingredients, photo, thumbnail)
-      values ($1, $2, $3, $4, $5, $6, $7) returning id`, [userId, identity.brand, identity.flavor, input.volumes, input.ingredients, photo.data, photo.thumbnail]);
+    const result = await db.query<{ id: string }>(`insert into "catalogDrink"("ownerId", brand, flavor, "fullName", volumes, ingredients, photo, thumbnail)
+      values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`, [userId, identity.brand, identity.flavor, input.fullName, input.volumes, input.ingredients, photo.data, photo.thumbnail]);
     await db.query('commit');
     return result.rows[0]!.id;
   } catch (error) {
@@ -103,9 +113,82 @@ export async function moderateCatalogDrink(adminId: string, id: string, status: 
 }
 
 export async function listPendingCatalogDrinks(page = 1, size = 20): Promise<{ items: CatalogDrink[]; hasMore: boolean }> {
+  return listCatalogDrinks('pending', page, size);
+}
+
+/**
+ * The admin's lists: requests oldest first (the queue), published and rejected newest first. `query` matches brand,
+ * flavour key and full name. Blocked authors' requests stay out of the queue, as in moderation.
+ */
+export async function listCatalogDrinks(status: CatalogDrinkStatus, page = 1, size = 20, query = ''): Promise<{ items: CatalogDrink[]; hasMore: boolean }> {
   const { rows } = await getPool().query<Row>(`select ${COLUMNS} from "catalogDrink" d join "user" u on u.id = d."ownerId"
-    where d.status = 'pending' and ${VISIBLE_AUTHOR} order by d."createdAt" limit $1 offset $2`, [size + 1, (page - 1) * size]);
+    where d.status = $1 ${status === 'pending' ? `and ${VISIBLE_AUTHOR}` : ''}
+      and ($4 = '' or concat_ws(' ', d.brand, d.flavor, d."fullName") ilike '%' || $4 || '%')
+    order by ${status === 'pending' ? 'd."createdAt"' : 'coalesce(d."reviewedAt", d."createdAt") desc'} limit $2 offset $3`,
+  [status, size + 1, (page - 1) * size, query.trim().replace(/[\\%_]/gu, match => `\\${match}`)]);
   return { items: rows.slice(0, size).map(toDrink), hasMore: rows.length > size };
+}
+
+const ADMIN = 'exists(select 1 from "user" u join "siteAdmin" a on lower(u.email) = a.email where u.id = $1)';
+
+/**
+ * An admin fixes a drink: full name, volumes, label text and the photo for any drink; brand and flavour only before it
+ * is published (`edit.brand`/`edit.flavor`), checked against the catalog like a new request. `version` is the
+ * `updatedAt` the admin saw, so two admins do not overwrite each other.
+ */
+export async function updateCatalogDrink(adminId: string, adminEmail: string, id: string, version: string, edit: CatalogDrinkEdit, photo?: PreparedReviewPhoto): Promise<void> {
+  let identity: { brand: string; flavor: string } | undefined;
+  if (edit.brand !== undefined && edit.flavor !== undefined) {
+    const files = await readAllCatalogGroups();
+    const published = await catalogDrinkGroups();
+    const brand = [...files, ...published].find(group => lower(group.brand) === lower(edit.brand!))?.brand ?? edit.brand;
+    identity = reviewedProductIdentity(brand, canonicalProductFlavor(brand, edit.flavor));
+    const other = [...files, ...published].find(group => lower(group.brand) === lower(identity!.brand) && lower(group.flavor) === lower(identity!.flavor));
+    if (other) throw new CatalogDrinkDuplicate('Такой напиток уже есть в каталоге.', `/catalog/${catalogGroupSlug(other.brand, other.flavor)}`);
+  }
+  const db = await getPool().connect();
+  try {
+    await db.query('begin');
+    const result = await db.query(`update "catalogDrink" d set "fullName" = $4, volumes = $5, ingredients = $6,
+        brand = case when $7::text is not null and d.status <> 'published' then $7 else d.brand end,
+        flavor = case when $8::text is not null and d.status <> 'published' then $8 else d.flavor end,
+        photo = coalesce($9, d.photo), thumbnail = coalesce($10, d.thumbnail), "updatedAt" = clock_timestamp()
+      where d.id = $2 and date_trunc('milliseconds', d."updatedAt") = $3::timestamptz and ${ADMIN}
+        and ($7::text is null or d.status <> 'published') returning id`,
+    [adminId, id, version, edit.fullName, edit.volumes, edit.ingredients, identity?.brand ?? null, identity?.flavor ?? null, photo?.data ?? null, photo?.thumbnail ?? null]);
+    if (!result.rowCount) throw new CatalogDrinkError('Напиток изменился или уже опубликован. Обновите страницу.');
+    await db.query('insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, $2, $3, $4)', [adminEmail, photo ? 'catalog-drink-edit-photo' : 'catalog-drink-edit', 'catalog-drink', id]);
+    await db.query('commit');
+  } catch (error) {
+    await db.query('rollback');
+    if ((error as { code?: string }).code === '23505') throw new CatalogDrinkError('Такой напиток уже ждёт проверки.');
+    throw error;
+  } finally { db.release(); }
+}
+
+/**
+ * Removes a drink and its photo. A published drink leaves the catalog; reviews, the calendar and tier lists keep their
+ * rows as for an archived product, and the XP paid for it stays (as for a deleted store).
+ */
+export async function deleteCatalogDrink(adminId: string, adminEmail: string, id: string): Promise<void> {
+  const db = await getPool().connect();
+  try {
+    await db.query('begin');
+    const result = await db.query(`delete from "catalogDrink" d where d.id = $2 and ${ADMIN} returning id`, [adminId, id]);
+    if (!result.rowCount) throw new CatalogDrinkError('Напиток уже удалён. Обновите страницу.');
+    await db.query('insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, $2, $3, $4)', [adminEmail, 'catalog-drink-delete', 'catalog-drink', id]);
+    await db.query('commit');
+  } catch (error) {
+    await db.query('rollback');
+    throw error;
+  } finally { db.release(); }
+}
+
+/** A member's published drinks for the profile block «Добавленные напитки», newest first, and how many there are. */
+export async function listPublishedDrinksByOwner(userId: string, limit = 6): Promise<{ items: CatalogDrink[]; total: number }> {
+  const { rows } = await getPool().query<Row & { total: number }>(`select ${COLUMNS}, count(*) over()::int as total from "catalogDrink" d join "user" u on u.id = d."ownerId"
+    where d."ownerId" = $1 and d.status = 'published' and ${VISIBLE_AUTHOR} order by d."reviewedAt" desc nulls last, d."createdAt" desc limit $2`, [userId, limit]);
+  return { items: rows.map(toDrink), total: rows[0]?.total ?? 0 };
 }
 
 /** The member's own requests with their status and the moderator's note. */

@@ -13,7 +13,7 @@ export const BRAND_SEARCH_ALIASES: Readonly<Record<string, readonly string[]>> =
   'Adrenaline Rush': ['Адреналин', 'Adrenaline'],
   'Alligator': ['Аллигатор', 'Алигатор'],
   'Arizona': ['Аризона'],
-  'Ashkudi': ['Ашкуди', 'Ашкуди Энерджи'],
+  'Ashkudi': ['Ашкуди', 'Ашкуди Энерджи', 'HQD', 'HQD Energy', 'Эйч Кью Ди'],
   'Aziano': ['Азиано'],
   'Bacchus': ['Бахус'],
   'Bizon': ['Бизон'],

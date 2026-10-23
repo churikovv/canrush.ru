@@ -10,7 +10,9 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
       [/(?:^| )газированный(?: |$)/u, 'bacchus_sparkling'],
     ],
     'Lit Energy': [[/клубничн.*жвач/u, 'blend:bubblegum+strawberry'], [/(?:granat|гранат)/u, 'pomegranate'], [/(?:turbo|турбо)/u, 'lit_turbo']],
-    'Doma By Guf': [[/ориджинал/u, 'original'], [/(?:мандарин.*пуэр|пуэр.*мандарин)/u, 'doma_tangerine_puer']],
+    'Doma By Guf': [[/ориджинал/u, 'original']],
+    // «Мандариновый пуэр» is a By Баста can («by БАСТА ГУФ» on it), even when the retailer files it under Guf.
+    'By Баста': [[/(?:мандарин.*пуэр|пуэр.*мандарин)/u, 'basta_tangerine_puer'], [/(?:^| )(?:классический|ориджинал|original)(?: |$)/u, 'original']],
     'Sangaria': [[/(?:миракл|miracle)/u, 'sangaria_miracle']],
     'Plan B': [[/витаминная энергия/u, 'plan_b_vitamin']],
     'Dydo': [[/вита энерджи желе/u, 'dydo_vita_jelly']],
@@ -18,7 +20,13 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
     'Power Torr': [[/(?:^| )red(?: |$)/u, 'power_torr_red']],
     'Scandalist': [[/adder terror/u, 'scandalist_adder_terror'], [/geneve/u, 'scandalist_geneve']],
     'Go Champ': [[/aperative/u, 'go_champ_aperative']],
-    'Ashkudi': [[/belarus apples/u, 'ashkudi_belarus_apples'], [/pomegranade/u, 'pomegranate']],
+    // HQD Energy was renamed Ashkudi (Ашкуди) in 2025: the same cans, so both names land here.
+    'Ashkudi': [
+      [/(?:belarus apples|белорусск\S* яблоч)/u, 'ashkudi_belarus_apples'], [/pomegranade/u, 'pomegranate'],
+      [/(?:golden bears|мармеладн\S* мишк)/u, 'ashkudi_golden_bears'], [/(?:sour|кисл\S* драже)/u, 'ashkudi_sour'],
+      [/(?:pink lemonade|розов\S* лимонад)/u, 'ashkudi_pink_lemonade'], [/(?:dynamo|динамо)/u, 'ashkudi_dynamo'],
+      [/(?:voltage|вольтаж)/u, 'ashkudi_voltage'], [/(?:surgut|сургутск)/u, 'blackcurrant'],
+    ],
     'Red Bull': [[/(?:winter edition|ледяные мармеладки)/u, 'redbull_winter_ice_gummies'], [/(?:^| )red edition(?: |$)/u, 'watermelon'], [/krating.*extra.*zinc/u, 'redbull_krating_daeng_extra_zinc'], [/krating/u, 'redbull_krating_daeng'], [/fruit mix/u, 'redbull_fruit_mix'], [/sods.*summer berry/u, 'redbull_sods_summer_berry']],
     'Drive Me': [
       [/(?:caramel|сaramel|карамель).*(?:lollypop|лоллипоп)/u, 'drive_caramel'],
@@ -115,6 +123,8 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
 export function isPlainOriginal(brand: string | undefined, name: string): boolean {
   const brands: Record<string, RegExp> = {
     'Doma By Guf': /doma by guf|дома бай гуф|энергия|energy/gu,
+    // «Вакуленко В. М.» is the maker named in Ароматный мир titles.
+    'By Баста': /byбаста|by баста|бай баста|баста|вакуленко|energy|drink|энерджи|дринк/gu,
     'Monster': /green text|monster|монстр|energy|энерджи|drink|green|grenn|зеленый|black/gu,
     'Tassay': /tassay|тассай|energy|энерджи/gu,
     'Vulkan': /vulkan|вулкан|energy|энерджи/gu,

@@ -22,6 +22,7 @@
     "Vulkan",
     "M-150",
     "White Shark",
+    "By Баста",
     "Doma By Guf",
     "Ninja Star",
     "BOMBBAR",
@@ -99,6 +100,12 @@
     "M-150": [
       "М-150"
     ],
+    "By Баста": [
+      "by Баста",
+      "BYБАСТА",
+      "Бай Баста",
+      "Баста"
+    ],
     "Doma By Guf": [
       "Дома Бай Гуф"
     ],
@@ -110,7 +117,11 @@
     ],
     "Ashkudi": [
       "Ашкуdи",
-      "Ашкуди"
+      "Ашкуди",
+      "HQD Energy",
+      "HQD",
+      "Эйч Кью Ди Энерджи",
+      "Эйч Кью Ди"
     ],
     "Wk Up": [
       "WK UP",
@@ -480,7 +491,10 @@
     },
     "lavka": {
       "categorySlug": "energy_beer",
-      "cities": ["moscow", "saint-petersburg"],
+      "cities": [
+        "moscow",
+        "saint-petersburg"
+      ],
       "maxItems": 500
     }
   }

@@ -4,6 +4,7 @@ import Link from '@/components/navigation-progress';
 import { SwipeDeck } from '@/components/swipe-deck';
 import { auth } from '@/lib/auth';
 import { loadCatalogSnapshot } from '@/lib/catalog';
+import { withCatalogDrinks } from '@/lib/catalog-drinks';
 import { datingRewards, getDatingProgress, getLikedSwipes, getSwipeDeck } from '@/lib/drink-swipes';
 
 /**
@@ -11,7 +12,9 @@ import { datingRewards, getDatingProgress, getLikedSwipes, getSwipeDeck } from '
  * recommender's picks come first and every swipe feeds «Тебе понравится» and the counts on the drink page.
  */
 export async function DatingBrowser() {
-  const [session, { groups }] = await Promise.all([auth.api.getSession({ headers: await headers() }), loadCatalogSnapshot()]);
+  const [session, snapshot] = await Promise.all([auth.api.getSession({ headers: await headers() }), loadCatalogSnapshot()]);
+  // The city's drinks in shops and the ones members added (they have no prices yet but can be dated all the same).
+  const groups = await withCatalogDrinks(snapshot.groups);
   const viewerId = session?.user.id ?? null;
   const [deck, liked, progress] = await Promise.all([getSwipeDeck(viewerId, groups), viewerId ? getLikedSwipes(viewerId, groups) : [], viewerId ? getDatingProgress(viewerId) : null]);
   return <div className="dating">
