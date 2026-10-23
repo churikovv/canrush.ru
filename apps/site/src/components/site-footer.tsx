@@ -50,7 +50,7 @@ export function SiteFooter() {
             </div>
             <p className="footer-description">Первая социальная сеть для любителей энергетических напитков</p>
             <div className="footer-partner">
-              <span className="footer-partner-logo"><Image src={NRJ_PARTY.logo} width={64} height={64} alt={NRJ_PARTY.name} /></span>
+              <span className="footer-partner-logo"><Image src={NRJ_PARTY.logo} width={90} height={90} alt={NRJ_PARTY.name} /></span>
               <div className="footer-partner-copy">
                 <p><span className="footer-label">При поддержке сообщества</span><strong>{NRJ_PARTY.name}</strong></p>
                 <div className="footer-partner-socials">

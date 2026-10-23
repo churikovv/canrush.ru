@@ -381,15 +381,22 @@ select {
 }
 /* «При поддержке сообщества NRJ PARTY» under the footer's description: the logo on a white tile (it is drawn for white). */
 .brand-footer .footer-partner { display: inline-flex; align-self: flex-start; align-items: center; gap: 14px; margin-top: 20px; padding: 10px 18px 10px 10px; border: 1px solid rgb(255 255 255 / .12); border-radius: 18px; background: rgb(255 255 255 / .04); }
-.footer-partner-logo { display: grid; flex: none; place-items: center; width: 64px; height: 64px; overflow: hidden; border-radius: 12px; background: #fff; }
-.footer-partner-logo img { width: 86%; height: 86%; object-fit: contain; }
+/* As tall as the text column beside it (label, name, socials), so nothing sticks out past the logo. */
+.footer-partner-logo { display: grid; flex: none; align-self: stretch; place-items: center; width: 90px; min-height: 90px; overflow: hidden; border-radius: 14px; background: #fff; }
+.footer-partner-logo img { width: 84%; height: auto; object-fit: contain; }
 .footer-partner-copy { display: grid; gap: 8px; min-width: 0; }
 .brand-footer .footer-partner p { display: grid; gap: 2px; margin: 0; }
 .footer-partner-socials { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .footer-partner-socials a { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; color: inherit; font-size: .875rem; text-decoration: none; }
 .footer-partner-socials a:hover span:last-child { text-decoration: underline; }
 /* Phone: the partner card takes the full width. */
-@media (max-width: 639px) { .brand-footer .footer-partner { display: flex; align-self: stretch; width: 100%; box-sizing: border-box; } }
+@media (max-width: 639px) {
+  .brand-footer .footer-partner { display: flex; align-self: stretch; width: 100%; box-sizing: border-box; gap: 12px; padding: 10px 12px 10px 10px; }
+  /* Tighter links so Telegram and TikTok stay on one line and the logo tile stays square. */
+  .footer-partner-logo { width: 84px; min-height: 84px; }
+  .footer-partner-socials { flex-wrap: nowrap; gap: 12px; }
+  .footer-partner-socials a { gap: 6px; font-size: .8125rem; }
+}
 .brand-footer .footer-partner strong { color: #fff; font-size: 1.0625rem; font-weight: 800; letter-spacing: .02em; }
 .brand-footer .footer-legal {
   font-size: 0.75rem;
