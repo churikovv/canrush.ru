@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CatalogDrinkError, drinkFlavorKey, parseCatalogDrink, parseCatalogDrinkEdit } from '../src/lib/catalog-drink-fields';
+import { CatalogDrinkError, drinkFlavorKey, parseCatalogDrink, parseCatalogDrinkEdit, splitDrinkFlavorKey } from '../src/lib/catalog-drink-fields';
 import { flavorName } from '../src/lib/catalog-query';
 
 const known = new Set(['mango', 'passion_fruit', 'apple']);
@@ -31,13 +31,21 @@ describe('catalog drink form', () => {
     expect(() => parseCatalogDrink(form([...base, ['fullName', 'x'.repeat(81)]]), known)).toThrow('Полное название');
   });
 
-  it('reads the admin edit: volumes from one field, brand and flavour only when the form has them', () => {
-    expect(parseCatalogDrinkEdit(form([['fullName', 'Monster  Ultra'], ['volumes', '500, 250; 500'], ['ingredients', 'Вода']])))
-      .toEqual({ fullName: 'Monster Ultra', volumes: [250, 500], ingredients: 'Вода' });
-    expect(parseCatalogDrinkEdit(form([['brand', ' Burn '], ['flavor', ' blend:mango+peach '], ['volumes', '450']])))
-      .toMatchObject({ brand: 'Burn', flavor: 'blend:mango+peach', volumes: [450] });
-    expect(() => parseCatalogDrinkEdit(form([['volumes', '50']]))).toThrow('объёмов');
-    expect(() => parseCatalogDrinkEdit(form([['brand', 'Burn'], ['flavor', ''], ['volumes', '450']]))).toThrow('ключ вкуса');
+  it('reads the admin edit with the same brand, flavour and sugar inputs, volumes from one field', () => {
+    expect(parseCatalogDrinkEdit(form([['brand', ' Burn '], ['flavor', 'mango'], ['customFlavor', 'лемонграсс'], ['sugar', 'free'], ['fullName', 'Burn  Lime'], ['volumes', '500, 250; 500'], ['ingredients', 'Вода']]), known))
+      .toEqual({ brand: 'Burn', flavor: 'blend:mango+Лемонграсс:sugarfree', fullName: 'Burn Lime', volumes: [250, 500], ingredients: 'Вода' });
+    expect(() => parseCatalogDrinkEdit(form([['brand', 'Burn'], ['flavor', 'apple'], ['volumes', '50']]), known)).toThrow('объёмов');
+    expect(() => parseCatalogDrinkEdit(form([['brand', 'Burn'], ['volumes', '450']]), known)).toThrow('Укажите вкус');
+  });
+
+  it('splits a flavour key back into the inputs', () => {
+    expect(splitDrinkFlavorKey('blend:lime+Лемонграсс')).toEqual({ parts: ['lime', 'Лемонграсс'], sugar: 'regular' });
+    expect(splitDrinkFlavorKey('mango:sugarfree')).toEqual({ parts: ['mango'], sugar: 'free' });
+    expect(splitDrinkFlavorKey('blend:apple+kiwi:sweetener')).toEqual({ parts: ['apple', 'kiwi'], sugar: 'sweetener' });
+    for (const key of ['blend:lime+Лемонграсс', 'mango:sugarfree', 'blend:apple+kiwi:sweetener']) {
+      const { parts, sugar } = splitDrinkFlavorKey(key);
+      expect(drinkFlavorKey({ flavors: parts, sugar })).toBe(key);
+    }
   });
 
   it('rejects unknown flavours, odd names and volumes', () => {

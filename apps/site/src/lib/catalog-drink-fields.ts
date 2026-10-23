@@ -48,6 +48,11 @@ export function customFlavorProblem(value: string): string | null {
 
 /** Reads and checks the form; `knownFlavors` are the keys the browser could offer. */
 export function parseCatalogDrink(form: FormData, knownFlavors: ReadonlySet<string>): CatalogDrinkInput {
+  return { ...parseIdentity(form, knownFlavors), fullName: parseFullName(form), volumes: parseVolumes(form), ingredients: parseIngredients(form) };
+}
+
+/** Brand, the flavours picked from the list or typed (`flavor`/`customFlavor`) and the sugar choice, as one catalog key. */
+function parseIdentity(form: FormData, knownFlavors: ReadonlySet<string>): { brand: string; flavor: string } {
   const brand = collapse(String(form.get('brand') ?? ''));
   if (brand.length < 2 || brand.length > 40) throw new CatalogDrinkError('Укажите бренд — от 2 до 40 символов.');
   const custom = form.getAll('customFlavor').map(String).filter(value => collapse(value));
@@ -59,9 +64,17 @@ export function parseCatalogDrink(form: FormData, knownFlavors: ReadonlySet<stri
   if (!custom.length && !flavors.length) throw new CatalogDrinkError('Укажите вкус: выберите из подсказок или впишите свой.');
   const sugar = form.get('sugar') ?? 'regular';
   if (!isDrinkSugar(sugar)) throw new CatalogDrinkError('Выберите, есть ли в напитке сахар.');
-  const flavor = drinkFlavorKey({ flavors, custom, sugar });
-  const fullName = parseFullName(form);
-  return { brand, flavor, fullName, volumes: parseVolumes(form), ingredients: parseIngredients(form) };
+  return { brand, flavor: drinkFlavorKey({ flavors, custom, sugar }) };
+}
+
+/**
+ * The other way round, for editing a drink in the same inputs: the key's parts (catalog keys, or own names) and the
+ * sugar choice. `blend:lime+Лемонграсс` → `['lime', 'Лемонграсс']`, regular.
+ */
+export function splitDrinkFlavorKey(key: string): { parts: string[]; sugar: DrinkSugar } {
+  const sugar: DrinkSugar = key.endsWith(':sugarfree') ? 'free' : key.endsWith(':sweetener') ? 'sweetener' : 'regular';
+  const base = key.slice(0, key.length - DRINK_SUGAR_SUFFIX[sugar].length);
+  return { parts: base.startsWith('blend:') ? base.slice(6).split('+').filter(Boolean) : [base], sugar };
 }
 
 function parseFullName(form: FormData): string {
@@ -86,21 +99,10 @@ function parseIngredients(form: FormData): string {
   return ingredients;
 }
 
-/**
- * An admin's correction of a drink. Brand and the flavour key come only for drinks that are not published yet: a
- * published drink's identity carries reviews, the calendar and tier lists, so it stays as it is.
- */
-export interface CatalogDrinkEdit { brand?: string; flavor?: string; fullName: string; volumes: number[]; ingredients: string }
-export function parseCatalogDrinkEdit(form: FormData): CatalogDrinkEdit {
-  const edit: CatalogDrinkEdit = { fullName: parseFullName(form), volumes: parseVolumes(form), ingredients: parseIngredients(form) };
-  if (form.has('brand')) {
-    const brand = collapse(String(form.get('brand')));
-    if (brand.length < 2 || brand.length > 40) throw new CatalogDrinkError('Укажите бренд — от 2 до 40 символов.');
-    const flavor = collapse(String(form.get('flavor') ?? ''));
-    if (!flavor || flavor.length > 120) throw new CatalogDrinkError('Укажите ключ вкуса — до 120 символов.');
-    Object.assign(edit, { brand, flavor });
-  }
-  return edit;
+/** An admin's correction of a drink: the same brand, flavour and sugar inputs as the request, plus the rest. */
+export type CatalogDrinkEdit = CatalogDrinkInput;
+export function parseCatalogDrinkEdit(form: FormData, knownFlavors: ReadonlySet<string>): CatalogDrinkEdit {
+  return parseCatalogDrink(form, knownFlavors);
 }
 
 export function volumeLabel(volume: number): string {

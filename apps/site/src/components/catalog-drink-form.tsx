@@ -16,7 +16,7 @@ const STEPS = [
 ] as const;
 const LAST_STEP = STEPS.length - 1;
 /** A version with a sweetener is a drink of its own, so it can sit next to the regular can in the catalog. */
-const SUGAR_OPTIONS: { value: DrinkSugar; title: string; hint: string }[] = [
+export const SUGAR_OPTIONS: { value: DrinkSugar; title: string; hint: string }[] = [
   { value: 'regular', title: 'С сахаром', hint: 'Обычная банка' },
   { value: 'free', title: 'Без сахара', hint: 'Zero, Sugar Free, Light' },
   { value: 'sweetener', title: 'С сахарозаменителем', hint: 'Часть сахара заменена подсластителем' },

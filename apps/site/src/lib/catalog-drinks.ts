@@ -28,7 +28,7 @@ interface Row { id: string; brand: string; flavor: string; fullName: string; vol
 const toDrink = (row: Row): CatalogDrink => ({
   id: row.id, brand: row.brand, flavor: row.flavor, name: flavorName(row.flavor), fullName: row.fullName, volumes: row.volumes, ingredients: row.ingredients,
   status: row.status, moderationNote: row.moderationNote, createdAt: row.createdAt, updatedAt: row.updatedAt,
-  href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: `/api/catalog-drinks/${row.id}?v=${row.updatedAt.getTime()}`,
+  href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: `/api/catalog-drinks/${row.id}/${row.updatedAt.getTime()}`,
   author: { id: row.ownerId, username: row.username, name: row.name, avatarId: row.avatarId, tag: row.tag, xp: Number(row.xp), drinks: row.drinks },
 });
 const VISIBLE_AUTHOR = 'not exists(select 1 from "userBlock" b where b."userId" = d."ownerId")';
@@ -132,38 +132,52 @@ export async function listCatalogDrinks(status: CatalogDrinkStatus, page = 1, si
 const ADMIN = 'exists(select 1 from "user" u join "siteAdmin" a on lower(u.email) = a.email where u.id = $1)';
 
 /**
- * An admin fixes a drink: full name, volumes, label text and the photo for any drink; brand and flavour only before it
- * is published (`edit.brand`/`edit.flavor`), checked against the catalog like a new request. `version` is the
- * `updatedAt` the admin saw, so two admins do not overwrite each other.
+ * An admin fixes a drink: brand, flavour, full name, volumes, label text and the photo. A new brand or flavour is checked
+ * against the catalog like a request; for a published drink everything tied to the old identity (reviews, favourites,
+ * tier lists, the calendar, swipes) moves to the new one (`move_drink_identity`), and the old address redirects
+ * (`catalogDrinkRename`). `version` is the `updatedAt` the admin saw, so two admins do not overwrite each other.
  */
 export async function updateCatalogDrink(adminId: string, adminEmail: string, id: string, version: string, edit: CatalogDrinkEdit, photo?: PreparedReviewPhoto): Promise<void> {
-  let identity: { brand: string; flavor: string } | undefined;
-  if (edit.brand !== undefined && edit.flavor !== undefined) {
-    const files = await readAllCatalogGroups();
-    const published = await catalogDrinkGroups();
-    const brand = [...files, ...published].find(group => lower(group.brand) === lower(edit.brand!))?.brand ?? edit.brand;
-    identity = reviewedProductIdentity(brand, canonicalProductFlavor(brand, edit.flavor));
-    const other = [...files, ...published].find(group => lower(group.brand) === lower(identity!.brand) && lower(group.flavor) === lower(identity!.flavor));
-    if (other) throw new CatalogDrinkDuplicate('Такой напиток уже есть в каталоге.', `/catalog/${catalogGroupSlug(other.brand, other.flavor)}`);
-  }
   const db = await getPool().connect();
   try {
     await db.query('begin');
-    const result = await db.query(`update "catalogDrink" d set "fullName" = $4, volumes = $5, ingredients = $6,
-        brand = case when $7::text is not null and d.status <> 'published' then $7 else d.brand end,
-        flavor = case when $8::text is not null and d.status <> 'published' then $8 else d.flavor end,
-        photo = coalesce($9, d.photo), thumbnail = coalesce($10, d.thumbnail), "updatedAt" = clock_timestamp()
-      where d.id = $2 and date_trunc('milliseconds', d."updatedAt") = $3::timestamptz and ${ADMIN}
-        and ($7::text is null or d.status <> 'published') returning id`,
-    [adminId, id, version, edit.fullName, edit.volumes, edit.ingredients, identity?.brand ?? null, identity?.flavor ?? null, photo?.data ?? null, photo?.thumbnail ?? null]);
-    if (!result.rowCount) throw new CatalogDrinkError('Напиток изменился или уже опубликован. Обновите страницу.');
-    await db.query('insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, $2, $3, $4)', [adminEmail, photo ? 'catalog-drink-edit-photo' : 'catalog-drink-edit', 'catalog-drink', id]);
+    const current = (await db.query<{ brand: string; flavor: string; status: CatalogDrinkStatus }>(`select d.brand, d.flavor, d.status from "catalogDrink" d
+      where d.id = $2 and date_trunc('milliseconds', d."updatedAt") = $3::timestamptz and ${ADMIN} for update`, [adminId, id, version])).rows[0];
+    if (!current) throw new CatalogDrinkError('Напиток изменился или удалён. Обновите страницу.');
+    const files = await readAllCatalogGroups();
+    const published = (await catalogDrinkGroups()).filter(group => !(group.brand === current.brand && group.flavor === current.flavor));
+    const brand = [...files, ...published].find(group => lower(group.brand) === lower(edit.brand))?.brand ?? edit.brand;
+    const identity = reviewedProductIdentity(brand, canonicalProductFlavor(brand, edit.flavor));
+    const renamed = identity.brand !== current.brand || identity.flavor !== current.flavor;
+    if (renamed) {
+      const other = [...files, ...published].find(group => lower(group.brand) === lower(identity.brand) && lower(group.flavor) === lower(identity.flavor));
+      if (other) throw new CatalogDrinkDuplicate('Такой напиток уже есть в каталоге.', `/catalog/${catalogGroupSlug(other.brand, other.flavor)}`);
+    }
+    await db.query(`update "catalogDrink" set brand = $2, flavor = $3, "fullName" = $4, volumes = $5, ingredients = $6,
+        photo = coalesce($7, photo), thumbnail = coalesce($8, thumbnail), "updatedAt" = clock_timestamp() where id = $1`,
+    [id, identity.brand, identity.flavor, edit.fullName, edit.volumes, edit.ingredients, photo?.data ?? null, photo?.thumbnail ?? null]);
+    if (renamed && current.status === 'published') {
+      await db.query('select move_drink_identity($1, $2, $3, $4)', [current.brand, current.flavor, identity.brand, identity.flavor]);
+      // Earlier renames of this drink lead straight to the newest address.
+      await db.query('update "catalogDrinkRename" set "toBrand" = $3, "toFlavor" = $4 where "toBrand" = $1 and "toFlavor" = $2', [current.brand, current.flavor, identity.brand, identity.flavor]);
+      await db.query('insert into "catalogDrinkRename"("drinkId", "fromBrand", "fromFlavor", "toBrand", "toFlavor") values ($1, $2, $3, $4, $5)', [id, current.brand, current.flavor, identity.brand, identity.flavor]);
+    }
+    await db.query('insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, $2, $3, $4)',
+      [adminEmail, renamed ? 'catalog-drink-rename' : photo ? 'catalog-drink-edit-photo' : 'catalog-drink-edit', 'catalog-drink', id]);
     await db.query('commit');
   } catch (error) {
     await db.query('rollback');
     if ((error as { code?: string }).code === '23505') throw new CatalogDrinkError('Такой напиток уже ждёт проверки.');
     throw error;
   } finally { db.release(); }
+}
+
+/** Where a renamed member drink lives now: the product page redirects its old address there. */
+export async function renamedCatalogDrink(slug: string): Promise<{ brand: string; flavor: string } | null> {
+  const { rows } = await getPool().query<{ fromBrand: string; fromFlavor: string; toBrand: string; toFlavor: string }>(
+    'select "fromBrand", "fromFlavor", "toBrand", "toFlavor" from "catalogDrinkRename" order by id desc limit 2000');
+  const row = rows.find(rename => catalogGroupSlug(rename.fromBrand, rename.fromFlavor) === slug);
+  return row ? { brand: row.toBrand, flavor: row.toFlavor } : null;
 }
 
 /**

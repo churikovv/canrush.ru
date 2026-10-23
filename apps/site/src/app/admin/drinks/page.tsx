@@ -1,13 +1,16 @@
 import '@/styles/shared.css';
 import '@/styles/admin.css';
+import '@/styles/catalog.css';
 import Image from 'next/image';
 import { AdminShell } from '@/components/admin-shell';
 import { BrandShell } from '@/components/brand-shell';
-import { CatalogDrinkAdminDelete, CatalogDrinkAdminEdit } from '@/components/catalog-drink-admin';
+import { CatalogDrinkAdminMenu } from '@/components/catalog-drink-admin';
 import { CatalogDrinkModeration } from '@/components/catalog-drink-moderation';
 import Link from '@/components/navigation-progress';
 import { requireSiteAdmin } from '@/lib/admin';
 import { volumeLabel } from '@/lib/catalog-drink-fields';
+import { loadAllCatalogGroups } from '@/lib/catalog';
+import { BASIC_FLAVORS } from '@/lib/catalog-query';
 import { listCatalogDrinks, type CatalogDrinkStatus } from '@/lib/catalog-drinks';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +18,7 @@ export const metadata = { title: 'Напитки участников', robots: 
 const submitted = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' });
 const TABS: { key: CatalogDrinkStatus; label: string; title: string; subtitle: string; empty: [string, string] }[] = [
   { key: 'pending', label: 'На проверке', title: 'Напитки на проверке', subtitle: 'Сверьте бренд и вкус с фото банки: так напиток появится в каталоге и к нему привяжутся отзывы.', empty: ['Все заявки проверены', 'Новые напитки появятся здесь после отправки.'] },
-  { key: 'published', label: 'Добавленные', title: 'Добавленные напитки', subtitle: 'Опубликованные напитки участников: поправьте фото, название, объёмы и состав или уберите напиток из каталога.', empty: ['Пока ничего не добавлено', 'Здесь появятся напитки после публикации.'] },
+  { key: 'published', label: 'Добавленные', title: 'Добавленные напитки', subtitle: 'Опубликованные напитки участников. В меню «⋯» — правка бренда, вкуса, фото, объёмов и состава или удаление из каталога.', empty: ['Пока ничего не добавлено', 'Здесь появятся напитки после публикации.'] },
   { key: 'rejected', label: 'Отклонённые', title: 'Отклонённые заявки', subtitle: 'Заявки, которые вернули автору. Их можно поправить и удалить.', empty: ['Отклонённых заявок нет', 'Здесь появятся заявки, возвращённые на исправление.'] },
 ];
 
@@ -25,7 +28,10 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
   const tab = TABS.find(item => item.key === params.tab) ?? TABS[0]!;
   const query = (params.q ?? '').trim().slice(0, 80);
   const page = Math.min(10000, Math.max(1, parseInt(params.page ?? '1', 10) || 1));
-  const { items, hasMore } = await listCatalogDrinks(tab.key, page, 20, query);
+  const [{ items, hasMore }, groups] = await Promise.all([listCatalogDrinks(tab.key, page, 24, query), loadAllCatalogGroups()]);
+  // The same brand and flavour suggestions as the request form, for the edit dialog.
+  const brands = [...new Set(groups.map(group => group.brand.trim()).filter(brand => brand && brand.toLowerCase() !== 'unknown'))].sort((a, b) => a.localeCompare(b, 'ru'));
+  const flavors = [...BASIC_FLAVORS].sort((a, b) => a.label.localeCompare(b.label, 'ru'));
   const href = (next: { tab?: CatalogDrinkStatus; page?: number; q?: string }) => {
     const search = new URLSearchParams();
     const nextTab = next.tab ?? tab.key;
@@ -46,25 +52,22 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
           <button className="community-button community-button-secondary" type="submit">Найти</button>
         </form>
       </div>
-      {items.length ? <div className="admin-store-queue">{items.map(drink => <section key={drink.id} className="admin-data-panel store-review admin-drink-review">
-        <div className="admin-drink">
-          <a className="admin-drink-cover" href={drink.photo} target="_blank" rel="noreferrer"><Image src={drink.photo} width={160} height={200} unoptimized alt={`Фото: ${drink.brand} ${drink.name}`} /></a>
-          <dl>
-            <div><dt>Бренд</dt><dd>{drink.brand}</dd></div>
-            <div><dt>Вкус</dt><dd>{drink.status === 'published' ? <Link href={drink.href}>{drink.name}</Link> : drink.name}{drink.flavor !== drink.name && <code>{drink.flavor}</code>}</dd></div>
-            {drink.fullName && <div><dt>Название</dt><dd>{drink.fullName}</dd></div>}
-            <div><dt>Объём</dt><dd>{drink.volumes.map(volumeLabel).join(' · ')}</dd></div>
-            <div><dt>Состав</dt><dd>{drink.ingredients || '—'}</dd></div>
-            <div><dt>Автор</dt><dd>{drink.author.username ? <Link href={`/profile/${drink.author.username}`}>@{drink.author.username}</Link> : drink.author.name} · {submitted.format(drink.createdAt)}</dd></div>
-            {drink.status === 'rejected' && drink.moderationNote && <div><dt>Причина</dt><dd>{drink.moderationNote}</dd></div>}
-          </dl>
+      {items.length ? <ul className="admin-drink-grid">{items.map(drink => <li key={drink.id} className="admin-drink-card">
+        <div className="admin-drink-card-main">
+          <a className="admin-drink-card-cover" href={drink.photo} target="_blank" rel="noreferrer" aria-label="Фото банки целиком"><Image src={drink.photo} width={64} height={80} unoptimized alt="" /></a>
+          <div className="admin-drink-card-text">
+            <small>{drink.brand}</small>
+            <strong>{drink.status === 'published' ? <Link href={drink.href}>{drink.name}</Link> : drink.name}</strong>
+            {drink.fullName && <span className="admin-drink-card-full">{drink.fullName}</span>}
+            <span className="admin-drink-card-meta">{drink.volumes.map(volumeLabel).join(' · ')} · {drink.author.username ? <Link href={`/profile/${drink.author.username}`}>@{drink.author.username}</Link> : drink.author.name} · {submitted.format(drink.createdAt)}</span>
+            {drink.flavor !== drink.name && <code title="Ключ вкуса">{drink.flavor}</code>}
+          </div>
+          <CatalogDrinkAdminMenu key={drink.updatedAt.toISOString()} brands={brands} flavors={flavors} drink={{ id: drink.id, brand: drink.brand, flavor: drink.flavor, name: drink.name, fullName: drink.fullName, volumes: drink.volumes, ingredients: drink.ingredients, status: drink.status, photo: drink.photo, version: drink.updatedAt.toISOString() }} />
         </div>
+        {drink.ingredients && <p className="admin-drink-card-ingredients">{drink.ingredients}</p>}
+        {drink.status === 'rejected' && drink.moderationNote && <p className="admin-drink-card-note">Причина: {drink.moderationNote}</p>}
         {drink.status === 'pending' && <CatalogDrinkModeration id={drink.id} version={drink.updatedAt.toISOString()} />}
-        <div className="admin-drink-manage">
-          <CatalogDrinkAdminEdit key={drink.updatedAt.toISOString()} drink={{ id: drink.id, brand: drink.brand, flavor: drink.flavor, fullName: drink.fullName, volumes: drink.volumes, ingredients: drink.ingredients, status: drink.status, photo: drink.photo, version: drink.updatedAt.toISOString() }} />
-          <CatalogDrinkAdminDelete id={drink.id} label={`${drink.brand} · ${drink.name}`} published={drink.status === 'published'} />
-        </div>
-      </section>)}</div>
+      </li>)}</ul>
         : <div className="admin-data-panel"><div className="admin-empty-result"><strong>{query ? 'Ничего не нашлось' : tab.empty[0]}</strong><span>{query ? 'Попробуйте другой бренд или вкус.' : tab.empty[1]}</span></div></div>}
       {(page > 1 || hasMore) && <nav className="admin-table-pagination" aria-label="Страницы напитков"><span>Страница {page}</span><div>{page > 1 && <Link href={href({ page: page - 1 })}>← Назад</Link>}{hasMore && <Link href={href({ page: page + 1 })}>Далее →</Link>}</div></nav>}
     </AdminShell>

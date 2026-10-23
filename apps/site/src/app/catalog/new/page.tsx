@@ -38,7 +38,7 @@ export default async function NewCatalogDrinkPage() {
       {own.length > 0 && <section className="catalog-drink-requests" aria-labelledby="catalog-drink-requests-title">
         <h2 id="catalog-drink-requests-title">Ваши заявки</h2>
         <ul>{own.map(drink => <li key={drink.id} data-status={drink.status}>
-          <span className="catalog-drink-request-cover"><Image src={`${drink.photo}&size=thumbnail`} width={56} height={56} unoptimized alt="" /></span>
+          <span className="catalog-drink-request-cover"><Image src={`${drink.photo}?size=thumbnail`} width={56} height={56} unoptimized alt="" /></span>
           <div>
             <p><b>{drink.brand} · {drink.name}</b><span className="catalog-drink-status">{STATUS[drink.status]}</span></p>
             <small>{drink.volumes.map(volumeLabel).join(' · ')}</small>

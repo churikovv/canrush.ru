@@ -10,7 +10,7 @@ import { CatalogProductDetail } from '@/components/catalog-product-detail';
 import type { ProductTab } from '@/components/catalog-product-tabs';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { getSwipeCounts } from '@/lib/drink-swipes';
-import { catalogDrinkIngredients, getCatalogDrink } from '@/lib/catalog-drinks';
+import { catalogDrinkIngredients, getCatalogDrink, renamedCatalogDrink } from '@/lib/catalog-drinks';
 import { getProductIngredients } from '@/lib/ingredients';
 import { auth } from '@/lib/auth';
 import { getCatalogGroup, isFavorite, loadAllCatalogGroups } from '@/lib/catalog';
@@ -67,7 +67,12 @@ export default async function CatalogProductPage({
     productFromParams(params),
     auth.api.getSession({ headers: await headers() }),
   ]);
-  if (!group) notFound();
+  if (!group) {
+    // A member drink an admin renamed: its old address leads to the new card.
+    const renamed = await renamedCatalogDrink((await params).product);
+    if (renamed) permanentRedirect(`/catalog/${catalogGroupSlug(renamed.brand, renamed.flavor)}${tab === 'reviews' ? '?tab=reviews' : ''}`);
+    notFound();
+  }
 
   const [favorite, reviews, summary, userReview, fileIngredients, swipes, added] = await Promise.all([
     session ? isFavorite(session.user.id, group.brand, group.flavor) : Promise.resolve(false),

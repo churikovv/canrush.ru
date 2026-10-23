@@ -52,7 +52,7 @@ function revalidateDrinks() {
 export async function updateCatalogDrinkAction(id: string, version: string, _previous: CatalogDrinkState, form: FormData): Promise<CatalogDrinkState> {
   const admin = await requireSiteAdmin();
   try {
-    const edit = parseCatalogDrinkEdit(form);
+    const edit = parseCatalogDrinkEdit(form, KNOWN_FLAVORS);
     const { photos } = await prepareReviewPhotos(form);
     if (photos.length > 1) return { error: 'Выберите одно фото банки.' };
     await updateCatalogDrink(admin.userId, admin.email, id, version, edit, photos[0]);
