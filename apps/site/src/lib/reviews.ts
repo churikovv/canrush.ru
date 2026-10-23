@@ -45,6 +45,7 @@ export interface ReviewInput {
 const EMPTY_SUMMARY: ReviewSummary = { count: 0, design: 0, taste: 0, overall: 0 };
 
 interface ReviewRow extends QueryResultRow {
+  userId: string;
   photos: string[];
   id: string;
   brand: string;
@@ -63,7 +64,7 @@ interface ReviewRow extends QueryResultRow {
 }
 
 const REVIEW_SELECT = `
-  select r."id", r."brand", r."flavor", r."design", r."taste", r."text",
+  select r."id", r."userId", r."brand", r."flavor", r."design", r."taste", r."text",
          r."createdAt", r."updatedAt",
          array(select p."id"::text from "reviewPhoto" p where p."reviewId" = r."id" order by p."position") as photos,
          u."username", u."name", u."telegramChannel",
@@ -96,6 +97,24 @@ function toReview(row: ReviewRow): ReviewData {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
+}
+
+/** The feed's «оценил напитки» events: a member's reviews of one Moscow day, newest first, keyed `<userId>|<YYYY-MM-DD>`. */
+export async function getReviewsByAuthorDays(keys: string[]): Promise<Map<string, ReviewData[]>> {
+  const pairs = keys.flatMap(key => { const [userId, day] = key.split('|'); return userId && day ? [{ userId, day }] : []; });
+  const byKey = new Map<string, ReviewData[]>();
+  if (!pairs.length) return byKey;
+  const result = await getPool().query<ReviewRow & { day: string }>(
+    `select q.*, to_char((q."createdAt" at time zone 'Europe/Moscow')::date, 'YYYY-MM-DD') as day from (${REVIEW_SELECT}
+      where (r."userId", (r."createdAt" at time zone 'Europe/Moscow')::date) in (select * from unnest($1::text[], $2::date[]))) q
+     order by q."createdAt" desc`,
+    [pairs.map(pair => pair.userId), pairs.map(pair => pair.day)],
+  );
+  for (const row of result.rows) {
+    const key = `${row.userId}|${row.day}`;
+    byKey.set(key, [...byKey.get(key) ?? [], toReview(row)]);
+  }
+  return byKey;
 }
 
 export async function getReviewsForProduct(brand: string, flavor: string, viewer: string | null = null): Promise<ReviewData[]> {

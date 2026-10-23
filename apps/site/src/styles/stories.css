@@ -41,7 +41,27 @@
 .story-close { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
 .story-stage { position: relative; flex: 1; display: grid; place-items: center; min-height: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
 .story-stage > img, .story-stage > video { width: 100%; height: 100%; object-fit: contain; }
-.story-caption { position: absolute; left: 16px; right: 16px; bottom: calc(24px + env(safe-area-inset-bottom)); margin: 0; padding: 10px 14px; border-radius: 14px; background: rgb(0 0 0 / .55); font-size: 1rem; line-height: 1.4; text-align: center; overflow-wrap: anywhere; }
+.story-caption { flex: 1; min-width: 0; margin: 0; padding: 10px 14px; border-radius: 14px; background: rgb(0 0 0 / .55); color: #fff; font-size: 1rem; line-height: 1.4; overflow-wrap: anywhere; }
+/* Under a member's story: the caption and the heart (or, for the author, likes and views that open «who liked»). */
+.story-foot { position: absolute; z-index: 3; left: 16px; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: flex-end; justify-content: flex-end; gap: 10px; pointer-events: none; }
+.story-foot > * { pointer-events: auto; }
+.story-like, .story-stats { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 48px; padding: 0 12px; border: 0; border-radius: 999px; background: rgb(0 0 0 / .45); color: #fff; font: inherit; font-weight: 800; font-variant-numeric: tabular-nums; cursor: pointer; }
+.story-like { min-width: 48px; justify-content: center; }
+.story-like.is-liked { color: #ff4e6a; }
+.story-like.is-liked svg { animation: story-like-pop 360ms cubic-bezier(.2, .9, .3, 1.4); }
+.story-like span { color: #fff; }
+.story-stats svg:nth-of-type(2) { margin-left: 6px; }
+@keyframes story-like-pop { 40% { transform: scale(1.3); } }
+.story-likers { position: absolute; z-index: 6; left: 0; right: 0; bottom: 0; max-height: 60%; display: flex; flex-direction: column; padding: 8px 16px calc(16px + env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; background: #1b1d22; color: #fff; overflow: hidden; }
+.story-likers header { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+.story-likers ul { margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.story-likers a { display: flex; align-items: center; gap: 12px; padding: 8px 0; color: inherit; text-decoration: none; }
+.story-likers a > span:last-child { display: grid; }
+.story-likers small { color: rgb(255 255 255 / .6); }
+.story-likers p { margin: 8px 0; color: rgb(255 255 255 / .7); }
+.story-liker-avatar { display: grid; flex: none; place-items: center; width: 36px; height: 36px; overflow: hidden; border-radius: 50%; background: #2f343c; font-weight: 800; }
+.story-liker-avatar img { width: 100%; height: 100%; object-fit: cover; }
+@media (prefers-reduced-motion: reduce) { .story-like.is-liked svg { animation: none; } }
 .story-nav { display: none; }
 @media (min-width: 640px) and (pointer: fine) {
   .story-frame { height: min(100dvh - 32px, 860px); border-radius: 18px; overflow: visible; }
@@ -137,4 +157,4 @@
 .story-frame[data-tone=light] .story-progress span { background: rgb(19 20 26 / .2); }
 .story-frame[data-tone=light] .story-progress i { background: #13141a; }
 .story-share:disabled { opacity: .5; cursor: progress; }
-.story-notice { position: absolute; z-index: 5; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom)); margin: 0; padding: 10px 16px; border-radius: 999px; background: #fff; color: #13141a; font-weight: 700; white-space: nowrap; box-shadow: 0 10px 28px -10px rgb(0 0 0 / .5); transform: translateX(-50%); }
+.story-notice { position: absolute; z-index: 5; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); margin: 0; padding: 10px 16px; border-radius: 999px; background: #fff; color: #13141a; font-weight: 700; white-space: nowrap; box-shadow: 0 10px 28px -10px rgb(0 0 0 / .5); transform: translateX(-50%); }

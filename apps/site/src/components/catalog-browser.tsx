@@ -6,6 +6,7 @@ import { CatalogControls } from '@/components/catalog-controls';
 import { CatalogGrid } from '@/components/catalog-grid';
 import { CatalogProductCard } from '@/components/catalog-product-card';
 import { loadAllCatalogGroups, loadCatalogSnapshot } from '@/lib/catalog';
+import { catalogDrinkGroups } from '@/lib/catalog-drinks';
 import {
   filterCatalogGroups,
   flavorName,
@@ -48,9 +49,12 @@ export async function CatalogBrowser({ params, basePath = '/catalog', keep = {},
   const snapshot = await loadCatalogSnapshot();
   const { groups, city } = snapshot;
   const searching = Boolean(first(params.q).trim());
-  const allGroups = searching ? await loadAllCatalogGroups() : groups;
   const currentKeys = new Set(groups.map(group => JSON.stringify([group.brand, group.flavor])));
-  const archived = allGroups.filter(group => !currentKeys.has(JSON.stringify([group.brand, group.flavor])) && !isExcludedEnergyBrand(group.brand) && !/^(?:unknown|unresolved)(?::|$)/.test(group.flavor) && !(group.brand === 'Volt Energy' && group.flavor === 'mango') && !isAssortmentFlavor(group.flavor)).map(group => ({ ...group, variants: [], minPrice: 0 }));
+  // Drinks members added stay listed after the shop offers until shops have them; the archive waits for a search.
+  const added = (await catalogDrinkGroups().catch(() => [])).filter(group => !currentKeys.has(JSON.stringify([group.brand, group.flavor])));
+  const addedKeys = new Set(added.map(group => JSON.stringify([group.brand, group.flavor])));
+  const allGroups = searching ? await loadAllCatalogGroups() : [...groups, ...added];
+  const archived = allGroups.filter(group => !currentKeys.has(JSON.stringify([group.brand, group.flavor])) && !addedKeys.has(JSON.stringify([group.brand, group.flavor])) && !isExcludedEnergyBrand(group.brand) && !/^(?:unknown|unresolved)(?::|$)/.test(group.flavor) && !(group.brand === 'Volt Energy' && group.flavor === 'mango') && !isAssortmentFlavor(group.flavor)).map(group => ({ ...group, variants: [], minPrice: 0 }));
   const brands = [...new Set(allGroups.map((group) => group.brand))].sort((a, b) => a.localeCompare(b, 'ru-RU'));
   const flavorValues = [...new Set(allGroups.map((group) => group.flavor))];
   const flavors = flavorValues
@@ -67,13 +71,15 @@ export async function CatalogBrowser({ params, basePath = '/catalog', keep = {},
   const ratingSummaries = filters.sort === 'rating' ? await getReviewSummaries(allGroups) : undefined;
   const discussions = filters.sort === 'comments' ? await getDiscussionCounts() : undefined;
   const filtered = filterCatalogGroups(groups, filters, ratingSummaries, discussions);
+  const addedFiltered = filterCatalogGroups(added, filters, ratingSummaries, discussions);
   const archivedFiltered = searching ? filterCatalogGroups(archived, filters, ratingSummaries, discussions) : [];
-  const totalCount = filtered.length + archivedFiltered.length;
+  const totalCount = filtered.length + addedFiltered.length + archivedFiltered.length;
   const visible = filtered.slice(0, limit);
-  const visibleArchive = archivedFiltered.slice(0, Math.max(0, limit - filtered.length));
+  const visibleAdded = addedFiltered.slice(0, Math.max(0, limit - filtered.length));
+  const visibleArchive = archivedFiltered.slice(0, Math.max(0, limit - filtered.length - addedFiltered.length));
   const nextHref = limit < totalCount ? loadMoreHref(filters, limit + PAGE_SIZE, basePath, keep) : undefined;
   const reviewSummaries = ratingSummaries ?? await getReviewSummaries(
-    [...visible, ...visibleArchive].map((group) => ({ brand: group.brand, flavor: group.flavor })),
+    [...visible, ...visibleAdded, ...visibleArchive].map((group) => ({ brand: group.brand, flavor: group.flavor })),
   );
 
   return (
@@ -89,6 +95,7 @@ export async function CatalogBrowser({ params, basePath = '/catalog', keep = {},
         sort={filters.sort}
         basePath={basePath}
         keep={keep}
+        addHref="/catalog/new"
       /></Pinned>
 
       <p className="sr-only" aria-live="polite">
@@ -99,7 +106,7 @@ export async function CatalogBrowser({ params, basePath = '/catalog', keep = {},
         <CatalogGrid
           nextHref={nextHref}
           autoLoad={limit < AUTO_LOAD_LIMIT}
-          visibleCount={visible.length + visibleArchive.length}
+          visibleCount={visible.length + visibleAdded.length + visibleArchive.length}
           totalCount={totalCount}
         >
           {visible.map((group, index) => (
@@ -110,6 +117,8 @@ export async function CatalogBrowser({ params, basePath = '/catalog', keep = {},
               summary={reviewSummaries.get(`${group.brand}\u0000${group.flavor}`)}
             />
           ))}
+          {visibleAdded.length > 0 && <div className="catalog-archive-heading"><h2>Добавлены участниками</h2><p>Проверены модераторами. Цены появятся, когда напиток найдут в магазинах.</p></div>}
+          {visibleAdded.map(group => <CatalogProductCard key={`added:${group.brand}:${group.flavor}`} group={group} eager={false} summary={reviewSummaries.get(`${group.brand}\u0000${group.flavor}`)} />)}
           {visibleArchive.length > 0 && <div className="catalog-archive-heading"><h2>Архивные напитки</h2><p>Сейчас нет предложений в выбранном городе.</p></div>}
           {visibleArchive.map(group => <CatalogProductCard key={`archive:${group.brand}:${group.flavor}`} group={group} eager={false} summary={reviewSummaries.get(`${group.brand}\u0000${group.flavor}`)} />)}
         </CatalogGrid>

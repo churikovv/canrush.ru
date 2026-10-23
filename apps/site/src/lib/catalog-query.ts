@@ -82,6 +82,10 @@ const FLAVOR_NAMES: Record<string, string> = {
   unknown: 'Вкус не указан',
 };
 
+/** Single flavours a member can pick when adding a drink; combining two or three makes a `blend:` key. */
+export const BASIC_FLAVORS: { key: string; label: string }[] = Object.entries(FLAVOR_NAMES)
+  .filter(([key]) => key !== 'unknown').map(([key, label]) => ({ key, label }));
+
 export function flavorName(flavor: string): string {
   if (isAssortmentFlavor(flavor)) return "В ассортименте";
   const named: Record<string, string> = { bacchus_still: "Негазированный", bacchus_sparkling: "Газированный", lit_turbo: "Turbo", dydo_vita_jelly: "Vita Energy Jelly", bizon_black: "Black", power_torr_red: "Red · Ягодно-фруктовый микс", scandalist_adder_terror: "Adder Terror", scandalist_geneve: "Geneve", go_champ_aperative: "Aperative","monster_ultra_white": "Ultra White", "monster_ultra_paradise": "Ultra Paradise", "monster_ultra_violet": "Ultra Violet", "monster_ultra_black": "Ultra Black", "monster_ultra_rosa": "Ultra Rosa", "monster_ultra_peachy_keen": "Ultra Peachy Keen", "monster_ultra_strawberry": "Ultra Strawberry", "monster_ultra_fiesta": "Ultra Fiesta Mango", "monster_ultra_golden_pineapple": "Ultra Golden Pineapple", "monster_ultra_watermelon": "Ultra Watermelon", "monster_ultra_vice_guava": "Ultra Vice Guava", "monster_ultra_fantasy": "Ultra Fantasy", "monster_mango_loco": "Mango Loco", "monster_bad_apple": "Bad Apple", "monster_monarch": "Monarch", "monster_pipeline_punch": "Pipeline Punch", "monster_rio_punch": "Rio Punch", "monster_aussie_lemonade": "Aussie Lemonade", "monster_nitro_cosmic_peach": "Nitro Cosmic Peach", "monster_nitro": "Nitro", "monster_rehab_peach_tea": "Rehab Peach Tea", "monster_the_doctor": "The Doctor", "monster_vr46": "VR46", "monster_full_throttle": "Full Throttle", "monster_lando_norris": "Lando Norris", "monster_khaotic": "Khaotic", "monster_strawberry_shot": "Strawberry Shot", "monster_viking_berry": "Viking Berry", "monster_absolute_zero": "Absolute Zero", "ashkudi_belarus_apples": "Belarus Apples", "redbull_sods_summer_berry": "Sods Summer Berry"};

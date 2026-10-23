@@ -5,6 +5,8 @@ import type { PriceSeries } from '@/lib/price-history';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import type { SwipeCounts } from '@/lib/drink-swipes';
+import type { CatalogDrink } from '@/lib/catalog-drinks';
+import { CatalogDrinkAuthor } from '@/components/catalog-drink-author';
 import type { CatalogGroup, PublishedIngredients } from '@canrush/shared';
 import { CatalogProductIngredients } from '@/components/catalog-product-ingredients';
 import { CatalogFavoriteButton } from '@/components/catalog-favorite-button';
@@ -33,9 +35,11 @@ interface CatalogProductDetailProps {
   activeTab: ProductTab;
   /** Dating in the community: how many swiped the drink right («нравится») and left («пропустить»). */
   swipes?: SwipeCounts;
+  /** A drink a member added (catalogDrink) that shops do not have yet: who added it, when, and the volumes they gave. */
+  addedBy?: Pick<CatalogDrink, 'author' | 'volumes' | 'createdAt'>;
 }
 
-export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, activeTab, swipes }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, activeTab, swipes, addedBy }: CatalogProductDetailProps) {
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
   const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
 
@@ -68,6 +72,10 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
         </div>
 
         <h1>{flavorName(group.flavor)}</h1>
+        {addedBy && <ul className="catalog-added-facts" aria-label="О напитке">
+          <li className="catalog-added-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M16 11h6" /></svg>От участника</li>
+          {addedBy.volumes.map(volume => <li key={volume}>{volumeLabel(volume)}</li>)}
+        </ul>}
         {swipes && (swipes.liked > 0 || swipes.skipped > 0) && <section className="catalog-swipe-card" aria-label={`В дейтинге: свайпнули ${swipes.liked}, пропустили ${swipes.skipped}`}>
           <div className="catalog-swipe-head">
             <strong>В дейтинге</strong>
@@ -131,11 +139,16 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
                   ))}
                 </CatalogVolumeTabs>
               ) : (
-                <p className="catalog-product-note">Пока нет актуальных предложений.</p>
+                addedBy ? <div className="catalog-added-empty">
+                  <span className="catalog-added-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9 5 3h14l2 6M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Zm2 5v7h14v-7" /></svg></span>
+                  <div><strong>Цен пока нет</strong><p>Напиток добавил участник — в магазинах из нашего мониторинга его ещё не нашли. Видели его в продаже? Добавьте магазин, и его увидят все.</p></div>
+                  <Link className="community-button community-button-secondary" href="/market/stores/new">Добавить магазин</Link>
+                </div> : <p className="catalog-product-note">Пока нет актуальных предложений.</p>
               )}
             </section>
 
-            <CatalogPriceHistory icons={Object.fromEntries([...new Set(priceHistory.flatMap(s=>s.stores.map(store=>store.name)))].map(name=>[name,<RetailerBadge key={name} name={name} decorative/>]))} series={sortedHistory} today={new Date().toISOString().slice(0,10)}/>
+            {/* A member's drink without offers has no history yet; the empty card above already says so. */}
+            {!(addedBy && !priceHistory.length) && <CatalogPriceHistory icons={Object.fromEntries([...new Set(priceHistory.flatMap(s=>s.stores.map(store=>store.name)))].map(name=>[name,<RetailerBadge key={name} name={name} decorative/>]))} series={sortedHistory} today={new Date().toISOString().slice(0,10)}/>}
 
             <CatalogProductIngredients data={ingredients} />
           </div>
@@ -151,6 +164,7 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
             />
           </div>
         )}
+        {addedBy && <CatalogDrinkAuthor author={addedBy.author} createdAt={addedBy.createdAt} />}
       </div>
     </article>
   );

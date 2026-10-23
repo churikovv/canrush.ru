@@ -2925,7 +2925,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 .notification-panel h2 { margin: 0 0 5px; font-size: 1.25rem; }
 .notification-panel header span { font-size: .75rem; color: var(--color-muted-strong); }
 .notification-close { width: 44px; height: 44px; flex-shrink: 0; display: grid; place-items: center; border: 0; border-radius: 12px; background: var(--color-subtle); cursor: pointer; }
-.notification-toolbar { display: flex; justify-content: space-between; padding: 0 14px 8px; border-bottom: 1px solid var(--color-control); }
+.notification-toolbar { display: flex; justify-content: flex-end; padding: 0 14px 8px; border-bottom: 1px solid var(--color-control); }
 .notification-toolbar button, .notification-more { border: 0; background: none; color: var(--color-brand-deep); padding: 10px 6px; min-height: 44px; font: inherit; font-size: .8125rem; cursor: pointer; }
 .notification-toolbar button:disabled { color: var(--color-muted-strong); cursor: default; }
 .notification-content ul { margin: 0; padding: 0; list-style: none; }
@@ -3548,17 +3548,20 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
   .experience-panel .experience-rewards ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* Home metrics: live totals as tiles at the top of the page, each opening the part of the site it counts. */
-.home-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
-.home-metrics a { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 10px; height: 100%; padding: 12px; border-radius: 18px; background: var(--color-subtle); color: var(--color-ink); text-decoration: none; transition: background-color 150ms ease-out, transform 150ms ease-out; }
-.home-metrics a:hover { background: color-mix(in srgb, var(--color-subtle) 84%, var(--color-brand) 12%); }
+.home-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+/* Colour cards: a huge number and its word top-left, a brand sticker in the bottom-right corner. */
+.home-metrics a { position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: flex-start; height: 100%; min-height: 176px; padding: 18px 18px 20px; overflow: hidden; border-radius: 28px; background: var(--metric); color: #fff; text-decoration: none; transition: transform 150ms ease-out; }
 .home-metrics a:active { transform: scale(.98); }
-.home-metric-icon { display: grid; grid-row: 1 / 3; width: 38px; height: 38px; place-items: center; border-radius: 12px; background: color-mix(in srgb, var(--metric, var(--color-brand)) 16%, transparent); color: var(--metric, var(--color-brand)); }
-.home-metrics [data-metric=reviews] { --metric: #f5a400; }
-.home-metrics [data-metric=tierlists] { --metric: #8b5cf6; }
-.home-metrics [data-metric=stores] { --metric: #16a34a; }
-.home-metrics strong { font-size: 1.25rem; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
-.home-metrics a > span:last-child { display: -webkit-box; overflow: hidden; color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.25; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
-@media (prefers-reduced-motion: reduce) { .home-metrics a { transition: none; } }
+/* One family with the brand: Canrush blue, its deep shade, an indigo and the ink-navy of the header in dark mode. */
+.home-metrics [data-metric=reviews] { --metric: #006eff; }
+.home-metrics [data-metric=tierlists] { --metric: #4a4fe0; }
+.home-metrics [data-metric=stores] { --metric: #0058cc; }
+.home-metrics [data-metric=drinks] { --metric: #12203d; }
+.home-metrics strong { font-size: clamp(2.25rem, 4.2vw, 3.25rem); font-weight: 900; line-height: .95; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.home-metrics a > span { max-width: 62%; margin-top: 4px; font-size: 1.0625rem; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; }
+.home-metric-art { position: absolute; z-index: -1; right: -10%; bottom: -12%; width: 64%; height: auto; transform: rotate(-6deg); transition: transform 220ms ease-out; pointer-events: none; }
+.home-metrics a:hover .home-metric-art { transform: rotate(0deg) translateY(-4px) scale(1.04); }
+@media (prefers-reduced-motion: reduce) { .home-metrics a, .home-metric-art { transition: none; } }
 /* Short event banners above the home feed: two in a row, sideways on phones. */
 .home-events { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; }
 .home-event { position: relative; display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 10px 40px 10px 10px; overflow: hidden; border-radius: 20px; color: #fff; text-decoration: none; transition: transform 150ms ease-out; }
@@ -3594,10 +3597,10 @@ li[data-place="3"] .monthly-top-place { background: linear-gradient(135deg, #ffd
 .feed-more { display: flex; min-height: 48px; align-items: center; justify-content: center; margin-top: 8px; border-radius: 999px; background: var(--color-subtle); color: var(--color-ink); font-weight: 700; text-decoration: none; }
 .feed-more:hover { background: color-mix(in srgb, var(--color-subtle) 84%, var(--color-brand) 12%); }
 @media (max-width: 639px) {
-  .home-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .home-metrics a { padding: 10px; column-gap: 8px; border-radius: 16px; }
-  .home-metric-icon { width: 34px; height: 34px; border-radius: 10px; }
-  .home-metrics strong { font-size: 1.125rem; }
+  .home-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .home-metrics a { min-height: 150px; padding: 14px 14px 16px; border-radius: 24px; }
+  .home-metrics strong { font-size: 2.25rem; }
+  .home-metrics a > span { max-width: 70%; font-size: .9375rem; }
   .home-events { display: flex; gap: 8px; margin-inline: -16px; padding-inline: 16px; scroll-padding-inline: 16px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .home-events::-webkit-scrollbar { display: none; }
   .home-event { flex: 0 0 min(86%, 340px); scroll-snap-align: start; }

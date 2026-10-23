@@ -20,6 +20,8 @@ interface CatalogControlsProps {
   basePath?: string;
   /** Extra query parameters kept on every navigation (the search scope). */
   keep?: Record<string, string>;
+  /** A «+» after the filter button that opens the form for a missing drink. */
+  addHref?: string;
 }
 
 function catalogHref(form: HTMLFormElement, basePath: string, keep: Record<string, string>, query?: string): string {
@@ -37,7 +39,7 @@ function catalogHref(form: HTMLFormElement, basePath: string, keep: Record<strin
   return search ? `${basePath}?${search}` : basePath;
 }
 
-export function CatalogControls({ brands, flavors, query, brand, flavor, sort, basePath = '/catalog', keep = {} }: CatalogControlsProps) {
+export function CatalogControls({ brands, flavors, query, brand, flavor, sort, basePath = '/catalog', keep = {}, addHref }: CatalogControlsProps) {
   const router = useRouter();
   const [selectedBrand, setSelectedBrand] = useState(brand);
   const [selectedFlavor, setSelectedFlavor] = useState(flavor);
@@ -156,6 +158,10 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort, b
           </div>
         </div>
       </details>
+
+      {addHref && <Link className="catalog-add-button" href={addHref} aria-label="Добавить напиток в каталог" title="Добавить напиток">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+      </Link>}
 
       <button className="sr-only" type="submit">
         Найти

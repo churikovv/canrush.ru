@@ -1,4 +1,5 @@
 import Link from '@/components/navigation-progress';
+import { FeedReviewsEvent, FeedTierListEvent } from '@/components/feed-activity';
 import { WallComposer } from '@/components/profile-community-controls';
 import { PagePagination } from '@/components/page-pagination';
 import { RankUpCard } from '@/components/rank-up-card';
@@ -7,6 +8,9 @@ import { WallPost } from '@/components/wall-post';
 import { profilePageNumber } from '@/lib/profile-achievements';
 import { getFeed, type FeedScope } from '@/lib/profile-community';
 import { getWallInteractions } from '@/lib/wall-discussions';
+import { loadAllCatalogGroups } from '@/lib/catalog';
+import { getTierCardViewer } from '@/lib/tier-discussions';
+import { tierListProductsForPlacements } from '@/lib/tier-lists';
 
 export type FeedSearchParams = { scope?: string; page?: string };
 
@@ -19,7 +23,15 @@ export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = 
   const page = profilePageNumber(query.page);
   const feed = await getFeed(viewerId, scope, page);
   const items = limit ? feed.items.slice(0, limit) : feed.items;
-  const interactions = await getWallInteractions(feed.posts.map(post => post.id), viewerId);
+  const tierLists = items.flatMap(item => item.kind === 'tierlist' ? [item.tierList] : []);
+  const hasEvents = tierLists.length > 0 || items.some(item => item.kind === 'reviews');
+  const [interactions, groups, tierViewer] = await Promise.all([
+    getWallInteractions(feed.posts.map(post => post.id), viewerId),
+    hasEvents ? loadAllCatalogGroups() : Promise.resolve([]),
+    getTierCardViewer(tierLists.map(list => list.id), viewerId),
+  ]);
+  const tierProducts = tierListProductsForPlacements(groups, tierLists.flatMap(list => list.preview));
+  const covers = new Map(groups.flatMap(group => group.coverImageUrl ? [[`${group.brand}\u0000${group.flavor}`, group.coverImageUrl] as const] : []));
   const pageHref = (target: number) => {
     const params = new URLSearchParams({ ...keep, ...(scope !== 'all' ? { scope } : {}) });
     if (target > 1) params.set('page', String(target));
@@ -39,6 +51,8 @@ export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = 
       </section>
       <section className="feed-posts" aria-label="Записи">
         {items.length ? <div className="wall-comments">{items.map(item => item.kind === 'rank-up' ? <RankUpCard key={item.rankUp.id} rankUp={item.rankUp} />
+          : item.kind === 'tierlist' ? <FeedTierListEvent key={`tierlist-${item.tierList.id}`} list={item.tierList} products={tierProducts} viewer={tierViewer} />
+          : item.kind === 'reviews' ? <FeedReviewsEvent key={`reviews-${item.group.key}`} group={item.group} covers={covers} />
           : <WallPost key={item.post.id} post={item.post} owner={{ username: item.post.ownerUsername, name: item.post.ownerName, avatarId: item.post.ownerAvatarId }} interaction={interactions.get(item.post.id)} canDelete={viewerId === item.post.userId || viewerId === item.post.profileId} canEdit={viewerId === item.post.userId} />)}</div>
           : <div className="wall-empty-card">{scope === 'saved'
             ? <><strong>Сохранённых записей нет</strong><p>Нажмите на закладку под записью, чтобы вернуться к ней здесь.</p></>

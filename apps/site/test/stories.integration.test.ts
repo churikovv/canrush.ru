@@ -52,6 +52,22 @@ it('groups active stories, tracks views and hides authors the viewer blocked', a
   await stories.deleteStory(author, groupForViewer!.stories[0]!.id);
 });
 
+it('likes another member\'s story once, never one\'s own or across a block, and shows the author who liked', async () => {
+  const id = (await pool.query<{ id: string }>(`insert into "story"("userId",kind,mime,data,thumbnail) values($1,'image','image/webp','x','x') returning id`, [author])).rows[0]!.id;
+  expect(await stories.setStoryLike(viewer, id, true)).toBe(1);
+  expect(await stories.setStoryLike(viewer, id, true)).toBe(1);
+  await expect(stories.setStoryLike(author, id, true)).rejects.toThrow('недоступна');
+  await expect(stories.setStoryLike(blocker, id, true)).rejects.toThrow('недоступна');
+  await expect(stories.setStoryLike(banned, id, true)).rejects.toThrow('недоступна');
+  const story = (groups: Awaited<ReturnType<typeof stories.getStoryGroups>>) => groups.flatMap(group => group.stories).find(item => item.id === id);
+  expect(story(await stories.getStoryGroups(viewer))).toMatchObject({ likes: 1, liked: true, views: 0 });
+  await stories.markStoriesViewed(viewer, [id]);
+  expect(story(await stories.getStoryGroups(author))).toMatchObject({ likes: 1, liked: false, views: 1 });
+  expect((await stories.getStoryLikers(author, id)).map(person => person.username)).toEqual([`st_${viewer.slice(0, 12)}`]);
+  expect(await stories.getStoryLikers(viewer, id)).toEqual([]);
+  expect(await stories.setStoryLike(viewer, id, false)).toBe(0);
+});
+
 it('builds the weekly digest and suggests what similar members like', async () => {
   const week = await digest.getWeeklyDigest(viewer);
   expect(week).toMatchObject({ cans: 0, days: 0, reviews: 0, daily: [0, 0, 0, 0, 0, 0, 0] });

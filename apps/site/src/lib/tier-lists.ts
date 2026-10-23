@@ -198,6 +198,12 @@ export function getTierListsForOwner(userId: string, limit = 48): Promise<TierLi
   return getTierListSummaries('where tl."userId" = $1', [userId], Math.min(Math.max(limit, 1), 100));
 }
 
+/** Published lists by id, for the feed's «новый тирлист» events. */
+export function getPublishedTierListsByIds(ids: string[]): Promise<TierListSummary[]> {
+  if (!ids.length) return Promise.resolve([]);
+  return getTierListSummaries('where tl."id" = any($1::uuid[]) and tl."status" = \'published\'', [ids], Math.min(ids.length, 100));
+}
+
 export function getPublishedTierListsForUser(userId: string, limit = 48): Promise<TierListSummary[]> {
   return getTierListSummaries(
     'where tl."userId" = $1 and tl."status" = \'published\'',

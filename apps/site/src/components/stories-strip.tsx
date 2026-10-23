@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { deleteStoryAction, publishStoryAction, viewStoriesAction } from '@/app/stories/actions';
+import { deleteStoryAction, likeStoryAction, publishStoryAction, storyLikersAction, viewStoriesAction } from '@/app/stories/actions';
 import { ContentReportButton } from '@/components/content-report-button';
 import { MoreActions } from '@/components/more-actions';
 import Link from '@/components/navigation-progress';
@@ -13,7 +13,7 @@ import { nativeImage, nativeShare } from '@/lib/native-app';
 import { pickReason } from '@/lib/pick-reason';
 import { MAX_STORY_CAPTION } from '@/lib/story-limits';
 import { renderWeekShare } from '@/lib/week-share-image';
-import type { StoryAuthor, StoryItem } from '@/lib/stories';
+import type { StoryAuthor, StoryItem, StoryLiker } from '@/lib/stories';
 import { WALL_MEDIA_ACCEPT } from '@/lib/wall-media-limits';
 
 export type StorySlide =
@@ -227,6 +227,9 @@ function StoryViewer({ groups, start, startSlide, signedIn, onClose, onSeen }: {
   const [sharing, setSharing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
+  // Hearts changed in this viewer, by story id, over what the page loaded.
+  const [hearts, setHearts] = useState<Record<string, { likes: number; liked: boolean }>>({});
+  const [likers, setLikers] = useState<StoryLiker[] | null>(null);
   const elapsed = useRef(0);
   const press = useRef<{ x: number; y: number; at: number; held: boolean; timer: number } | null>(null);
   const group = groups[pos.g]!;
@@ -237,7 +240,7 @@ function StoryViewer({ groups, start, startSlide, signedIn, onClose, onSeen }: {
     const target = groups[g];
     const next = target?.slides[s];
     if (!target || !next) { onClose(); return; }
-    elapsed.current = 0; setProgress(0); setPaused(false);
+    elapsed.current = 0; setProgress(0); setPaused(false); setLikers(null);
     setPos({ g, s });
     onSeen(target, next);
   }
@@ -286,6 +289,24 @@ function StoryViewer({ groups, start, startSlide, signedIn, onClose, onSeen }: {
   }
   useEffect(() => { if (!notice) return; const timer = window.setTimeout(() => setNotice(''), 2500); return () => window.clearTimeout(timer); }, [notice]);
 
+  const heart = slide.kind === 'media' ? hearts[slide.story.id] ?? { likes: slide.story.likes, liked: slide.story.liked } : null;
+  async function toggleLike() {
+    if (slide.kind !== 'media' || !heart) return;
+    if (!signedIn) { setNotice('Войдите, чтобы ставить лайки'); return; }
+    const id = slide.story.id, liked = !heart.liked;
+    setHearts(current => ({ ...current, [id]: { liked, likes: Math.max(0, heart.likes + (liked ? 1 : -1)) } }));
+    const result = await likeStoryAction(id, liked);
+    if (result.error) { setNotice(result.error); setHearts(current => ({ ...current, [id]: heart })); return; }
+    if (result.likes !== undefined) setHearts(current => ({ ...current, [id]: { liked, likes: result.likes! } }));
+  }
+  /** The author's «who liked»: the story waits while the list is open. */
+  async function openLikers() {
+    if (slide.kind !== 'media') return;
+    setPaused(true); video.current?.pause(); setLikers([]);
+    setLikers(await storyLikersAction(slide.story.id));
+  }
+  function closeLikers() { setLikers(null); setPaused(false); void video.current?.play().catch(() => {}); }
+
   function onPointerDown(event: ReactPointerEvent) {
     if ((event.target as Element).closest('a, button, [role="menu"]')) return;
     const timer = window.setTimeout(() => { if (press.current) { press.current.held = true; setPaused(true); video.current?.pause(); } }, 220);
@@ -331,10 +352,28 @@ function StoryViewer({ groups, start, startSlide, signedIn, onClose, onSeen }: {
               onTimeUpdate={event => { const media = event.currentTarget; if (media.duration) setProgress(media.currentTime / media.duration); }} onEnded={() => go(1)} />
           /* eslint-disable-next-line @next/next/no-img-element -- stored story media, not optimised by Next */
           : <img key={slide.story.id} src={`/api/story-media/${slide.story.id}`} alt={slide.story.caption || `История ${title}`} draggable={false} />)}
-        {slide.kind === 'media' && slide.story.caption && <p className="story-caption">{slide.story.caption}</p>}
         {slide.kind === 'digest' && <DigestCard digest={slide.digest} page={slide.page} />}
         {slide.kind === 'pick' && <PickCard item={slide.item} basis={slide.basis} />}
       </div>
+      {slide.kind === 'media' && heart && <footer className="story-foot">
+        {slide.story.caption && <p className="story-caption">{slide.story.caption}</p>}
+        {group.own
+          ? <button type="button" className="story-stats" onClick={() => void openLikers()} aria-label={`Лайки: ${heart.likes}, просмотры: ${slide.story.views}. Кто лайкнул`}>
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.5.8-1.3 2.3-2.5 4.4-2.5 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21Z" /></svg>{heart.likes}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>{slide.story.views}
+            </button>
+          : <button type="button" className={`story-like${heart.liked ? ' is-liked' : ''}`} aria-pressed={heart.liked} aria-label={heart.liked ? 'Убрать лайк' : 'Нравится'} onClick={() => void toggleLike()}>
+              <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill={heart.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.5.8-1.3 2.3-2.5 4.4-2.5 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21Z" /></svg>
+              {heart.likes > 0 && <span>{heart.likes}</span>}
+            </button>}
+      </footer>}
+      {likers && <div className="story-likers" role="dialog" aria-label="Кто лайкнул историю">
+        <header><strong>Нравится</strong><button type="button" className="story-close" aria-label="Закрыть список" onClick={closeLikers}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button></header>
+        {likers.length ? <ul>{likers.map(person => <li key={person.username}><Link href={`/profile/${person.username}`}>
+          <span className="story-liker-avatar">{person.avatarId ? <Image src={`/api/profile-images/${person.avatarId}`} width={36} height={36} unoptimized alt="" /> : (person.name || person.username).slice(0, 1).toUpperCase()}</span>
+          <span><b>{person.name || person.username}</b><small>@{person.username}</small></span>
+        </Link></li>)}</ul> : <p>Пока никто не лайкнул эту историю.</p>}
+      </div>}
       {notice && <p className="story-notice" role="status">{notice}</p>}
       <button type="button" className="story-nav" data-side="prev" aria-label="Предыдущая история" onClick={() => go(-1)} disabled={pos.g === 0 && pos.s === 0}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6" /></svg></button>
       <button type="button" className="story-nav" data-side="next" aria-label="Следующая история" onClick={() => go(1)}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg></button>

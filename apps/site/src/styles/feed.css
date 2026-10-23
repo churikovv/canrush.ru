@@ -90,3 +90,32 @@
   .rank-up-card::after { opacity: 0; }
   .rank-up-confetti { animation: none; opacity: .8; }
 }
+
+/* Feed events — a published tier list, a day of reviews: rows like the records, a head line and the content under it. */
+.feed-posts .feed-event { display: grid; gap: 12px; padding: 18px 0; border-top: 1px solid var(--theme-line, #e6e9ee); }
+.feed-posts .feed-event:first-child { border-top: 0; }
+.feed-event-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.feed-event-avatar { flex: none; }
+.feed-event-who { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.feed-event-who p { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; margin: 0; }
+.feed-event-action { color: var(--color-muted-strong); font-size: .875rem; }
+.feed-event .tier-list-card { margin: 0; }
+.feed-reviews { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.feed-review { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; padding: 10px; border-radius: 18px; background: var(--color-subtle); color: inherit; text-decoration: none; transition: background-color 150ms ease-out; }
+.feed-review:hover { background: var(--color-control); }
+/* The can fills the card's height, so a short review leaves no empty corner. */
+.feed-review-cover { display: grid; place-items: center; align-self: stretch; min-height: 136px; overflow: hidden; border-radius: 14px; background: #fff; color: #5b6472; font-weight: 800; }
+.feed-review-cover img { width: 88%; height: 100%; max-height: 160px; object-fit: contain; mix-blend-mode: multiply; }
+.feed-review-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; padding: 4px 4px 4px 0; }
+/* Like the drink page: the brand as a grey chip, the score as the blue pill with a star. */
+.feed-review-brand { max-width: 100%; padding: 3px 9px; overflow: hidden; border-radius: 8px; background: var(--color-surface); color: var(--color-muted-strong); font-size: .75rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.feed-review-name { max-width: 100%; overflow: hidden; font-size: 1.0625rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.feed-review-scores { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.feed-review-overall { display: inline-flex; align-items: center; gap: 5px; min-height: 28px; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); }
+.feed-review-overall strong { color: var(--color-ink); font-size: .875rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.feed-review-criteria { color: var(--color-muted-strong); font-size: .8125rem; }
+.feed-review-criteria b { color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.feed-review-text { display: -webkit-box; overflow: hidden; margin-top: 2px; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow-wrap: anywhere; }
+@media (max-width: 639px) { .feed-review { grid-template-columns: 88px minmax(0, 1fr); gap: 12px; } .feed-review-cover { min-height: 120px; } }
+.feed-event-more { justify-self: start; color: var(--theme-link, #0058cc); font-size: .875rem; font-weight: 700; text-decoration: none; }
+@media (prefers-reduced-motion: reduce) { .feed-review { transition: none; } }

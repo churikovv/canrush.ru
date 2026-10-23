@@ -10,6 +10,7 @@ import { CatalogProductDetail } from '@/components/catalog-product-detail';
 import type { ProductTab } from '@/components/catalog-product-tabs';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { getSwipeCounts } from '@/lib/drink-swipes';
+import { catalogDrinkIngredients, getCatalogDrink } from '@/lib/catalog-drinks';
 import { getProductIngredients } from '@/lib/ingredients';
 import { auth } from '@/lib/auth';
 import { getCatalogGroup, isFavorite, loadAllCatalogGroups } from '@/lib/catalog';
@@ -68,14 +69,17 @@ export default async function CatalogProductPage({
   ]);
   if (!group) notFound();
 
-  const [favorite, reviews, summary, userReview, ingredients, swipes] = await Promise.all([
+  const [favorite, reviews, summary, userReview, fileIngredients, swipes, added] = await Promise.all([
     session ? isFavorite(session.user.id, group.brand, group.flavor) : Promise.resolve(false),
     getReviewsForProduct(group.brand, group.flavor, session?.user.id ?? null),
     getReviewSummary(group.brand, group.flavor),
     session ? getUserReview(session.user.id, group.brand, group.flavor) : Promise.resolve(null),
     getProductIngredients(group.brand, group.flavor),
     getSwipeCounts(group.brand, group.flavor),
+    getCatalogDrink(group.brand, group.flavor),
   ]);
+  // A drink a member added has no ingredient file: its label text from the request stands in.
+  const ingredients = fileIngredients ?? (added ? catalogDrinkIngredients(added) : null);
 
   const priceHistory=activeTab==='prices'?await getPriceHistory((await selectedCity()).id,group.brand,group.flavor):[];
 
@@ -92,6 +96,7 @@ export default async function CatalogProductPage({
         userReview={userReview}
         activeTab={activeTab}
         swipes={swipes}
+        addedBy={added && group.variants.length === 0 ? added : undefined}
       />
     </BrandShell>
   );

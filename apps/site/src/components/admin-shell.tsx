@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import Link from '@/components/navigation-progress';
 import { adminHref, type AdminTab } from '@/lib/admin-tabs';
 
-export type AdminSection = AdminTab | 'stores' | 'contest';
+export type AdminSection = AdminTab | 'stores' | 'drinks' | 'contest';
 
 const ICONS: Record<AdminSection, ReactNode> = {
   analytics: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
@@ -15,6 +15,7 @@ const ICONS: Record<AdminSection, ReactNode> = {
   wall: <path d="M4 4h16v16H4zM4 10h16M10 10v10" />,
   market: <path d="M3 9h18l-1.5 11h-15L3 9Zm5 0V7a4 4 0 0 1 8 0v2" />,
   stores: <path d="M3 9 5 3h14l2 6M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Zm2 5v7h14v-7" />,
+  drinks: <path d="M8 2h8l-1 4H9L8 2Zm1 4h6l1 3v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9l1-3Zm-1 7h8" />,
   reports: <path d="M4 22V4m0 0h13l-2 4 2 4H4" />,
   admins: <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm-3 10 2 2 4-4" />,
 };
@@ -22,7 +23,7 @@ const ICONS: Record<AdminSection, ReactNode> = {
 const GROUPS: { title: string; items: { key: AdminSection; label: string }[] }[] = [
   { title: 'Обзор', items: [{ key: 'analytics', label: 'Аналитика' }, { key: 'campaigns', label: 'Кампании' }, { key: 'contest', label: 'Конкурс' }] },
   { title: 'Контент', items: [{ key: 'tierlists', label: 'Тирлисты' }, { key: 'reviews', label: 'Отзывы' }, { key: 'comments', label: 'Комментарии' }, { key: 'wall', label: 'Стена' }] },
-  { title: 'Маркет', items: [{ key: 'market', label: 'Объявления' }, { key: 'stores', label: 'Магазины' }] },
+  { title: 'Маркет', items: [{ key: 'market', label: 'Объявления' }, { key: 'stores', label: 'Магазины' }, { key: 'drinks', label: 'Напитки' }] },
   { title: 'Модерация', items: [{ key: 'reports', label: 'Жалобы' }, { key: 'users', label: 'Участники' }, { key: 'admins', label: 'Администраторы' }] },
 ];
 
@@ -38,7 +39,7 @@ export function AdminShell({ active, email, title, subtitle, actions, children }
       <nav className="admin-sidebar-nav">
         {GROUPS.map(group => <div className="admin-sidebar-group" key={group.title}>
           <p>{group.title}</p>
-          {group.items.map(item => <Link key={item.key} href={item.key === 'stores' ? '/admin/stores' : item.key === 'contest' ? '/admin/contest' : adminHref(item.key)} aria-current={item.key === active ? 'page' : undefined}><AdminIcon section={item.key} /><span>{item.label}</span></Link>)}
+          {group.items.map(item => <Link key={item.key} href={item.key === 'stores' ? '/admin/stores' : item.key === 'drinks' ? '/admin/drinks' : item.key === 'contest' ? '/admin/contest' : adminHref(item.key)} aria-current={item.key === active ? 'page' : undefined}><AdminIcon section={item.key} /><span>{item.label}</span></Link>)}
         </div>)}
       </nav>
       <div className="admin-sidebar-account"><span className="admin-sidebar-avatar" aria-hidden="true">{email.slice(0, 1).toUpperCase()}</span><span><strong>{email}</strong><Link href="/profile">Вернуться в профиль</Link></span></div>

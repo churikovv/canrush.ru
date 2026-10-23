@@ -262,9 +262,12 @@ button.tier-list-card-likes[aria-pressed="true"] svg { animation: tier-like-pop 
 .store-form-footer { justify-items: stretch; }
 .store-form-nav { display: flex; gap: 12px; }
 .store-form-nav .community-button[type=submit] { margin-left: auto; }
-.store-form .store-form-counter { color: var(--color-muted-strong); font-size: .875rem; }
+.store-form .store-form-counter { margin: 0 0 -8px; color: var(--color-muted-strong); font-size: .875rem; }
+.store-form .store-form-counter b { color: var(--color-text); }
 @media(min-width:640px) { .store-form .store-form-counter { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
-@media(max-width:639px) { .store-form-progress { gap: 6px; } .store-form-progress button { min-height: 24px; } .store-form-progress-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .store-form-nav .community-button { flex: 1 1 0; } }
+@media(max-width:639px) { .store-form-progress { gap: 6px; } .store-form-progress button { min-height: 24px; } .store-form-progress-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
+/* Phone: the step's main action large and full width, «Назад» an outlined button under it (it comes first in the DOM). */
+@media(max-width:639px) { .store-form-nav { flex-direction: column-reverse; gap: 12px; margin-top: 8px; } .store-form-nav .community-button { width: 100%; } .store-form-nav .community-button[type=submit] { min-height: 56px; margin-left: 0; font-size: 1.0625rem; } .store-form .store-form-nav .community-button.community-button-secondary { min-height: 52px; border: 1px solid var(--color-control); background: transparent; box-shadow: none; color: var(--color-text); } }
 .form-card { display: grid; gap: 16px; min-width: 0; padding: 24px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 20px; background: var(--theme-panel, #fff); }
 /* Numbered form steps: store and listing editors (market.css) and the drink calendar (profile.css). */
 .form-step { display: flex; align-items: flex-start; gap: 14px; }

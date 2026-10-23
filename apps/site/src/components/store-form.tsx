@@ -104,6 +104,7 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
       startTransition(()=>action(form));
     });
   }} className="store-form"><fieldset disabled={pending}>
+    <p className="store-form-counter" aria-live="polite">Шаг {step+1} из {STEPS.length} · <b>{STEPS[step]!.title}</b></p>
     <ol className="store-form-progress" aria-label="Этапы заявки">{STEPS.map((item,index)=><li key={item.id} data-state={index===step?'current':index<=reached?'visited':'upcoming'}>
       <button type="button" disabled={index>reached} aria-current={index===step?'step':undefined} onClick={()=>{if(index!==step)void advance(index);}}><span className="store-form-progress-label">{index+1}. {item.title}</span></button>
     </li>)}</ol>
@@ -158,7 +159,6 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
         {step>0&&<button type="button" className="community-button community-button-secondary" disabled={busy} onClick={()=>show(step-1)}>Назад</button>}
         <button className="community-button" disabled={busy} type="submit">{pending?'Отправляем…':geo.kind==='searching'?'Ищем адрес…':step<LAST_STEP?nextLabel:'Отправить на проверку'}</button>
       </div>
-      <p className="store-form-counter" aria-live="polite">Шаг {step+1} из {STEPS.length}</p>
     </div>
   </fieldset></form>;
 }

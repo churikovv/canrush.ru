@@ -3,6 +3,9 @@ import { notBlockedBy } from '@/lib/member-blocks';
 import type { WallMediaKind } from '@/lib/wall-media-limits';
 import type { RankUpTier } from '@/lib/level-tier';
 import { getPool } from '@/db/pool';
+import { getReviewsByAuthorDays, type ReviewData } from '@/lib/reviews';
+import { getPublishedTierListsByIds } from '@/lib/tier-lists';
+import type { TierListSummary } from '@/lib/tier-list-types';
 import { ACHIEVEMENT_METRICS, DETAILED_REVIEW_CHARS, FAN_XP_SINCE, PROFILE_ACHIEVEMENTS, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
 
 export const COMMUNITY_PAGE_SIZE = 20;
@@ -126,8 +129,14 @@ export interface FeedPostRow extends WallPostRow { ownerUsername: string | null;
 export type FeedScope = 'all' | 'following' | 'saved';
 
 export interface RankUpRow { id: string; userId: string; tier: RankUpTier; degree: number; createdAt: Date; username: string; name: string; avatarId: string | null; tag: string | null; xp: number }
-/** A feed entry: a wall record or the moment a member reached a high level tier (migration 0079). */
-export type FeedItem = { kind: 'post'; post: FeedPostRow } | { kind: 'rank-up'; rankUp: RankUpRow };
+/** A member's reviews of one Moscow day, shown as one «оценил напитки» event so a run of reviews does not flood the feed. */
+export interface FeedReviewGroup { key: string; createdAt: Date; reviews: ReviewData[] }
+/**
+ * A feed entry: a wall record, the moment a member reached a high level tier (migration 0079), a published tier
+ * list or a day of a member's reviews.
+ */
+export type FeedItem = { kind: 'post'; post: FeedPostRow } | { kind: 'rank-up'; rankUp: RankUpRow }
+  | { kind: 'tierlist'; tierList: TierListSummary } | { kind: 'reviews'; group: FeedReviewGroup };
 
 // The author `u` as every timeline row shows them: avatar, XP and the selected tag.
 const AUTHOR_COLUMNS = `u.username, u.name,
@@ -152,6 +161,12 @@ export async function getProfileWall(profileId: string, page = 1, viewerId: stri
  * All walls merged into one timeline, together with members reaching a high level tier. `following` keeps the
  * viewer's own entries and those written by, on the walls of, or about people the viewer follows.
  */
+// Events (rank-ups, tier lists, reviews) come from members with a nickname who are not blocked by the site or the viewer;
+// «Подписки» keeps the viewer's own and those of people they follow.
+const FEED_EVENT_AUTHOR = (author: string) => `u.username is not null and not exists(select 1 from "userBlock" b where b."userId" = u.id)
+          and ${notBlockedBy('$2::text', author)}
+          and (not $1::boolean or ${author} = $2 or exists(select 1 from "userFollow" f where f."userId" = $2 and f."targetId" = ${author}))`;
+
 export async function getFeed(viewerId: string | null, scope: FeedScope = 'all', page = 1) {
   const following = scope === 'following' && viewerId !== null;
   const saved = scope === 'saved' && viewerId !== null;
@@ -163,26 +178,40 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
           and (not $5::boolean or exists(select 1 from "savedPost" s where s."postId" = c.id and s."userId" = $2))
         union all
         select r.id::text, 'rank-up', r."createdAt" from "rankUp" r join "user" u on u.id = r."userId"
-        where not $5::boolean and u.username is not null and not exists(select 1 from "userBlock" b where b."userId" = u.id) and ${notBlockedBy('$2::text', 'r."userId"')}
-          and (not $1::boolean or r."userId" = $2 or exists(select 1 from "userFollow" f where f."userId" = $2 and f."targetId" = r."userId"))
+        where not $5::boolean and ${FEED_EVENT_AUTHOR('r."userId"')}
+        union all
+        select t.id::text, 'tierlist', t."publishedAt" from "tierList" t join "user" u on u.id = t."userId"
+        where not $5::boolean and t.status = 'published' and t."publishedAt" is not null and ${FEED_EVENT_AUTHOR('t."userId"')}
+        union all
+        select r."userId" || '|' || to_char((r."createdAt" at time zone 'Europe/Moscow')::date, 'YYYY-MM-DD'), 'reviews', max(r."createdAt")
+        from review r join "user" u on u.id = r."userId"
+        where not $5::boolean and ${FEED_EVENT_AUTHOR('r."userId"')}
+        group by r."userId", (r."createdAt" at time zone 'Europe/Moscow')::date
       ) entry order by "createdAt" desc, id desc limit $3 offset $4`,
   [following, viewerId, COMMUNITY_PAGE_SIZE, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE, saved]);
   const total = entries[0]?.total ?? 0;
   const idsOf = (kind: FeedItem['kind']) => entries.filter(entry => entry.kind === kind).map(entry => entry.id);
-  const [posts, rankUps] = await Promise.all([
+  const [posts, rankUps, tierLists, reviewDays] = await Promise.all([
     getPool().query<FeedPostRow>(`select ${WALL_POST_COLUMNS}, o.username as "ownerUsername", o.name as "ownerName",
       (select id::text from "profileImage" where "userId"=o.id and kind='avatar') as "ownerAvatarId"
       from "profileComment" c join "user" u on u.id = c."userId" join "user" o on o.id = c."profileId" where c.id = any($1::uuid[])`, [idsOf('post')]),
     getPool().query<RankUpRow>(`select r.id, r."userId", r.tier, r.degree, r."createdAt", ${AUTHOR_COLUMNS}
       from "rankUp" r join "user" u on u.id = r."userId" where r.id = any($1::uuid[])`, [idsOf('rank-up')]),
+    getPublishedTierListsByIds(idsOf('tierlist')),
+    getReviewsByAuthorDays(idsOf('reviews')),
   ]);
+  const tierListById = new Map(tierLists.map(list => [list.id, list]));
   const postById = new Map(posts.rows.map(post => [post.id, post]));
   const rankUpById = new Map(rankUps.rows.map(rankUp => [rankUp.id, rankUp]));
   const items = entries.flatMap((entry): FeedItem[] => {
     const post = entry.kind === 'post' ? postById.get(entry.id) : undefined;
     if (post) return [{ kind: 'post', post }];
     const rankUp = entry.kind === 'rank-up' ? rankUpById.get(entry.id) : undefined;
-    return rankUp ? [{ kind: 'rank-up', rankUp }] : [];
+    if (rankUp) return [{ kind: 'rank-up', rankUp }];
+    const tierList = entry.kind === 'tierlist' ? tierListById.get(entry.id) : undefined;
+    if (tierList) return [{ kind: 'tierlist', tierList }];
+    const reviews = entry.kind === 'reviews' ? reviewDays.get(entry.id) : undefined;
+    return reviews?.length ? [{ kind: 'reviews', group: { key: entry.id, createdAt: reviews[0]!.createdAt, reviews } }] : [];
   });
   const pages = Math.ceil(total / COMMUNITY_PAGE_SIZE);
   return { items, posts: items.flatMap(item => item.kind === 'post' ? [item.post] : []), pages, hasMore: profilePageNumber(page) < pages };

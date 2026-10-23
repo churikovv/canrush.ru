@@ -7,7 +7,9 @@ import type { WallMediaKind } from '@/lib/wall-media-limits';
 
 export class StoryError extends Error {}
 
-export interface StoryItem { id: string; kind: WallMediaKind; caption: string; createdAt: string; seen: boolean }
+/** `likes` and `liked` — hearts from members; `views` is told only to the author (0 for everyone else). */
+export interface StoryItem { id: string; kind: WallMediaKind; caption: string; createdAt: string; seen: boolean; likes: number; liked: boolean; views: number }
+export interface StoryLiker { username: string; name: string; avatarId: string | null }
 export interface StoryAuthor { id: string; username: string; name: string; avatarId: string | null }
 export interface StoryGroup { author: StoryAuthor; stories: StoryItem[]; own: boolean; seen: boolean }
 
@@ -57,8 +59,11 @@ export async function markStoriesViewed(userId: string, ids: string[]): Promise<
  * unseen groups before seen ones, newest first. Blocked accounts and authors the viewer blocked are left out.
  */
 export async function getStoryGroups(viewerId: string | null): Promise<StoryGroup[]> {
-  const { rows } = await getPool().query<{ id: string; kind: WallMediaKind; caption: string; createdAt: Date; seen: boolean; userId: string; username: string; name: string; avatarId: string | null; followed: boolean }>(`
+  const { rows } = await getPool().query<{ id: string; kind: WallMediaKind; caption: string; createdAt: Date; seen: boolean; userId: string; username: string; name: string; avatarId: string | null; followed: boolean; likes: number; liked: boolean; views: number }>(`
     select s.id, s.kind, s.caption, s."createdAt", s."userId", u.username, u.name,
+      (select count(*)::int from "storyLike" l where l."storyId" = s.id) as likes,
+      ($1::text is not null and exists(select 1 from "storyLike" l where l."storyId" = s.id and l."userId" = $1)) as liked,
+      case when s."userId" = $1 then (select count(*)::int from "storyView" v where v."storyId" = s.id) else 0 end as views,
       (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
       ($1::text is not null and exists(select 1 from "storyView" v where v."storyId" = s.id and v."userId" = $1)) as seen,
       ($1::text is not null and exists(select 1 from "userFollow" f where f."userId" = $1 and f."targetId" = s."userId")) as followed
@@ -70,7 +75,7 @@ export async function getStoryGroups(viewerId: string | null): Promise<StoryGrou
   for (const row of rows) {
     const own = row.userId === viewerId;
     const group = groups.get(row.userId) ?? { author: { id: row.userId, username: row.username, name: row.name, avatarId: row.avatarId }, stories: [], own, seen: true, followed: row.followed, latest: 0 };
-    group.stories.push({ id: row.id, kind: row.kind, caption: row.caption, createdAt: row.createdAt.toISOString(), seen: own || row.seen });
+    group.stories.push({ id: row.id, kind: row.kind, caption: row.caption, createdAt: row.createdAt.toISOString(), seen: own || row.seen, likes: row.likes, liked: row.liked, views: row.views });
     group.seen &&= own || row.seen;
     group.latest = row.createdAt.getTime();
     groups.set(row.userId, group);
@@ -78,6 +83,32 @@ export async function getStoryGroups(viewerId: string | null): Promise<StoryGrou
   return [...groups.values()]
     .sort((a, b) => Number(b.own) - Number(a.own) || Number(a.seen) - Number(b.seen) || Number(b.followed) - Number(a.followed) || b.latest - a.latest)
     .map(({ followed: _followed, latest: _latest, ...group }) => group);
+}
+
+/**
+ * Likes or unlikes someone else's active story and returns its new count. Not one's own story, not for blocked
+ * accounts, and not between members where either blocked the other.
+ */
+export async function setStoryLike(userId: string, id: string, like: boolean): Promise<number> {
+  const db = getPool();
+  const allowed = `s.id = $1 and ${ACTIVE} and s."userId" <> $2
+    and not exists(select 1 from "userBlock" b where b."userId" in ($2, s."userId"))
+    and not exists(select 1 from "memberBlock" mb where (mb."blockerId", mb."blockedId") in ((s."userId", $2), ($2, s."userId")))`;
+  const story = await db.query(`select 1 from "story" s where ${allowed}`, [id, userId]);
+  if (!story.rowCount) throw new StoryError('История недоступна.');
+  if (like) await db.query('insert into "storyLike"("storyId", "userId") values ($1, $2) on conflict do nothing', [id, userId]);
+  else await db.query('delete from "storyLike" where "storyId" = $1 and "userId" = $2', [id, userId]);
+  const { rows } = await db.query<{ likes: number }>('select count(*)::int as likes from "storyLike" where "storyId" = $1', [id]);
+  return rows[0]?.likes ?? 0;
+}
+
+/** Who liked a story, newest first — only for its author. */
+export async function getStoryLikers(userId: string, id: string): Promise<StoryLiker[]> {
+  const { rows } = await getPool().query<StoryLiker>(`select u.username, u.name, (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId"
+    from "storyLike" l join "story" s on s.id = l."storyId" join "user" u on u.id = l."userId"
+    where l."storyId" = $1 and s."userId" = $2 and u.username is not null and not exists(select 1 from "userBlock" b where b."userId" = u.id)
+    order by l."createdAt" desc limit 100`, [id, userId]);
+  return rows;
 }
 
 /** Whether /api/story-media may serve this story: it is still active and its author is not blocked. */
