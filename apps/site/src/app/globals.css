@@ -2993,6 +2993,23 @@ html[data-cookie-notice="visible"] .brand-footer {
 @keyframes header-menu-in { from { opacity: 0; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .header-menu-panel { animation: none; } .header-menu-chevron { transition: none; } }
 .sign-out-control .primary-button { background: transparent; color: var(--theme-danger, #c52b35); border-color: #c52b35; }
+/* ActionToast: a success note above the tab bar — rises in, the check draws itself, then it fades away. */
+.action-toast { position: fixed; z-index: 1100; left: 50%; bottom: calc(var(--site-tab-bar-offset, 0px) + 24px); display: flex; align-items: center; gap: 10px; width: max-content; max-width: calc(100vw - 32px); padding: 10px 8px 10px 14px; border-radius: 16px; background: #1b1f26; color: #fff; font-size: .9375rem; font-weight: 600; line-height: 1.35; box-shadow: 0 16px 40px -14px rgb(0 0 0 / .55), 0 0 0 1px rgb(255 255 255 / .08); transform: translateX(-50%); animation: action-toast-in 320ms cubic-bezier(.2, .9, .3, 1.25) both; }
+.action-toast.is-leaving { animation: action-toast-out 220ms ease-in forwards; }
+/* Above the cookie notice while it is shown, like the store's floating map button. */
+html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-bar-offset, 0px) + 112px); }
+.action-toast-check { flex: none; color: #22c55e; }
+.action-toast.is-error .action-toast-check { color: #f5a524; }
+.action-toast.is-error .action-toast-check path { stroke-dasharray: none; stroke-dashoffset: 0; animation: action-toast-nudge 420ms 120ms ease-in-out; transform-origin: 12px 12px; }
+.action-toast-check circle { stroke: currentColor; stroke-width: 2; fill: color-mix(in srgb, currentColor 18%, transparent); }
+.action-toast-check path { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16; stroke-dashoffset: 16; animation: action-toast-check 360ms 160ms ease-out forwards; }
+.action-toast button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: rgb(255 255 255 / .7); cursor: pointer; }
+.action-toast button:hover { background: rgb(255 255 255 / .12); color: #fff; }
+@keyframes action-toast-in { from { opacity: 0; transform: translate(-50%, 14px) scale(.96); } }
+@keyframes action-toast-out { to { opacity: 0; transform: translate(-50%, 8px) scale(.98); } }
+@keyframes action-toast-check { to { stroke-dashoffset: 0; } }
+@keyframes action-toast-nudge { 25% { transform: rotate(-12deg); } 50% { transform: rotate(10deg); } 75% { transform: rotate(-5deg); } }
+@media (prefers-reduced-motion: reduce) { .action-toast, .action-toast.is-leaving { animation: none; } .action-toast-check path, .action-toast.is-error .action-toast-check path { animation: none; stroke-dashoffset: 0; } }
 .share-toast {
   position: fixed;
   z-index: 1100;

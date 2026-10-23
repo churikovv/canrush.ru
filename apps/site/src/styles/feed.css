@@ -127,5 +127,18 @@ button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-w
 .feed-more-loading, .feed-more-end { color: var(--color-muted-strong); font-size: .875rem; }
 .feed-more-end { text-decoration: none; }
 @media (max-width: 639px) { .feed-review { grid-template-columns: 88px minmax(0, 1fr); gap: 12px; } .feed-review-cover { min-height: 120px; } }
-.feed-event-more { justify-self: start; color: var(--theme-link, #0058cc); font-size: .875rem; font-weight: 700; text-decoration: none; }
-@media (prefers-reduced-motion: reduce) { .feed-review { transition: none; } }
+/* The stack under the one shown review: the edges of the cards behind it, narrower and dimmer with depth. */
+.feed-reviews-stack { display: grid; justify-items: center; margin-top: -8px; cursor: pointer; }
+.feed-reviews-stack span { display: block; height: 10px; border-radius: 0 0 14px 14px; background: color-mix(in srgb, var(--color-subtle) 78%, var(--color-ink) 14%); box-shadow: 0 6px 12px -8px rgb(0 0 0 / .35); }
+.feed-reviews-stack span:first-child { width: calc(100% - 20px); }
+.feed-reviews-stack span:last-child { width: calc(100% - 44px); opacity: .55; }
+.feed-reviews-stack[data-layers="1"] span:last-child { display: none; }
+.feed-reviews-stack:hover span { background: var(--color-control); }
+/* «Посмотреть больше» under a day of reviews: opens the rest in place, «Свернуть» hides them. */
+.feed-reviews-toggle button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 4px; border: 0; background: none; color: var(--theme-link, #0058cc); font: inherit; font-size: .9375rem; font-weight: 700; cursor: pointer; }
+.feed-reviews-toggle button span { color: var(--color-muted-strong); font-weight: 600; }
+.feed-reviews-toggle svg { transition: transform 200ms ease-out; }
+.feed-reviews-toggle button[aria-expanded="true"] svg { transform: rotate(180deg); }
+.feed-reviews > .feed-review-item { animation: feed-review-in 220ms ease-out; }
+@keyframes feed-review-in { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .feed-review, .feed-reviews-toggle svg { transition: none; } .feed-reviews > .feed-review-item { animation: none; } }

@@ -2,6 +2,7 @@
 import { MentionTextarea } from '@/components/mention-textarea';
 import { MediaAttachButton, MediaAttachmentPreviews, useMediaAttachments } from '@/components/media-attachments';
 import { TrashIcon } from '@/components/action-icons';
+import { ActionToast } from '@/components/action-toast';
 
 import { useActionState, useState, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -18,7 +19,7 @@ export function CommunityForm({ children, className = '' }: { children: ReactNod
   const [state, action] = useActionState(updateCommunityAction, {});
   return <form action={action} className={`community-form ${className}`}>
     {children}
-    <p className={state.error ? 'field-error' : 'community-feedback'} role={state.error ? 'alert' : 'status'}>{state.error ?? state.success}</p>
+    <ActionToast message={state.error ?? state.success} tone={state.error ? 'error' : 'success'} trigger={state} />
   </form>;
 }
 
@@ -58,7 +59,7 @@ export function WallComposer({ targetId, label = 'Комментарий на с
       <MediaAttachmentPreviews media={media} />
       <div className="community-form-footer wall-composer-footer"><Submit className="review-composer-submit" disabled={(!text.trim() && !media.files.length) || media.preparing}>Отправить</Submit></div>
     </fieldset>
-    <p role={state.error ? 'alert' : 'status'} className={state.error ? 'field-error' : 'community-feedback'}>{state.error ?? state.success}</p>
+    <ActionToast message={state.error ?? state.success} tone={state.error ? 'error' : 'success'} trigger={state} />
   </form>;
 }
 

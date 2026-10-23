@@ -8,7 +8,6 @@ import { WallPost } from '@/components/wall-post';
 import { profilePageNumber } from '@/lib/profile-achievements';
 import type { ReactNode } from 'react';
 import { FeedMore } from '@/components/feed-more';
-import { REVIEWS_SHOWN } from '@/components/feed-activity';
 import { getFeed, type FeedItem, type FeedScope } from '@/lib/profile-community';
 import { getReviewInteractions } from '@/lib/review-discussions';
 import { getWallInteractions } from '@/lib/wall-discussions';
@@ -25,7 +24,7 @@ export type FeedSearchParams = { scope?: string; page?: string };
 export async function renderFeedItems(items: FeedItem[], viewerId: string | null): Promise<ReactNode[]> {
   const posts = items.flatMap(item => item.kind === 'post' ? [item.post] : []);
   const tierLists = items.flatMap(item => item.kind === 'tierlist' ? [item.tierList] : []);
-  const reviewIds = items.flatMap(item => item.kind === 'reviews' ? item.group.reviews.slice(0, REVIEWS_SHOWN).map(review => review.id) : []);
+  const reviewIds = items.flatMap(item => item.kind === 'reviews' ? item.group.reviews.map(review => review.id) : []);
   const hasEvents = tierLists.length > 0 || reviewIds.length > 0;
   const [interactions, groups, tierViewer, reviewVotes] = await Promise.all([
     getWallInteractions(posts.map(post => post.id), viewerId),
