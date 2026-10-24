@@ -1,12 +1,4 @@
 /* /profile/*. Loaded after globals.css: equal-specificity rules here win over it. */
-.sign-out-control {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.sign-out-control .primary-button:hover:not(:disabled) {
-  background: var(--color-subtle);
-}
 .profile-edit-field {
   display: flex;
   flex-direction: column;
@@ -189,7 +181,6 @@ a.profile-about-row:hover .profile-about-arrow { color: var(--theme-link, #0058c
 .presence-switch:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
 .presence-switch:disabled { cursor: wait; opacity: .7; }
 @media (prefers-reduced-motion: reduce) { .presence-switch, .presence-switch span, .profile-about-arrow { transition: none; } }
-.community-sidebar .sign-out-control .primary-button { border-radius: 8px; min-height: 44px; font-size: .875rem; }
 .wall-comments { margin-top: 20px; }
 .community-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 20px; font-size: .875rem; }
 .community-directory { max-width: 760px; }
@@ -229,7 +220,6 @@ a.profile-about-row:hover .profile-about-arrow { color: var(--theme-link, #0058c
   .community-main > #wall { order: 4; }
   .community-sidebar > .community-panel:first-child { order: 1; }
   .community-sidebar > .community-panel:last-of-type { order: 5; }
-  .community-sidebar > .sign-out-control { order: 6; }
 }
 /* Profile customization shares its header geometry with the public profile. */
 .community-cover { position: relative; }
@@ -308,7 +298,6 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
   .tag-picker-option .achievement-copy { flex-basis: calc(100% - 36px); }
   .tag-picker-option .achievement-progress { margin-left: 28px; }
 }
-.sign-out-control .primary-button:hover:not(:disabled) { background: transparent; border-color: #a51e28; color: var(--theme-danger, #a51e28); }
 .wall-composer fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .wall-composer .review-photo-previews:not(:empty) { margin-top: 12px; }
 .wall-composer .review-photo-previews:empty { display: none; }
@@ -426,6 +415,7 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 .profile-hub-row { display: flex; align-items: center; gap: 16px; width: 100%; min-height: 60px; padding: 8px 12px; border: 0; border-radius: 16px; background: transparent; color: var(--color-text); font: inherit; text-align: left; cursor: pointer; transition: background-color 150ms ease-out; }
 a.profile-hub-row { text-decoration: none; }
 .profile-hub-row[data-tone=admin] .profile-hub-icon { background: #4a4fe0; }
+.profile-hub-error { margin: 4px 12px 8px; }
 .profile-hub-row:hover { background: var(--theme-subtle, #f1f5fb); }
 .profile-hub-row:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: -2px; }
 .profile-hub-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--color-brand, #006eff); color: #fff; }
@@ -463,8 +453,6 @@ a.profile-hub-row { text-decoration: none; }
 [data-profile-theme] .tag-picker-search input { color: var(--profile-ink); }
 [data-profile-theme] :is(.tag-picker-option.is-selected,label.tag-picker-option:not(.is-locked):hover) { background: var(--profile-soft); }
 [data-profile-tone=dark] .tag-picker-option .achievement-progress.is-earned { color: #7adb9a; }
-[data-profile-tone=dark] .sign-out-control .primary-button { color: #ffb5b5; border-color: #b85d65; }
-[data-profile-tone=dark] .sign-out-control .primary-button:hover:not(:disabled) { color: #ffdada; border-color: #ffb5b5; }
 .profile-editor-danger[hidden] { display: none; }
 .profile-editor-panel { display: grid; gap: 24px; }
 .profile-editor-panel[hidden], .profile-editor-savebar[hidden] { display: none; }

@@ -12,6 +12,7 @@ import { useFormStatus } from 'react-dom';
 import { deleteAccountAction, updateProfileAction, type ProfileFormState } from '@/app/profile/actions';
 import { ProfileImageCrop, type Crop, type CropSource } from '@/components/profile-image-crop';
 import { ProfileHeader } from '@/components/profile-header';
+import { useSignOut } from '@/components/sign-out-button';
 import { PROFILE_BIO_MAX } from '@/lib/profile-fields';
 import { DEFAULT_PROFILE_LAYOUT, PROFILE_BLOCKS, type ProfileBlockKey } from '@/lib/profile-layout';
 import type { ProfileData } from '@/lib/profile';
@@ -52,6 +53,7 @@ const SECTION_ICONS: Record<ProfileSection, ReactNode> = {
   tags: <svg {...ICON}><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9Z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>,
   blocks: <svg {...ICON}><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></svg>,
 };
+const SignOutIcon = () => <svg {...ICON}><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" /></svg>;
 const Chevron = () => <svg {...ICON} width={20} height={20} className="profile-hub-chevron"><path d="m9 6 6 6-6 6" /></svg>;
 const BackIcon = () => <svg {...ICON}><path d="M19 12H5M11 18l-6-6 6-6" /></svg>;
 const PencilIcon = () => <svg {...ICON} width={16} height={16}><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z" /><path d="m13.5 6.5 4 4" /></svg>;
@@ -69,6 +71,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, 
   // The open section lives in ?section= (native history, synced with useSearchParams), so the phone's back gesture
   // returns to the list of sections instead of leaving the editor.
   const pathname = usePathname();
+  const { signOut, pending: signingOut, error: signOutError } = useSignOut();
   const requested = useSearchParams().get('section');
   const settingsRows = [...settings.flatMap(group => group.rows), ...accountRows].filter(row => !row.href);
   const tab: Section | null = SECTIONS.find(key => key === requested && (key !== 'tags' || tags)) ?? settingsRows.find(row => row.key === requested)?.key ?? null;
@@ -189,7 +192,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, 
   }
   const visibleBlocks = (() => { const layout = profile.profileLayout ?? DEFAULT_PROFILE_LAYOUT; return layout.order.length - layout.hidden.length; })();
   const imageState = (kind: ImageKind, label: string) => images[kind]?.remove ? `${label}: удалится` : images[kind] ? `${label}: новое` : imageSource(kind) ? `${label} есть` : `Без ${kind === 'avatar' ? 'аватара' : 'баннера'}`;
-  const sectionGroups: { key: string; title: string; rows: { key: Section; title: string; value?: string; tone?: string; icon?: ReactNode; href?: string }[] }[] = [
+  const sectionGroups: { key: string; title: string; rows: { key: Section; title: string; value?: string; tone?: string; icon?: ReactNode; href?: string; onSelect?: () => void }[] }[] = [
     { key: 'profile', title: 'Профиль', rows: [
       { key: 'details', title: 'Имя, ник и описание', value: `${name.trim() || initialName} · @${username.replace(/^@+/, '') || profile.username}` },
       { key: 'telegram', title: 'Telegram', value: [telegram && `t.me/${telegram}`, channel && `канал t.me/${channel}`].filter(Boolean).join(' · ') || 'Не указан', tone: 'telegram' },
@@ -201,7 +204,9 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, 
       { key: 'blocks', title: 'Блоки профиля', value: `Показано ${visibleBlocks} из ${PROFILE_BLOCKS.length}` },
     ] },
     ...settings,
-    { key: 'account', title: 'Аккаунт', rows: [...accountRows, { key: 'account', title: 'Удаление аккаунта', value: 'Без возможности восстановления', tone: 'danger' }] },
+    { key: 'account', title: 'Аккаунт', rows: [...accountRows,
+      { key: 'sign-out', title: signingOut ? 'Выходим…' : 'Выйти из аккаунта', value: 'На этом устройстве', icon: <SignOutIcon />, onSelect: () => { if (!signingOut) void signOut(); } },
+      { key: 'account', title: 'Удаление аккаунта', value: 'Без возможности восстановления', tone: 'danger' }] },
   ];
   return <div className="community-profile profile-editor ym-hide-content">
     <form className="profile-customization-form" action={formAction} noValidate onSubmit={event => {
@@ -230,7 +235,8 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, 
             </>;
             return <li key={row.key}>{row.href
               ? <Link id={`profile-section-row-${row.key}`} className="profile-hub-row" data-tone={row.tone} href={row.href}>{content}</Link>
-              : <button id={`profile-section-row-${row.key}`} type="button" className="profile-hub-row" data-tone={row.tone} onClick={() => openSection(row.key)}>{content}</button>}
+              : <button id={`profile-section-row-${row.key}`} type="button" className="profile-hub-row" data-tone={row.tone} aria-busy={row.key === 'sign-out' ? signingOut : undefined} onClick={row.onSelect ?? (() => openSection(row.key))}>{content}</button>}
+              {row.key === 'sign-out' && signOutError && <p className="field-error profile-hub-error" role="alert">{signOutError}</p>}
             </li>;
           })}</ul>
         </section>)}

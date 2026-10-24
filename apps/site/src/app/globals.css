@@ -971,11 +971,6 @@ html[data-cookie-notice="visible"] .brand-footer {
   font-size: 1rem;
   line-height: 1.4;
 }
-.sign-out-control .primary-button {
-  border: 1px solid var(--color-ink);
-  background: var(--color-surface);
-  color: var(--color-ink);
-}
 .profile-edit-panel,
 .profile-edit-form,
 .profile-danger-zone {
@@ -2994,7 +2989,6 @@ html[data-cookie-notice="visible"] .brand-footer {
 .header-menu-link[aria-current="page"] > svg { background: var(--color-brand, #006eff); color: #fff; }
 @keyframes header-menu-in { from { opacity: 0; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .header-menu-panel { animation: none; } .header-menu-chevron { transition: none; } }
-.sign-out-control .primary-button { background: transparent; color: var(--theme-danger, #c52b35); border-color: #c52b35; }
 /* ActionToast: a success note above the tab bar — rises in, the check draws itself, then it fades away. */
 .action-toast { position: fixed; z-index: 1100; left: 50%; bottom: calc(var(--site-tab-bar-offset, 0px) + 24px); display: flex; align-items: center; gap: 10px; width: max-content; max-width: calc(100vw - 32px); padding: 10px 8px 10px 14px; border-radius: 16px; background: #1b1f26; color: #fff; font-size: .9375rem; font-weight: 600; line-height: 1.35; box-shadow: 0 16px 40px -14px rgb(0 0 0 / .55), 0 0 0 1px rgb(255 255 255 / .08); transform: translateX(-50%); animation: action-toast-in 320ms cubic-bezier(.2, .9, .3, 1.25) both; }
 .action-toast.is-leaving { animation: action-toast-out 220ms ease-in forwards; }

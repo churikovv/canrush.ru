@@ -7,7 +7,10 @@ import type { CatalogDrink } from '@/lib/catalog-drinks';
 const addedOn = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Moscow' });
 const drinksWord = (count: number) => count % 10 === 1 && count % 100 !== 11 ? 'напиток' : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? 'напитка' : 'напитков';
 
-/** The end of a member-added drink's page: who added it, with avatar, tag, XP and how many drinks they brought. */
+/**
+ * The end of a member-added drink's page: who added it, with avatar, tag, XP and how many drinks they brought.
+ * The avatar and the name lead to the profile; there is no separate button.
+ */
 export function CatalogDrinkAuthor({ author, createdAt }: { author: CatalogDrink['author']; createdAt: Date }) {
   const name = author.name.trim() && !author.name.includes('@') ? author.name : author.username ?? 'Участник';
   const tag = profileTagLabel(author.tag);
@@ -30,7 +33,6 @@ export function CatalogDrinkAuthor({ author, createdAt }: { author: CatalogDrink
         <div><dt>Добавлен</dt><dd>{addedOn.format(createdAt).replace(/\s?г\.$/u, '')}</dd></div>
         <div><dt>В каталоге от автора</dt><dd>{author.drinks} {drinksWord(author.drinks)}</dd></div>
       </dl>
-      {href && <Link className="community-button community-button-secondary catalog-drink-author-open" href={href}>Профиль</Link>}
     </div>
   </section>;
 }

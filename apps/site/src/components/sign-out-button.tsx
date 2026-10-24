@@ -6,7 +6,8 @@ import { unregisterPushDeviceAction } from '@/app/notifications/push-actions';
 import { authClient } from '@/lib/auth-client';
 import { storedPushToken, storePushToken } from '@/lib/native-app';
 
-export function SignOutButton() {
+/** Signs out: unregisters this device's push token first (it needs the session), then goes to the sign-in page. */
+export function useSignOut() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
@@ -30,16 +31,5 @@ export function SignOutButton() {
     router.refresh();
   }
 
-  return (
-    <div className="sign-out-control">
-      <button className="primary-button" type="button" onClick={signOut} disabled={pending}>
-        {pending ? 'Выходим…' : 'Выйти из аккаунта'}
-      </button>
-      {error ? (
-        <p className="field-error" role="alert">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
+  return { signOut, pending, error };
 }

@@ -17,7 +17,6 @@ import { ProfileExperience } from '@/components/profile-experience';
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
 import Link from '@/components/navigation-progress';
-import { SignOutButton } from '@/components/sign-out-button';
 import type { ProfileData } from '@/lib/profile';
 import { COMMUNITY_PAGE_SIZE, getConnections, getLastSeen, getPresence, getProfileCommunity, getProfileRatings, getProfileWall } from '@/lib/profile-community';
 import { PROFILE_ACHIEVEMENTS, visibleProfileAchievements } from '@/lib/profile-achievements';
@@ -143,7 +142,6 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           </ProfileBlock></ProfileBlocks>
           {!isOwn && viewerId && <ProfileReportForm targetId={profile.id} />}
           {!isOwn && viewerId && <div className="profile-report"><BlockMemberButton userId={profile.id} name={`@${profile.username}`} initiallyBlocked={blockedByViewer} /></div>}
-          {isOwn && <SignOutButton />}
         </aside>
       </div>
     </div>
