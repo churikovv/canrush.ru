@@ -8,7 +8,7 @@ export const MAX_DRINK_INGREDIENTS = 1500;
 /** The optional full name from the can, «Monster Ultra Paradise»: search finds the drink by it. */
 export const MAX_DRINK_FULL_NAME = 80;
 /** Pending requests one member may have at once. */
-export const MAX_PENDING_DRINKS = 10;
+export const MAX_PENDING_DRINKS = 50;
 
 export interface CatalogDrinkInput { brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string }
 

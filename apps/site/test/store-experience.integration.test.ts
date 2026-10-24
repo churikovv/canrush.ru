@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { Pool } from 'pg';
+import { STORE_XP } from '../src/lib/store-fields';
 const url = process.env.TEST_DATABASE_URL ?? 'postgresql://localhost:5432/canrush_site_test';
 if (new URL(url).pathname !== '/canrush_site_test') throw new Error('Test DB only');
 const pool = new Pool({ connectionString: url, max: 2 });
@@ -22,17 +23,17 @@ it('pays once when a store passes moderation, not again after an edit and re-mod
   const store = await addStore(owner);
   expect(await xp(owner)).toEqual({ count: 0, points: 0 });
   await pool.query(`update "marketStore" set status='published' where id=$1`, [store]);
-  expect(await xp(owner)).toEqual({ count: 1, points: 75 });
+  expect(await xp(owner)).toEqual({ count: 1, points: STORE_XP });
   await pool.query(`update "marketStore" set status='pending' where id=$1`, [store]);
   await pool.query(`update "marketStore" set status='published' where id=$1`, [store]);
-  expect(await xp(owner)).toEqual({ count: 1, points: 75 });
+  expect(await xp(owner)).toEqual({ count: 1, points: STORE_XP });
   await pool.query(`update "marketStore" set status='rejected' where id=$1`, [await addStore(owner)]);
-  expect(await xp(owner)).toEqual({ count: 1, points: 75 });
+  expect(await xp(owner)).toEqual({ count: 1, points: STORE_XP });
 });
 
 it('stops at 20 stores and skips blocked authors', async () => {
   for (let index = 0; index < 21; index++) await addStore(owner, 'published');
-  expect(await xp(owner)).toEqual({ count: 20, points: 1500 });
+  expect(await xp(owner)).toEqual({ count: 20, points: 20 * STORE_XP });
   await addStore(blocked, 'published');
   expect(await xp(blocked)).toEqual({ count: 0, points: 0 });
 });

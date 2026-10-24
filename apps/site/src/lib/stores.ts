@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import type { PreparedReviewPhoto } from './review-photos';
 import { getPool } from '@/db/pool';
-import { StoreError, type StoreInput } from './store-fields';
+import { MAX_PENDING_STORES, StoreError, type StoreInput } from './store-fields';
 export interface Store extends StoreInput { id: string; photos: string[]; ownerId: string; status: 'pending'|'published'|'rejected'; moderationNote: string; updatedAt: Date; reviewedAt: Date | null }
 /** `metro`: the stations of one name (one per line) — a store matches by its chosen station or by being within walking distance of one. */
 export interface StoreFilters { brand?: string; metro?: { ids: string[]; lat: number[]; lng: number[]; km: number } }
@@ -51,7 +51,7 @@ export async function saveStore(userId: string, input: StoreInput, id?: string, 
     if((await db.query('select 1 from "userBlock" where "userId"=$1',[userId])).rowCount)throw new StoreError('Добавление магазинов для аккаунта ограничено.');
     if(!id){
       const counts=await db.query<{count:number;recent:boolean}>(`select count(*) filter(where status='pending')::int as count,coalesce(bool_or("createdAt">now()-interval '60 seconds'),false) as recent from "marketStore" where "ownerId"=$1`,[userId]);
-      if(counts.rows[0]!.count>=10 || counts.rows[0]!.recent)throw new StoreError('Подождите минуту между заявками. Одновременно можно отправить до 10 магазинов на проверку.');
+      if(counts.rows[0]!.count>=MAX_PENDING_STORES || counts.rows[0]!.recent)throw new StoreError(`Подождите минуту между заявками. Одновременно можно отправить до ${MAX_PENDING_STORES} магазинов на проверку.`);
     }
     const values=[userId,input.name,input.city,input.address,input.latitude,input.longitude,input.metro,input.description,JSON.stringify(input.catalog),input.locationSource];
     const result = id ? await db.query(`update "marketStore" set name=$2,city=$3,address=$4,latitude=$5,longitude=$6,metro=$7,description=$8,catalog=$9,"locationSource"=$10,status='pending',"moderationNote"='',"reviewedAt"=null,"reviewedBy"=null,"updatedAt"=clock_timestamp() where "ownerId"=$1 and id=$11 returning id`,[...values,id]) : await db.query(`insert into "marketStore"("ownerId",name,city,address,latitude,longitude,metro,description,catalog,"locationSource") values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,values);
