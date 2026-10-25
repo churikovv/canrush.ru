@@ -37,6 +37,9 @@ wait_for 3003
 echo "recreate site on 3002 (nginx serves the standby meanwhile)"
 docker compose up -d --no-deps site
 wait_for 3002
+# nginx keeps 3002 marked down for fail_timeout (3 s) after a refused connection and sends traffic to the standby
+# meanwhile: removing the standby inside that window leaves no live upstream (one 502 on the first run).
+sleep 6
 
 echo "remove standby"
 docker compose --profile standby rm -sf site-standby
