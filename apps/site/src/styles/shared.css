@@ -67,6 +67,7 @@
 .profile-tierlists-empty strong {
   color: var(--color-ink);
 }
+.tier-list-more { display: flex; justify-content: center; width: fit-content; margin: 20px auto 0; }
 .tier-list-cards {
   display: grid;
   gap: 12px;

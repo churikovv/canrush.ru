@@ -12,7 +12,10 @@ import { buildOfficialTierList, getCommunityTierLists, tierListProductsForPlacem
 
 const count = new Intl.NumberFormat('ru-RU');
 
-export type TierListSearchParams = { q?: string; metric?: string };
+export type TierListSearchParams = { q?: string; metric?: string; more?: string };
+/** Community tier lists come in pages of 12 (each card carries up to a dozen can covers), up to the 48 the query allows. */
+const COMMUNITY_PAGE = 12;
+const COMMUNITY_MAX = 48;
 
 /**
  * The official board and community tier lists, with the search above the community lists.
@@ -21,13 +24,17 @@ export type TierListSearchParams = { q?: string; metric?: string };
 export async function TierListsBrowser({ params, basePath = '/tierlists', keep = {} }: { params: TierListSearchParams; basePath?: string; keep?: Record<string, string> }) {
   const q = typeof params.q === 'string' ? params.q.trim().slice(0, 200) : '';
   const metric = params.metric === 'design' || params.metric === 'taste' ? params.metric : 'overall';
+  const shownCount = Math.min(COMMUNITY_MAX, Math.max(COMMUNITY_PAGE, Math.ceil((parseInt(params.more ?? '', 10) || COMMUNITY_PAGE) / COMMUNITY_PAGE) * COMMUNITY_PAGE));
   const modes = { overall: 'Общий тирлист', design: 'По дизайну', taste: 'По вкусу' };
   const title = metric === 'overall' ? 'Тирлист энергетиков CanRush' : `Тирлист энергетиков CanRush — ${modes[metric].toLowerCase()}`;
 
   const groups = await loadAllCatalogGroups();
-  const [official, community, session] = await Promise.all([buildOfficialTierList(groups, metric), getCommunityTierLists(48, q), auth.api.getSession({ headers: await headers() })]);
-  const viewer = await getTierCardViewer(community.map((list) => list.id), session?.user.id ?? null);
-  const communityProducts = tierListProductsForPlacements(groups, community.flatMap((list) => list.preview));
+  const [official, community, session] = await Promise.all([buildOfficialTierList(groups, metric), getCommunityTierLists(shownCount + 1, q), auth.api.getSession({ headers: await headers() })]);
+  // One extra list tells whether «Показать ещё» has anything to show.
+  const hasMore = community.length > shownCount && shownCount < COMMUNITY_MAX;
+  const shownLists = community.slice(0, shownCount);
+  const viewer = await getTierCardViewer(shownLists.map((list) => list.id), session?.user.id ?? null);
+  const communityProducts = tierListProductsForPlacements(groups, shownLists.flatMap((list) => list.preview));
   const ratedShare = official.eligibleCount > 0 ? Math.min(100, Math.round(official.ratedCount / official.eligibleCount * 100)) : 0;
 
   const form = (
@@ -84,7 +91,7 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
             <p className="tierlists-kicker">Сообщество</p>
             <h2 id="community-title">Пользовательские тирлисты</h2>
           </div>
-          {community.length > 0 ? <span>{community.length} последних</span> : null}
+          {shownLists.length > 0 ? <span>{shownLists.length} последних</span> : null}
         </div>
 
         <Link className="tier-create-banner" href="/tierlists/new">
@@ -96,11 +103,13 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
         {form}
         {q && <Link href={`${basePath}?${new URLSearchParams({ ...keep, metric })}`}>Сбросить поиск</Link>}
 
-        {community.length > 0 ? (
+        {shownLists.length > 0 ? (<>
           <div className="tier-list-cards">
-            {community.map((list) => <TierListCard list={list} products={communityProducts} viewer={viewer} key={list.id} />)}
+            {shownLists.map((list) => <TierListCard list={list} products={communityProducts} viewer={viewer} key={list.id} />)}
           </div>
-        ) : (
+          {hasMore && <Link className="community-button community-button-secondary tier-list-more" scroll={false}
+            href={`${basePath}?${new URLSearchParams({ ...keep, metric, ...(q ? { q } : {}), more: String(shownCount + COMMUNITY_PAGE) })}`}>Показать ещё</Link>}
+        </>) : (
           <div className="tierlists-community-empty">
             <strong>{q ? 'Тирлисты не найдены' : 'Первый тирлист может быть вашим'}</strong>
             <p>{q ? 'Попробуйте другое название или имя автора.' : 'Разложите знакомые энергетики по категориям и поделитесь результатом.'}</p>

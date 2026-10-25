@@ -39,7 +39,7 @@ export default async function CommunityPage({ searchParams }: { searchParams: Pr
       {/* Tier lists have their own visible heading. */}
       {scope === 'people' && <h1 className="sr-only">Участники</h1>}
       <div className="search-pinned">{scopes}</div>
-      {scope === 'tierlists' ? <TierListsBrowser params={{ q: text('q'), metric: text('metric') }} basePath="/community" />
+      {scope === 'tierlists' ? <TierListsBrowser params={{ q: text('q'), metric: text('metric'), more: text('more') }} basePath="/community" />
         : scope === 'dating' ? <DatingBrowser />
         : <PeopleBrowser q={text('q') ?? ''} />}
     </div>

@@ -20,29 +20,34 @@ export class CatalogDrinkDuplicate extends CatalogDrinkError {
 
 const COLUMNS = `d.id, d.brand, d.flavor, d."fullName", d.volumes, d.ingredients, d.status, d."moderationNote", d."createdAt", d."updatedAt",
   d."ownerId", u.username, u.name, (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
-  coalesce((select xp from "profileRanking" where id = u.id), 0) as xp,
+  coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
   case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
     when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
   (select count(*)::int from "catalogDrink" o where o."ownerId" = d."ownerId" and o.status = 'published') as drinks`;
 interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number }
+/** The photo's address carries `updatedAt` in the path: a new photo gets a new URL past the hour of public caching. */
+const drinkPhotoUrl = (id: string, updatedAt: Date) => `/api/catalog-drinks/${id}/${updatedAt.getTime()}`;
 const toDrink = (row: Row): CatalogDrink => ({
   id: row.id, brand: row.brand, flavor: row.flavor, name: flavorName(row.flavor), fullName: row.fullName, volumes: row.volumes, ingredients: row.ingredients,
   status: row.status, moderationNote: row.moderationNote, createdAt: row.createdAt, updatedAt: row.updatedAt,
-  href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: `/api/catalog-drinks/${row.id}/${row.updatedAt.getTime()}`,
+  href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: drinkPhotoUrl(row.id, row.updatedAt),
   author: { id: row.ownerId, username: row.username, name: row.name, avatarId: row.avatarId, tag: row.tag, xp: Number(row.xp), drinks: row.drinks },
 });
 const VISIBLE_AUTHOR = 'not exists(select 1 from "userBlock" b where b."userId" = d."ownerId")';
 
-/** Published drinks of members whose accounts are not blocked; read once per request. */
-export const getPublishedCatalogDrinks = cache(async (): Promise<CatalogDrink[]> => {
-  const { rows } = await getPool().query<Row>(`select ${COLUMNS} from "catalogDrink" d join "user" u on u.id = d."ownerId"
-    where d.status = 'published' and ${VISIBLE_AUTHOR} order by d."reviewedAt" desc nulls last, d."createdAt" desc`);
-  return rows.map(toDrink);
-});
+/**
+ * The catalog's view of published member drinks: identity, full name and the photo address, nothing about the author.
+ * Every page that loads the catalog reads it, so it stays one cheap scan; the author's avatar, XP and tag (COLUMNS)
+ * are only for the drink's own page and the admin.
+ */
+const getPublishedDrinkIdentities = cache(async () => (await getPool().query<{ id: string; brand: string; flavor: string; fullName: string; updatedAt: Date }>(
+  `select d.id, d.brand, d.flavor, d."fullName", d."updatedAt" from "catalogDrink" d
+   where d.status = 'published' and ${VISIBLE_AUTHOR} order by d."reviewedAt" desc nulls last, d."createdAt" desc`)).rows);
 
 /** The same drinks as catalog groups: no offers yet, the member's photo as the cover. */
 export async function catalogDrinkGroups(): Promise<CatalogGroup[]> {
-  return (await getPublishedCatalogDrinks()).map(drink => ({ brand: drink.brand, flavor: drink.flavor, variants: [], minPrice: 0, coverImageUrl: drink.photo, ...(drink.fullName ? { fullName: drink.fullName } : {}) }));
+  return (await getPublishedDrinkIdentities()).map(drink => ({ brand: drink.brand, flavor: drink.flavor, variants: [], minPrice: 0,
+    coverImageUrl: drinkPhotoUrl(drink.id, drink.updatedAt), ...(drink.fullName ? { fullName: drink.fullName } : {}) }));
 }
 
 /**
@@ -55,8 +60,11 @@ export async function withCatalogDrinks(groups: CatalogGroup[]): Promise<Catalog
   return [...groups, ...added.filter(group => !known.has(JSON.stringify([group.brand, group.flavor])))];
 }
 
+/** One published drink with its author, for the drink's page. */
 export async function getCatalogDrink(brand: string, flavor: string): Promise<CatalogDrink | null> {
-  return (await getPublishedCatalogDrinks()).find(drink => drink.brand === brand && drink.flavor === flavor) ?? null;
+  const { rows } = await getPool().query<Row>(`select ${COLUMNS} from "catalogDrink" d join "user" u on u.id = d."ownerId"
+    where d.status = 'published' and d.brand = $1 and d.flavor = $2 and ${VISIBLE_AUTHOR} limit 1`, [brand, flavor]);
+  return rows[0] ? toDrink(rows[0]) : null;
 }
 
 /** The label text a member typed, shown in the «Состав» block like a store's unverified card. */

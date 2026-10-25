@@ -3,6 +3,10 @@ import type { NextConfig } from 'next';
 const nextConfig = {
   output: 'standalone',
   experimental: {
+    // Pages visited in the last 30 seconds open from the client cache without a server round trip: going back and
+    // forth between tabs (most of all in the Android app on slow phones) is instant. Server actions that change data
+    // revalidate their paths, which clears these entries.
+    staleTimes: { dynamic: 30 },
     serverActions: { bodySizeLimit: '26mb' },
     proxyClientMaxBodySize: '26mb',
   },

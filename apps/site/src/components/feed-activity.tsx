@@ -13,6 +13,11 @@ import type { TierListProduct, TierListSummary } from '@/lib/tier-list-types';
 const eventTime = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' });
 /** Shown in a «оценил напитки» event; the rest wait in a stack under it and open in place (they are already loaded). */
 export const REVIEWS_SHOWN = 1;
+/**
+ * Reviews of one event rendered into the page at most: a day of thirty reviews would otherwise put thirty cards with
+ * covers into the feed HTML (slow on budget phones). The rest are on the author's reviews page.
+ */
+export const REVIEWS_IN_FEED = 5;
 
 /** `tag` — the selected tag as a key or a label (reviews carry the label). */
 interface EventAuthor { username: string; name: string; avatarId: string | null; tag: string | null }
@@ -75,7 +80,10 @@ export function FeedReviewsEvent({ group, covers, votes, viewerId }: { group: Fe
     <EventHead author={author} action={action} at={group.createdAt} />
     <ul className="feed-reviews">
       {group.reviews.slice(0, REVIEWS_SHOWN).map(renderReview)}
-      {count > REVIEWS_SHOWN && <FeedReviewsMore hidden={count - REVIEWS_SHOWN}>{group.reviews.slice(REVIEWS_SHOWN).map(renderReview)}</FeedReviewsMore>}
+      {count > REVIEWS_SHOWN && <FeedReviewsMore hidden={count - REVIEWS_SHOWN}>
+        {group.reviews.slice(REVIEWS_SHOWN, REVIEWS_IN_FEED).map(renderReview)}
+        {count > REVIEWS_IN_FEED && <li className="feed-reviews-all"><Link href={`/profile/${first.author.username}/reviews`}>Все отзывы @{first.author.username} · ещё {count - REVIEWS_IN_FEED}</Link></li>}
+      </FeedReviewsMore>}
     </ul>
   </article>;
 }

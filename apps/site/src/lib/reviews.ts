@@ -68,7 +68,7 @@ const REVIEW_SELECT = `
          r."createdAt", r."updatedAt",
          array(select p."id"::text from "reviewPhoto" p where p."reviewId" = r."id" order by p."position") as photos,
          u."username", u."name", u."telegramChannel",
-         coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
+         coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
          (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
          case when u."profileTags"[1] in ('admin', 'moderator') then
            case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end

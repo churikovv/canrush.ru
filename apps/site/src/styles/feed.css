@@ -137,6 +137,9 @@ button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-w
 /* «Посмотреть больше» under a day of reviews: opens the rest in place, «Свернуть» hides them. */
 .feed-reviews-toggle button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 4px; border: 0; background: none; color: var(--theme-link, #0058cc); font: inherit; font-size: .9375rem; font-weight: 700; cursor: pointer; }
 .feed-reviews-toggle button span { color: var(--color-muted-strong); font-weight: 600; }
+.feed-reviews-all { padding: 4px 0 0; list-style: none; }
+.feed-reviews-all a { color: var(--theme-link, #0058cc); font-weight: 700; text-decoration: none; }
+.feed-reviews-all a:hover { text-decoration: underline; }
 .feed-reviews-toggle svg { transition: transform 200ms ease-out; }
 .feed-reviews-toggle button[aria-expanded="true"] svg { transform: rotate(180deg); }
 .feed-reviews > .feed-review-item { animation: feed-review-in 220ms ease-out; }
