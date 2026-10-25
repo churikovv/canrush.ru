@@ -7,7 +7,7 @@ import { FormOptional, FormStep } from '@/components/form-step';
 import { MarketPhotoPicker } from '@/components/market-photo-picker';
 import { submitCatalogDrinkAction } from '@/app/catalog/new/actions';
 import { CatalogDrinkBrandInput, CatalogDrinkFlavorInput, type PickedFlavor } from '@/components/catalog-drink-flavor-input';
-import { DRINK_SUGAR_NAME, DRINK_VOLUME_PRESETS, MAX_DRINK_FLAVORS, MAX_DRINK_FULL_NAME, MAX_DRINK_INGREDIENTS, MAX_DRINK_VOLUMES, volumeLabel, type DrinkSugar } from '@/lib/catalog-drink-fields';
+import { DRINK_JUICE_NAME, DRINK_SUGAR_NAME, DRINK_VOLUME_PRESETS, MAX_DRINK_FLAVORS, MAX_DRINK_FULL_NAME, MAX_DRINK_INGREDIENTS, MAX_DRINK_VOLUMES, volumeLabel, type DrinkSugar } from '@/lib/catalog-drink-fields';
 
 const STEPS = [
   { id: 'drink-step-name', title: 'Бренд и вкус' },
@@ -23,6 +23,17 @@ export const SUGAR_OPTIONS: { value: DrinkSugar; title: string; hint: string }[]
   { value: 'sweetener', title: 'С сахарозаменителем', hint: 'Часть сахара заменена подсластителем' },
 ];
 
+/** «С соком» — a mark on top of the sugar choice: some flavours come only with juice, and the can is a drink of its own. */
+export function DrinkJuiceOption({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  return <fieldset className="catalog-drink-sugar catalog-drink-juice">
+    <legend className="catalog-flavor-label">Сок</legend>
+    <label className="catalog-drink-sugar-option">
+      <input type="checkbox" name="juice" value="1" checked={checked} onChange={event => onChange(event.target.checked)} />
+      <span><b>С соком</b><small>В составе есть фруктовый сок — некоторые вкусы выпускают только так</small></span>
+    </label>
+  </fieldset>;
+}
+
 /**
  * «Добавить напиток»: four steps like the store form — brand and flavour, a can photo, volumes and the label text,
  * then a preview of the catalog card before it goes to moderation.
@@ -35,6 +46,7 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
   const [brand, setBrand] = useState('');
   const [picked, setPicked] = useState<PickedFlavor[]>([]);
   const [sugar, setSugar] = useState<DrinkSugar>('regular');
+  const [juice, setJuice] = useState(false);
   const [fullName, setFullName] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [photosBusy, setPhotosBusy] = useState(false);
@@ -47,7 +59,7 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
   // The same name the catalog will show (flavorName on the key the server builds).
   // Parts in the server's order (sorted keys and own names), shown by their labels.
   const baseName = [...picked].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).map(item => item.label).join(' + ');
-  const drinkName = baseName ? `${baseName}${DRINK_SUGAR_NAME[sugar]}` : '';
+  const drinkName = baseName ? `${baseName}${juice ? DRINK_JUICE_NAME : ''}${DRINK_SUGAR_NAME[sugar]}` : '';
   const photoUrl = useMemo(() => photos[0] ? URL.createObjectURL(photos[0]) : '', [photos]);
   useEffect(() => () => { if (photoUrl) URL.revokeObjectURL(photoUrl); }, [photoUrl]);
 
@@ -97,6 +109,10 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
     if (issue) { event.preventDefault(); const index = [0, 1, 2].findIndex(item => stepProblem(item)); setStep(index); setProblem(issue); }
   }} action={form => {
     if (busy) return;
+    // React resets the form after each action, which puts the radios and the checkbox back to their first state in the
+    // DOM while the cards still show the choice: a second send («Всё равно отправить») took «С сахаром» and no juice.
+    form.set('sugar', sugar);
+    if (juice) form.set('juice', '1'); else form.delete('juice');
     photos.forEach(photo => form.append('photos', photo));
     startTransition(() => action(form));
   }}><fieldset disabled={pending}>
@@ -123,6 +139,7 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
           <span><b>{option.title}</b><small>{option.hint}</small></span>
         </label>)}
       </fieldset>
+      <DrinkJuiceOption checked={juice} onChange={setJuice} />
       <div className="form-field">
         <label htmlFor="catalog-drink-full-name"><span className="form-label">Полное название {<FormOptional />}</span></label>
         <input id="catalog-drink-full-name" type="text" name="fullName" maxLength={MAX_DRINK_FULL_NAME} autoComplete="off" value={fullName} onChange={event => setFullName(event.target.value)} placeholder="Monster Ultra Paradise" aria-describedby="catalog-drink-full-name-note" />
@@ -175,7 +192,7 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
 
     <div className="form-submit store-form-footer">
       {/* The submitter's name and value reach the action: «Всё равно отправить» is the same request, sent as the member's own version. */}
-      {!problem && state.confirmable ? <FormAlert tone="warning" actions={<>{state.duplicate && <Link href={state.duplicate}>Открыть карточку</Link>}<button className="community-button community-button-secondary" type="submit" name="confirmMatch" value="1" disabled={busy}>Всё равно отправить на проверку</button></>}>{state.error}</FormAlert>
+      {!problem && state.confirmable ? <FormAlert tone="warning" actions={<>{state.duplicate && <Link href={state.duplicate}>{state.duplicate.startsWith('/catalog/pending') ? 'Посмотреть заявки' : 'Открыть карточку'}</Link>}<button className="community-button community-button-secondary" type="submit" name="confirmMatch" value="1" disabled={busy}>Всё равно отправить на проверку</button></>}>{state.error}</FormAlert>
       : (problem || state.error) && <FormAlert actions={!problem && state.duplicate ? <Link href={state.duplicate}>Открыть карточку</Link> : undefined}>{problem || state.error}</FormAlert>}
       <div className="store-form-nav">
         {step > 0 && <button type="button" className="community-button community-button-secondary" disabled={busy} onClick={() => show(step - 1)}>Назад</button>}

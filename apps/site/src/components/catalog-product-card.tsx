@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import { CoverImage } from '@/components/cover-image';
 import Link from '@/components/navigation-progress';
 import { isResolvedFlavor, type CatalogGroup } from '@canrush/shared';
 import { RetailerBadge } from '@/components/retailer-badge';
@@ -37,7 +37,7 @@ export function CatalogProductCard({ group, eager, summary }: CatalogProductCard
       <Link className="catalog-card-link" href={href} aria-label={`${group.brand}, ${flavorName(group.flavor)}`}>
         <div className="catalog-card-image">
           {group.coverImageUrl ? (
-            <Image
+            <CoverImage
               src={group.coverImageUrl}
               width={170}
               height={170}

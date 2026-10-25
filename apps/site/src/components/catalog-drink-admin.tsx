@@ -7,7 +7,7 @@ import { FormAlert } from '@/components/form-alert';
 import { EditIcon, TrashIcon } from '@/components/action-icons';
 import { MoreActions } from '@/components/more-actions';
 import { CatalogDrinkBrandInput, CatalogDrinkFlavorInput, type PickedFlavor } from '@/components/catalog-drink-flavor-input';
-import { SUGAR_OPTIONS } from '@/components/catalog-drink-form';
+import { DrinkJuiceOption, SUGAR_OPTIONS } from '@/components/catalog-drink-form';
 import { deleteCatalogDrinkAction, mergeCatalogDrinkAction, searchMergeTargetsAction, updateCatalogDrinkAction } from '@/app/catalog/new/actions';
 import { MAX_DRINK_FULL_NAME, MAX_DRINK_INGREDIENTS, splitDrinkFlavorKey, type DrinkSugar } from '@/lib/catalog-drink-fields';
 import type { CatalogDrink } from '@/lib/catalog-drinks';
@@ -118,27 +118,33 @@ function MergeForm({ drink, titleId, onDone }: { drink: AdminDrink; titleId: str
   </form>;
 }
 
-/** The edit form: the request's brand, flavour and sugar inputs, then photo, full name, volumes and the label text. */
+/** The edit form: the request's brand, flavour, sugar and juice inputs, then photo, full name, volumes and the label text. */
 function EditForm({ drink, brands, flavors, titleId, onDone }: { drink: AdminDrink; titleId: string; onDone: () => void } & Options) {
   const [state, action, pending] = useActionState(updateCatalogDrinkAction.bind(null, drink.id, drink.version), {});
   const initial = useMemo(() => {
-    const { parts, sugar } = splitDrinkFlavorKey(drink.flavor);
+    const { parts, sugar, juice } = splitDrinkFlavorKey(drink.flavor);
     const picked = parts.map((part): PickedFlavor => {
       const known = flavors.find(flavor => flavor.key === part);
       return known ? { key: known.key, label: known.label, own: false } : { key: part, label: part, own: true };
     });
-    return { picked, sugar };
+    return { picked, sugar, juice };
   }, [drink.flavor, flavors]);
   const [brand, setBrand] = useState(drink.brand);
   const [picked, setPicked] = useState<PickedFlavor[]>(initial.picked);
   const [sugar, setSugar] = useState<DrinkSugar>(initial.sugar);
+  const [juice, setJuice] = useState(initial.juice);
   const [problem, setProblem] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const preview = useMemo(() => photo ? URL.createObjectURL(photo) : '', [photo]);
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
   useEffect(() => { if (state.saved) onDone(); }, [state.saved, onDone]);
   const id = `admin-drink-${drink.id}`;
-  return <form action={action} className="store-form admin-drink-edit-form">
+  // The sugar and juice the dialog shows, not the DOM: React resets the form after a failed save.
+  return <form action={form => {
+    form.set('sugar', sugar);
+    if (juice) form.set('juice', '1'); else form.delete('juice');
+    action(form);
+  }} className="store-form admin-drink-edit-form">
     <h2 id={titleId}>Редактировать напиток</h2>
     {drink.status === 'published' && <p className="field-help">Если поменять бренд или вкус, отзывы, избранное, тирлисты, календарь и свайпы переедут на новую карточку, а старый адрес будет вести на неё.</p>}
     <fieldset disabled={pending}>
@@ -161,6 +167,7 @@ function EditForm({ drink, brands, flavors, titleId, onDone }: { drink: AdminDri
           <span><b>{option.title}</b><small>{option.hint}</small></span>
         </label>)}
       </fieldset>
+      <DrinkJuiceOption checked={juice} onChange={setJuice} />
       <label>Полное название<input name="fullName" defaultValue={drink.fullName} maxLength={MAX_DRINK_FULL_NAME} placeholder="Monster Ultra Paradise" /></label>
       <label>Объёмы, мл<input name="volumes" defaultValue={drink.volumes.join(', ')} required inputMode="numeric" placeholder="250, 450" /></label>
       <label>Состав<textarea name="ingredients" rows={4} maxLength={MAX_DRINK_INGREDIENTS} defaultValue={drink.ingredients} /></label>

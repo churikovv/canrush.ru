@@ -30,11 +30,17 @@ export type DrinkSugar = 'regular' | 'free' | 'sweetener';
 export const DRINK_SUGAR_SUFFIX: Record<DrinkSugar, string> = { regular: '', free: ':sugarfree', sweetener: ':sweetener' };
 export const DRINK_SUGAR_NAME: Record<DrinkSugar, string> = { regular: '', free: ' · без сахара', sweetener: ' · с сахарозаменителем' };
 export const isDrinkSugar = (value: unknown): value is DrinkSugar => value === 'regular' || value === 'free' || value === 'sweetener';
+/**
+ * A can with fruit juice: some flavours come only with it, and it is a drink of its own next to the plain one. It sits
+ * before the sugar mark (`mango:juice:sugarfree`), so `flavorName` shows «Манго · с соком · без сахара».
+ */
+export const DRINK_JUICE_SUFFIX = ':juice';
+export const DRINK_JUICE_NAME = ' · с соком';
 
-export function drinkFlavorKey({ flavors, custom = [], sugar }: { flavors: string[]; custom?: string[]; sugar: DrinkSugar }): string {
+export function drinkFlavorKey({ flavors, custom = [], sugar, juice = false }: { flavors: string[]; custom?: string[]; sugar: DrinkSugar; juice?: boolean }): string {
   const parts = [...new Set([...flavors, ...custom.map(ownFlavorName).filter(Boolean)])].sort();
   const base = parts.length > 1 ? `blend:${parts.join('+')}` : parts[0] ?? '';
-  return base ? `${base}${DRINK_SUGAR_SUFFIX[sugar]}` : base;
+  return base ? `${base}${juice ? DRINK_JUICE_SUFFIX : ''}${DRINK_SUGAR_SUFFIX[sugar]}` : base;
 }
 
 /** Checks the own flavour name: free text, but without the characters the catalog keys are built from. */
@@ -42,7 +48,7 @@ export function customFlavorProblem(value: string): string | null {
   const name = collapse(value);
   if (!name) return null;
   if (name.length < 2 || name.length > 60) return 'Название вкуса — от 2 до 60 символов.';
-  if (/[:+]/u.test(name) || /^(?:blend|unknown|unresolved|sugarfree|sweetener)$/iu.test(name)) return 'Название вкуса не должно содержать «:» и «+».';
+  if (/[:+]/u.test(name) || /^(?:blend|unknown|unresolved|sugarfree|sweetener|juice)$/iu.test(name)) return 'Название вкуса не должно содержать «:» и «+».';
   return null;
 }
 
@@ -51,7 +57,7 @@ export function parseCatalogDrink(form: FormData, knownFlavors: ReadonlySet<stri
   return { ...parseIdentity(form, knownFlavors), fullName: parseFullName(form), volumes: parseVolumes(form), ingredients: parseIngredients(form) };
 }
 
-/** Brand, the flavours picked from the list or typed (`flavor`/`customFlavor`) and the sugar choice, as one catalog key. */
+/** Brand, the flavours picked from the list or typed (`flavor`/`customFlavor`), juice and the sugar choice, as one catalog key. */
 function parseIdentity(form: FormData, knownFlavors: ReadonlySet<string>): { brand: string; flavor: string } {
   const brand = collapse(String(form.get('brand') ?? ''));
   if (brand.length < 2 || brand.length > 40) throw new CatalogDrinkError('Укажите бренд — от 2 до 40 символов.');
@@ -64,17 +70,19 @@ function parseIdentity(form: FormData, knownFlavors: ReadonlySet<string>): { bra
   if (!custom.length && !flavors.length) throw new CatalogDrinkError('Укажите вкус: выберите из подсказок или впишите свой.');
   const sugar = form.get('sugar') ?? 'regular';
   if (!isDrinkSugar(sugar)) throw new CatalogDrinkError('Выберите, есть ли в напитке сахар.');
-  return { brand, flavor: drinkFlavorKey({ flavors, custom, sugar }) };
+  return { brand, flavor: drinkFlavorKey({ flavors, custom, sugar, juice: form.get('juice') === '1' }) };
 }
 
 /**
  * The other way round, for editing a drink in the same inputs: the key's parts (catalog keys, or own names) and the
- * sugar choice. `blend:lime+Лемонграсс` → `['lime', 'Лемонграсс']`, regular.
+ * sugar and juice choices. `blend:lime+Лемонграсс:juice` → `['lime', 'Лемонграсс']`, regular, with juice.
  */
-export function splitDrinkFlavorKey(key: string): { parts: string[]; sugar: DrinkSugar } {
+export function splitDrinkFlavorKey(key: string): { parts: string[]; sugar: DrinkSugar; juice: boolean } {
   const sugar: DrinkSugar = key.endsWith(':sugarfree') ? 'free' : key.endsWith(':sweetener') ? 'sweetener' : 'regular';
-  const base = key.slice(0, key.length - DRINK_SUGAR_SUFFIX[sugar].length);
-  return { parts: base.startsWith('blend:') ? base.slice(6).split('+').filter(Boolean) : [base], sugar };
+  let base = key.slice(0, key.length - DRINK_SUGAR_SUFFIX[sugar].length);
+  const juice = base.endsWith(DRINK_JUICE_SUFFIX);
+  if (juice) base = base.slice(0, -DRINK_JUICE_SUFFIX.length);
+  return { parts: base.startsWith('blend:') ? base.slice(6).split('+').filter(Boolean) : [base], sugar, juice };
 }
 
 function parseFullName(form: FormData): string {

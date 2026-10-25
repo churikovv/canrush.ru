@@ -14,8 +14,9 @@ export interface CatalogDrink {
   author: { id: string; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; drinks: number };
 }
 /**
- * A duplicate of a drink the catalog already has: the form links to it. `confirmable` — a parser card, which the member
- * may still send as their own version after a warning (the moderator then compares, renames or merges it).
+ * A duplicate of a drink the catalog already has or that waits in another member's request: the form links to it.
+ * `confirmable` — the member may still send their own version after the warning (the moderator then compares, renames
+ * or merges it); only an admin's rename onto a taken identity is refused outright.
  */
 export class CatalogDrinkDuplicate extends CatalogDrinkError {
   constructor(message: string, readonly href: string, readonly confirmable = false) { super(message); }
@@ -87,9 +88,11 @@ export function catalogDrinkIngredients(drink: CatalogDrink): PublishedIngredien
 const lower = (value: string) => value.toLocaleLowerCase('ru-RU');
 
 /**
- * Sends a drink for moderation. The brand takes the catalog's spelling when it is already known. A drink another member
- * already added (or that waits in a live request — the unique index catches a race) is refused; one matching a parser
- * card is refused with a warning first and goes through with `confirmMatch`, as the member's own version of it.
+ * Sends a drink for moderation. The brand takes the catalog's spelling when it is already known. A drink the catalog
+ * already has — a parser card or another member's drink — or that waits in another member's request is refused with a
+ * warning first and goes through with `confirmMatch`, as the member's own version of it: the moderator renames or
+ * merges it, publishing it as is fails (`catalog_drink_identity` holds one published drink per identity). The member's
+ * own waiting request for the same drink is refused (`catalog_drink_owner_pending` catches a race).
  */
 export async function submitCatalogDrink(userId: string, input: CatalogDrinkInput, photo: PreparedReviewPhoto | undefined, confirmMatch = false): Promise<string> {
   if (!photo) throw new CatalogDrinkError('Добавьте фото банки.');
@@ -99,7 +102,11 @@ export async function submitCatalogDrink(userId: string, input: CatalogDrinkInpu
   const identity = reviewedProductIdentity(brand, canonicalProductFlavor(brand, input.flavor));
   const same = (group: CatalogGroup) => lower(group.brand) === lower(identity.brand) && lower(group.flavor) === lower(identity.flavor);
   const member = published.find(same);
-  if (member) throw new CatalogDrinkDuplicate('Такой напиток уже добавил другой участник. Если в вашей банке часть сахара заменена подсластителем, выберите «С сахарозаменителем» на первом шаге.', `/catalog/${catalogGroupSlug(member.brand, member.flavor)}`);
+  if (member && !confirmMatch) throw new CatalogDrinkDuplicate('Такой напиток уже добавил другой участник. Если в вашей банке есть сок или часть сахара заменена подсластителем, отметьте это на первом шаге. Если у вас другая версия — новый дизайн или состав, — всё равно отправьте её: модератор сверит и переименует или объединит.', `/catalog/${catalogGroupSlug(member.brand, member.flavor)}`, true);
+  const waiting = (await getPool().query<{ own: boolean }>(`select bool_or("ownerId" = $3) as own from "catalogDrink"
+    where status = 'pending' and lower(brand) = lower($1) and lower(flavor) = lower($2) having count(*) > 0`, [identity.brand, identity.flavor, userId])).rows[0];
+  if (waiting?.own) throw new CatalogDrinkError('Этот напиток уже ждёт проверки.');
+  if (waiting && !confirmMatch) throw new CatalogDrinkDuplicate('Такой напиток уже ждёт проверки — его отправил другой участник. Если у вас другая версия, всё равно отправьте её: модератор сверит обе заявки.', `/catalog/pending?${new URLSearchParams({ q: identity.brand })}`, true);
   const file = files.find(same);
   if (file && !confirmMatch) throw new CatalogDrinkDuplicate('Похоже, такой напиток уже есть в каталоге. Если у вас другая версия — новый дизайн, состав или объём, — всё равно отправьте её: модератор сверит с карточкой и переименует или объединит.', `/catalog/${catalogGroupSlug(file.brand, file.flavor)}`, true);
   const db = await getPool().connect();
@@ -130,10 +137,14 @@ export async function moderateCatalogDrink(adminId: string, id: string, status: 
     // Published under a parser card's identity, the drink would be hidden behind that card.
     if (drink && await catalogFileMatch(drink.brand, drink.flavor)) throw new CatalogDrinkError('Такая карточка уже есть в каталоге: измените вкус в «Редактировать» или склейте напиток с ней.');
   }
+  // Another member's drink under the same identity is already published: the unique index refuses a second one.
   const result = await getPool().query(`update "catalogDrink" d set status = $3, "moderationNote" = $4, "reviewedBy" = $1, "reviewedAt" = now(), "updatedAt" = clock_timestamp()
     where id = $2 and status = 'pending' and date_trunc('milliseconds', "updatedAt") = $5::timestamptz
       and exists(select 1 from "user" u join "siteAdmin" a on lower(u.email) = a.email where u.id = $1) and ${VISIBLE_AUTHOR} returning id`,
-  [adminId, id, status, note.trim(), version]);
+  [adminId, id, status, note.trim(), version]).catch((error: { code?: string }) => {
+    if (error.code === '23505') throw new CatalogDrinkError('Такой напиток уже опубликован: измените вкус в «Редактировать» или склейте напиток с ним.');
+    throw error;
+  });
   if (!result.rowCount) throw new CatalogDrinkError('Заявка изменилась, уже проверена или автор заблокирован. Обновите страницу.');
 }
 

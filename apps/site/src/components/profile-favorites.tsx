@@ -1,5 +1,6 @@
 import { ProfileBackButton } from '@/components/profile-back-button';
 import Image from 'next/image';
+import { CoverImage } from '@/components/cover-image';
 import Link from '@/components/navigation-progress';
 import { RemoveFavoriteButton } from '@/components/remove-favorite-button';
 import type { CatalogGroup } from '@canrush/shared';
@@ -32,7 +33,7 @@ function FavoriteCard({ group, eager, isOwn }: { group: CatalogGroup; eager: boo
       <Link className="favorite-card-product" href={href}>
       {group.coverImageUrl ? (
         <div className="favorite-card-image">
-          <Image
+          <CoverImage
             src={group.coverImageUrl}
             width={170}
             height={170}

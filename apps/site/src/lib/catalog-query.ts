@@ -98,6 +98,8 @@ export function flavorName(flavor: string): string {
   if (flavor.endsWith(':sugarfree')) return `${flavorName(flavor.slice(0, -10))} · без сахара`;
   // Only member-added drinks carry it: the same flavour with part of the sugar swapped for a sweetener.
   if (flavor.endsWith(':sweetener')) return `${flavorName(flavor.slice(0, -10))} · с сахарозаменителем`;
+  // Member-added too: a can with fruit juice, before the sugar mark (`mango:juice:sugarfree`).
+  if (flavor.endsWith(':juice')) return `${flavorName(flavor.slice(0, -6))} · с соком`;
   if (flavor.startsWith('blend:')) return flavor.slice(6).split('+').map(flavorName).join(' + ');
   return FLAVOR_NAMES[flavor] ?? flavor;
 }

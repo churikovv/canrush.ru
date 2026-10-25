@@ -2,7 +2,7 @@ import { isAssortmentFlavor } from '@canrush/shared';
 import { CatalogVolumeTabs } from '@/components/catalog-volume-tabs';
 import { CatalogPriceHistory } from '@/components/catalog-price-history';
 import type { PriceSeries } from '@/lib/price-history';
-import Image from 'next/image';
+import { CoverImage } from '@/components/cover-image';
 import Link from '@/components/navigation-progress';
 import type { SwipeCounts } from '@/lib/drink-swipes';
 import type { CatalogDrink } from '@/lib/catalog-drinks';
@@ -49,7 +49,7 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
     <article className="catalog-product-detail">
       <div className="catalog-product-visual">
         {group.coverImageUrl ? (
-          <Image
+          <CoverImage
             src={group.coverImageUrl}
             width={278}
             height={278}

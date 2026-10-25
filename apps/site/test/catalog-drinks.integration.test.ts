@@ -60,8 +60,8 @@ it('publishes after moderation into the catalog, with the photo public only then
   expect(await drinks.getCatalogDrinkPhoto(pending!.id, null, false)).toMatchObject({ published: true });
   const drink = await drinks.getCatalogDrink(brand, 'mango');
   expect(drinks.catalogDrinkIngredients(drink!)).toMatchObject({ ingredients: 'Вода', status: 'unverified', volumeMl: 450 });
-  // Now the published drink itself is the duplicate.
-  await expect(drinks.submitCatalogDrink(stranger, input('mango'), photo)).rejects.toMatchObject({ message: expect.stringContaining('другой участник'), confirmable: false });
+  // Now the published drink itself is the duplicate — a warning, as with a parser card (see the last tests).
+  await expect(drinks.submitCatalogDrink(stranger, input('mango'), photo)).rejects.toMatchObject({ message: expect.stringContaining('другой участник'), confirmable: true });
 });
 
 it('pays 50 XP per published drink once, lists them for the profile and gives «Сэнсэй» for three', async () => {
@@ -162,5 +162,26 @@ it('takes a version of a parser card after the warning, but will not publish it 
     await drinks.moderateCatalogDrink(admin, id, 'rejected', 'Та же банка', request!.updatedAt.toISOString());
   } finally {
     await pool.query('delete from "user" where id = $1', [member]);
+  }
+});
+
+it("takes another member's version after the warning: one waiting request per member, one published drink per identity", async () => {
+  const [first, second] = [randomUUID(), randomUUID()];
+  for (const id of [first, second]) await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Drinks test',$2,true,now(),now(),$3)`, [id, `${id}@example.com`, `cd_${id.slice(0, 12)}`]);
+  try {
+    const firstId = await drinks.submitCatalogDrink(first, input('pear'), photo);
+    // Waiting in another member's request: a warning that links to the public queue.
+    await expect(drinks.submitCatalogDrink(second, input('pear'), photo)).rejects.toMatchObject({ href: expect.stringMatching(/^\/catalog\/pending\?q=/u), confirmable: true });
+    const secondId = await drinks.submitCatalogDrink(second, input('pear'), photo, true);
+    // The member's own waiting request is not sent twice, warning or not.
+    await expect(drinks.submitCatalogDrink(second, input('pear'), photo, true)).rejects.toThrow('ждёт проверки');
+    const version = async (owner: string, id: string) => (await drinks.listOwnCatalogDrinks(owner)).find(drink => drink.id === id)!.updatedAt.toISOString();
+    await drinks.moderateCatalogDrink(admin, firstId, 'published', '', await version(first, firstId));
+    await expect(drinks.moderateCatalogDrink(admin, secondId, 'published', '', await version(second, secondId))).rejects.toThrow('уже опубликован');
+    // Juice makes it a drink of its own: no warning.
+    await pool.query(`update "catalogDrink" set "createdAt" = now() - interval '2 minutes' where "ownerId" = $1`, [second]);
+    await expect(drinks.submitCatalogDrink(second, input('pear:juice'), photo)).resolves.toEqual(expect.any(String));
+  } finally {
+    await pool.query('delete from "user" where id = any($1::text[])', [[first, second]]);
   }
 });

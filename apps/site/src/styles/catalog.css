@@ -523,6 +523,8 @@
 .catalog-drink-chips button:disabled { opacity: .45; cursor: default; }
 /* Sugar: three choice cards (с сахаром / без сахара / с сахарозаменителем), the chosen one in the brand colour. */
 .store-form .catalog-drink-sugar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+/* One mark on top of the sugar choice, as wide as the sugar row. */
+.store-form .catalog-drink-juice { grid-template-columns: 1fr; }
 .catalog-drink-sugar legend { grid-column: 1 / -1; margin-bottom: 8px; padding: 0; }
 .store-form .catalog-drink-sugar-option { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); cursor: pointer; transition: border-color 150ms ease-out, background-color 150ms ease-out; }
 .store-form .catalog-drink-sugar-option:has(input:checked) { border-color: color-mix(in srgb, var(--color-brand) 60%, transparent); background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface)); }

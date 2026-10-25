@@ -4,7 +4,7 @@ import { PriceFilterInput } from '@/components/price-filter-input';
 import { TierEmojiPicker } from '@/components/tier-emoji-picker';
 import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import { compareTierProducts, type TierProductSort } from '@/lib/tier-product-sort';
-import Image from 'next/image';
+import { CoverImage } from '@/components/cover-image';
 import Link from '@/components/navigation-progress';
 import { Fragment, useActionState, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type MouseEvent } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -142,7 +142,7 @@ function ProductButton({ product, selected, compact, onSelect, onDragStart, onDr
     >
       <span className="tier-editor-product-image" aria-hidden="true">
         {product.imageUrl ? (
-          <Image src={product.imageUrl} width={compact ? 64 : 96} height={compact ? 64 : 96} sizes={compact ? '64px' : '96px'} alt="" draggable={false} />
+          <CoverImage src={product.imageUrl} width={compact ? 64 : 96} height={compact ? 64 : 96} sizes={compact ? '64px' : '96px'} alt="" draggable={false} />
         ) : (
           <span>{product.brand.slice(0, 2).toLocaleUpperCase('ru-RU')}</span>
         )}

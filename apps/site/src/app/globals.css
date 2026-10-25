@@ -1186,6 +1186,11 @@ html[data-cookie-notice="visible"] .brand-footer {
   height: 100%;
   object-fit: contain;
 }
+/* A photo on a white background (CoverImage marks it on load) gets a tile of the photo's own white, so its backdrop
+   does not show as a box on the grey tile; :root:root outranks the dark themes' tile colour in site-theme.css. */
+:root:root :is(.catalog-card-image, .catalog-product-visual, .favorite-card-image, .tier-editor-product-image)[data-backdrop="white"] {
+  background: var(--cover-backdrop, #fff);
+}
 .catalog-card-image > span {
   display: block;
   width: 100%;

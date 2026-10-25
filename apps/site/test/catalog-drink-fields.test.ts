@@ -17,6 +17,10 @@ describe('catalog drink form', () => {
     // A sweetener version is its own drink next to the regular one.
     expect(drinkFlavorKey({ flavors: ['lime', 'melon', 'mint'], sugar: 'sweetener' })).toBe('blend:lime+melon+mint:sweetener');
     expect(flavorName('blend:lime+melon+mint:sweetener')).toBe('Лайм + Дыня + Мята · с сахарозаменителем');
+    // Juice too, before the sugar mark.
+    expect(drinkFlavorKey({ flavors: ['mango'], sugar: 'free', juice: true })).toBe('mango:juice:sugarfree');
+    expect(flavorName('mango:juice:sugarfree')).toBe('Манго · с соком · без сахара');
+    expect(parseCatalogDrink(form([['brand', 'Burn'], ['flavor', 'apple'], ['juice', '1'], ['volume', '450']]), known).flavor).toBe('apple:juice');
   });
 
   it('reads brand, flavour, volumes and the label text', () => {
@@ -39,12 +43,13 @@ describe('catalog drink form', () => {
   });
 
   it('splits a flavour key back into the inputs', () => {
-    expect(splitDrinkFlavorKey('blend:lime+Лемонграсс')).toEqual({ parts: ['lime', 'Лемонграсс'], sugar: 'regular' });
-    expect(splitDrinkFlavorKey('mango:sugarfree')).toEqual({ parts: ['mango'], sugar: 'free' });
-    expect(splitDrinkFlavorKey('blend:apple+kiwi:sweetener')).toEqual({ parts: ['apple', 'kiwi'], sugar: 'sweetener' });
-    for (const key of ['blend:lime+Лемонграсс', 'mango:sugarfree', 'blend:apple+kiwi:sweetener']) {
-      const { parts, sugar } = splitDrinkFlavorKey(key);
-      expect(drinkFlavorKey({ flavors: parts, sugar })).toBe(key);
+    expect(splitDrinkFlavorKey('blend:lime+Лемонграсс')).toEqual({ parts: ['lime', 'Лемонграсс'], sugar: 'regular', juice: false });
+    expect(splitDrinkFlavorKey('mango:sugarfree')).toEqual({ parts: ['mango'], sugar: 'free', juice: false });
+    expect(splitDrinkFlavorKey('blend:apple+kiwi:sweetener')).toEqual({ parts: ['apple', 'kiwi'], sugar: 'sweetener', juice: false });
+    expect(splitDrinkFlavorKey('blend:apple+kiwi:juice:sugarfree')).toEqual({ parts: ['apple', 'kiwi'], sugar: 'free', juice: true });
+    for (const key of ['blend:lime+Лемонграсс', 'mango:sugarfree', 'blend:apple+kiwi:sweetener', 'mango:juice']) {
+      const { parts, sugar, juice } = splitDrinkFlavorKey(key);
+      expect(drinkFlavorKey({ flavors: parts, sugar, juice })).toBe(key);
     }
   });
 
