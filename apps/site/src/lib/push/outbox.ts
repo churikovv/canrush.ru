@@ -3,7 +3,7 @@ import type { PushEnv } from '@/lib/env';
 import { getNotificationById } from '@/lib/notifications';
 import { truncate, type MarketEvent } from '@/lib/telegram-bot/format';
 import type { MarketPayload } from '@/lib/telegram-bot/outbox';
-import { PushError, sendFcm, sendRuStore, type PushMessage } from './providers';
+import { PushError, sendApns, sendFcm, sendRuStore, type ApnsPost, type PushMessage } from './providers';
 
 export type PushKind = 'notification' | 'market';
 type Queryable = Pool | PoolClient;
@@ -35,10 +35,11 @@ export async function renderPush(row: { kind: PushKind; payload: Record<string, 
   return { title: MARKET_TITLES[p.event](p.counterpart), body, url, link: link(url) };
 }
 
-interface OutboxRow { id: string; token: string; provider: 'fcm' | 'rustore'; kind: PushKind; payload: Record<string, unknown>; attempts: number }
+export type PushProvider = 'fcm' | 'rustore' | 'apns';
+interface OutboxRow { id: string; token: string; provider: PushProvider; kind: PushKind; payload: Record<string, unknown>; attempts: number }
 
-/** Sends up to `batch` due pushes. Rows are leased for two minutes, as in the Telegram outbox. */
-export async function deliverPush(pool: Pool, env: PushEnv, siteUrl: string, batch = 50): Promise<number> {
+/** Sends up to `batch` due pushes. Rows are leased for two minutes, as in the Telegram outbox. `apnsPost` — tests only. */
+export async function deliverPush(pool: Pool, env: PushEnv, siteUrl: string, batch = 50, apnsPost?: ApnsPost): Promise<number> {
   const { rows } = await pool.query<OutboxRow>(`
     update "pushOutbox" o set attempts = o.attempts + 1, "sendAfter" = now() + interval '2 minutes'
     from (select id from "pushOutbox" where "sentAt" is null and "sendAfter" <= now() order by "sendAfter", id limit $1 for update skip locked) due,
@@ -53,6 +54,9 @@ export async function deliverPush(pool: Pool, env: PushEnv, siteUrl: string, bat
         if (row.provider === 'fcm') {
           if (!env.fcm) throw new PushError('FCM is not configured', false);
           await sendFcm(env.fcm, row.token, message);
+        } else if (row.provider === 'apns') {
+          if (!env.apns) throw new PushError('APNs is not configured', false);
+          await sendApns(env.apns, row.token, message, apnsPost);
         } else {
           if (!env.rustore) throw new PushError('RuStore Push is not configured', false);
           await sendRuStore(env.rustore, row.token, message);
@@ -80,7 +84,7 @@ export async function prunePush(pool: Pool): Promise<void> {
   await pool.query(`delete from "pushDevice" where "lastSeenAt" < now() - interval '180 days'`);
 }
 
-export async function registerPushDevice(db: Queryable, userId: string, token: string, provider: 'fcm' | 'rustore'): Promise<void> {
+export async function registerPushDevice(db: Queryable, userId: string, token: string, provider: PushProvider): Promise<void> {
   await db.query(`insert into "pushDevice" (token, "userId", provider) values ($1, $2, $3)
     on conflict (token) do update set "userId" = excluded."userId", provider = excluded.provider, "lastSeenAt" = now()`, [token, userId, provider]);
 }

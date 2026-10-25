@@ -190,3 +190,9 @@
 .story-frame[data-tone=light] .story-progress i { background: #13141a; }
 .story-share:disabled { opacity: .5; cursor: progress; }
 .story-notice { position: absolute; z-index: 5; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); margin: 0; padding: 10px 16px; border-radius: 999px; background: #fff; color: #13141a; font-weight: 700; white-space: nowrap; box-shadow: 0 10px 28px -10px rgb(0 0 0 / .5); transform: translateX(-50%); }
+/* iPhone Duo (and other foldables) opened like a book: the viewer sits in the right half instead of across the fold.
+   Viewport Segments is a WebKit preview behind a flag in Safari 27.1, so this only applies where the browser exposes it. */
+@media (horizontal-viewport-segments: 2) {
+  .story-viewer[open] { justify-content: flex-start; }
+  .story-frame { width: min(env(viewport-segment-width 1 0), calc(100dvh * 9 / 16)); margin-left: calc(env(viewport-segment-left 1 0) + (env(viewport-segment-width 1 0) - min(env(viewport-segment-width 1 0), calc(100dvh * 9 / 16))) / 2); }
+}

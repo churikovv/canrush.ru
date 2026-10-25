@@ -31,6 +31,12 @@ x-site-env: &site-env
   RUSTORE_PUSH_PROJECT_ID: ${RUSTORE_PUSH_PROJECT_ID:-}
   RUSTORE_PUSH_TOKEN: ${RUSTORE_PUSH_TOKEN:-}
   ANDROID_APP_SHA256: ${ANDROID_APP_SHA256:-}
+  # iOS app: Universal Links team and APNs push (the .p8 key from ./secrets)
+  APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+  APNS_KEY_FILE: ${APNS_KEY_FILE:-}
+  APNS_KEY_ID: ${APNS_KEY_ID:-}
+  APNS_TEAM_ID: ${APNS_TEAM_ID:-}
+  APNS_SANDBOX: ${APNS_SANDBOX:-}
   PUSH_WORKER: ${PUSH_WORKER:-}
 
 x-site-volumes: &site-volumes

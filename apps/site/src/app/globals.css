@@ -3621,6 +3621,15 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 html[data-native-app] { overscroll-behavior-y: none; }
 /* No site footer in the app: its documents and contacts live in Settings → «Документы и связь». */
 html[data-native-app] .brand-footer { display: none; }
+/* The apps draw edge to edge (viewport-fit=cover): in landscape and on iPad/iPhone Duo the camera cut-out and rounded
+   corners sit at the sides, so the page keeps clear of them; the tab bar and fixed elements add the same insets.
+   The strip left beside the page takes the header's backdrop: on iPhone Duo the status bar is a column there, and its
+   dark icons vanished on the near-black body. */
+html[data-native-app] body {
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
+  background: var(--color-header, var(--color-subtle));
+}
 /* The footer used to clear the tab bar; without it every page keeps the same room at the bottom. */
 html[data-native-app] .main-surface.main-surface { padding-bottom: calc(var(--site-tab-bar-offset, 0px) + 32px); }
 html[data-native-app] .pull-refresh {

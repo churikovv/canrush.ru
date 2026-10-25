@@ -1,4 +1,4 @@
-// Android-оболочка (apps/android) грузит сайт в WebView, и Capacitor встраивает в страницу
+// Оболочки Android (apps/android) и iOS (apps/ios) грузят сайт в WebView, и Capacitor встраивает в страницу
 // свой мост `window.Capacitor`. Сайт вызывает нативные модули только через этот файл.
 
 interface ShareOptions { title?: string; text?: string; url?: string; dialogTitle?: string }
@@ -45,13 +45,25 @@ export async function setSystemBars(dark: boolean, colors: { top: string; bottom
 }
 
 /**
- * Screenshots in the app: the WebView can neither download a blob link nor copy an image, so the PNG goes to the
- * shell as base64. Null outside the app or in an app version without the module.
+ * Screenshots in the app: the WebView can neither download a blob link nor copy an image. On Android the PNG goes to
+ * the shell as base64 (`CanrushImage`: saved to Pictures/CanRush); on iOS WKWebView shares files itself, and «Сохранить
+ * изображение» in that sheet puts it in Photos — `viaSheet` tells the caller saving opens the same sheet. Null outside
+ * the app or in an Android app version without the module.
  */
-export function nativeImage(): { save(blob: Blob, fileName: string): Promise<void>; share(blob: Blob, fileName: string, title?: string): Promise<void> } | null {
+export function nativeImage(): { viaSheet: boolean; save(blob: Blob, fileName: string): Promise<void>; share(blob: Blob, fileName: string, title?: string): Promise<void> } | null {
+  if (isNativeIos()) {
+    const sheet = async (blob: Blob, fileName: string, title?: string) => {
+      const file = new File([blob], fileName, { type: 'image/png' });
+      if (!navigator.canShare?.({ files: [file] })) throw new Error('Sharing files is unavailable');
+      try { await navigator.share({ files: [file], title }); }
+      catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) throw error; }
+    };
+    return { viaSheet: true, save: (blob, fileName) => sheet(blob, fileName), share: sheet };
+  }
   const plugin = bridge()?.Plugins?.CanrushImage;
   if (!plugin) return null;
   return {
+    viaSheet: false,
     save: async (blob, fileName) => plugin.save({ data: await base64(blob), fileName }),
     share: async (blob, fileName, title) => plugin.share({ data: await base64(blob), fileName, title }),
   };
@@ -72,18 +84,27 @@ export function hideSplash(): void {
 }
 
 /**
- * Push in the app: the permission and FCM go through `@capacitor/push-notifications` (`fcm` — the build carries
- * Firebase config); `rustoreToken` asks RuStore Push for phones without Google services (null when RuStore
- * is not installed, the build is signed with another key, or the app predates RuStore support).
+ * Push in the app: the permission and the token go through `@capacitor/push-notifications`. `provider` — what its
+ * `registration` token is: `apns` on iOS (an Apple device token), `fcm` on Android when the build carries Firebase
+ * config, null otherwise; `rustoreToken` asks RuStore Push for Android phones without Google services (null when
+ * RuStore is not installed, the build is signed with another key, the app predates RuStore support, or on iOS).
  */
-export interface NativePush { plugin: NativePushPlugin; fcm: boolean; rustoreToken(): Promise<string | null> }
+export interface NativePush { plugin: NativePushPlugin; provider: 'fcm' | 'apns' | null; rustoreToken(): Promise<string | null> }
 
 export async function nativePush(): Promise<NativePush | null> {
-  const plugins = bridge()?.Plugins;
-  const plugin = plugins?.PushNotifications, shell = plugins?.CanrushPush;
-  if (!plugin || !shell) return null;
+  const capacitor = bridge();
+  const plugin = capacitor?.Plugins?.PushNotifications;
+  if (!plugin) return null;
+  if (capacitor?.getPlatform?.() === 'ios') return { plugin, provider: 'apns', rustoreToken: async () => null };
+  const shell = capacitor?.Plugins?.CanrushPush;
+  if (!shell) return null;
   const fcm = await shell.status().then(status => status.fcm, () => false);
-  return { plugin, fcm, rustoreToken: () => shell.rustoreToken().then(result => result.token || null, () => null) };
+  return { plugin, provider: fcm ? 'fcm' : null, rustoreToken: () => shell.rustoreToken().then(result => result.token || null, () => null) };
+}
+
+/** The app runs on iOS/iPadOS (apps/ios), where WKWebView shares files through `navigator.share`. */
+export function isNativeIos(): boolean {
+  return bridge()?.getPlatform?.() === 'ios';
 }
 
 const PUSH_TOKEN_KEY = 'canrush:push-token';

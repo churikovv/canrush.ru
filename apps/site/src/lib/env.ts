@@ -117,11 +117,15 @@ export function getReviewLoginEnv(): ReviewLoginEnv | null {
 
 export interface FcmAccount { projectId: string; clientEmail: string; privateKey: string }
 export interface RuStorePushEnv { projectId: string; token: string }
-export interface PushEnv { fcm: FcmAccount | null; rustore: RuStorePushEnv | null }
+/** APNs token auth: the .p8 key from developer.apple.com (Keys → Apple Push Notifications service). */
+export interface ApnsEnv { keyId: string; teamId: string; privateKey: string; topic: string; sandbox: boolean }
+export interface PushEnv { fcm: FcmAccount | null; rustore: RuStorePushEnv | null; apns: ApnsEnv | null }
 
 /**
- * Android push senders, each optional: FCM_SERVICE_ACCOUNT_FILE — path to the Firebase service account JSON
- * (kept as a file, not in the environment); RUSTORE_PUSH_PROJECT_ID + RUSTORE_PUSH_TOKEN from the RuStore console.
+ * Push senders, each optional: FCM_SERVICE_ACCOUNT_FILE — path to the Firebase service account JSON
+ * (kept as a file, not in the environment); RUSTORE_PUSH_PROJECT_ID + RUSTORE_PUSH_TOKEN from the RuStore console;
+ * for the iOS app APNS_KEY_FILE (the .p8 key, a file too) with APNS_KEY_ID and APNS_TEAM_ID — APNS_TOPIC is the bundle
+ * id (ru.canrush.app), APNS_SANDBOX=1 sends to development builds from Xcode instead of App Store/TestFlight ones.
  */
 export function getPushEnv(): PushEnv {
   let fcm: FcmAccount | null = null;
@@ -135,7 +139,14 @@ export function getPushEnv(): PushEnv {
   }
   const projectId = process.env.RUSTORE_PUSH_PROJECT_ID?.trim();
   const token = process.env.RUSTORE_PUSH_TOKEN?.trim();
-  return { fcm, rustore: projectId && token ? { projectId, token } : null };
+  const keyFile = process.env.APNS_KEY_FILE?.trim(), keyId = process.env.APNS_KEY_ID?.trim(), teamId = process.env.APNS_TEAM_ID?.trim();
+  let apns: ApnsEnv | null = null;
+  if (keyFile && keyId && teamId) {
+    const privateKey = readFileSync(keyFile, 'utf8');
+    if (!privateKey.includes('BEGIN PRIVATE KEY')) throw new Error('APNS_KEY_FILE must be the .p8 key from Apple');
+    apns = { keyId, teamId, privateKey, topic: process.env.APNS_TOPIC?.trim() || 'ru.canrush.app', sandbox: process.env.APNS_SANDBOX === '1' };
+  }
+  return { fcm, rustore: projectId && token ? { projectId, token } : null, apns };
 }
 
 export const DEFAULT_TELEGRAM_API_URL = 'https://api.telegram.org';

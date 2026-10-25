@@ -2,15 +2,15 @@
 import { headers } from 'next/headers';
 import { getPool } from '@/db/pool';
 import { auth } from '@/lib/auth';
-import { registerPushDevice, unregisterPushDevice } from '@/lib/push/outbox';
+import { registerPushDevice, unregisterPushDevice, type PushProvider } from '@/lib/push/outbox';
 
 const TOKEN = /^[A-Za-z0-9:_\-.]{16,4096}$/u;
 
-/** Called by the Android app with its FCM/RuStore token; the member comes from the session, never from the client. */
+/** Called by the apps with their FCM/RuStore (Android) or APNs (iOS) token; the member comes from the session, never from the client. */
 export async function registerPushDeviceAction(token: string, provider: string): Promise<{ ok: boolean }> {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || typeof token !== 'string' || !TOKEN.test(token) || (provider !== 'fcm' && provider !== 'rustore')) return { ok: false };
-  await registerPushDevice(getPool(), session.user.id, token, provider);
+  if (!session || typeof token !== 'string' || !TOKEN.test(token) || !['fcm', 'rustore', 'apns'].includes(provider)) return { ok: false };
+  await registerPushDevice(getPool(), session.user.id, token, provider as PushProvider);
   return { ok: true };
 }
 

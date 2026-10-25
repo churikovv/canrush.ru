@@ -7,8 +7,8 @@ import { isNativeApp, nativePush, storePushToken } from '@/lib/native-app';
 let started = false;
 
 /**
- * Inside the Android app, for a signed-in member: asks for the notification permission once,
- * sends the device token to the server and opens the page a tapped push points to.
+ * Inside the apps (Android: FCM or RuStore Push; iOS: APNs), for a signed-in member: asks for the notification
+ * permission once, sends the device token to the server and opens the page a tapped push points to.
  */
 export function PushRegistration({ signedIn }: { signedIn: boolean }) {
   useEffect(() => {
@@ -17,7 +17,7 @@ export function PushRegistration({ signedIn }: { signedIn: boolean }) {
     void (async () => {
       const push = await nativePush();
       if (!push) return;
-      const save = (token: string, provider: 'fcm' | 'rustore') => {
+      const save = (token: string, provider: 'fcm' | 'rustore' | 'apns') => {
         storePushToken(token);
         void registerPushDeviceAction(token, provider).catch(() => {});
       };
@@ -26,8 +26,9 @@ export function PushRegistration({ signedIn }: { signedIn: boolean }) {
         const token = await push.rustoreToken();
         if (token) save(token, 'rustore');
       };
-      if (push.fcm) {
-        await push.plugin.addListener('registration', ({ value }) => save(value, 'fcm'));
+      const provider = push.provider;
+      if (provider) {
+        await push.plugin.addListener('registration', ({ value }) => save(value, provider));
         await push.plugin.addListener('registrationError', () => { void registerRuStore(); });
       }
       await push.plugin.addListener('pushNotificationActionPerformed', ({ notification }) => {
@@ -38,7 +39,7 @@ export function PushRegistration({ signedIn }: { signedIn: boolean }) {
       let permission = await push.plugin.checkPermissions();
       if (permission.receive === 'prompt' || permission.receive === 'prompt-with-rationale') permission = await push.plugin.requestPermissions();
       if (permission.receive !== 'granted') return;
-      if (push.fcm) await push.plugin.register();
+      if (provider) await push.plugin.register();
       else await registerRuStore();
     })().catch(() => { started = false; });
   }, [signedIn]);

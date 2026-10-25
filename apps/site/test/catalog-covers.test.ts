@@ -30,3 +30,9 @@ it('pins the sharp Scandalist Adder Terror cover over the blurred retailer photo
   expect(catalogCover('Scandalist', 'scandalist_geneve', '/images/products/c62c243c5e45c780.jpg')).toBe('/images/products/c62c243c5e45c780.jpg');
   expect(existsSync('public/brand/products/scandalist-adder-terror.jpg')).toBe(true);
 });
+
+it('pins the real Tornado Iceberry can, leaving other Tornado flavours alone', () => {
+  expect(catalogCover('Tornado', 'tornado_iceberry', '/images/products/4dcf5b2b9c479778.jpg')).toBe('/brand/products/tornado-iceberry.jpg');
+  expect(catalogCover('Tornado', 'tornado_storm', '/images/products/c6d24ee223124245.jpg')).toBe('/images/products/c6d24ee223124245.jpg');
+  expect(existsSync('public/brand/products/tornado-iceberry.jpg')).toBe(true);
+});

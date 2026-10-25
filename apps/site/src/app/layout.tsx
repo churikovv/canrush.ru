@@ -87,7 +87,7 @@ const VIEWPORT: Viewport = {
 };
 
 /**
- * In the Android app (User-Agent «CanrushApp/») the page draws under the status and navigation bars
+ * In the apps (User-Agent «CanrushApp/Android» or «CanrushApp/iOS») the page draws under the status and navigation bars
  * (viewport-fit=cover → Capacitor SystemBars passes the insets through): the header backing and the tab bar
  * colour them, and env(safe-area-inset-*) keeps content clear. Browsers keep the default viewport.
  * The layout already reads cookies, so reading headers here does not make anything dynamic that was not.

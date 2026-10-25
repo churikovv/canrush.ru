@@ -1,0 +1,24 @@
+{
+  "name": "@canrush/ios",
+  "version": "0.1.0",
+  "private": true,
+  "description": "iOS/iPadOS-оболочка Capacitor для canrush.ru (App Store, с поддержкой iPhone Duo)",
+  "scripts": {
+    "sync": "cap sync ios",
+    "open": "cap open ios",
+    "build:sim": "cap sync ios && xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build build",
+    "icons": "node scripts/icons.mjs"
+  },
+  "dependencies": {
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
+    "@capacitor/push-notifications": "8.1.3",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
+  }
+}

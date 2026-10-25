@@ -1,4 +1,4 @@
-import { generateKeyPairSync, randomUUID } from 'node:crypto';
+import { generateKeyPairSync, randomUUID, verify } from 'node:crypto';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
 
@@ -12,7 +12,9 @@ const run = randomUUID().replaceAll('-', '');
 const [member, actor, other] = [randomUUID(), randomUUID(), randomUUID()];
 const token = `fcm-token-${run}`;
 const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-const env = { fcm: { projectId: 'canrush-test', clientEmail: 'push@canrush-test.iam.gserviceaccount.com', privateKey: privateKey.export({ type: 'pkcs8', format: 'pem' }).toString() }, rustore: null };
+const apnsKey = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+const apns = { keyId: 'KEY1234567', teamId: 'TEAM123456', privateKey: apnsKey.privateKey.export({ type: 'pkcs8', format: 'pem' }).toString(), topic: 'ru.canrush.app', sandbox: false };
+const env = { fcm: { projectId: 'canrush-test', clientEmail: 'push@canrush-test.iam.gserviceaccount.com', privateKey: privateKey.export({ type: 'pkcs8', format: 'pem' }).toString() }, rustore: null, apns };
 const sent: { url: string; body: unknown }[] = [];
 let sendStatus = 200;
 vi.stubGlobal('fetch', async (input: string, init: RequestInit) => {
@@ -71,4 +73,30 @@ it('sends RuStore taps as a deep link to the site page', async () => {
   const body = messageBody('token', { title: 'Заголовок', body: 'Текст', url: '/profile/a', link: 'https://canrush.ru/profile/a' }, 'rustore');
   expect(body.message.android).toEqual({ notification: expect.objectContaining({ title: 'Заголовок', body: 'Текст', click_action: 'https://canrush.ru/profile/a', click_action_type: 1, channel_id: 'canrush' }) });
   expect(messageBody('token', { title: 't', body: 'b', url: '/x', link: 'https://canrush.ru/x' }).message.android).not.toHaveProperty('notification.click_action');
+});
+
+it('sends iOS pushes through APNs over HTTP/2 with a signed provider token, and drops an uninstalled app', async () => {
+  const iosToken = `apns${run}`;
+  await registerPushDevice(pool, member, iosToken, 'apns');
+  await pool.query(`insert into notification ("userId","actorId",kind,"eventKey") values ($1,$2,'follow',$3)`, [member, actor, `follow-ios:${run}`]);
+  const requests: { origin: string; path: string; headers: Record<string, string>; body: string }[] = [];
+  let status = 200;
+  const post = async (origin: string, path: string, headers: Record<string, string>, body: string) => {
+    requests.push({ origin, path, headers, body });
+    return { status, body: status === 200 ? '' : '{"reason":"Unregistered"}' };
+  };
+  await deliverPush(pool, env, 'https://canrush.ru', 50, post);
+  const request = requests.find(item => item.path === `/3/device/${iosToken}`)!;
+  expect(request).toMatchObject({ origin: 'https://api.push.apple.com', headers: { 'apns-topic': 'ru.canrush.app', 'apns-push-type': 'alert' } });
+  expect(JSON.parse(request.body)).toMatchObject({ aps: { alert: { title: expect.any(String) }, sound: 'default' }, url: expect.stringMatching(/^\//u) });
+  // The provider token is an ES256 JWT that Apple can check with the key's public half.
+  const [header, claims, signature] = request.headers.authorization!.replace('bearer ', '').split('.') as [string, string, string];
+  expect(JSON.parse(Buffer.from(header, 'base64url').toString())).toEqual({ alg: 'ES256', kid: 'KEY1234567' });
+  expect(JSON.parse(Buffer.from(claims, 'base64url').toString())).toMatchObject({ iss: 'TEAM123456' });
+  expect(verify('sha256', Buffer.from(`${header}.${claims}`), { key: apnsKey.publicKey, dsaEncoding: 'ieee-p1363' }, Buffer.from(signature, 'base64url'))).toBe(true);
+
+  await enqueuePush(pool, member, 'market', { event: 'message', orderId: randomUUID(), title: 'Банка', counterpart: 'Автор', message: 'Привет' }, `market:ios:${run}`);
+  status = 410;
+  await deliverPush(pool, env, 'https://canrush.ru', 50, post);
+  expect((await pool.query('select 1 from "pushDevice" where token=$1', [iosToken])).rowCount).toBe(0);
 });

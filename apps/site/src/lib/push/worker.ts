@@ -7,7 +7,7 @@ const PRUNE_INTERVAL_MS = 6 * 60 * 60 * 1_000;
 
 const globalForWorker = globalThis as typeof globalThis & { canrushPushWorker?: boolean };
 
-/** Runs inside the site process next to the Telegram worker; off until FCM or RuStore Push is configured. */
+/** Runs inside the site process next to the Telegram worker; off until FCM, RuStore Push or APNs is configured. */
 export function startPushWorker(): void {
   // A broken key file must not take the site down: push stays off and the error is logged.
   let env: ReturnType<typeof getPushEnv>;
@@ -17,7 +17,7 @@ export function startPushWorker(): void {
     console.error('Push is off: bad push configuration', error instanceof Error ? error.message : error);
     return;
   }
-  if ((!env.fcm && !env.rustore) || globalForWorker.canrushPushWorker) return;
+  if ((!env.fcm && !env.rustore && !env.apns) || globalForWorker.canrushPushWorker) return;
   globalForWorker.canrushPushWorker = true;
   const pool = getPool();
   const siteUrl = getAuthEnv().authUrl;

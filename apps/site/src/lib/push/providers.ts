@@ -1,5 +1,6 @@
-import { createSign } from 'node:crypto';
-import type { FcmAccount, RuStorePushEnv } from '@/lib/env';
+import { createSign, sign } from 'node:crypto';
+import { connect, type ClientHttp2Session } from 'node:http2';
+import type { ApnsEnv, FcmAccount, RuStorePushEnv } from '@/lib/env';
 
 /** `url` — a path of this site; `link` — the same page as an absolute https URL (RuStore opens it as a deep link). */
 export interface PushMessage { title: string; body: string; url: string; link: string }
@@ -79,4 +80,66 @@ export async function sendFcm(account: FcmAccount, token: string, message: PushM
 
 export async function sendRuStore(config: RuStorePushEnv, token: string, message: PushMessage): Promise<void> {
   await send(`https://vkpns.rustore.ru/v1/projects/${encodeURIComponent(config.projectId)}/messages:send`, `Bearer ${config.token}`, messageBody(token, message, 'rustore'));
+}
+
+/** The APNs request body: the alert, and `url` beside `aps` — @capacitor/push-notifications hands it to the site as `data.url`. */
+export function apnsBody(message: PushMessage) {
+  return { aps: { alert: { title: message.title, body: message.body }, sound: 'default' }, url: message.url };
+}
+
+const apnsJwtCache = new Map<string, { value: string; issuedAt: number }>();
+
+/**
+ * Provider token for APNs (ES256 JWT signed with the .p8 key). Apple refuses tokens older than an hour and throttles
+ * ones renewed more often than every 20 minutes, so one is kept for 50 minutes.
+ */
+export function apnsJwt(config: ApnsEnv, now = Date.now()): string {
+  const cached = apnsJwtCache.get(config.keyId);
+  if (cached && now - cached.issuedAt < 50 * 60_000) return cached.value;
+  const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
+  const unsigned = `${encode({ alg: 'ES256', kid: config.keyId })}.${encode({ iss: config.teamId, iat: Math.floor(now / 1_000) })}`;
+  const signature = sign('sha256', Buffer.from(unsigned), { key: config.privateKey, dsaEncoding: 'ieee-p1363' }).toString('base64url');
+  const value = `${unsigned}.${signature}`;
+  apnsJwtCache.set(config.keyId, { value, issuedAt: now });
+  return value;
+}
+
+/** One HTTP/2 request; tests replace it. APNs speaks HTTP/2 only, which Node's fetch does not. */
+export type ApnsPost = (origin: string, path: string, headers: Record<string, string>, body: string) => Promise<{ status: number; body: string }>;
+
+const sessions = new Map<string, ClientHttp2Session>();
+const http2Post: ApnsPost = (origin, path, headers, body) => new Promise((resolve, reject) => {
+  let session = sessions.get(origin);
+  if (!session || session.closed || session.destroyed) {
+    session = connect(origin);
+    session.on('error', () => sessions.delete(origin));
+    session.on('close', () => sessions.delete(origin));
+    // An idle connection does not keep the process (or a test run) alive.
+    session.unref();
+    sessions.set(origin, session);
+  }
+  const request = session.request({ ':method': 'POST', ':path': path, ...headers });
+  request.setTimeout(10_000, () => request.close());
+  let status = 0, text = '';
+  request.on('response', response => { status = Number(response[':status']); });
+  request.setEncoding('utf8');
+  request.on('data', chunk => { text += chunk; });
+  request.on('end', () => resolve({ status, body: text }));
+  request.on('error', reject);
+  request.end(body);
+});
+
+export async function sendApns(config: ApnsEnv, token: string, message: PushMessage, post: ApnsPost = http2Post): Promise<void> {
+  const origin = config.sandbox ? 'https://api.sandbox.push.apple.com' : 'https://api.push.apple.com';
+  const response = await post(origin, `/3/device/${encodeURIComponent(token)}`, {
+    authorization: `bearer ${apnsJwt(config)}`,
+    'apns-topic': config.topic,
+    'apns-push-type': 'alert',
+    'apns-priority': '10',
+    'content-type': 'application/json',
+  }, JSON.stringify(apnsBody(message)));
+  if (response.status === 200) return;
+  // 410 Unregistered: the app was removed; 400 BadDeviceToken / DeviceTokenNotForTopic: a token of another app or environment.
+  const permanent = response.status === 410 || (response.status === 400 && /BadDeviceToken|DeviceTokenNotForTopic/u.test(response.body));
+  throw new PushError(`APNs ${response.status} ${response.body.slice(0, 200)}`, permanent);
 }

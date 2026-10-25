@@ -67,8 +67,9 @@ export function ScreenshotPreview({ blob, url, renderStory, onClose, labels = TI
     <div className="tier-screenshot-actions">
       {app ? <>
         <button type="button" className="tier-primary-action" disabled={!image || pending || (format === 'story' && !story)} onClick={() => run(async () => {
-          await image!.save(current.blob, fileName); notify('Сохранено в галерею, альбом CanRush');
-        }, 'Не удалось сохранить. Попробуйте «Поделиться».')}>{pending ? 'Сохраняем…' : 'Сохранить в галерею'}</button>
+          // iOS saves from the share sheet («Сохранить изображение»), so there is nothing to report afterwards.
+          await image!.save(current.blob, fileName); if (!image!.viaSheet) notify('Сохранено в галерею, альбом CanRush');
+        }, 'Не удалось сохранить. Попробуйте «Поделиться».')}>{pending ? 'Сохраняем…' : image?.viaSheet ? 'Сохранить в «Фото»' : 'Сохранить в галерею'}</button>
         <button type="button" className="tier-secondary-action" disabled={!image || pending || (format === 'story' && !story)} onClick={() => run(async () => {
           await image!.share(current.blob, fileName, labels.title);
         }, 'Не удалось открыть меню «Поделиться».')}>Поделиться</button>
