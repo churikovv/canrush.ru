@@ -48,7 +48,7 @@ export async function getWallComments(id: string, viewer: string | null, before?
     (select count(*)::int from "wallReplyLike" where "replyId"=c.id) as likes,
     exists(select 1 from "wallReplyLike" where "replyId"=c.id and "userId"=$2) as liked,
     (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
-    case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
+    case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
       when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
     from "wallReply" c join "user" u on u.id=c."userId" left join "user" ru on ru.id=c."replyToUserId"
     where ${notBlockedBy('$2', 'c."userId"')} and c."wallPostId"=$1 and exists(select 1 from "profileComment" where id=$1) and ($3::uuid is null or (c."createdAt",c.id)<(select "createdAt",id from "wallReply" where id=$3 and "wallPostId"=$1))

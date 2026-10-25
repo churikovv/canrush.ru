@@ -22,6 +22,8 @@ interface CatalogControlsProps {
   keep?: Record<string, string>;
   /** A «+» after the filter button that opens the form for a missing drink. */
   addHref?: string;
+  /** «На модерации» before the «+»: drinks members sent that wait for review, with how many there are. */
+  pending?: { href: string; count: number };
 }
 
 function catalogHref(form: HTMLFormElement, basePath: string, keep: Record<string, string>, query?: string): string {
@@ -39,7 +41,7 @@ function catalogHref(form: HTMLFormElement, basePath: string, keep: Record<strin
   return search ? `${basePath}?${search}` : basePath;
 }
 
-export function CatalogControls({ brands, flavors, query, brand, flavor, sort, basePath = '/catalog', keep = {}, addHref }: CatalogControlsProps) {
+export function CatalogControls({ brands, flavors, query, brand, flavor, sort, basePath = '/catalog', keep = {}, addHref, pending }: CatalogControlsProps) {
   const router = useRouter();
   const [selectedBrand, setSelectedBrand] = useState(brand);
   const [selectedFlavor, setSelectedFlavor] = useState(flavor);
@@ -158,6 +160,12 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort, b
           </div>
         </div>
       </details>
+
+      {pending && <Link className="catalog-add-button catalog-pending-button" href={pending.href}
+        aria-label={pending.count ? `На модерации: ${pending.count}` : 'На модерации'} title="На модерации">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3v3a4 4 0 0 0 8 0V3M8 21v-3a4 4 0 0 1 8 0v3" /></svg>
+        {pending.count > 0 && <span className="catalog-pending-badge" aria-hidden="true">{pending.count > 99 ? '99+' : pending.count}</span>}
+      </Link>}
 
       {addHref && <Link className="catalog-add-button" href={addHref} aria-label="Добавить напиток в каталог" title="Добавить напиток">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>

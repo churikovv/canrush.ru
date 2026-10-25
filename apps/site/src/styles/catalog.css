@@ -545,6 +545,22 @@
 .catalog-drink-preview-text { display: -webkit-box; overflow: hidden; font-size: .875rem; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
 .catalog-drink-rules { display: grid; gap: 6px; margin: 0; padding-left: 20px; color: var(--color-muted-strong); font-size: .875rem; }
 .catalog-drink-requests { max-width: 720px; margin-top: 32px; }
+.catalog-pending-search { display: flex; gap: 8px; max-width: 720px; margin: 8px 0 4px; }
+.catalog-pending-search input { flex: 1; min-width: 0; min-height: 48px; padding: 10px 14px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); color: var(--color-ink); font: inherit; }
+.catalog-pending-count { min-height: 1.2em; margin: 8px 0 12px; color: var(--color-muted-strong); font-size: .875rem; }
+.catalog-pending-list { display: grid; gap: 8px; max-width: 720px; margin: 0; padding: 0; list-style: none; }
+.catalog-pending-list li { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--color-control); border-radius: 16px; }
+.catalog-pending-list li > div { display: grid; gap: 2px; min-width: 0; }
+.catalog-pending-list small { color: var(--color-muted-strong); font-size: .8125rem; }
+.catalog-pending-list strong { overflow-wrap: anywhere; }
+.catalog-pending-full, .catalog-pending-meta { color: var(--color-muted-strong); font-size: .875rem; overflow-wrap: anywhere; }
+.catalog-pending-meta a { color: var(--theme-link, #0058cc); }
+.catalog-pending-can { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 12px; background: var(--color-subtle); color: var(--color-muted-strong); }
+.catalog-pending-empty { display: grid; justify-items: start; gap: 6px; max-width: 720px; padding: 20px; border: 1px dashed var(--color-control); border-radius: 16px; }
+.catalog-pending-empty span { color: var(--color-muted-strong); }
+.catalog-pending-empty .community-button { margin-top: 8px; }
+.catalog-pending-pages { display: flex; align-items: center; gap: 16px; max-width: 720px; margin-top: 16px; }
+@media (pointer: coarse) { .catalog-pending-search input { font-size: 1rem; } }
 .catalog-drink-requests h2 { margin: 0 0 12px; font-size: 1.25rem; }
 .catalog-drink-requests ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .catalog-drink-requests li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--color-control); border-radius: 16px; }
@@ -562,6 +578,9 @@
 
 /* «+» after the filter button: add a drink the catalog is missing. */
 .catalog-controls:has(.catalog-add-button) { grid-template-columns: minmax(0, 1fr) auto auto; }
+.catalog-controls:has(.catalog-pending-button) { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+.catalog-pending-button { position: relative; }
+.catalog-pending-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .6875rem; font-weight: 800; line-height: 20px; text-align: center; }
 .catalog-add-button { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--color-subtle); color: var(--color-ink); text-decoration: none; transition: background-color var(--motion-fast) ease-out; }
 .catalog-add-button:hover { background: var(--color-control); }
 .catalog-add-button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }

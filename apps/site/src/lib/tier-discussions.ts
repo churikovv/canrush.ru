@@ -45,7 +45,7 @@ export async function getTierComments(id: string, viewer: string | null, before?
   const { rows } = await getPool().query(`select c.id,c.text,c."createdAt",c."editedAt",${commentMediaColumn('tierlist')},u.name,u.username,ru.username as "replyToUsername",ru.name as "replyToName",
     c."userId"=$2 as "canDelete",
     (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
-    case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
+    case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
       when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
     from "tierListComment" c join "user" u on u.id=c."userId" left join "user" ru on ru.id=c."replyToUserId"
     where ${notBlockedBy('$2', 'c."userId"')} and c."tierListId"=$1 and exists(select 1 from "tierList" where id=$1 and status='published' and "commentsEnabled") and ($3::uuid is null or (c."createdAt",c.id)<(select "createdAt",id from "tierListComment" where id=$3 and "tierListId"=$1))

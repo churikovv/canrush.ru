@@ -4,7 +4,7 @@ import type { PoolClient, QueryResultRow } from 'pg';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getPool } from '@/db/pool';
-import { requireSiteAdmin, type SiteAdminIdentity } from '@/lib/admin';
+import { requireFullAdmin, requireSiteAdmin, type SiteAdminIdentity, type SiteRole } from '@/lib/admin';
 import { normalizeAdminSearch, validateAdminEmail } from '@/lib/admin-fields';
 import { adminTab, adminPage, type AdminTab } from '@/lib/admin-tabs';
 import { catalogGroupSlug } from '@/lib/catalog-query';
@@ -14,6 +14,7 @@ type AdminNotice =
   | 'report-reviewed'
   | 'admin-added'
   | 'admin-exists'
+  | 'role-changed'
   | 'admin-removed'
   | 'user-blocked'
   | 'user-unblocked'
@@ -70,21 +71,26 @@ async function auditedMutation<T>(
   }
 }
 
+const siteRole = (value: FormDataEntryValue | null): SiteRole | null => value === 'admin' || value === 'moderator' ? value : null;
+
+/** Only an administrator adds staff, as an administrator or a moderator (`role`, administrator by default). */
 export async function addAdminAction(formData: FormData): Promise<void> {
-  const admin = await requireSiteAdmin();
+  const admin = await requireFullAdmin();
   const query = returnQuery(formData);
   const email = validateAdminEmail(String(formData.get('email') ?? ''));
   if (!email) redirect(adminLocation('error', 'invalid-email', query));
+  const role = siteRole(formData.get('role') ?? 'admin');
+  if (!role) redirect(adminLocation('error', 'invalid-target', query));
 
   let added: string | null;
   try {
     added = await auditedMutation(admin, 'add', 'admin', email, async (client) => {
       const result = await client.query(
-        `insert into "siteAdmin" ("email", "addedByUserId")
-         values ($1, $2)
+        `insert into "siteAdmin" ("email", "addedByUserId", role)
+         values ($1, $2, $3)
          on conflict ("email") do nothing
          returning "email"`,
-        [email, admin.userId],
+        [email, admin.userId, role],
       );
       if (result.rowCount !== 1) return null;
       await client.query(
@@ -102,7 +108,7 @@ export async function addAdminAction(formData: FormData): Promise<void> {
 }
 
 export async function removeAdminAction(formData: FormData): Promise<void> {
-  const admin = await requireSiteAdmin();
+  const admin = await requireFullAdmin();
   const query = returnQuery(formData);
   const email = validateAdminEmail(String(formData.get('email') ?? ''));
   if (!email) redirect(adminLocation('error', 'invalid-target', query));
@@ -123,6 +129,32 @@ export async function removeAdminAction(formData: FormData): Promise<void> {
   if (!removed) redirect(adminLocation('error', 'protected-admin', query));
   revalidatePath('/admin');
   redirect(adminLocation('notice', 'admin-removed', query));
+}
+
+/** An administrator switches another member of staff between administrator and moderator; the owner stays an administrator. */
+export async function setAdminRoleAction(formData: FormData): Promise<void> {
+  const admin = await requireFullAdmin();
+  const query = returnQuery(formData);
+  const email = validateAdminEmail(String(formData.get('email') ?? ''));
+  const role = siteRole(formData.get('role'));
+  if (!email || !role) redirect(adminLocation('error', 'invalid-target', query));
+  if (email === admin.email) redirect(adminLocation('error', 'protected-admin', query));
+
+  let changed: string | null;
+  try {
+    changed = await auditedMutation(admin, role === 'moderator' ? 'make-moderator' : 'make-admin', 'admin', email, async (client) => {
+      const result = await client.query(
+        'update "siteAdmin" set role = $2 where "email" = $1 and "isOwner" = false and role <> $2 returning "email"',
+        [email, role],
+      );
+      return result.rowCount === 1 ? email : null;
+    });
+  } catch {
+    redirect(adminLocation('error', 'operation-failed', query));
+  }
+  if (!changed) redirect(adminLocation('error', 'protected-admin', query));
+  revalidatePath('/admin');
+  redirect(adminLocation('notice', 'role-changed', query));
 }
 
 export async function blockUserAction(formData: FormData): Promise<void> {
@@ -291,7 +323,7 @@ export async function reviewProfileReportAction(formData: FormData): Promise<voi
 export interface StoreTransferState { error?: string; success?: string }
 /** Hands a store (and its editing) to another member found by email or username; the change is audited. */
 export async function transferStoreAction(_previous: StoreTransferState, formData: FormData): Promise<StoreTransferState> {
-  const admin = await requireSiteAdmin();
+  const admin = await requireFullAdmin();
   const storeId = parseStoreReference(String(formData.get('store') ?? ''));
   if (!storeId) return { error: 'Вставьте ссылку на магазин или его ID.' };
   const target = parseStoreTransferTarget(String(formData.get('owner') ?? ''));

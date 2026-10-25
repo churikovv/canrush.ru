@@ -42,7 +42,7 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
     return `/admin/drinks${search.size ? `?${search}` : ''}`;
   };
   return <BrandShell headerAction={<Link className="admin-back-link" href="/profile/settings">Вернуться в настройки</Link>} surfaceClassName="admin-surface">
-    <AdminShell active="drinks" email={admin.email} title={tab.title} subtitle={tab.subtitle}>
+    <AdminShell active="drinks" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
       <div className="admin-drink-toolbar">
         <nav className="market-filters" aria-label="Напитки участников">{TABS.map(item => <Link key={item.key} href={href({ tab: item.key, q: '' })} aria-current={item.key === tab.key ? 'page' : undefined}>{item.label}</Link>)}</nav>
         <form className="admin-drink-search" action="/admin/drinks" role="search">

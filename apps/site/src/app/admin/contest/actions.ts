@@ -1,13 +1,13 @@
 'use server';
 import { revalidatePath } from 'next/cache';
-import { requireSiteAdmin } from '@/lib/admin';
+import { requireFullAdmin } from '@/lib/admin';
 import { findContest } from '@/lib/contest';
 import { confirmContestWinner, ContestError, drawContestWinner, redrawContestWinner } from '@/lib/contest-db';
 
 export interface ContestActionState { error?: string; success?: string }
 
 async function run(key: string, work: (contest: NonNullable<ReturnType<typeof findContest>>, email: string) => Promise<string>): Promise<ContestActionState> {
-  const admin = await requireSiteAdmin();
+  const admin = await requireFullAdmin();
   const contest = findContest(key);
   if (!contest) return { error: 'Конкурс не найден.' };
   try {

@@ -6,6 +6,7 @@ import Link from '@/components/navigation-progress';
 import { BrandShell } from '@/components/brand-shell';
 import { AdminDashboard } from '@/components/admin-dashboard';
 import { requireSiteAdmin } from '@/lib/admin';
+import { redirect } from 'next/navigation';
 import { getAdminDashboardData } from '@/lib/admin-dashboard-data';
 import { adminTab, adminPage } from '@/lib/admin-tabs';
 import { normalizeAdminSearch } from '@/lib/admin-fields';
@@ -19,9 +20,10 @@ export const metadata: Metadata = {
 
 const NOTICES: Record<string, string> = {
   'report-reviewed': 'Статус жалобы обновлён.',
-  'admin-added': 'Администратор добавлен.',
+  'admin-added': 'Доступ к админ-панели выдан.',
   'admin-exists': 'Этот email уже есть в списке администраторов.',
-  'admin-removed': 'Доступ администратора удалён.',
+  'admin-removed': 'Доступ к админ-панели удалён.',
+  'role-changed': 'Роль изменена.',
   'user-blocked': 'Пользователь заблокирован.',
   'user-unblocked': 'Пользователь разблокирован.',
   'tierlist-deleted': 'Тирлист удалён.',
@@ -34,6 +36,7 @@ const ERRORS: Record<string, string> = {
   'invalid-email': 'Введите корректный email администратора.',
   'protected-admin': 'Этот доступ защищён и не может быть удалён.',
   'invalid-target': 'Объект не найден или действие для него недоступно.',
+  forbidden: 'Этот раздел доступен только администраторам.',
   'operation-failed': 'Не удалось выполнить действие. Обновите страницу и попробуйте снова.',
 };
 
@@ -45,11 +48,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const [admin, params] = await Promise.all([requireSiteAdmin(), searchParams]);
   const query = normalizeAdminSearch(params.q);
   const tab = adminTab(params.tab);
-  const data = await getAdminDashboardData(query, tab, adminPage(params.page));
+  // Moderators have no administrators and campaigns tabs; their tables show nicknames instead of emails.
+  if (admin.role !== 'admin' && (tab === 'admins' || tab === 'campaigns')) redirect('/admin?error=forbidden');
+  const data = await getAdminDashboardData(query, tab, adminPage(params.page), admin.role === 'admin');
 
   return (
     <BrandShell
-      headerAction={<Link className="admin-back-link" href="/profile">Вернуться в профиль</Link>}
+      headerAction={<Link className="admin-back-link" href="/profile/settings">Вернуться в настройки</Link>}
       surfaceClassName="admin-surface"
     >
       <AdminDashboard

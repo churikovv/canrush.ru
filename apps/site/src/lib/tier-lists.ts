@@ -62,7 +62,7 @@ const TIER_LIST_SELECT = `
          u."username", u."name", u."telegramChannel",
          (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
          coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
-         case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
+         case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
          when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
   from "tierList" tl
   join "user" u on u."id" = tl."userId"
@@ -143,7 +143,7 @@ async function getTierListSummaries(where: string, values: unknown[], limit: num
             u."username", u."name", u."telegramChannel",
          (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
          coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
-         case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
+         case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
          when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag,
             count(tli."tierListId")::int as "itemCount",
             (select count(*)::int from "tierListReaction" where "tierListId"=tl.id and value=1) as likes,

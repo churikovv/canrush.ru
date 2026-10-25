@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { BrandShell } from '@/components/brand-shell';
 import Link from '@/components/navigation-progress';
 import { AdminShell } from '@/components/admin-shell';
-import { requireSiteAdmin } from '@/lib/admin';
+import { requireFullAdmin } from '@/lib/admin';
 import { CONTESTS, contestPhase, DRAW_STATUS_LABELS, type ContestPhase } from '@/lib/contest';
 import { getContestOverview } from '@/lib/contest-db';
 
@@ -16,7 +16,7 @@ const PHASES: Record<ContestPhase, string> = { upcoming: 'Скоро', open: 'И
 
 /** Every contest as a card: phase, entrants and the winner's state; a card opens the contest's draw page. */
 export default async function AdminContestsPage() {
-  const admin = await requireSiteAdmin();
+  const admin = await requireFullAdmin();
   const now = new Date();
   const cards = await Promise.all([...CONTESTS].sort((a, b) => b.resultsDay.localeCompare(a.resultsDay)).map(async contest => ({ contest, phase: contestPhase(contest, now), overview: await getContestOverview(contest) })));
   return <BrandShell headerAction={<Link className="admin-back-link" href="/profile">Вернуться в профиль</Link>} surfaceClassName="admin-surface">

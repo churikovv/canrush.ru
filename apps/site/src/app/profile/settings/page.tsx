@@ -21,7 +21,7 @@ import { getTelegramEnv } from '@/lib/env';
 import { TELEGRAM_PROVIDER_ID } from '@/lib/telegram-auth';
 import { isTelegramPlaceholderEmail } from '@/lib/telegram-init-data';
 import { TelegramLinkButton } from '@/components/telegram-link-button';
-import { isSiteAdminEmail } from '@/lib/admin';
+import { siteRoleForEmail } from '@/lib/admin';
 import { experienceLevel } from '@/lib/experience-level';
 import { getFavoriteGroups } from '@/lib/catalog';
 import { getProfileRatings, getProfileWall, getConnections, getProfileCommunity } from '@/lib/profile-community';
@@ -97,8 +97,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const profile = await ensureOwnProfile(session.user);
   const telegram = getTelegramEnv();
   const telegramOnly = isTelegramPlaceholderEmail(session.user.email);
-  const [ratings, wall, listings, experience, friends, favorites, community, viewerIsAdmin, preferenceRows, telegramLinked, blocked] = await Promise.all([
-    getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getFavoriteGroups(profile.id), getProfileCommunity(profile.id, profile.id), isSiteAdminEmail(session.user.email),
+  const [ratings, wall, listings, experience, friends, favorites, community, siteRole, preferenceRows, telegramLinked, blocked] = await Promise.all([
+    getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getFavoriteGroups(profile.id), getProfileCommunity(profile.id, profile.id), siteRoleForEmail(session.user.email),
     getPool().query<{ kind: string; enabled: boolean }>('select kind,enabled from "notificationPreference" where "userId"=$1', [session.user.id]).then(result => result.rows),
     getPool().query('select 1 from "account" where "userId" = $1 and "providerId" = $2 limit 1', [session.user.id, TELEGRAM_PROVIDER_ID]).then(result => (result.rowCount ?? 0) > 0),
     getBlockedMembers(session.user.id),
@@ -107,6 +107,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const botChat = telegram && telegramLinked ? (await getPool().query<Record<string, boolean> & { city: string | null; blocked: boolean }>(`select c.*, c."blockedAt" is not null as blocked from "telegramChat" c
     join account a on a."providerId" = $2 and a."accountId" = c."telegramId"::text where a."userId" = $1`, [session.user.id, TELEGRAM_PROVIDER_ID])).rows[0] : undefined;
 
+  // Administrators see secret tags and the bot's admin summary; moderators only get the panel link.
+  const viewerIsAdmin = siteRole === 'admin';
   const achievements = visibleProfileAchievements(viewerIsAdmin, community.earned);
   const earned = community.earned.filter(key => achievements.some(item => item.key === key));
   const layoutPreviews = {
@@ -165,7 +167,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </li>;
         })}</ul> : <div className="blocked-members-empty"><span aria-hidden="true">{ICONS.blocked}</span><p>Вы никого не блокировали. Заблокировать участника можно на его профиле или после жалобы.</p></div>}
       </Panel> },
-  ] }, ...(viewerIsAdmin ? [{ key: 'admin', title: 'Администрирование', rows: [
+  ] }, ...(siteRole ? [{ key: 'admin', title: 'Администрирование', rows: [
     { key: 'admin', title: 'Админ-панель', value: 'Аналитика, жалобы, модерация', tone: 'admin', icon: ICONS.admin, href: '/admin' } satisfies SettingsRow,
   ] }] : []), { key: 'about', title: 'О CanRush', rows: [
     { key: 'about', title: 'Документы и связь', value: 'Соглашение, политика, удаление аккаунта', icon: ICONS.about, panel:

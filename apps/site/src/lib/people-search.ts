@@ -17,7 +17,7 @@ export async function searchPeople(query: string, limit = 50): Promise<PersonRes
   const { rows } = await getPool().query<Omit<PersonResult, 'frame'> & { appearance: unknown }>(`select r.username, r.name, u.bio, r.xp, r.rank,
       (select id::text from "profileImage" where "userId" = r.id and kind = 'avatar') as "avatarId",
       u."profileAppearance" as appearance,
-      case when u."profileTags"[1] = 'admin' then case when exists(select 1 from "siteAdmin" where email = lower(u.email)) then 'admin' end
+      case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
         when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
       (select number from "betaEngine" where "userId" = u.id) as "engineNumber",
       (select count(*)::int from "userFollow" where "targetId" = u.id) as followers,

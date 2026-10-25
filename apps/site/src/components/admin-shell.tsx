@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
 import Link from '@/components/navigation-progress';
 import { adminHref, type AdminTab } from '@/lib/admin-tabs';
+import { SITE_ROLE_LABELS, type SiteRole } from '@/lib/admin-roles';
 
 export type AdminSection = AdminTab | 'stores' | 'drinks' | 'contest';
+/** Sections a moderator does not see: administrators, contests and campaigns. */
+export const ADMIN_ONLY_SECTIONS: ReadonlySet<AdminSection> = new Set(['campaigns', 'contest', 'admins']);
 
 const ICONS: Record<AdminSection, ReactNode> = {
   analytics: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
@@ -32,17 +35,18 @@ export function AdminIcon({ section }: { section: AdminSection }) {
 }
 
 /** SaaS-style admin frame: grouped sidebar (a scrolling chip row on phones), top bar and the section body. */
-export function AdminShell({ active, email, title, subtitle, actions, children }: { active: AdminSection; email: string; title: string; subtitle?: string; actions?: ReactNode; children: ReactNode }) {
+export function AdminShell({ active, email, role = 'admin', title, subtitle, actions, children }: { active: AdminSection; email: string; role?: SiteRole; title: string; subtitle?: string; actions?: ReactNode; children: ReactNode }) {
+  const groups = GROUPS.map(group => ({ ...group, items: group.items.filter(item => role === 'admin' || !ADMIN_ONLY_SECTIONS.has(item.key)) })).filter(group => group.items.length);
   return <div className="admin-app ym-hide-content ym-disable-clickmap">
     <aside className="admin-sidebar" aria-label="Разделы администрирования">
       <div className="admin-sidebar-brand"><span className="admin-sidebar-logo" aria-hidden="true">C</span><span><strong>CanRush</strong><small>Админ-панель</small></span></div>
       <nav className="admin-sidebar-nav">
-        {GROUPS.map(group => <div className="admin-sidebar-group" key={group.title}>
+        {groups.map(group => <div className="admin-sidebar-group" key={group.title}>
           <p>{group.title}</p>
           {group.items.map(item => <Link key={item.key} href={item.key === 'stores' ? '/admin/stores' : item.key === 'drinks' ? '/admin/drinks' : item.key === 'contest' ? '/admin/contest' : adminHref(item.key)} aria-current={item.key === active ? 'page' : undefined}><AdminIcon section={item.key} /><span>{item.label}</span></Link>)}
         </div>)}
       </nav>
-      <div className="admin-sidebar-account"><span className="admin-sidebar-avatar" aria-hidden="true">{email.slice(0, 1).toUpperCase()}</span><span><strong>{email}</strong><Link href="/profile">Вернуться в профиль</Link></span></div>
+      <div className="admin-sidebar-account"><span className="admin-sidebar-avatar" aria-hidden="true">{email.slice(0, 1).toUpperCase()}</span><span><strong>{email}</strong><small className="admin-sidebar-role">{SITE_ROLE_LABELS[role]}</small><Link href="/profile/settings">Вернуться в настройки</Link></span></div>
     </aside>
     <div className="admin-main">
       <header className="admin-topbar"><div><p className="admin-breadcrumb">Админ-панель / {title}</p><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>{actions && <div className="admin-topbar-actions">{actions}</div>}</header>

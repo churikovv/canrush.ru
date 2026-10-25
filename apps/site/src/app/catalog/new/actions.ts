@@ -6,6 +6,7 @@ import { requireSiteAdmin } from '@/lib/admin';
 import { BASIC_FLAVORS } from '@/lib/catalog-query';
 import { CatalogDrinkError, parseCatalogDrink, parseCatalogDrinkEdit } from '@/lib/catalog-drink-fields';
 import { CatalogDrinkDuplicate, deleteCatalogDrink, moderateCatalogDrink, submitCatalogDrink, updateCatalogDrink } from '@/lib/catalog-drinks';
+import { mergeCatalogDrink, searchMergeTargets } from '@/lib/catalog-drink-merge';
 import { ensureOwnProfile } from '@/lib/profile';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 
@@ -72,5 +73,24 @@ export async function deleteCatalogDrinkAction(id: string, _previous: CatalogDri
     return { saved: true };
   } catch (error) {
     return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось удалить напиток.' };
+  }
+}
+
+/** Catalog cards to merge a member drink into, for the «Склеить с…» dialog (staff only). */
+export async function searchMergeTargetsAction(query: string, exclude: { brand: string; flavor: string }): Promise<{ brand: string; flavor: string; label: string; cover?: string }[]> {
+  await requireSiteAdmin();
+  return (await searchMergeTargets(query, exclude)).map(({ brand, flavor, label, cover }) => ({ brand, flavor, label, ...(cover ? { cover } : {}) }));
+}
+
+/** Merges a duplicate member drink into a catalog card; `revokeXp` takes back the 50 XP paid for it. */
+export async function mergeCatalogDrinkAction(id: string, version: string, _previous: CatalogDrinkState, form: FormData): Promise<CatalogDrinkState> {
+  const admin = await requireSiteAdmin();
+  try {
+    await mergeCatalogDrink(admin.userId, admin.email, id, version,
+      { brand: String(form.get('targetBrand') ?? ''), flavor: String(form.get('targetFlavor') ?? '') }, form.get('revokeXp') === 'on');
+    revalidateDrinks();
+    return { saved: true };
+  } catch (error) {
+    return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось склеить напиток.' };
   }
 }

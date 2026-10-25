@@ -41,7 +41,7 @@ async function chatState(pool: Pool, telegramId: number): Promise<ChatState> {
   const { rows } = await pool.query<ChatSettings & { linked: boolean; admin: boolean; started: boolean }>(`
     select c.city, c.notify, c.market, c."promoAlerts", c."weeklyDigest", c."adminSummary", c."telegramId" is not null as started,
       a."userId" is not null as linked,
-      exists (select 1 from "user" u join "siteAdmin" s on s.email = lower(u.email) where u.id = a."userId") as admin
+      exists (select 1 from "user" u join "siteAdmin" s on s.email = lower(u.email) and s.role = 'admin' where u.id = a."userId") as admin
     from (select $1::bigint as id) t
     left join "telegramChat" c on c."telegramId" = t.id
     left join account a on a."providerId" = 'telegram' and a."accountId" = t.id::text`, [telegramId]);

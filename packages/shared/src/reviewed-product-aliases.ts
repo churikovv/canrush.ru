@@ -200,6 +200,9 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Adrenaline Game Fuel", "mango", "Adrenaline Rush", "mango"], // the mango can moved from Game Fuel to Vitamin Power; retailers sell it as both
   ["Ninja", "peach", "Ninja Star", "peach"], // Пятёрочка "Ninja Star Energy Персик-Личи" under Edadeal's brand "Ninja"
   ["Ninja", "cherry", "Ninja Star", "cherry"], // Пятёрочка "Нинджа Стар Энерджи (Ninja Star Energy) Вишня" under Edadeal's brand "Ninja"
+  ["Piranha's", "berry", "Piranha's", "original"], // member drink «slam classic energy»: the photo is the Slam Classic Energy can (0101)
+  ["100 Kwt", "citrus", "100 Kwt", "blend:grapefruit+orange"], // member drink «100 Kwt atomic citrus» (Atomic Heart grapefruit can), merged on the owner's request (0102)
+  ["X-Turbo", "blend:peach+Сакура", "X-Turbo", "peach"], // member drink «X-Turbo персик сакура»: the old design of the Персик-Сакура can (0102)
   // The puer can says «by БАСТА ГУФ»: it is By Баста's, the «Гуф» in titles had filed it under Doma By Guf (October 2026).
   ["Doma By Guf", "doma_tangerine_puer", "By Баста", "basta_tangerine_puer"],
   ["By Баста", "unknown", "By Баста", "basta_tangerine_puer"], // archived card with the puer can on the cover

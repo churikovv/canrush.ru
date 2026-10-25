@@ -6,7 +6,7 @@ import { CatalogControls } from '@/components/catalog-controls';
 import { CatalogGrid } from '@/components/catalog-grid';
 import { CatalogProductCard } from '@/components/catalog-product-card';
 import { loadAllCatalogGroups, loadCatalogSnapshot } from '@/lib/catalog';
-import { catalogDrinkGroups } from '@/lib/catalog-drinks';
+import { catalogDrinkGroups, countPendingCatalogDrinks } from '@/lib/catalog-drinks';
 import {
   filterCatalogGroups,
   flavorName,
@@ -51,6 +51,8 @@ export async function CatalogBrowser({ params, basePath = '/catalog', keep = {},
   const searching = Boolean(first(params.q).trim());
   const currentKeys = new Set(groups.map(group => JSON.stringify([group.brand, group.flavor])));
   // Drinks members added stay listed after the shop offers until shops have them; the archive waits for a search.
+  // The badge on «На модерации»; the catalog still renders if the database is slow or down.
+  const pendingCount = await countPendingCatalogDrinks().catch(() => 0);
   const added = (await catalogDrinkGroups().catch(() => [])).filter(group => !currentKeys.has(JSON.stringify([group.brand, group.flavor])));
   const addedKeys = new Set(added.map(group => JSON.stringify([group.brand, group.flavor])));
   const allGroups = searching ? await loadAllCatalogGroups() : [...groups, ...added];
@@ -96,6 +98,7 @@ export async function CatalogBrowser({ params, basePath = '/catalog', keep = {},
         basePath={basePath}
         keep={keep}
         addHref="/catalog/new"
+        pending={{ href: '/catalog/pending', count: pendingCount }}
       /></Pinned>
 
       <p className="sr-only" aria-live="polite">

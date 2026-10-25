@@ -98,3 +98,19 @@ it('points HQD Energy cards at Ashkudi and the puer at By Баста', () => {
     expect([slug, response.status, response.headers.get('location')]).toEqual([slug, 301, `https://canrush.ru/catalog/${canonical}`]);
   }
 });
+
+it('points the member-added Piranha\'s «berry» card at the original Slam Classic Energy card', () => {
+  expect(decodeCatalogGroupSlug('piranha-s-berry-30ynlx2rwrkhs')).toEqual({ brand: "Piranha's", flavor: 'berry' });
+  const response = proxy(new NextRequest('https://canrush.ru/catalog/piranha-s-berry-30ynlx2rwrkhs?tab=reviews'));
+  expect([response.status, response.headers.get('location')]).toEqual([301, 'https://canrush.ru/catalog/piranha-s-original?tab=reviews']);
+});
+
+it('points the member-added 100 Kwt citrus and X-Turbo peach-sakura cards at the parser cards', () => {
+  for (const [slug, canonical] of [
+    ['100-kwt-citrus-4h7y3w3fk3ic', '100-kwt-grapefruit-orange'],
+    ['x-turbo-peach-sakura-1uyuwzskrpch7', 'x-turbo-peach-3czfw0esqzvi5'],
+  ] as const) {
+    const response = proxy(new NextRequest(`https://canrush.ru/catalog/${slug}`));
+    expect([slug, response.status, response.headers.get('location')]).toEqual([slug, 301, `https://canrush.ru/catalog/${canonical}`]);
+  }
+});

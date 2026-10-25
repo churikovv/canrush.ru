@@ -6,7 +6,7 @@ import { getPool } from '@/db/pool';
 import { getReviewsByAuthorDays, type ReviewData } from '@/lib/reviews';
 import { getPublishedTierListsByIds } from '@/lib/tier-lists';
 import type { TierListSummary } from '@/lib/tier-list-types';
-import { ACHIEVEMENT_METRICS, DETAILED_REVIEW_CHARS, FAN_XP_SINCE, PROFILE_ACHIEVEMENTS, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
+import { ACHIEVEMENT_METRICS, DETAILED_REVIEW_CHARS, FAN_XP_SINCE, PROFILE_ACHIEVEMENTS, ROLE_TAGS, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
 
 export const COMMUNITY_PAGE_SIZE = 20;
 export type ConnectionKind = 'friends' | 'followers' | 'following';
@@ -53,7 +53,8 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(*)::int from "drinkSwipe" where "userId" = u.id and liked) as "swipeLikes",
     (select count(*)::int from r where b = 'flash up') as flash,
     (select count(*)::int from r where b = 'flash up' and detailed) as "flashDetailed",
-    (case when exists(select 1 from "siteAdmin" where email = lower(u.email)) then 1 else 0 end) as admin,
+    (case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = 'admin') then 1 else 0 end) as admin,
+    (case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = 'moderator') then 1 else 0 end) as moderator,
     (case when u."telegramChannel" ~* '^[a-z][a-z0-9_]{4,31}$' then 1 else 0 end) as telegram,
     (select count(*)::int from fav) as favorites,
     (select count(distinct brand)::int from fav) as "favoriteBrands",
@@ -71,10 +72,12 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
   const row = result.rows[0];
   if (!row) throw new CommunityError('Профиль не найден.');
   const progress = Object.fromEntries(ACHIEVEMENT_METRICS.map(metric => [metric, row[metric]])) as AchievementProgress;
-  const eligible = eligibleAchievements(progress).filter(key => key !== 'admin');
+  // Role tags are not stored: they follow the current role, so they go away with it.
+  const eligible = eligibleAchievements(progress).filter(key => !ROLE_TAGS.has(key));
   if (eligible.length) await db.query(`insert into "profileAchievement" ("userId", "key") select $1, unnest($2::text[]) on conflict do nothing`, [userId, eligible]);
-  const earned = (await db.query<{ key: string }>('select "key" from "profileAchievement" where "userId" = $1', [userId])).rows.map(item => item.key).filter(key => key !== 'admin' && PROFILE_ACHIEVEMENTS.some(item => item.key === key));
+  const earned = (await db.query<{ key: string }>('select "key" from "profileAchievement" where "userId" = $1', [userId])).rows.map(item => item.key).filter(key => !ROLE_TAGS.has(key) && PROFILE_ACHIEVEMENTS.some(item => item.key === key));
   if (row.admin) earned.push('admin');
+  if (row.moderator) earned.push('moderator');
   return { following: row.following, followers: row.followers, friends: row.friends, isFollowing: row.isFollowing, followsYou: row.followsYou,
     tags: row.profileTags.filter(tag => earned.includes(tag)), showOnline: row.showOnline, progress, earned };
 }
@@ -143,7 +146,7 @@ export type FeedItem = { kind: 'post'; post: FeedPostRow } | { kind: 'rank-up'; 
 const AUTHOR_COLUMNS = `u.username, u.name,
       (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
       coalesce((select xp from "profileRanking" where id=u.id),0) as xp,
-      case when u."profileTags"[1]='admin' then case when exists(select 1 from "siteAdmin" where email=lower(u.email)) then 'admin' end
+      case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
       when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag`;
 // One record serves both the wall it was written on and the feed, so both views select the same columns.
 const WALL_POST_COLUMNS = `c.id, c."profileId", c."userId", c.text, c."createdAt", c."editedAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, coalesce((select array_agg(p.kind order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as "mediaKinds", ${AUTHOR_COLUMNS}`;

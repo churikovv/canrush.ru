@@ -5,7 +5,7 @@ import { BrandShell } from '@/components/brand-shell';
 import Link from '@/components/navigation-progress';
 import { AdminShell } from '@/components/admin-shell';
 import { ContestDrawForm, ContestWinnerActions } from '@/components/contest-admin-controls';
-import { requireSiteAdmin } from '@/lib/admin';
+import { requireFullAdmin } from '@/lib/admin';
 import { contestPhase, DRAW_STATUS_LABELS, findContest } from '@/lib/contest';
 import { getContestDraws, getContestParticipants, type ContestParticipant } from '@/lib/contest-db';
 
@@ -24,7 +24,7 @@ function Contact({ entry }: { entry: ContestParticipant | undefined }) {
 }
 
 export default async function AdminContestPage({ params }: { params: Promise<{ key: string }> }) {
-  const admin = await requireSiteAdmin();
+  const admin = await requireFullAdmin();
   const contest = findContest((await params).key);
   if (!contest) notFound();
   const [participants, draws] = await Promise.all([getContestParticipants(contest), getContestDraws(contest)]);

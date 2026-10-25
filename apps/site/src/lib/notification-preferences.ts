@@ -6,4 +6,5 @@ export const NOTIFICATION_OPTIONS = [
   { kind: 'mention', label: 'Упоминания через @' },
   { kind: 'wall-comment', label: 'Сообщения на стене' },
   { kind: 'price', label: 'Изменение цен в избранном' },
+  { kind: 'overtaken', label: 'Вас обогнали в топе месяца' },
 ] as const;

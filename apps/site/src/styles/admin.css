@@ -49,6 +49,11 @@
 .admin-table .admin-status { white-space: nowrap; }
 .admin-table .admin-action-button { min-height: 40px; font-size: .75rem; }
 .admin-invite-form { margin-bottom: 24px; }
+.admin-invite-form select { flex: none; min-height: 46px; border: 1px solid var(--theme-line, #c6ccd4); border-radius: 10px; padding: 10px 12px; background: var(--color-surface); color: var(--color-ink); font: inherit; }
+.admin-status-moderator { background: color-mix(in srgb, #4a4fe0 14%, transparent); color: #4a4fe0; }
+.admin-table-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-sidebar-role { color: var(--theme-muted, #59616b); font-size: .75rem; }
+@media (pointer: coarse) { .admin-invite-form select { font-size: 1rem; } }
 /* SaaS dashboard frame (admin-shell.tsx): sticky grouped sidebar + top bar + card content. */
 .main-surface.admin-surface { padding: 20px 20px 64px; }
 .admin-app { display: grid; grid-template-columns: 248px minmax(0, 1fr); align-items: start; gap: 24px; width: 100%; max-width: 1440px; margin: 0 auto; }
@@ -230,4 +235,12 @@
 .admin-drink-edit-photo label { flex: 1; min-width: 0; }
 .admin-drink-edit-photo input[type=file] { min-height: 0; padding: 8px; }
 .admin-drink-dialog .store-form .catalog-drink-sugar { grid-template-columns: 1fr; }
+.admin-merge-results { display: grid; gap: 4px; max-height: 280px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.admin-merge-results button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 4px 8px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--color-ink); font: inherit; text-align: left; cursor: pointer; }
+.admin-merge-results button:hover { background: var(--color-subtle); }
+.admin-merge-results button[aria-pressed=true] { border-color: var(--color-brand); background: color-mix(in srgb, var(--color-brand) 12%, transparent); }
+.admin-merge-cover { flex: none; width: 40px; height: 40px; overflow: hidden; border-radius: 8px; background: #fff; }
+.admin-merge-cover img { width: 100%; height: 100%; object-fit: contain; }
+.store-form.admin-drink-merge .admin-merge-revoke { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.store-form.admin-drink-merge .admin-merge-revoke input[type=checkbox] { flex: none; width: 18px; height: 18px; min-height: 0; padding: 0; accent-color: var(--color-brand); }
 @media (pointer: coarse) { .admin-drink-search input { font-size: 1rem; } }

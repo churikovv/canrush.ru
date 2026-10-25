@@ -21,7 +21,7 @@ export class CatalogDrinkDuplicate extends CatalogDrinkError {
 const COLUMNS = `d.id, d.brand, d.flavor, d."fullName", d.volumes, d.ingredients, d.status, d."moderationNote", d."createdAt", d."updatedAt",
   d."ownerId", u.username, u.name, (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
   coalesce((select xp from "profileRanking" where id = u.id), 0) as xp,
-  case when u."profileTags"[1] = 'admin' then case when exists(select 1 from "siteAdmin" where email = lower(u.email)) then 'admin' end
+  case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
     when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
   (select count(*)::int from "catalogDrink" o where o."ownerId" = d."ownerId" and o.status = 'published') as drinks`;
 interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number }
@@ -196,6 +196,33 @@ export async function deleteCatalogDrink(adminId: string, adminEmail: string, id
     await db.query('rollback');
     throw error;
   } finally { db.release(); }
+}
+
+/** A request waiting for moderation, as anyone may see it: no photo (not checked yet), no label text, no moderator note. */
+export interface PendingCatalogDrink { id: string; brand: string; flavor: string; name: string; fullName: string; volumes: number[]; createdAt: Date; author: string | null }
+
+/**
+ * «На модерации» in the catalog: requests now waiting for review, newest first, so members see a drink is already on its
+ * way before sending it again. `query` matches brand, flavour and full name; blocked authors are left out.
+ */
+export async function listPendingCatalogDrinksPublic(query = '', page = 1, size = 30): Promise<{ items: PendingCatalogDrink[]; total: number; hasMore: boolean }> {
+  const { rows } = await getPool().query<{ id: string; brand: string; flavor: string; fullName: string; volumes: number[]; createdAt: Date; username: string | null; total: number }>(
+    `select d.id, d.brand, d.flavor, d."fullName", d.volumes, d."createdAt", u.username, count(*) over()::int as total
+     from "catalogDrink" d join "user" u on u.id = d."ownerId"
+     where d.status = 'pending' and ${VISIBLE_AUTHOR}
+       and ($1 = '' or concat_ws(' ', d.brand, d.flavor, d."fullName") ilike '%' || $1 || '%')
+     order by d."createdAt" desc limit $2 offset $3`,
+    [query.trim().replace(/[\\%_]/gu, match => `\\${match}`), size + 1, (page - 1) * size]);
+  return {
+    items: rows.slice(0, size).map(row => ({ id: row.id, brand: row.brand, flavor: row.flavor, name: flavorName(row.flavor), fullName: row.fullName, volumes: row.volumes, createdAt: row.createdAt, author: row.username })),
+    total: rows[0]?.total ?? 0, hasMore: rows.length > size,
+  };
+}
+
+/** How many requests wait for moderation now, for the badge on the catalog button. */
+export async function countPendingCatalogDrinks(): Promise<number> {
+  const { rows } = await getPool().query<{ count: number }>(`select count(*)::int as count from "catalogDrink" d where d.status = 'pending' and ${VISIBLE_AUTHOR}`);
+  return rows[0]?.count ?? 0;
 }
 
 /** A member's published drinks for the profile block «Добавленные напитки», newest first, and how many there are. */

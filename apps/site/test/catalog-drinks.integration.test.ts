@@ -129,3 +129,22 @@ it('lets an admin list, correct, rename, re-photograph and delete drinks', async
   await pool.query(`delete from "drinkLog" where brand = $1`, [brand]);
   await pool.query(`delete from "drinkSwipe" where brand = $1`, [brand]);
 });
+
+it('shows everyone the requests waiting for moderation, searchable, without photos', async () => {
+  const id = (await pool.query<{ id: string }>(`insert into "catalogDrink"("ownerId", brand, flavor, "fullName", volumes, photo, thumbnail)
+    values ($1, $2, 'blend:melon+peach', 'Тест Adder Terror', '{450}', 'x', 'x') returning id`, [stranger, brand])).rows[0]!.id;
+  const before = await drinks.countPendingCatalogDrinks();
+  expect(before).toBeGreaterThanOrEqual(1);
+  const found = await drinks.listPendingCatalogDrinksPublic('adder terror');
+  expect(found.items.find(drink => drink.id === id)).toEqual(expect.objectContaining({ brand, name: 'Дыня + Персик', fullName: 'Тест Adder Terror', volumes: [450], author: `cd_${stranger.slice(0, 12)}` }));
+  expect(Object.keys(found.items[0]!)).not.toContain('photo');
+  // A blocked author's request is not on the list, and neither is a drink once it is published.
+  const hidden = (await pool.query<{ id: string }>(`insert into "catalogDrink"("ownerId", brand, flavor, "fullName", volumes, photo, thumbnail)
+    values ($1, $2, 'grape', 'Тест Adder Hidden', '{450}', 'x', 'x') returning id`, [banned, brand])).rows[0]!.id;
+  expect((await drinks.listPendingCatalogDrinksPublic('adder')).items.map(drink => drink.id)).not.toContain(hidden);
+  await pool.query('delete from "catalogDrink" where id = $1', [hidden]);
+  await pool.query(`update "catalogDrink" set status = 'published' where id = $1`, [id]);
+  expect((await drinks.listPendingCatalogDrinksPublic('adder terror')).items.some(drink => drink.id === id)).toBe(false);
+  expect(await drinks.countPendingCatalogDrinks()).toBe(before - 1);
+  await pool.query('delete from "catalogDrink" where id = $1', [id]);
+});

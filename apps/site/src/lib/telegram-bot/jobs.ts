@@ -138,7 +138,7 @@ export async function collectAdminSummary(pool: Pool, now = new Date()): Promise
 
 export async function queueAdminSummary(pool: Pool, period: string): Promise<void> {
   const admins = await pool.query<{ id: string }>(`
-    select u.id from "user" u join "siteAdmin" a on a.email = lower(u.email)
+    select u.id from "user" u join "siteAdmin" a on a.email = lower(u.email) and a.role = 'admin'
     where exists (select 1 from account t where t."userId" = u.id and t."providerId" = 'telegram')`);
   if (!admins.rows.length) return;
   const payload: AdminSummaryPayload = { day: period, summary: await collectAdminSummary(pool) };

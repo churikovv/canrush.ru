@@ -1,7 +1,7 @@
 import '@/styles/shared.css';
 import { ContentReportButton } from '@/components/content-report-button';
 import '@/styles/market.css';
-import { isSiteAdminEmail } from '@/lib/admin';
+import { isSiteStaffEmail } from '@/lib/admin';
 import type { Metadata } from 'next';
 import Link from '@/components/navigation-progress';
 import { headers } from 'next/headers';
@@ -21,7 +21,8 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   if (!PHOTO_ID_PATTERN.test(id)) notFound();
   const session = await auth.api.getSession({ headers: await headers() });
-  const viewerIsAdmin = session ? await isSiteAdminEmail(session.user.email) : false;
+  // Staff (moderators too) open deleted and hidden listings they moderate.
+  const viewerIsAdmin = session ? await isSiteStaffEmail(session.user.email) : false;
   const listing = await getListing(id, session?.user.id, viewerIsAdmin);
   if (!listing) notFound();
   const activeOrderId = session ? await getActiveOrderId(session.user.id, id) : undefined;

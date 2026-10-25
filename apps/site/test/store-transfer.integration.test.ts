@@ -6,7 +6,8 @@ if (new URL(url).pathname !== '/canrush_site_test') throw new Error('Only test d
 const pool = new Pool({ connectionString: url, max: 2 });
 const mocks = vi.hoisted(() => ({ requireAdmin: vi.fn() }));
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
-vi.mock('../src/lib/admin', () => ({ requireSiteAdmin: mocks.requireAdmin }));
+// Store transfer is for administrators only (requireFullAdmin); moderators cannot reach it.
+vi.mock('../src/lib/admin', () => ({ requireSiteAdmin: mocks.requireAdmin, requireFullAdmin: mocks.requireAdmin }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('next/navigation', () => ({ redirect: (url: string) => { throw new Error(url); } }));
 const { transferStoreAction } = await import('../src/app/admin/actions');

@@ -83,6 +83,18 @@ function describeNotification(row: any): NotificationItem {
       const p = row.payload;
       title = `Вы заняли ${p.place} место в топе месяца`; detail = `+${p.reward} XP и тег «ТОП» для профиля`;
       href = row.ownerUsername ? `/profile/${encodeURIComponent(row.ownerUsername)}/achievements` : '/profile';
+    } else if (row.kind==='overtaken') {
+      // Someone passed the member in the month's top five (migration 0100): the new place and how far behind they are.
+      const p = row.payload;
+      title = `${actor} обогнал вас в топе месяца`;
+      detail = `Теперь вы на ${p.place} месте · отставание ${p.gap} XP`;
+      href = '/leaderboard';
+    } else if (row.kind==='drink-merged') {
+      // A moderator merged the member's drink into a catalog card it duplicated (catalog-drink-merge.ts).
+      const p = row.payload;
+      title = `Ваш напиток «${p.brand} · ${flavorName(p.flavor)}» объединён с карточкой каталога`;
+      detail = [`Это ${p.targetBrand} · ${flavorName(p.targetFlavor)}`, p.published ? 'отзывы и отметки перенесены' : '', p.xp ? `−${p.xp} XP за дубль` : ''].filter(Boolean).join(' · ');
+      href = `/catalog/${catalogGroupSlug(p.targetBrand,p.targetFlavor)}`;
     } else if (row.kind==='price') {
       const p = row.payload; city = p.city;
       title = `${p.price < p.before ? 'Цена снизилась' : 'Цена выросла'}: ${p.brand} · ${flavorName(p.flavor)}`;

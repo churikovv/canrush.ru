@@ -2,7 +2,7 @@ export const ACHIEVEMENT_METRICS = [
   'listings', 'sales', 'reviews', 'detailedReviews', 'photoReviews', 'reviewLikes', 'brands', 'favorites', 'favoriteBrands',
   'tierLists', 'tierListLikes', 'friends', 'followers', 'whiteMonster', 'whiteMonsterFavorite', 'flash', 'flashDetailed',
   'burn', 'burnDetailed', 'burnFavorites', 'adrenaline', 'adrenalineDetailed', 'adrenalineFavorites',
-  'admin', 'telegram', 'monthlyTop', 'drinkLogs', 'drinkStreak', 'contestWin', 'betaEngine',
+  'admin', 'moderator', 'telegram', 'monthlyTop', 'drinkLogs', 'drinkStreak', 'contestWin', 'betaEngine',
   'monster', 'monsterDetailed', 'weeklyXp', 'publishedStores', 'swipes', 'swipeLikes', 'publishedDrinks',
 ] as const;
 export type AchievementMetric = typeof ACHIEVEMENT_METRICS[number];
@@ -103,7 +103,15 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
     { metric: 'telegram', goal: 1, label: 'Указать Telegram в настройках профиля' }] },
   { key: 'admin', label: 'Админ', rarity: 'special', description: 'Только для действующих администраторов', steps: [
     { metric: 'admin', goal: 1, label: 'Быть администратором сайта' }] },
+  { key: 'moderator', label: 'Модератор', rarity: 'special', description: 'Только для действующих модераторов', steps: [
+    { metric: 'moderator', goal: 1, label: 'Быть модератором сайта' }] },
 ];
+
+/**
+ * Tags that follow a role in the admin panel instead of being earned once: they are not stored in profileAchievement,
+ * appear while the member holds the role (siteAdmin.role) and go away with it.
+ */
+export const ROLE_TAGS: ReadonlySet<string> = new Set(['admin', 'moderator']);
 
 export function achievementStepsDone(item: ProfileAchievement, progress: AchievementProgress): number {
   return item.steps.filter(step => progress[step.metric] >= step.goal).length;
@@ -121,8 +129,11 @@ export function eligibleAchievements(progress: AchievementProgress): string[] {
 
 /** Tags hidden from everyone but admins and those who already have them. */
 const SECRET_ACHIEVEMENTS = new Set(['energizer']);
+/** The moderator tag is listed for administrators and for the moderator who holds it, like a secret one. */
 export function visibleProfileAchievements(viewerIsAdmin: boolean, earned: readonly string[] = []) {
-  return PROFILE_ACHIEVEMENTS.filter(item => item.key === 'admin' ? viewerIsAdmin : !SECRET_ACHIEVEMENTS.has(item.key) || viewerIsAdmin || earned.includes(item.key));
+  return PROFILE_ACHIEVEMENTS.filter(item => item.key === 'admin' ? viewerIsAdmin
+    : item.key === 'moderator' ? viewerIsAdmin || earned.includes(item.key)
+    : !SECRET_ACHIEVEMENTS.has(item.key) || viewerIsAdmin || earned.includes(item.key));
 }
 
 export function validateProfileTags(value: unknown, earned: string[]): string[] | null {
@@ -145,7 +156,7 @@ export function profilePageNumber(value: unknown): number {
   return typeof page === 'number' && Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
 }
 
-const ACHIEVEMENT_ART = new Set(['engine', 'energizer', 'top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven', 'drink-start', 'streak-7', 'streak-14', 'streak-30', 'monster', 'fan', 'shopper', 'date', 'sensei']);
+const ACHIEVEMENT_ART = new Set(['engine', 'energizer', 'top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'moderator', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven', 'drink-start', 'streak-7', 'streak-14', 'streak-30', 'monster', 'fan', 'shopper', 'date', 'sensei']);
 export function achievementImage(key: string): string {
   return ACHIEVEMENT_ART.has(key) ? `/brand/achievements/${key}.png` : '/brand/icons/achievement.svg';
 }
