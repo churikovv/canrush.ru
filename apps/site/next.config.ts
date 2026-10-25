@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 
 const nextConfig = {
   output: 'standalone',
+  // The commit being deployed (build arg DEPLOYMENT_ID). A page from the previous build then reloads itself on its
+  // next navigation or action instead of failing on files and server actions the new build no longer has.
+  deploymentId: process.env.NEXT_DEPLOYMENT_ID || undefined,
   experimental: {
     // Pages visited in the last 30 seconds open from the client cache without a server round trip: going back and
     // forth between tabs (most of all in the Android app on slow phones) is instant. Server actions that change data

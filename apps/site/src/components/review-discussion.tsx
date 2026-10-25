@@ -11,6 +11,7 @@ import { wallCommentLikeAction, wallDiscussionAction } from '@/app/profile/wall-
 import { EditIcon, TrashIcon } from '@/components/action-icons';
 import { ContentReportButton } from '@/components/content-report-button';
 import { MoreActions } from '@/components/more-actions';
+import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
 import { tierDiscussionAction } from '@/app/tierlists/discussion-actions';
 import { reviewDiscussionAction } from '@/app/catalog/discussion-actions';
 import type { ReviewCommentData, ReviewInteraction } from '@/lib/review-discussions';
@@ -130,6 +131,8 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
             {comment.canDelete && editing !== comment.id && <button className="more-actions-item" type="button" role="menuitem" disabled={pending} onClick={() => { setEditing(comment.id); setDraft(comment.text); setError(''); }}><EditIcon /><span>Редактировать</span></button>}
             {comment.canDelete && <button className="more-actions-item is-danger" type="button" role="menuitem" disabled={pending} onClick={() => { if(window.confirm('Удалить комментарий?')) run('delete',comment.id); }}><TrashIcon /><span>Удалить</span></button>}
             {!comment.canDelete && <ContentReportButton kind={target === 'wall' ? 'wall-reply' : target === 'tierlist' ? 'tier-comment' : 'review-comment'} id={comment.id} variant="menuitem" />}
+            {!comment.canDelete && stats.staff && <StaffDeleteMenuItem kind={target === 'wall' ? 'wall-reply' : target === 'tierlist' ? 'tier-comment' : 'review-comment'} id={comment.id}
+              onDeleted={() => { setComments(previous => previous.filter(item => item.id !== comment.id)); setStats(previous => ({ ...previous, comments: Math.max(0, previous.comments - 1) })); }} />}
           </MoreActions></span>}</header>
         {editing === comment.id ? <form className="review-comment-edit" onSubmit={event => { event.preventDefault(); run('edit', { commentId: comment.id, text: draft }); }}>
           <label htmlFor={`${regionId}-edit-${comment.id}`} className="sr-only">Текст комментария</label>

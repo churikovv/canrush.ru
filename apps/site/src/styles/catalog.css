@@ -543,6 +543,10 @@
 .catalog-drink-preview strong { font-size: 1.375rem; line-height: 1.2; overflow-wrap: anywhere; }
 .catalog-drink-preview p { margin: 0; color: var(--color-muted-strong); }
 .catalog-drink-preview-text { display: -webkit-box; overflow: hidden; font-size: .875rem; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
+/* «Похоже, такой напиток уже есть»: a warning, not an error — the member may still send their version. */
+.catalog-drink-match { display: grid; gap: 12px; margin-bottom: 12px; padding: 14px 16px; border-radius: 14px; background: color-mix(in srgb, #f5a524 16%, var(--color-surface)); color: var(--color-ink); }
+.catalog-drink-match p { margin: 0; font-size: .9375rem; line-height: 1.45; }
+@media (max-width: 639px) { .catalog-drink-match .community-button { width: 100%; } }
 .catalog-drink-rules { display: grid; gap: 6px; margin: 0; padding-left: 20px; color: var(--color-muted-strong); font-size: .875rem; }
 .catalog-drink-requests { max-width: 720px; margin-top: 32px; }
 .catalog-pending-search { display: flex; gap: 8px; max-width: 720px; margin: 8px 0 4px; }
@@ -559,6 +563,7 @@
 .catalog-pending-empty { display: grid; justify-items: start; gap: 6px; max-width: 720px; padding: 20px; border: 1px dashed var(--color-control); border-radius: 16px; }
 .catalog-pending-empty span { color: var(--color-muted-strong); }
 .catalog-pending-empty .community-button { margin-top: 8px; }
+@media (max-width: 639px) { .catalog-pending-empty { justify-items: stretch; } .catalog-pending-empty .community-button { width: 100%; justify-content: center; text-align: center; } }
 .catalog-pending-pages { display: flex; align-items: center; gap: 16px; max-width: 720px; margin-top: 16px; }
 @media (pointer: coarse) { .catalog-pending-search input { font-size: 1rem; } }
 .catalog-drink-requests h2 { margin: 0 0 12px; font-size: 1.25rem; }

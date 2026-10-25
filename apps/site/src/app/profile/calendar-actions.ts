@@ -19,6 +19,7 @@ export async function addDrinkAction(_state: DrinkActionState, form: FormData): 
     await ensureOwnProfile(session.user);
     const result = await addDrink(session.user.id, parseDrinkForm(form, moscowDay()));
     revalidatePath('/profile', 'layout');
+    revalidatePath('/calendar'); // the tab bar's calendar renders the same screen
     return { success: { ...result, tags: result.tags.map(key => ({ key, label: profileTagLabel(key) ?? key })) }, at: Date.now() };
   } catch (error) {
     return { error: error instanceof DrinkCalendarError ? error.message : 'Не удалось сохранить запись. Попробуйте ещё раз.', at: Date.now() };
@@ -31,6 +32,7 @@ export async function deleteDrinkAction(id: string): Promise<{ error?: string }>
   try {
     await deleteDrink(session.user.id, typeof id === 'string' ? id : '');
     revalidatePath('/profile', 'layout');
+    revalidatePath('/calendar'); // the tab bar's calendar renders the same screen
     return {};
   } catch (error) {
     return { error: error instanceof DrinkCalendarError ? error.message : 'Не удалось удалить запись.' };

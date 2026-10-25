@@ -2,7 +2,46 @@
 # Usage:
 #   1. Copy deploy/.env.example to .env and fill in secrets
 #   2. docker compose up -d
-#   3. Run migrations: docker compose exec site node scripts/migrate.mjs
+#   3. Run migrations: docker compose exec site node apps/site/scripts/migrate.mjs
+#   Updates of the site: deploy/deploy-site.sh (no downtime, see deploy/README.md)
+
+x-site-env: &site-env
+  NODE_ENV: production
+  DATABASE_URL: postgresql://${POSTGRES_USER:-canrush}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-canrush}
+  BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://canrush.ru}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+  SMTP_HOST: ${SMTP_HOST:-smtp.spaceweb.ru}
+  SMTP_PORT: "465"
+  SMTP_USER: ${SMTP_USER}
+  SMTP_PASSWORD: ${SMTP_PASSWORD}
+  MAIL_FROM_NAME: ${MAIL_FROM_NAME:-CanRush}
+  PRICE_HISTORY_DIR: /app/price-history/regions
+  YANDEX_MAPS_API_KEY: ${YANDEX_MAPS_API_KEY:-}
+  YANDEX_GEOCODER_API_KEY: ${YANDEX_GEOCODER_API_KEY:-}
+  GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+  TELEGRAM_MINI_APP_URL: ${TELEGRAM_MINI_APP_URL:-}
+  TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+  TELEGRAM_API_URL: ${TELEGRAM_API_URL:-}
+  TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
+  # Android app: store-reviewer sign-in, push (FCM key file from ./secrets, RuStore), extra App Links keys
+  REVIEW_LOGIN_EMAIL: ${REVIEW_LOGIN_EMAIL:-}
+  REVIEW_LOGIN_PASSWORD_HASH: ${REVIEW_LOGIN_PASSWORD_HASH:-}
+  FCM_SERVICE_ACCOUNT_FILE: ${FCM_SERVICE_ACCOUNT_FILE:-}
+  RUSTORE_PUSH_PROJECT_ID: ${RUSTORE_PUSH_PROJECT_ID:-}
+  RUSTORE_PUSH_TOKEN: ${RUSTORE_PUSH_TOKEN:-}
+  ANDROID_APP_SHA256: ${ANDROID_APP_SHA256:-}
+  PUSH_WORKER: ${PUSH_WORKER:-}
+
+x-site-volumes: &site-volumes
+  # Server-only key files (Firebase service account), not in git: FCM_SERVICE_ACCOUNT_FILE=/run/secrets/canrush/<file>.json
+  - ./secrets:/run/secrets/canrush:ro
+  # Shared catalog data (parser writes to /app/apps/site/data, site reads from cwd/data)
+  # Next.js standalone server sets cwd to /app/apps/site, so mount there
+  - parser-data:/app/price-history:ro
+  - catalog-data:/app/apps/site/data
+  # Product images (parser downloads, site serves)
+  - product-images:/app/apps/site/public/images
 
 services:
   postgres:
@@ -24,51 +63,40 @@ services:
       - canrush-net
 
   site:
+    image: canrush-site:latest
     build:
       context: .
       dockerfile: apps/site/Dockerfile
+      args:
+        # The commit (deploy/deploy-site.sh passes it): pages of the previous build reload instead of failing.
+        DEPLOYMENT_ID: ${DEPLOYMENT_ID:-}
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-canrush}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-canrush}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://canrush.ru}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      SMTP_HOST: ${SMTP_HOST:-smtp.spaceweb.ru}
-      SMTP_PORT: "465"
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-CanRush}
-      PRICE_HISTORY_DIR: /app/price-history/regions
-      YANDEX_MAPS_API_KEY: ${YANDEX_MAPS_API_KEY:-}
-      YANDEX_GEOCODER_API_KEY: ${YANDEX_GEOCODER_API_KEY:-}
-      GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-      TELEGRAM_MINI_APP_URL: ${TELEGRAM_MINI_APP_URL:-}
-      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
-      TELEGRAM_API_URL: ${TELEGRAM_API_URL:-}
-      TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
-      # Android app: store-reviewer sign-in, push (FCM key file from ./secrets, RuStore), extra App Links keys
-      REVIEW_LOGIN_EMAIL: ${REVIEW_LOGIN_EMAIL:-}
-      REVIEW_LOGIN_PASSWORD_HASH: ${REVIEW_LOGIN_PASSWORD_HASH:-}
-      FCM_SERVICE_ACCOUNT_FILE: ${FCM_SERVICE_ACCOUNT_FILE:-}
-      RUSTORE_PUSH_PROJECT_ID: ${RUSTORE_PUSH_PROJECT_ID:-}
-      RUSTORE_PUSH_TOKEN: ${RUSTORE_PUSH_TOKEN:-}
-      ANDROID_APP_SHA256: ${ANDROID_APP_SHA256:-}
-      PUSH_WORKER: ${PUSH_WORKER:-}
-    volumes:
-      # Server-only key files (Firebase service account), not in git: FCM_SERVICE_ACCOUNT_FILE=/run/secrets/canrush/<file>.json
-      - ./secrets:/run/secrets/canrush:ro
-      # Shared catalog data (parser writes to /app/apps/site/data, site reads from cwd/data)
-      # Next.js standalone server sets cwd to /app/apps/site, so mount there
-      - parser-data:/app/price-history:ro
-      - catalog-data:/app/apps/site/data
-      # Product images (parser downloads, site serves)
-      - product-images:/app/apps/site/public/images
+    environment: *site-env
+    volumes: *site-volumes
     ports:
       - "127.0.0.1:3002:3000"
+    networks:
+      - canrush-net
+
+  # Stand-in for a deploy (deploy/deploy-site.sh): the new image on port 3003, the nginx «backup» upstream, serves
+  # while `site` is recreated, then is removed. Not started by a plain `docker compose up`. Workers stay in `site`.
+  site-standby:
+    image: canrush-site:latest
+    profiles: [standby]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *site-env
+      TELEGRAM_WORKER: "off"
+      PUSH_WORKER: "off"
+    volumes: *site-volumes
+    ports:
+      - "127.0.0.1:3003:3000"
     networks:
       - canrush-net
 

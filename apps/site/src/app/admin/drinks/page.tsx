@@ -10,7 +10,8 @@ import Link from '@/components/navigation-progress';
 import { requireSiteAdmin } from '@/lib/admin';
 import { volumeLabel } from '@/lib/catalog-drink-fields';
 import { loadAllCatalogGroups } from '@/lib/catalog';
-import { BASIC_FLAVORS } from '@/lib/catalog-query';
+import { BASIC_FLAVORS, catalogGroupSlug } from '@/lib/catalog-query';
+import { readAllCatalogGroups } from '@/lib/catalog-files';
 import { listCatalogDrinks, type CatalogDrinkStatus } from '@/lib/catalog-drinks';
 
 export const dynamic = 'force-dynamic';
@@ -28,7 +29,9 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
   const tab = TABS.find(item => item.key === params.tab) ?? TABS[0]!;
   const query = (params.q ?? '').trim().slice(0, 80);
   const page = Math.min(10000, Math.max(1, parseInt(params.page ?? '1', 10) || 1));
-  const [{ items, hasMore }, groups] = await Promise.all([listCatalogDrinks(tab.key, page, 24, query), loadAllCatalogGroups()]);
+  const [{ items, hasMore }, groups, files] = await Promise.all([listCatalogDrinks(tab.key, page, 24, query), loadAllCatalogGroups(), readAllCatalogGroups()]);
+  // A request sent despite the «уже есть в каталоге» warning: the parser card it matches, to compare before publishing.
+  const fileCard = (brand: string, flavor: string) => files.find(group => group.brand.toLowerCase() === brand.toLowerCase() && group.flavor.toLowerCase() === flavor.toLowerCase());
   // The same brand and flavour suggestions as the request form, for the edit dialog.
   const brands = [...new Set(groups.map(group => group.brand.trim()).filter(brand => brand && brand.toLowerCase() !== 'unknown'))].sort((a, b) => a.localeCompare(b, 'ru'));
   const flavors = [...BASIC_FLAVORS].sort((a, b) => a.label.localeCompare(b.label, 'ru'));
@@ -66,6 +69,7 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
         </div>
         {drink.ingredients && <p className="admin-drink-card-ingredients">{drink.ingredients}</p>}
         {drink.status === 'rejected' && drink.moderationNote && <p className="admin-drink-card-note">Причина: {drink.moderationNote}</p>}
+        {drink.status === 'pending' && (() => { const card = fileCard(drink.brand, drink.flavor); return card && <p className="admin-drink-card-match">Совпадает с карточкой каталога — <Link href={`/catalog/${catalogGroupSlug(card.brand, card.flavor)}`}>сравнить</Link>. Автор отправил свою версию: смените вкус в «Редактировать» или склейте; опубликовать как есть нельзя.</p>; })()}
         {drink.status === 'pending' && <CatalogDrinkModeration id={drink.id} version={drink.updatedAt.toISOString()} />}
       </li>)}</ul>
         : <div className="admin-data-panel"><div className="admin-empty-result"><strong>{query ? 'Ничего не нашлось' : tab.empty[0]}</strong><span>{query ? 'Попробуйте другой бренд или вкус.' : tab.empty[1]}</span></div></div>}

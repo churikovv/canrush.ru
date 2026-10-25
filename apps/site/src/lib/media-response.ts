@@ -1,5 +1,6 @@
 import { getPool } from '@/db/pool';
 import { parseRange } from '@/lib/byte-range';
+import { IMMUTABLE_MEDIA, STORY_MEDIA } from '@/lib/media-cache';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 
 const NO_STORE = { 'Cache-Control': 'no-store' };
@@ -12,7 +13,8 @@ const missing = () => new Response(null, { status: 404, headers: NO_STORE });
 export async function serveStoredMedia(request: Request, table: 'wallPhoto' | 'commentMedia' | 'story', id: string): Promise<Response> {
   if (!PHOTO_ID_PATTERN.test(id)) return missing();
   const db = getPool();
-  const common = { 'X-Content-Type-Options': 'nosniff', 'Content-Disposition': 'inline', ...NO_STORE };
+  // Attachments never change under their id; stories expire, so they are kept for an hour only.
+  const common = { 'X-Content-Type-Options': 'nosniff', 'Content-Disposition': 'inline', 'Cache-Control': table === 'story' ? STORY_MEDIA : IMMUTABLE_MEDIA };
   if (new URL(request.url).searchParams.get('size') === 'thumbnail') {
     const result = await db.query<{ data: Buffer }>(`select thumbnail as data from "${table}" where id = $1`, [id]);
     const photo = result.rows[0];

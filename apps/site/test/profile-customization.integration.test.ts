@@ -25,7 +25,7 @@ describe.sequential('profile image storage and displayed tags', () => {
     const profile = (await getProfileByUserId(a))!;
     expect(profile.name).toBe('Updated'); expect(profile.telegramUsername).toBe('canrush_tester'); expect(profile.avatarId).toBeTruthy(); expect(profile.bannerId).toBeTruthy();
     const response = await GET(new Request('http://localhost'), { params: Promise.resolve({ id: profile.avatarId! }) });
-    expect(response.headers.get('content-type')).toBe('image/webp'); expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('content-type')).toBe('image/webp'); expect(response.headers.get('cache-control')).toBe('private, max-age=2592000, immutable');
     expect(await response.text()).toBe('avatar fixture');
     await saveProfileCustomization(a, input, { avatar: Buffer.from('new avatar') });
     expect((await GET(new Request('http://localhost'), { params: Promise.resolve({ id: profile.avatarId! }) })).status).toBe(404);

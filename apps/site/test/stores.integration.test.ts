@@ -45,13 +45,14 @@ it('keeps photos private until moderation and validates retained ownership atomi
  expect(row.photos).toHaveLength(1);
  expect(await api.getStorePhoto(photoId,null)).toBeNull();
  expect(await api.getStorePhoto(photoId,stranger)).toBeNull();
- expect(await api.getStorePhoto(photoId,owner)).toEqual(photo.data);
- expect(await api.getStorePhoto(photoId,admin,'thumbnail')).toEqual(photo.thumbnail);
- const card=await api.getStorePhoto(photoId,owner,'card');expect(card?.length).toBeGreaterThan(0);
+ // A request's photos are not published yet, so the route never lets a device keep them.
+ expect(await api.getStorePhoto(photoId,owner)).toEqual({data:photo.data,published:false});
+ expect(await api.getStorePhoto(photoId,admin,'thumbnail')).toEqual({data:photo.thumbnail,published:false});
+ const card=(await api.getStorePhoto(photoId,owner,'card'))?.data;expect(card?.length).toBeGreaterThan(0);
  expect((await pool.query('select preview from "storePhoto" where id=$1',[photoId])).rows[0].preview).toEqual(card);
- expect(await api.getStorePhoto(photoId,owner,'card')).toEqual(card);
+ expect((await api.getStorePhoto(photoId,owner,'card'))?.data).toEqual(card);
  await api.moderateStore(admin,id,'published','',row.updatedAt.toISOString());
- expect(await api.getStorePhoto(photoId,null)).toEqual(photo.data);
+ expect(await api.getStorePhoto(photoId,null)).toEqual({data:photo.data,published:true});
  await expect(api.saveStore(owner,input,id,{retained:[randomUUID()],photos:[]})).rejects.toThrow('не принадлежит');
  expect((await api.getStore(id))?.status).toBe('published');
  await api.saveStore(owner,input,id,{retained:[photoId],photos:[]});

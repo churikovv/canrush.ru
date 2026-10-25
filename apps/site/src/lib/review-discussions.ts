@@ -1,11 +1,12 @@
 import { getPool } from '@/db/pool';
+import { VIEWER_IS_STAFF } from '@/lib/staff-moderation';
 import { notBlockedBy } from '@/lib/member-blocks';
 import { commentMediaColumn, saveCommentMedia, type CommentMedia } from '@/lib/comment-media';
 import type { PreparedWallMedia } from '@/lib/wall-media';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { profileTagLabel } from '@/lib/profile-achievements';
 export class ReviewDiscussionError extends Error {}
-export interface ReviewInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean }
+export interface ReviewInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean; /** The viewer is an admin or a moderator: «Удалить» on anyone's content. */ staff?: boolean }
 export interface ReviewCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; canDelete: boolean }
 export function reviewId(value: unknown): string {
   if (typeof value !== 'string' || !PHOTO_ID_PATTERN.test(value)) throw new ReviewDiscussionError('Отзыв или комментарий не найден.');
@@ -17,9 +18,10 @@ export async function getReviewInteractions(ids: string[], viewer: string | null
     (select count(*)::int from "reviewReaction" where "reviewId"=r.id and value=1) as likes,
     (select count(*)::int from "reviewReaction" where "reviewId"=r.id and value=-1) as dislikes,
     (select count(*)::int from "reviewComment" where "reviewId"=r.id) as comments,
-    coalesce((select value from "reviewReaction" where "reviewId"=r.id and "userId"=$2),0)::int as vote
+    coalesce((select value from "reviewReaction" where "reviewId"=r.id and "userId"=$2),0)::int as vote,
+    ${VIEWER_IS_STAFF} as staff
     from review r where r.id=any($1::uuid[])`, [ids, viewer]);
-  return new Map(rows.map(row => [row.id, { likes: row.likes, dislikes: row.dislikes, comments: row.comments, vote: row.vote, authenticated: Boolean(viewer) }]));
+  return new Map(rows.map(row => [row.id, { likes: row.likes, dislikes: row.dislikes, comments: row.comments, vote: row.vote, authenticated: Boolean(viewer), staff: Boolean(row.staff) }]));
 }
 export async function setReviewReaction(userId: string, id: string, value: number) {
   reviewId(id);

@@ -21,8 +21,9 @@ function miniAppUrl(): string | null {
  * picks first (built on the fly, nothing stored), the «Telegram» promo for everyone, then members' stories of 24 hours.
  */
 export async function HomeStories({ viewerId, groups, openStory }: { viewerId: string | null; groups: CatalogGroup[]; openStory?: string }) {
-  const viewer = viewerId ? (await getPool().query<{ id: string; username: string | null; avatarId: string | null }>(
-    `select u.id, u.username, (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId" from "user" u where u.id = $1`, [viewerId])).rows[0] ?? null : null;
+  const viewer = viewerId ? (await getPool().query<{ id: string; username: string | null; avatarId: string | null; staff: boolean }>(
+    `select u.id, u.username, (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
+      exists(select 1 from "siteAdmin" a where a.email = lower(u.email)) as staff from "user" u where u.id = $1`, [viewerId])).rows[0] ?? null : null;
   const [stories, digest, recommendations] = await Promise.all([
     getStoryGroups(viewer?.id ?? null),
     viewer ? getWeeklyDigest(viewer.id) : null,
@@ -44,7 +45,7 @@ export async function HomeStories({ viewerId, groups, openStory }: { viewerId: s
   // For everyone, guests too: the channel and the bot. The key is versioned so a new campaign lights the ring again.
   // The partner's story comes back every Monday (Moscow): its key is the week, so the ring lights up again.
   system.push({ key: `nrj:${moscowWeekStart()}`, kind: 'partner', title: 'NRJ PARTY', slides: [{ kind: 'partner' }] });
-  system.push({ key: 'telegram:v1', kind: 'telegram', title: 'Telegram', slides: [{ kind: 'promo', page: 'channel' }, { kind: 'promo', page: 'bot', miniApp: miniAppUrl() }] });
+  system.push({ key: 'telegram:v2', kind: 'telegram', title: 'Telegram', slides: [{ kind: 'promo', page: 'channel' }, { kind: 'promo', page: 'bot', miniApp: miniAppUrl() }] });
   const people: StoryGroupView[] = stories.map(group => ({
     key: `user:${group.author.id}`, kind: 'user', title: group.own ? 'Вы' : group.author.username, author: group.author, own: group.own, seen: group.seen,
     slides: group.stories.map(story => ({ kind: 'media', story })),
@@ -55,5 +56,5 @@ export async function HomeStories({ viewerId, groups, openStory }: { viewerId: s
   const group = openStory ? ordered.findIndex(item => item.slides.some(slide => slide.kind === 'media' && slide.story.id === openStory)) : -1;
   const initial = group >= 0 ? { group, slide: ordered[group]!.slides.findIndex(slide => slide.kind === 'media' && slide.story.id === openStory) } : undefined;
   return <StoriesStrip groups={ordered} initial={initial}
-    viewer={viewer ? { username: viewer.username, avatarId: viewer.avatarId } : null} />;
+    viewer={viewer ? { username: viewer.username, avatarId: viewer.avatarId, staff: viewer.staff } : null} />;
 }

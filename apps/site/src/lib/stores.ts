@@ -81,14 +81,15 @@ export type StorePhotoSize = 'full' | 'card' | 'thumbnail';
 /** Visible store photo bytes. The `card` size (up to 960 px) is made from the original on first request and kept. */
 export async function getStorePhoto(id:string,userId:string|null,size:StorePhotoSize='full'){
  const column=size==='thumbnail'?'p.thumbnail':size==='card'?'coalesce(p.preview,p.data)':'p.data';
- const result=await getPool().query<{data:Buffer;ready:boolean}>(`select ${column} as data, p.preview is not null as ready from "storePhoto" p join "marketStore" s on s.id=p."storeId" where p.id=$1 and (
+ const result=await getPool().query<{data:Buffer;ready:boolean;published:boolean}>(`select ${column} as data, p.preview is not null as ready, s.status='published' as published from "storePhoto" p join "marketStore" s on s.id=p."storeId" where p.id=$1 and (
   (s.status='published' and not exists(select 1 from "userBlock" b where b."userId"=s."ownerId")) or s."ownerId"=$2
   or exists(select 1 from "user" u join "siteAdmin" a on lower(u.email)=a.email where u.id=$2))`,[id,userId]);
  const row=result.rows[0];if(!row)return null;
- if(size!=='card'||row.ready)return row.data;
+ const published=row.published;
+ if(size!=='card'||row.ready)return {data:row.data,published};
  try{
   const preview=await sharp(row.data).resize({width:960,height:960,fit:'inside',withoutEnlargement:true}).webp({quality:80}).toBuffer();
   await getPool().query('update "storePhoto" set preview=$2 where id=$1 and preview is null',[id,preview]);
-  return preview;
- }catch{return row.data;}
+  return {data:preview,published};
+ }catch{return {data:row.data,published};}
 }

@@ -19,6 +19,10 @@ COPY apps/parser/ apps/parser/
 COPY tsconfig.base.json ./
 COPY .eslintrc.cjs eslint.config.mjs ./
 
+# The commit being deployed: Next.js tells pages of the previous build to reload (next.config.ts deploymentId)
+ARG DEPLOYMENT_ID=""
+ENV NEXT_DEPLOYMENT_ID=$DEPLOYMENT_ID
+
 # Build shared package first (site depends on it)
 RUN npm run build -w @canrush/shared
 

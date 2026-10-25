@@ -10,7 +10,8 @@ import { mergeCatalogDrink, searchMergeTargets } from '@/lib/catalog-drink-merge
 import { ensureOwnProfile } from '@/lib/profile';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 
-export interface CatalogDrinkState { error?: string; duplicate?: string; saved?: boolean }
+/** `confirmable` — the duplicate is a parser card: the form offers «Всё равно отправить» (`confirmMatch`). */
+export interface CatalogDrinkState { error?: string; duplicate?: string; confirmable?: boolean; saved?: boolean }
 const KNOWN_FLAVORS = new Set(BASIC_FLAVORS.map(flavor => flavor.key));
 
 export async function submitCatalogDrinkAction(_previous: CatalogDrinkState, form: FormData): Promise<CatalogDrinkState> {
@@ -21,12 +22,12 @@ export async function submitCatalogDrinkAction(_previous: CatalogDrinkState, for
     const input = parseCatalogDrink(form, KNOWN_FLAVORS);
     const { photos } = await prepareReviewPhotos(form);
     if (photos.length > 1) return { error: 'Добавьте одно фото банки.' };
-    await submitCatalogDrink(session.user.id, input, photos[0]);
+    await submitCatalogDrink(session.user.id, input, photos[0], form.get('confirmMatch') === '1');
     revalidatePath('/catalog/new');
     revalidatePath('/admin/drinks');
     return { saved: true };
   } catch (error) {
-    if (error instanceof CatalogDrinkDuplicate) return { error: error.message, duplicate: error.href };
+    if (error instanceof CatalogDrinkDuplicate) return { error: error.message, duplicate: error.href, confirmable: error.confirmable };
     return { error: error instanceof CatalogDrinkError || error instanceof ReviewPhotoError ? error.message : 'Не удалось отправить напиток. Попробуйте ещё раз.' };
   }
 }

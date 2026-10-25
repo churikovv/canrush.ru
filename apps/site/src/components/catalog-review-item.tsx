@@ -7,6 +7,7 @@ import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import { ReviewEditShortcut } from '@/components/review-edit-shortcut';
 import { ContentReportButton } from '@/components/content-report-button';
 import { MoreActions } from '@/components/more-actions';
+import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
 import type { ReviewData } from '@/lib/reviews';
 
 const CRITERIA = [
@@ -48,7 +49,7 @@ export function CatalogReviewItem({ review, own = false }: { review: ReviewData;
         </div>
       </header>
       {own && <div className="wall-post-actions review-item-actions"><ReviewEditShortcut /></div>}
-      {!own && review.interaction?.authenticated && <div className="wall-post-actions review-item-actions"><MoreActions label="Действия с отзывом"><ContentReportButton kind="review" id={review.id} variant="menuitem" /></MoreActions></div>}
+      {!own && review.interaction?.authenticated && <div className="wall-post-actions review-item-actions"><MoreActions label="Действия с отзывом"><ContentReportButton kind="review" id={review.id} variant="menuitem" />{review.interaction.staff && <StaffDeleteMenuItem kind="review" id={review.id} />}</MoreActions></div>}
 
       <div className="review-item-body">
         <div className="review-item-top">

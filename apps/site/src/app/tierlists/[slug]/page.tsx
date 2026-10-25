@@ -13,6 +13,7 @@ import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { ShareTierListButton } from '@/components/share-tier-list-button';
 import { MoreActions } from '@/components/more-actions';
+import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
 import { ContentReportButton } from '@/components/content-report-button';
 import { TierBoard } from '@/components/tier-board';
 import { auth } from '@/lib/auth';
@@ -88,7 +89,7 @@ export default async function TierListPage({ params }: { params: TierListParams 
           )}
           {list.status === 'published' ? <ShareTierListButton title={list.title} /> : null}
           <TierScreenshotButton boardId="tier-capture-board" title={list.title} telegramChannel={list.author.telegramChannel} authorUsername={list.author.username} />
-          {list.status === 'published' && session && !isOwn ? <MoreActions label="Ещё действия с тирлистом"><ContentReportButton kind="tier-list" id={list.id} variant="menuitem" /></MoreActions> : null}
+          {list.status === 'published' && session && !isOwn ? <MoreActions label="Ещё действия с тирлистом"><ContentReportButton kind="tier-list" id={list.id} variant="menuitem" />{interaction?.staff && <StaffDeleteMenuItem kind="tier-list" id={list.id} after="/tierlists" />}</MoreActions> : null}
         </div>
         {interaction && (list.reactionsEnabled || list.commentsEnabled) && <div id="tier-discussion"><ReviewDiscussion target="tierlist" reactionsEnabled={list.reactionsEnabled} commentsEnabled={list.commentsEnabled} reviewId={list.id} initial={interaction} /></div>}
       </div>

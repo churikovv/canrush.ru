@@ -82,15 +82,26 @@
 .story-card p { margin: 0; font-size: 1.125rem; line-height: 1.4; }
 .story-card-note { opacity: .85; font-size: .9375rem !important; }
 .story-card-pick > strong { font-size: 1.75rem; line-height: 1.15; }
-/* «Telegram»: Telegram blue (the bot page a shade deeper), the brand sticker and one button. */
-.story-card-telegram { position: relative; align-items: flex-start; overflow: hidden; background: #229ed9; color: #fff; }
-.story-card-telegram[data-page=bot] { background: #1677b8; }
-.story-card-telegram > strong { position: relative; font-size: 2rem; line-height: 1.1; }
-.story-card-telegram > small, .story-card-telegram > p, .story-telegram-list { position: relative; }
-.story-telegram-art { width: min(62%, 240px); height: auto; margin-bottom: 4px; transform: rotate(-6deg); }
-.story-card-telegram[data-page=bot] .story-telegram-art { transform: rotate(6deg); }
-.story-telegram-list { display: grid; gap: 10px; margin: 4px 0 0; padding: 0; list-style: none; font-size: 1.0625rem; }
-.story-telegram-list li { padding-left: 26px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 4.5 4.5L19 7'/%3E%3C/svg%3E") left .2em / 18px no-repeat; }
+/* «Telegram», poster style: centred heavy headline, tilted colour pills between its halves, one round button. */
+.tg-promo { --tg-bg: #006eff; --tg-ink: #fff; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; width: 100%; height: 100%; padding: 88px 24px calc(40px + env(safe-area-inset-bottom)); overflow: hidden; background: var(--tg-bg); color: var(--tg-ink); text-align: center; }
+.tg-promo[data-page=bot] { --tg-bg: #f4f1ea; --tg-ink: #111; }
+.tg-promo > *, .tg-promo-pills li { animation: wrap-rise 600ms cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--line, 0) * 110ms + 100ms); }
+.tg-promo-pills { animation: none; }
+.tg-promo-handle { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; background: rgb(255 255 255 / .16); font-size: .875rem; font-weight: 700; }
+.tg-promo[data-page=bot] .tg-promo-handle { background: rgb(0 0 0 / .07); }
+.tg-promo-handle img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.tg-promo-title { max-width: 12ch; font-size: clamp(2.5rem, 13vw, 3.5rem); font-weight: 700; line-height: .92; letter-spacing: -.03em; text-transform: uppercase; overflow-wrap: anywhere; }
+.tg-promo-pills { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 6px 0; padding: 0; list-style: none; }
+.tg-promo-pills li { padding: 9px 20px; border-radius: 999px; font-size: 1.125rem; font-weight: 700; white-space: nowrap; box-shadow: 0 10px 22px -14px rgb(0 0 0 / .6); }
+.tg-promo-pills li:nth-child(4n + 1) { background: #ff5a1f; color: #fff; rotate: -4deg; }
+.tg-promo-pills li:nth-child(4n + 2) { background: #b9a7ff; color: #1b1340; rotate: 3deg; }
+.tg-promo-pills li:nth-child(4n + 3) { background: #ffc93c; color: #2b1d00; rotate: -2deg; }
+.tg-promo-pills li:nth-child(4n + 4) { background: #12203d; color: #fff; rotate: 4deg; }
+.tg-promo[data-page=bot] .tg-promo-pills li:nth-child(4n + 4) { background: #006eff; }
+.tg-promo-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
+.tg-promo-cta { min-height: 48px; padding: 14px 26px; border-radius: 999px; background: var(--tg-ink); color: var(--tg-bg); font-weight: 700; text-decoration: none; }
+.tg-promo-cta.is-secondary { background: transparent; color: var(--tg-ink); box-shadow: inset 0 0 0 2px currentColor; }
+@media (prefers-reduced-motion: reduce) { .tg-promo > *, .tg-promo-pills li { animation: none; } }
 /* NRJ PARTY: the partner's red, their logo on a white tile, the description and two buttons. */
 .story-card-partner { position: relative; align-items: flex-start; overflow: hidden; background: #c8101e; color: #fff; }
 .story-partner-logo { display: grid; place-items: center; width: min(46%, 180px); aspect-ratio: 1; margin-bottom: 8px; border-radius: 28px; background: #fff; box-shadow: 0 18px 40px -18px rgb(0 0 0 / .5); transform: rotate(-4deg); }
@@ -99,8 +110,9 @@
 .story-telegram-actions { position: relative; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 .story-telegram-actions .story-card-cta { margin-top: 0; }
 .story-card-cta.is-secondary { background: transparent; color: #fff; box-shadow: inset 0 0 0 2px rgb(255 255 255 / .8); }
-.story-pick-cover { display: grid; place-items: center; width: min(70%, 260px); aspect-ratio: 1; margin-bottom: 8px; overflow: hidden; border-radius: 28px; background: #fff; }
-.story-pick-cover img { width: 82%; height: 82%; object-fit: contain; mix-blend-mode: multiply; }
+.story-pick-cover { position: relative; display: grid; place-items: center; width: min(70%, 260px); aspect-ratio: 1; margin-bottom: 8px; overflow: hidden; border-radius: 28px; background: #fff; }
+/* A % height inside a square made by aspect-ratio does not resolve: a tall can photo (member drinks) took its own height and the square cropped it. Absolute + inset 0 + margin auto sizes it against the square. */
+.story-pick-cover img { position: absolute; inset: 0; margin: auto; width: 82%; height: 82%; object-fit: contain; mix-blend-mode: multiply; }
 .story-card-cta { position: relative; z-index: 2; align-self: flex-start; margin-top: 12px; padding: 12px 20px; border-radius: 999px; background: #fff; color: #111; font-weight: 800; text-decoration: none; }
 
 .story-composer { width: min(420px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 16px; border: 0; border-radius: 24px; background: var(--color-surface); color: var(--color-ink); }

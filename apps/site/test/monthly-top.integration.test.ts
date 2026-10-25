@@ -40,9 +40,9 @@ describe.sequential('monthly top-3 award', () => {
     await Promise.all([settle(), settle(), settle()]);
     await settle();
     const awards = await pool.query(`select place, "userId", xp, reward from "monthlyTopAward" where month=$1::date order by place`, [`${month}-01`]);
-    expect(awards.rows).toEqual([{ place: 1, userId: a, xp: 400, reward: 500 }, { place: 2, userId: b, xp: 300, reward: 300 }, { place: 3, userId: c, xp: 300, reward: 150 }]);
+    expect(awards.rows).toEqual([{ place: 1, userId: a, xp: 400, reward: 1000 }, { place: 2, userId: b, xp: 300, reward: 600 }, { place: 3, userId: c, xp: 300, reward: 300 }]);
     const paid = await pool.query(`select "userId", points from "profileExperience" where reason='monthly-top' and "sourceKey"=$1 order by points desc`, [month]);
-    expect(paid.rows).toEqual([{ userId: a, points: 500 }, { userId: b, points: 300 }, { userId: c, points: 150 }]);
+    expect(paid.rows).toEqual([{ userId: a, points: 1000 }, { userId: b, points: 600 }, { userId: c, points: 300 }]);
   });
 
   it('grants the selectable TOP tag and notifies winners', async () => {
@@ -50,6 +50,6 @@ describe.sequential('monthly top-3 award', () => {
     await setProfileTags(c, ['top']);
     expect((await pool.query('select "profileTags" from "user" where id=$1', [c])).rows[0].profileTags).toEqual(['top']);
     await expect(setProfileTags(d, ['top'])).rejects.toThrow();
-    expect((await getNotifications(a)).items.find(item => item.kind === 'monthly-top')).toMatchObject({ title: 'Вы заняли 1 место в топе месяца', detail: '+500 XP и тег «ТОП» для профиля' });
+    expect((await getNotifications(a)).items.find(item => item.kind === 'monthly-top')).toMatchObject({ title: 'Вы заняли 1 место в топе месяца', detail: '+1000 XP и тег «ТОП» для профиля' });
   });
 });

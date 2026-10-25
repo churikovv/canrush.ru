@@ -25,7 +25,7 @@ export function HomeEvents({ monthly, contest, joined, engine, signedIn }: {
       <Image className="home-event-art" src={achievementImage('top')} width={112} height={112} sizes="(min-width: 960px) 120px, 56px" alt="" />
       <span className="home-event-copy">
         <small>Топ месяца · {top.month}</small>
-        <strong>+{MONTHLY_TOP_REWARDS[0]} XP за 1 место</strong>
+        <strong>+{MONTHLY_TOP_REWARDS[0].toLocaleString('ru-RU')} XP за 1 место</strong>
         <span>{monthly.leader ? `Лидер: @${monthly.leader}` : `Итоги ${top.settles}`}</span>
         <em className="home-event-more">Топ-3 по опыту за месяц получают +{MONTHLY_TOP_REWARDS.join(' / +')} XP и тег «ТОП». Итоги {top.settles}.</em>
         <b className="home-event-cta">Рейтинг месяца</b>

@@ -1,11 +1,12 @@
 import { getPool } from '@/db/pool';
+import { VIEWER_IS_STAFF } from '@/lib/staff-moderation';
 import { notBlockedBy } from '@/lib/member-blocks';
 import { commentMediaColumn, saveCommentMedia, type CommentMedia } from '@/lib/comment-media';
 import type { PreparedWallMedia } from '@/lib/wall-media';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { profileTagLabel } from '@/lib/profile-achievements';
 export class TierDiscussionError extends Error {}
-export interface TierInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean }
+export interface TierInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean; /** The viewer is an admin or a moderator: «Удалить» on anyone's content. */ staff?: boolean }
 export interface TierCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; canDelete: boolean }
 export function tierListId(value: unknown): string {
   if (typeof value !== 'string' || !PHOTO_ID_PATTERN.test(value)) throw new TierDiscussionError('Тирлист или комментарий не найден.');
@@ -17,9 +18,10 @@ export async function getTierInteractions(ids: string[], viewer: string | null =
     (select count(*)::int from "tierListReaction" where "tierListId"=r.id and value=1) as likes,
     (select count(*)::int from "tierListReaction" where "tierListId"=r.id and value=-1) as dislikes,
     (select count(*)::int from "tierListComment" where "tierListId"=r.id) as comments,
-    coalesce((select value from "tierListReaction" where "tierListId"=r.id and "userId"=$2),0)::int as vote
+    coalesce((select value from "tierListReaction" where "tierListId"=r.id and "userId"=$2),0)::int as vote,
+    ${VIEWER_IS_STAFF} as staff
     from "tierList" r where r.status='published' and r.id=any($1::uuid[])`, [ids, viewer]);
-  return new Map(rows.map(row => [row.id, { likes: row.likes, dislikes: row.dislikes, comments: row.comments, vote: row.vote, authenticated: Boolean(viewer) }]));
+  return new Map(rows.map(row => [row.id, { likes: row.likes, dislikes: row.dislikes, comments: row.comments, vote: row.vote, authenticated: Boolean(viewer), staff: Boolean(row.staff) }]));
 }
 /** The viewer's votes on these tier lists (for the like on cards); a guest gets an empty map. */
 export async function getTierCardViewer(ids: string[], viewer: string | null): Promise<{ id: string | null; votes: Map<string, number> }> {

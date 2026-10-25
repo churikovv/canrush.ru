@@ -1,6 +1,7 @@
 import { ProfileCompatibility } from '@/components/profile-compatibility';
 import { isBlockedByViewer } from '@/lib/member-blocks';
 import { BlockMemberButton } from '@/components/block-member-button';
+import { MoreActions } from '@/components/more-actions';
 import { profileThemeAttributes } from '@/lib/profile-appearance';
 import { getProfileCompatibility } from '@/lib/profile-compatibility-data';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
@@ -10,7 +11,7 @@ import { getFavoriteGroups } from '@/lib/catalog';
 import { ProfileConnections } from '@/components/profile-connections';
 import { getListings } from '@/lib/market';
 import { formatPrice } from '@/lib/market-fields';
-import { ProfileReportForm } from '@/components/profile-report-form';
+import { ProfileReportMenuItem } from '@/components/profile-report-form';
 import { ProfileRatingStats } from '@/components/profile-rating-stats';
 import { getExperience } from '@/lib/profile-experience';
 import { ProfileExperience } from '@/components/profile-experience';
@@ -70,7 +71,8 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         level={<ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} />}
         tags={community.tags.length > 0 && <div className="profile-tags">{community.tags.map(tag => <a key={tag} href={`${base}/achievements`} className="profile-tag" data-tag={tag}>{PROFILE_ACHIEVEMENTS.find(item => item.key === tag)?.label}</a>)}</div>}
         actions={isOwn ? undefined
-          : viewerId ? <FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
+          : viewerId ? <div className="profile-hero-buttons"><FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
+            <MoreActions label="Ещё действия с профилем"><ProfileReportMenuItem targetId={profile.id} /><BlockMemberButton userId={profile.id} name={`@${profile.username}`} initiallyBlocked={blockedByViewer} variant="menuitem" /></MoreActions></div>
           : <Link className="community-button" href="/sign-in">Войти и подписаться</Link>} />
 
 
@@ -140,8 +142,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
             </div>
           </section>
           </ProfileBlock></ProfileBlocks>
-          {!isOwn && viewerId && <ProfileReportForm targetId={profile.id} />}
-          {!isOwn && viewerId && <div className="profile-report"><BlockMemberButton userId={profile.id} name={`@${profile.username}`} initiallyBlocked={blockedByViewer} /></div>}
+          {blockedByViewer && <BlockMemberButton userId={profile.id} name={`@${profile.username}`} initiallyBlocked />}
         </aside>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { editWallPostAction } from '@/app/profile/community-actions';
 import { EditIcon } from '@/components/action-icons';
 import { ContentReportButton } from '@/components/content-report-button';
 import { MoreActions } from '@/components/more-actions';
+import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
 import { DeleteWallComment } from '@/components/profile-community-controls';
 
 interface WallPostBodyProps {
@@ -18,11 +19,13 @@ interface WallPostBodyProps {
   canDelete: boolean;
   /** Signed-in viewer who is not the author: offer «Пожаловаться». */
   canReport?: boolean;
+  /** An admin or a moderator who cannot delete it as author or wall owner: «Удалить» as staff. */
+  canModerate?: boolean;
   children?: ReactNode;
 }
 
 /** Heading actions and text of a wall record; the author switches the text into an inline editor. */
-export function WallPostBody({ id, text: initial, heading, canEdit, canDelete, canReport = false, children }: WallPostBodyProps) {
+export function WallPostBody({ id, text: initial, heading, canEdit, canDelete, canReport = false, canModerate = false, children }: WallPostBodyProps) {
   const router = useRouter();
   const fieldId = useId();
   const [text, setText] = useState(initial);
@@ -44,11 +47,12 @@ export function WallPostBody({ id, text: initial, heading, canEdit, canDelete, c
   return <>
     <header className="wall-comment-heading">
       {heading}
-      {(canEdit || canDelete || canReport) && <div className="wall-post-actions">
+      {(canEdit || canDelete || canReport || canModerate) && <div className="wall-post-actions">
         <MoreActions label="Действия с записью">
           {canEdit && !editing && <button className="more-actions-item" type="button" role="menuitem" onClick={() => { setDraft(text); setError(''); setEditing(true); }}><EditIcon /><span>Редактировать</span></button>}
           {canDelete && <DeleteWallComment id={id} variant="menuitem" />}
           {canReport && <ContentReportButton kind="wall-post" id={id} variant="menuitem" />}
+          {canModerate && <StaffDeleteMenuItem kind="wall-post" id={id} onDeleted={() => document.getElementById(`wall-post-${id}`)?.setAttribute('hidden', '')} />}
         </MoreActions>
       </div>}
     </header>

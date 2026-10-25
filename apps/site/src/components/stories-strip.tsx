@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { deleteStoryAction, likeStoryAction, publishStoryAction, storyLikersAction, viewStoriesAction } from '@/app/stories/actions';
 import { ContentReportButton } from '@/components/content-report-button';
 import { MoreActions } from '@/components/more-actions';
+import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
 import Link from '@/components/navigation-progress';
 import { useMediaAttachments } from '@/components/media-attachments';
 import type { StoryRecommendation, WeeklyDigest } from '@/lib/story-digest';
@@ -103,10 +104,10 @@ function Avatar({ group, size = 56 }: { group: StoryGroupView; size?: number }) 
  * Stories row on the home page: «add» for the signed-in member, their own stories, the weekly digest and picks,
  * then other members. A tap opens the full-screen viewer; the ring dims once everything in a group was seen.
  */
-export function StoriesStrip({ groups, viewer, initial }: { groups: StoryGroupView[]; viewer: { username: string | null; avatarId: string | null } | null; initial?: { group: number; slide: number } }) {
+export function StoriesStrip({ groups, viewer, initial }: { groups: StoryGroupView[]; viewer: { username: string | null; avatarId: string | null; staff?: boolean } | null; initial?: { group: number; slide: number } }) {
   // A shared link (/?story=<id>) opens the viewer right on that story.
-  const [open, setOpen] = useState<number | null>(initial?.group ?? null);
-  const [openSlide, setOpenSlide] = useState(initial?.slide ?? 0);
+  // The viewer keeps the row as it was when opened: a story leaving the row mid-view does not shift the others.
+  const [viewing, setViewing] = useState<{ groups: StoryGroupView[]; start: number; slide: number } | null>(initial ? { groups, start: initial.group, slide: initial.slide } : null);
   const [composer, setComposer] = useState(false);
   const [viewed, setViewed] = useState<Set<string>>(() => new Set());
   const seenKeys = useSyncExternalStore(subscribeSeen, seenSnapshot, () => '');
@@ -115,22 +116,24 @@ export function StoriesStrip({ groups, viewer, initial }: { groups: StoryGroupVi
   const isSeen = (group: StoryGroupView) => group.own ? false : group.kind === 'user'
     ? Boolean(group.seen) || group.slides.every(slide => slide.kind === 'media' && (slide.story.seen || viewed.has(slide.story.id)))
     : seenKeys.split('\n').includes(group.key);
-  if (!groups.length && !viewer) return null;
+  // The partner's story is once a week: seen, it leaves the row until Monday, when its key (the week) changes.
+  const shown = groups.filter(group => !(group.kind === 'partner' && seenKeys.split('\n').includes(group.key)));
+  if (!shown.length && !viewer) return null;
   return <section className="stories" aria-label="Истории">
     <ul className="stories-row">
       {viewer && !own && <li><button type="button" className="story-chip" onClick={() => setComposer(true)}>
         <span className="story-ring is-add"><span className="story-avatar">{viewer.avatarId ? <Image src={`/api/profile-images/${viewer.avatarId}`} width={56} height={56} unoptimized alt="" /> : <span>{(viewer.username ?? '?').slice(0, 1).toUpperCase()}</span>}</span><span className="story-add-badge" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></span></span>
         <span className="story-label">Добавить</span>
       </button></li>}
-      {groups.map((group, index) => <li key={group.key} className={group.own ? 'is-own' : undefined}>
-        <button type="button" className="story-chip" onClick={() => { setOpenSlide(0); setOpen(index); }} aria-label={group.own ? 'Ваши истории' : `${group.title}${isSeen(group) ? '' : ', новое'}`}>
+      {shown.map((group, index) => <li key={group.key} className={group.own ? 'is-own' : undefined}>
+        <button type="button" className="story-chip" onClick={() => setViewing({ groups: shown, start: index, slide: 0 })} aria-label={group.own ? 'Ваши истории' : `${group.title}${isSeen(group) ? '' : ', новое'}`}>
           <span className={`story-ring${isSeen(group) ? ' is-seen' : ''}`} data-kind={group.kind}><Avatar group={group} /></span>
           <span className="story-label">{group.title}</span>
         </button>
         {group.own && <button type="button" className="story-add-badge is-button" aria-label="Добавить историю" onClick={() => setComposer(true)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></button>}
       </li>)}
     </ul>
-    {open !== null && <StoryViewer groups={groups} start={open} startSlide={openSlide} signedIn={Boolean(viewer)} onClose={() => setOpen(null)}
+    {viewing && <StoryViewer groups={viewing.groups} start={viewing.start} startSlide={viewing.slide} signedIn={Boolean(viewer)} staff={Boolean(viewer?.staff)} onClose={() => setViewing(null)}
       onSeen={(group, slide) => {
         if (slide.kind === 'media') { if (!group.own) { setViewed(current => new Set(current).add(slide.story.id)); void viewStoriesAction([slide.story.id]); } }
         else rememberSeen(group.key);
@@ -224,23 +227,37 @@ function PickCard({ item, basis }: { item: StoryRecommendation; basis: 'similar'
   </div>;
 }
 
-/** «CanRush в Telegram»: the channel, then the bot and its Mini App, with their buttons. Links leave in a new tab. */
+/** What each «Telegram» slide promises: a word or two on a tilted pill, in the order they pop in. */
+const PROMO_PILLS = {
+  channel: ['Новые вкусы', 'Розыгрыши', 'Подборки', 'Новости'],
+  bot: ['Цены рядом', 'Акции утром', 'Поиск банки'],
+} as const;
+
+/**
+ * «CanRush в Telegram», poster style: a huge headline, a few tilted pills, the rest of the headline and one button.
+ * The channel is on the brand blue, the bot on the light page colour. Links leave in a new tab.
+ */
 function PromoCard({ page, miniApp }: { page: 'channel' | 'bot'; miniApp?: string | null }) {
   const channel = page === 'channel';
-  return <div className="story-card story-card-telegram" data-page={page}>
-    {/* eslint-disable-next-line @next/next/no-img-element -- brand sticker */}
-    <img className="story-telegram-art" src="/brand/achievements/telegram.png" alt="" />
-    <small>{channel ? 'Telegram · @canrushoff' : 'Бот · @canrush_bot'}</small>
-    <strong>{channel ? 'CanRush в Telegram' : 'Бот найдёт, где дешевле'}</strong>
-    {channel
-      ? <p>Новости проекта, новые вкусы, розыгрыши и подборки — первыми.</p>
-      : <ul className="story-telegram-list"><li>Поиск напитка и цен в магазинах</li><li>Акции на избранное каждое утро</li><li>Подборка недели по понедельникам</li>{miniApp && <li><b>Mini App</b> — весь CanRush прямо в Telegram, вход в один тап</li>}</ul>}
-    {channel
-      ? <a className="story-card-cta" href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer">Подписаться на канал</a>
-      : <span className="story-telegram-actions">
-          {miniApp && <a className="story-card-cta" href={miniApp} target="_blank" rel="noopener noreferrer">Открыть Mini App</a>}
-          <a className={`story-card-cta${miniApp ? ' is-secondary' : ''}`} href={TELEGRAM_BOT_URL} target="_blank" rel="noopener noreferrer">Открыть бота</a>
-        </span>}
+  const pills = [...PROMO_PILLS[page], ...(!channel && miniApp ? ['Mini App'] : [])];
+  return <div className="tg-promo" data-page={page}>
+    <span className="tg-promo-handle" style={{ '--line': 0 } as CSSProperties}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- brand sticker */}
+      <img src="/brand/achievements/telegram.png" alt="" />{channel ? '@canrushoff' : '@canrush_bot'}
+    </span>
+    <strong className="tg-promo-title" style={{ '--line': 1 } as CSSProperties}>{channel ? 'Канал CanRush' : 'Бот найдёт'}</strong>
+    <ul className="tg-promo-pills">
+      {pills.map((pill, index) => <li key={pill} style={{ '--line': index + 2 } as CSSProperties}>{pill}</li>)}
+    </ul>
+    <strong className="tg-promo-title" style={{ '--line': pills.length + 2 } as CSSProperties}>{channel ? 'в Telegram' : 'где дешевле'}</strong>
+    <span className="tg-promo-actions" style={{ '--line': pills.length + 3 } as CSSProperties}>
+      {channel
+        ? <a className="tg-promo-cta" href={TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer">Подписаться</a>
+        : <>
+            {miniApp && <a className="tg-promo-cta" href={miniApp} target="_blank" rel="noopener noreferrer">Открыть Mini App</a>}
+            <a className={`tg-promo-cta${miniApp ? ' is-secondary' : ''}`} href={TELEGRAM_BOT_URL} target="_blank" rel="noopener noreferrer">Открыть бота</a>
+          </>}
+    </span>
   </div>;
 }
 
@@ -258,7 +275,7 @@ function PartnerCard() {
   </div>;
 }
 
-function StoryViewer({ groups, start, startSlide, signedIn, onClose, onSeen }: { groups: StoryGroupView[]; start: number; startSlide: number; signedIn: boolean; onClose: () => void; onSeen: (group: StoryGroupView, slide: StorySlide) => void }) {
+function StoryViewer({ groups, start, startSlide, signedIn, staff, onClose, onSeen }: { groups: StoryGroupView[]; start: number; startSlide: number; signedIn: boolean; staff: boolean; onClose: () => void; onSeen: (group: StoryGroupView, slide: StorySlide) => void }) {
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -367,7 +384,7 @@ function StoryViewer({ groups, start, startSlide, signedIn, onClose, onSeen }: {
   const title = group.own ? 'Ваша история' : group.title;
   return createPortal(<dialog ref={dialog} className="story-viewer" aria-label={`История: ${title}`} onCancel={event => { event.preventDefault(); onClose(); }}
     onKeyDown={event => { if (event.key === 'ArrowRight') go(1); if (event.key === 'ArrowLeft') go(-1); }}>
-    <div className="story-frame" data-kind={slide.kind} data-tone={slide.kind === 'digest' && (slide.page === 'cans' || slide.page === 'discover') ? 'light' : undefined}>
+    <div className="story-frame" data-kind={slide.kind} data-tone={(slide.kind === 'digest' && (slide.page === 'cans' || slide.page === 'discover')) || (slide.kind === 'promo' && slide.page === 'bot') ? 'light' : undefined}>
       <div className="story-progress" aria-hidden="true">{group.slides.map((_, index) => <span key={index}><i style={{ transform: `scaleX(${index < pos.s ? 1 : index === pos.s ? progress : 0})` }} /></span>)}</div>
       <header className="story-head">
         {group.author && !group.own ? <Link className="story-head-author" href={`/profile/${group.author.username}`}><Avatar group={group} size={32} /><b>{title}</b></Link>
@@ -384,7 +401,7 @@ function StoryViewer({ groups, start, startSlide, signedIn, onClose, onSeen }: {
                 if (result.error) { window.alert(result.error); return; }
                 onClose(); router.refresh();
               }}>Удалить историю</button></MoreActions>
-            : signedIn && <MoreActions label="Действия с историей"><ContentReportButton kind="story" id={slide.story.id} variant="menuitem" /></MoreActions>)}
+            : signedIn && <MoreActions label="Действия с историей"><ContentReportButton kind="story" id={slide.story.id} variant="menuitem" />{staff && <StaffDeleteMenuItem kind="story" id={slide.story.id} onDeleted={onClose} />}</MoreActions>)}
           <button type="button" className="story-close" aria-label="Закрыть истории" onClick={onClose}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
         </span>
       </header>

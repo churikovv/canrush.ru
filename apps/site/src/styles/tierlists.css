@@ -500,8 +500,11 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .tierlists-main-actions :is(.tier-primary-action, .tier-secondary-action) :is(svg, img) { width: 20px; height: 20px; }
 .tierlists-main-actions .more-actions { margin-left: auto; }
 .tierlists-main-actions .more-actions-trigger { width: 44px; height: 44px; background: var(--color-subtle); color: var(--color-ink); }
+/* Phones: the main action on its own row («⋯» beside it), «Поделиться» and «Скриншот» in two equal halves below. */
 @media (max-width: 639px) {
-  .tierlists-main-actions > .tier-primary-action { flex: 1 1 100%; }
-  .tierlists-main-actions > :is(.tier-secondary-action, :has(> .tier-secondary-action)) { flex: 1 1 0; }
-  .tierlists-main-actions :is(.tier-secondary-action) { width: 100%; padding-inline: 12px; }
+  .tierlists-main-actions > .tier-primary-action { flex: 1 1 calc(100% - 52px); }
+  .tierlists-main-actions > .more-actions { order: -1; margin-left: 0; }
+  .tierlists-main-actions > .tier-primary-action { order: -2; }
+  .tierlists-main-actions > :is(.tier-secondary-action, :has(> .tier-secondary-action)) { flex: 1 1 calc(50% - 4px); }
+  .tierlists-main-actions .tier-secondary-action { width: 100%; gap: 6px; padding-inline: 10px; font-size: .875rem; white-space: nowrap; }
 }

@@ -5,6 +5,7 @@ vi.mock('../src/app/tierlists/discussion-actions', () => ({ tierDiscussionAction
 vi.mock('../src/app/catalog/review-actions', () => ({ deleteReviewAction: vi.fn(), submitReviewAction: vi.fn() }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock('../src/app/catalog/discussion-actions', () => ({ reviewDiscussionAction: vi.fn() }));
+vi.mock('../src/app/moderation-actions', () => ({ staffDeleteAction: vi.fn() }));
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';

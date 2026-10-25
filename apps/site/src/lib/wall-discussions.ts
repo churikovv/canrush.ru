@@ -1,4 +1,5 @@
 import { getPool } from '@/db/pool';
+import { VIEWER_IS_STAFF } from '@/lib/staff-moderation';
 import { notBlockedBy } from '@/lib/member-blocks';
 import { commentMediaColumn, saveCommentMedia, type CommentMedia } from '@/lib/comment-media';
 import type { PreparedWallMedia } from '@/lib/wall-media';
@@ -6,7 +7,7 @@ import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { profileTagLabel } from '@/lib/profile-achievements';
 export class WallDiscussionError extends Error {}
 /** `saved` — the viewer bookmarked the record (savedPost). */
-export interface WallInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean; saved: boolean }
+export interface WallInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean; saved: boolean; /** The viewer is an admin or a moderator: «Удалить» on anyone's content. */ staff?: boolean }
 export interface WallCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; canDelete: boolean; likes: number; liked: boolean }
 export function wallPostId(value: unknown): string {
   if (typeof value !== 'string' || !PHOTO_ID_PATTERN.test(value)) throw new WallDiscussionError('Запись или комментарий не найден.');
@@ -19,9 +20,10 @@ export async function getWallInteractions(ids: string[], viewer: string | null =
     (select count(*)::int from "wallReaction" where "wallPostId"=r.id and value=-1) as dislikes,
     (select count(*)::int from "wallReply" where "wallPostId"=r.id) as comments,
     coalesce((select value from "wallReaction" where "wallPostId"=r.id and "userId"=$2),0)::int as vote,
-    exists(select 1 from "savedPost" where "postId"=r.id and "userId"=$2) as saved
+    exists(select 1 from "savedPost" where "postId"=r.id and "userId"=$2) as saved,
+    ${VIEWER_IS_STAFF} as staff
     from "profileComment" r where r.id=any($1::uuid[])`, [ids, viewer]);
-  return new Map(rows.map(row => [row.id, { likes: row.likes, dislikes: row.dislikes, comments: row.comments, vote: row.vote, authenticated: Boolean(viewer), saved: Boolean(row.saved) }]));
+  return new Map(rows.map(row => [row.id, { likes: row.likes, dislikes: row.dislikes, comments: row.comments, vote: row.vote, authenticated: Boolean(viewer), saved: Boolean(row.saved), staff: Boolean(row.staff) }]));
 }
 /** Bookmarks a wall record for the member (own records too); `saved=false` removes the bookmark. */
 export async function setWallSaved(userId: string, id: string, saved: boolean) {

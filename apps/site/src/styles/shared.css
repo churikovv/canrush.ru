@@ -68,6 +68,7 @@
   color: var(--color-ink);
 }
 .tier-list-more { display: flex; justify-content: center; width: fit-content; margin: 20px auto 0; }
+@media (max-width: 639px) { .tier-list-more { width: 100%; } }
 .tier-list-cards {
   display: grid;
   gap: 12px;
@@ -192,12 +193,6 @@ button.tier-list-card-likes[aria-pressed="true"] svg { animation: tier-like-pop 
 @media (max-width: 639px) {
   .tier-screenshot-control, .tier-screenshot-control > button { width: 100%; }
 }
-.profile-report { padding: 1rem 0; border-top: 1px solid var(--theme-line, #dce0e5); }
-.profile-report form { display: grid; gap: .75rem; padding-top: 1rem; }
-.profile-report label { font-weight: 600; }
-.profile-report select, .profile-report textarea { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--theme-line, #c8ced6); border-radius: 12px; padding: .75rem; background: var(--theme-panel, #ffffff); color: var(--theme-text, #333); font: inherit; }
-.profile-report textarea { resize: vertical; }
-.profile-report button { width: 100%; }
 /* «Пожаловаться» on content: a modal with the same fields as the profile report. */
 .content-report-dialog { width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 24px; border: 0; border-radius: 16px; background: var(--theme-panel, #ffffff); color: var(--theme-text, var(--color-ink)); overflow: auto; }
 .content-report-dialog::backdrop { background: #0009; }
@@ -216,6 +211,14 @@ button.tier-list-card-likes[aria-pressed="true"] svg { animation: tier-like-pop 
 .market-search-toolbar { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: stretch; }
 .market-search-toolbar .catalog-search-field { grid-column: auto; }
 .market-search-toolbar.has-add { grid-template-columns: minmax(0,1fr) auto auto; }
+/* Same row as the catalog's: a 48px field, the 56×48 filter button and a 48px square «+», 6px apart. */
+.market-search-toolbar, .market-search-toolbar.has-add { gap: 6px; }
+.market-search-toolbar > * { height: 48px; }
+.market-search-toolbar > .catalog-search-field { padding-block: 8px; }
+/* The 32px search button keeps its tap area but sits where the catalog's 24px icon is, so the text starts at the same x. */
+.market-search-toolbar .market-search-submit { margin-inline: -4px; }
+.market-search-toolbar > .market-filter-toggle { padding: 0 12px; }
+.market-search-toolbar > .store-add-button { width: 48px; min-width: 48px; padding: 0; }
 .store-add-button { color: var(--color-ink); text-decoration: none; }
 .store-add-button:hover { background: color-mix(in srgb, var(--color-subtle) 70%, var(--color-ink) 8%); }
 .store-add-button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }

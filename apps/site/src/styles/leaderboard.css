@@ -1,0 +1,102 @@
+/*
+ * All-time leaderboard (/leaderboard), laid out like a game ladder: place with a medal for the top 3, framed avatar,
+ * nick with the drink streak and tag, three counters, a level tile in the rank's colours and the XP. First place gets
+ * a soft warm wash and a quiet glow, not a neon frame (PRODUCT.md anti-references).
+ */
+.lb-table { --lb-gold: #e8a623; --lb-silver: #a9b4c4; --lb-bronze: #c47a43;
+  overflow: hidden; margin: 16px 0 24px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 24px; background: var(--theme-panel, #fff); }
+.lb-head, .lb-row { display: grid; grid-template-columns: 64px 76px minmax(0, 1fr) 84px 150px; align-items: center; column-gap: 16px; }
+.lb-head { padding: 18px 24px 12px; color: var(--theme-muted, #6b7280); font-size: .75rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.lb-head > :nth-child(2) { grid-column: 2 / 4; }
+.lb-head > :nth-child(3) { text-align: center; }
+.lb-head > :nth-child(4) { text-align: right; }
+.lb-list { margin: 0; padding: 0; list-style: none; }
+.lb-list li + li { border-top: 1px solid var(--theme-line, #edf0f3); }
+.lb-row { position: relative; min-height: 92px; padding: 14px 24px; color: inherit; text-decoration: none; transition: background-color 150ms ease-out; }
+.lb-row:hover { background: var(--theme-subtle, #f6f8fb); }
+.lb-row:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: -2px; }
+
+.lb-rank { display: flex; align-items: center; gap: 6px; color: var(--theme-muted, #6b7280); font-variant-numeric: tabular-nums; }
+.lb-rank b { font-size: 1.375rem; font-weight: 800; }
+li[data-rank] .lb-rank b { color: var(--theme-text, #1a1a1a); font-size: 2rem; font-weight: 900; letter-spacing: -.03em; }
+li[data-rank="1"] .lb-medal { color: var(--lb-gold); }
+li[data-rank="2"] .lb-medal { color: var(--lb-silver); }
+li[data-rank="3"] .lb-medal { color: var(--lb-bronze); }
+
+/* Room around the avatar: heavy frames draw at 160% of it. */
+.lb-avatar { position: relative; display: grid; place-items: center; width: 56px; height: 56px; margin: 10px; border-radius: 50%; background: var(--theme-subtle, #eef1f5); color: var(--color-brand, #006eff); font-size: 1.25rem; font-weight: 800; }
+.lb-avatar > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+
+.lb-main { display: grid; gap: 8px; min-width: 0; }
+.lb-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.lb-name strong { overflow: hidden; color: var(--theme-text, #1a1a1a); font-size: 1.125rem; text-overflow: ellipsis; white-space: nowrap; }
+.lb-name .profile-tag small { font-size: inherit; opacity: .85; }
+.lb-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 10px 2px 8px; border-radius: 999px; font-size: .8125rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.lb-streak { background: color-mix(in srgb, #ff6a3d 14%, transparent); color: #e5532b; box-shadow: inset 0 0 0 1px color-mix(in srgb, #ff6a3d 30%, transparent); }
+.lb-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; color: var(--theme-muted, #6b7280); font-size: .9375rem; font-variant-numeric: tabular-nums; }
+.lb-stats > span { display: inline-flex; align-items: center; gap: 6px; }
+.lb-stats > span + span::before { content: ""; width: 4px; height: 4px; margin-right: 8px; border-radius: 50%; background: currentColor; opacity: .35; }
+
+/* Level: the rank's own shape in its metal, the number on top. */
+.lb-level { position: relative; display: grid; place-items: center; justify-self: center; width: 56px; height: 56px; filter: drop-shadow(0 4px 10px var(--tier-glow, rgb(0 0 0 / .15))); }
+.lb-level .level-tier-glyph { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--tier-mid, #8ab4ff); stroke: var(--tier-dark, #3d7bff); stroke-width: 3; }
+.lb-level b { position: relative; color: var(--tier-ink, #fff); font-size: 1.0625rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+.lb-xp { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; color: var(--theme-text, #1a1a1a); font-size: 1.375rem; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.01em; white-space: nowrap; }
+.lb-xp svg { color: var(--color-brand, #006eff); }
+.lb-xp small { align-self: flex-end; margin-bottom: 4px; color: var(--theme-muted, #6b7280); font-size: .75rem; font-weight: 800; }
+
+/* First place: a warm wash fading to the right, a thin gold edge and a soft glow under the avatar. */
+li[data-rank="1"] .lb-row { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-gold) 13%, transparent), color-mix(in srgb, var(--lb-gold) 4%, transparent) 45%, transparent 75%); }
+li[data-rank="1"] .lb-row::before { content: ""; position: absolute; inset: 14px auto 14px 0; width: 3px; border-radius: 0 3px 3px 0; background: var(--lb-gold); opacity: .8; }
+li[data-rank="1"] .lb-avatar { box-shadow: 0 0 0 3px color-mix(in srgb, var(--lb-gold) 35%, transparent), 0 8px 26px -6px color-mix(in srgb, var(--lb-gold) 55%, transparent); }
+li[data-rank="1"] .lb-xp svg { color: var(--lb-gold); }
+li[data-rank="1"] .lb-row:hover { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-gold) 17%, transparent), color-mix(in srgb, var(--lb-gold) 6%, transparent) 45%, transparent 80%); }
+
+/* Phones: no header; rank, avatar and the nick block in a row, level and XP under the counters. */
+@media (max-width: 719px) {
+  .lb-table { border-radius: 20px; }
+  .lb-head { display: none; }
+  .lb-row { grid-template-columns: 34px 60px minmax(0, 1fr); grid-template-areas: "rank avatar main" "rank avatar meta"; column-gap: 10px; row-gap: 8px; min-height: 0; padding: 14px 14px 14px 12px; }
+  .lb-rank { grid-area: rank; flex-direction: column; gap: 2px; }
+  .lb-rank b { font-size: 1.125rem; }
+  li[data-rank] .lb-rank b { font-size: 1.5rem; }
+  .lb-avatar { grid-area: avatar; width: 48px; height: 48px; margin: 6px; }
+  .lb-main { grid-area: main; gap: 6px; }
+  .lb-name strong { font-size: 1rem; }
+  .lb-stats { font-size: .8125rem; gap: 4px 10px; }
+  .lb-stats > span + span::before { margin-right: 4px; }
+  .lb-level, .lb-xp { grid-area: meta; }
+  .lb-level { justify-self: start; width: 36px; height: 36px; }
+  .lb-level b { font-size: .8125rem; }
+  .lb-xp { justify-self: end; font-size: 1.125rem; }
+  .lb-xp svg { width: 18px; height: 18px; }
+  li[data-rank="1"] .lb-row::before { inset: 10px auto 10px 0; }
+}
+@media (prefers-reduced-motion: reduce) { .lb-row { transition: none; } }
+
+/* «Топ-3 за месяц»: the prize card on top, then the three leaders as ladder rows running edge to edge. */
+.monthly-top { position: relative; overflow: hidden; margin: 8px 0 28px; padding: 24px 24px 0; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 24px; background: var(--theme-panel, #fff); }
+.monthly-top-hero { display: flex; align-items: center; gap: 20px; padding-bottom: 20px; }
+.monthly-top-art { width: 112px; height: 112px; flex: none; object-fit: contain; filter: drop-shadow(0 10px 16px rgb(0 70 190 / .28)); transform-origin: 50% 90%; animation: monthly-top-bob 3.2s ease-in-out infinite; }
+.monthly-top-copy { min-width: 0; }
+.monthly-top-copy h3 { margin: 10px 0 6px; font-size: 1.375rem; line-height: 1.2; }
+.monthly-top-copy p { margin: 0; color: var(--color-muted-strong); font-size: .9375rem; line-height: 1.5; text-wrap: pretty; }
+.monthly-top-list { --lb-gold: #e8a623; --lb-silver: #a9b4c4; --lb-bronze: #c47a43; margin: 0 -24px; border-top: 1px solid var(--theme-line, #edf0f3); }
+.monthly-top-row { grid-template-columns: 64px 76px minmax(0, 1fr) auto; }
+.monthly-top-prize { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand, #006eff) 12%, transparent); color: var(--color-brand, #006eff); font-size: 1.0625rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand, #006eff) 28%, transparent); }
+.monthly-top-prize small { font-size: .75rem; font-weight: 800; opacity: .8; }
+li[data-rank="1"] .monthly-top-prize { background: color-mix(in srgb, var(--lb-gold) 16%, transparent); color: color-mix(in srgb, var(--lb-gold) 75%, var(--theme-text, #1a1a1a)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lb-gold) 40%, transparent); }
+.monthly-top-winners { margin: 0 -24px; padding: 14px 24px; border-top: 1px solid var(--theme-line, #edf0f3); color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.5; }
+.monthly-top .community-empty { margin: 0 0 20px; }
+@keyframes monthly-top-bob { 0%,100% { transform: rotate(-3deg) translateY(0); } 50% { transform: rotate(3deg) translateY(-4px); } }
+@media (max-width: 719px) {
+  .monthly-top { padding: 16px 16px 0; border-radius: 20px; }
+  .monthly-top-hero { gap: 14px; padding-bottom: 16px; }
+  .monthly-top-art { width: 84px; height: 84px; }
+  .monthly-top-copy h3 { font-size: 1.125rem; }
+  .monthly-top-list, .monthly-top-winners { margin-inline: -16px; }
+  .monthly-top-winners { padding-inline: 16px; }
+  .monthly-top-row { grid-template-columns: 34px 60px minmax(0, 1fr); grid-template-areas: "rank avatar main" "rank avatar meta"; }
+  .monthly-top-prize { grid-area: meta; justify-self: start; min-height: 32px; padding: 4px 12px; font-size: .9375rem; }
+}

@@ -123,8 +123,14 @@ docker compose exec site node apps/site/scripts/migrate.mjs
 
 ```bash
 git pull
-docker compose up -d --build
+deploy/deploy-site.sh                 # the site, without downtime
+docker compose up -d --build parser   # the parser, when it changed
 ```
+
+`deploy-site.sh` builds the image with the commit as `DEPLOYMENT_ID` (pages opened before the update reload
+themselves instead of failing on the old build's files), runs migrations, serves the new image from a standby
+container on 3003 while `site` on 3002 is recreated, then removes the standby. The host nginx
+(`deploy/nginx/canrush.ru.conf` → `/etc/nginx/sites-available/canrush.ru`) uses 3003 as a `backup` upstream.
 
 ### Stop everything
 
