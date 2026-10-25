@@ -1,25 +1,26 @@
 import { CONTENT_REPORT_KINDS, REPORT_REASONS } from '@/lib/profile-report-fields';
-import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
+import Image from 'next/image';
 import Link from '@/components/navigation-progress';
+import { AdminMemberMenu } from '@/components/admin-member-menu';
+import { AvatarFrame } from '@/components/avatar-frame';
+import { LevelChip } from '@/components/level-badge';
+import { experienceLevel } from '@/lib/experience-level';
+import { profileTagLabel } from '@/lib/profile-achievements';
 import type { ReactNode } from 'react';
-import { reviewProfileReportAction, addAdminAction, blockUserAction, deleteAdminReviewAction, deleteAdminTierListAction, deleteAdminWallAction, deleteAdminCommentAction, removeAdminAction, setAdminRoleAction, unblockUserAction } from '@/app/admin/actions';
+import { reviewProfileReportAction, addAdminAction, blockUserAction, removeAdminAction, setAdminRoleAction, unblockUserAction } from '@/app/admin/actions';
 import { AdminActionButton } from '@/components/admin-action-button';
 import type { SiteAdminIdentity } from '@/lib/admin';
 import { SITE_ROLE_LABELS } from '@/lib/admin-roles';
 import { ADMIN_PAGE_SIZE, type AdminDashboardData } from '@/lib/admin-dashboard-data';
 import { ADMIN_TABS, adminHref, type AdminTab } from '@/lib/admin-tabs';
-import { AdminIcon, AdminShell } from '@/components/admin-shell';
-import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
+import { AdminIcon, AdminShell, type AdminIconName } from '@/components/admin-shell';
+import { flavorName } from '@/lib/catalog-query';
 
 interface Props { admin: SiteAdminIdentity; data: AdminDashboardData; query: string; tab: AdminTab; notice?: string; error?: string; campaignPanel?: ReactNode }
 const SUBTITLES: Record<AdminTab, string> = {
   analytics: 'Ключевые показатели сайта на момент открытия',
   campaigns: 'UTM-ссылки и переходы по размещениям',
   users: 'Аккаунты, активность и блокировки',
-  tierlists: 'Опубликованные тирлисты и черновики',
-  reviews: 'Оценки и тексты отзывов о напитках',
-  comments: 'Комментарии к отзывам и записям стены',
-  wall: 'Записи на стенах профилей',
   market: 'Объявления участников и продавцы',
   reports: 'Жалобы участников на профили и контент',
   admins: 'Доступ к админ-панели',
@@ -53,12 +54,12 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
           { label: 'В сети сейчас', value: metrics.online, delta: null, note: 'Активны за 2 минуты, без скрывших статус', tab: 'users', live: true },
           { label: 'Активны сегодня', value: metrics.activeToday, delta: null, note: 'Заходили с входом с начала дня по Москве', tab: 'users' },
           { label: 'Активны за неделю', value: metrics.activeWeek, delta: null, note: 'Разные участники за 7 дней, включая сегодня', tab: 'users' },
-          { label: 'Отзывы', value: metrics.reviews, delta: metrics.newReviews, note: 'за 30 дней', tab: 'reviews' },
-          { label: 'Тирлисты', value: metrics.tierLists, delta: metrics.newTierLists, note: 'за 30 дней', tab: 'tierlists' },
-          { label: 'Комментарии стены', value: metrics.wall, delta: metrics.newWall, note: 'за 30 дней', tab: 'wall' },
+          { label: 'Отзывы', value: metrics.reviews, delta: metrics.newReviews, note: 'за 30 дней', href: '/catalog', icon: 'reviews' },
+          { label: 'Тирлисты', value: metrics.tierLists, delta: metrics.newTierLists, note: 'за 30 дней', href: '/tierlists', icon: 'tierlists' },
+          { label: 'Записи стены', value: metrics.wall, delta: metrics.newWall, note: 'за 30 дней', href: '/feed', icon: 'wall' },
           ...(admin.role === 'admin' ? [{ label: 'Администраторы', value: metrics.admins, delta: null, note: 'Включая владельца и модераторов', tab: 'admins' }] : []),
           { label: 'Активные сессии', value: metrics.sessions, delta: null, note: 'Участники с действующим входом', tab: 'users' },
-        ].map(item => <Link href={adminHref(item.tab as AdminTab)} className="admin-metric" key={item.label}><span className="admin-metric-head"><span className="admin-metric-icon">{'live' in item ? <span className="admin-online-dot" /> : <AdminIcon section={item.tab as AdminTab} />}</span>{item.label}</span><strong>{number(item.value)}</strong><small>{item.delta !== null && <b className={item.delta > 0 ? 'admin-delta admin-delta-up' : 'admin-delta'}>+{number(item.delta)}</b>}{item.note}</small></Link>)}</div>
+        ].map(item => <Link href={'href' in item && item.href ? item.href : adminHref(item.tab as AdminTab)} className="admin-metric" key={item.label}><span className="admin-metric-head"><span className="admin-metric-icon">{'live' in item ? <span className="admin-online-dot" /> : <AdminIcon section={('icon' in item && item.icon ? item.icon : item.tab) as AdminIconName} />}</span>{item.label}</span><strong>{number(item.value)}</strong><small>{item.delta !== null && <b className={item.delta > 0 ? 'admin-delta admin-delta-up' : 'admin-delta'}>+{number(item.delta)}</b>}{item.note}</small></Link>)}</div>
       </section>
       <section className="admin-data-panel" aria-labelledby="admin-online-title"><div className="admin-panel-heading"><h2 id="admin-online-title">Онлайн за сутки</h2><span>{onlinePeak ? `Пик ${number(onlinePeak.peak)} в ${onlinePeak.hour.slice(11)}` : 'Пока без данных'} · 24 часа · МСК</span></div>
         <div className="admin-registration-chart admin-online-chart" role="img" aria-label={`Пиковый онлайн по часам: ${data.onlineByHour.map(hour => `${hour.hour.slice(11)}: ${hour.peak}`).join('; ')}`}>
@@ -123,15 +124,23 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
           <td><span className="admin-status">{report.status === 'open' ? 'Новая' : report.status === 'resolved' ? 'Рассмотрена' : 'Отклонена'}</span></td>
           <td>{report.status === 'open' && <form action={reviewProfileReportAction}>{context}<input type="hidden" name="reportId" value={report.id} /><AdminActionButton name="status" value="resolved" pendingLabel="Сохраняем…">Рассмотрена</AdminActionButton><AdminActionButton name="status" value="dismissed" pendingLabel="Сохраняем…">Отклонить</AdminActionButton></form>}</td>
         </tr>)}</DataTable>}
-        {tab === 'users' && <DataTable label="Участники" columns={['Участник', 'Отзывы', 'Тирлисты', 'Регистрация', 'Статус', 'Действия']}>{data.users.map(user => <tr key={user.id}>
-          <td><div className="admin-table-identity">{user.username ? <Link href={`/profile/${user.username}`}>{user.name || `@${user.username}`}</Link> : <strong>{user.name || 'Без имени'}</strong>}{user.email !== `@${user.username}` && <span>{user.email}</span>}{user.username && <span>@{user.username}</span>}</div></td><td>{user.reviewCount}</td><td>{user.tierListCount}</td><td>{formatDate(user.createdAt)}</td>
-          <td><span className={`admin-status ${user.isAdmin ? 'admin-status-admin' : user.blockedAt ? 'admin-status-blocked' : 'admin-status-active'}`}>{user.isAdmin ? 'Администратор' : user.blockedAt ? 'Заблокирован' : 'Активен'}</span></td>
-          <td>{!user.isAdmin ? <form action={user.blockedAt ? unblockUserAction : blockUserAction}>{context}<input type="hidden" name="userId" value={user.id} /><AdminActionButton pendingLabel="Сохраняем…" variant={user.blockedAt ? 'secondary' : 'danger'} confirmMessage={user.blockedAt ? undefined : `Заблокировать ${user.email}?`}>{user.blockedAt ? 'Разблокировать' : 'Заблокировать'}</AdminActionButton></form> : <span className="admin-table-muted">Защищён</span>}</td>
-        </tr>)}</DataTable>}
-        {tab === 'tierlists' && <DataTable label="Тирлисты" columns={['Тирлист', 'Автор', 'Позиций', 'Статус', 'Обновлён', 'Действия']}>{data.tierLists.map(list => <tr key={list.id}><td>{list.status === 'published' ? <Link href={`/tierlists/${list.slug}`}>{list.title}</Link> : list.title}</td><td><div className="admin-table-identity"><strong>{list.authorName}</strong><span>{list.authorEmail}</span></div></td><td>{list.itemCount}</td><td><span className="admin-status">{list.status === 'published' ? 'Опубликован' : 'Черновик'}</span></td><td>{formatDate(list.updatedAt)}</td><td><form action={deleteAdminTierListAction}>{context}<input type="hidden" name="slug" value={list.slug} /><AdminActionButton pendingLabel="Удаляем…" variant="danger" confirmMessage={`Удалить тирлист «${list.title}» без возможности восстановления?`}>Удалить</AdminActionButton></form></td></tr>)}</DataTable>}
-        {tab === 'reviews' && <DataTable label="Отзывы" columns={['Напиток', 'Автор', 'Оценка', 'Текст', 'Дата', 'Действия']}>{data.reviews.map(review => <tr key={review.id}><td><strong>{review.brand}</strong><div className="admin-table-muted">{flavorName(review.flavor)}</div></td><td><div className="admin-table-identity"><strong>{review.authorName}</strong><span>{review.authorEmail}</span></div></td><td>{number(review.score)} / 10</td><td><RecordText text={review.text} /></td><td>{formatDate(review.createdAt)}</td><td><form action={deleteAdminReviewAction}>{context}<input type="hidden" name="reviewId" value={review.id} /><AdminActionButton pendingLabel="Удаляем…" variant="danger" confirmMessage="Удалить отзыв без возможности восстановления?">Удалить</AdminActionButton></form></td></tr>)}</DataTable>}
-        {tab === 'comments' && <DataTable label="Комментарии" columns={['Автор', 'Публикация', 'Комментарий', 'Дата', 'Действия']}>{data.comments.map(comment => <tr key={comment.id}><td><div className="admin-table-identity"><strong>{comment.authorName}</strong><span>{comment.authorEmail}</span></div></td><td><Link href={comment.kind === 'wall' ? `/profile/${comment.profileUsername}#wall-post-${comment.reviewId}` : `/catalog/${catalogGroupSlug(comment.brand, comment.flavor)}?tab=reviews#review-${comment.reviewId}`}>{comment.kind === 'wall' ? `Стена @${comment.profileUsername}` : `${comment.brand} · ${flavorName(comment.flavor)}`}</Link></td><td><RecordText text={comment.text} /></td><td>{formatDate(comment.createdAt)}</td><td><form action={deleteAdminCommentAction}>{context}<input type="hidden" name="kind" value={comment.kind} /><input type="hidden" name="commentId" value={comment.id} /><AdminActionButton pendingLabel="Удаляем…" variant="danger" confirmMessage="Удалить комментарий?">Удалить</AdminActionButton></form></td></tr>)}</DataTable>}
-        {tab === 'wall' && <DataTable label="Комментарии стены" columns={['Автор', 'На стене', 'Комментарий', 'Дата', 'Действия']}>{data.wall.map(comment => <tr key={comment.id}><td><div className="admin-table-identity">{comment.authorUsername ? <Link href={`/profile/${comment.authorUsername}`}>@{comment.authorUsername}</Link> : <strong>{comment.authorName}</strong>}<span>{comment.authorEmail}</span></div></td><td>{comment.profileUsername ? <Link href={`/profile/${comment.profileUsername}#wall`}>@{comment.profileUsername}</Link> : 'Без юзернейма'}</td><td><RecordText text={comment.text} /><ReviewPhotoGallery photos={comment.photos} kinds={comment.mediaKinds} source="wall-photos" /><p className="community-muted">Лайки: {comment.likes} · Дизлайки: {comment.dislikes} · Ответы: {comment.replies}</p></td><td>{formatDate(comment.createdAt)}</td><td><form action={deleteAdminWallAction}>{context}<input type="hidden" name="commentId" value={comment.id} /><AdminActionButton pendingLabel="Удаляем…" variant="danger" confirmMessage="Удалить комментарий со стены без возможности восстановления?">Удалить</AdminActionButton></form></td></tr>)}</DataTable>}
+        {tab === 'users' && <DataTable label="Участники" columns={['Участник', 'Активность', 'Регистрация', 'Статус', '']}>{data.users.map(user => {
+          const label = user.username ? `@${user.username}` : user.name || 'участника';
+          return <tr key={user.id}>
+            <td><div className="admin-member">
+              <span className="admin-member-avatar" data-frame={user.frame}>{user.avatarId ? <Image src={`/api/profile-images/${user.avatarId}`} width={44} height={44} unoptimized alt="" /> : <span aria-hidden="true">{(user.username ?? user.name ?? '?').slice(0, 1).toUpperCase()}</span>}<AvatarFrame frame={user.frame} /></span>
+              <div className="admin-member-text">
+                <div className="admin-member-name">{user.username ? <Link href={`/profile/${user.username}`}>{user.name || `@${user.username}`}</Link> : <strong>{user.name || 'Без имени'}</strong>}{user.tag && <span className="profile-tag" data-tag={user.tag}>{profileTagLabel(user.tag)}</span>}<LevelChip level={experienceLevel(user.xp).level} /></div>
+                <span className="admin-member-meta">{user.username && <>@{user.username}</>}{user.email !== `@${user.username}` && <>{user.username && ' · '}{user.email}</>}</span>
+              </div>
+            </div></td>
+            <td><span className="admin-member-stats"><span title="Отзывы"><AdminIcon section="reviews" />{user.reviewCount}</span><span title="Тирлисты"><AdminIcon section="tierlists" />{user.tierListCount}</span><span title="Комментарии и записи"><AdminIcon section="comments" />{user.commentCount}</span><span title="Опыт">{number(user.xp)} XP</span></span></td>
+            <td>{formatDate(user.createdAt)}</td>
+            <td><span className={`admin-status ${user.role ? 'admin-status-admin' : user.blockedAt ? 'admin-status-blocked' : user.frozenUntil ? 'admin-status-frozen' : 'admin-status-active'}`}>{user.role ? SITE_ROLE_LABELS[user.role] : user.blockedAt ? 'Заблокирован' : user.frozenUntil ? `Заморожен до ${formatDate(user.frozenUntil)}` : 'Активен'}</span></td>
+            <td className="admin-member-actions">{user.role ? <span className="admin-table-muted">Команда</span> : <AdminMemberMenu canDelete={admin.role === 'admin'} context={{ query, tab, page: data.page }}
+              member={{ id: user.id, label, username: user.username, blocked: Boolean(user.blockedAt), frozen: Boolean(user.frozenUntil), tierLists: user.tierListCount, comments: user.commentCount }} />}</td>
+          </tr>;
+        })}</DataTable>}
         {tab === 'admins' && <DataTable label="Администраторы" columns={['Email', 'Роль', 'Добавлен', 'Кем', 'Действия']}>{data.admins.map(entry => <tr key={entry.email}><td>{entry.email}</td><td><span className={`admin-status admin-status-${entry.role}`}>{entry.isOwner ? 'Владелец' : SITE_ROLE_LABELS[entry.role]}</span></td><td>{formatDate(entry.createdAt)}</td><td>{entry.addedByName ?? '—'}</td><td>{!entry.isOwner && entry.email !== admin.email ? <div className="admin-table-actions"><form action={setAdminRoleAction}>{context}<input type="hidden" name="email" value={entry.email} /><input type="hidden" name="role" value={entry.role === 'admin' ? 'moderator' : 'admin'} /><AdminActionButton pendingLabel="Меняем…" confirmMessage={entry.role === 'admin' ? `Сделать ${entry.email} модератором? Он потеряет доступ к администраторам, конкурсам, кампаниям и почте участников.` : `Сделать ${entry.email} администратором с полным доступом?`}>{entry.role === 'admin' ? 'Сделать модератором' : 'Сделать администратором'}</AdminActionButton></form><form action={removeAdminAction}>{context}<input type="hidden" name="email" value={entry.email} /><AdminActionButton pendingLabel="Удаляем…" variant="danger" confirmMessage={`Убрать доступ у ${entry.email}?`}>Убрать доступ</AdminActionButton></form></div> : <span className="admin-table-muted">Защищён</span>}</td></tr>)}</DataTable>}
       </>}
       {data.total > 0 && <nav className="admin-table-pagination" aria-label="Страницы записей"><span>{(data.page - 1) * ADMIN_PAGE_SIZE + 1}–{Math.min(data.page * ADMIN_PAGE_SIZE, data.total)} из {number(data.total)}</span><div>{data.page > 1 && <Link href={adminHref(tab, query, data.page - 1)}>← Назад</Link>}<span>{data.page} / {pages}</span>{data.page < pages && <Link href={adminHref(tab, query, data.page + 1)}>Далее →</Link>}</div></nav>}

@@ -8,8 +8,16 @@ const render = (role: 'admin' | 'moderator') => renderToStaticMarkup(<AdminShell
 it('hides administrators, contests and campaigns from a moderator', () => {
   const moderator = render('moderator');
   for (const label of ['>Кампании<', '>Конкурс<', '>Администраторы<']) expect(moderator).not.toContain(label);
-  for (const label of ['>Аналитика<', '>Магазины<', '>Напитки<', '>Жалобы<', '>Участники<', '>Отзывы<']) expect(moderator).toContain(label);
+  for (const label of ['>Аналитика<', '>Магазины<', '>Напитки<', '>Жалобы<', '>Участники<', '>Объявления<']) expect(moderator).toContain(label);
+  // Groups left without items disappear with them.
+  for (const group of ['Модерация', 'Каталог']) expect(moderator).toContain(group);
+  for (const group of ['Продвижение', 'Команда']) expect(moderator).not.toContain(group);
   expect(moderator).toContain('Модератор');
   const admin = render('admin');
-  for (const label of ['>Кампании<', '>Конкурс<', '>Администраторы<']) expect(admin).toContain(label);
+  for (const label of ['>Кампании<', '>Конкурс<', '>Администраторы<', 'Продвижение', 'Команда']) expect(admin).toContain(label);
+});
+
+it('has no sections for content deleted in place', () => {
+  // Reviews, comments, wall posts and tier lists are deleted from their «⋯» menus (staff-moderation.ts).
+  for (const label of ['>Отзывы<', '>Комментарии<', '>Стена<', '>Тирлисты<']) expect(render('admin')).not.toContain(label);
 });

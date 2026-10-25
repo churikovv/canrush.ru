@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { reportProfileAction } from '@/app/profile/report-actions';
 import { FlagIcon } from '@/components/action-icons';
 import { REPORT_REASONS } from '@/lib/profile-report-fields';
+import { FormAlert } from '@/components/form-alert';
 
 const subscribeNever = () => () => {};
 
@@ -44,7 +45,7 @@ function ReportForm({ targetId, fieldId, onClose }: { targetId: string; fieldId:
       </select>
       <label htmlFor={`${fieldId}-comment`}>Комментарий <span className="community-muted">(необязательно)</span></label>
       <textarea id={`${fieldId}-comment`} name="comment" maxLength={1000} rows={3} placeholder="Расскажите, что произошло" disabled={pending} />
-      {state.error && <p className="field-error" role="alert">{state.error}</p>}
+      {state.error && <FormAlert>{state.error}</FormAlert>}
       <div className="content-report-actions">
         <button className="community-button community-button-secondary" type="button" disabled={pending} onClick={onClose}>Отмена</button>
         <button className="community-button" type="submit" disabled={pending}>{pending ? 'Отправляем…' : 'Отправить'}</button>

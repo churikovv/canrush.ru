@@ -1185,3 +1185,38 @@ a.profile-hub-row { text-decoration: none; }
 [data-profile-theme] .profile-bio-block p { color: var(--profile-ink); }
 [data-profile-theme] .profile-bio-block.is-empty p { color: var(--profile-muted); }
 @media (max-width: 700px) { .profile-bio-block { margin-bottom: 16px; } }
+
+/* Settings → «Вход и бот Telegram»: a status card (linked with a check, or an invitation with perks), the bot block with
+   its own status chip, and unlinking set apart at the bottom. Telegram blue only on the icon and the main button. */
+.tg-settings-card { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; background: color-mix(in srgb, #2aabee 10%, var(--theme-subtle, #f3f5f7)); }
+.tg-settings-icon { position: relative; display: grid; place-items: center; width: 52px; height: 52px; flex: none; border-radius: 16px; background: #2aabee; color: #fff; box-shadow: 0 8px 18px -10px rgb(42 171 238 / .8); }
+.tg-settings-icon svg { width: 26px; height: 26px; }
+.tg-settings-check { position: absolute; right: -4px; bottom: -4px; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--theme-panel, #fff); border-radius: 50%; background: #22a861; color: #fff; }
+.tg-settings-check svg { width: 12px; height: 12px; }
+.tg-settings-copy { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.tg-settings-copy strong { color: var(--theme-text, #111); font-size: 1.0625rem; }
+.tg-settings-copy > span:last-child { color: var(--theme-muted, #59616b); font-size: .875rem; line-height: 1.4; }
+.tg-settings-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.tg-settings-chip { flex: none; padding: 4px 10px; border-radius: 999px; background: var(--theme-subtle, #eef1f5); color: var(--theme-muted, #59616b); font-size: .75rem; font-weight: 800; white-space: nowrap; }
+.tg-settings-chip.is-on { background: color-mix(in srgb, #22a861 16%, transparent); color: #1d9354; }
+.tg-settings-perks { display: grid; gap: 10px; margin: 16px 0; padding: 0; list-style: none; }
+.tg-settings-perks li { display: flex; align-items: flex-start; gap: 10px; color: var(--theme-muted, #59616b); font-size: .9375rem; line-height: 1.4; }
+.tg-settings-perks li > svg { flex: none; margin-top: 2px; color: #2aabee; }
+.tg-settings-perks b { color: var(--theme-text, #111); }
+.tg-settings-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-color: #2aabee; background: #2aabee; color: #fff; }
+.tg-settings-link:hover:not(:disabled) { border-color: #1e96d6; background: #1e96d6; }
+.tg-settings-hint { margin-top: 8px; }
+.tg-settings-bot { display: grid; gap: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--theme-line, #edf0f3); }
+.tg-settings-bot-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tg-settings-bot-head h3 { margin: 0; }
+.tg-settings-bot .tg-settings-link { justify-self: start; }
+.tg-settings-danger { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; margin-top: 20px; padding: 16px; border: 1px solid var(--theme-line, #e4e7eb); border-radius: 16px; }
+.tg-settings-danger > div { display: grid; gap: 2px; min-width: 0; flex: 1 1 260px; }
+.tg-settings-danger strong { color: var(--theme-text, #111); }
+.tg-settings-danger span { overflow-wrap: anywhere; color: var(--theme-muted, #59616b); font-size: .875rem; line-height: 1.4; }
+.tg-settings-danger .field-help { margin: 0; }
+/* Over the site themes' `:root[data-site-theme=…] .community-button-secondary`. */
+:root .tg-settings-danger .community-button-secondary.tg-settings-unlink { color: #e5484d; }
+@media (max-width: 639px) {
+  .tg-settings-link, .tg-settings-bot .tg-settings-link, .tg-settings-danger form, .tg-settings-unlink { width: 100%; }
+}

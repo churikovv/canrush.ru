@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export type NavigationSection = 'home' | 'search' | 'community' | 'calendar' | 'catalog' | 'prices' | 'stores' | 'tierlists' | 'favorites' | 'profile' | 'market' | 'feed';
 /** Header groups have their own glyphs; they are not pages. */
-export type NavigationIconName = NavigationSection | 'sign-in' | 'can' | 'dating' | 'people';
+export type NavigationIconName = NavigationSection | 'sign-in' | 'can' | 'dating' | 'people' | 'leaderboard';
 
 const GLYPHS: Record<NavigationIconName, ReactNode> = {
   // Two stacked cards with a heart: drink dating in the community.
@@ -12,6 +12,8 @@ const GLYPHS: Record<NavigationIconName, ReactNode> = {
       <path fillRule="evenodd" d="M9 6.5h9a3 3 0 0 1 3 3v9.5a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V9.5a3 3 0 0 1 3-3Zm4.5 11.6s-3.9-2.3-3.9-5a2.1 2.1 0 0 1 3.9-1.1 2.1 2.1 0 0 1 3.9 1.1c0 2.7-3.9 5-3.9 5Z" />
     </>
   ),
+  // A cup on a stand: the members' leaderboard.
+  leaderboard: <path fillRule="evenodd" d="M7 2.5h10a1 1 0 0 1 1 1V4h2.5a1 1 0 0 1 1 1v1.5A4.5 4.5 0 0 1 17.2 11a5.6 5.6 0 0 1-4.2 3.4V17h2.5a1.5 1.5 0 0 1 1.5 1.5V21H7v-2.5A1.5 1.5 0 0 1 8.5 17H11v-2.6A5.6 5.6 0 0 1 6.8 11 4.5 4.5 0 0 1 2.5 6.5V5a1 1 0 0 1 1-1H6v-.5a1 1 0 0 1 1-1ZM6 6H4.5v.5a2.5 2.5 0 0 0 1.6 2.33A5.9 5.9 0 0 1 6 8V6Zm12 0v2c0 .28-.03.56-.1.83A2.5 2.5 0 0 0 19.5 6.5V6H18Z" />,
   // A member's card: avatar and two lines — the people of the community.
   people: <path fillRule="evenodd" d="M5.5 3h13A3.5 3.5 0 0 1 22 6.5v11a3.5 3.5 0 0 1-3.5 3.5h-13A3.5 3.5 0 0 1 2 17.5v-11A3.5 3.5 0 0 1 5.5 3ZM9 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm-4 9.7c0-1.7 1.8-3 4-3s4 1.3 4 3v.3H5v-.3ZM15.5 8.5a1 1 0 1 0 0 2h3a1 1 0 1 0 0-2h-3Zm0 4a1 1 0 1 0 0 2h2a1 1 0 1 0 0-2h-2Z" />,
   market: <path d="M3 3h18l1 6a3 3 0 0 1-5 2 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-5-2l1-6Zm1 10h5v8H4v-8Zm7 0h9v8h-9v-8Z" />,

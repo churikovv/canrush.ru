@@ -5,6 +5,7 @@ import { getPool } from '@/db/pool';
 import { auth } from '@/lib/auth';
 import { normalizeAdminEmail } from '@/lib/admin-fields';
 import type { SiteRole } from '@/lib/admin-roles';
+import type { ProfileAppearance } from '@/lib/profile-appearance';
 
 export { SITE_ROLE_LABELS, type SiteRole } from '@/lib/admin-roles';
 
@@ -33,30 +34,14 @@ export interface AdminUserEntry {
   isAdmin: boolean;
   reviewCount: number;
   tierListCount: number;
-}
-
-export interface AdminTierListEntry {
-  id: string;
-  slug: string;
-  title: string;
-  status: 'draft' | 'published';
-  updatedAt: Date;
-  userId: string;
-  authorName: string;
-  authorEmail: string;
-  itemCount: number;
-}
-
-export interface AdminReviewEntry {
-  id: string;
-  brand: string;
-  flavor: string;
-  text: string;
-  createdAt: Date;
-  userId: string;
-  authorName: string;
-  authorEmail: string;
-  score: number;
+  /** As members see them elsewhere: avatar, frame, chosen tag (still earned), XP; and moderation state. */
+  avatarId: string | null;
+  frame: ProfileAppearance['frame'];
+  tag: string | null;
+  xp: number;
+  role: SiteRole | null;
+  frozenUntil: Date | null;
+  commentCount: number;
 }
 
 interface SiteAdminRow extends QueryResultRow {

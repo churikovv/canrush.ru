@@ -2810,7 +2810,6 @@ html[data-cookie-notice="visible"] .brand-footer {
 .admin-record-text p { margin: 10px 0 0; }
 .admin-invite-form > label { display: block; margin-bottom: 8px; font-size: .875rem; }
 .admin-invite-form > div { display: flex; align-items: center; gap: 12px; max-width: 620px; }
-.admin-sidebar-group > p { margin: 0 0 6px; padding: 0 10px; color: var(--theme-muted, #59616b); font-size: .6875rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .admin-sidebar-group a { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 10px; border-radius: 10px; color: var(--theme-muted, #59616b); font-size: .875rem; font-weight: 600; text-decoration: none; transition: background-color 150ms ease-out, color 150ms ease-out; }
 .admin-sidebar-account a { color: var(--theme-link, #0058cc); font-size: .75rem; text-decoration: none; }
 .admin-topbar p { margin: 6px 0 0; color: var(--theme-muted, #59616b); font-size: .875rem; }
@@ -3667,3 +3666,16 @@ html[data-native-app] .pull-refresh:not([data-state="pulling"]) { transition: tr
   .pull-refresh[data-state="refreshing"] svg { animation: pull-refresh-pulse 1.2s ease-in-out infinite; }
   @keyframes pull-refresh-pulse { 50% { opacity: 0.45; } }
 }
+
+/* FormAlert (form-alert.tsx): a form's message above its buttons — icon, tinted card, plain text, optional actions. */
+.form-alert { --alert: var(--color-danger, #d93025); display: flex; align-items: flex-start; gap: 12px; margin: 0 0 12px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--alert) 30%, transparent); border-radius: 16px; background: color-mix(in srgb, var(--alert) 9%, var(--theme-panel, #fff)); color: var(--theme-text, var(--color-text)); text-align: left; }
+.form-alert[data-tone=warning] { --alert: #e08a00; }
+.form-alert[data-tone=success] { --alert: #1d9354; }
+.form-alert-icon { flex: none; margin-top: 1px; color: var(--alert); }
+.form-alert-body { display: grid; flex: 1; gap: 4px; min-width: 0; }
+.form-alert-body strong { font-size: .9375rem; line-height: 1.35; }
+.form-alert-body p { margin: 0; color: var(--theme-text, var(--color-text)); font-size: .875rem; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+.form-alert-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.form-alert-actions a:not(.community-button) { display: inline-flex; align-items: center; min-height: 36px; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--alert) 14%, transparent); color: inherit; font-size: .875rem; font-weight: 700; text-decoration: none; }
+.form-alert-actions a:not(.community-button):hover { background: color-mix(in srgb, var(--alert) 22%, transparent); }
+@media (max-width: 639px) { .form-alert-actions > * { flex: 1 1 100%; justify-content: center; } .form-alert-actions .community-button { width: 100%; } }

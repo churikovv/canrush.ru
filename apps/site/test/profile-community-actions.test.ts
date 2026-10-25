@@ -4,7 +4,7 @@ vi.mock('next/headers', () => ({ headers: async () => new Headers() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('../src/lib/auth', () => ({ auth: { api: { getSession: mocks.session } } }));
 vi.mock('../src/lib/profile', () => ({ ensureOwnProfile: vi.fn() }));
-vi.mock('../src/lib/moderation', () => ({ isUserBlocked: mocks.blocked }));
+vi.mock('../src/lib/moderation', () => ({ isUserBlocked: mocks.blocked, frozenMessage: async () => null, isFrozenError: () => false }));
 vi.mock('../src/lib/profile-community', () => ({ CommunityError: class extends Error {}, setFollowing: mocks.follow, setProfileTags: mocks.tags, addProfileComment: mocks.comment, deleteProfileComment: mocks.remove, touchPresence: mocks.touch, getPresence: vi.fn(), setPresenceVisibility: mocks.visibility }));
 import { updateCommunityAction, heartbeatAction } from '../src/app/profile/community-actions';
 const form = (operation: string) => { const data = new FormData(); data.set('operation', operation); data.set('userId', 'spoofed'); data.set('targetId', 'target'); data.set('text', 'hello'); return data; };

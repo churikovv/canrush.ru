@@ -10,8 +10,10 @@ const group = (brand: string, variants: FlavorVariant[]): CatalogGroup => ({ bra
 
 describe('home metrics', () => {
   it('counts drinks and distinct stores with prices', () => {
-    expect(catalogMetrics([group('Red Bull', [variant('Магнит', 99), variant('Лента', 109)]), group('Burn', [variant('Магнит', 89)])])).toEqual({ stores: 2, drinks: 2 });
-    expect(catalogMetrics([])).toEqual({ stores: 0, drinks: 0 });
+    const city = [group('Red Bull', [variant('Магнит', 99), variant('Лента', 109)]), group('Burn', [variant('Магнит', 89)])];
+    // Drinks count the whole catalog, archive included; stores only the city's offers.
+    expect(catalogMetrics(city, [...city, group('Tornado', [])])).toEqual({ stores: 2, drinks: 3 });
+    expect(catalogMetrics([], [])).toEqual({ stores: 0, drinks: 0 });
   });
 
   it('renders a tile per non-zero total, each linking to its section', () => {

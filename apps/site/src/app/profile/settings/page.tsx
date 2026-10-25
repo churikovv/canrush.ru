@@ -20,7 +20,7 @@ import { NOTIFICATION_OPTIONS } from '@/lib/notification-preferences';
 import { getTelegramEnv } from '@/lib/env';
 import { TELEGRAM_PROVIDER_ID } from '@/lib/telegram-auth';
 import { isTelegramPlaceholderEmail } from '@/lib/telegram-init-data';
-import { TelegramLinkButton } from '@/components/telegram-link-button';
+import { TelegramLinkButton, TelegramUnlinkButton } from '@/components/telegram-link-button';
 import { siteRoleForEmail } from '@/lib/admin';
 import { experienceLevel } from '@/lib/experience-level';
 import { getFavoriteGroups } from '@/lib/catalog';
@@ -60,6 +60,8 @@ function Panel({ id, title, note, children }: { id: string; title: string; note?
 }
 
 const ARROW = <svg {...ICON} width={16} height={16}><path d="m9 6 6 6-6 6" /></svg>;
+const TG_GLYPH = <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.7 3.3a1.6 1.6 0 0 0-1.7-.2L2.9 9.6c-1.2.5-1.1 2.2.1 2.6l3.9 1.2 1.5 4.8c.3.9 1.4 1.2 2.1.5l2.2-2.1 4.1 3c.9.7 2.2.2 2.4-.9l2.6-13.9c.1-.6-.1-1.2-.6-1.5ZM10 14.2l-.6 3.2-1.1-3.6 9.4-7.5-7.7 7.9Z" /></svg>;
+const CHECK = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>;
 const EXTERNAL = <svg {...ICON} width={16} height={16}><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" /></svg>;
 
 /**
@@ -135,9 +137,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       value: telegramLinked ? (botChat && !botChat.blocked ? `Привязан · бот @${telegram.botUsername} подключён` : 'Привязан · бот не подключён') : 'Не привязан',
       panel: <Panel id="telegram" title="Вход и бот Telegram">
         {telegramLinked ? <>
-          <p className="community-section-note">Telegram привязан: мини-приложение CanRush открывает этот аккаунт без письма.</p>
-          {!telegramOnly && <form action={unlinkTelegram}><button className="community-button community-button-secondary" type="submit">Отвязать Telegram</button></form>}
-          <h3>Бот @{telegram.botUsername}</h3>
+          <div className="tg-settings-card is-linked">
+            <span className="tg-settings-icon" aria-hidden="true">{TG_GLYPH}<span className="tg-settings-check">{CHECK}</span></span>
+            <div className="tg-settings-copy"><span className="tg-settings-title"><strong>Telegram привязан</strong><span className="tg-settings-chip is-on">Вход включён</span></span><span>Мини-приложение CanRush открывает этот аккаунт сразу, без письма.</span></div>
+          </div>
+          <div className="tg-settings-bot">
+            <div className="tg-settings-bot-head"><h3>Бот @{telegram.botUsername}</h3><span className={`tg-settings-chip${botChat && !botChat.blocked ? ' is-on' : ''}`}>{botChat && !botChat.blocked ? 'Подключён' : botChat?.blocked ? 'Остановлен' : 'Не подключён'}</span></div>
           {botChat && !botChat.blocked ? <form action={saveTelegramBotSettings} className="telegram-bot-settings">
             <p className="community-section-note">Что бот присылает в Telegram. Уведомления сайта приходят по тем же правилам, что выбраны в «Уведомлениях».</p>
             {TELEGRAM_BOT_OPTIONS.filter(option => !option.adminOnly || viewerIsAdmin).map(option => <label className="notification-setting" key={option.column}><span>{option.label}</span><input type="checkbox" name={option.column} defaultChecked={botChat[option.column] ?? true} /></label>)}
@@ -145,12 +150,27 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <button className="community-button" type="submit">Сохранить</button>
             {query.saved === 'telegram' && <p role="status">Настройки бота сохранены.</p>}
           </form> : <>
-            <p className="community-section-note">Бот присылает уведомления сайта, сообщения маркета и акции на ваше избранное, а ещё ищет энергетики прямо в чате.</p>
-            <a className="community-button" href={`https://t.me/${telegram.botUsername}?start=settings`} target="_blank" rel="noopener noreferrer">{botChat?.blocked ? 'Снова подключить бота' : 'Подключить бота'}</a>
+            <p className="community-section-note">{botChat?.blocked ? 'Бот остановлен в Telegram. Нажмите «Старт» в чате, и он снова будет присылать уведомления.' : 'Бот присылает уведомления сайта, сообщения маркета и акции на ваше избранное, а ещё ищет энергетики прямо в чате.'}</p>
+            <a className="community-button tg-settings-link" href={`https://t.me/${telegram.botUsername}?start=settings`} target="_blank" rel="noopener noreferrer">{TG_GLYPH}{botChat?.blocked ? 'Снова подключить бота' : 'Подключить бота'}</a>
           </>}
+          </div>
+          <div className="tg-settings-danger">
+            {telegramOnly
+              ? <p className="field-help">Аккаунт создан через Telegram, поэтому отвязать его нельзя: войти без Telegram будет нечем.</p>
+              : <><div><strong>Отвязать Telegram</strong><span>Вход останется по почте {session.user.email}. Привязать снова можно в любой момент.</span></div><TelegramUnlinkButton action={unlinkTelegram} /></>}
+          </div>
         </> : <>
-          <p className="community-section-note">Привяжите Telegram, чтобы входить в этот аккаунт из мини-приложения CanRush и получать уведомления от бота @{telegram.botUsername}. Ссылка для привязки действует 10 минут.</p>
+          <div className="tg-settings-card">
+            <span className="tg-settings-icon" aria-hidden="true">{TG_GLYPH}</span>
+            <div className="tg-settings-copy"><strong>Привяжите Telegram</strong><span>Один раз — и аккаунт открывается в Telegram без писем.</span></div>
+          </div>
+          <ul className="tg-settings-perks">
+            <li>{CHECK}<span><b>Вход в мини-приложение</b> CanRush в один тап</span></li>
+            <li>{CHECK}<span><b>Уведомления и сообщения маркета</b> от бота @{telegram.botUsername}</span></li>
+            <li>{CHECK}<span><b>Акции на избранное</b> каждое утро и подборка недели</span></li>
+          </ul>
           <TelegramLinkButton />
+          <p className="field-help tg-settings-hint">Откроется Telegram — подтвердите там. Ссылка действует 10 минут.</p>
         </>}
       </Panel> } satisfies SettingsRow] : []),
     { key: 'blocked', title: 'Заблокированные', value: blocked.length ? `Заблокировано: ${blocked.length}` : 'Никого', icon: ICONS.blocked, panel:

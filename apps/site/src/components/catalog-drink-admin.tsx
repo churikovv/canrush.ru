@@ -3,6 +3,7 @@ import { useActionState, useEffect, useId, useMemo, useRef, useState, useSyncExt
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
+import { FormAlert } from '@/components/form-alert';
 import { EditIcon, TrashIcon } from '@/components/action-icons';
 import { MoreActions } from '@/components/more-actions';
 import { CatalogDrinkBrandInput, CatalogDrinkFlavorInput, type PickedFlavor } from '@/components/catalog-drink-flavor-input';
@@ -108,7 +109,7 @@ function MergeForm({ drink, titleId, onDone }: { drink: AdminDrink; titleId: str
         {query.trim() && !searching && !results.length && <li className="field-help">Ничего не нашлось.</li>}
       </ul>
       {published && <label className="admin-merge-revoke"><input type="checkbox" name="revokeXp" defaultChecked />Забрать 50 XP у автора за дубль</label>}
-      {state.error && <p className="field-error" role="alert">{state.error}</p>}
+      {state.error && <FormAlert>{state.error}</FormAlert>}
       <div className="store-card-actions">
         <button className="community-button" type="submit" disabled={!target}>{pending ? 'Склеиваем…' : target ? `Склеить с «${target.label}»` : 'Выберите карточку'}</button>
         <button className="community-button community-button-secondary" type="button" onClick={onDone}>Отмена</button>
@@ -163,7 +164,7 @@ function EditForm({ drink, brands, flavors, titleId, onDone }: { drink: AdminDri
       <label>Полное название<input name="fullName" defaultValue={drink.fullName} maxLength={MAX_DRINK_FULL_NAME} placeholder="Monster Ultra Paradise" /></label>
       <label>Объёмы, мл<input name="volumes" defaultValue={drink.volumes.join(', ')} required inputMode="numeric" placeholder="250, 450" /></label>
       <label>Состав<textarea name="ingredients" rows={4} maxLength={MAX_DRINK_INGREDIENTS} defaultValue={drink.ingredients} /></label>
-      {(problem || state.error) && <p className="field-error" role="alert">{problem || state.error}{!problem && state.duplicate && <> <Link href={state.duplicate}>Открыть карточку</Link></>}</p>}
+      {(problem || state.error) && <FormAlert actions={!problem && state.duplicate ? <Link href={state.duplicate}>Открыть карточку</Link> : undefined}>{problem || state.error}</FormAlert>}
       <div className="store-card-actions">
         <button className="community-button" type="submit" disabled={!picked.length || brand.trim().length < 2}>{pending ? 'Сохраняем…' : 'Сохранить'}</button>
         <button className="community-button community-button-secondary" type="button" onClick={onDone}>Отмена</button>

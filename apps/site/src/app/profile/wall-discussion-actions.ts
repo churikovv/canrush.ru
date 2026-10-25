@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { ReviewPhotoError } from '@/lib/review-photos';
 import { prepareWallMedia } from '@/lib/wall-media';
-import { isUserBlocked } from '@/lib/moderation';
+import { frozenMessage, isUserBlocked } from '@/lib/moderation';
 import { addWallComment, deleteWallComment, editWallComment, getWallComments, getWallInteractions, WallDiscussionError, wallPostId, setWallCommentLike, setWallReaction, setWallSaved } from '@/lib/wall-discussions';
 
 export async function wallDiscussionAction(id: string, action: 'read' | 'vote' | 'save' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }) {
@@ -19,6 +19,8 @@ export async function wallDiscussionAction(id: string, action: 'read' | 'vote' |
     if (action !== 'read') {
       if (!viewer) return { error: 'Войдите, чтобы участвовать в обсуждении.', signIn: true };
       if (await isUserBlocked(viewer)) return { error: 'Ваш аккаунт заблокирован для публикаций.' };
+      const frozen = action === 'comment' || action === 'edit' ? await frozenMessage(viewer) : null;
+      if (frozen) return { error: frozen };
       if (action === 'vote') {
         if (typeof value !== 'number') throw new WallDiscussionError('Некорректная реакция.');
         await setWallReaction(viewer, id, value);

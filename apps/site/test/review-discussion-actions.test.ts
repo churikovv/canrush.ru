@@ -3,7 +3,7 @@ const mocks=vi.hoisted(()=>({session:vi.fn(),blocked:vi.fn(),vote:vi.fn(),commen
 vi.mock('next/headers',()=>({headers:async()=>new Headers()}));
 vi.mock('next/cache',()=>({revalidatePath:vi.fn()}));
 vi.mock('../src/lib/auth',()=>({auth:{api:{getSession:mocks.session}}}));
-vi.mock('../src/lib/moderation',()=>({isUserBlocked:mocks.blocked}));
+vi.mock('../src/lib/moderation',()=>({isUserBlocked:mocks.blocked,frozenMessage:async()=>null,isFrozenError:()=>false}));
 vi.mock('../src/lib/review-discussions',async importOriginal=>({...await importOriginal<typeof import('../src/lib/review-discussions')>(),setReviewReaction:mocks.vote,addReviewComment:mocks.comment,deleteReviewComment:mocks.remove,getReviewInteractions:mocks.stats,getReviewComments:mocks.read}));
 import { reviewDiscussionAction } from '../src/app/catalog/discussion-actions';
 const id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';

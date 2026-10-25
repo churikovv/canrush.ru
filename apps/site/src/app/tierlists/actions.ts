@@ -8,7 +8,7 @@ import { getPool } from '@/db/pool';
 import { auth } from '@/lib/auth';
 import { getProfileCommunity } from '@/lib/profile-community';
 import { loadTierPickerGroups } from '@/lib/catalog';
-import { isUserBlocked } from '@/lib/moderation';
+import { frozenMessage, isUserBlocked } from '@/lib/moderation';
 import { ensureOwnProfile } from '@/lib/profile';
 import { validateTierListInput, type TierListFieldErrors } from '@/lib/tier-list-fields';
 import { TIER_KEYS, type TierListPlacement, type TierListStatus } from '@/lib/tier-list-types';
@@ -54,6 +54,9 @@ export async function saveTierListAction(
   }
   const requestedSlug = String(formData.get('slug') ?? '');
   const intent = formData.get('intent') === 'publish' ? 'publish' : 'save';
+  // A frozen member may keep a draft, not publish it.
+  const frozen = intent === 'publish' ? await frozenMessage(user.id) : null;
+  if (frozen) return { status: 'error', message: frozen };
   const validation = validateTierListInput({
     title: String(formData.get('title') ?? ''),
     emoji: String(formData.get('emoji') ?? ''),

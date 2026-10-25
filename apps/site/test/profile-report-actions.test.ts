@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({ session: vi.fn(), blocked: vi.fn(), create: vi
 vi.mock('next/headers', () => ({ headers: async () => new Headers() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('../src/lib/auth', () => ({ auth: { api: { getSession: mocks.session } } }));
-vi.mock('../src/lib/moderation', () => ({ isUserBlocked: mocks.blocked }));
+vi.mock('../src/lib/moderation', () => ({ isUserBlocked: mocks.blocked, frozenMessage: async () => null, isFrozenError: () => false }));
 vi.mock('../src/lib/profile-reports', () => ({ createProfileReport: mocks.create }));
 import { reportProfileAction } from '../src/app/profile/report-actions';
 beforeEach(() => { vi.clearAllMocks(); mocks.session.mockResolvedValue({ user: { id: 'real-user' } }); mocks.blocked.mockResolvedValue(false); mocks.create.mockResolvedValue('sent'); });

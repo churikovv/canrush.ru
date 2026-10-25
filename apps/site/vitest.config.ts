@@ -23,7 +23,7 @@ export default defineConfig({
       'test/profile-community.integration.test.ts',
       'test/review-photos.integration.test.ts',
       'test/auth.integration.test.ts', 'test/review-login.integration.test.ts', 'test/push.integration.test.ts', 'test/member-blocks.integration.test.ts', 'test/saved-posts.integration.test.ts',
-      'test/admin.integration.test.ts', 'test/monthly-overtaken.integration.test.ts', 'test/moderator-role.integration.test.ts', 'test/catalog-drink-merge.integration.test.ts', 'test/staff-moderation.integration.test.ts',
+      'test/admin.integration.test.ts', 'test/monthly-overtaken.integration.test.ts', 'test/moderator-role.integration.test.ts', 'test/catalog-drink-merge.integration.test.ts', 'test/staff-moderation.integration.test.ts', 'test/admin-members.integration.test.ts',
       'node_modules/**',
       '.next/**',
     ],

@@ -7,7 +7,7 @@ import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { ensureOwnProfile } from '@/lib/profile';
-import { isUserBlocked } from '@/lib/moderation';
+import { frozenMessage, isUserBlocked } from '@/lib/moderation';
 import { CommunityError, addProfileComment, deleteProfileComment, editProfileComment, getPresence, setFollowing, setPresenceVisibility, setProfileTags, touchPresence } from '@/lib/profile-community';
 
 export interface CommunityActionState { error?: string; success?: string }
@@ -19,6 +19,8 @@ export async function updateCommunityAction(_state: CommunityActionState, form: 
   const userId = session.user.id;
   try {
     if ((operation === 'follow' || operation === 'comment') && await isUserBlocked(userId)) return { error: 'Публикации и подписки для этого аккаунта ограничены.' };
+    const frozen = operation === 'comment' ? await frozenMessage(userId) : null;
+    if (frozen) return { error: frozen };
     switch (operation) {
       case 'follow':
       case 'unfollow':
@@ -56,6 +58,8 @@ export async function editWallPostAction(commentId: string, text: string): Promi
   try {
     if (typeof commentId !== 'string' || typeof text !== 'string') throw new CommunityError('Запись не найдена.');
     if (await isUserBlocked(session.user.id)) return { error: 'Публикации для этого аккаунта ограничены.' };
+    const frozen = await frozenMessage(session.user.id);
+    if (frozen) return { error: frozen };
     const edited = await editProfileComment(session.user.id, commentId, text);
     revalidatePath('/profile', 'layout'); revalidatePath('/feed');
     return edited;

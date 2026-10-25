@@ -4,7 +4,7 @@ vi.mock('next/headers', () => ({ headers: async () => new Headers() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('../src/lib/auth', () => ({ auth: { api: { getSession: mocks.session } } }));
 vi.mock('../src/lib/profile', () => ({ ensureOwnProfile: vi.fn() }));
-vi.mock('../src/lib/moderation', () => ({ isUserBlocked: mocks.blocked }));
+vi.mock('../src/lib/moderation', () => ({ isUserBlocked: mocks.blocked, frozenMessage: async () => null, isFrozenError: () => false }));
 vi.mock('../src/lib/market', () => ({ createListing: mocks.create, closeListing: mocks.close, startOrder: mocks.start, changeOrderStatus: mocks.status, sendMarketMessage: mocks.send, getOrder: mocks.order, getMessages: mocks.messages, markMessagesRead: mocks.read }));
 vi.mock('../src/lib/review-photos', () => ({ prepareReviewPhotos: mocks.photos, ReviewPhotoError: class extends Error {} }));
 import { createListingAction, listingAction, orderStatusAction, sendMessageAction, loadMessagesAction, readMessagesAction } from '../src/app/market/actions';

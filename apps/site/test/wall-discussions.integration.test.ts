@@ -24,12 +24,10 @@ it('keeps one vote per person, switches or removes it, forbids self votes and in
   await expect(api.setWallReaction(owner,review,1)).rejects.toThrow();
   await expect(api.setWallReaction(reader,review,2)).rejects.toThrow();
 });
-it('limits concurrent comments, protects author deletion, and exposes them in admin search',async()=>{
+it('limits concurrent comments and protects author deletion',async()=>{
   const attempts=await Promise.allSettled([api.addWallComment(reader,review,'Comment '+reader),api.addWallComment(reader,review,'Comment '+reader)]);
   expect(attempts.filter(x=>x.status==='fulfilled')).toHaveLength(1);
   const thread=await api.getWallComments(review,reader);
-  const { getAdminDashboardData } = await import('../src/lib/admin-dashboard-data');
-  expect((await getAdminDashboardData(reader, 'comments')).comments).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'wall', text: 'Comment '+reader })]));
   expect(thread.items).toHaveLength(1); expect(thread.items[0]?.canDelete).toBe(true);
   expect((await api.getWallComments(review,other)).items[0]?.canDelete).toBe(false);
   await expect(api.deleteWallComment(other,review,thread.items[0]!.id)).rejects.toThrow();

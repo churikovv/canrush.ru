@@ -6,7 +6,6 @@ if(new URL(url).pathname !== '/canrush_site_test') throw new Error('Test DB only
 const pool = new Pool({ connectionString: url, max: 4 });
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
 const api = await import('../src/lib/review-discussions');
-const { getAdminDashboardData } = await import('../src/lib/admin-dashboard-data');
 const users = [randomUUID(),randomUUID(),randomUUID()];
 const [owner,reader,other] = users as [string,string,string];
 let review: string;
@@ -25,13 +24,12 @@ it('keeps one vote per person, switches or removes it, forbids self votes and in
   await expect(api.setReviewReaction(owner,review,1)).rejects.toThrow();
   await expect(api.setReviewReaction(reader,review,2)).rejects.toThrow();
 });
-it('limits concurrent comments, protects author deletion, and exposes them in admin search',async()=>{
+it('limits concurrent comments and protects author deletion',async()=>{
   const attempts=await Promise.allSettled([api.addReviewComment(reader,review,'Comment '+reader),api.addReviewComment(reader,review,'Comment '+reader)]);
   expect(attempts.filter(x=>x.status==='fulfilled')).toHaveLength(1);
   const thread=await api.getReviewComments(review,reader);
   expect(thread.items).toHaveLength(1); expect(thread.items[0]?.canDelete).toBe(true);
   expect((await api.getReviewComments(review,other)).items[0]?.canDelete).toBe(false);
-  expect((await getAdminDashboardData(reader,'comments')).total).toBe(1);
   await expect(api.deleteReviewComment(other,review,thread.items[0]!.id)).rejects.toThrow();
   await expect(api.addReviewComment(other,review,' '.repeat(5))).rejects.toThrow();
   await expect(api.addReviewComment(other,review,'a'.repeat(1001))).rejects.toThrow();

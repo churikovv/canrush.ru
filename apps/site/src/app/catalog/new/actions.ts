@@ -1,4 +1,5 @@
 'use server';
+import { isFrozenError } from '@/lib/moderation';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
@@ -28,7 +29,7 @@ export async function submitCatalogDrinkAction(_previous: CatalogDrinkState, for
     return { saved: true };
   } catch (error) {
     if (error instanceof CatalogDrinkDuplicate) return { error: error.message, duplicate: error.href, confirmable: error.confirmable };
-    return { error: error instanceof CatalogDrinkError || error instanceof ReviewPhotoError ? error.message : 'Не удалось отправить напиток. Попробуйте ещё раз.' };
+    return { error: error instanceof CatalogDrinkError || error instanceof ReviewPhotoError || isFrozenError(error) ? error.message : 'Не удалось отправить напиток. Попробуйте ещё раз.' };
   }
 }
 

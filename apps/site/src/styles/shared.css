@@ -372,7 +372,6 @@ a.store-drink-name:hover > span { color: var(--theme-link, #0058cc); text-decora
 .store-transfer-form p { grid-column: 1 / -1; margin: 0; }
 .store-transfer-form p:empty { display: none; }
 .store-admin-panel { margin-top: 24px; }
-.store-transfer-panel { margin-bottom: 16px; }
 @media (max-width: 639px) { .store-transfer-form { grid-template-columns: minmax(0, 1fr); } }
 .store-detail-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin-bottom: 24px; }
 .store-detail-head > div:first-child { min-width: 0; flex: 1 1 320px; }

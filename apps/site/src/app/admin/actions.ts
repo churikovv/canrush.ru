@@ -1,13 +1,12 @@
 'use server';
 
-import type { PoolClient, QueryResultRow } from 'pg';
+import type { PoolClient } from 'pg';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getPool } from '@/db/pool';
 import { requireFullAdmin, requireSiteAdmin, type SiteAdminIdentity, type SiteRole } from '@/lib/admin';
 import { normalizeAdminSearch, validateAdminEmail } from '@/lib/admin-fields';
 import { adminTab, adminPage, type AdminTab } from '@/lib/admin-tabs';
-import { catalogGroupSlug } from '@/lib/catalog-query';
 import { parseStoreReference, parseStoreTransferTarget } from '@/lib/store-fields';
 
 type AdminNotice =
@@ -18,10 +17,11 @@ type AdminNotice =
   | 'admin-removed'
   | 'user-blocked'
   | 'user-unblocked'
-  | 'tierlist-deleted'
-  | 'review-deleted'
-  | 'wall-deleted'
-  | 'comment-deleted';
+  | 'user-frozen'
+  | 'user-unfrozen'
+  | 'tierlists-purged'
+  | 'comments-purged'
+  | 'user-deleted';
 
 type AdminError = 'invalid-email' | 'protected-admin' | 'invalid-target' | 'operation-failed';
 
@@ -209,97 +209,67 @@ export async function unblockUserAction(formData: FormData): Promise<void> {
   redirect(adminLocation('notice', 'user-unblocked', query));
 }
 
-export async function deleteAdminTierListAction(formData: FormData): Promise<void> {
-  const admin = await requireSiteAdmin();
+/**
+ * One action on a member from the «⋯» menu of «Участники»: runs in a transaction with an audit row, never on a member
+ * of the team (admins and moderators), never on oneself. `full` — only administrators (deleting an account).
+ */
+async function memberAction(formData: FormData, options: { full?: boolean; action: string; notice: AdminNotice; run: (client: PoolClient, userId: string, admin: SiteAdminIdentity) => Promise<boolean> }): Promise<void> {
+  const admin = options.full ? await requireFullAdmin() : await requireSiteAdmin();
   const query = returnQuery(formData);
-  const slug = String(formData.get('slug') ?? '').trim();
-  if (!/^[a-z0-9-]{8,100}$/u.test(slug)) redirect(adminLocation('error', 'invalid-target', query));
-
-  let deleted: string | null;
+  const userId = String(formData.get('userId') ?? '');
+  if (!validTargetId(userId) || userId === admin.userId) redirect(adminLocation('error', 'invalid-target', query));
+  let done: string | null;
   try {
-    deleted = await auditedMutation(admin, 'delete', 'tier-list', slug, async (client) => {
-      const result = await client.query('delete from "tierList" where "slug" = $1 returning "slug"', [slug]);
-      return result.rowCount === 1 ? slug : null;
+    done = await auditedMutation(admin, options.action, 'user', userId, async client => {
+      const staff = await client.query('select 1 from "user" t join "siteAdmin" sa on sa.email = lower(t.email) where t.id = $1', [userId]);
+      if (staff.rowCount) return null;
+      return await options.run(client, userId, admin) ? userId : null;
     });
   } catch {
     redirect(adminLocation('error', 'operation-failed', query));
   }
-  if (!deleted) redirect(adminLocation('error', 'invalid-target', query));
-  revalidatePath('/admin');
-  revalidatePath('/tierlists');
-  revalidatePath(`/tierlists/${slug}`);
-  revalidatePath('/profile');
-  revalidatePath('/profile/tierlists');
-  redirect(adminLocation('notice', 'tierlist-deleted', query));
+  if (!done) redirect(adminLocation('error', 'invalid-target', query));
+  revalidatePath('/', 'layout');
+  redirect(adminLocation('notice', options.notice, query));
 }
 
-interface DeletedReviewRow extends QueryResultRow {
-  brand: string;
-  flavor: string;
+const FREEZE_DAYS = [1, 7, 30] as const;
+
+/** «Заморозить на сутки / неделю / месяц»: a temporary ban on posting ("userFreeze", 0108); a new freeze replaces the old. */
+export async function freezeUserAction(formData: FormData): Promise<void> {
+  const days = FREEZE_DAYS.find(value => value === Number(formData.get('days'))) ?? 1;
+  await memberAction(formData, { action: `freeze-${days}d`, notice: 'user-frozen', run: async (client, userId, admin) => (await client.query(
+    `insert into "userFreeze" ("userId", until, "frozenBy") select id, now() + make_interval(days => $2), $3 from "user" where id = $1
+     on conflict ("userId") do update set until = excluded.until, "frozenBy" = excluded."frozenBy", "createdAt" = now()`, [userId, days, admin.userId])).rowCount === 1 });
 }
 
-export async function deleteAdminReviewAction(formData: FormData): Promise<void> {
-  const admin = await requireSiteAdmin();
-  const query = returnQuery(formData);
-  const reviewId = String(formData.get('reviewId') ?? '').trim();
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(reviewId)) {
-    redirect(adminLocation('error', 'invalid-target', query));
-  }
-
-  let deleted: DeletedReviewRow | null;
-  try {
-    deleted = await auditedMutation(admin, 'delete', 'review', reviewId, async (client) => {
-      const result = await client.query<DeletedReviewRow>(
-        'delete from "review" where "id" = $1 returning "brand", "flavor"',
-        [reviewId],
-      );
-      return result.rows[0] ?? null;
-    });
-  } catch {
-    redirect(adminLocation('error', 'operation-failed', query));
-  }
-  if (!deleted) redirect(adminLocation('error', 'invalid-target', query));
-  revalidatePath('/admin');
-  revalidatePath('/catalog');
-  revalidatePath('/profile');
-  if (deleted) revalidatePath(`/catalog/${catalogGroupSlug(deleted.brand, deleted.flavor)}`);
-  redirect(adminLocation('notice', 'review-deleted', query));
+export async function unfreezeUserAction(formData: FormData): Promise<void> {
+  await memberAction(formData, { action: 'unfreeze', notice: 'user-unfrozen', run: async (client, userId) => (await client.query('delete from "userFreeze" where "userId" = $1', [userId])).rowCount === 1 });
 }
 
-export async function deleteAdminWallAction(formData: FormData): Promise<void> {
-  const admin = await requireSiteAdmin();
-  const query = returnQuery(formData);
-  const id = String(formData.get('commentId') ?? '');
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(id)) redirect(adminLocation('error', 'invalid-target', query));
-  let deleted: string | null;
-  try {
-    deleted = await auditedMutation(admin, 'delete', 'wall-comment', id, async client => {
-      const result = await client.query('delete from "profileComment" where id=$1 returning id', [id]);
-      return result.rows[0]?.id ?? null;
-    });
-  } catch { redirect(adminLocation('error', 'operation-failed', query)); }
-  if (!deleted) redirect(adminLocation('error', 'invalid-target', query));
-  revalidatePath('/admin');
-  revalidatePath('/profile', 'layout');
-  redirect(adminLocation('notice', 'wall-deleted', query));
+/** Every tier list of the member, drafts included. */
+export async function purgeUserTierListsAction(formData: FormData): Promise<void> {
+  await memberAction(formData, { action: 'purge-tierlists', notice: 'tierlists-purged', run: async (client, userId) => {
+    await client.query('delete from "tierList" where "userId" = $1', [userId]);
+    return true;
+  } });
 }
 
-export async function deleteAdminCommentAction(formData: FormData): Promise<void> {
-  const admin = await requireSiteAdmin();
-  const query = returnQuery(formData);
-  const id = String(formData.get('commentId') ?? '');
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(id)) redirect(adminLocation('error', 'invalid-target', query));
-  const wall = formData.get('kind') === 'wall';
-  let deleted: string | null;
-  try {
-    deleted = await auditedMutation(admin, 'delete', wall ? 'wall-reply' : 'review-comment', id, async client => {
-      const result = await client.query(wall ? 'delete from "wallReply" where id=$1 returning id' : 'delete from "reviewComment" where id=$1 returning id', [id]);
-      return result.rows[0]?.id ?? null;
-    });
-  } catch { redirect(adminLocation('error', 'operation-failed', query)); }
-  if (!deleted) redirect(adminLocation('error', 'invalid-target', query));
-  revalidatePath('/admin'); revalidatePath('/catalog', 'layout'); revalidatePath('/profile', 'layout');
-  redirect(adminLocation('notice', 'comment-deleted', query));
+/** Comments under reviews, tier lists and wall posts, and the member's own wall posts (the feed shows them). */
+export async function purgeUserCommentsAction(formData: FormData): Promise<void> {
+  await memberAction(formData, { action: 'purge-comments', notice: 'comments-purged', run: async (client, userId) => {
+    for (const table of ['"reviewComment"', '"tierListComment"', '"wallReply"', '"profileComment"']) await client.query(`delete from ${table} where "userId" = $1`, [userId]);
+    return true;
+  } });
+}
+
+/** The account and everything tied to it, as when the member deletes it themselves (deleteAccountAction). Admins only. */
+export async function deleteUserAction(formData: FormData): Promise<void> {
+  await memberAction(formData, { full: true, action: 'delete-account', notice: 'user-deleted', run: async (client, userId) => {
+    await client.query(`delete from "telegramChat" where "telegramId"::text in
+      (select "accountId" from account where "userId" = $1 and "providerId" = 'telegram')`, [userId]);
+    return (await client.query('delete from "user" where id = $1', [userId])).rowCount === 1;
+  } });
 }
 
 export async function reviewProfileReportAction(formData: FormData): Promise<void> {

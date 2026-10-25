@@ -50,8 +50,6 @@ it('shows moderators nicknames instead of emails, and email search finds nothing
   expect(forAdmin.users.find(user => user.id === member.id)?.email).toBe(member.email);
   const forModerator = await getAdminDashboardData(member.username, 'users', 1, false);
   expect(forModerator.users.find(user => user.id === member.id)?.email).toBe(`@${member.username}`);
-  const reviews = await getAdminDashboardData(`проверки ролей ${run}`, 'reviews', 1, false);
-  expect(reviews.reviews.map(review => review.authorEmail)).toEqual([`@${member.username}`]);
   // An email typed into the search reveals nothing to a moderator.
   expect((await getAdminDashboardData(member.email, 'users', 1, false)).users).toEqual([]);
   expect((await getAdminDashboardData(member.email, 'users', 1, true)).users.map(user => user.id)).toEqual([member.id]);

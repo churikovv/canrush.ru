@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEv
 import Link from '@/components/navigation-progress';
 import { NavigationIcon, type NavigationIconName, type NavigationSection } from '@/components/navigation-icon';
 
-/** `section` names the page for «current» and the icon; a menu-only item (Люди) may use an icon name. */
+/** `section` names the page for «current» and the icon; a menu-only item (Дейтинг, Люди, Рейтинг) may use an icon name. */
 export interface HeaderMenuItem { section: NavigationSection | NavigationIconName; href: string; label: string; hint: string; current: boolean }
 
 const CLOSE_DELAY_MS = 160;

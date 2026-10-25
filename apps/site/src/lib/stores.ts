@@ -15,6 +15,20 @@ export async function listStores(city: string, query: string, page: number, owne
     order by s."updatedAt" desc,s.id limit 25 offset $5`,[city,query,ownerId??null,pending,(page-1)*24,filters.brand??'',filters.metro?.ids??null,filters.metro?.lat??[],filters.metro?.lng??[],filters.metro?.km??0]);
   return {items:result.rows.slice(0,24),hasMore:result.rows.length>24};
 }
+export interface StoreAuthor { username: string | null; name: string; avatarId: string | null }
+export type StoreStatus = Store['status'];
+/**
+ * The admin's lists of stores by status, with who sent each one: requests oldest first (the queue), published and
+ * rejected newest first. `query` matches the name, address and the sender's nick or name.
+ */
+export async function listStoresForAdmin(status: StoreStatus, page: number, query = ''): Promise<{ items: (Store & { author: StoreAuthor })[]; hasMore: boolean }> {
+  const { rows } = await getPool().query<Store & { authorUsername: string | null; authorName: string; authorAvatarId: string | null }>(`select s.*, array(select p.id::text from "storePhoto" p where p."storeId"=s.id order by p.position) as photos,
+      u.username as "authorUsername", u.name as "authorName", (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "authorAvatarId"
+    from "marketStore" s join "user" u on u.id=s."ownerId"
+    where s.status=$1 and ($3::text='' or concat_ws(' ',s.name,s.address,s.city,u.username,u.name) ilike '%' || $3 || '%')
+    order by case when $1='pending' then s."updatedAt" end asc, s."updatedAt" desc, s.id limit 25 offset $2`, [status, (page - 1) * 24, query]);
+  return { items: rows.slice(0, 24).map(({ authorUsername, authorName, authorAvatarId, ...store }) => ({ ...store, author: { username: authorUsername, name: authorName, avatarId: authorAvatarId } })), hasMore: rows.length > 24 };
+}
 export interface StorePoint { id: string; name: string; city: string; address: string; metro: string | null; latitude: number; longitude: number; drinks: number }
 /** Published stores of a city that have a point, for the home page map. */
 export async function listStorePoints(city: string, limit = 300): Promise<StorePoint[]> {
@@ -43,7 +57,11 @@ export async function getVisibleStore(id: string, userId: string | null) {
    (s.status='published' and not exists(select 1 from "userBlock" b where b."userId"=s."ownerId")) or s."ownerId"=$2
    or exists(select 1 from "user" u join "siteAdmin" a on lower(u.email)=a.email where u.id=$2))`,[id,userId])).rows[0]??null;
 }
-export async function saveStore(userId: string, input: StoreInput, id?: string, photoChanges?: {retained: string[]; photos: PreparedReviewPhoto[]}) {
+/**
+ * Creates or edits a store. The owner's edit sends it back for moderation; `staff` (an admin or moderator editing someone
+ * else's store from /admin/stores) keeps its status and is checked by role here, not by ownership.
+ */
+export async function saveStore(userId: string, input: StoreInput, id?: string, photoChanges?: {retained: string[]; photos: PreparedReviewPhoto[]}, staff = false) {
   const db=await getPool().connect();
   try {
     await db.query('begin');
@@ -54,7 +72,9 @@ export async function saveStore(userId: string, input: StoreInput, id?: string, 
       if(counts.rows[0]!.count>=MAX_PENDING_STORES || counts.rows[0]!.recent)throw new StoreError(`Подождите минуту между заявками. Одновременно можно отправить до ${MAX_PENDING_STORES} магазинов на проверку.`);
     }
     const values=[userId,input.name,input.city,input.address,input.latitude,input.longitude,input.metro,input.description,JSON.stringify(input.catalog),input.locationSource];
-    const result = id ? await db.query(`update "marketStore" set name=$2,city=$3,address=$4,latitude=$5,longitude=$6,metro=$7,description=$8,catalog=$9,"locationSource"=$10,status='pending',"moderationNote"='',"reviewedAt"=null,"reviewedBy"=null,"updatedAt"=clock_timestamp() where "ownerId"=$1 and id=$11 returning id`,[...values,id]) : await db.query(`insert into "marketStore"("ownerId",name,city,address,latitude,longitude,metro,description,catalog,"locationSource") values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,values);
+    const result = id && staff ? await db.query(`update "marketStore" set name=$2,city=$3,address=$4,latitude=$5,longitude=$6,metro=$7,description=$8,catalog=$9,"locationSource"=$10,"updatedAt"=clock_timestamp()
+        where id=$11 and exists(select 1 from "user" u join "siteAdmin" a on lower(u.email)=a.email where u.id=$1) returning id`,[...values,id])
+      : id ? await db.query(`update "marketStore" set name=$2,city=$3,address=$4,latitude=$5,longitude=$6,metro=$7,description=$8,catalog=$9,"locationSource"=$10,status='pending',"moderationNote"='',"reviewedAt"=null,"reviewedBy"=null,"updatedAt"=clock_timestamp() where "ownerId"=$1 and id=$11 returning id`,[...values,id]) : await db.query(`insert into "marketStore"("ownerId",name,city,address,latitude,longitude,metro,description,catalog,"locationSource") values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,values);
     if(!result.rowCount)throw new StoreError('Магазин недоступен для редактирования.');
     const storeId=result.rows[0].id as string;
     if(photoChanges){

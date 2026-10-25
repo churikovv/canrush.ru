@@ -17,7 +17,9 @@ const COMMUNITY = [
   { section: 'tierlists', href: '/tierlists', label: 'Тирлисты', hint: 'Рейтинги вкусов' },
   { section: 'market', href: '/market', label: 'Объявления', hint: 'Маркет банок от участников' },
   { section: 'feed', href: '/feed', label: 'Лента', hint: 'Записи всех стен' },
+  { section: 'dating', href: '/community?type=dating', label: 'Дейтинг', hint: 'Свайпай напитки' },
   { section: 'people', href: '/community?type=people', label: 'Люди', hint: 'Участники и их вкусы' },
+  { section: 'leaderboard', href: '/leaderboard', label: 'Рейтинг', hint: 'Топ месяца и лучшие участники' },
 ] as const;
 const STORES = [
   { section: 'catalog', href: '/catalog', label: 'Каталог', hint: 'Все энергетики и отзывы' },

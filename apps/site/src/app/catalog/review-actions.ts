@@ -9,7 +9,7 @@ import { auth } from '@/lib/auth';
 import { getProfileCommunity } from '@/lib/profile-community';
 import { getCatalogGroup } from '@/lib/catalog';
 import { catalogGroupSlug } from '@/lib/catalog-query';
-import { isUserBlocked } from '@/lib/moderation';
+import { frozenMessage, isUserBlocked } from '@/lib/moderation';
 import { validateReviewInput } from '@/lib/review-fields';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { deleteReview, upsertReview } from '@/lib/reviews';
@@ -38,6 +38,8 @@ export async function submitReviewAction(
   if (await isUserBlocked(user.id)) {
     return { status: 'error', message: 'Ваш аккаунт заблокирован для публикации отзывов.' };
   }
+  const frozen = await frozenMessage(user.id);
+  if (frozen) return { status: 'error', message: frozen };
 
   const brand = formData.get('brand');
   const flavor = formData.get('flavor');

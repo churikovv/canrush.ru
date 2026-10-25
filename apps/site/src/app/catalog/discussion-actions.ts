@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { ReviewPhotoError } from '@/lib/review-photos';
 import { prepareWallMedia } from '@/lib/wall-media';
-import { isUserBlocked } from '@/lib/moderation';
+import { frozenMessage, isUserBlocked } from '@/lib/moderation';
 import { addReviewComment, deleteReviewComment, editReviewComment, getReviewComments, getReviewInteractions, ReviewDiscussionError, reviewId, setReviewReaction } from '@/lib/review-discussions';
 
 export async function reviewDiscussionAction(id: string, action: 'read' | 'vote' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }) {
@@ -18,6 +18,8 @@ export async function reviewDiscussionAction(id: string, action: 'read' | 'vote'
     if (action !== 'read') {
       if (!viewer) return { error: 'Войдите, чтобы участвовать в обсуждении.', signIn: true };
       if (await isUserBlocked(viewer)) return { error: 'Ваш аккаунт заблокирован для публикаций.' };
+      const frozen = action === 'comment' || action === 'edit' ? await frozenMessage(viewer) : null;
+      if (frozen) return { error: frozen };
       if (action === 'vote') {
         if (typeof value !== 'number') throw new ReviewDiscussionError('Некорректная реакция.');
         await setReviewReaction(viewer, id, value);

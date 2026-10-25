@@ -13,6 +13,7 @@ import type { Store } from '@/lib/stores';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
 import { geocodeStoreAction, saveStoreAction } from '@/app/market/stores/actions';
 import { FormOptional, FormStep } from '@/components/form-step';
+import { FormAlert } from '@/components/form-alert';
 
 type GeoStatus = {kind:'idle'}|{kind:'searching'}|{kind:'found';address:string;precise:boolean}|{kind:'missing'}|{kind:'error'};
 interface Row { id: string; name: string; price: string; availability: StockStatus; brand?: string; flavor?: string }
@@ -85,6 +86,7 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
     show(target);
   }
 
+  if(state.saved&&state.staff)return <section className="market-empty"><h2>Изменения сохранены</h2><p>Магазин остался в своём статусе, правка записана в журнал админки.</p><div className="market-empty-actions"><Link href="/admin/stores" className="community-button">К магазинам в админке</Link>{initial&&<Link href={`/market/stores/${initial.id}`} className="community-button community-button-secondary">Открыть магазин</Link>}</div></section>;
   if(state.saved)return <section className="market-empty"><h2>Магазин отправлен на проверку</h2><p>После модерации он появится в списке и на карте{initial ? '' : <>, а вы получите <strong>+{STORE_XP} XP</strong></>}.</p><div className="market-empty-actions"><Link href="/market/stores?mine=1" className="community-button">Мои магазины</Link></div></section>;
   const optional=<FormOptional/>;
   const photoCount=photos.length+retained.length;
@@ -154,7 +156,7 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
     <div className="form-submit store-form-footer">
       {initial&&step===LAST_STEP&&<p>После изменения магазин снова пройдёт модерацию и временно исчезнет из публичного списка.</p>}
       {geoError&&<p className="store-note" role="status">{geoError}</p>}
-      {state.error&&<p className="field-error" role="alert">{state.error}</p>}
+      {state.error&&<FormAlert>{state.error}</FormAlert>}
       <div className="store-form-nav">
         {step>0&&<button type="button" className="community-button community-button-secondary" disabled={busy} onClick={()=>show(step-1)}>Назад</button>}
         <button className="community-button" disabled={busy} type="submit">{pending?'Отправляем…':geo.kind==='searching'?'Ищем адрес…':step<LAST_STEP?nextLabel:'Отправить на проверку'}</button>

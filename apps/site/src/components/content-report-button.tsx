@@ -5,6 +5,7 @@ import { reportContentAction } from '@/app/profile/report-actions';
 import { FlagIcon } from '@/components/action-icons';
 import { BlockMemberButton } from '@/components/block-member-button';
 import { CONTENT_REPORT_KINDS, REPORT_REASONS, type ContentReportKind } from '@/lib/profile-report-fields';
+import { FormAlert } from '@/components/form-alert';
 
 /**
  * «Пожаловаться» on someone else's content: opens a dialog with the reason and an optional comment.
@@ -62,7 +63,7 @@ function ReportForm({ kind, id, pagePath, fieldId, onClose }: { kind: ContentRep
       </select>
       <label htmlFor={`${fieldId}-comment`}>Комментарий <span className="community-muted">(необязательно)</span></label>
       <textarea id={`${fieldId}-comment`} name="comment" maxLength={1000} rows={3} placeholder="Что не так?" disabled={pending} />
-      {state.error && <p className="field-error" role="alert">{state.error}</p>}
+      {state.error && <FormAlert>{state.error}</FormAlert>}
       <div className="content-report-actions">
         <button className="community-button community-button-secondary" type="button" disabled={pending} onClick={onClose}>Отмена</button>
         <button className="community-button" type="submit" disabled={pending}>{pending ? 'Отправляем…' : 'Отправить'}</button>

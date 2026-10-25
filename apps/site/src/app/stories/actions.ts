@@ -1,4 +1,5 @@
 'use server';
+import { isFrozenError } from '@/lib/moderation';
 
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
@@ -21,7 +22,7 @@ export async function publishStoryAction(form: FormData): Promise<StoryActionSta
     revalidatePath('/');
     return { id };
   } catch (error) {
-    return { error: error instanceof StoryError || error instanceof ReviewPhotoError ? error.message : 'Не удалось опубликовать историю. Попробуйте ещё раз.' };
+    return { error: error instanceof StoryError || error instanceof ReviewPhotoError || isFrozenError(error) ? error.message : 'Не удалось опубликовать историю. Попробуйте ещё раз.' };
   }
 }
 

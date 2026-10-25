@@ -79,3 +79,13 @@ it('stores an address-only point, its source and catalog links; the page follows
  await expect(pool.query('update "marketStore" set "locationSource"=null where id=$1',[id])).rejects.toThrow();
  expect(await api.getVisibleStore('not-a-uuid',owner)).toBeNull();
 });
+it('lets the team edit someone else’s store in place, keeping its status, and lists it for the admin with its author',async()=>{
+ const row=(await api.getStore(id))!;
+ if(row.status!=='published')await api.moderateStore(admin,id,'published','',row.updatedAt.toISOString());
+ // Not the team: refused even with the staff flag.
+ await expect(api.saveStore(stranger,{...input,description:'Чужая правка'},id,undefined,true)).rejects.toThrow('редактирования');
+ await api.saveStore(admin,{...input,description:'Правка модератора'},id,undefined,true);
+ expect(await api.getStore(id)).toMatchObject({status:'published',description:'Правка модератора',ownerId:owner});
+ const {items}=await api.listStoresForAdmin('published',1,input.name.slice(0,20));
+ expect(items.find(store=>store.id===id)?.author).toMatchObject({name:'Store test'});
+});

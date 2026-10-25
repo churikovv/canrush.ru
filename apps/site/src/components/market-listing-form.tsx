@@ -7,6 +7,7 @@ import { PriceFilterInput } from './price-filter-input';
 import { DELIVERY } from '@/lib/market-fields';
 import { createListingAction } from '@/app/market/actions';
 import { FormStep } from './form-step';
+import { FormAlert } from '@/components/form-alert';
 
 export function MarketListingForm({ brands }: { brands: string[] }) {
   const [brand, setBrand] = useState('');
@@ -53,7 +54,7 @@ export function MarketListingForm({ brands }: { brands: string[] }) {
     </fieldset>
     <div className="form-submit">
       <p className="market-note">Оплату и доставку вы согласуете с покупателем в переписке. CanRush не принимает платежи и не оформляет доставку.</p>
-      {error && <p className="market-error" role="alert">{error}</p>}
+      {error && <FormAlert>{error}</FormAlert>}
       <button className="community-button" disabled={pending || photosBusy} type="submit">{pending ? 'Публикуем…' : 'Опубликовать объявление'}</button>
     </div>
   </form>;

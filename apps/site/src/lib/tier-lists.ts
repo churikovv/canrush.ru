@@ -1,4 +1,5 @@
-import { isAssortmentFlavor, isExcludedEnergyBrand, isResolvedFlavor, type CatalogGroup } from '@canrush/shared';
+import type { CatalogGroup } from '@canrush/shared';
+import { isCountedCatalogDrink } from '@/lib/home-metrics';
 import type { QueryResultRow } from 'pg';
 import { getPool } from '@/db/pool';
 import { catalogGroupSlug, catalogRetailerCount, flavorName } from '@/lib/catalog-query';
@@ -252,8 +253,7 @@ export type OfficialTierMetric = 'overall' | 'design' | 'taste';
 
 export async function buildOfficialTierList(groups: CatalogGroup[], metric: OfficialTierMetric = 'overall'): Promise<OfficialTierList> {
   // Every drink of the catalog counts — in shops or not (archived, or added by members); the reviews decide.
-  const eligible = groups.filter((group) => group.brand.trim() && group.brand.toLowerCase() !== 'unknown' && !isExcludedEnergyBrand(group.brand)
-    && isResolvedFlavor(group.flavor) && !isAssortmentFlavor(group.flavor));
+  const eligible = groups.filter(isCountedCatalogDrink);
   const summaries = await getReviewSummaries(eligible.map(({ brand, flavor }) => ({ brand, flavor })));
   const products = catalogGroupsToTierProducts(eligible, summaries, metric)
     .filter((product) => product.reviewCount >= MIN_OFFICIAL_REVIEW_COUNT && product.score !== undefined)

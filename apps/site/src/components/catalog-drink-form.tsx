@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/navigation-progress';
+import { FormAlert } from '@/components/form-alert';
 import { FormOptional, FormStep } from '@/components/form-step';
 import { MarketPhotoPicker } from '@/components/market-photo-picker';
 import { submitCatalogDrinkAction } from '@/app/catalog/new/actions';
@@ -173,12 +174,9 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
     </section>
 
     <div className="form-submit store-form-footer">
-      {!problem && state.confirmable ? <div className="catalog-drink-match" role="alert">
-        <p>{state.error} {state.duplicate && <Link href={state.duplicate}>Открыть карточку</Link>}</p>
-        {/* The submitter's name and value reach the action: the same request, sent as the member's own version. */}
-        <button className="community-button community-button-secondary" type="submit" name="confirmMatch" value="1" disabled={busy}>Всё равно отправить на проверку</button>
-      </div>
-      : (problem || state.error) && <p className="field-error" role="alert">{problem || state.error}{!problem && state.duplicate && <> <Link href={state.duplicate}>Открыть карточку</Link></>}</p>}
+      {/* The submitter's name and value reach the action: «Всё равно отправить» is the same request, sent as the member's own version. */}
+      {!problem && state.confirmable ? <FormAlert tone="warning" actions={<>{state.duplicate && <Link href={state.duplicate}>Открыть карточку</Link>}<button className="community-button community-button-secondary" type="submit" name="confirmMatch" value="1" disabled={busy}>Всё равно отправить на проверку</button></>}>{state.error}</FormAlert>
+      : (problem || state.error) && <FormAlert actions={!problem && state.duplicate ? <Link href={state.duplicate}>Открыть карточку</Link> : undefined}>{problem || state.error}</FormAlert>}
       <div className="store-form-nav">
         {step > 0 && <button type="button" className="community-button community-button-secondary" disabled={busy} onClick={() => show(step - 1)}>Назад</button>}
         <button className="community-button" disabled={busy} type="submit">{pending ? 'Отправляем…' : step < LAST_STEP ? 'Далее' : 'Отправить на проверку'}</button>

@@ -59,7 +59,7 @@ function Row({ user }: { user: LeaderboardRow }) {
 export default async function LeaderboardPage() {
   await settleMonthlyTop();
   const [users, monthly] = await Promise.all([getLeaderboard(), getMonthlyTop()]);
-  return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface"><div className="community-profile">
+  return <BrandShell headerAction={<ProfileNavigation active="community" />} surfaceClassName="profile-surface"><div className="community-profile">
     <div className="community-section-heading"><h1>Рейтинг участников</h1><Link href="/profile">Мой профиль ↗</Link></div>
     <MonthlyTop data={monthly} />
     <h2 className="leaderboard-subheading">За всё время</h2>

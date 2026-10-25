@@ -20,12 +20,7 @@ it('paginates and searches participants without loading other sections', async (
   expect(first.total).toBe(27); expect(first.users).toHaveLength(25);
   expect(last.page).toBe(2); expect(last.users).toHaveLength(2);
   expect(new Set([...first.users,...last.users].map(u => u.id)).size).toBe(27);
-  expect(first.metrics).toBeNull(); expect(first.wall).toEqual([]);
-});
-it('finds wall comments by text and wall owner', async () => {
-  const text = await getAdminDashboardData(`Wall ${run}`, 'wall');
-  expect(text.total).toBe(1); expect(text.wall[0]?.profileUsername).toBe(`${username}_0`);
-  expect((await getAdminDashboardData(`${username}_0`, 'wall')).total).toBe(1);
+  expect(first.metrics).toBeNull(); expect(first.market).toEqual([]);
 });
 it('uses full database metrics rather than the page size or search results', async () => {
   const data = await getAdminDashboardData('does-not-exist', 'analytics');

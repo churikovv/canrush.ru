@@ -1,4 +1,5 @@
 import '@/styles/shared.css';
+import '@/styles/profile.css';
 import '@/styles/admin.css';
 import { AdminCampaigns } from '@/components/admin-campaigns';
 import type { Metadata } from 'next';
@@ -26,10 +27,11 @@ const NOTICES: Record<string, string> = {
   'role-changed': 'Роль изменена.',
   'user-blocked': 'Пользователь заблокирован.',
   'user-unblocked': 'Пользователь разблокирован.',
-  'tierlist-deleted': 'Тирлист удалён.',
-  'review-deleted': 'Отзыв удалён.',
-  'comment-deleted': 'Комментарий к отзыву удалён.',
-  'wall-deleted': 'Комментарий стены удалён.',
+  'user-frozen': 'Участник заморожен: писать он не сможет до конца срока.',
+  'user-unfrozen': 'Заморозка снята.',
+  'tierlists-purged': 'Все тирлисты участника удалены.',
+  'comments-purged': 'Все комментарии и записи участника удалены.',
+  'user-deleted': 'Аккаунт участника удалён.',
 };
 
 const ERRORS: Record<string, string> = {

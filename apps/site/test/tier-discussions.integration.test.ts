@@ -31,7 +31,7 @@ it('gives cards the viewer\'s own votes only', async () => {
   expect(await api.getTierCardViewer([review], null)).toEqual({ id: null, votes: new Map() });
   await api.setTierReaction(reader, review, 0);
 });
-it('limits concurrent comments, protects author deletion, and exposes them in admin search',async()=>{
+it('limits concurrent comments and protects author deletion',async()=>{
   const attempts=await Promise.allSettled([api.addTierComment(reader,review,'Comment '+reader),api.addTierComment(reader,review,'Comment '+reader)]);
   expect(attempts.filter(x=>x.status==='fulfilled')).toHaveLength(1);
   const thread=await api.getTierComments(review,reader);
