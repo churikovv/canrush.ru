@@ -14,6 +14,8 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
     // «Мандариновый пуэр» is a By Баста can («by БАСТА ГУФ» on it), even when the retailer files it under Guf.
     'By Баста': [[/(?:мандарин.*пуэр|пуэр.*мандарин)/u, 'basta_tangerine_puer'], [/(?:^| )(?:классический|ориджинал|original)(?: |$)/u, 'original']],
     'Sangaria': [[/(?:миракл|miracle)/u, 'sangaria_miracle']],
+    // «Burn Energy» is a WOW Energy flavour (red-orange can), not the Burn brand.
+    'Wow': [[/burn energy/u, 'wow_burn']],
     'Plan B': [[/витаминная энергия/u, 'plan_b_vitamin']],
     'Dydo': [[/вита энерджи желе/u, 'dydo_vita_jelly']],
     'Bizon': [[/(?:^| )black(?: |$)/u, 'bizon_black']],

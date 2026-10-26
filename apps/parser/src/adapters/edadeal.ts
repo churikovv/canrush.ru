@@ -140,7 +140,7 @@ function matchesCategory(
   aliases: BrandAliases,
   apiBrand: string | undefined,
 ): boolean {
-  if (isExcludedEnergyBrand(apiBrand) || /(?:^|[^a-zа-яё])(?:pepsi|пепси)(?=$|[^a-zа-яё])/iu.test(name)) return false;
+  if (isExcludedEnergyBrand(apiBrand) || /(?:^|[^a-zа-яё])(?:pepsi|пепси|dragon king)(?=$|[^a-zа-яё])/iu.test(name)) return false;
   const lower = name.toLowerCase();
   const explicitEnergy =
     keywords.some((keyword) => lower.includes(keyword.toLowerCase())) ||

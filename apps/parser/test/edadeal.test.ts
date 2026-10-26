@@ -275,3 +275,13 @@ it('rejects Pepsi labels from source metadata and product titles even with energ
   const result = mapEdadealResponse({ items }, { brands: BRANDS, keywords: ['энергетик'] }, MOSCOW, FETCHED_AT, new Map([['pepsi', 'Pepsi']]));
   expect(result.map(product => product.sourceId)).toEqual(['valid']);
 });
+
+it('rejects the Dragon King aloe vera drink that a promo calls «энергетический»', () => {
+  const items = [
+    { uuid: 'aloe', title: 'Напиток энергетический DRAGON KING алоэ, 500 мл' },
+    { uuid: 'aloe-brand', title: 'Напиток энергетический алоэ, 500 мл', brandUuid: 'dragon' },
+    { uuid: 'valid', title: 'Энергетический напиток Burn 449 мл' },
+  ].map(item => ({ ...item, itemType: 'meta_offer' as const, partner: { name: 'Ашан' }, priceData: { new: { type: 'value' as const, value: 6699 } } }));
+  const result = mapEdadealResponse({ items }, { brands: BRANDS, keywords: ['энергетик'] }, MOSCOW, FETCHED_AT, new Map([['dragon', 'Dragon']]));
+  expect(result.map(product => product.sourceId)).toEqual(['valid']);
+});

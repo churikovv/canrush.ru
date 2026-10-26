@@ -283,3 +283,12 @@ it('reads Pulse Up as Pulseup and its misspelled plain title as the original', (
   expect(product('Энергетический напиток PulseUP Berry Energy 0,45 л ж/б', 'Pulse Up')).toMatchObject({ brand: 'Pulseup', flavor: 'berry' });
   expect(product('Энергетический напиток PulseUP Your Energy 0,45 л ж/б', 'Pulseup')).toMatchObject({ brand: 'Pulseup', flavor: 'pulse_your' });
 });
+
+it('reads the WOW Energy cans, a misspelt bubble gum and Gorilla Mojito (Edadeal titles, October 2026)', () => {
+  const config = loadProductsConfig();
+  const product = (name: string, brand?: string) => normalizeProduct('edadeal', { sourceId: 'edadeal', name, ...(brand ? { brand } : {}), price: 100, url: 'https://edadeal.ru/x' }, config.brands, '2026-10-26', config.brandAliases, config.flavors, config.flavorAliases);
+  // «Burn Energy» is a WOW flavour: the longer «WOW Energy» wins over the Burn brand in the same title.
+  expect(product('Напиток тонизирующий WOW Energy Burn Energy без сахара 450мл')).toMatchObject({ brand: 'Wow', flavor: 'wow_burn:sugarfree' });
+  expect(product('Напиток тонизирующий WOW Energy Buble gum без сахара 450мл', 'Wow')).toMatchObject({ brand: 'Wow', flavor: 'bubblegum:sugarfree' });
+  expect(product('Напиток энергетический GORILLA Мохито тонизирующий пастеризованный, 450 мл')).toMatchObject({ brand: 'Gorilla', flavor: 'mojito' });
+});

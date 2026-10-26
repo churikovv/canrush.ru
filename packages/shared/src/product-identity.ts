@@ -37,7 +37,8 @@ export function canonicalProductFlavor(brand: string | undefined, flavor: string
 }
 
 /** Known non-energy labels supplied incorrectly by the source. Extend after review. */
-const EXCLUDED_ENERGY_BRANDS = new Set(['pepsi', 'пепси', 'dr. pepper', 'dr pepper', 'доктор пеппер']);
+// Dragon King is an aloe vera drink in a PET bottle that Ашан's promo calls «энергетический».
+const EXCLUDED_ENERGY_BRANDS = new Set(['pepsi', 'пепси', 'dr. pepper', 'dr pepper', 'доктор пеппер', 'dragon', 'dragon king']);
 export function isExcludedEnergyBrand(brand: string | undefined): boolean {
   return EXCLUDED_ENERGY_BRANDS.has((brand ?? '').trim().toLowerCase());
 }

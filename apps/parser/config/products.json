@@ -33,7 +33,8 @@
     "Genesis",
     "Quantum",
     "Из Лавки",
-    "Pulseup"
+    "Pulseup",
+    "Wow"
   ],
   "brandAliases": {
     "Red Bull": [
@@ -137,6 +138,10 @@
     ],
     "Из Лавки": [
       "изЛавки"
+    ],
+    "Wow": [
+      "WOW Energy",
+      "Вау Энерджи"
     ]
   },
   "flavors": [
@@ -188,7 +193,8 @@
     "pear",
     "elderflower",
     "acai",
-    "coffee"
+    "coffee",
+    "mojito"
   ],
   "flavorAliases": {
     "original": [
@@ -432,7 +438,8 @@
     "bubblegum": [
       "баббл гам",
       "бабл гам",
-      "bubble gum"
+      "bubble gum",
+      "buble gum"
     ],
     "grapefruit": [
       "грейпфрут",
@@ -481,6 +488,10 @@
     "coffee": [
       "кофе",
       "кофейный"
+    ],
+    "mojito": [
+      "мохито",
+      "mojito"
     ]
   },
   "sources": {

@@ -219,6 +219,10 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Ashkudi", "unresolved:8ee5cd706b59f0c6ac18da05", "Ashkudi", "ashkudi_sour"], // "АШКУДИ Кислое Драже"
   ...['7652380e773a72f6d8361b9d', '7dee97fa9bcdf10c765323aa'].map(id => ['Ashkudi', `unresolved:${id}`, 'Ashkudi', 'ashkudi_dynamo:sugarfree'] as const), // "Сила Динамо без сахара (Dynamo Power)"
   ["Ashkudi", "unresolved:1fc1008675af7843b3fc0fd0", "Ashkudi", "blackcurrant"], // the Surgut Currant can on the cover
+  // Checked by Edadeal title and cover, October 2026 (migration 0112 moves what members left on them).
+  ["Burn", "unresolved:7eb90192bec3099c1399a4b6", "Wow", "wow_burn:sugarfree"], // «WOW Energy Burn Energy без сахара»: a WOW can, not Burn
+  ["Wow", "unresolved:d31458043ac244b7adb6a16a", "Wow", "bubblegum:sugarfree"], // «WOW Energy Buble gum без сахара»
+  ["Gorilla", "unresolved:f8276697e27ba95210a91f8b", "Gorilla", "mojito"], // «GORILLA Мохито»
 ];
 export function reviewedProductIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
   const alias = REVIEWED_PRODUCT_ALIASES.find(entry => entry[0] === brand && entry[1] === flavor);
