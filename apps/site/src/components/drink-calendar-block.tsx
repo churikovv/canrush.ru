@@ -1,6 +1,6 @@
 import Link from '@/components/navigation-progress';
-import { DrinkBird } from '@/components/drink-bird';
-import { DrinkHeatmap } from '@/components/drink-heatmap';
+import { BirdSpeech, DrinkBird } from '@/components/drink-bird';
+import { DrinkHeatLegend, DrinkHeatmap } from '@/components/drink-heatmap';
 import { getDrinkEntries, getDrinkOverview } from '@/lib/drink-calendar';
 import { birdLine, birdMood, cans, days, heatmapWeeks } from '@/lib/drink-calendar-fields';
 
@@ -21,17 +21,20 @@ export async function DrinkCalendarBlock({ userId, username, isOwn }: { userId: 
   return <section className="community-panel drink-calendar-block" aria-labelledby="drink-calendar-title">
     <div className="community-section-heading"><h2 id="drink-calendar-title">Календарь выпитого</h2><Link href={href}>Открыть ↗</Link></div>
     <div className="drink-calendar-hero">
-      <DrinkBird mood={mood} size={84} />
+      <DrinkBird mood={mood} size={56} />
       <div className="drink-calendar-hero-text">
-        <p className="drink-bird-speech">{birdLine(mood, streak, isOwn)}</p>
-        <dl className="drink-streak-stats">
-          <div data-stat="streak"><dt>Серия</dt><dd>{days(streak)}</dd></div>
+        <BirdSpeech className="drink-bird-speech" text={birdLine(mood, streak, isOwn)} />
+        <dl className="drink-banner-stats">
           <div><dt>Рекорд</dt><dd>{days(overview.best)}</dd></div>
           <div><dt>За год</dt><dd>{cans(yearTotal)}</dd></div>
         </dl>
       </div>
     </div>
     <DrinkHeatmap weeks={weeks} counts={overview.dayCounts} drinks={drinks} label={`За последний год: ${cans(yearTotal)}, рекордная серия — ${days(overview.best)}.`} />
+    <div className="drink-heatmap-foot">
+      <dl className="drink-banner-stats">{streak ? <div data-stat="streak"><dt>Серия</dt><dd>{days(streak)}</dd></div> : <div data-stat="no-streak"><dt className="sr-only">Серия</dt><dd>Серии нет</dd></div>}</dl>
+      <DrinkHeatLegend />
+    </div>
     {isOwn && <div className="drink-calendar-actions"><Link className="community-button" href={`${href}#add-drink`}>Отметить энергетик</Link></div>}
   </section>;
 }

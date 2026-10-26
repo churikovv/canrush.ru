@@ -30,7 +30,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 
 /** The mascot already drawn on the page, serialised without its animations. */
 async function birdImage(): Promise<HTMLImageElement | null> {
-  const svg = document.querySelector<SVGSVGElement>('.drink-calendar-hero .drink-bird');
+  const svg = document.querySelector<SVGSVGElement>('.drink-banner .drink-bird');
   if (!svg) return null;
   const copy = svg.cloneNode(true) as SVGSVGElement;
   copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');

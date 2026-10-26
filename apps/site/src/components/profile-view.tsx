@@ -132,7 +132,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
 
         <aside className="community-sidebar profile-arranged-sidebar"><ProfileBlocks layout={profile.profileLayout}><ProfileBlock block="social">
           <ProfileConnections username={profile.username} friends={{ count: friends.count, users: friends.users.slice(0, 8) }} />
-          {compatibility && <ProfileCompatibility value={compatibility} />}
+          {compatibility && <ProfileCompatibility value={compatibility} username={profile.username} />}
           </ProfileBlock><ProfileBlock block="about"><section className="community-panel profile-about" aria-labelledby="profile-about-title"><h2 id="profile-about-title">О профиле</h2>
             <div className="profile-about-list">
             {showTelegram && (profile.telegramUsername ? <a className="profile-about-row" href={`https://t.me/${profile.telegramUsername}`} target="_blank" rel="noopener noreferrer"><span className="profile-about-icon profile-about-icon-telegram"><TelegramGlyph /></span><span className="profile-about-text"><small>Telegram</small><strong>@{profile.telegramUsername}</strong></span><span className="profile-about-arrow" aria-hidden="true">↗</span></a>

@@ -136,7 +136,7 @@ export function birdMood(current: DrinkStreak | null, today: string): BirdMood {
 export function birdLine(mood: BirdMood, streak: number, isOwn: boolean): string {
   if (mood === 'happy') return streak > 1 ? `Серия ${days(streak)}! Так держать.` : 'Первый день серии. Завтра — второй!';
   if (mood === 'waiting') return isOwn ? `Серия ${days(streak)} сгорит в полночь — отметь банку сегодня.` : `Серия ${days(streak)}, сегодня ещё без отметки.`;
-  return isOwn ? 'Птица спит. Отметь энергетик, чтобы начать серию.' : 'Серии пока нет — птица спит.';
+  return isOwn ? 'Канлинго спит. Отметь и начни серию' : 'Серии пока нет — птица спит.';
 }
 
 export interface MonthSummary { cans: number; days: number; unique: number; top: { name: string; count: number } | null; spent: number; priced: number }

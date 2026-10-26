@@ -45,3 +45,9 @@ export function DrinkBird({ mood, size = 96, className }: { mood: DrinkBirdMood;
     </g>}
   </svg>;
 }
+
+/** The bird's line: the first sentence stands out («Канлинго спит.»), the rest is the quieter hint. */
+export function BirdSpeech({ text, className }: { text: string; className?: string }) {
+  const [, head, tail] = /^(.+?[.!?])\s+(.+)$/.exec(text) ?? [text, text, ''];
+  return <p className={className}><strong>{head}</strong>{tail && <> <span>{tail}</span></>}</p>;
+}

@@ -5,8 +5,8 @@
  */
 export type RatingFaceKind = 'design' | 'taste';
 
-type Eyes = 'cross' | 'worried' | 'plain' | 'happy' | 'heart';
-type Mouth = 'wavy' | 'frown' | 'flat' | 'smile' | 'grin' | 'yum';
+type Eyes = 'cross' | 'worried' | 'dot' | 'happy' | 'heart';
+type Mouth = 'wavy' | 'frown' | 'flat' | 'calm' | 'smile' | 'grin' | 'yum';
 type Extra = 'sweat' | 'sparkles' | 'lines';
 interface Mood { eyes: Eyes; mouth: Mouth; tilt: number; extra?: Extra; word: string }
 
@@ -17,15 +17,15 @@ const MOODS: Record<RatingFaceKind, Mood[]> = {
   taste: [
     { eyes: 'cross', mouth: 'wavy', tilt: -12, extra: 'sweat', word: 'невкусно' },
     { eyes: 'worried', mouth: 'frown', tilt: -5, extra: 'sweat', word: 'так себе' },
-    { eyes: 'plain', mouth: 'flat', tilt: 0, word: 'нормально' },
+    { eyes: 'dot', mouth: 'calm', tilt: 0, word: 'нормально' },
     { eyes: 'happy', mouth: 'smile', tilt: 4, word: 'вкусно' },
     { eyes: 'happy', mouth: 'yum', tilt: 8, extra: 'lines', word: 'очень вкусно' },
   ],
   design: [
     { eyes: 'cross', mouth: 'frown', tilt: -12, extra: 'sweat', word: 'не нравится' },
     { eyes: 'worried', mouth: 'flat', tilt: -5, word: 'так себе' },
-    { eyes: 'plain', mouth: 'flat', tilt: 0, word: 'нормально' },
-    { eyes: 'plain', mouth: 'smile', tilt: 4, word: 'красиво' },
+    { eyes: 'dot', mouth: 'calm', tilt: 0, word: 'нормально' },
+    { eyes: 'dot', mouth: 'smile', tilt: 4, word: 'красиво' },
     { eyes: 'heart', mouth: 'grin', tilt: 8, extra: 'sparkles', word: 'очень красиво' },
   ],
 };
@@ -45,7 +45,8 @@ function Eye({ x, eyes }: { x: number; eyes: Eyes }) {
   switch (eyes) {
     case 'cross': return <path {...white} d={`M${x - 2.4} 21.6l4.8 4.8M${x + 2.4} 21.6l-4.8 4.8`} />;
     case 'worried': return <><circle cx={x} cy={24.5} r={3.3} fill="#fff" stroke={INK} strokeWidth={1.4} /><circle cx={x} cy={25.6} r={1.5} fill={INK} /><path {...white} strokeWidth={1.8} d={x < 24 ? `M${x - 3} 19.6l5-1.6` : `M${x + 3} 19.6l-5-1.6`} /></>;
-    case 'plain': return <><circle cx={x} cy={24} r={3.4} fill="#fff" stroke={INK} strokeWidth={1.4} /><circle cx={x + .4} cy={24.2} r={1.6} fill={INK} /></>;
+    // Calm eyes: plain white ovals, drawn like the happy ones, not the outlined «bug eyes».
+    case 'dot': return <ellipse cx={x} cy={24.4} rx={1.9} ry={2.5} fill="#fff" />;
     case 'happy': return <path {...white} d={`M${x - 2.8} 25q2.8-4.2 5.6 0`} />;
     case 'heart': return <path d={HEART} fill={RED} stroke={INK} strokeWidth={1} transform={`translate(${x - 4.3} 20.6) scale(1.3)`} />;
   }
@@ -57,6 +58,7 @@ function MouthShape({ mouth }: { mouth: Mouth }) {
     case 'wavy': return <path {...white} d="M18 33.2q1.5-1.8 3 0t3 0 3 0 3 0" />;
     case 'frown': return <path {...white} d="M19.5 34.2q4.5-3.8 9 0" />;
     case 'flat': return <path {...white} d="M20.5 32.6h7" />;
+    case 'calm': return <path {...white} d="M20.6 32q3.4 1.8 6.8 0" />;
     case 'smile': return <path {...white} d="M19 31q5 4.6 10 0" />;
     case 'grin': return <><path d="M18.6 30.4h10.8q0 5.6-5.4 5.6t-5.4-5.6z" fill={INK} stroke={INK} strokeWidth={1.2} strokeLinejoin="round" /><path d="M21.4 34.4q2.6-1.9 5.2 0-2.6 1.6-5.2 0z" fill={RED} /></>;
     case 'yum': return <><path {...white} d="M19 30.6q5 4.6 10 0" /><path d="M25.2 33.2q3.2-1 4 1.6.7 2.6-1.7 2.9-2.3.3-2.3-4.5z" fill={RED} stroke={INK} strokeWidth={1.2} strokeLinejoin="round" /></>;

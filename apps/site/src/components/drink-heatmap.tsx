@@ -36,11 +36,15 @@ export function DrinkHeatmap({ weeks, counts, drinks, label }: { weeks: (string 
       </div>
     </div>
     </div>
-    <div className="drink-heatmap-legend" aria-hidden="true">Меньше{[0, 1, 2, 3, 4].map(level => <span key={level} className="drink-heat-cell" data-level={level} />)}Больше</div>
     {hint && <div className="drink-heatmap-hint" role="tooltip" style={{ left: hint.x, top: hint.y }}>
       <strong>{dayTitle(hint.day)}</strong>
       <span>{counts[hint.day] ? cans(counts[hint.day]!) : 'Без энергетиков'}</span>
       {names.length > 0 && <ul>{names.slice(0, 5).map((name, index) => <li key={index}>{name}</li>)}{names.length > 5 && <li>и ещё {names.length - 5}</li>}</ul>}
     </div>}
   </div>;
+}
+
+/** «Меньше … Больше» under the year; the profile block puts it at the right of the streak chips. */
+export function DrinkHeatLegend() {
+  return <div className="drink-heatmap-legend" aria-hidden="true">Меньше{[0, 1, 2, 3, 4].map(level => <span key={level} className="drink-heat-cell" data-level={level} />)}Больше</div>;
 }

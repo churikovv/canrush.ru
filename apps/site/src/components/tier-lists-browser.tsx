@@ -52,9 +52,7 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
         <div>
           <p className="tierlists-kicker">Рейтинг CanRush</p>
           <h1>Тирлист энергетиков</h1>
-          <p>
-            В рейтинге участвуют все напитки каталога, у которых минимум три отзыва — и те, что сейчас в магазинах, и добавленные участниками.
-          </p>
+          <p>Участвуют все энергетики — минимум 3 отзыва</p>
         </div>
         <div className="tierlists-facts">
           <dl>
@@ -89,9 +87,8 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
         <div className="tierlists-section-heading">
           <div>
             <p className="tierlists-kicker">Сообщество</p>
-            <h2 id="community-title">Пользовательские тирлисты</h2>
+            <h2 id="community-title">Пользовательские тирлисты{shownLists.length > 0 && <span className="tierlists-count" aria-label={`показано ${shownLists.length}`}>{shownLists.length}</span>}</h2>
           </div>
-          {shownLists.length > 0 ? <span>{shownLists.length} последних</span> : null}
         </div>
 
         <Link className="tier-create-banner" href="/tierlists/new">
