@@ -9,5 +9,7 @@ export const IMMUTABLE_MEDIA = 'private, max-age=2592000, immutable';
 export const STORY_MEDIA = 'private, max-age=3600';
 /** Published store photos: public pages, but a store can be edited, so a day. */
 export const STORE_MEDIA = 'private, max-age=86400';
+/** Photos of a published article: public, but the article can go back to drafts, so a day. */
+export const ARTICLE_MEDIA = 'private, max-age=86400';
 /** Anything only some members may see right now (pending requests, order attachments): never stored. */
 export const NO_STORE_MEDIA = 'private, no-store';

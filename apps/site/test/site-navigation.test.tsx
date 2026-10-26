@@ -15,20 +15,13 @@ function links(html: string) {
 }
 
 describe('site tab bar', () => {
-  it('has five tabs with search in the middle', () => {
-    const html = renderToStaticMarkup(createElement(SiteTabBar, { signedIn: true }));
-    expect(links(html).map(({ href }) => href)).toEqual(['/', '/calendar', '/search', '/community', '/profile']);
-    for (const label of ['Главная', 'Календарь', 'Поиск', 'Сообщество', 'Профиль']) expect(html).toContain(`>${label}</span>`);
+  it('has five tabs with search in the middle and the news last', () => {
+    const html = renderToStaticMarkup(createElement(SiteTabBar));
+    expect(links(html).map(({ href }) => href)).toEqual(['/', '/calendar', '/search', '/community', '/news']);
+    for (const label of ['Главная', 'Календарь', 'Поиск', 'Сообщество', 'Новости']) expect(html).toContain(`>${label}</span>`);
     expect(html).not.toContain('/messages');
     expect(html).not.toContain('aria-current');
-    expect(html).not.toContain('/profile/favorites');
-  });
-
-  it('offers sign-in instead of the profile to guests', () => {
-    const html = renderToStaticMarkup(createElement(SiteTabBar));
-    expect(links(html).at(-1)?.href).toBe('/sign-in');
-    expect(html).toContain('>Войти</span>');
-    expect(html).not.toContain('>Профиль</span>');
+    expect(html).not.toContain('/profile');
   });
 
   it('marks the home tab on the homepage', () => {
@@ -44,8 +37,8 @@ describe('site tab bar', () => {
   });
 
   it('marks only the active section as the current page', () => {
-    const html = renderToStaticMarkup(createElement(SiteTabBar, { active: 'favorites', signedIn: true }));
-    expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/profile']);
+    const html = renderToStaticMarkup(createElement(SiteTabBar, { active: 'news' }));
+    expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/news']);
   });
 
   it('lights up the community tab for tier lists and the feed', () => {
@@ -60,23 +53,33 @@ describe('site tab bar', () => {
     expect(links(html).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/feed', '/community']);
   });
 
+  it('puts the own profile into the header corner, sign-in for guests', async () => {
+    const member = renderToStaticMarkup(await ProfileNavigation({ active: 'profile', signedIn: true }));
+    expect(member).toContain('class="header-profile"');
+    expect(links(member).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/profile']);
+    const guest = renderToStaticMarkup(await ProfileNavigation({ signedIn: false }));
+    expect(links(guest).some(({ href }) => href === '/sign-in')).toBe(true);
+    expect(guest).not.toContain('href="/profile"');
+  });
+
   it('renders the header buttons and the tab bar with the same active section', async () => {
     const html = renderToStaticMarkup(await ProfileNavigation({ active: 'calendar', signedIn: true }));
     const tabBarStart = html.indexOf('<nav class="site-tab-bar"');
-    expect(html.indexOf('<nav class="profile-navigation"')).toBe(0);
-    expect(tabBarStart).toBeGreaterThan(0);
+    // React hoists a preload of the header avatar before the markup.
+    expect(html.indexOf('<nav class="profile-navigation"')).toBeGreaterThanOrEqual(0);
+    expect(tabBarStart).toBeGreaterThan(html.indexOf('<nav class="profile-navigation"'));
     expect(html).not.toContain('/profile/favorites');
     expect(links(html.slice(tabBarStart)).filter(({ current }) => current === 'page').map(({ href }) => href)).toEqual(['/calendar']);
   });
 });
 
 describe('header menus', () => {
-  it('groups the desktop header into community and stores menus plus the profile', async () => {
+  it('groups the desktop header into community and stores menus plus the profile avatar', async () => {
     const html = renderToStaticMarkup(await ProfileNavigation({ signedIn: true }));
     const header = html.slice(0, html.indexOf('<nav class="site-tab-bar"'));
     // Each group label links to its first page, then the panel lists every page of the group.
-    expect(links(header).map(({ href }) => href)).toEqual(['/tierlists', '/tierlists', '/market', '/feed', '/community?type=dating', '/community?type=people', '/leaderboard', '/catalog', '/catalog', '/prices', '/market/stores', '/profile']);
-    for (const label of ['Сообщество', 'Магазины', 'Объявления', 'Тирлисты', 'Лента', 'Каталог', 'Цены', 'Найти']) expect(header).toContain(label);
+    expect(links(header).map(({ href }) => href)).toEqual(['/tierlists', '/tierlists', '/market', '/feed', '/news', '/community?type=dating', '/community?type=people', '/leaderboard', '/catalog', '/catalog', '/prices', '/market/stores', '/profile']);
+    for (const label of ['Сообщество', 'Магазины', 'Объявления', 'Тирлисты', 'Лента', 'Новости', 'Каталог', 'Цены', 'Найти']) expect(header).toContain(label);
     expect(header.match(/aria-expanded="false"/g)).toHaveLength(2);
   });
 

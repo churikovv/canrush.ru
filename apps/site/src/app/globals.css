@@ -2965,6 +2965,17 @@ html[data-cookie-notice="visible"] .brand-footer {
 @media (prefers-reduced-motion: reduce) { .more-actions-panel { animation: none; } }
 .header-action { gap: 18px; }
 .notification-slot { display: inline-block; flex: 0 0 44px; width: 44px; height: 44px; }
+/* The member's own profile: the avatar in the header's right corner (after the bell and settings), «Войти» for guests. */
+.header-profile { order: 10; display: inline-grid; flex: 0 0 40px; place-items: center; width: 40px; height: 40px; overflow: hidden; border-radius: 999px; background: var(--color-surface); color: var(--color-ink); box-shadow: 0 0 0 1px var(--color-control); text-decoration: none; }
+.header-profile img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.header-profile svg { width: 22px; height: 22px; }
+.header-profile[aria-current] { box-shadow: 0 0 0 2px var(--color-brand); }
+.header-profile:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.header-profile.is-guest { display: inline-flex; flex: none; gap: 6px; width: auto; padding: 0 14px 0 10px; background: var(--color-brand); color: #fff; box-shadow: none; font-size: .875rem; font-weight: 700; }
+.header-profile.is-guest svg { width: 18px; height: 18px; }
+/* Narrow phones: the guest button keeps only its icon, so the city name is not cut. */
+@media (max-width: 419px) { .header-profile.is-guest { width: 40px; padding: 0; justify-content: center; } .header-profile.is-guest span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
+@media (max-width: 959px) { .header-profile { margin-left: 4px; } }
 .notification-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: #ffffff; cursor: pointer; }
 @media (hover: hover) {
   .brand-header :is(.profile-navigation-item, .city-header-button, .notification-bell, .admin-back-link):hover {
@@ -3607,67 +3618,42 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
   .experience-stats strong { font-size: 1rem; }
   .experience-panel .experience-rewards ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-/* Home metrics: live totals as tiles at the top of the page, each opening the part of the site it counts. */
-.home-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
-/* Colour cards: a huge number and its word top-left, a brand sticker in the bottom-right corner. */
-.home-metrics a { position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: flex-start; height: 100%; min-height: 176px; padding: 18px 18px 20px; overflow: hidden; border-radius: 28px; background: var(--metric); color: #fff; text-decoration: none; transition: transform 150ms ease-out; }
-.home-metrics a:active { transform: scale(.98); }
-/* One family with the brand: Canrush blue, its deep shade, an indigo and the ink-navy of the header in dark mode. */
-.home-metrics [data-metric=reviews] { --metric: #006eff; }
-.home-metrics [data-metric=tierlists] { --metric: #4a4fe0; }
-.home-metrics [data-metric=stores] { --metric: #0058cc; }
-.home-metrics [data-metric=drinks] { --metric: #12203d; }
-.home-metrics strong { font-size: clamp(2.25rem, 4.2vw, 3.25rem); font-weight: 900; line-height: .95; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
-.home-metrics a > span { max-width: 62%; margin-top: 4px; font-size: 1.0625rem; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; }
-.home-metric-art { position: absolute; z-index: -1; right: -10%; bottom: -12%; width: 64%; height: auto; transform: rotate(-6deg); transition: transform 220ms ease-out; pointer-events: none; }
-.home-metrics a:hover .home-metric-art { transform: rotate(0deg) translateY(-4px) scale(1.04); }
-@media (prefers-reduced-motion: reduce) { .home-metrics a, .home-metric-art { transition: none; } }
-/* Short event banners above the home feed: two in a row, sideways on phones. */
-.home-events { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; }
-.home-event { position: relative; display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 10px 40px 10px 10px; overflow: hidden; border-radius: 20px; color: #fff; text-decoration: none; transition: transform 150ms ease-out; }
-.home-event[data-event=contest] { background: linear-gradient(120deg, #006eff, #3b8bff 60%, #6aa8ff); }
-.home-event[data-event=monthly] { background: linear-gradient(120deg, #3b1782, #6d28d9 55%, #a855f7); color: #fff; }
-.home-event[data-event=engine] { background: #f4f1ea; color: #141414; }
-.home-event:active { transform: scale(.98); }
-.home-event-art { flex: none; width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 6px 10px rgb(0 0 0 / .2)); }
-.home-event-copy { display: grid; min-width: 0; gap: 1px; }
-.home-event-copy small { overflow: hidden; font-size: .6875rem; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
-.home-event-copy strong { overflow: hidden; font-size: 1rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
-.home-event-copy span { overflow: hidden; font-size: .8125rem; opacity: .85; text-overflow: ellipsis; white-space: nowrap; }
-.home-event-arrow { position: absolute; top: 50%; right: 16px; font-size: 1.75rem; line-height: 1; transform: translateY(-50%); opacity: .7; transition: transform 150ms ease-out; }
-.home-event:hover .home-event-arrow { transform: translate(3px, -50%); }
-.home-event-more, .home-event-cta { display: none; }
-/* Desktop: full banners — a description and a button, with the art large in the corner. */
-@media (min-width: 960px) {
-  .home-events { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
-  .home-event { flex-direction: column; align-items: stretch; min-height: 232px; padding: 24px; border-radius: 24px; }
-  .home-event-art { position: absolute; right: 14px; bottom: 14px; width: 120px; height: 120px; transition: transform 200ms ease-out; }
-  .home-event:hover .home-event-art { transform: rotate(-5deg) scale(1.05); }
-  .home-event-copy { display: flex; flex: 1; flex-direction: column; gap: 6px; padding-right: 116px; }
-  .home-event-copy small { margin-bottom: 2px; font-size: .75rem; }
-  .home-event-copy strong { font-size: 1.375rem; line-height: 1.2; white-space: normal; }
-  .home-event-more { display: -webkit-box; overflow: hidden; margin: 6px 0 20px; font-size: .875rem; font-style: normal; line-height: 1.45; opacity: .85; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; }
-  .home-event-cta { display: inline-flex; align-self: flex-start; align-items: center; margin-top: auto; padding: 10px 18px; border-radius: 999px; background: rgb(255 255 255 / .22); font-size: .875rem; font-weight: 800; }
-  .home-event[data-event=engine] .home-event-cta { background: #141414; color: #f4f1ea; }
-  .home-event-arrow { display: none; }
+/* Home services, like a super app's start screen: four big categories with a sticker standing over its plate, then a row
+   of small icons (top, giveaway, beta places, dating, market) that scrolls sideways on phones. */
+.home-services { display: grid; gap: 20px; }
+.go-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; margin: 0; padding: 0; list-style: none; }
+.go-tile { display: grid; justify-items: center; gap: 8px; color: var(--color-ink); text-decoration: none; }
+.go-tile-plate { position: relative; display: block; width: 100%; height: 84px; margin-top: 34px; border-radius: 26px; background: var(--color-subtle); transition: transform 150ms ease-out; }
+.go-tile-plate img { position: absolute; left: 50%; bottom: -6px; width: auto; height: 122px; transform: translateX(-50%); filter: drop-shadow(0 8px 14px rgb(0 0 0 / .18)); transition: transform 200ms ease-out; }
+.go-tile:hover .go-tile-plate img { transform: translateX(-50%) translateY(-4px) rotate(-3deg); }
+.go-tile:active .go-tile-plate { transform: scale(.97); }
+.go-tile-label { font-size: 1rem; font-weight: 700; line-height: 1.2; text-align: center; }
+.go-tile-label small { color: var(--color-muted-strong); font-size: .875rem; font-weight: 600; }
+.go-icons { display: flex; gap: 6px; margin: 0 -16px; padding: 0 16px 2px; overflow-x: auto; list-style: none; scroll-snap-type: x proximity; scrollbar-width: none; }
+.go-icons::-webkit-scrollbar { display: none; }
+.go-icons li { flex: 0 0 auto; scroll-snap-align: start; }
+.go-icon { display: grid; justify-items: center; gap: 4px; width: 84px; color: var(--color-ink); text-decoration: none; }
+.go-icon-plate { display: grid; place-items: center; width: 68px; height: 68px; overflow: hidden; border-radius: 20px; background: var(--color-subtle); transition: transform 150ms ease-out; }
+.go-icon-plate img { width: 56px; height: 56px; object-fit: contain; }
+.go-icon:active .go-icon-plate { transform: scale(.94); }
+.go-icon-label { font-size: .8125rem; font-weight: 700; line-height: 1.2; }
+.go-icon small { max-width: 100%; overflow: hidden; color: var(--color-muted-strong); font-size: .6875rem; text-overflow: ellipsis; white-space: nowrap; }
+@media (min-width: 640px) {
+  .go-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 16px; }
+  .go-tile-plate { height: 104px; margin-top: 42px; border-radius: 30px; }
+  .go-tile-plate img { height: 150px; }
+  /* One group in the middle, as on phones, only larger: the plates grow with the page, the gaps stay tight. */
+  .go-icons { justify-content: center; gap: 12px; margin: 0; padding: 0; overflow: visible; }
+  .go-icon { width: clamp(96px, 10vw, 132px); gap: 6px; }
+  .go-icon-plate { width: clamp(76px, 8.4vw, 112px); height: auto; aspect-ratio: 1; border-radius: clamp(20px, 2vw, 26px); }
+  .go-icon-plate img { width: 82%; height: 82%; }
+  .go-icon-label { font-size: clamp(.875rem, 1.4vw, 1.0625rem); }
+  .go-icon small { font-size: clamp(.6875rem, 1vw, .8125rem); }
 }
-@media (min-width: 960px) and (prefers-reduced-motion: reduce) { .home-event-art { transition: none; } .home-event:hover .home-event-art { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .home-event, .home-event-arrow { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .go-tile-plate, .go-tile-plate img, .go-icon-plate { transition: none; } }
 .home-feed .feed-layout { gap: 12px; }
 .feed-more { display: flex; min-height: 48px; align-items: center; justify-content: center; margin-top: 8px; border-radius: 999px; background: var(--color-subtle); color: var(--color-ink); font-weight: 700; text-decoration: none; }
 .feed-more:hover { background: color-mix(in srgb, var(--color-subtle) 84%, var(--color-brand) 12%); }
-@media (max-width: 639px) {
-  /* Phone: all four in one row — a compact number and word on top, the sticker filling the lower half. */
-  .home-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-  .home-metrics a { min-height: 132px; padding: 10px 8px; border-radius: 18px; }
-  .home-metrics strong { font-size: clamp(1.125rem, 5.4vw, 1.5rem); letter-spacing: -.03em; }
-  .home-metrics a > span { max-width: 100%; margin-top: 2px; font-size: .6875rem; line-height: 1.15; }
-  .home-metric-art { right: -14%; bottom: -10%; width: 92%; }
-  .home-events { display: flex; gap: 8px; margin-inline: -16px; padding-inline: 16px; scroll-padding-inline: 16px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
-  .home-events::-webkit-scrollbar { display: none; }
-  .home-event { flex: 0 0 min(86%, 340px); scroll-snap-align: start; }
-  .home-event:only-child { flex-basis: 100%; }
-}
 /* Store map (store directory and store pages); kept here so its cascade order stays as before. */
 .store-map-shell { position: relative; }
 .store-map { height: 480px; width: 100%; border-radius: 12px; overflow: hidden; background: var(--color-subtle); }

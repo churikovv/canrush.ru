@@ -32,18 +32,33 @@ export function FollowControl({ targetId, following, mutual }: { targetId: strin
   </CommunityForm>;
 }
 
-export function WallComposer({ targetId, label = 'Комментарий на стене', placeholder = 'Напишите на стене…' }: { targetId: string; label?: string; placeholder?: string }) {
+/**
+ * `collapsible` (the feed): until tapped the composer is one pill «Что нового?», like a search bar; it opens into the
+ * full form with the field focused, and folds back after sending (or Escape on an empty one). Not on blur: picking a
+ * photo moves focus to the system dialog.
+ */
+export function WallComposer({ targetId, label = 'Комментарий на стене', placeholder = 'Напишите на стене…', collapsible = false }: { targetId: string; label?: string; placeholder?: string; collapsible?: boolean }) {
   const [text, setText] = useState('');
+  const [open, setOpen] = useState(!collapsible);
   const media = useMediaAttachments();
   const [state, action, pending] = useActionState(async (previous: { error?: string; success?: string }, form: FormData) => {
     media.appendTo(form);
     try {
       const next = await updateCommunityAction(previous, form);
-      if (!next.error) { setText(''); media.clear(); }
+      if (!next.error) { setText(''); media.clear(); if (collapsible) setOpen(false); }
       return next;
     } catch { return { error: 'Не удалось отправить запись. Проверьте соединение и попробуйте снова.' }; }
   }, {});
-  return <form action={action} className="wall-composer">
+  if (!open) return <>
+    <button type="button" className="wall-composer-pill" onClick={() => { setOpen(true); window.requestAnimationFrame(() => document.getElementById('wall-text')?.focus()); }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+      <span>Что нового?</span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4" /><circle cx="9" cy="10" r="1.8" /><path d="m4 18 5-5 4 4 3-3 4 4" /></svg>
+    </button>
+    <ActionToast message={state.error ?? state.success} tone={state.error ? 'error' : 'success'} trigger={state} />
+  </>;
+  return <form action={action} className="wall-composer" data-collapsible={collapsible || undefined}
+    onKeyDown={event => { if (collapsible && event.key === 'Escape' && !text.trim() && !media.files.length) setOpen(false); }}>
     <input type="hidden" name="operation" value="comment" /><input type="hidden" name="targetId" value={targetId} />
     <fieldset disabled={pending}>
       <label htmlFor="wall-text" className="sr-only">{label}</label>

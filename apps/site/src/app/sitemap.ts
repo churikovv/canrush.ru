@@ -3,6 +3,7 @@ import { isExcludedEnergyBrand, type CatalogGroup } from '@canrush/shared';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 import { SITE_URL } from '@/lib/seo';
+import { getPublishedArticleSitemapEntries } from '@/lib/articles';
 import { getPublishedTierListSitemapEntries } from '@/lib/tier-lists';
 
 export const dynamic = 'force-dynamic';
@@ -16,9 +17,10 @@ function productUpdatedAt(group: CatalogGroup): Date | undefined {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [groups, tierLists] = await Promise.all([
+  const [groups, tierLists, articles] = await Promise.all([
     loadAllCatalogGroups(),
     getPublishedTierListSitemapEntries().catch(() => []),
+    getPublishedArticleSitemapEntries().catch(() => []),
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -26,6 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/catalog`, changeFrequency: 'daily', priority: 1 },
     { url: `${SITE_URL}/tierlists`, changeFrequency: 'daily', priority: 0.8 },
     { url: `${SITE_URL}/feed`, changeFrequency: 'hourly', priority: 0.6 },
+    { url: `${SITE_URL}/news`, changeFrequency: 'daily', priority: 0.7 },
     { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}/account-deletion`, changeFrequency: 'yearly', priority: 0.2 },
@@ -44,5 +47,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
-  return [...staticPages, ...products, ...publicTierLists];
+  const publicArticles: MetadataRoute.Sitemap = articles.map(article => ({
+    url: `${SITE_URL}/news/${article.id}`, lastModified: article.updatedAt, changeFrequency: 'weekly', priority: 0.6,
+  }));
+
+  return [...staticPages, ...products, ...publicTierLists, ...publicArticles];
 }

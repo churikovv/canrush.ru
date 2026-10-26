@@ -13,6 +13,7 @@ const STAFF_DELETE = {
   'wall-post': { table: '"profileComment"', audit: 'wall-comment' },
   'wall-reply': { table: '"wallReply"', audit: 'wall-reply' },
   story: { table: '"story"', audit: 'story' },
+  article: { table: 'article', audit: 'article' },
 } as const;
 export type StaffDeleteKind = keyof typeof STAFF_DELETE;
 export function staffDeleteKind(value: string): StaffDeleteKind | null {

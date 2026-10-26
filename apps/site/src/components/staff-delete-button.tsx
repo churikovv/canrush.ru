@@ -7,7 +7,7 @@ import type { StaffDeleteKind } from '@/lib/staff-moderation';
 
 const WHAT: Record<StaffDeleteKind, string> = {
   review: 'отзыв', 'review-comment': 'комментарий', 'tier-list': 'тирлист', 'tier-comment': 'комментарий',
-  'wall-post': 'запись', 'wall-reply': 'комментарий', story: 'историю',
+  'wall-post': 'запись', 'wall-reply': 'комментарий', story: 'историю', article: 'статью',
 };
 
 /**

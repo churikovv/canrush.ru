@@ -1,10 +1,17 @@
 import type { ReactNode } from 'react';
 
-export type NavigationSection = 'home' | 'search' | 'community' | 'calendar' | 'catalog' | 'prices' | 'stores' | 'tierlists' | 'favorites' | 'profile' | 'market' | 'feed';
+export type NavigationSection = 'home' | 'search' | 'community' | 'calendar' | 'catalog' | 'prices' | 'stores' | 'tierlists' | 'favorites' | 'profile' | 'market' | 'feed' | 'news';
 /** Header groups have their own glyphs; they are not pages. */
 export type NavigationIconName = NavigationSection | 'sign-in' | 'can' | 'dating' | 'people' | 'leaderboard';
 
 const GLYPHS: Record<NavigationIconName, ReactNode> = {
+  // A folded newspaper: a picture block and lines of text — the members' articles.
+  news: (
+    <>
+      <path fillRule="evenodd" d="M5.5 3h11A2.5 2.5 0 0 1 19 5.5V8h1.5A1.5 1.5 0 0 1 22 9.5v9a3.5 3.5 0 0 1-3.5 3.5h-13A3.5 3.5 0 0 1 2 18.5v-13A2.5 2.5 0 0 1 4.5 3h1ZM19 10v8.5a1.5 1.5 0 0 0 3 0V10h-3ZM6 7a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1H6Zm7 .5a1 1 0 1 0 0 2h2a1 1 0 1 0 0-2h-2ZM6 15a1 1 0 1 0 0 2h9a1 1 0 1 0 0-2H6Z" />
+      <path className="nav-icon-part" d="M13 11.5h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </>
+  ),
   // Two stacked cards with a heart: drink dating in the community.
   dating: (
     <>

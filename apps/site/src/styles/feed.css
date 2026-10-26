@@ -145,3 +145,11 @@ button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-w
 .feed-reviews > .feed-review-item { animation: feed-review-in 220ms ease-out; }
 @keyframes feed-review-in { from { opacity: 0; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .feed-review, .feed-reviews-toggle svg { transition: none; } .feed-reviews > .feed-review-item { animation: none; } }
+
+/* The feed composer folded into one pill, like a search bar; a tap opens the full form. */
+.feed-composer:has(> .wall-composer-pill) { padding: 0; border: 0; background: none; box-shadow: none; }
+.wall-composer-pill { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 60px; padding: 0 22px; border: 0; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font: inherit; font-size: 1.0625rem; text-align: left; cursor: text; transition: background-color 150ms ease-out; }
+.wall-composer-pill span { flex: 1; min-width: 0; }
+.wall-composer-pill svg { flex: none; color: var(--color-ink); }
+.wall-composer-pill:hover { background: color-mix(in srgb, var(--color-subtle) 88%, var(--color-ink) 6%); }
+.wall-composer-pill:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }

@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { CatalogGroup, FlavorVariant } from '@canrush/shared';
-import { HomeMetrics } from '@/components/home-metrics';
+import { HomeServices } from '@/components/home-services';
 import { catalogMetrics } from '@/lib/home-metrics';
 
 const variant = (retailer: string, price: number): FlavorVariant => ({ source: 'edadeal', retailer, price, volumeMl: 449, url: 'https://example.test', fetchedAt: '2026-10-01T00:00:00Z' });
@@ -16,16 +16,18 @@ describe('home metrics', () => {
     expect(catalogMetrics([], [])).toEqual({ stores: 0, drinks: 0 });
   });
 
-  it('renders a tile per non-zero total, each linking to its section', () => {
-    const html = renderToStaticMarkup(createElement(HomeMetrics, { data: { reviews: 1234, tierLists: 0, stores: 6, drinks: 21 } }));
-    expect(html).toContain(`<strong>${(1234).toLocaleString('ru-RU')}</strong><span>оценки</span>`);
-    expect(html).toContain('<strong>6</strong><span>магазинов с ценами</span>');
-    expect(html).toContain('<strong>21</strong><span>напиток</span>');
-    expect(html).toContain('href="/prices"');
-    expect(html).not.toContain('тирлист');
-  });
-
-  it('renders nothing without data', () => {
-    expect(renderToStaticMarkup(createElement(HomeMetrics, { data: { reviews: 0, tierLists: 0, stores: 0, drinks: 0 } }))).toBe('');
+  it('renders the four big categories and the small icons', () => {
+    const html = renderToStaticMarkup(createElement(HomeServices, {
+      metrics: { reviews: 1234, tierLists: 0, stores: 6, drinks: 21 }, contest: null, joined: false,
+      engine: { taken: 10, number: null } as never,
+    }));
+    const hrefs = [...html.matchAll(/href="([^"]*)"/g)].map(match => match[1]);
+    expect(hrefs.slice(0, 4)).toEqual(['/catalog', '/prices', '/market/stores', '/tierlists']);
+    expect(hrefs).toContain('/leaderboard');
+    expect(hrefs).toContain('/engine');
+    expect(hrefs).not.toContain('/contest');
+    expect(html).toContain('Каталог<small> · 21</small>');
+    expect(html).toContain('Лидеры');
+    expect(html).toContain('Бета сайта');
   });
 });
