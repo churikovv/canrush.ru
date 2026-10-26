@@ -17,6 +17,7 @@ import { getCatalogGroup, isFavorite, loadAllCatalogGroups } from '@/lib/catalog
 import { catalogGroupSlug, catalogRetailerCount, decodeCatalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { getReviewSummary, getReviewsForProduct, getUserReview } from '@/lib/reviews';
 import { seoMetadata } from '@/lib/seo';
+import { isExcludedEnergyBrand } from '@canrush/shared';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,6 +74,8 @@ export default async function CatalogProductPage({
     if (renamed) permanentRedirect(`/catalog/${catalogGroupSlug(renamed.brand, renamed.flavor)}${tab === 'reviews' ? '?tab=reviews' : ''}`);
     notFound();
   }
+  // Not an energy drink (an excluded brand): gone from the catalog; its page stays only while reviews hang on it.
+  if (isExcludedEnergyBrand(group.brand) && !(await getReviewSummary(group.brand, group.flavor)).count) notFound();
 
   const [favorite, reviews, summary, userReview, fileIngredients, swipes, added] = await Promise.all([
     session ? isFavorite(session.user.id, group.brand, group.flavor) : Promise.resolve(false),

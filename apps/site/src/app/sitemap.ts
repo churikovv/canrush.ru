@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import type { CatalogGroup } from '@canrush/shared';
+import { isExcludedEnergyBrand, type CatalogGroup } from '@canrush/shared';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 import { SITE_URL } from '@/lib/seo';
@@ -30,7 +30,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}/account-deletion`, changeFrequency: 'yearly', priority: 0.2 },
   ];
-  const products: MetadataRoute.Sitemap = groups.map((group) => ({
+  // Excluded brands are not energy drinks: kept in the full catalog only for their history, never offered to search.
+  const products: MetadataRoute.Sitemap = groups.filter(group => !isExcludedEnergyBrand(group.brand)).map((group) => ({
     url: `${SITE_URL}/catalog/${catalogGroupSlug(group.brand, group.flavor)}`,
     lastModified: productUpdatedAt(group),
     changeFrequency: 'daily',
