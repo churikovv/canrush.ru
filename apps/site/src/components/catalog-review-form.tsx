@@ -15,6 +15,9 @@ import {
 } from '@/app/catalog/review-actions';
 import { MAX_REVIEW_PHOTOS, MAX_REVIEW_PHOTO_BYTES, REVIEW_PHOTO_TYPES } from '@/lib/review-photo-limits';
 import type { ReviewData } from '@/lib/reviews';
+import { RatingFace, ratingMood } from '@/components/rating-face';
+import { CountryInput } from '@/components/country-input';
+import { FormOptional } from '@/components/form-step';
 
 interface CatalogReviewFormProps {
   brand: string;
@@ -31,15 +34,30 @@ const CRITERIA: Array<{ name: 'design' | 'taste'; label: string }> = [
   { name: 'taste', label: 'Вкус' },
 ];
 
-function RatingInput({ name, value, label, error, disabled, onChange }: { name: string; value: number; label: string; error?: string; disabled: boolean; onChange: (value: number) => void }) {
+function RatingInput({ name, value, label, error, disabled, onChange }: { name: 'design' | 'taste'; value: number; label: string; error?: string; disabled: boolean; onChange: (value: number) => void }) {
   return <div className="review-criterion">
     <label htmlFor={`rating-${name}`}>{label}</label>
-    <div className="review-range-control">
-      <output htmlFor={`rating-${name}`} style={{ left: `calc(12px + (100% - 24px) * ${(value - 1) / 9})` }}>{value}</output>
-      <input id={`rating-${name}`} type="range" name={name} disabled={disabled} min={1} max={10} step={1} value={value} onChange={event => onChange(Number(event.target.value))} aria-valuetext={`${value} из 10`} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} />
+    <div className="review-range-row">
+      <div className="review-range-main">
+        <div className="review-range-control">
+          <output htmlFor={`rating-${name}`} style={{ left: `calc(12px + (100% - 24px) * ${(value - 1) / 9})` }}>{value}</output>
+          <input id={`rating-${name}`} type="range" name={name} disabled={disabled} min={1} max={10} step={1} value={value} onChange={event => onChange(Number(event.target.value))} aria-valuetext={`${value} из 10, ${ratingMood(name, value).word}`} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} />
+        </div>
+        <div className="review-range-scale" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} style={{ left: `${index / 9 * 100}%` }}>{index + 1}</span>)}</div>
+      </div>
+      <RatingFace kind={name} value={value} />
     </div>
-    <div className="review-range-scale" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} style={{ left: `${index / 9 * 100}%` }}>{index + 1}</span>)}</div>
     {error && <p className="field-error" id={`${name}-error`}>{error}</p>}
+  </div>;
+}
+
+/** «Страна производства»: optional, the country printed on the can («Изготовлено в…»). */
+function CountryField({ value, error, disabled, onChange }: { value: string; error?: string; disabled: boolean; onChange: (value: string) => void }) {
+  const note = error ? 'review-country-error' : 'review-country-help';
+  return <div className="review-country-field">
+    <label htmlFor="review-country">Страна производства <FormOptional /></label>
+    <CountryInput value={value} onChange={onChange} disabled={disabled} invalid={Boolean(error)} describedBy={note} />
+    {error ? <p className="field-error" id={note}>{error}</p> : <p className="field-help" id={note}>Посмотрите на банке строку «Изготовлено в…» — один вкус бывает разлит в разных странах.</p>}
   </div>;
 }
 
@@ -56,13 +74,16 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
   const [editing, setEditing] = useState(initiallyEditing || !existing);
   const [hasReview, setHasReview] = useState(Boolean(existing));
   const [ratings, setRatings] = useState({ design: existing?.design ?? 5, taste: existing?.taste ?? 5 });
-  const saved = useRef({ text: existing?.text ?? '', design: existing?.design ?? 5, taste: existing?.taste ?? 5, photos: existing?.photos ?? [] });
+  const [country, setCountry] = useState(existing?.country ?? '');
+  const saved = useRef({ text: existing?.text ?? '', design: existing?.design ?? 5, taste: existing?.taste ?? 5, country: existing?.country ?? '', photos: existing?.photos ?? [] });
   const [files, setFiles] = useState<Array<{ file: File; url: string }>>([]);
   const [retained, setRetained] = useState(existing?.photos ?? []);
   const [photoError, setPhotoError] = useState('');
   const previews = useRef(new Set<string>());
   const [text, setText] = useState(existing?.text ?? '');
   const [state, formAction, pending] = useActionState<ReviewFormState, FormData>(async (previous, data) => {
+    // React resets the form after each action; the controls show state, so a resend after an error takes it from there.
+    data.set('design', String(ratings.design)); data.set('taste', String(ratings.taste)); data.set('country', country);
     files.forEach(({ file }) => data.append('photos', file));
     retained.forEach(id => data.append('retainedPhoto', id));
     try {
@@ -73,7 +94,7 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
         setFiles([]);
         setRetained(result.photos ?? []);
         setPhotoError('');
-        saved.current = { text: String(data.get('text') ?? ''), design: Number(data.get('design')), taste: Number(data.get('taste')), photos: result.photos ?? [] };
+        saved.current = { text: String(data.get('text') ?? ''), design: Number(data.get('design')), taste: Number(data.get('taste')), country: String(data.get('country') ?? ''), photos: result.photos ?? [] };
         setHasReview(true);
         setEditing(false);
         onClose?.();
@@ -135,8 +156,8 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
       try {
         await deleteReviewAction(data);
         clearPreviews();
-        saved.current = { text: '', design: 5, taste: 5, photos: [] };
-        setText(''); setRatings({ design: 5, taste: 5 }); setRetained([]);
+        saved.current = { text: '', design: 5, taste: 5, country: '', photos: [] };
+        setText(''); setRatings({ design: 5, taste: 5 }); setCountry(''); setRetained([]);
         setHasReview(false); setEditing(true);
         onClose?.();
       } catch {
@@ -219,6 +240,8 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
         ))}
       </div>
 
+      <CountryField value={country} onChange={setCountry} disabled={!editing} error={state.fieldErrors?.country} />
+
       <div className="review-text-field">
         <div className="review-text-heading">
           <label htmlFor="review-text">Ваш отзыв</label>
@@ -286,7 +309,7 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
       {editing ? <div className="review-form-actions">
         <SubmitButton editing={hasReview} tooShort={normalizeReviewText(text).length < MIN_REVIEW_LENGTH} />
         {hasReview && <button className="community-button community-button-secondary" type="button" disabled={busy} onClick={() => {
-          setText(saved.current.text); setRatings({ design: saved.current.design, taste: saved.current.taste }); setRetained(saved.current.photos);
+          setText(saved.current.text); setRatings({ design: saved.current.design, taste: saved.current.taste }); setCountry(saved.current.country); setRetained(saved.current.photos);
           clearPreviews(); setEditing(false); onClose?.();
         }}>Отмена</button>}
       </div> : null}

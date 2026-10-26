@@ -30,6 +30,12 @@ describe.sequential('review photo storage', () => {
     expect(response.headers.get('content-type')).toBe('image/webp');
     expect(await response.text()).toBe('test thumbnail');
   });
+  it('keeps the country of the can and clears it when the member removes it', async () => {
+    await upsertReview(userId, 'Photo test', 'original', { ...input, country: 'AT' });
+    expect((await getUserReview(userId, 'Photo test', 'original'))?.country).toBe('AT');
+    await upsertReview(userId, 'Photo test', 'original', { ...input, country: null });
+    expect((await getUserReview(userId, 'Photo test', 'original'))?.country).toBeNull();
+  });
   it('rejects another review’s photo and rolls back the text update', async () => {
     const foreign = await upsertReview(otherId, 'Photo test', 'original', input, { retained: [], photos: [photo] });
     await expect(upsertReview(userId, 'Photo test', 'original', { ...input, text: 'Should roll back' }, { retained: foreign, photos: [] })).rejects.toThrow('does not belong');

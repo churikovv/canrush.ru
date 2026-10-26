@@ -539,6 +539,7 @@ a.wall-post-author:hover { color: var(--theme-link, #0058cc); }
 .review-item-ratings > div { display: flex; gap: 6px; }
 .review-item-ratings dt { color: var(--theme-muted, #59616b); }
 .review-item-ratings dd { margin: 0; color: var(--color-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.review-item-country { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 0 9px; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .75rem; font-weight: 600; white-space: nowrap; }
 .review-item-date { color: var(--theme-muted, #59616b); font-size: .75rem; opacity: .8; white-space: nowrap; }
 /* Own review: edit/delete sit in the card's top-right corner, in the free space beside the name. */
 .review-item-actions { position: absolute; top: 14px; right: 12px; margin: 0; }

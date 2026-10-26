@@ -14,7 +14,7 @@ import type { ReviewData } from '../src/lib/reviews';
 const review: ReviewData = {
   id: 'review-1', author: { username: 'reader', name: 'Reader', telegramChannel: null, tag: 'Burner', avatarId: null },
   brand: 'Burn', flavor: 'original', design: 4, taste: 5,
-  text: 'Отличный вкус', photos: ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'],
+  text: 'Отличный вкус', country: null, photos: ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'],
   createdAt: new Date('2026-09-24'), updatedAt: new Date('2026-09-24'),
 };
 const base = { isOwn: false, images: { 'review-1': '/brand/products/adrenaline-rush-original.jpg' }, username: 'reader', ownerName: 'Reader', count: 1, page: 1, pages: 1 };

@@ -1,3 +1,5 @@
+import { isCountryCode } from '@/lib/countries';
+
 export const MIN_REVIEW_LENGTH = 30;
 export const DETAILED_REVIEW_LENGTH = 150;
 export function normalizeReviewText(text: string): string {
@@ -10,12 +12,14 @@ export function reviewTextGuidance(value: string) {
   return { level: 'detailed', message: 'Хороший, подробный отзыв — он поможет другим людям с выбором.' } as const;
 }
 
-export type ReviewField = 'design' | 'taste' | 'text';
+export type ReviewField = 'design' | 'taste' | 'text' | 'country';
 
 export interface ReviewInputData {
   design: number;
   taste: number;
   text: string;
+  /** Where the can was made (ISO code from `countries.ts`), null when the member did not say. */
+  country?: string | null;
 }
 
 export type ReviewFieldErrors = Partial<Record<ReviewField, string>>;
@@ -39,6 +43,7 @@ export function validateReviewInput(values: {
   design: string;
   taste: string;
   text: string;
+  country?: string;
 }): ReviewValidationResult {
   const errors: ReviewFieldErrors = {};
   const parsed: Partial<ReviewInputData> = {};
@@ -63,6 +68,9 @@ export function validateReviewInput(values: {
     parsed.text = text;
   }
 
+  const country = values.country?.trim() || null;
+  if (country && !isCountryCode(country)) errors.country = 'Выберите страну из списка.';
+
   if (Object.keys(errors).length > 0) return { errors };
 
   return {
@@ -70,6 +78,7 @@ export function validateReviewInput(values: {
       design: parsed.design!,
       taste: parsed.taste!,
       text: parsed.text!,
+      country,
     },
   };
 }

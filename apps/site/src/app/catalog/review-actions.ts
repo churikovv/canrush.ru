@@ -60,6 +60,7 @@ export async function submitReviewAction(
     design: String(formData.get('design') ?? ''),
     taste: String(formData.get('taste') ?? ''),
     text: String(formData.get('text') ?? ''),
+    country: String(formData.get('country') ?? ''),
   });
 
   if (validation.errors) {

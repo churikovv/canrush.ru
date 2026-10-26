@@ -25,6 +25,8 @@ export interface ReviewData {
   design: number;
   taste: number;
   text: string;
+  /** Country of the can (ISO code), null when not given. */
+  country: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +42,7 @@ export interface ReviewInput {
   design: number;
   taste: number;
   text: string;
+  country?: string | null;
 }
 
 const EMPTY_SUMMARY: ReviewSummary = { count: 0, design: 0, taste: 0, overall: 0 };
@@ -53,6 +56,7 @@ interface ReviewRow extends QueryResultRow {
   design: number;
   taste: number;
   text: string;
+  country: string | null;
   createdAt: Date;
   updatedAt: Date;
   username: string;
@@ -64,7 +68,7 @@ interface ReviewRow extends QueryResultRow {
 }
 
 const REVIEW_SELECT = `
-  select r."id", r."userId", r."brand", r."flavor", r."design", r."taste", r."text",
+  select r."id", r."userId", r."brand", r."flavor", r."design", r."taste", r."text", r."country",
          r."createdAt", r."updatedAt",
          array(select p."id"::text from "reviewPhoto" p where p."reviewId" = r."id" order by p."position") as photos,
          u."username", u."name", u."telegramChannel",
@@ -94,6 +98,7 @@ function toReview(row: ReviewRow): ReviewData {
     design: Number(row.design),
     taste: Number(row.taste),
     text: row.text,
+    country: row.country ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -203,13 +208,13 @@ export async function upsertReview(
   try {
     await client.query('begin');
     const result = await client.query<{ id: string }>(
-      `insert into "review" ("userId", "brand", "flavor", "design", "taste", "text")
-       values ($1, $2, $3, $4, $5, $6)
+      `insert into "review" ("userId", "brand", "flavor", "design", "taste", "text", "country")
+       values ($1, $2, $3, $4, $5, $6, $7)
        on conflict ("userId", "brand", "flavor")
        do update set "design" = excluded."design", "taste" = excluded."taste",
-         "text" = excluded."text", "updatedAt" = current_timestamp
+         "text" = excluded."text", "country" = excluded."country", "updatedAt" = current_timestamp
        returning "id"`,
-      [userId, brand, flavor, input.design, input.taste, input.text],
+      [userId, brand, flavor, input.design, input.taste, input.text, input.country ?? null],
     );
     const reviewId = result.rows[0]!.id;
     if (attachments) {

@@ -25,7 +25,16 @@ describe('review fields', () => {
       design: 5,
       taste: 4,
       text: 'Отличный энергетик, приятный вкус и дизайн!',
+      country: null,
     });
+  });
+
+  it('принимает страну производства из списка и отклоняет чужие коды', () => {
+    const base = { design: '7', taste: '8', text: 'Отличный энергетик, приятный вкус и дизайн!' };
+    expect(validateReviewInput({ ...base, country: 'AT' }).data?.country).toBe('AT');
+    expect(validateReviewInput({ ...base, country: '' }).data?.country).toBeNull();
+    expect(validateReviewInput({ ...base, country: 'XX' }).errors).toMatchObject({ country: expect.any(String) });
+    expect(validateReviewInput({ ...base, country: 'toString' }).errors).toMatchObject({ country: expect.any(String) });
   });
 
   it('отклоняет отзыв без оценок и текста', () => {

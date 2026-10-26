@@ -9,6 +9,7 @@ import { ContentReportButton } from '@/components/content-report-button';
 import { MoreActions } from '@/components/more-actions';
 import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
 import type { ReviewData } from '@/lib/reviews';
+import { countryFlag, countryName } from '@/lib/countries';
 
 const CRITERIA = [
   { key: 'design', label: 'Дизайн' },
@@ -30,6 +31,7 @@ function authorDisplay(review: ReviewData): string {
 export function CatalogReviewItem({ review, own = false }: { review: ReviewData; own?: boolean }) {
   const profileHref = `/profile/${review.author.username}`;
   const overall = (review.design + review.taste) / 2;
+  const country = countryName(review.country);
   const createdAt = new Date(review.createdAt);
   const avatar = review.author.avatarId
     ? <Image src={`/api/profile-images/${review.author.avatarId}`} width={40} height={40} unoptimized alt="" />
@@ -57,6 +59,7 @@ export function CatalogReviewItem({ review, own = false }: { review: ReviewData;
           <dl className="review-item-ratings">
             {CRITERIA.map(({ key, label }) => <div key={key}><dt>{label}</dt><dd>{review[key].toFixed(1)}</dd></div>)}
           </dl>
+          {country && review.country && <span className="review-item-country" title="Страна производства банки"><span aria-hidden="true">{countryFlag(review.country)}</span><span className="sr-only">Страна производства: </span>{country}</span>}
           <time className="review-item-date" dateTime={createdAt.toISOString()}>{reviewDate.format(createdAt)}</time>
         </div>
 
