@@ -29,6 +29,7 @@ import { BrandCollectionBlock } from '@/components/brand-collection';
 import { getBrandCollections } from '@/lib/brand-collection';
 import { listPublishedDrinksByOwner } from '@/lib/catalog-drinks';
 import { ProfilePresence } from '@/components/profile-presence';
+import { SignInPrompt } from '@/components/sign-in-prompt';
 
 interface ProfileViewProps {
   profile: ProfileData;
@@ -115,7 +116,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           </ProfileBlock><ProfileBlock block="wall">
           <section className="community-panel" id="wall" aria-labelledby="wall-title">
             <div className="community-section-heading"><h2 id="wall-title">Стена <span>{wall.count}</span></h2><Link href="/feed">В ленте ↗</Link></div>
-            {viewerId ? <WallComposer targetId={profile.id} /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
+            {viewerId ? <WallComposer targetId={profile.id} /> : <SignInPrompt title="Напишите на стене" text="Войдите, чтобы оставить запись или ответить на неё." />}
             {wall.comments.length ? <div className="wall-comments">{wall.comments.map(comment => <WallPost key={comment.id} post={comment} interaction={wallInteractions.get(comment.id)} canDelete={isOwn || viewerId === comment.userId} canEdit={viewerId === comment.userId} />)}</div> : <div className="wall-empty-card"><strong>Здесь пока тихо</strong><p>Оставьте первый комментарий.</p></div>}
             {pages > 1 && <nav className="community-pagination" aria-label="Страницы стены">{wallPage > 1 ? <Link href={`${base}?wallPage=${wallPage - 1}#wall`}>← Назад</Link> : <span />}<span>{wallPage} / {pages}</span>{wallPage < pages ? <Link href={`${base}?wallPage=${wallPage + 1}#wall`}>Далее →</Link> : <span />}</nav>}
           </section>

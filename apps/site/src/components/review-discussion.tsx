@@ -16,6 +16,7 @@ import { tierDiscussionAction } from '@/app/tierlists/discussion-actions';
 import { reviewDiscussionAction } from '@/app/catalog/discussion-actions';
 import type { ReviewCommentData, ReviewInteraction } from '@/lib/review-discussions';
 import type { WallCommentData } from '@/lib/wall-discussions';
+import { SignInPrompt } from '@/components/sign-in-prompt';
 
 /** Wall comments also carry likes; review and tier list comments do not. */
 type Comment = ReviewCommentData & Partial<Pick<WallCommentData, 'likes' | 'liked'>>;
@@ -119,7 +120,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         {media.error && <p role="alert" className="field-error">{media.error}</p>}
         <MediaAttachmentPreviews media={media} />
         <button className="community-button review-composer-submit" type="submit" disabled={pending || (!text.trim() && !media.files.length) || media.preparing}>{pending ? 'Подождите…' : 'Отправить'}</button>
-      </form> : <p><Link href="/sign-in">Войдите</Link>, чтобы оставить комментарий.</p>}
+      </form> : <SignInPrompt compact title="Обсудите отзыв" text="Войдите, чтобы ответить автору." />}
       {!loaded ? <p role="status">{pending ? 'Загружаем комментарии…' : 'Комментарии не загружены.'} {!pending && <button type="button" onClick={() => run('read')}>Повторить</button>}</p> : !comments.length ? <div className="review-thread-empty" role="status">
         <span className="review-thread-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"><path d="M20 16a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10Z" /><path d="M8 9h8M8 13h5" strokeLinecap="round" /></svg></span>
         <strong>Пока без комментариев</strong>

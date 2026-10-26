@@ -2699,6 +2699,31 @@ html[data-cookie-notice="visible"] .brand-footer {
 .community-section-note, .community-muted { color: var(--theme-muted, #59616b); font-size: .8125rem; line-height: 1.5; }
 .community-section-note { margin: 12px 0 0; }
 .community-section-heading + .community-section-note { margin: -8px 0 20px; }
+/* Guests see this in place of a composer (feed, profile wall, review discussion): what signing in gives here and one
+   clear button. On a phone the button takes the full width under the text. */
+.signin-prompt { display: flex; align-items: center; gap: 14px; padding: 16px 16px 16px 18px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 20px; background: var(--color-subtle); }
+/* The prompt is the card itself: a panel around it (the feed composer, the wall) would make a box in a box. */
+.community-panel:has(> .signin-prompt:only-child) { padding: 0; border: 0; background: none; box-shadow: none; }
+.signin-prompt-icon { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--color-brand); color: #fff; box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--color-brand) 70%, transparent); }
+.signin-prompt-text { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.signin-prompt-text strong { color: var(--color-ink); font-size: 1rem; line-height: 1.3; }
+.signin-prompt-text span { color: var(--color-muted-strong); font-size: .875rem; line-height: 1.4; }
+.signin-prompt-button { display: inline-flex; flex: none; align-items: center; justify-content: center; min-height: 44px; padding: 0 24px; border-radius: 999px; background: var(--color-brand); color: #fff; font-weight: 800; text-decoration: none; transition: background-color 150ms ease-out, transform 150ms ease-out; }
+/* Link colours of the places it sits in (.review-thread a, .community-empty a) must not tint the button's label. */
+.signin-prompt a.signin-prompt-button { color: #fff; }
+.signin-prompt-button:hover { background: color-mix(in srgb, var(--color-brand) 85%, #000); }
+.signin-prompt-button:active { transform: scale(.97); }
+.signin-prompt[data-compact] { gap: 12px; padding: 12px 12px 12px 14px; border-radius: 16px; }
+.signin-prompt[data-compact] .signin-prompt-icon { width: 36px; height: 36px; }
+.signin-prompt[data-compact] .signin-prompt-icon svg { width: 18px; height: 18px; }
+.signin-prompt[data-compact] .signin-prompt-text strong { font-size: .9375rem; }
+.signin-prompt[data-compact] .signin-prompt-button { min-height: 40px; padding: 0 18px; font-size: .9375rem; }
+@media (max-width: 639px) {
+  .signin-prompt { flex-wrap: wrap; }
+  .signin-prompt-text { flex-basis: calc(100% - 58px); }
+  .signin-prompt-button, .signin-prompt[data-compact] .signin-prompt-button { width: 100%; min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .signin-prompt-button { transition: none; } }
 .community-empty { padding: 16px 0; color: var(--theme-muted, #59616b); font-size: .875rem; line-height: 1.6; }
 .community-empty p { margin: 0 0 12px; }
 .community-empty a { color: var(--theme-link, #0058cc); }

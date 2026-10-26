@@ -14,6 +14,7 @@ import { getWallInteractions } from '@/lib/wall-discussions';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import { getTierCardViewer } from '@/lib/tier-discussions';
 import { tierListProductsForPlacements } from '@/lib/tier-lists';
+import { SignInPrompt } from '@/components/sign-in-prompt';
 
 export type FeedSearchParams = { scope?: string; page?: string };
 
@@ -65,7 +66,7 @@ export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = 
       </div>}
       {!embedded && tabs}
       <section className="community-panel feed-composer" aria-label="Новая запись">
-        {viewerId ? <WallComposer targetId={viewerId} label="Новая запись в ленте и на вашей стене" placeholder="Что нового? Запись появится и на вашей стене…" /> : <p className="community-empty"><Link href="/sign-in">Войдите</Link>, чтобы написать в ленту.</p>}
+        {viewerId ? <WallComposer targetId={viewerId} label="Новая запись в ленте и на вашей стене" placeholder="Что нового? Запись появится и на вашей стене…" /> : <SignInPrompt title="Поделитесь с сообществом" text="Войдите, чтобы писать в ленту, ставить лайки и отвечать на записи." />}
       </section>
       <section className="feed-posts" aria-label="Записи">
         {items.length ? <div className="wall-comments">{nodes}{embedded && feed.hasMore && <FeedMore />}</div>
