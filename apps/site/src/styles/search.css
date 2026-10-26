@@ -57,3 +57,5 @@
   .people-stat-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 @media (prefers-reduced-motion: reduce) { .people-card { transition: none; } }
+/* From 960px the header's «Сообщество» menu has Тирлисты, Дейтинг and Люди: the community switcher would only repeat it. */
+@media (min-width: 960px) { .community-layout > .search-pinned { display: none; } }

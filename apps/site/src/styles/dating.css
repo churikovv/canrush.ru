@@ -15,8 +15,12 @@
 .swipe-card.is-top:active { cursor: grabbing; }
 .swipe-card.is-resting, .swipe-card.is-leaving { transition: transform 260ms cubic-bezier(.2, .8, .2, 1), opacity 260ms ease-out; }
 .swipe-card.is-leaving { opacity: 0; }
-.swipe-cover { display: grid; flex: 1; min-height: 0; place-items: center; padding: 16px; background: #fff; }
-.swipe-cover img { width: auto; max-width: 78%; height: 100%; max-height: 100%; object-fit: contain; mix-blend-mode: multiply; pointer-events: none; }
+/* The photo is placed absolutely inside the flexed tile: a percentage height in a grid cell did not always resolve, and a
+   square photo then took its height from the width and spilled over the card's text. */
+.swipe-cover { position: relative; flex: 1; min-height: 0; background: #fff; }
+.swipe-cover img { position: absolute; top: 16px; left: 11%; width: 78%; height: calc(100% - 32px); object-fit: contain; mix-blend-mode: multiply; pointer-events: none; }
+/* With the tile in the photo's own off-white (CoverImage), multiply would darken the photo's backdrop against it again. */
+:is(.swipe-cover, .dating-match-cover)[data-backdrop] img { mix-blend-mode: normal; }
 .swipe-copy { display: grid; gap: 4px; padding: 16px 20px 20px; }
 .swipe-copy small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .swipe-copy h2 { margin: 0; font-size: 1.625rem; line-height: 1.15; overflow-wrap: anywhere; }

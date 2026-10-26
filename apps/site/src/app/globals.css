@@ -1188,7 +1188,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 }
 /* A photo on a white background (CoverImage marks it on load) gets a tile of the photo's own white, so its backdrop
    does not show as a box on the grey tile; :root:root outranks the dark themes' tile colour in site-theme.css. */
-:root:root :is(.catalog-card-image, .catalog-product-visual, .favorite-card-image, .tier-editor-product-image)[data-backdrop="white"] {
+:root:root :is(.catalog-card-image, .catalog-product-visual, .favorite-card-image, .tier-editor-product-image, .swipe-cover, .dating-match-cover)[data-backdrop="white"] {
   background: var(--cover-backdrop, #fff);
 }
 .catalog-card-image > span {
@@ -3669,7 +3669,9 @@ html[data-native-app] .pull-refresh {
   --pull: 0;
   position: fixed;
   z-index: 60;
-  top: 0;
+  /* Below the status bar, notch or camera hole: WebView 140+ draws the page under the bars and reports the inset;
+     older WebViews are padded by Capacitor and report 0, like the header's own top padding. */
+  top: env(safe-area-inset-top, 0px);
   left: 50%;
   display: grid;
   place-items: center;

@@ -1,5 +1,5 @@
 'use client';
-import Image from 'next/image';
+import { CoverImage } from '@/components/cover-image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { swipeAction, undoSwipeAction } from '@/app/community/dating-actions';
@@ -84,7 +84,7 @@ export function SwipeDeck({ cards, signedIn, rewards, progress: initialProgress 
           onPointerCancel={top ? () => { start.current = null; setDrag(0); } : undefined}>
           <span className="swipe-stamp is-like" aria-hidden="true">Нравится</span>
           <span className="swipe-stamp is-skip" aria-hidden="true">Пропуск</span>
-          <span className="swipe-cover"><Image src={item.cover} width={360} height={360} sizes="(max-width: 639px) 70vw, 300px" alt="" draggable={false} priority={top} /></span>
+          <span className="swipe-cover"><CoverImage src={item.cover} width={360} height={360} sizes="(max-width: 639px) 70vw, 300px" alt="" draggable={false} priority={top} /></span>
           <div className="swipe-copy">
             <small>{item.brand}</small>
             <h2>{item.name}</h2>

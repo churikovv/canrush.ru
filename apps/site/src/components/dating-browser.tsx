@@ -1,5 +1,5 @@
 import { headers } from 'next/headers';
-import Image from 'next/image';
+import { CoverImage } from '@/components/cover-image';
 import Link from '@/components/navigation-progress';
 import { SwipeDeck } from '@/components/swipe-deck';
 import { auth } from '@/lib/auth';
@@ -26,7 +26,7 @@ export async function DatingBrowser() {
     {liked.length > 0 && <section className="dating-matches" aria-labelledby="dating-matches-title">
       <h2 id="dating-matches-title">Твои мэтчи</h2>
       <ul>{liked.map(item => <li key={`${item.brand}:${item.flavor}`}><Link href={item.href}>
-        <span className="dating-match-cover"><Image src={item.cover} width={120} height={120} sizes="120px" alt="" /></span>
+        <span className="dating-match-cover"><CoverImage src={item.cover} width={120} height={120} sizes="120px" alt="" /></span>
         <strong>{item.brand}</strong><span>{item.name}</span>
       </Link></li>)}</ul>
     </section>}
