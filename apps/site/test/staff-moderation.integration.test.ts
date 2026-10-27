@@ -49,3 +49,18 @@ it('lets a moderator, not a member, delete someone else’s content, and logs it
   expect((await pool.query(`select action, "targetType" from "adminAuditLog" where "adminEmail" = $1 order by "createdAt"`, [moderatorEmail])).rows)
     .toEqual([{ action: 'delete', targetType: 'wall-reply' }, { action: 'delete', targetType: 'wall-comment' }]);
 });
+
+it('lets a moderator take down a company reply to a review, keyed by the review', async () => {
+  expect(staffDeleteKind('company-reply')).toBe('company-reply');
+  const company = (await pool.query<{ id: string }>(`insert into business("ownerId", kind, name, status) values ($1, 'brand', 'Staff test brand', 'approved') returning id`, [member])).rows[0]!.id;
+  const review = (await pool.query<{ id: string }>(`insert into review("userId", brand, flavor, design, taste, text) values ($1, 'Staff test brand', 'mango', 5, 5, 'Отзыв для ответа') returning id`, [author])).rows[0]!.id;
+  await pool.query(`insert into "reviewCompanyReply"("reviewId", "businessId", "authorId", text) values ($1, $2, $3, 'Ответ компании')`, [review, company, member]);
+  expect(await staffDeleteContent(member, 'company-reply', review)).toBe(false);
+  expect(await staffDeleteContent(moderator, 'company-reply', review)).toBe(true);
+  expect((await pool.query('select 1 from "reviewCompanyReply" where "reviewId" = $1', [review])).rowCount).toBe(0);
+  expect((await pool.query('select 1 from review where id = $1', [review])).rowCount).toBe(1);
+  expect((await pool.query(`select 1 from "adminAuditLog" where "adminEmail" = $1 and "targetType" = 'company-reply' and "targetId" = $2`, [moderatorEmail, review])).rowCount).toBe(1);
+  await pool.query('delete from notification where "userId" = $1', [author]);
+  await pool.query('delete from review where id = $1', [review]);
+  await pool.query('delete from business where id = $1', [company]);
+});

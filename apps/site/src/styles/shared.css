@@ -717,3 +717,14 @@ a.blocked-member:hover strong { color: var(--theme-link, var(--color-brand)); }
 .score-radar-legend .score-radar-key { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 4px; color: var(--color-muted-strong); }
 .score-radar-swatch { display: inline-block; width: 14px; height: 10px; border: 1.5px solid var(--color-brand); border-radius: 3px; background: color-mix(in srgb, var(--color-brand) 30%, transparent); }
 .score-radar-swatch.is-catalog { margin-left: 8px; border-color: var(--color-muted-strong); border-style: dashed; background: transparent; }
+
+/* A company's reply under a review (CatalogReviewItem → CompanyReplyBlock): indented, brand-tinted, «Компания» badge. */
+.review-company-reply { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 10px; margin-top: 12px; padding: 12px; border-left: 3px solid var(--color-brand); border-radius: 4px 14px 14px 4px; background: color-mix(in srgb, var(--color-brand) 8%, var(--color-subtle)); }
+.review-company-logo { display: grid; width: 36px; height: 36px; place-items: center; overflow: hidden; border-radius: 10px; background: var(--color-brand); color: #fff; font-size: .75rem; font-weight: 800; }
+.review-company-logo img { width: 100%; height: 100%; object-fit: cover; }
+.review-company-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; font-size: .875rem; }
+.review-company-badge { padding: 1px 8px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .6875rem; font-weight: 700; }
+.review-company-head time { color: var(--color-muted-strong); font-size: .75rem; }
+.review-company-text { margin: 4px 0 0; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.review-company-reply:has(.review-company-actions) { grid-template-columns: 36px minmax(0, 1fr) auto; }
+.review-company-actions { align-self: start; margin: -8px -6px 0 0; }

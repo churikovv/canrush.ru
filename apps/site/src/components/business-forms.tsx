@@ -1,12 +1,12 @@
 'use client';
 import { useActionState, useRef, useState, useTransition } from 'react';
-import { answerBusinessInviteAction, inviteBusinessMemberAction, leaveBusinessAction, removeBusinessLogoAction, removeBusinessMemberAction, saveBusinessNotificationsAction, uploadBusinessLogoAction, moderateBusinessAction, moderateBusinessDrinkAction, removeBusinessDrinkAction, requestBusinessDrinkAction, saveBusinessAction } from '@/app/business/cabinet/actions';
+import { answerBusinessInviteAction, deleteReviewReplyAction, inviteBusinessMemberAction, replyReviewAction, leaveBusinessAction, removeBusinessLogoAction, removeBusinessMemberAction, saveBusinessNotificationsAction, uploadBusinessLogoAction, moderateBusinessAction, moderateBusinessDrinkAction, removeBusinessDrinkAction, requestBusinessDrinkAction, saveBusinessAction } from '@/app/business/cabinet/actions';
 import { saveThemeSettings } from '@/app/profile/settings/theme-actions';
 import { ActionToast } from '@/components/action-toast';
 import { FormAlert } from '@/components/form-alert';
 import Link from '@/components/navigation-progress';
 import { StoreDrinkPicker } from '@/components/store-drink-picker';
-import { BUSINESS_KINDS, type BusinessKind } from '@/lib/business-fields';
+import { BUSINESS_KINDS, MAX_BUSINESS_REPLY, type BusinessKind } from '@/lib/business-fields';
 import type { SiteTheme } from '@/lib/site-theme';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
 
@@ -220,4 +220,39 @@ export function BusinessThemeForm({ theme }: { theme: SiteTheme }) {
     </button>)}</div>
     <p role={state.error ? 'alert' : 'status'} className={state.error ? 'bc-note' : 'bc-muted'}>{pending ? 'Применяем тему…' : state.error ?? (state.success ? 'Тема сохранена в этом браузере.' : 'Системная следует настройкам устройства. Выбор сохраняется в этом браузере и действует на всём сайте.')}</p>
   </form>;
+}
+
+/**
+ * «Ответить» / «Изменить ответ» on a review in the cabinet: a dialog with the reply text, saved as the company's public
+ * reply under the review on the drink page; «Удалить ответ» takes it down.
+ */
+export function BusinessReplyButton({ reviewId, author, reply }: { reviewId: string; author: string; reply: string | null }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [text, setText] = useState(reply ?? '');
+  const [error, setError] = useState('');
+  const [pending, start] = useTransition();
+  const run = (task: () => Promise<{ error?: string }>) => start(async () => {
+    setError('');
+    const result = await task().catch(() => ({ error: 'Нет связи с сервером.' }));
+    if (result.error) setError(result.error); else dialog.current?.close();
+  });
+  return <>
+    <button type="button" className={`bc-button ${reply ? 'is-outline' : ''} bc-reply-button`} onClick={() => { setText(reply ?? ''); setError(''); dialog.current?.showModal(); }}>
+      {reply ? 'Изменить ответ' : 'Ответить'}
+    </button>
+    <dialog ref={dialog} className="bc-reply-dialog" aria-labelledby={`reply-${reviewId}`} onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
+      <form method="dialog" onSubmit={event => { event.preventDefault(); run(() => replyReviewAction(reviewId, text)); }}>
+        <h2 id={`reply-${reviewId}`}>Ответ компании</h2>
+        <p className="bc-muted">Его увидят все под отзывом {author} с отметкой «Компания». Автор получит уведомление.</p>
+        <textarea value={text} onChange={event => setText(event.target.value)} maxLength={MAX_BUSINESS_REPLY} rows={6} placeholder="Спасибо за отзыв! …" autoFocus aria-label="Текст ответа" />
+        <small className="bc-muted bc-reply-count">{text.length} / {MAX_BUSINESS_REPLY}</small>
+        {error && <FormAlert>{error}</FormAlert>}
+        <div className="bc-reply-actions">
+          <button type="submit" className="bc-button" disabled={pending || !text.trim()}>{pending ? 'Сохраняем…' : reply ? 'Сохранить' : 'Опубликовать ответ'}</button>
+          <button type="button" className="bc-button is-outline" disabled={pending} onClick={() => dialog.current?.close()}>Отмена</button>
+          {reply && <button type="button" className="bc-button is-danger" disabled={pending} onClick={() => { if (window.confirm('Удалить ответ компании?')) run(() => deleteReviewReplyAction(reviewId)); }}>Удалить ответ</button>}
+        </div>
+      </form>
+    </dialog>
+  </>;
 }

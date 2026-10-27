@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireSiteAdmin } from '@/lib/admin';
 import { auth } from '@/lib/auth';
 import sharp from 'sharp';
-import { answerBusinessInvite, inviteBusinessMember, leaveBusiness, moderateBusiness, moderateBusinessDrink, removeBusinessDrink, removeBusinessLogo, removeBusinessMember, requestBusinessDrink, saveBusiness, setBusinessLogo } from '@/lib/business';
+import { answerBusinessInvite, deleteReviewReply, inviteBusinessMember, replyToReview, leaveBusiness, moderateBusiness, moderateBusinessDrink, removeBusinessDrink, removeBusinessLogo, removeBusinessMember, requestBusinessDrink, saveBusiness, setBusinessLogo } from '@/lib/business';
 import { getPool } from '@/db/pool';
 import { MAX_REVIEW_PHOTO_BYTES, REVIEW_PHOTO_TYPES } from '@/lib/review-photo-limits';
 import { encodeStillPhoto } from '@/lib/review-photos';
@@ -133,5 +133,22 @@ export async function saveBusinessNotificationsAction(_state: BusinessActionStat
       on conflict ("userId", kind) do update set enabled = excluded.enabled`, [user.id, form.get('reviews') === 'on']);
   } catch (error) { return { error: message(error, 'Не удалось сохранить.') }; }
   revalidatePath('/business/cabinet');
+  return { done: true };
+}
+
+/** A company reply to a review (replyToReview checks the company, the drink and the text); the drink page shows it. */
+export async function replyReviewAction(reviewId: string, text: string): Promise<BusinessActionState> {
+  try { await replyToReview((await member()).id, reviewId, text); }
+  catch (error) { return { error: isFrozenError(error) ? error.message : message(error, 'Не удалось сохранить ответ.') }; }
+  revalidatePath('/business/cabinet');
+  revalidatePath('/catalog/[product]', 'page');
+  return { done: true };
+}
+
+export async function deleteReviewReplyAction(reviewId: string): Promise<BusinessActionState> {
+  try { await deleteReviewReply((await member()).id, reviewId); }
+  catch (error) { return { error: message(error, 'Не удалось удалить ответ.') }; }
+  revalidatePath('/business/cabinet');
+  revalidatePath('/catalog/[product]', 'page');
   return { done: true };
 }

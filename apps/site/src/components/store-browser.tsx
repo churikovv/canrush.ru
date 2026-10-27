@@ -1,3 +1,4 @@
+import { logSearch } from '@/lib/search-log';
 import type { ReactNode } from 'react';
 import Link from '@/components/navigation-progress';
 import { Pinned } from '@/components/search-pinned';
@@ -30,6 +31,7 @@ export async function StoreBrowser({ params, ownerId, basePath = '/market/stores
   ]);
   const stationNames = [...new Set(stations.filter(station => options.metro.includes(station.id) || options.points.some(point => stationDistanceKm(point.lat, point.lng, station) <= NEAREST_METRO_KM)).map(station => station.name))].sort((a, b) => a.localeCompare(b, 'ru'));
   const filtered = Boolean(q || brand || metro);
+  if (q && page === 1 && !mine) await logSearch(q, 'stores', rows.length);
   const items = await withCatalogLinks(rows.map(s => ({ id: s.id, photos: s.photos, ownerId: mine ? s.ownerId : '', name: s.name, city: s.city, address: s.address, latitude: s.latitude, longitude: s.longitude, locationSource: s.locationSource, metro: s.metro, description: s.description, catalog: s.catalog, status: s.status, moderationNote: mine ? s.moderationNote : '', updatedAt: s.updatedAt, reviewedAt: null })));
   const scope = { ...keep, ...(mine ? { mine: '1' } : {}) };
   const href = (n: number) => `${basePath}?${new URLSearchParams({ ...scope, q, ...(brand ? { brand } : {}), ...(metro ? { metro } : {}), page: String(n) })}`;

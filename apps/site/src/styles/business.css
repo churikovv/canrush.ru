@@ -150,3 +150,13 @@
   .biz-feature:nth-child(even) .biz-mock { order: 2; }
 }
 @media (prefers-reduced-motion: reduce) { .biz-button, .biz-faq summary::after { transition: none; } }
+/* «Аналитика поиска» and «Ответы от имени компании» screens. */
+.biz-queries { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.biz-queries li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-control); font-size: .9375rem; }
+.biz-queries li:last-child { border-bottom: 0; }
+.biz-queries b { color: var(--color-brand); }
+.biz-missed { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-brand) 10%, var(--color-subtle)); font-size: .875rem; font-weight: 600; }
+.biz-review { display: grid; grid-template-columns: 36px 1fr; gap: 10px; }
+.biz-review.is-brand { margin-left: 24px; padding: 10px; border-left: 3px solid var(--color-brand); border-radius: 4px 14px 14px 4px; background: color-mix(in srgb, var(--color-brand) 10%, transparent); }
+.biz-review p { font-size: .9375rem; line-height: 1.4; }
+.biz-review i { margin-left: 4px; padding: 2px 6px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .6875rem; font-style: normal; vertical-align: 2px; }

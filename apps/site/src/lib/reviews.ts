@@ -32,7 +32,11 @@ export interface ReviewData {
   country: string | null;
   createdAt: Date;
   updatedAt: Date;
+  /** The public reply of the company whose drink this is (reviewCompanyReply), shown under the review. */
+  companyReply?: CompanyReply | null;
 }
+
+export interface CompanyReply { business: string; logoId: string | null; text: string; createdAt: Date; edited: boolean }
 
 export interface ReviewSummary {
   count: number;
@@ -69,6 +73,7 @@ interface ReviewRow extends QueryResultRow {
   avatarId: string | null;
   xp?: number;
   appearance: unknown;
+  companyReply: { business: string; logoId: string | null; text: string; createdAt: string; edited: boolean } | null;
 }
 
 const REVIEW_SELECT = `
@@ -76,6 +81,8 @@ const REVIEW_SELECT = `
          r."createdAt", r."updatedAt",
          array(select p."id"::text from "reviewPhoto" p where p."reviewId" = r."id" order by p."position") as photos,
          u."username", u."name", u."telegramChannel", u."profileAppearance" as appearance,
+         (select jsonb_build_object('business', b.name, 'logoId', b."logoId", 'text', c.text, 'createdAt', c."createdAt", 'edited', c."updatedAt" > c."createdAt" + interval '1 minute')
+            from "reviewCompanyReply" c join business b on b.id = c."businessId" where c."reviewId" = r.id and b.status = 'approved') as "companyReply",
          coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
          (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
          case when u."profileTags"[1] in ('admin', 'moderator') then
@@ -104,6 +111,7 @@ function toReview(row: ReviewRow): ReviewData {
     taste: Number(row.taste),
     text: row.text,
     country: row.country ?? null,
+    companyReply: row.companyReply ? { ...row.companyReply, createdAt: new Date(row.companyReply.createdAt) } : null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

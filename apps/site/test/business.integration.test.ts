@@ -24,6 +24,7 @@ afterAll(async () => {
   await pool.query('delete from review where brand = $1', [brand]);
   await pool.query('delete from "businessReviewDigest" where brand = $1', [brand]);
   await pool.query(`delete from "telegramJobRun" where job like 'business-digest:' || $1 || ':%'`, [brand]);
+  await pool.query(`delete from "searchQuery" where brands && array[$1]::text[] or strpos(query, lower($1)) > 0`, [brand]);
   await pool.query('delete from "drinkSwipe" where brand = $1', [brand]);
   await pool.query('delete from "adminAuditLog" where "adminEmail" = $1', [staffEmail]);
   await pool.query('delete from "siteAdmin" where email = $1', [staffEmail]);
@@ -137,4 +138,38 @@ it('invites a team member, notifies about new reviews and keeps one logo', async
   expect(await business.getCabinet(later)).toMatchObject({ role: 'manager' });
   await business.removeBusinessMember(owner, `email:${fresh}`);
   await pool.query('delete from "user" where id = $1', [later]);
+});
+
+it('counts searches with the brand and lets the company answer a review', async () => {
+  const company = (await business.getOwnBusiness(owner))!;
+  const name = brand.toLowerCase();
+  // Anonymous search log: shown in results, named in the query, named but found nothing, and an unrelated search.
+  await pool.query(`insert into "searchQuery"(query, scope, results, brands) values
+    ('манго', 'catalog', 5, array[$1]::text[]), ($2 || ' манго', 'catalog', 1, array[$1]::text[]),
+    ($2 || ' юдзу', 'market', 0, '{}'), ($2 || ' юдзу', 'stores', 0, '{}'), ('совсем другое', 'catalog', 3, '{}')`, [brand, name]);
+  const search = await business.getBusinessSearch(company.id);
+  expect(search).toMatchObject({ brands: [brand], total30: 4, shown30: 2, named30: 3, missed30: 2 });
+  expect(search.missed).toEqual([expect.objectContaining({ query: `${name} юдзу`, count: 2 })]);
+  expect(search.top.find(item => item.query === `${name} юдзу`)).toMatchObject({ named: true, results: 0, scopes: ['market', 'stores'] });
+  expect(search.top.some(item => item.query === 'совсем другое')).toBe(false);
+
+  // A reply under a review of the company's approved drink; its author hears about it once.
+  const author = randomUUID();
+  await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Author',$2,true,now(),now(),$3)`, [author, `${author}@example.com`, `bz_${author.slice(0, 12)}`]);
+  const review = (await pool.query<{ id: string }>(`insert into review("userId", brand, flavor, design, taste, text) values ($1, $2, 'mango', 6, 5, 'Мало газа') returning id`, [author, brand])).rows[0]!.id;
+  await expect(business.replyToReview(author, review, 'Я не компания')).rejects.toThrow('подтверждённая компания');
+  await expect(business.replyToReview(owner, review, '   ')).rejects.toThrow('Напишите ответ');
+  await business.replyToReview(owner, review, '  Спасибо!   Учтём   газ.  ');
+  const reply = (await pool.query<{ text: string; businessId: string }>(`select text, "businessId" from "reviewCompanyReply" where "reviewId" = $1`, [review])).rows[0];
+  expect(reply).toEqual({ text: 'Спасибо! Учтём газ.', businessId: company.id });
+  expect((await pool.query<{ business: string }>(`select payload->>'business' as business from notification where "userId" = $1 and kind = 'business-reply'`, [author])).rows).toEqual([{ business: 'Energy Lab' }]);
+  expect((await business.listBusinessReviews(company.id, { q: 'Мало газа' })).items[0]?.reply?.text).toBe('Спасибо! Учтём газ.');
+  // Editing keeps one reply and does not notify again; deleting takes it down.
+  await business.replyToReview(owner, review, 'Спасибо! Газ добавим в новой партии.');
+  expect((await pool.query(`select 1 from notification where "userId" = $1 and kind = 'business-reply'`, [author])).rowCount).toBe(1);
+  await business.deleteReviewReply(owner, review);
+  expect((await pool.query(`select 1 from "reviewCompanyReply" where "reviewId" = $1`, [review])).rowCount).toBe(0);
+  await pool.query('delete from notification where "userId" = $1', [author]);
+  await pool.query('delete from review where id = $1', [review]);
+  await pool.query('delete from "user" where id = $1', [author]);
 });

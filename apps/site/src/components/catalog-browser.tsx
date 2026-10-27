@@ -14,6 +14,7 @@ import {
   type CatalogFilters,
 } from '@/lib/catalog-query';
 import { getReviewSummaries, getDiscussionCounts } from '@/lib/reviews';
+import { logSearch } from '@/lib/search-log';
 
 const PAGE_SIZE = 24;
 const AUTO_LOAD_ROUNDS = 3;
@@ -76,6 +77,8 @@ export async function CatalogBrowser({ params, basePath = '/catalog', keep = {},
   const addedFiltered = filterCatalogGroups(added, filters, ratingSummaries, discussions);
   const archivedFiltered = searching ? filterCatalogGroups(archived, filters, ratingSummaries, discussions) : [];
   const totalCount = filtered.length + addedFiltered.length + archivedFiltered.length;
+  // A search, not «Показать ещё» on it: the brands of every result count as shown (business «Поиск»).
+  if (searching && !first(params.limit)) await logSearch(filters.query, 'catalog', totalCount, [...filtered, ...addedFiltered, ...archivedFiltered].map(group => group.brand));
   const visible = filtered.slice(0, limit);
   const visibleAdded = addedFiltered.slice(0, Math.max(0, limit - filtered.length));
   const visibleArchive = archivedFiltered.slice(0, Math.max(0, limit - filtered.length - addedFiltered.length));

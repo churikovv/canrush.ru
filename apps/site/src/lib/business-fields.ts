@@ -80,3 +80,14 @@ export function sortRows<T>(rows: T[], by: string | undefined, dir: 'asc' | 'des
     return sign * (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'ru-RU'));
   });
 }
+
+/** A company reply to a review: up to this many characters. */
+export const MAX_BUSINESS_REPLY = 1000;
+
+/** The reply text as stored: spaces collapsed within lines, at most two line breaks in a row, trimmed; checks the length. */
+export function parseBusinessReply(value: unknown): string {
+  const text = typeof value === 'string' ? value.replace(/\r\n?/g, '\n').split('\n').map(line => line.replace(/[^\S\n]+/g, ' ').trim()).join('\n').replace(/\n{3,}/g, '\n\n').trim() : '';
+  if (!text) throw new BusinessError('Напишите ответ.');
+  if (text.length > MAX_BUSINESS_REPLY) throw new BusinessError(`Ответ — до ${MAX_BUSINESS_REPLY} символов.`);
+  return text;
+}

@@ -14,6 +14,8 @@ const STAFF_DELETE = {
   'wall-reply': { table: '"wallReply"', audit: 'wall-reply' },
   story: { table: '"story"', audit: 'story' },
   article: { table: 'article', audit: 'article' },
+  // A company's reply to a review is keyed by the review (one reply each): the id is the review's.
+  'company-reply': { table: '"reviewCompanyReply"', audit: 'company-reply', key: '"reviewId"' },
 } as const;
 export type StaffDeleteKind = keyof typeof STAFF_DELETE;
 export function staffDeleteKind(value: string): StaffDeleteKind | null {
@@ -29,12 +31,14 @@ export const VIEWER_IS_STAFF = '(select exists(select 1 from "user" su join "sit
  */
 export async function staffDeleteContent(userId: string, kind: StaffDeleteKind, id: string): Promise<boolean> {
   if (!isContentId(id)) return false;
-  const { table, audit } = STAFF_DELETE[kind];
+  const target = STAFF_DELETE[kind];
+  const { table, audit } = target;
+  const key = 'key' in target ? target.key : 'id';
   const db = await getPool().connect();
   try {
     await db.query('begin');
     const staff = (await db.query<{ email: string }>('select sa.email from "user" u join "siteAdmin" sa on lower(u.email) = sa.email where u.id = $1', [userId])).rows[0];
-    const deleted = staff ? await db.query(`delete from ${table} where id = $1 returning id`, [id]) : null;
+    const deleted = staff ? await db.query(`delete from ${table} where ${key} = $1 returning ${key}`, [id]) : null;
     if (!staff || !deleted?.rowCount) { await db.query('rollback'); return false; }
     await db.query('insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, \'delete\', $2, $3)', [staff.email, audit, id]);
     await db.query('commit');

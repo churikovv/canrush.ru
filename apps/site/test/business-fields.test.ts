@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { BusinessError, csvCell, parseBusinessInput, sortRows, percentChange, weekStart, weeklySeries } from '../src/lib/business-fields';
+import { brandSearchNames, normalizeSearchQuery } from '../src/lib/search-log-fields';
+import { BusinessError, csvCell, parseBusinessInput, parseBusinessReply, MAX_BUSINESS_REPLY, sortRows, percentChange, weekStart, weeklySeries } from '../src/lib/business-fields';
 
 const form = (values: Record<string, string>) => { const data = new FormData(); for (const [key, value] of Object.entries(values)) data.set(key, value); return data; };
 
@@ -46,4 +47,16 @@ describe('sortRows', () => {
     expect(sortRows(rows, 'name', 'asc', columns).map(row => row.name)).toEqual(['А', 'Б', 'В']);
   });
   it('keeps the order for an unknown column', () => expect(sortRows(rows, 'nope', 'asc', columns)).toBe(rows));
+});
+
+describe('company replies and the search log', () => {
+  it('keeps line breaks, collapses spaces and checks the length of a reply', () => {
+    expect(parseBusinessReply('  Спасибо!   Учтём.\r\n\n\n\nДо встречи  ')).toBe('Спасибо! Учтём.\n\nДо встречи');
+    expect(() => parseBusinessReply('   ')).toThrow(BusinessError);
+    expect(() => parseBusinessReply('а'.repeat(MAX_BUSINESS_REPLY + 1))).toThrow('символов');
+  });
+  it('normalises queries and brand names the same way', () => {
+    expect(normalizeSearchQuery('  Burn   МАНГО  Ёлка ')).toBe('burn манго елка');
+    expect(brandSearchNames('100 Kwt')).toEqual(['100 kwt', '100 квт', 'сто киловатт', 'киловатт']);
+  });
 });

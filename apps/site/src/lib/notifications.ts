@@ -101,6 +101,12 @@ function describeNotification(row: any): NotificationItem {
       title = `Новый отзыв: ${p.brand} · ${flavorName(p.flavor)}`;
       detail = `${actor} · вкус ${p.taste}, дизайн ${p.design} · ${p.business}`;
       href = '/business/cabinet?section=reviews';
+    } else if (row.kind==='business-reply') {
+      // The company of the drink answered the member's review (migration 0124); off in the notification settings.
+      const p = row.payload;
+      title = `${p.business} ответили на ваш отзыв`;
+      detail = `${p.brand} · ${flavorName(p.flavor)} — ${p.text}`;
+      href = `/catalog/${catalogGroupSlug(p.brand,p.flavor)}?tab=reviews#review-${row.reviewId}`;
     } else if (row.kind==='business-invite') {
       // The owner of a company invited the member to its cabinet; accepting happens in the cabinet.
       const p = row.payload;

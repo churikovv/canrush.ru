@@ -1,3 +1,4 @@
+import { logSearch } from '@/lib/search-log';
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
@@ -22,6 +23,7 @@ export async function MarketBrowser({ query, viewerId, basePath = '/market', kee
   const suffix = Object.keys(scope).length ? `&${new URLSearchParams(scope)}` : '';
   const filterSuffix = '&' + new URLSearchParams(filters).toString();
   const filtered = Boolean(filters.q || filters.brand || filters.city || filters.delivery);
+  if (filters.q && page === 1 && !mine && !seller) await logSearch(filters.q, 'market', items.length, items.map(listing => listing.brand).filter((brand): brand is string => Boolean(brand)));
   return <>
     <Pinned scopes={scopes}><MarketFilters key={JSON.stringify([filters,scope])} brands={filterOptions.brands} cities={filterOptions.cities} initial={filters} scope={scope} basePath={basePath} addHref={basePath === '/market' ? undefined : '/market/new'}/></Pinned>
     {items.length ? <div className="market-grid">{items.map(listing => <article className="market-card" key={listing.id}>

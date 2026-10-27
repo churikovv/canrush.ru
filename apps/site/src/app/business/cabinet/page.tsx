@@ -8,7 +8,7 @@ import { cookies, headers } from 'next/headers';
 import { parseSiteTheme, SITE_THEME_COOKIE } from '@/lib/site-theme';
 import { redirect } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
-import { BusinessDrinkAttach, BusinessDrinkRemove, BusinessDrinkRequest, BusinessForm, BusinessInviteAnswer, BusinessInviteForm, BusinessLeave, BusinessLogoForm, BusinessMemberRemove, BusinessNotificationsForm, BusinessThemeForm } from '@/components/business-forms';
+import { BusinessDrinkAttach, BusinessDrinkRemove, BusinessDrinkRequest, BusinessForm, BusinessInviteAnswer, BusinessInviteForm, BusinessLeave, BusinessLogoForm, BusinessMemberRemove, BusinessNotificationsForm, BusinessReplyButton, BusinessThemeForm } from '@/components/business-forms';
 import { CatalogDrinkForm } from '@/components/catalog-drink-form';
 import { MarketListingForm } from '@/components/market-listing-form';
 import { MarketChat } from '@/components/market-chat';
@@ -30,7 +30,7 @@ import { isUserBlocked } from '@/lib/moderation';
 import { auth } from '@/lib/auth';
 import { getGigaChat } from '@/lib/gigachat';
 import { DIGEST_MIN_REVIEWS, DIGEST_SENTIMENT_LABELS } from '@/lib/review-digest-fields';
-import { BUSINESS_REVIEW_SORTS, MAX_BUSINESS_MEMBERS, getBusinessAnalytics, digestDue, getCabinet, listBusinessInvites, listBusinessMembers, listDrinkDigests, refreshBusinessDigests, type BusinessRole, listBrandDrinks, listBusinessDrinks, listBusinessReviews, type Business, type BusinessReview, type BusinessReviewSort } from '@/lib/business';
+import { BUSINESS_REVIEW_SORTS, MAX_BUSINESS_MEMBERS, getBusinessAnalytics, getBusinessSearch, digestDue, getCabinet, listBusinessInvites, listBusinessMembers, listDrinkDigests, refreshBusinessDigests, type BusinessRole, listBrandDrinks, listBusinessDrinks, listBusinessReviews, type Business, type BusinessReview, type BusinessReviewSort } from '@/lib/business';
 import { BUSINESS_STATUS_LABELS, percentChange, sortRows, type BusinessStatus } from '@/lib/business-fields';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 import { getListings, getMessages, getOrder, getOrders } from '@/lib/market';
@@ -44,7 +44,7 @@ type Params = { section?: string; page?: string; size?: string; drink?: string; 
 const number = new Intl.NumberFormat('ru-RU');
 const longDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' });
 const shortDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow' });
-const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', insights: 'Разбор нейросетью', brand: 'Бренд', drinks: 'Напитки', 'new-drink': 'Новый напиток', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки' };
+const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', insights: 'Разбор нейросетью', search: 'Поиск', brand: 'Бренд', drinks: 'Напитки', 'new-drink': 'Новый напиток', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки' };
 const ORDER_TONE: Record<OrderStatus, string> = { new: 'mid', confirmed: 'good', completed: 'good', cancelled: 'bad' };
 const DRINK_REQUEST: Record<CatalogDrinkStatus, { label: string; tone: string }> = { pending: { label: 'На модерации', tone: 'mid' }, published: { label: 'В каталоге', tone: 'good' }, rejected: { label: 'Нужно исправить', tone: 'bad' } };
 const SECTIONS = Object.keys(TITLES) as BusinessSection[];
@@ -71,6 +71,9 @@ const KPI_ICONS = {
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
   box: <path d="M3 7 12 3l9 4-9 4-9-4Zm0 0v10l9 4 9-4V7M12 11v10" />,
   bag: <path d="M3 9h18l-1.5 11h-15L3 9Zm5 0V7a4 4 0 0 1 8 0v2" />,
+  search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
+  name: <path d="M4 7V5h16v2M9 19h6M12 5v14" />,
+  miss: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5M8.5 8.5l5 5M13.5 8.5l-5 5" /></>,
 };
 
 /** A KPI card like the reference: an icon in a raised square, the number with its change in colour, the label below. */
@@ -115,13 +118,13 @@ function ReviewsTable({ items, sortHref, sort }: { items: BusinessReview[]; sort
     <tbody>{items.map(item => <tr key={item.id}>
       <td><Person review={item} /></td>
       <td data-label="Напиток"><Link className="bc-link" href={`/catalog/${catalogGroupSlug(item.brand, item.flavor)}`}>{item.name}</Link></td>
-      <td data-label="Отзыв" className="bc-cell-text"><span>{item.text}</span></td>
+      <td data-label="Отзыв" className="bc-cell-text"><span>{item.text}</span>{item.reply && <span className="bc-reply-preview"><b>Ваш ответ:</b> {item.reply.text}</span>}</td>
       <td data-label="Дата" className="bc-nowrap">{longDay.format(item.createdAt)}</td>
       <td data-label="Оценка"><ScorePill taste={item.taste} design={item.design} /></td>
-      <td className="bc-cell-menu"><BusinessRowMenu label="Действия с отзывом" items={[
+      <td className="bc-cell-menu"><span className="bc-row-actions"><BusinessReplyButton reviewId={item.id} author={item.authorName} reply={item.reply?.text ?? null} /><BusinessRowMenu label="Действия с отзывом" items={[
         { href: `/catalog/${catalogGroupSlug(item.brand, item.flavor)}#reviews`, label: 'Открыть напиток' },
         ...(item.author ? [{ href: `/profile/${item.author}`, label: 'Профиль автора' }] : []),
-      ]} /></td>
+      ]} /></span></td>
     </tr>)}</tbody>
   </table></div>;
 }
@@ -199,6 +202,54 @@ async function Reviews({ business, params }: { business: Business; params: Param
       <ReviewsTable items={items} sort={sort} sortHref={value => link({ sort: value !== 'new' ? value : undefined, page: undefined })} />
       <BusinessPagination page={page} size={size} total={total} sizes={SIZES} href={(to, perPage) => link({ page: to > 1 ? String(to) : undefined, size: perPage !== 20 ? String(perPage) : undefined })} />
     </div> : <Empty title={q ? 'Ничего не нашлось' : 'Отзывов пока нет'} text={q ? 'Попробуйте другое слово или сбросьте фильтр.' : approved.length ? 'Отзывы на подтверждённые напитки появятся здесь.' : 'Сначала прикрепите напитки компании.'} />}
+  </>;
+}
+
+const SCOPE_LABELS: Record<string, string> = { catalog: 'Каталог', stores: 'Магазины', market: 'Маркет' };
+
+/**
+ * «Поиск»: anonymous searches on CanRush where the company's brands were in the results or in the query itself — how
+ * many, by week, the most frequent queries, and queries that named a brand and found nothing.
+ */
+async function Search({ business }: { business: Business }) {
+  const data = await getBusinessSearch(business.id);
+  if (!data.brands.length) return <Empty title="Поиск появится с первым напитком" text="Считаем поиски, где в выдаче или в самом запросе был бренд ваших подтверждённых напитков." action={<Link className="bc-button" href={businessHref('drinks')}>Прикрепить напитки</Link>} />;
+  const maxWeek = Math.max(1, ...data.weekly.map(item => item.count));
+  const change = percentChange(data.total30, data.previous30);
+  return <>
+    <div className="bc-kpis">
+      <Kpi icon="search" value={number.format(data.total30)} delta={change} deltaLabel="%" label="Поисков с вашим брендом за 30 дней" />
+      <Kpi icon="catalog" value={number.format(data.shown30)} label="Бренд был в выдаче" />
+      <Kpi icon="name" value={number.format(data.named30)} label="Бренд назвали в запросе" />
+      <Kpi icon="miss" value={number.format(data.missed30)} label="Назвали, но ничего не нашли" />
+    </div>
+    <div className="bc-grid">
+      <section className="bc-card" aria-labelledby="bc-search-weekly">
+        <div className="bc-card-head"><h2 id="bc-search-weekly">Поиски по неделям</h2><span className="bc-muted">12 недель</span></div>
+        <ol className="bc-chart">{data.weekly.map(item => <li key={item.week} title={`Неделя с ${shortDay.format(new Date(item.week))}: ${item.count}`}>
+          <span style={bar(item.count / maxWeek)}>{item.count > 0 && <b>{item.count}</b>}</span><small>{shortDay.format(new Date(item.week))}</small>
+        </li>)}</ol>
+      </section>
+      <section className="bc-card" aria-labelledby="bc-search-missed">
+        <div className="bc-card-head"><h2 id="bc-search-missed">Искали и не нашли</h2><span className="bc-muted">30 дней</span></div>
+        {data.missed.length ? <ul className="bc-search-missed">{data.missed.map(item => <li key={item.query}><span>«{item.query}»</span><b>{item.count}</b></li>)}</ul>
+          : <p className="bc-muted">Таких запросов нет — всё, что искали с вашим брендом, находилось.</p>}
+        <p className="bc-muted bc-search-note">Запрос с названием бренда без результатов — спрос, который не встретил ни карточки, ни магазина, ни объявления.</p>
+      </section>
+    </div>
+    <section aria-labelledby="bc-search-top" className="bc-stack">
+      <div className="bc-section-head"><h2 id="bc-search-top">Частые запросы</h2><span className="bc-muted">30 дней · обезличено</span></div>
+      {data.top.length ? <div className="bc-table-card"><table className="bc-table">
+        <thead><tr><th>Запрос</th><th>Поисков</th><th>Результатов</th><th>Где искали</th><th>Последний</th></tr></thead>
+        <tbody>{data.top.map(item => <tr key={item.query}>
+          <td><strong>«{item.query}»</strong>{item.named && <span className="bc-pill bc-search-named">бренд в запросе</span>}</td>
+          <td data-label="Поисков">{number.format(item.count)}</td>
+          <td data-label="Результатов">{item.results === 0 ? <span className="bc-muted">ничего</span> : `≈ ${number.format(item.results)}`}</td>
+          <td data-label="Где искали">{item.scopes.map(scope => SCOPE_LABELS[scope] ?? scope).join(', ')}</td>
+          <td data-label="Последний" className="bc-nowrap">{longDay.format(item.lastAt)}</td>
+        </tr>)}</tbody>
+      </table></div> : <Empty title="Поисков пока нет" text="Как только участники начнут искать ваш бренд или найдут его в выдаче, запросы появятся здесь." />}
+    </section>
   </>;
 }
 
@@ -616,11 +667,12 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     : section === 'orders' ? (params.order ? <Link className="bc-button is-outline" href={businessHref('orders')}>Все заказы</Link> : <Link className="bc-button" href={businessHref('new-listing')}>Новое объявление</Link>)
     : section === 'settings' ? undefined
     : <>{approved && <a className="bc-button is-outline" href="/business/cabinet/export" download>Экспорт CSV</a>}<Link className="bc-button" href={businessHref('drinks')}>Прикрепить напиток</Link></>;
-  const toolbar = section === 'overview' || section === 'reviews' || section === 'insights' || section === 'brand'
+  const toolbar = section === 'overview' || section === 'reviews' || section === 'insights' || section === 'search' || section === 'brand'
     ? <BusinessSegments label="Аналитика" items={[
       { href: businessHref('overview'), label: 'Сводка', current: section === 'overview' },
       { href: businessHref('reviews'), label: 'Отзывы', current: section === 'reviews' },
       { href: businessHref('insights'), label: 'Разбор', current: section === 'insights' },
+      { href: businessHref('search'), label: 'Поиск', current: section === 'search' },
       { href: businessHref('brand'), label: 'Бренд', current: section === 'brand' },
     ]} />
     : undefined;
@@ -633,6 +685,7 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     {section === 'overview' && (approved ? <Overview business={business} /> : locked('Аналитика появится после проверки'))}
     {section === 'reviews' && (approved ? <Reviews business={business} params={params} /> : locked('Отзывы появятся после проверки'))}
     {section === 'insights' && (approved ? <Insights business={business} /> : locked('Разбор появится после проверки'))}
+    {section === 'search' && (approved ? <Search business={business} /> : locked('Поиск появится после проверки'))}
     {section === 'brand' && (approved ? <Brand business={business} params={params} /> : locked('Метрики бренда появятся после проверки'))}
     {section === 'drinks' && <Drinks business={business} params={params} userId={session.user.id} />}
     {section === 'new-drink' && <NewDrink />}

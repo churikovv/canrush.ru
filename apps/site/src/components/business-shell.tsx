@@ -3,7 +3,7 @@ import { BusinessFrame } from '@/components/business-shell-client';
 import Link from '@/components/navigation-progress';
 import { BUSINESS_KINDS, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
 
-export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'brand' | 'drinks' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings';
+export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'brand' | 'drinks' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings';
 export const businessHref = (section: BusinessSection, params: Record<string, string> = {}) =>
   `/business/cabinet?${new URLSearchParams({ ...(section !== 'overview' ? { section } : {}), ...params })}`.replace(/\?$/, '');
 
@@ -28,7 +28,7 @@ export function BusinessIcon({ name, size = 20 }: { name: BusinessIconName; size
 type NavLeaf = { label: string; section?: BusinessSection; href?: string };
 const NAV: { label: string; icon: BusinessIconName; section?: BusinessSection; items?: NavLeaf[] }[] = [
   { label: 'Обзор', icon: 'home', section: 'overview' },
-  { label: 'Аналитика', icon: 'chart', items: [{ label: 'Отзывы', section: 'reviews' }, { label: 'Разбор нейросетью', section: 'insights' }, { label: 'Бренд', section: 'brand' }] },
+  { label: 'Аналитика', icon: 'chart', items: [{ label: 'Отзывы', section: 'reviews' }, { label: 'Разбор нейросетью', section: 'insights' }, { label: 'Поиск', section: 'search' }, { label: 'Бренд', section: 'brand' }] },
   { label: 'Каталог', icon: 'can', items: [{ label: 'Напитки', section: 'drinks' }, { label: 'Новый напиток', section: 'new-drink' }] },
   { label: 'Продажи', icon: 'bag', items: [{ label: 'Объявления', section: 'market' }, { label: 'Новое объявление', section: 'new-listing' }, { label: 'Заказы и чаты', section: 'orders' }] },
 ];

@@ -8,7 +8,9 @@ import { getGigaChat, type GigaChatClient } from '@/lib/gigachat';
 import { getCatalogScoreProfile, getScoreProfile, type ScoreProfile } from '@/lib/score-profile';
 import { DIGEST_COOLDOWN_HOURS, DIGEST_DAILY_LIMIT, DIGEST_MIN_REVIEWS, type ReviewDigest } from '@/lib/review-digest-fields';
 import { writeReviewDigest } from '@/lib/review-digest';
-import { BusinessError, MAX_PENDING_BUSINESS_DRINKS, weeklySeries, type BusinessInput, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
+import { brandSearchNames } from '@/lib/search-log-fields';
+import { frozenMessage } from '@/lib/moderation';
+import { BusinessError, MAX_PENDING_BUSINESS_DRINKS, parseBusinessReply, weeklySeries, type BusinessInput, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
 
 export interface Business {
   id: string; ownerId: string; name: string; kind: BusinessKind; website: string | null; telegram: string | null;
@@ -305,6 +307,8 @@ export async function getBusinessAnalytics(businessId: string, today = moscowDay
 export interface BusinessReview {
   id: string; brand: string; flavor: string; name: string; taste: number; design: number; text: string; createdAt: Date;
   author: string | null; authorName: string; avatarId: string | null;
+  /** The company's public reply, if it wrote one. */
+  reply: { text: string; updatedAt: Date } | null;
 }
 export type BusinessReviewSort = 'new' | 'old' | 'high' | 'low';
 export const BUSINESS_REVIEW_SORTS: { value: BusinessReviewSort; label: string }[] = [
@@ -327,12 +331,94 @@ export async function listBusinessReviews(businessId: string, options: { page?: 
     db.query<Omit<BusinessReview, 'name'>>(
       `select r.id, r.brand, r.flavor, r.taste, r.design, r.text, r."createdAt", u.username as author,
          case when trim(u.name) <> '' and u.name not like '%@%' then u.name else coalesce(u.username, 'Участник') end as "authorName",
-         (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId"
+         (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
+         (select jsonb_build_object('text', c.text, 'updatedAt', c."updatedAt") from "reviewCompanyReply" c where c."reviewId" = r.id and c."businessId" = $1) as reply
        from review r join "user" u on u.id = r."userId" where ${where} order by ${REVIEW_ORDER[options.sort ?? 'new']} limit $5 offset $6`,
       [...args, size, (page - 1) * size]),
     db.query<{ count: number }>(`select count(*)::int as count from review r join "user" u on u.id = r."userId" where ${where}`, args),
   ]);
-  return { items: rows.map(row => ({ ...row, name: `${row.brand} · ${flavorName(row.flavor)}` })), total: total.rows[0]!.count };
+  return { items: rows.map(row => ({ ...row, name: `${row.brand} · ${flavorName(row.flavor)}`, reply: row.reply ? { text: row.reply.text, updatedAt: new Date(row.reply.updatedAt) } : null })), total: total.rows[0]!.count };
+}
+
+/**
+ * The company's public reply to a review (`reviewCompanyReply`, migration 0124): the owner or an active member of an
+ * approved company, only on a review of one of its approved drinks; writing again edits it. The review's author is
+ * notified once (trigger `notify_business_reply`). Blocked or frozen members cannot write.
+ */
+export async function replyToReview(userId: string, reviewId: string, value: unknown): Promise<void> {
+  const text = parseBusinessReply(value);
+  const business = await replyBusiness(userId, reviewId);
+  const frozen = await frozenMessage(userId);
+  if (frozen) throw new BusinessError(frozen);
+  const saved = await getPool().query(
+    `insert into "reviewCompanyReply"("reviewId", "businessId", "authorId", text) values ($1, $2, $3, $4)
+     on conflict ("reviewId") do update set text = excluded.text, "authorId" = excluded."authorId", "updatedAt" = now()
+       where "reviewCompanyReply"."businessId" = excluded."businessId"`, [reviewId, business.id, userId, text]);
+  if (!saved.rowCount) throw new BusinessError('На этот отзыв уже ответила другая компания.');
+}
+
+/** Removes the company's reply (owner or active member). */
+export async function deleteReviewReply(userId: string, reviewId: string): Promise<void> {
+  const business = await replyBusiness(userId, reviewId);
+  await getPool().query(`delete from "reviewCompanyReply" where "reviewId" = $1 and "businessId" = $2`, [reviewId, business.id]);
+}
+
+async function replyBusiness(userId: string, reviewId: string): Promise<Business> {
+  if (!/^[0-9a-f-]{36}$/i.test(reviewId)) throw new BusinessError('Отзыв не найден.');
+  const business = (await getCabinet(userId))?.business ?? null;
+  if (!business || business.status !== 'approved') throw new BusinessError('Отвечать может подтверждённая компания.');
+  const db = getPool();
+  if ((await db.query(`select 1 from "userBlock" where "userId" = $1`, [userId])).rowCount) throw new BusinessError('Аккаунт заблокирован.');
+  const owned = await db.query(`select 1 from review r join "businessDrink" d on d.brand = r.brand and d.flavor = r.flavor
+    where r.id = $1 and d."businessId" = $2 and d.status = 'approved'`, [reviewId, business.id]);
+  if (!owned.rowCount) throw new BusinessError('Можно ответить только на отзыв о подтверждённом напитке компании.');
+  return business;
+}
+
+export interface BusinessSearch {
+  brands: string[];
+  /** Searches in the last 30 days that showed a brand in the results or named it, and the 30 days before. */
+  total30: number; previous30: number; shown30: number; named30: number;
+  /** Searches that named a brand and found nothing: demand the catalog, stores or market did not meet. */
+  missed30: number;
+  weekly: { week: string; count: number }[];
+  top: { query: string; count: number; results: number; named: boolean; scopes: string[]; lastAt: Date }[];
+  missed: { query: string; count: number; lastAt: Date }[];
+}
+
+/**
+ * «Поиск» in the cabinet, from the anonymous `searchQuery` log (search-log.ts): searches whose results showed one of
+ * the company's brands (brands of its approved drinks) or whose text named one (the brand and its search aliases).
+ */
+export async function getBusinessSearch(businessId: string, today = moscowDay()): Promise<BusinessSearch> {
+  const db = getPool();
+  const brands = [...new Set((await db.query<{ brand: string }>(`select distinct brand from "businessDrink" where "businessId" = $1 and status = 'approved'`, [businessId])).rows.map(row => row.brand))];
+  const empty: BusinessSearch = { brands, total30: 0, previous30: 0, shown30: 0, named30: 0, missed30: 0, weekly: weeklySeries([], today), top: [], missed: [] };
+  if (!brands.length) return empty;
+  const names = [...new Set(brands.flatMap(brandSearchNames))];
+  const scope = `with s as (
+      select q.*, q.brands && $1::text[] as shown, exists(select 1 from unnest($2::text[]) as n(name) where strpos(q.query, n.name) > 0) as named
+      from "searchQuery" q where q."createdAt" > now() - interval '13 weeks'),
+    m as (select * from s where shown or named)`;
+  const recent = `"createdAt" > now() - interval '30 days'`;
+  const [totals, weekly, top, missed] = await Promise.all([
+    db.query<Omit<BusinessSearch, 'brands' | 'weekly' | 'top' | 'missed'>>(`${scope}
+      select count(*) filter (where ${recent})::int as total30,
+        count(*) filter (where "createdAt" <= now() - interval '30 days' and "createdAt" > now() - interval '60 days')::int as previous30,
+        count(*) filter (where shown and ${recent})::int as shown30, count(*) filter (where named and ${recent})::int as named30,
+        count(*) filter (where named and results = 0 and ${recent})::int as missed30
+      from m`, [brands, names]),
+    db.query<{ week: string; count: number }>(`${scope}
+      select date_trunc('week', "createdAt" at time zone 'Europe/Moscow')::date::text as week, count(*)::int as count from m group by 1`, [brands, names]),
+    db.query<BusinessSearch['top'][number]>(`${scope}
+      select query, count(*)::int as count, round(avg(results))::int as results, bool_or(named) as named,
+        array_agg(distinct scope order by scope) as scopes, max("createdAt") as "lastAt"
+      from m where ${recent} group by query order by count(*) desc, max("createdAt") desc limit 20`, [brands, names]),
+    db.query<BusinessSearch['missed'][number]>(`${scope}
+      select query, count(*)::int as count, max("createdAt") as "lastAt"
+      from m where named and results = 0 and ${recent} group by query order by count(*) desc, max("createdAt") desc limit 10`, [brands, names]),
+  ]);
+  return { ...empty, ...totals.rows[0]!, weekly: weeklySeries(weekly.rows, today), top: top.rows, missed: missed.rows };
 }
 
 export interface BrandDrink { brand: string; flavor: string; name: string; cover: string | null; reviews: number; score: number | null; likes: number; skips: number; yours: boolean }

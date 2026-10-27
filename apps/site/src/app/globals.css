@@ -616,8 +616,9 @@ html[data-cookie-notice="visible"] .brand-footer {
 .profile-navigation {
   display: flex;
   align-items: center;
-  /* No gap: each item's own padding (10px before the icon, 8px after the chevron) already spaces them evenly. */
-  gap: 0;
+  /* Between the groups (a menu's label and its chevron share one `.header-menu`): with 0 they stuck together and the
+     highlighted «Для бизнеса» touched «Магазины». */
+  gap: 8px;
 }
 .profile-navigation-item {
   display: inline-flex;
@@ -2966,6 +2967,8 @@ html[data-cookie-notice="visible"] .brand-footer {
 @media (prefers-reduced-motion: reduce) { .more-actions-panel { animation: none; } }
 .header-action { gap: 18px; }
 .notification-slot { display: inline-block; flex: 0 0 44px; width: 44px; height: 44px; }
+/* A guest's empty bell place keeps the city button steady on a phone; on a computer it only widened the gap before the gear. */
+@media (min-width: 960px) { .notification-slot { display: none; } }
 /* The member's own profile: the avatar in the header's right corner (after the bell and settings), «Войти» for guests. */
 .header-profile { order: 10; display: inline-grid; flex: 0 0 40px; place-items: center; width: 40px; height: 40px; overflow: hidden; border-radius: 999px; background: var(--color-surface); color: var(--color-ink); box-shadow: 0 0 0 1px var(--color-control); text-decoration: none; }
 .header-profile img { display: block; width: 100%; height: 100%; object-fit: cover; }

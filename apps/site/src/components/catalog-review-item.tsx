@@ -8,7 +8,7 @@ import { ReviewEditShortcut } from '@/components/review-edit-shortcut';
 import { ContentReportButton } from '@/components/content-report-button';
 import { MoreActions } from '@/components/more-actions';
 import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
-import type { ReviewData } from '@/lib/reviews';
+import type { CompanyReply, ReviewData } from '@/lib/reviews';
 import { countryFlag, countryName } from '@/lib/countries';
 import { AvatarFrame } from '@/components/avatar-frame';
 
@@ -26,6 +26,23 @@ function Star({ size }: { size: number }) {
 function authorDisplay(review: ReviewData): string {
   const name = review.author.name.trim();
   return name && !name.includes('@') ? name : review.author.username;
+}
+
+/** The drink's company answering the review: its logo (or initials), name with a «Компания» mark, date and text; staff get «⋯» → «Удалить». */
+function CompanyReplyBlock({ reply, reviewId, staff }: { reply: CompanyReply; reviewId: string; staff: boolean }) {
+  const created = new Date(reply.createdAt);
+  return <section className="review-company-reply" aria-label={`Ответ компании ${reply.business}`}>
+    <span className="review-company-logo" aria-hidden="true">
+      {/* eslint-disable-next-line @next/next/no-img-element -- the company logo is served from the database */}
+      {reply.logoId ? <img src={`/api/business-logos/${reply.logoId}`} alt="" width={36} height={36} loading="lazy" /> : reply.business.slice(0, 2).toUpperCase()}
+    </span>
+    <div>
+      <p className="review-company-head"><strong>{reply.business}</strong><span className="review-company-badge">Компания</span><time dateTime={created.toISOString()}>{reviewDate.format(created)}{reply.edited ? ' · изменено' : ''}</time></p>
+      <p className="review-company-text">{reply.text}</p>
+    </div>
+    {/* Admins and moderators take a reply down where it is shown, like any other content (staff-moderation.ts). */}
+    {staff && <div className="review-company-actions"><MoreActions label="Действия с ответом компании"><StaffDeleteMenuItem kind="company-reply" id={reviewId} /></MoreActions></div>}
+  </section>;
 }
 
 /** A published review: author column (avatar, name, badges) beside the scores, text, photos and discussion. Wall record pieces are reused. */
@@ -67,6 +84,7 @@ export function CatalogReviewItem({ review, own = false }: { review: ReviewData;
 
         <p className="review-item-text">{review.text}</p>
         <ReviewPhotoGallery photos={review.photos} />
+        {review.companyReply && <CompanyReplyBlock reply={review.companyReply} reviewId={review.id} staff={Boolean(review.interaction?.staff)} />}
 
         <ReviewDiscussion reviewId={review.id} initial={review.interaction} telegramChannel={review.author.telegramChannel} />
       </div>
