@@ -620,3 +620,11 @@
   .catalog-added-empty .community-button { grid-column: auto; justify-self: stretch; text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) { .catalog-flavor-chip { animation: none; } .catalog-drink-chips button, .catalog-add-button, .store-form .catalog-drink-sugar-option { transition: none; } }
+/* «Новинки»: periods of new drinks, each card with a date pill over the photo. */
+.catalog-novelties-heading { display: grid; gap: 6px; margin: 8px 0 4px; }
+.catalog-novelties-heading h1 { margin: 0; font-size: clamp(1.75rem, 6vw, 2.25rem); line-height: 1.1; }
+.catalog-novelties-heading p { margin: 0; color: var(--color-muted-strong); }
+.catalog-novelties-period { display: flex; align-items: baseline; gap: 8px; margin: 24px 0 12px; font-size: 1.25rem; }
+.catalog-novelties-period small { color: var(--color-muted); font-size: .9375rem; font-weight: 600; }
+.catalog-novelty { position: relative; display: grid; min-width: 0; }
+.catalog-novelty-badge { position: absolute; z-index: 1; top: 8px; left: 8px; max-width: calc(100% - 16px); padding: 3px 9px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .75rem; font-weight: 700; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }

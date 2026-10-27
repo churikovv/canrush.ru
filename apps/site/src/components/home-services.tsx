@@ -9,10 +9,12 @@ const count = new Intl.NumberFormat('ru-RU');
 /**
  * The home page's services, like a super app's start screen: four big categories with their own art (Figma 704:1526,
  * `public/brand/home`) standing over the plate (catalog, prices, stores, tier lists, each with its live number), then one row of small icons for the month's
- * top, the giveaway, the beta «Двигатель» places and drink dating. The row scrolls sideways on phones.
+ * novelties, the top, the giveaway, the beta «Двигатель» places, drink dating and the market. The row scrolls sideways on phones.
  */
-export function HomeServices({ metrics, contest, joined, engine }: {
+export function HomeServices({ metrics, novelties = 0, contest, joined, engine }: {
   metrics: HomeMetrics;
+  /** New drinks of the last 7 days, for the «Новинки» icon. */
+  novelties?: number;
   contest: { contest: Contest; phase: 'open' | 'results' } | null;
   joined: boolean;
   engine: BetaEngine;
@@ -24,10 +26,11 @@ export function HomeServices({ metrics, contest, joined, engine }: {
     { key: 'tierlists', href: '/tierlists', label: 'Тирлисты', note: metrics.tierLists ? count.format(metrics.tierLists) : '', art: 'tierlists' },
   ];
   const small = [
+    { key: 'novelties', href: '/catalog/novelties', label: 'Новинки', note: novelties ? `+${count.format(novelties)} за неделю` : 'свежие вкусы', art: '/brand/home/novelties.png' },
     { key: 'leaderboard', href: '/leaderboard', label: 'Лидеры', note: 'таблица', art: '/brand/home/leaderboard.png' },
-    ...(contest ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: contest.phase === 'open' ? (joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`) : 'итоги', art: contest.contest.image.src }] : []),
+    ...(contest ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: contest.phase === 'open' ? (joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`) : 'итоги', art: '/brand/home/contest.png' }] : []),
     ...(engine.taken < BETA_ENGINE_PLACES ? [{ key: 'engine', href: '/engine', label: 'Бета сайта', note: 'каждый важен', art: '/brand/achievements/engine.png' }] : []),
-    { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: '/brand/achievements/date.png' },
+    { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: '/brand/home/dating.png' },
     { key: 'market', href: '/market', label: 'Маркет', note: 'объявления', art: '/brand/home/market.png' },
   ];
   return <nav className="home-services" aria-label="Разделы">

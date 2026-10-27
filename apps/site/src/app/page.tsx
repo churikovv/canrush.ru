@@ -8,7 +8,9 @@ import { ProfileNavigation } from '@/components/profile-navigation';
 import { HomeStories } from '@/components/home-stories';
 import { loadAllCatalogGroups, loadCatalogSnapshot } from '@/lib/catalog';
 import { withCatalogDrinks } from '@/lib/catalog-drinks';
-import { catalogMetrics, getHomeCounts } from '@/lib/home-metrics';
+import { catalogMetrics, getHomeCounts, isCountedCatalogDrink } from '@/lib/home-metrics';
+import { getNovelties } from '@/lib/novelties';
+import { noveltyKey } from '@/lib/novelty-fields';
 import { settleMonthlyTop } from '@/lib/monthly-top';
 import { DEFAULT_DESCRIPTION, seoMetadata } from '@/lib/seo';
 import { headers } from 'next/headers';
@@ -29,12 +31,15 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const contest = currentContest(new Date());
   const [session, counts, allGroups] = await Promise.all([auth.api.getSession({ headers: await headers() }), getHomeCounts(), loadAllCatalogGroups()]);
   const resolved = groups.filter(group => isResolvedFlavor(group.flavor));
-  const [contestEntry, engine] = await Promise.all([contest && session ? getContestEntry(contest.contest, session.user.id) : null, getBetaEngine(session?.user.id ?? null)]);
+  const [contestEntry, engine, novelties] = await Promise.all([contest && session ? getContestEntry(contest.contest, session.user.id) : null, getBetaEngine(session?.user.id ?? null), getNovelties(7).catch(() => [])]);
+  // The «Новинки» icon counts the week's new drinks that the page would show.
+  const catalogKeys = new Set(allGroups.filter(isCountedCatalogDrink).map(group => noveltyKey(group.brand, group.flavor)));
+  const newThisWeek = novelties.filter(item => catalogKeys.has(noveltyKey(item.brand, item.flavor))).length;
   return <BrandShell headerAction={<ProfileNavigation active="home" />} surfaceClassName="catalog-surface home-surface">
     <div className="home-layout">
       <h1 className="sr-only">CanRush — социальная сеть для энергокомьюнити: лента, цены и рейтинги энергетиков</h1>
       <HomeStories viewerId={session?.user.id ?? null} groups={await withCatalogDrinks(resolved)} openStory={typeof story === 'string' ? story : undefined} />
-      <HomeServices metrics={{ ...counts, ...catalogMetrics(resolved, allGroups) }} contest={contest} joined={Boolean(contestEntry?.cans)} engine={engine} />
+      <HomeServices metrics={{ ...counts, ...catalogMetrics(resolved, allGroups) }} novelties={newThisWeek} contest={contest} joined={Boolean(contestEntry?.cans)} engine={engine} />
       <section aria-labelledby="home-feed" className="home-section home-feed">
         {/* No visible heading: the feed simply continues the page; screen readers still get the section name. */}
         <h2 id="home-feed" className="sr-only">Лента</h2>
