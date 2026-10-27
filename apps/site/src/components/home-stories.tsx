@@ -1,17 +1,19 @@
 import type { CatalogGroup } from '@canrush/shared';
 import { StoriesStrip, type DigestPage, type StoryGroupView } from '@/components/stories-strip';
+import { addDays, moscowDay } from '@/lib/drink-calendar-fields';
 import { getRecommendations, getWeeklyDigest } from '@/lib/story-digest';
 import { getPool } from '@/db/pool';
 import { getStoryGroups } from '@/lib/stories';
 import { getTelegramEnv } from '@/lib/env';
 
-/** The Mini App link for the «Telegram» story; without the bot set up (or with it misconfigured) the story only shows the bot. */
+/** Monday of the current week, Moscow time. */
 function moscowWeekStart(now = new Date()): string {
   const day = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
   day.setDate(day.getDate() - ((day.getDay() + 6) % 7));
   return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
 }
 
+/** The Mini App link for the «Telegram» story; without the bot set up (or with it misconfigured) the story only shows the bot. */
 function miniAppUrl(): string | null {
   try { return getTelegramEnv()?.miniAppUrl ?? null; } catch { return null; }
 }
@@ -24,9 +26,11 @@ export async function HomeStories({ viewerId, groups, openStory }: { viewerId: s
   const viewer = viewerId ? (await getPool().query<{ id: string; username: string | null; avatarId: string | null; staff: boolean }>(
     `select u.id, u.username, (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
       exists(select 1 from "siteAdmin" a where a.email = lower(u.email)) as staff from "user" u where u.id = $1`, [viewerId])).rows[0] ?? null : null;
+  // «Твоя неделя» arrives once a week: on Monday, the finished week (Monday to Sunday), keyed by this Monday.
+  const monday = moscowWeekStart();
   const [stories, digest, recommendations] = await Promise.all([
     getStoryGroups(viewer?.id ?? null),
-    viewer ? getWeeklyDigest(viewer.id) : null,
+    viewer ? getWeeklyDigest(viewer.id, addDays(monday, -1)) : null,
     viewer ? getRecommendations(viewer.id, groups) : null,
   ]);
   const system: StoryGroupView[] = [];
@@ -36,10 +40,10 @@ export async function HomeStories({ viewerId, groups, openStory }: { viewerId: s
     const top = digest.favorite?.brand ? groups.find(group => group.brand === digest.favorite!.brand && group.flavor === digest.favorite!.flavor) : undefined;
     const week = { ...digest, favorite: digest.favorite && { ...digest.favorite, cover: top?.coverImageUrl ?? null } };
     const pages: DigestPage[] = !digest.cans && !digest.xp ? ['empty'] : ['intro', 'cans', ...(week.favorite ? ['drink' as const] : []), 'progress', 'discover', 'summary'];
-    system.push({ key: `week:${digest.to}`, kind: 'week', title: 'Твоя неделя', slides: pages.map(page => ({ kind: 'digest', digest: week, page })) });
+    system.push({ key: `week:${monday}`, kind: 'week', title: 'Твоя неделя', slides: pages.map(page => ({ kind: 'digest', digest: week, page })) });
   }
   if (recommendations?.items.length) system.push({
-    key: `picks:${digest?.to ?? ''}`, kind: 'picks', title: 'Тебе понравится',
+    key: `picks:${moscowDay()}`, kind: 'picks', title: 'Тебе понравится',
     slides: recommendations.items.map(item => ({ kind: 'pick', item, basis: recommendations.basis })),
   });
   // For everyone, guests too: the channel and the bot. The key is versioned so a new campaign lights the ring again.

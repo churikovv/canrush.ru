@@ -6,7 +6,7 @@ import { getDrinkOverview } from '@/lib/drink-calendar';
 import type { Preference, RatedPreference } from '@/lib/profile-compatibility';
 import { drinkKey, rankRecommendations, type CatalogDrink, type RecommendationReason, type TasteProfile } from '@/lib/story-recommendations';
 
-/** «Твоя неделя»: the last seven days (Moscow), today included. */
+/** «Твоя неделя»: seven days (Moscow) ending with `today`; the home page passes last Sunday, so it is the finished week. */
 export interface WeeklyDigest {
   from: string; to: string;
   cans: number; days: number; streak: number; xp: number; reviews: number; newDrinks: number;
@@ -34,8 +34,8 @@ export async function getWeeklyDigest(userId: string, today = moscowDay()): Prom
        from week`, [userId, from, today]),
     db.query<{ days: number; xp: number; reviews: number; newDrinks: number; rank: number | null }>(
       `select (select count(distinct day)::int from "drinkLog" where "userId" = $1 and day between $2::date and $3::date) as days,
-         (select coalesce(sum(points), 0)::int from "profileExperience" where "userId" = $1 and "createdAt" >= $2::date) as xp,
-         (select count(*)::int from review where "userId" = $1 and "createdAt" >= $2::date) as reviews,
+         (select coalesce(sum(points), 0)::int from "profileExperience" where "userId" = $1 and "createdAt" >= $2::date and "createdAt" < $3::date + 1) as xp,
+         (select count(*)::int from review where "userId" = $1 and "createdAt" >= $2::date and "createdAt" < $3::date + 1) as reviews,
          (select count(*)::int from (select distinct brand, flavor from "drinkLog" d where d."userId" = $1 and d.brand is not null and d.day between $2::date and $3::date
             and not exists(select 1 from "drinkLog" e where e."userId" = $1 and e.brand = d.brand and e.flavor = d.flavor and e.day < $2::date)
             and not exists(select 1 from review r where r."userId" = $1 and r.brand = d.brand and r.flavor = d.flavor and r."createdAt" < $2::date)) n) as "newDrinks",

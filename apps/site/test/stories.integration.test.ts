@@ -76,6 +76,9 @@ it('builds the weekly digest and suggests what similar members like', async () =
   const logged = await digest.getWeeklyDigest(viewer);
   expect(logged).toMatchObject({ cans: 1, days: 1, favorite: { name: 'Тестовая банка', count: 1, brand: null } });
   expect(logged.daily.at(-1)).toBe(1);
+  // The home page shows the finished week: a can today is not in the week that ended yesterday.
+  const yesterday = new Date(Date.now() - 86_400_000).toLocaleDateString('sv-SE', { timeZone: 'Europe/Moscow' });
+  expect(await digest.getWeeklyDigest(viewer, yesterday)).toMatchObject({ cans: 0, to: yesterday });
   // The author shares three favourites with the viewer and also loves a fourth drink the viewer has not tried.
   const flavors = ['apple', 'mango', 'peach', 'cherry'];
   for (const flavor of flavors.slice(0, 3)) for (const id of [viewer, author]) await pool.query('insert into favorite("userId",brand,flavor) values($1,$2,$3)', [id, brand, flavor]);

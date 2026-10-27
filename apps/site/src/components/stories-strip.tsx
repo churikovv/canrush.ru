@@ -116,8 +116,8 @@ export function StoriesStrip({ groups, viewer, initial }: { groups: StoryGroupVi
   const isSeen = (group: StoryGroupView) => group.own ? false : group.kind === 'user'
     ? Boolean(group.seen) || group.slides.every(slide => slide.kind === 'media' && (slide.story.seen || viewed.has(slide.story.id)))
     : seenKeys.split('\n').includes(group.key);
-  // The partner's story is once a week: seen, it leaves the row until Monday, when its key (the week) changes.
-  const shown = groups.filter(group => !(group.kind === 'partner' && seenKeys.split('\n').includes(group.key)));
+  // The weekly digest and the partner's story are once a week: seen, they leave the row until Monday, when their key (the week) changes.
+  const shown = groups.filter(group => !((group.kind === 'partner' || group.kind === 'week') && seenKeys.split('\n').includes(group.key)));
   if (!shown.length && !viewer) return null;
   return <section className="stories" aria-label="Истории">
     <ul className="stories-row">
