@@ -34,6 +34,10 @@ try {
   await seller.getByRole('heading', { name: 'Новое объявление', exact: true }).waitFor();
   await seller.waitForTimeout(500);
   const sellerConsent = seller.getByRole('button', { name: 'Принять и закрыть' }); if (await sellerConsent.isVisible()) await sellerConsent.click();
+  // The listing form is a wizard: title → photos → brand and description → terms → check.
+  const next = () => seller.getByRole('button', { name: 'Далее', exact: true }).click();
+  await seller.getByLabel('Название объявления', { exact: true }).fill('Набор редких энергетиков');
+  await next();
   const buffer = await sharp({ create: { width: 800, height: 1000, channels: 3, background: '#006eff' } }).png().toBuffer();
   await seller.locator('input[type=file]').setInputFiles([{ name: 'test.png', mimeType: 'image/png', buffer }, { name: 'test2.png', mimeType: 'image/png', buffer }]);
   await seller.getByRole('button', { name: 'Обрезать фото 1', exact: true }).click();
@@ -41,14 +45,17 @@ try {
   // Photos reorder with the arrow keys on a focused tile.
   await seller.getByLabel(/^Фотография 2\./).press('ArrowLeft');
   await seller.getByLabel(/^Фотография 1, обложка/).waitFor();
-  await seller.getByLabel('Название объявления', { exact: true }).fill('Набор редких энергетиков');
+  await next();
   await seller.getByRole('combobox', { name: 'Бренд' }).fill('Разные');
   await seller.getByRole('option', { name: 'Разные бренды' }).click();
   await seller.getByLabel('Описание', { exact: true }).fill('Три банки из коллекции. Срок годности до декабря. Упакую каждую банку отдельно.');
+  await next();
   for (const name of ['Самовывоз', 'Яндекс', 'Авито', 'Сдэк', 'Почта России', 'X5 Post']) await seller.getByLabel(name, { exact: true }).check();
   await seller.getByLabel('Город', { exact: true }).fill('Москва');
   await seller.getByLabel('Количество, шт.').fill('6');
   await seller.getByLabel('Цена за одну банку, ₽').fill('1200,50');
+  await next();
+  await seller.locator('.market-listing-preview').waitFor();
   await seller.screenshot({ path: '/tmp/canrush-market-form.png', fullPage: true });
   await seller.getByRole('button', { name: 'Опубликовать объявление' }).click();
   await seller.waitForURL(/\/market\/[0-9a-f-]+$/);

@@ -54,7 +54,7 @@
   .brand-header .city-header-button,.brand-header:has(.notification-bell,.notification-slot) .city-header-button { max-width: 100%; min-width: 0; margin: 0 0 0 auto; }
   .site-theme-choice { padding: 12px; font-size: .875rem; }
 }
-@media (min-width: 1200px) and (max-width: 1399px) { .profile-navigation { gap: 2px; } .profile-navigation-item { padding-inline: 8px; } .header-action { gap: 8px; } }
+@media (min-width: 1200px) and (max-width: 1399px) { .profile-navigation { gap: 0; } .profile-navigation-item { padding-inline: 8px; } .header-action { gap: 8px; } }
 /* Preserve artwork and the brand's white-on-blue/black surfaces. */
 :root[data-site-theme=graphite] .brand-footer { background: #090d13; color: #fff; }
 :root[data-site-theme=graphite] .site-tab-bar { box-shadow: inset 0 1px 0 #2b3240; }

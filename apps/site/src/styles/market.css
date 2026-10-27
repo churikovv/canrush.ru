@@ -256,3 +256,15 @@
   .market-card-copy h2 { font-size: 1rem; }
   .market-card-price { font-size: 1.125rem; }
 }
+
+/* The listing wizard's last step (MarketListingForm): the card as the market will show it. */
+.market-listing-preview { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; align-items: start; padding: 16px; border: 1px solid var(--color-control); border-radius: 16px; }
+.market-listing-preview-cover { display: grid; place-items: center; aspect-ratio: 1; overflow: hidden; border-radius: 12px; background: var(--color-subtle); }
+.market-listing-preview-cover img { width: 100%; height: 100%; object-fit: cover; }
+.market-listing-preview > div { display: grid; gap: 4px; min-width: 0; }
+.market-listing-preview small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.market-listing-preview strong { font-size: 1.25rem; line-height: 1.2; overflow-wrap: anywhere; }
+.market-listing-preview p { margin: 0; color: var(--color-muted-strong); }
+.market-listing-preview p b { color: var(--color-ink); }
+.market-listing-preview-text { display: -webkit-box; overflow: hidden; font-size: .875rem; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
+@media (max-width: 479px) { .market-listing-preview { grid-template-columns: 88px minmax(0, 1fr); gap: 12px; padding: 12px; } }

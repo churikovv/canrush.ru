@@ -38,7 +38,8 @@ export function DrinkJuiceOption({ checked, onChange }: { checked: boolean; onCh
  * «Добавить напиток»: four steps like the store form — brand and flavour, a can photo, volumes and the label text,
  * then a preview of the catalog card before it goes to moderation.
  */
-export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavors: { key: string; label: string }[] }) {
+/** `inCabinet` — the business cabinet's form: the done screen leads back to the company's drinks. */
+export function CatalogDrinkForm({ brands, flavors, inCabinet = false }: { brands: string[]; flavors: { key: string; label: string }[]; inCabinet?: boolean }) {
   const [state, action, pending] = useActionState(submitCatalogDrinkAction, {});
   const [step, setStep] = useState(0);
   const [reached, setReached] = useState(0);
@@ -99,8 +100,10 @@ export function CatalogDrinkForm({ brands, flavors }: { brands: string[]; flavor
 
   if (state.saved) return <section className="market-empty catalog-drink-done">
     <h2>Напиток отправлен на проверку</h2>
-    <p>Модератор сверит фото и название. После публикации «{brand} · {drinkName}» появится в каталоге — его можно будет оценить, добавить в избранное и отметить в календаре.</p>
-    <div className="market-empty-actions"><Link href="/catalog" className="community-button">В каталог</Link><a href="/catalog/new" className="community-button community-button-secondary">Добавить ещё</a></div>
+    <p>Модератор сверит фото и название. После публикации «{brand} · {drinkName}» появится в каталоге — {inCabinet ? 'и его можно будет прикрепить к компании в один клик.' : 'его можно будет оценить, добавить в избранное и отметить в календаре.'}</p>
+    {inCabinet
+      ? <div className="market-empty-actions"><Link href="/business/cabinet?section=drinks" className="community-button">К напиткам компании</Link><a href="/business/cabinet?section=new-drink" className="community-button community-button-secondary">Добавить ещё</a></div>
+      : <div className="market-empty-actions"><Link href="/catalog" className="community-button">В каталог</Link><a href="/catalog/new" className="community-button community-button-secondary">Добавить ещё</a></div>}
   </section>;
 
   return <form ref={formRef} noValidate className="store-form catalog-drink-form" onSubmit={event => {

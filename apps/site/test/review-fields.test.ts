@@ -74,9 +74,9 @@ it('requires 30 normalized characters and gives consistent guidance at boundarie
     expect(validateReviewInput({ design: '8', taste: '9', text }).errors?.text).toBeTruthy();
     expect(reviewTextGuidance(text).level).toBe('short');
   }
-  for (const length of [30, 149, 150, 1000]) {
+  for (const length of [30, 89, 90, 149, 150, 1000]) {
     const text = 'а'.repeat(length);
     expect(validateReviewInput({ design: '8', taste: '9', text }).data?.text).toBe(text);
-    expect(reviewTextGuidance(text).level).toBe(length < 150 ? 'enough' : 'detailed');
+    expect(reviewTextGuidance(text).level).toBe(length < 90 ? 'enough' : length < 150 ? 'good' : 'detailed');
   }
 });

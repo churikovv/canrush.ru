@@ -5,7 +5,7 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getAuthEnv } from '@/lib/env';
-import { isMagicLinkToken } from '@/lib/magic-link-url';
+import { AUDIENCE_DESTINATION, isMagicLinkToken, parseSignInAudience } from '@/lib/magic-link-url';
 
 function originOf(value: string | null): string | undefined {
   if (!value) return undefined;
@@ -21,7 +21,7 @@ function safeRedirectPath(value: string | null, expectedOrigin: string): string 
   try {
     const url = new URL(value, expectedOrigin);
     if (url.origin !== expectedOrigin) return undefined;
-    if (url.pathname !== '/profile' && url.pathname !== '/auth/error') return undefined;
+    if (url.pathname !== '/profile' && url.pathname !== '/business/cabinet' && url.pathname !== '/auth/error') return undefined;
     return `${url.pathname}${url.search}`;
   } catch {
     return undefined;
@@ -52,11 +52,13 @@ export async function confirmMagicLink(formData: FormData): Promise<never> {
 
   if (!trustedRequest) redirect('/auth/error?error=INVALID_REQUEST');
 
+  // The letter's «for» flag picks one of the fixed pages; the address itself never comes from the request.
+  const destinationPath = AUDIENCE_DESTINATION[parseSignInAudience(formData.get('for'))];
   const verificationResponse = await auth.api.magicLinkVerify({
     query: {
       token,
-      callbackURL: '/profile',
-      newUserCallbackURL: '/profile',
+      callbackURL: destinationPath,
+      newUserCallbackURL: destinationPath,
       errorCallbackURL: '/auth/error',
     },
     headers: new Headers(requestHeaders),

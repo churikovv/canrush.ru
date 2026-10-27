@@ -14,11 +14,11 @@ process.env.BETTER_AUTH_SECRET = TEST_SECRET;
 
 const { createAuth } = await import('../src/lib/auth.js');
 const pool = new Pool({ connectionString: DATABASE_URL, max: 2, allowExitOnIdle: true });
-const sentLinks: Array<{ email: string; token: string }> = [];
+const sentLinks: Array<{ email: string; token: string; audience?: string }> = [];
 const auth = createAuth({
   database: pool,
-  sendMagicLink: async (email, token) => {
-    sentLinks.push({ email, token });
+  sendMagicLink: async (email, token, audience) => {
+    sentLinks.push({ email, token, audience });
   },
 });
 const runId = randomUUID().replaceAll('-', '');
@@ -28,7 +28,7 @@ function testIp(index: number): string {
   return `2001:db8:${ipParts[index % ipParts.length]}:${index.toString(16)}::1`;
 }
 
-function magicLinkRequest(email: string, ip: string, origin = BASE_URL): Request {
+function magicLinkRequest(email: string, ip: string, origin = BASE_URL, callbackURL = '/profile'): Request {
   return new Request(`${BASE_URL}/api/auth/sign-in/magic-link`, {
     method: 'POST',
     headers: {
@@ -39,8 +39,8 @@ function magicLinkRequest(email: string, ip: string, origin = BASE_URL): Request
     },
     body: JSON.stringify({
       email,
-      callbackURL: '/profile',
-      newUserCallbackURL: '/profile',
+      callbackURL,
+      newUserCallbackURL: callbackURL,
       errorCallbackURL: '/auth/error',
     }),
   });
@@ -195,5 +195,21 @@ describe.sequential('Magic Link authentication', () => {
     }
     const blocked = await auth.handler(magicLinkRequest(`ip-blocked-${runId}@example.com`, ip));
     expect(blocked.status).toBe(429);
+  });
+
+  it('sends a business letter for the cabinet and signs in there', async () => {
+    const email = `business-${runId}@example.com`;
+    expect((await auth.handler(magicLinkRequest(email, testIp(5), BASE_URL, '/business/cabinet'))).status).toBe(200);
+    const sent = sentLinks.slice().reverse().find((entry) => entry.email === email);
+    expect(sent?.audience).toBe('business');
+    const response = await auth.api.magicLinkVerify({
+      query: { token: sent!.token, callbackURL: '/business/cabinet', newUserCallbackURL: '/business/cabinet', errorCallbackURL: '/auth/error' },
+      headers: new Headers({ 'x-forwarded-for': testIp(5) }),
+      asResponse: true,
+    });
+    expect(response.headers.get('location')).toBe(`${BASE_URL}/business/cabinet`);
+    // A member's request stays personal.
+    expect((await auth.handler(magicLinkRequest(`personal-${runId}@example.com`, testIp(6)))).status).toBe(200);
+    expect(sentLinks.at(-1)?.audience).toBe('personal');
   });
 });

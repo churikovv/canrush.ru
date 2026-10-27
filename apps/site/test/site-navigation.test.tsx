@@ -74,12 +74,12 @@ describe('site tab bar', () => {
 });
 
 describe('header menus', () => {
-  it('groups the desktop header into community and stores menus plus the profile avatar', async () => {
+  it('groups the desktop header into community and stores menus, the business link and the profile avatar', async () => {
     const html = renderToStaticMarkup(await ProfileNavigation({ signedIn: true }));
     const header = html.slice(0, html.indexOf('<nav class="site-tab-bar"'));
     // Each group label links to its first page, then the panel lists every page of the group.
-    expect(links(header).map(({ href }) => href)).toEqual(['/tierlists', '/tierlists', '/market', '/feed', '/news', '/community?type=dating', '/community?type=people', '/leaderboard', '/catalog', '/catalog', '/prices', '/market/stores', '/profile']);
-    for (const label of ['Сообщество', 'Магазины', 'Объявления', 'Тирлисты', 'Лента', 'Новости', 'Каталог', 'Цены', 'Найти']) expect(header).toContain(label);
+    expect(links(header).map(({ href }) => href)).toEqual(['/tierlists', '/tierlists', '/market', '/feed', '/news', '/community?type=dating', '/community?type=people', '/leaderboard', '/catalog', '/catalog', '/prices', '/market/stores', '/business', '/profile']);
+    for (const label of ['Сообщество', 'Магазины', 'Объявления', 'Тирлисты', 'Лента', 'Новости', 'Каталог', 'Цены', 'Найти', 'Для бизнеса']) expect(header).toContain(label);
     expect(header.match(/aria-expanded="false"/g)).toHaveLength(2);
   });
 

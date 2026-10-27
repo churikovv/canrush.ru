@@ -8,4 +8,9 @@ export async function register() {
     const { startPushWorker } = await import('@/lib/push/worker');
     startPushWorker();
   }
+  // Review summaries spend model tokens: production only, unless a developer opts in with DIGEST_WORKER=on.
+  if (process.env.DIGEST_WORKER === 'on' || (process.env.NODE_ENV === 'production' && process.env.DIGEST_WORKER !== 'off')) {
+    const { startReviewDigestWorker } = await import('@/lib/review-digest-worker');
+    startReviewDigestWorker();
+  }
 }

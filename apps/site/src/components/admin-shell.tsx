@@ -4,7 +4,7 @@ import { AdminSidebarGroup } from '@/components/admin-sidebar-group';
 import { adminHref, type AdminTab } from '@/lib/admin-tabs';
 import { SITE_ROLE_LABELS, type SiteRole } from '@/lib/admin-roles';
 
-export type AdminSection = AdminTab | 'stores' | 'drinks' | 'contest' | 'articles';
+export type AdminSection = AdminTab | 'stores' | 'drinks' | 'contest' | 'articles' | 'business';
 /** Sections a moderator does not see: administrators, contests and campaigns. */
 export const ADMIN_ONLY_SECTIONS: ReadonlySet<AdminSection> = new Set(['campaigns', 'contest', 'admins']);
 
@@ -22,6 +22,7 @@ const ICONS: Record<AdminIconName, ReactNode> = {
   market: <path d="M3 9h18l-1.5 11h-15L3 9Zm5 0V7a4 4 0 0 1 8 0v2" />,
   stores: <path d="M3 9 5 3h14l2 6M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Zm2 5v7h14v-7" />,
   articles: <path d="M5 3h11l3 3v15H5V3Zm3 6h8M8 13h8M8 17h5" />,
+  business: <path d="M9.5 3h5A2.5 2.5 0 0 1 17 5.5V7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3V5.5A2.5 2.5 0 0 1 9.5 3ZM2 13h20M12 12v2" />,
   drinks: <path d="M8 2h8l-1 4H9L8 2Zm1 4h6l1 3v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9l1-3Zm-1 7h8" />,
   reports: <path d="M4 22V4m0 0h13l-2 4 2 4H4" />,
   admins: <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm-3 10 2 2 4-4" />,
@@ -34,11 +35,11 @@ const ICONS: Record<AdminIconName, ReactNode> = {
 const OVERVIEW = { key: 'analytics', label: 'Аналитика' } as const;
 const GROUPS: { title: string; items: { key: AdminSection; label: string }[] }[] = [
   { title: 'Модерация', items: [{ key: 'reports', label: 'Жалобы' }, { key: 'users', label: 'Участники' }, { key: 'market', label: 'Объявления' }] },
-  { title: 'Каталог', items: [{ key: 'drinks', label: 'Напитки' }, { key: 'stores', label: 'Магазины' }, { key: 'articles', label: 'Статьи' }] },
+  { title: 'Каталог', items: [{ key: 'drinks', label: 'Напитки' }, { key: 'stores', label: 'Магазины' }, { key: 'articles', label: 'Статьи' }, { key: 'business', label: 'Компании' }] },
   { title: 'Продвижение', items: [{ key: 'campaigns', label: 'Кампании' }, { key: 'contest', label: 'Конкурс' }] },
   { title: 'Команда', items: [{ key: 'admins', label: 'Администраторы' }] },
 ];
-const sectionHref = (key: AdminSection) => key === 'stores' ? '/admin/stores' : key === 'drinks' ? '/admin/drinks' : key === 'contest' ? '/admin/contest' : key === 'articles' ? '/admin/articles' : adminHref(key);
+const sectionHref = (key: AdminSection) => key === 'stores' ? '/admin/stores' : key === 'drinks' ? '/admin/drinks' : key === 'contest' ? '/admin/contest' : key === 'articles' ? '/admin/articles' : key === 'business' ? '/admin/business' : adminHref(key);
 
 export function AdminIcon({ section }: { section: AdminIconName }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[section]}</svg>;

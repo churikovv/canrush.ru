@@ -94,7 +94,12 @@ export function PricePlot({ stores, icons, unit = '', caption = 'медианн�
       <ul>{selected.offers.map(offer => <li key={offer.name}>{icons[offer.name]}<span>{offer.name}</span><b>{money(offer.price)}</b></li>)}</ul>
     </div>}
     </div>
-    <p className="price-history-hint">Наведите курсор или нажмите на график, чтобы увидеть цены магазинов</p>
+    <p className="review-hint-card price-history-hint">
+      <span className="review-meter-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L4.6 15.6a1.6 1.6 0 0 1 2.4-2.1L9 15.5" /></svg>
+      </span>
+      <span>Наведите или нажмите на график — покажем цены магазинов в этот день</span>
+    </p>
 
 
   </>;

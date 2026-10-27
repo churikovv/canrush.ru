@@ -2,14 +2,28 @@ import { isCountryCode } from '@/lib/countries';
 
 export const MIN_REVIEW_LENGTH = 30;
 export const DETAILED_REVIEW_LENGTH = 150;
+/** Between publishable and detailed: a good review that is close to detailed, so the next step feels near. */
+export const GOOD_REVIEW_LENGTH = 90;
 export function normalizeReviewText(text: string): string {
   return text.replace(/[\u200B-\u200D\uFEFF]/gu, '').trim().replace(/\s+/gu, ' ');
 }
+const symbols = (n: number) => {
+  const tens = n % 100, ones = n % 10;
+  return `${n} ${tens > 10 && tens < 20 ? 'символов' : ones === 1 ? 'символ' : ones > 1 && ones < 5 ? 'символа' : 'символов'}`;
+};
+
+/**
+ * The note under the review text: how far it is from publishable (MIN_REVIEW_LENGTH), good (GOOD_REVIEW_LENGTH) and
+ * detailed (DETAILED_REVIEW_LENGTH). `title` counts down, `status` changes only with the level (for screen readers),
+ * `progress` is the share of the way to detailed.
+ */
 export function reviewTextGuidance(value: string) {
   const length = normalizeReviewText(value).length;
-  if (length < MIN_REVIEW_LENGTH) return { level: 'short', message: `Поделитесь ещё впечатлениями — нужно минимум ${MIN_REVIEW_LENGTH} символов.` } as const;
-  if (length < DETAILED_REVIEW_LENGTH) return { level: 'enough', message: 'Отзыв уже можно опубликовать. Дополните его впечатлениями о вкусе, дизайне или составе.' } as const;
-  return { level: 'detailed', message: 'Хороший, подробный отзыв — он поможет другим людям с выбором.' } as const;
+  const progress = Math.min(1, length / DETAILED_REVIEW_LENGTH);
+  if (length < MIN_REVIEW_LENGTH) return { level: 'short', progress, title: `Ещё ${symbols(MIN_REVIEW_LENGTH - length)}`, hint: 'до публикации', status: `Нужно минимум ${symbols(MIN_REVIEW_LENGTH)}.` } as const;
+  if (length < GOOD_REVIEW_LENGTH) return { level: 'enough', progress, title: 'Можно публиковать', hint: 'а пара деталей сделает отзыв лучше', status: 'Отзыв можно публиковать.' } as const;
+  if (length < DETAILED_REVIEW_LENGTH) return { level: 'good', progress, title: 'Хороший отзыв', hint: `ещё ${DETAILED_REVIEW_LENGTH - length} до подробного`, status: 'Хороший отзыв.' } as const;
+  return { level: 'detailed', progress, title: 'Подробный отзыв', hint: 'такие помогают с выбором', status: 'Подробный отзыв.' } as const;
 }
 
 export type ReviewField = 'design' | 'taste' | 'text' | 'country';

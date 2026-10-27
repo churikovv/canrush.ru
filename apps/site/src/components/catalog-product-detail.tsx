@@ -4,6 +4,8 @@ import { CatalogPriceHistory } from '@/components/catalog-price-history';
 import type { PriceSeries } from '@/lib/price-history';
 import { CoverImage } from '@/components/cover-image';
 import Link from '@/components/navigation-progress';
+import type { DrinkSummary } from '@/lib/review-digest';
+import type { DrinkRadar } from '@/lib/score-profile';
 import type { SwipeCounts } from '@/lib/drink-swipes';
 import type { CatalogDrink } from '@/lib/catalog-drinks';
 import { CatalogDrinkAuthor } from '@/components/catalog-drink-author';
@@ -11,7 +13,7 @@ import type { CatalogGroup, PublishedIngredients } from '@canrush/shared';
 import { CatalogProductIngredients } from '@/components/catalog-product-ingredients';
 import { CatalogFavoriteButton } from '@/components/catalog-favorite-button';
 import { CatalogProductReviews } from '@/components/catalog-product-reviews';
-import { CatalogProductTabs, type ProductTab } from '@/components/catalog-product-tabs';
+import { CatalogReviewsSheet } from '@/components/catalog-reviews-sheet';
 import { RetailerBadge } from '@/components/retailer-badge';
 import { catalogOffersByVolume, catalogRetailerName, flavorName } from '@/lib/catalog-query';
 import type { ReviewData, ReviewSummary } from '@/lib/reviews';
@@ -32,16 +34,22 @@ interface CatalogProductDetailProps {
   reviews: ReviewData[];
   summary: ReviewSummary;
   userReview: ReviewData | null;
-  activeTab: ProductTab;
+  /** `?tab=reviews` (a notification, a feed link): the reviews sheet is open on arrival. */
+  reviewsOpen: boolean;
   /** Dating in the community: how many swiped the drink right («нравится») and left («пропустить»). */
   swipes?: SwipeCounts;
   /** A drink a member added (catalogDrink) that shops do not have yet: who added it, when, and the volumes they gave. */
   addedBy?: Pick<CatalogDrink, 'author' | 'volumes' | 'createdAt'>;
   /** The full name a member gave the drink («Monster Ultra Paradise»), shown under the flavour. */
   fullName?: string;
+  /** The review summary written by the model (nightly or from a company cabinet): its praise and complaints sit under the rating card, unsigned. */
+  reviewDigest?: DrinkSummary | null;
+  /** The reviews tab: the rating card's radar against the catalog average. */
+  radar?: { drink: DrinkRadar; catalog: DrinkRadar; country: string | null } | null;
 }
 
-export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, activeTab, swipes, addedBy, fullName }: CatalogProductDetailProps) {
+
+export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar }: CatalogProductDetailProps) {
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
   const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
 
@@ -92,10 +100,19 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
         </section>}
         {isAssortmentFlavor(group.flavor) && <p className="catalog-product-note">В источнике указано несколько напитков в ассортименте. Конкретный вкус и фотография отдельной банки не предоставлены.</p>}
 
-        <CatalogProductTabs active={activeTab} reviewCount={summary.count} />
-
-        {activeTab === 'prices' ? (
-          <div id="tab-panel-prices" role="tabpanel" aria-labelledby="tab-prices" className="catalog-product-tab-panel">
+        <div className="catalog-product-tab-panel">
+            <CatalogReviewsSheet overall={summary.count > 0 ? summary.overall : 0} count={summary.count} title={`${group.brand} · ${flavorName(group.flavor)}`} initiallyOpen={reviewsOpen}
+              highlights={reviewDigest && summary.count > 0 ? { praise: reviewDigest.body.praise, complaints: reviewDigest.body.complaints } : null}>
+              <CatalogProductReviews
+                brand={group.brand}
+                flavor={group.flavor}
+                reviews={reviews}
+                summary={summary}
+                userReview={userReview}
+                authenticated={authenticated}
+                radar={radar}
+              />
+            </CatalogReviewsSheet>
             <section className="catalog-product-section" aria-label="Цены в магазинах">
               {volumeGroups.length > 0 ? (
                 <CatalogVolumeTabs labels={volumeGroups.map(({volumeMl})=>volumeLabel(volumeMl) ?? "Объём не указан")}>
@@ -154,19 +171,7 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
             {!(addedBy && !priceHistory.length) && <CatalogPriceHistory icons={Object.fromEntries([...new Set(priceHistory.flatMap(s=>s.stores.map(store=>store.name)))].map(name=>[name,<RetailerBadge key={name} name={name} decorative/>]))} series={sortedHistory} today={new Date().toISOString().slice(0,10)}/>}
 
             <CatalogProductIngredients data={ingredients} />
-          </div>
-        ) : (
-          <div id="tab-panel-reviews" role="tabpanel" aria-labelledby="tab-reviews" className="catalog-product-tab-panel">
-            <CatalogProductReviews
-              brand={group.brand}
-              flavor={group.flavor}
-              reviews={reviews}
-              summary={summary}
-              userReview={userReview}
-              authenticated={authenticated}
-            />
-          </div>
-        )}
+        </div>
         {addedBy && <CatalogDrinkAuthor author={addedBy.author} createdAt={addedBy.createdAt} />}
       </div>
     </article>

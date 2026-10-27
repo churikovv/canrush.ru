@@ -1,8 +1,10 @@
 import { isResolvedFlavor } from '@canrush/shared';
-import { CatalogReviewForm } from '@/components/catalog-review-form';
 import { CatalogReviewItem } from '@/components/catalog-review-item';
 import { RatingStars } from '@/components/rating-stars';
+import { ReviewFormPanel } from '@/components/review-form-panel';
 import { ReviewSorter } from '@/components/review-sorter';
+import { DrinkRatingRadar } from '@/components/drink-rating-radar';
+import type { DrinkRadar } from '@/lib/score-profile';
 import type { ReviewData, ReviewSummary } from '@/lib/reviews';
 
 interface CatalogProductReviewsProps {
@@ -12,6 +14,8 @@ interface CatalogProductReviewsProps {
   summary: ReviewSummary;
   userReview: ReviewData | null;
   authenticated: boolean;
+  /** The rating card's radar (taste, design, average, favourites) against the catalog; absent without reviews. */
+  radar?: { drink: DrinkRadar; catalog: DrinkRadar; country: string | null } | null;
 }
 
 const CRITERIA: Array<{ key: keyof Pick<ReviewSummary, 'design' | 'taste'>; label: string }> = [
@@ -42,6 +46,7 @@ export function CatalogProductReviews({
   summary,
   userReview,
   authenticated,
+  radar,
 }: CatalogProductReviewsProps) {
   if (!isResolvedFlavor(flavor)) return <section className="catalog-product-section catalog-reviews">
     <p>Вкус этого предложения не подтверждён. Общий рейтинг и новые отзывы недоступны, чтобы не смешивать разные напитки.</p>
@@ -51,7 +56,7 @@ export function CatalogProductReviews({
   const overall = hasReviews ? summary.overall : 0;
 
   return (
-    <section className="catalog-product-section catalog-reviews" aria-labelledby="tab-reviews">
+    <section className="catalog-product-section catalog-reviews" aria-labelledby="catalog-reviews-title">
       <div className="review-overview">
         <div className="review-summary" aria-labelledby="review-summary-title">
           <div className="review-summary-overall">
@@ -68,7 +73,7 @@ export function CatalogProductReviews({
             </span>
           </div>
 
-          <dl className="review-summary-criteria">
+          {radar ? <DrinkRatingRadar drink={radar.drink} catalog={radar.catalog} country={radar.country} /> : <dl className="review-summary-criteria">
             {CRITERIA.map(({ key, label }) => {
               const value = hasReviews ? summary[key] : 0;
               return (
@@ -83,15 +88,11 @@ export function CatalogProductReviews({
                 </div>
               );
             })}
-          </dl>
+          </dl>}
         </div>
 
         <div className="review-form-wrapper">
-          <div className="review-form-heading">
-            <h2>{userReview ? 'Ваш отзыв' : 'Оценить напиток'}</h2>
-            <p>Оцените дизайн и вкус по шкале от 1 до 10 и коротко поделитесь впечатлением.</p>
-          </div>
-          <CatalogReviewForm brand={brand} flavor={flavor} existing={userReview} authenticated={authenticated} />
+          <ReviewFormPanel brand={brand} flavor={flavor} existing={userReview} authenticated={authenticated} />
         </div>
       </div>
 

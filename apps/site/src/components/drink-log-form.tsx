@@ -75,7 +75,9 @@ export function DrinkLogForm({ options, stores, today, yesterday }: { options: S
           <button type="button" className="community-button" onClick={close}>Готово</button>
           <button type="button" className="community-button community-button-secondary" onClick={() => setDone(null)}>Ещё банку</button>
         </div>
-      </div> : <form className="drink-log-form" action={action}>
+      </div> : <form className="drink-log-form" action={action}
+        // Only the last step sends; Enter on an earlier one moves on instead.
+        onSubmit={event => { if (step < 2) { event.preventDefault(); if (drink) setStep(step + 1); } }}>
         <ol className="drink-add-progress" aria-label={`Шаг ${step + 1} из ${STEPS.length}`}>
           {STEPS.map((title, index) => <li key={title} data-state={index < step ? 'done' : index === step ? 'current' : undefined}>
             <span aria-hidden="true">{index < step ? '✓' : index + 1}</span>{title}
@@ -124,9 +126,11 @@ export function DrinkLogForm({ options, stores, today, yesterday }: { options: S
 
         {state.error && <FormAlert>{state.error}</FormAlert>}
         <div className="drink-add-actions">
+          {/* Separate keys: one reused <button> switched to type=submit inside the «Далее» click, and the browser then
+              submitted the form — step 3 «Детали» was skipped. */}
           {step < 2
-            ? <button type="button" className="community-button" disabled={!drink} onClick={() => setStep(step + 1)}>{drink ? 'Далее' : 'Сначала выберите энергетик'}</button>
-            : <button type="submit" className="community-button" disabled={pending || !drink}>{pending ? 'Сохраняем…' : 'Отметить'}</button>}
+            ? <button key="next" type="button" className="community-button" disabled={!drink} onClick={() => setStep(step + 1)}>{drink ? 'Далее' : 'Сначала выберите энергетик'}</button>
+            : <button key="submit" type="submit" className="community-button" disabled={pending || !drink}>{pending ? 'Сохраняем…' : 'Отметить'}</button>}
           {step > 0 && <button type="button" className="community-button community-button-secondary" disabled={pending} onClick={() => setStep(step - 1)}>Назад</button>}
         </div>
       </form>}

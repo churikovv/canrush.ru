@@ -1,10 +1,18 @@
 import type { ReactNode } from 'react';
 
-export type NavigationSection = 'home' | 'search' | 'community' | 'calendar' | 'catalog' | 'prices' | 'stores' | 'tierlists' | 'favorites' | 'profile' | 'market' | 'feed' | 'news';
+export type NavigationSection = 'home' | 'search' | 'community' | 'calendar' | 'catalog' | 'prices' | 'stores' | 'tierlists' | 'favorites' | 'profile' | 'market' | 'feed' | 'news' | 'business';
 /** Header groups have their own glyphs; they are not pages. */
 export type NavigationIconName = NavigationSection | 'sign-in' | 'can' | 'dating' | 'people' | 'leaderboard';
 
 const GLYPHS: Record<NavigationIconName, ReactNode> = {
+  // A briefcase with its clasp: CanRush for business.
+  business: (
+    <>
+      <path fillRule="evenodd" d="M9.5 3h5A2.5 2.5 0 0 1 17 5.5V6h2.5A2.5 2.5 0 0 1 22 8.5v3H2v-3A2.5 2.5 0 0 1 4.5 6H7v-.5A2.5 2.5 0 0 1 9.5 3ZM9 6h6v-.5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0-.5.5V6Z" />
+      <path d="M2 13.5h7.5v.5a2.5 2.5 0 0 0 5 0v-.5H22v5a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 18.5v-5Z" />
+      <path className="nav-icon-part" d="M10.5 11a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v3a1.5 1.5 0 0 1-3 0v-3Z" />
+    </>
+  ),
   // A folded newspaper: a picture block and lines of text — the members' articles.
   news: (
     <>

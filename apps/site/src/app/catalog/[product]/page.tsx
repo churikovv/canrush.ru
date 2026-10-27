@@ -1,4 +1,6 @@
 import '@/styles/shared.css';
+// Avatar frames of review authors (AvatarFrame) are styled there.
+import '@/styles/profile.css';
 import '@/styles/catalog.css';
 import { getPriceHistory } from '@/lib/price-history-files';
 import { selectedCity } from '@/lib/location';
@@ -7,10 +9,11 @@ import { headers } from 'next/headers';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
 import { CatalogProductDetail } from '@/components/catalog-product-detail';
-import type { ProductTab } from '@/components/catalog-product-tabs';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { getSwipeCounts } from '@/lib/drink-swipes';
 import { catalogDrinkIngredients, getCatalogDrink, renamedCatalogDrink } from '@/lib/catalog-drinks';
+import { getDrinkSummary } from '@/lib/review-digest';
+import { getDrinkRadar } from '@/lib/score-profile';
 import { getProductIngredients } from '@/lib/ingredients';
 import { auth } from '@/lib/auth';
 import { getCatalogGroup, isFavorite, loadAllCatalogGroups } from '@/lib/catalog';
@@ -32,10 +35,6 @@ async function productFromParams(params: ProductParams) {
     return group ? getCatalogGroup(group.brand, group.flavor) : null;
   }
   return getCatalogGroup(decoded.brand, decoded.flavor);
-}
-
-function resolveTab(value: string | undefined): ProductTab {
-  return value === 'reviews' ? 'reviews' : 'prices';
 }
 
 export async function generateMetadata({ params }: { params: ProductParams }): Promise<Metadata> {
@@ -62,7 +61,6 @@ export default async function CatalogProductPage({
   if (decoded && catalogGroupSlug(decoded.brand, decoded.flavor) !== (await params).product) {
     permanentRedirect(`/catalog/${catalogGroupSlug(decoded.brand, decoded.flavor)}${tab === 'reviews' ? '?tab=reviews' : ''}`);
   }
-  const activeTab = resolveTab(tab);
 
   const [group, session] = await Promise.all([
     productFromParams(params),
@@ -89,7 +87,12 @@ export default async function CatalogProductPage({
   // A drink a member added has no ingredient file: its label text from the request stands in.
   const ingredients = fileIngredients ?? (added ? catalogDrinkIngredients(added) : null);
 
-  const priceHistory=activeTab==='prices'?await getPriceHistory((await selectedCity()).id,group.brand,group.flavor):[];
+  // One page now: the description and prices, with the reviews in a sheet over it (radar only when there are reviews).
+  const [priceHistory, reviewDigest, radar] = await Promise.all([
+    getPriceHistory((await selectedCity()).id, group.brand, group.flavor),
+    getDrinkSummary(group.brand, group.flavor).catch(() => null),
+    summary.count > 0 ? getDrinkRadar(group.brand, group.flavor).catch(() => null) : null,
+  ]);
 
   return (
     <BrandShell headerAction={<ProfileNavigation active="catalog" />} surfaceClassName="catalog-detail-surface">
@@ -102,8 +105,10 @@ export default async function CatalogProductPage({
         reviews={reviews}
         summary={summary}
         userReview={userReview}
-        activeTab={activeTab}
+        reviewsOpen={tab === 'reviews'}
         swipes={swipes}
+        reviewDigest={reviewDigest}
+        radar={radar}
         addedBy={added && group.variants.length === 0 ? added : undefined}
         fullName={added?.fullName || undefined}
       />

@@ -10,6 +10,7 @@ import { MoreActions } from '@/components/more-actions';
 import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
 import type { ReviewData } from '@/lib/reviews';
 import { countryFlag, countryName } from '@/lib/countries';
+import { AvatarFrame } from '@/components/avatar-frame';
 
 const CRITERIA = [
   { key: 'design', label: 'Дизайн' },
@@ -33,6 +34,7 @@ export function CatalogReviewItem({ review, own = false }: { review: ReviewData;
   const overall = (review.design + review.taste) / 2;
   const country = countryName(review.country);
   const createdAt = new Date(review.createdAt);
+  const frame = review.author.frame ?? 'none';
   const avatar = review.author.avatarId
     ? <Image src={`/api/profile-images/${review.author.avatarId}`} width={40} height={40} unoptimized alt="" />
     : authorDisplay(review).charAt(0).toLocaleUpperCase('ru-RU');
@@ -40,7 +42,7 @@ export function CatalogReviewItem({ review, own = false }: { review: ReviewData;
   return (
     <article className="review-item" id={`review-${review.id}`}>
       <header className="review-item-author">
-        <Link className="wall-avatar review-item-avatar" href={profileHref} tabIndex={-1} aria-hidden="true">{avatar}</Link>
+        <Link className="wall-avatar review-item-avatar" href={profileHref} tabIndex={-1} aria-hidden="true" data-frame={frame}>{avatar}{frame !== 'none' && <AvatarFrame frame={frame} />}</Link>
         <div className="review-item-who">
           <Link className="wall-post-author" href={profileHref}>{authorDisplay(review)}</Link>
           <span className="review-item-handle">@{review.author.username}</span>

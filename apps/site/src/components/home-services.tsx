@@ -29,6 +29,8 @@ export function HomeServices({ metrics, contest, joined, engine }: {
     ...(engine.taken < BETA_ENGINE_PLACES ? [{ key: 'engine', href: '/engine', label: 'Бета сайта', note: 'каждый важен', art: '/brand/achievements/engine.png' }] : []),
     { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: '/brand/home/dating.png' },
     { key: 'market', href: '/market', label: 'Маркет', note: 'объявления', art: '/brand/home/market.png' },
+    // The landing for brands, distributors and shops (CanRush для бизнеса).
+    { key: 'business', href: '/business', label: 'Бизнес', note: 'для брендов', art: '/brand/home/business.png' },
   ];
   return <nav className="home-services" aria-label="Разделы">
     <ul className="go-tiles">{big.map(item => <li key={item.key}><Link className="go-tile" href={item.href} data-tile={item.key}>

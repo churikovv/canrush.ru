@@ -10,6 +10,7 @@ import {
   emailRateLimitKey,
 } from '@/lib/email-rate-limit';
 import { sendMagicLinkEmail } from '@/lib/email';
+import { audienceFromVerifyUrl, type SignInAudience } from '@/lib/magic-link-url';
 import { getAuthEnv, getReviewLoginEnv, getTelegramEnv, type ReviewLoginEnv } from '@/lib/env';
 import { reviewLogin } from '@/lib/review-login';
 import { telegramMiniApp } from '@/lib/telegram-auth';
@@ -20,7 +21,7 @@ interface RateLimitRecord {
   lastRequest: bigint | number | string;
 }
 
-export type MagicLinkSender = (email: string, token: string) => Promise<void>;
+export type MagicLinkSender = (email: string, token: string, audience?: SignInAudience) => Promise<void>;
 
 export interface CreateAuthOptions {
   database?: Pool;
@@ -169,7 +170,7 @@ export function createAuth(options: CreateAuthOptions = {}) {
           max: 5,
         },
         storeToken: 'hashed',
-        sendMagicLink: async ({ email, token }) => sendMagicLink(email, token),
+        sendMagicLink: async ({ email, token, url }) => sendMagicLink(email, token, audienceFromVerifyUrl(url)),
       }),
       telegramMiniApp({ botToken: telegramBotToken, botUsername: options.telegramBotUsername !== undefined ? options.telegramBotUsername : (getTelegramEnv()?.botUsername ?? null), trustedOrigin: env.authUrl }),
       reviewLogin({ account: options.reviewLogin !== undefined ? options.reviewLogin : getReviewLoginEnv(), trustedOrigin: env.authUrl }),

@@ -3,13 +3,10 @@ import '@/styles/auth.css';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import Image from 'next/image';
 import { BrandShell } from '@/components/brand-shell';
-import Link from '@/components/navigation-progress';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { ReviewSignIn } from '@/components/review-sign-in';
-import { SignInForm } from '@/components/sign-in-form';
-import { TelegramSignIn } from '@/components/telegram-sign-in';
+import { SignInPanel } from '@/components/sign-in-panel';
 import { auth } from '@/lib/auth';
 import { getReviewLoginEnv, getTelegramEnv } from '@/lib/env';
 
@@ -20,28 +17,19 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function SignInPage() {
+/** Sign-in: «Для себя» or «Бизнес» (`?for=business`, the business landing links here), email and Telegram. */
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ for?: string }> }) {
+  const business = (await searchParams).for === 'business';
   const session = await auth.api.getSession({ headers: await headers() });
-  if (session) redirect('/profile');
+  if (session) redirect(business ? '/business/cabinet' : '/profile');
   const telegram = getTelegramEnv() !== null;
   const reviewLogin = getReviewLoginEnv() !== null;
 
   return (
     <BrandShell headerAction={<ProfileNavigation active="profile" />}>
       <div className="auth-layout sign-in-card">
-        <div className="auth-illustration" aria-hidden="true">
-          <Image src="/brand/profile-illustration.png" width={188} height={120} alt="" priority />
-        </div>
-        <h1>Вход в CanRush</h1>
-        {telegram ? <>
-          <TelegramSignIn />
-          <p className="sign-in-divider"><span>или по почте</span></p>
-        </> : null}
-        <div className="sign-in-email"><SignInForm /></div>
+        <SignInPanel telegram={telegram} initial={business ? 'business' : 'personal'} />
         {reviewLogin ? <ReviewSignIn /> : null}
-        <p className="privacy-note">
-          Входя, вы принимаете <Link href="/terms">Соглашение</Link> и <Link href="/privacy">Политику обработки данных</Link>.
-        </p>
       </div>
     </BrandShell>
   );

@@ -4,6 +4,7 @@ import type { QueryResultRow } from 'pg';
 import type { PreparedReviewPhoto } from './review-photos';
 import { MAX_REVIEW_PHOTOS, PHOTO_ID_PATTERN } from './review-photo-limits';
 import { profileTagLabel } from '@/lib/profile-achievements';
+import { DEFAULT_PROFILE_APPEARANCE, parseProfileAppearance, type ProfileAppearance } from '@/lib/profile-appearance';
 import { getPool } from '@/db/pool';
 
 export interface ReviewAuthor {
@@ -13,6 +14,8 @@ export interface ReviewAuthor {
   tag: string | null;
   avatarId: string | null;
   xp?: number;
+  /** The author's avatar frame from their profile appearance, drawn around the avatar like elsewhere on the site. */
+  frame?: ProfileAppearance['frame'];
 }
 
 export interface ReviewData {
@@ -65,13 +68,14 @@ interface ReviewRow extends QueryResultRow {
   tag: string | null;
   avatarId: string | null;
   xp?: number;
+  appearance: unknown;
 }
 
 const REVIEW_SELECT = `
   select r."id", r."userId", r."brand", r."flavor", r."design", r."taste", r."text", r."country",
          r."createdAt", r."updatedAt",
          array(select p."id"::text from "reviewPhoto" p where p."reviewId" = r."id" order by p."position") as photos,
-         u."username", u."name", u."telegramChannel",
+         u."username", u."name", u."telegramChannel", u."profileAppearance" as appearance,
          coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
          (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
          case when u."profileTags"[1] in ('admin', 'moderator') then
@@ -92,6 +96,7 @@ function toReview(row: ReviewRow): ReviewData {
       tag: profileTagLabel(row.tag) ?? null,
       avatarId: row.avatarId,
       xp: row.xp ?? 0,
+      frame: (parseProfileAppearance(row.appearance) ?? DEFAULT_PROFILE_APPEARANCE).frame,
     },
     brand: row.brand,
     flavor: row.flavor,

@@ -616,7 +616,8 @@ html[data-cookie-notice="visible"] .brand-footer {
 .profile-navigation {
   display: flex;
   align-items: center;
-  gap: 4px;
+  /* No gap: each item's own padding (10px before the icon, 8px after the chevron) already spaces them evenly. */
+  gap: 0;
 }
 .profile-navigation-item {
   display: inline-flex;
@@ -3022,7 +3023,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 .brand-header .header-menu[data-current] { background: #ffffff2e; }
 .brand-header .header-menu:hover, .brand-header .header-menu[data-open] { background: #ffffff38; }
 .brand-header .header-menu .header-menu-trigger, .brand-header .header-menu .header-menu-trigger:hover { padding-right: 4px; background: transparent; }
-.header-menu-toggle { display: grid; place-items: center; width: 28px; height: 44px; margin-left: -2px; padding: 0 8px 0 0; border: 0; border-radius: 0 12px 12px 0; background: transparent; color: #fff; cursor: pointer; }
+.header-menu-toggle { display: grid; place-items: center; width: 22px; height: 44px; margin-left: -2px; padding: 0 6px 0 0; border: 0; border-radius: 0 12px 12px 0; background: transparent; color: #fff; cursor: pointer; }
 .header-menu-toggle:focus-visible { outline: 2px solid var(--theme-line, #fff); outline-offset: 2px; }
 .header-menu-chevron { width: 12px; height: 12px; transition: transform .2s ease; }
 .header-menu[data-open] .header-menu-chevron { transform: rotate(180deg); }
@@ -3100,10 +3101,25 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 @media (max-width: 420px) {
   .review-reactions { gap: 4px 10px; }
 }
-.review-text-guidance { line-height: 1.5; }
-.review-text-guidance-short { color: var(--theme-danger, #b42332); }
-.review-text-guidance-enough { color: var(--theme-danger, #876000); }
-.review-text-guidance-detailed { color: var(--theme-success, #237340); }
+/* ReviewTextMeter: its own small card under the review text (also in the profile form, so it lives here) — an icon in a
+   tinted circle, the level and a hint, and a bar to a detailed review with ticks at publishable and good. */
+.review-meter { --meter: var(--color-muted-strong); display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px 12px; margin-top: 12px; padding: 12px 14px 14px; border: 1px solid color-mix(in srgb, var(--meter) 32%, transparent); border-radius: 16px; background: color-mix(in srgb, var(--meter) 11%, var(--color-subtle)); transition: border-color 200ms ease-out, background-color 200ms ease-out; }
+.review-meter[data-level="enough"] { --meter: var(--color-brand); }
+/* A quiet tip in the same card as the meter (the country field): brand-tinted, icon in a circle, text beside it. */
+.review-hint-card { --meter: var(--color-brand); display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; margin: 4px 0 0; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--meter) 32%, transparent); border-radius: 16px; background: color-mix(in srgb, var(--meter) 11%, var(--color-subtle)); color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.4; }
+.review-meter[data-level="good"] { --meter: color-mix(in srgb, var(--color-brand) 45%, var(--color-success)); }
+.review-meter[data-level="detailed"] { --meter: var(--color-success); }
+.review-meter-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: color-mix(in srgb, var(--meter) 22%, transparent); color: var(--meter); }
+.review-meter-icon svg { animation: review-meter-pop 360ms cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes review-meter-pop { from { transform: scale(.5); opacity: .3; } to { transform: none; opacity: 1; } }
+.review-meter p { display: grid; gap: 1px; margin: 0; min-width: 0; line-height: 1.35; }
+.review-meter p b { color: var(--color-ink); font-size: .9375rem; font-weight: 700; }
+.review-meter p span { color: var(--color-muted-strong); font-size: .8125rem; }
+.review-meter-bar { grid-column: 1 / -1; position: relative; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--color-muted-strong) 18%, transparent); }
+.review-meter-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--meter); transition: width 180ms ease-out, background-color 180ms ease-out; }
+.review-meter-bar > i { position: absolute; top: -3px; width: 2px; height: 12px; margin-left: -1px; border-radius: 1px; background: var(--color-muted-strong); opacity: .45; }
+.review-meter[data-level="short"] .review-meter-bar > span { opacity: .55; }
+@media (prefers-reduced-motion: reduce) { .review-meter, .review-meter-bar > span { transition: none; } .review-meter-icon svg { animation: none; } }
 .wall-empty-card p { margin: 8px 0 0; }
 .profile-settings, .profile-achievements { margin: 32px auto; width: 100%; }
 /* One rhythm for every block: --home-gap between blocks, 12px from a heading to its content, nothing extra under shelves. */

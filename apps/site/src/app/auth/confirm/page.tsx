@@ -16,11 +16,13 @@ export const metadata: Metadata = {
 };
 
 interface ConfirmPageProps {
-  searchParams: Promise<{ token?: string | string[] }>;
+  searchParams: Promise<{ token?: string | string[]; for?: string | string[] }>;
 }
 
 export default async function ConfirmPage({ searchParams }: ConfirmPageProps) {
-  const tokenValue = (await searchParams).token;
+  const params = await searchParams;
+  const tokenValue = params.token;
+  const business = params.for === 'business';
   const token = Array.isArray(tokenValue) ? undefined : tokenValue;
   const validToken = isMagicLinkToken(token);
 
@@ -28,16 +30,16 @@ export default async function ConfirmPage({ searchParams }: ConfirmPageProps) {
     <BrandShell headerAction={<ProfileNavigation active="profile" />}>
       <section className="auth-layout compact-layout">
         <p className="section-label">Проверка ссылки</p>
-        <h1>{validToken ? 'Входим в профиль…' : 'Ссылка не подходит'}</h1>
+        <h1>{validToken ? (business ? 'Открываем кабинет…' : 'Входим в профиль…') : 'Ссылка не подходит'}</h1>
         <p>
           {validToken
-            ? 'Ссылка проверяется. Через мгновение откроется ваш профиль.'
+            ? `Ссылка проверяется. Через мгновение откроется ${business ? 'кабинет для бизнеса' : 'ваш профиль'}.`
             : 'Ссылка повреждена или скопирована не полностью. Запросите новое письмо.'}
         </p>
         {validToken ? (
-          <MagicLinkAutoConfirm token={token!} />
+          <MagicLinkAutoConfirm token={token!} business={business} />
         ) : (
-          <Link className="primary-link" href="/sign-in">
+          <Link className="primary-link" href={business ? '/sign-in?for=business' : '/sign-in'}>
             Запросить новую ссылку
           </Link>
         )}

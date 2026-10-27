@@ -26,7 +26,7 @@ function TelegramIcon() {
  * «Войти через Telegram». Inside the Mini App it signs in with the launch data;
  * in a browser it opens the bot, which asks the member to confirm, and waits for that confirmation.
  */
-export function TelegramSignIn() {
+export function TelegramSignIn({ callbackURL = '/profile', allow }: { callbackURL?: '/profile' | '/business/cabinet'; allow?: () => boolean } = {}) {
   const router = useRouter();
   const { webApp, auth } = useTelegramApp();
   const [pending, setPending] = useState(false);
@@ -36,7 +36,7 @@ export function TelegramSignIn() {
 
   function finish() {
     setTelegramAppState({ auth: 'signed-in' });
-    router.push('/profile');
+    router.push(callbackURL);
     router.refresh();
   }
 
@@ -103,7 +103,7 @@ export function TelegramSignIn() {
   }, [waiting]);
 
   async function handleClick() {
-    if (pending) return;
+    if (pending || (allow && !allow())) return;
     setPending(true);
     setError(undefined);
 

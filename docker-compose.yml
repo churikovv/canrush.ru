@@ -22,6 +22,8 @@ x-site-env: &site-env
   TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
   TELEGRAM_MINI_APP_URL: ${TELEGRAM_MINI_APP_URL:-}
   TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+  # «Рецензии на отзывы» in the business cabinet; without it the feature is off.
+  GIGACHAT_AUTH_KEY: ${GIGACHAT_AUTH_KEY:-}
   TELEGRAM_API_URL: ${TELEGRAM_API_URL:-}
   TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
   # Android app: store-reviewer sign-in, push (FCM key file from ./secrets, RuStore), extra App Links keys
@@ -100,6 +102,7 @@ services:
       <<: *site-env
       TELEGRAM_WORKER: "off"
       PUSH_WORKER: "off"
+      DIGEST_WORKER: "off"
     volumes: *site-volumes
     ports:
       - "127.0.0.1:3003:3000"

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  audienceFromVerifyUrl,
   buildMagicLinkConfirmationUrl,
   buildMagicLinkVerificationPath,
   isMagicLinkToken,
@@ -23,6 +24,14 @@ describe('magic link URL helpers', () => {
       newUserCallbackURL: '/profile',
       errorCallbackURL: '/auth/error',
     });
+  });
+
+  it('marks only the business cabinet, with a flag rather than an address', () => {
+    expect(buildMagicLinkConfirmationUrl('https://canrush.ru', token, 'business')).toBe(`https://canrush.ru/auth/confirm?token=${token}&for=business`);
+    expect(new URL(buildMagicLinkVerificationPath(token, 'business'), 'https://canrush.ru').searchParams.get('callbackURL')).toBe('/business/cabinet');
+    expect(audienceFromVerifyUrl(`https://canrush.ru/api/auth/magic-link/verify?token=${token}&callbackURL=%2Fbusiness%2Fcabinet`)).toBe('business');
+    expect(audienceFromVerifyUrl(`https://canrush.ru/api/auth/magic-link/verify?token=${token}&callbackURL=https%3A%2F%2Fevil.example%2Fbusiness%2Fcabinet`)).toBe('personal');
+    expect(audienceFromVerifyUrl('not a url')).toBe('personal');
   });
 
   it('rejects malformed or oversized tokens', () => {

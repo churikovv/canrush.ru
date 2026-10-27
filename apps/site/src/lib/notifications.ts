@@ -95,6 +95,18 @@ function describeNotification(row: any): NotificationItem {
       title = `Ваш напиток «${p.brand} · ${flavorName(p.flavor)}» объединён с карточкой каталога`;
       detail = [`Это ${p.targetBrand} · ${flavorName(p.targetFlavor)}`, p.published ? 'отзывы и отметки перенесены' : '', p.xp ? `−${p.xp} XP за дубль` : ''].filter(Boolean).join(' · ');
       href = `/catalog/${catalogGroupSlug(p.targetBrand,p.targetFlavor)}`;
+    } else if (row.kind==='business-review') {
+      // A review of a drink the member's company has approved (migration 0121); off in the cabinet's notification settings.
+      const p = row.payload;
+      title = `Новый отзыв: ${p.brand} · ${flavorName(p.flavor)}`;
+      detail = `${actor} · вкус ${p.taste}, дизайн ${p.design} · ${p.business}`;
+      href = '/business/cabinet?section=reviews';
+    } else if (row.kind==='business-invite') {
+      // The owner of a company invited the member to its cabinet; accepting happens in the cabinet.
+      const p = row.payload;
+      title = `${actor} приглашает вас в команду «${p.business}»`;
+      detail = 'Кабинет CanRush для бизнеса: аналитика, напитки и объявления компании';
+      href = '/business/cabinet';
     } else if (row.kind==='price') {
       const p = row.payload; city = p.city;
       title = `${p.price < p.before ? 'Цена снизилась' : 'Цена выросла'}: ${p.brand} · ${flavorName(p.flavor)}`;

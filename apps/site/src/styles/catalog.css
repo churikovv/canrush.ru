@@ -136,37 +136,6 @@
   font-size: 1rem;
   line-height: 1.4;
 }
-.catalog-product-tabs {
-  display: flex;
-  gap: 8px;
-  border-bottom: 1px solid var(--color-control);
-  margin-bottom: 4px;
-}
-.catalog-product-tab {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  padding: 10px 16px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  background: transparent;
-  color: var(--color-muted-strong);
-  font-size: 0.875rem;
-  line-height: 1.4;
-  text-decoration: none;
-  transition: color var(--motion-fast) ease-out, border-color var(--motion-fast) ease-out;
-}
-.catalog-product-tab:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: -3px;
-  border-radius: 8px;
-}
-.catalog-product-tab-active {
-  color: var(--color-ink);
-  border-bottom-color: var(--color-brand);
-  font-weight: 500;
-}
 .catalog-product-tab-panel {
   display: flex;
   flex-direction: column;
@@ -620,3 +589,147 @@
   .catalog-added-empty .community-button { grid-column: auto; justify-self: stretch; text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) { .catalog-flavor-chip { animation: none; } .catalog-drink-chips button, .catalog-add-button, .store-form .catalog-drink-sugar-option { transition: none; } }
+/* «Сводка» on the «Описание» tab: the model's summary of the reviews in neutral colours, then the prices. */
+/* The rating card's radar (DrinkRatingRadar): taste, design, average and favourites against the catalog, no table. */
+.drink-radar { display: grid; gap: 8px; }
+.drink-radar-chart { display: block; width: 100%; max-width: 360px; height: auto; margin: 0 auto; overflow: visible; }
+.drink-radar-ring { fill: none; stroke: color-mix(in srgb, var(--color-muted-strong) 40%, transparent); stroke-width: 1; }
+.drink-radar-shape { fill: color-mix(in srgb, var(--color-brand) 30%, transparent); stroke: var(--color-brand); stroke-width: 1.5; stroke-linejoin: round; }
+.drink-radar-shape.is-catalog { fill: none; stroke: var(--color-muted-strong); stroke-dasharray: 4 3; }
+.drink-radar-dot { fill: var(--color-brand); }
+.drink-radar-chart text { fill: var(--color-text, var(--color-ink)); font-size: 13px; }
+.drink-radar-chart .drink-radar-value { fill: var(--color-ink); font-weight: 700; }
+.drink-radar-key { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin: 0; color: var(--color-muted-strong); font-size: .8125rem; }
+.drink-radar-swatch { display: inline-block; width: 14px; height: 10px; border: 1.5px solid var(--color-brand); border-radius: 3px; background: color-mix(in srgb, var(--color-brand) 30%, transparent); }
+.drink-radar-swatch.is-catalog { margin-left: 8px; border-color: var(--color-muted-strong); border-style: dashed; background: transparent; }
+.drink-radar-chart .drink-radar-flag { font-size: 17px; }
+/* With the radar the rating card is one compact column: the score and its stars side by side, a thin divider, then
+   the radar with its legend tucked into the empty corner beside the «Вкус» axis. */
+.review-summary:has(.drink-radar) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; align-items: start; gap: 10px; padding: 16px; }
+.review-summary:has(.drink-radar) .review-summary-overall {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "label label" "score stars" "score count";
+  align-items: center; gap: 2px 14px; padding: 0 0 12px; border-right: 0; border-bottom: 1px solid var(--color-control);
+}
+.review-summary:has(.drink-radar) .review-summary-label { grid-area: label; }
+.review-summary:has(.drink-radar) .review-summary-score { grid-area: score; margin-top: 2px; }
+.review-summary:has(.drink-radar) .review-summary-overall .rating-stars { grid-area: stars; grid-template-columns: repeat(10, 13px); align-self: end; margin-top: 0; }
+.review-summary:has(.drink-radar) .review-summary-count { grid-area: count; align-self: start; margin-top: 2px; }
+.drink-radar { position: relative; }
+.drink-radar .drink-radar-key { position: absolute; top: 2px; left: 0; display: grid; justify-items: start; gap: 4px; font-size: .75rem; line-height: 1.2; }
+.drink-radar .drink-radar-key .drink-radar-swatch { margin: 0 6px 0 0; vertical-align: -1px; }
+@media (min-width: 960px) { .review-summary:has(.drink-radar) { padding: 24px; gap: 14px; } }
+/* The wide layout's rules for the plain rating card (stars stretched to 320 px, a huge score, two equal rows) must not
+   reach the compact card with the radar: the stars ran out of their column. */
+.review-summary:has(.drink-radar) { grid-template-rows: auto; align-content: start; }
+.review-summary:has(.drink-radar) .review-summary-overall { justify-content: start; padding-bottom: 12px; }
+.review-summary:has(.drink-radar) .review-summary-overall .rating-stars { width: auto; gap: 3px; }
+.review-summary:has(.drink-radar) .review-summary-overall .rating-stars svg { width: 13px; height: 13px; }
+.review-summary:has(.drink-radar) .review-summary-score strong { font-size: clamp(2.75rem, 4vw, 3.5rem); }
+/* The review form folded behind «Написать отзыв» / «Изменить отзыв» (ReviewFormPanel). */
+.review-form-toggle-row { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.review-form-toggle-row > div { display: grid; gap: 4px; min-width: 0; }
+.review-form-toggle { min-height: 44px; }
+@media (max-width: 639px) { .review-form-toggle { width: 100%; } }
+.review-form-toggle:not(.community-button-secondary) { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+
+/* The review wizard on a drink's page (CatalogReviewForm stepped): taste, design, then country and text. */
+.review-steps { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.review-steps-back { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; margin: 0 -10px; border: 0; border-radius: 50%; background: none; color: var(--color-ink); cursor: pointer; }
+.review-steps-back:disabled { visibility: hidden; }
+.review-steps-back:hover { background: var(--color-subtle); }
+.review-steps-list { display: flex; flex: 1; justify-content: safe center; min-width: 0; gap: 5px; margin: 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.review-steps-list li { flex: none; }
+.review-steps-list span, .review-steps-list button { display: inline-flex; align-items: center; min-height: 32px; padding: 0 11px; border: 0; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font: inherit; font-size: .8125rem; font-weight: 600; white-space: nowrap; }
+.review-steps-list button { cursor: pointer; color: var(--color-ink); }
+.review-steps-list li[aria-current] span { background: var(--color-brand); color: #fff; }
+
+.review-step-rating { display: grid; min-width: 0; justify-items: center; gap: 4px; padding: 12px 0 4px; animation: review-step-in 260ms ease-out; }
+@keyframes review-step-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+.review-step-question { font-size: clamp(1.375rem, 5vw, 1.75rem); font-weight: 700; letter-spacing: -.02em; text-align: center; }
+.review-step-actions .primary-button { min-height: 48px; }
+@media (max-width: 639px) { .review-step-actions .primary-button { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .review-step-rating { animation: none; } }
+.review-step-actions .primary-button { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+
+
+/* RatingDial: the score in large type, its neighbours right beside it on the baseline; swipe, tap or type. */
+.rating-dial { display: flex; justify-content: center; width: 100%; max-width: 100%; margin-top: 6px; padding: 4px 0; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
+.rating-dial:active { cursor: grabbing; }
+.rating-dial-row { display: flex; align-items: baseline; gap: 6px; }
+.rating-dial-value { flex: none; box-sizing: content-box; min-width: 0; padding: 0 2px; border: 0; border-radius: 14px; background: none; color: var(--color-ink); font: inherit; font-size: clamp(4.5rem, 22vw, 6.5rem); font-weight: 800; line-height: 1; letter-spacing: 0; text-align: center; font-variant-numeric: tabular-nums; caret-color: var(--color-brand); cursor: text; }
+.rating-dial-value:focus { outline: none; }
+.rating-dial-value:focus-visible { box-shadow: 0 0 0 3px var(--color-focus, var(--color-brand)); }
+.rating-dial-near { flex: none; min-width: 28px; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--color-muted-strong); font: inherit; font-size: 1.75rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; cursor: pointer; transition: color var(--motion-fast, 120ms) ease-out; }
+.rating-dial-near[data-far] { min-width: 22px; font-size: 1.25rem; opacity: .45; }
+.rating-dial-near:hover:not(:disabled) { color: var(--color-ink); }
+.rating-dial-dots { display: inline-flex; flex: none; gap: 3px; margin-bottom: 6px; opacity: .6; }
+.rating-dial-dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--color-muted-strong); }
+.rating-dial-mood { display: flex; align-items: center; gap: 10px; margin-top: 4px; color: var(--color-muted-strong); font-size: 1rem; }
+.rating-dial-mood .rating-face { width: 48px; height: 48px; margin: 0; }
+.rating-dial-mood .rating-face svg { width: 48px; height: 48px; }
+.rating-dial-mood b { color: var(--color-ink); }
+.rating-dial-hint { margin: 2px 0 0; color: var(--color-muted-strong); font-size: .8125rem; text-align: center; }
+
+/* The rating card on a drink page (CatalogReviewsSheet): opens the reviews in a sheet over the page. */
+.catalog-rating-card { position: relative; display: grid; gap: 14px; padding: 14px 16px 16px 18px; border: 1px solid var(--color-control); border-radius: 20px; background: var(--color-surface, transparent); color: var(--color-ink); transition: background-color var(--motion-fast, 120ms) ease-out; }
+.catalog-rating-card:hover { background: color-mix(in srgb, var(--color-subtle) 60%, var(--color-surface, transparent)); }
+.catalog-rating-card:has(.catalog-rating-card-head:focus-visible) { outline: 3px solid var(--color-focus, var(--color-brand)); outline-offset: 2px; }
+/* The head button stretches over the whole card, so a tap anywhere — the lists too — opens the reviews. */
+.catalog-rating-card-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center; gap: 4px 12px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.catalog-rating-card-head:focus-visible { outline: none; }
+.catalog-rating-card-head::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.catalog-rating-highlights { display: grid; gap: 14px 16px; }
+@media (min-width: 640px) { .catalog-rating-highlights { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); } }
+.catalog-rating-highlights section { --tone: var(--color-brand); display: grid; align-content: start; gap: 8px; }
+/* Praise in the brand blue, complaints neutral: no traffic-light greens and reds on the page. */
+.catalog-rating-highlights section[data-tone="bad"] { --tone: var(--color-muted-strong); }
+.catalog-rating-highlights h3 { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--color-ink); font-size: .875rem; font-weight: 700; }
+.catalog-rating-highlights h3 > span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--tone) 18%, transparent); color: var(--tone); }
+.catalog-rating-highlights ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.catalog-rating-highlights li { padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 14%, var(--color-subtle)); color: var(--color-ink); font-size: .875rem; line-height: 1.3; }
+.catalog-rating-highlights section[data-tone="bad"] li { background: var(--color-subtle); }
+.catalog-rating-card-score { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; }
+.catalog-rating-card-score strong { font-size: 1.75rem; font-weight: 800; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.catalog-rating-card-score strong small { margin-left: 2px; color: var(--color-muted-strong); font-size: .9375rem; font-weight: 700; }
+.catalog-rating-card-score .rating-stars { color: var(--color-brand); }
+.catalog-rating-card-score .catalog-rating-card-empty { font-size: 1.125rem; }
+.catalog-rating-card-count { grid-column: 1; color: var(--color-muted-strong); font-size: .875rem; }
+.catalog-rating-card-arrow { grid-column: 2; grid-row: 1 / span 2; color: var(--color-ink); }
+
+/* The reviews sheet: full screen, the page under it does not scroll. */
+html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
+.catalog-reviews-sheet { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: var(--color-page, var(--color-surface, #fff)); color: var(--color-ink); overflow: auto; overscroll-behavior: contain; }
+.catalog-reviews-sheet::backdrop { background: rgb(10 14 22 / .55); }
+.catalog-reviews-sheet[open] { animation: catalog-sheet-in 260ms cubic-bezier(.2, .8, .2, 1); }
+@keyframes catalog-sheet-in { from { transform: translateY(32px); opacity: 0; } to { transform: none; opacity: 1; } }
+.catalog-reviews-sheet-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--color-control); background: inherit; }
+.catalog-reviews-sheet-back { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin-left: -6px; border: 0; border-radius: 50%; background: none; color: var(--color-ink); cursor: pointer; }
+.catalog-reviews-sheet-back:hover { background: var(--color-subtle); }
+.catalog-reviews-sheet-head > div { min-width: 0; }
+.catalog-reviews-sheet-head h2 { margin: 0; font-size: 1.125rem; line-height: 1.25; }
+.catalog-reviews-sheet-head p { overflow: hidden; margin: 0; color: var(--color-muted-strong); font-size: .8125rem; white-space: nowrap; text-overflow: ellipsis; }
+.catalog-reviews-sheet-body { padding: 16px 20px 32px; }
+/* Full screen on every width: on a computer the content keeps a readable column in the middle. */
+.catalog-reviews-sheet-head, .catalog-reviews-sheet-body { padding-inline: max(20px, calc((100vw - 1200px) / 2)); }
+@media (max-width: 639px) {
+  .catalog-reviews-sheet-head { padding-inline: 16px; }
+  .catalog-reviews-sheet-body { padding: 16px 16px calc(32px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) { .catalog-reviews-sheet[open] { animation: none; } }
+
+/* Drink page rhythm: one step between all blocks (the cards' own margins are dropped), and on a phone the cards'
+   inner padding (16 px) stays below the page gutter (20 px), so content does not look roomier inside than outside. */
+.catalog-product-information > .catalog-swipe-card { margin: 4px 0; }
+.catalog-product-information .catalog-product-tab-panel { gap: 16px; }
+.catalog-product-information .catalog-product-tab-panel > * { margin-block: 0; }
+@media (min-width: 960px) {
+  .catalog-product-information > .catalog-swipe-card { margin: 4px 0 8px; }
+  .catalog-product-information .catalog-product-tab-panel { gap: 20px; }
+}
+@media (max-width: 639px) {
+  .catalog-product-information :is(.catalog-swipe-card, .catalog-rating-card, .catalog-volume-card, .catalog-price-history, .catalog-ingredients-card) { padding: 16px; }
+  /* The volume block inside «История цены» is not a card of its own: no second inset for the chip, price and chart. */
+  .catalog-product-information .catalog-price-history .catalog-volume-card { padding: 16px 0 0; }
+}
+/* The chart's tip is a small card like the other tips (`.review-hint-card`), not a grey line. */
+.catalog-price-history .price-history-hint { margin: 16px 0 0; color: var(--color-muted-strong); font-size: .8125rem; }

@@ -3,7 +3,8 @@ import { PushRegistration } from '@/components/push-registration';
 import { headers } from 'next/headers';
 import { HeaderMenu } from '@/components/header-menu';
 import { HeaderProfile } from '@/components/header-profile';
-import type { NavigationSection } from '@/components/navigation-icon';
+import Link from '@/components/navigation-progress';
+import { NavigationIcon, type NavigationSection } from '@/components/navigation-icon';
 import { SiteTabBar } from '@/components/site-tab-bar';
 
 interface ProfileNavigationProps {
@@ -39,6 +40,10 @@ export async function ProfileNavigation({ active, signedIn }: ProfileNavigationP
       <nav className="profile-navigation" aria-label="Основная навигация">
         <HeaderMenu label="Сообщество" icon="community" current={active === 'community' || COMMUNITY.some(item => item.section === active)} items={items(COMMUNITY)} />
         <HeaderMenu label="Магазины" icon="prices" current={STORES.some(item => item.section === active)} items={items(STORES)} />
+        <Link className="profile-navigation-item header-business" href="/business" data-motion="business" aria-current={active === 'business' ? 'page' : undefined}>
+          <NavigationIcon section="business" />
+          <span className="profile-navigation-label">Для бизнеса</span>
+        </Link>
       </nav>
       <HeaderProfile active={active === 'profile' || active === 'favorites'} signedIn={member} />
       <SiteTabBar active={active} />
