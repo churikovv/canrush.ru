@@ -310,7 +310,7 @@ npm run schedule     # планировщик (CRON_SCHEDULE из .env, по у�
   (миграция `0116`), `syncCatalogFirstSeen` в `src/lib/novelties.ts` (не чаще раза в 10 минут на процесс, только
   `isCountedCatalogDrink`). Первая синхронизация — базовая линия (`baseline`, не новинки), а затем один раз в фоне
   датирует по дневной истории цен (`PRICE_HISTORY_DIR/<город>/history`) то, что появилось после первых
-  `NOVELTY_BASELINE_DAYS` (3) дней истории (`firstSeenDays`). Напитки участников — по дате модерации (`catalogDrink.reviewedAt`).
+  `NOVELTY_BASELINE_DAYS` (3) дней истории (`firstSeenDays`). Напитки участников синхронизация берёт вместе с файлами (`catalogDrinkGroups`): новинкой они становятся после модерации, а опубликованные до `0117` — базовая линия (первые дни раздела дали сотни уже продающихся напитков). Плашка «Участник» — `added`.
   Едадил отдаёт только акции, поэтому «новинкой» может стать и вкус, впервые попавший в акцию. Тесты: `test/novelty-fields.test.ts`,
   `test/novelties.integration.test.ts`.
 

@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { CatalogGroup } from '@canrush/shared';
 import { getPool } from '@/db/pool';
 import { mergeCatalogAliases, readAllCatalogGroups } from '@/lib/catalog-files';
+import { catalogDrinkGroups } from '@/lib/catalog-drinks';
 import { isCountedCatalogDrink } from '@/lib/home-metrics';
 import { firstSeenDays, NOVELTY_DAYS, noveltyKey } from '@/lib/novelty-fields';
 
@@ -19,7 +20,8 @@ export async function syncCatalogFirstSeen(groups?: CatalogGroup[]): Promise<voi
   if (!groups && Date.now() - lastSync < SYNC_EVERY_MS) return;
   if (syncing) return syncing;
   syncing = (async () => {
-    const identities = (groups ?? await readAllCatalogGroups()).filter(isCountedCatalogDrink);
+    // Members' drinks count from their first sync after moderation, like a new drink in shops.
+    const identities = (groups ?? [...await readAllCatalogGroups(), ...await catalogDrinkGroups()]).filter(isCountedCatalogDrink);
     const { rows } = await getPool().query<{ baseline: boolean }>(
       `with fresh as (select not exists(select 1 from "catalogFirstSeen") as baseline)
        insert into "catalogFirstSeen"(brand, flavor, baseline)
@@ -56,14 +58,12 @@ async function dateFromHistory(root = process.env.PRICE_HISTORY_DIR ?? path.reso
 /** `age` — days since it appeared (fractional). */
 export interface Novelty { brand: string; flavor: string; at: Date; age: number; added: boolean }
 
-/** Drinks new to the catalog in the last NOVELTY_DAYS: first seen in shops, or members' drinks that passed moderation. */
+/** Drinks new to the catalog in the last NOVELTY_DAYS, from shops or members' drinks after moderation (`added`). */
 export async function getNovelties(days = NOVELTY_DAYS, sync = true): Promise<Novelty[]> {
   if (sync) await syncCatalogFirstSeen().catch(error => console.error('[novelties] sync failed', error));
   const { rows } = await getPool().query<Novelty>(
-    `select brand, flavor, max(at) as at, (extract(epoch from now() - max(at)) / 86400)::float8 as age, bool_or(added) as added from (
-       select brand, flavor, "firstSeenAt" as at, false as added from "catalogFirstSeen" where not baseline and "firstSeenAt" > now() - make_interval(days => $1)
-       union all
-       select brand, flavor, "reviewedAt", true from "catalogDrink" where status = 'published' and "reviewedAt" > now() - make_interval(days => $1)
-     ) n group by brand, flavor order by at desc`, [days]);
+    `select s.brand, s.flavor, s."firstSeenAt" as at, (extract(epoch from now() - s."firstSeenAt") / 86400)::float8 as age,
+       exists(select 1 from "catalogDrink" d where d.status = 'published' and d.brand = s.brand and d.flavor = s.flavor) as added
+     from "catalogFirstSeen" s where not s.baseline and s."firstSeenAt" > now() - make_interval(days => $1) order by s."firstSeenAt" desc`, [days]);
   return rows;
 }
