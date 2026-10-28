@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { getBusinessCards, getBusinessSearch, getCabinet, listBusinessReviews, logBusiness } from '@/lib/business';
 import { getCompetitors } from '@/lib/business-competitors';
 import { csvCell } from '@/lib/business-fields';
+import { hasFeature } from '@/lib/business-plans';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
   if (!session) return new Response('Войдите в аккаунт', { status: 401 });
   const business = (await getCabinet(session.user.id))?.business;
   if (!business || business.status !== 'approved') return new Response('Кабинет компании не подтверждён', { status: 403 });
+  if (!hasFeature(business, 'export')) return new Response('Экспорт CSV — в тарифах «Бренд» и «Сеть»', { status: 403 });
   const kind = request.nextUrl.searchParams.get('kind') ?? 'reviews';
   const rows = await table(kind, business.id);
   if (!rows) return new Response('Неизвестная выгрузка', { status: 400 });

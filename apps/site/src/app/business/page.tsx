@@ -14,6 +14,9 @@ import { Kpi } from '@/components/business-kpi';
 import { ScoreRadar } from '@/components/score-radar';
 import { BusinessStats, type BusinessStory } from '@/components/business-stats';
 import { catalogRetailerName } from '@/lib/catalog-query';
+import { FOUNDER_MONTHLY, PILOT_COMPANIES, PLANS, rubles } from '@/lib/business-plans';
+import { BusinessPricing } from '@/components/business-pricing';
+import { BusinessCompare } from '@/components/business-compare';
 import { getPool } from '@/db/pool';
 import { auth } from '@/lib/auth';
 import { loadAllCatalogGroups } from '@/lib/catalog';
@@ -282,6 +285,7 @@ function HeroCabinet() {
 export default async function BusinessPage() {
   const [session, numbers] = await Promise.all([auth.api.getSession({ headers: await headers() }), stats()]);
   const start = session ? { href: '/business/cabinet', label: 'Открыть кабинет' } : { href: '/sign-in?for=business', label: 'Начать бесплатно' };
+  const buy = session ? '/business/cabinet?section=plan' : '/sign-in?for=business';
   const cta = (secondary?: boolean) => <Link className={`biz-button${secondary ? ' is-light' : ''}`} href={start.href}>{start.label}</Link>;
   return <BrandShell headerAction={<ProfileNavigation active="business" />}>
     <div className="biz">
@@ -414,7 +418,19 @@ export default async function BusinessPage() {
 
       <section className="biz-soon" aria-labelledby="soon-title">
         <p className="biz-kicker"><b>5.0</b>Скоро</p>
-        <div><h2 id="soon-title">Продвижение</h2><p>Место в каталоге, рекомендациях и историях для тех, кому нравятся похожие вкусы. Всегда с пометкой «Реклама».</p></div>
+        <div><h2 id="soon-title">Продвижение</h2><p>Место в каталоге, рекомендациях и историях для тех, кому нравятся похожие вкусы — уже по заявке из кабинета, самостоятельный запуск скоро. Всегда с пометкой «Реклама» и регистрацией в ОРД.</p></div>
+      </section>
+
+      <section className="biz-pricing" id="pricing" aria-labelledby="pricing-title">
+        <p className="biz-kicker"><b>6.0</b>Тарифы</p>
+        <div className="biz-pricing-head"><h2 id="pricing-title">Тарифы</h2>
+          <p>Отзывы, ответы покупателям и карточки напитков — бесплатно навсегда. Аналитика, история и большая команда — в тарифах «Бренд» и «Сеть».</p></div>
+        <BusinessPricing badges={{ brand: `3 месяца бесплатно первым ${PILOT_COMPANIES}` }} actions={{
+          start: { label: 'Начать бесплатно', href: start.href },
+          brand: { label: 'Купить', href: buy }, network: { label: 'Купить', href: buy },
+        }} />
+        <BusinessCompare />
+        <p className="biz-pricing-note">Цены в рублях за кабинет компании. Первые {PILOT_COMPANIES} компаний получают «Бренд» на 3 месяца бесплатно, потом — {rubles(FOUNDER_MONTHLY)} в месяц навсегда. Продвижение — отдельно, по заявке из кабинета, с пометкой «Реклама».</p>
       </section>
 
       <section className="biz-start" aria-labelledby="start-title">
@@ -433,7 +449,7 @@ export default async function BusinessPage() {
           <details><summary>Как вы проверяете компанию?</summary><p>Вручную: связываемся через официальные контакты бренда или магазина. Напитки компании тоже проверяются по одному — так аналитика видна только настоящему владельцу бренда.</p></details>
           <details><summary>Откуда данные в аналитике?</summary><p>Из отзывов, избранного, календаря выпитого и дейтинга участников CanRush, а поиск и просмотры — из обезличенной истории: без имён, аккаунтов и адресов. Отзывы заблокированных участников в расчёт не входят.</p></details>
           <details><summary>Можно убрать плохой отзыв?</summary><p>Нет. Отзывы принадлежат участникам. Нарушения правил разбирают модераторы — так же, как для всех.</p></details>
-          <details><summary>Сколько это стоит?</summary><p>Условия обсуждаем лично — напишите на hello@canrush.ru.</p></details>
+          <details><summary>Сколько это стоит?</summary><p>«Старт» — бесплатно навсегда. «Бренд» — {rubles(PLANS.brand.monthly)} в месяц, «Сеть» — {rubles(PLANS.network.monthly)}; за год — два месяца в подарок. Первым 20 компаниям — три месяца «Бренда» бесплатно и потом {rubles(FOUNDER_MONTHLY)} в месяц навсегда. Оплата по счёту.</p></details>
           <details><summary>Какие правила для компаний?</summary><p>Они собраны в <Link href="/business/terms">Условиях для бизнеса</Link>: проверка компании, работа с отзывами и данными участников, карточки напитков, объявления и команда.</p></details>
         </div>
       </section>

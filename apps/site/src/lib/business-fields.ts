@@ -57,6 +57,23 @@ export function weeklySeries(rows: { week: string; count: number }[], today: str
   });
 }
 
+/** 12 monthly buckets ending with the month of `today` (keys `YYYY-MM-01`), oldest first; empty months are zero. */
+export function monthlySeries(rows: { week: string; count: number }[], today: string, months = 12): { week: string; count: number }[] {
+  const counts = new Map(rows.map(row => [row.week, row.count]));
+  const [year, month] = today.split('-').map(Number) as [number, number];
+  return Array.from({ length: months }, (_, index) => {
+    const date = new Date(Date.UTC(year, month - 1 - (months - 1 - index), 1));
+    const key = date.toISOString().slice(0, 10);
+    return { week: key, count: counts.get(key) ?? 0 };
+  });
+}
+
+/** The analytics window the page asked for, within the plan: 30, 90 or 365 days. */
+export function historyWindow(asked: unknown, max: number): number {
+  const days = Number(asked);
+  return [30, 90, 365].includes(days) && days <= max ? days : 30;
+}
+
 /** Change against the previous period in percent, rounded; null when there was nothing before. */
 export function percentChange(current: number, previous: number): number | null {
   return previous > 0 ? Math.round((current - previous) / previous * 100) : null;
@@ -138,4 +155,5 @@ export const BUSINESS_AUDIT_LABELS: Record<string, string> = {
   'logo': 'Обновил логотип', 'logo-remove': 'Удалил логотип',
   'competitor': 'Добавил конкурента', 'competitor-remove': 'Убрал конкурента',
   'export': 'Выгрузил CSV',
+  'plan-request': 'Запросил счёт на тариф', 'promo-request': 'Оставил заявку на продвижение',
 };

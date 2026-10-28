@@ -12,6 +12,8 @@ import { BusinessError, parseBusinessInput } from '@/lib/business-fields';
 import { isFrozenError } from '@/lib/moderation';
 import { ensureOwnProfile } from '@/lib/profile';
 import { LEGAL_DETAILS } from '@/lib/legal';
+import { requestPromo, setPromoStatus } from '@/lib/business-billing';
+import { parsePromoRequest, PlanRequestError } from '@/lib/business-plans';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { parseDrinkEdit } from '@/lib/brand-drink-edit-fields';
 import { moderateDrinkEdit, requestDrinkEdit } from '@/lib/brand-drink-edits';
@@ -232,5 +234,24 @@ export async function moderateDrinkEditAction(id: string, _state: BusinessAction
     await moderateDrinkEdit(admin.userId, id, form.get('status') === 'approved' ? 'approved' : 'rejected', String(form.get('note') ?? ''));
   } catch (error) { return { error: message(error, 'Не удалось сохранить решение.') }; }
   revalidatePath('/admin/business'); revalidatePath('/catalog', 'layout'); revalidatePath('/business/cabinet');
+  return { done: true };
+}
+
+/** A promotion request from the cabinet. */
+export async function requestPromoAction(_state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
+  try { await requestPromo((await member()).id, parsePromoRequest(form)); }
+  catch (error) { return { error: error instanceof PlanRequestError ? error.message : message(error, 'Не удалось отправить заявку.') }; }
+  revalidatePath('/business/cabinet'); revalidatePath('/admin/business');
+  return { done: true };
+}
+
+export async function setPromoStatusAction(id: string, _state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
+  try {
+    const admin = await requireSiteAdmin();
+    const status = String(form.get('status'));
+    if (!['contacted', 'running', 'done', 'declined'].includes(status)) return { error: 'Неизвестное действие.' };
+    await setPromoStatus(admin.userId, id, status as 'contacted' | 'running' | 'done' | 'declined', String(form.get('erid') ?? ''));
+  } catch (error) { return { error: message(error, 'Не удалось сохранить.') }; }
+  revalidatePath('/admin/business'); revalidatePath('/business/cabinet');
   return { done: true };
 }

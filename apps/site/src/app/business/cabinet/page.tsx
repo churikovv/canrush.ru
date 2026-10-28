@@ -8,7 +8,7 @@ import { cookies, headers } from 'next/headers';
 import { parseSiteTheme, SITE_THEME_COOKIE } from '@/lib/site-theme';
 import { redirect } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
-import { BusinessDrinkAttach, BusinessDrinkRemove, BusinessDrinkRequest, BusinessForm, BusinessInviteAnswer, BusinessInviteForm, BusinessLeave, BusinessLogoForm, BusinessMemberRemove, BusinessMemberRole, BusinessNotificationsForm, BusinessReplyButton, BusinessThemeForm, CompetitorPicker, DrinkEditForm, WeeklyReportSwitch } from '@/components/business-forms';
+import { BusinessDrinkAttach, BusinessDrinkRemove, BusinessDrinkRequest, BusinessForm, BusinessInviteAnswer, BusinessInviteForm, BusinessLeave, BusinessLogoForm, BusinessMemberRemove, BusinessMemberRole, BusinessNotificationsForm, BusinessReplyButton, BusinessThemeForm, CompetitorPicker, DrinkEditForm, PromoAddons, WeeklyReportSwitch } from '@/components/business-forms';
 import { CatalogDrinkForm } from '@/components/catalog-drink-form';
 import { MarketListingForm } from '@/components/market-listing-form';
 import { MarketChat } from '@/components/market-chat';
@@ -33,11 +33,15 @@ import { auth } from '@/lib/auth';
 import { getGigaChat } from '@/lib/gigachat';
 import { DIGEST_MIN_REVIEWS, DIGEST_SENTIMENT_LABELS } from '@/lib/review-digest-fields';
 import { BUSINESS_REVIEW_SORTS, MAX_BUSINESS_MEMBERS, getBusinessAnalytics, getBusinessCards, getBusinessSearch, digestDue, getCabinet, listBusinessInvites, listBusinessMembers, listBusinessAudit, listDrinkDigests, refreshBusinessDigests, type BusinessRole, listBrandDrinks, listBusinessDrinks, listBusinessReviews, listReplyTemplates, type ReplyTemplate, type Business, type BusinessReview, type BusinessReviewSort, type BusinessReviewView, countReviewQueue, getOnboarding } from '@/lib/business';
-import { BUSINESS_AUDIT_LABELS, BUSINESS_KINDS, BUSINESS_ROLES, BUSINESS_STATUS_LABELS, percentChange, sortRows, type BusinessStatus } from '@/lib/business-fields';
+import { historyWindow, BUSINESS_AUDIT_LABELS, BUSINESS_KINDS, BUSINESS_ROLES, BUSINESS_STATUS_LABELS, percentChange, sortRows, type BusinessStatus } from '@/lib/business-fields';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 import { isTelegramPlaceholderEmail } from '@/lib/telegram-init-data';
 import { getBrandProfile, listDrinkEdits, type DrinkEdit, type DrinkEditStatus } from '@/lib/brand-drink-edits';
-import { getCompetitors, MAX_COMPETITORS, type BrandMetrics } from '@/lib/business-competitors';
+import { FEATURE_LABELS, PLANS, effectivePlan, hasFeature, planFor, planInfo, rubles, type PlanFeature } from '@/lib/business-plans';
+import { listPromoRequests, planUsage } from '@/lib/business-billing';
+import { BusinessPricing, type PlanAction } from '@/components/business-pricing';
+import { BusinessCompare } from '@/components/business-compare';
+import { getCompetitors, type BrandMetrics } from '@/lib/business-competitors';
 import { getCabinetListings, getMessages, getOrder, getOrders } from '@/lib/market';
 import { ORDER_STATUS, formatPrice, type OrderStatus } from '@/lib/market-fields';
 import { storeDrinkOptions } from '@/lib/store-catalog';
@@ -45,12 +49,12 @@ import { storeDrinkOptions } from '@/lib/store-catalog';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Кабинет бизнеса', robots: { index: false, follow: false } };
 
-type Params = { section?: string; page?: string; size?: string; drink?: string; q?: string; sort?: string; status?: string; view?: string; created?: string; by?: string; dir?: string; order?: string; tab?: string };
+type Params = { section?: string; page?: string; size?: string; drink?: string; q?: string; sort?: string; status?: string; view?: string; created?: string; by?: string; dir?: string; order?: string; tab?: string; days?: string };
 const number = new Intl.NumberFormat('ru-RU');
 const longDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' });
 const longDayTime = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
 const shortDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow' });
-const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', insights: 'Разбор нейросетью', search: 'Поиск', cards: 'Карточки', competitors: 'Конкуренты', brand: 'Бренд', drinks: 'Напитки', 'drink-edit': 'Правка карточки', 'new-drink': 'Новый напиток', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки' };
+const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', insights: 'Разбор нейросетью', search: 'Поиск', cards: 'Карточки', competitors: 'Конкуренты', brand: 'Бренд', drinks: 'Напитки', 'drink-edit': 'Правка карточки', 'new-drink': 'Новый напиток', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки', plan: 'Тариф и продвижение' };
 const ORDER_TONE: Record<OrderStatus, string> = { new: 'mid', confirmed: 'good', completed: 'good', cancelled: 'bad' };
 const DRINK_REQUEST: Record<CatalogDrinkStatus, { label: string; tone: string }> = { pending: { label: 'На модерации', tone: 'mid' }, published: { label: 'В каталоге', tone: 'good' }, rejected: { label: 'Нужно исправить', tone: 'bad' } };
 const SECTIONS = Object.keys(TITLES) as BusinessSection[];
@@ -218,34 +222,37 @@ const SCOPE_LABELS: Record<string, string> = { catalog: 'Каталог', stores
  * «Поиск»: anonymous searches on CanRush where the company's brands were in the results or in the query itself — how
  * many, by week, the most frequent queries, and queries that named a brand and found nothing.
  */
-async function Search({ business }: { business: Business }) {
-  const data = await getBusinessSearch(business.id);
+async function Search({ business, params }: { business: Business; params: Params }) {
+  const days = historyWindow(params.days, planInfo(business).historyDays);
+  const data = await getBusinessSearch(business.id, undefined, 20, days);
+  const period = periodName(days);
   if (!data.brands.length) return <Empty title="Поиск появится с первым напитком" text="Считаем поиски, где в выдаче или в самом запросе был бренд ваших подтверждённых напитков." action={<Link className="bc-button" href={businessHref('drinks')}>Прикрепить напитки</Link>} />;
   const maxWeek = Math.max(1, ...data.weekly.map(item => item.count));
   const change = percentChange(data.total30, data.previous30);
   return <>
+    <HistoryPicker section="search" days={days} business={business} />
     <div className="bc-kpis">
-      <Kpi icon="search" value={number.format(data.total30)} delta={change} deltaLabel="%" label="Поисков с вашим брендом за 30 дней" />
+      <Kpi icon="search" value={number.format(data.total30)} delta={change} deltaLabel="%" label={`Поисков с вашим брендом за ${period}`} />
       <Kpi icon="catalog" value={number.format(data.shown30)} label="Бренд был в выдаче" />
       <Kpi icon="name" value={number.format(data.named30)} label="Бренд назвали в запросе" />
       <Kpi icon="miss" value={number.format(data.missed30)} label="Назвали, но ничего не нашли" />
     </div>
     <div className="bc-grid">
       <section className="bc-card" aria-labelledby="bc-search-weekly">
-        <div className="bc-card-head"><h2 id="bc-search-weekly">Поиски по неделям</h2><span className="bc-muted">12 недель</span></div>
-        <ol className="bc-chart">{data.weekly.map(item => <li key={item.week} title={`Неделя с ${shortDay.format(new Date(item.week))}: ${item.count}`}>
+        <div className="bc-card-head"><h2 id="bc-search-weekly">Поиски по {days === 365 ? 'месяцам' : 'неделям'}</h2><span className="bc-muted">{days === 365 ? '12 месяцев' : '12 недель'}</span></div>
+        <ol className="bc-chart">{data.weekly.map(item => <li key={item.week} title={`${days === 365 ? 'Месяц' : 'Неделя'} с ${shortDay.format(new Date(item.week))}: ${item.count}`}>
           <span style={bar(item.count / maxWeek)}>{item.count > 0 && <b>{item.count}</b>}</span><small>{shortDay.format(new Date(item.week))}</small>
         </li>)}</ol>
       </section>
       <section className="bc-card" aria-labelledby="bc-search-missed">
-        <div className="bc-card-head"><h2 id="bc-search-missed">Искали и не нашли</h2><span className="bc-muted">30 дней</span></div>
+        <div className="bc-card-head"><h2 id="bc-search-missed">Искали и не нашли</h2><span className="bc-muted">{period}</span></div>
         {data.missed.length ? <ul className="bc-search-missed">{data.missed.map(item => <li key={item.query}><span>«{item.query}»</span><b>{item.count}</b></li>)}</ul>
           : <p className="bc-muted">Таких запросов нет — всё, что искали с вашим брендом, находилось.</p>}
         <p className="bc-muted bc-search-note">Запрос с названием бренда без результатов — спрос, который не встретил ни карточки, ни магазина, ни объявления.</p>
       </section>
     </div>
     <section aria-labelledby="bc-search-top" className="bc-stack">
-      <div className="bc-section-head"><h2 id="bc-search-top">Частые запросы</h2><span className="bc-muted">30 дней · обезличено</span></div>
+      <div className="bc-section-head"><h2 id="bc-search-top">Частые запросы</h2><span className="bc-muted">{period} · обезличено</span></div>
       {data.top.length ? <div className="bc-table-card"><table className="bc-table">
         <thead><tr><th>Запрос</th><th>Поисков</th><th>Результатов</th><th>Где искали</th><th>Последний</th></tr></thead>
         <tbody>{data.top.map(item => <tr key={item.query}>
@@ -263,7 +270,9 @@ async function Search({ business }: { business: Business }) {
 const percent = (part: number, whole: number) => whole ? `${(part / whole * 100).toLocaleString('ru-RU', { maximumFractionDigits: 1 })}%` : '—';
 
 async function Cards({ business, params }: { business: Business; params: Params }) {
-  const data = await getBusinessCards(business.id);
+  const days = historyWindow(params.days, planInfo(business).historyDays);
+  const data = await getBusinessCards(business.id, undefined, days);
+  const period = periodName(days);
   if (!data.drinks) return <Empty title="Карточки появятся с первым напитком" text="Считаем просмотры страниц ваших подтверждённых напитков и переходы из них в магазины." action={<Link className="bc-button" href={businessHref('drinks')}>Прикрепить напитки</Link>} />;
   const maxWeek = Math.max(1, ...data.weekly.map(item => item.count));
   const sort = tableSort(params, 'cards');
@@ -272,28 +281,29 @@ async function Cards({ business, params }: { business: Business; params: Params 
   });
   const maxRetailer = Math.max(1, ...data.retailers.map(item => item.count));
   return <>
+    <HistoryPicker section="cards" days={days} business={business} />
     <div className="bc-kpis">
-      <Kpi icon="eye" value={number.format(data.views30)} delta={percentChange(data.views30, data.previousViews30)} deltaLabel="%" label="Просмотров карточек за 30 дней" />
+      <Kpi icon="eye" value={number.format(data.views30)} delta={percentChange(data.views30, data.previousViews30)} deltaLabel="%" label={`Просмотров карточек за ${period}`} />
       <Kpi icon="tap" value={number.format(data.clicks30)} delta={percentChange(data.clicks30, data.previousClicks30)} deltaLabel="%" label="Переходов в магазины" />
       <Kpi icon="ratio" value={percent(data.clicks30, data.views30)} label="Конверсия просмотра в переход" />
       <Kpi icon="catalog" value={number.format(data.drinks)} label="Подтверждённых напитков" />
     </div>
     <div className="bc-grid">
       <section className="bc-card" aria-labelledby="bc-cards-weekly">
-        <div className="bc-card-head"><h2 id="bc-cards-weekly">Просмотры по неделям</h2><span className="bc-muted">12 недель</span></div>
-        <ol className="bc-chart">{data.weekly.map(item => <li key={item.week} title={`Неделя с ${shortDay.format(new Date(item.week))}: ${item.count} просмотров, ${item.clicks} переходов`}>
+        <div className="bc-card-head"><h2 id="bc-cards-weekly">Просмотры по {days === 365 ? 'месяцам' : 'неделям'}</h2><span className="bc-muted">{days === 365 ? '12 месяцев' : '12 недель'}</span></div>
+        <ol className="bc-chart">{data.weekly.map(item => <li key={item.week} title={`${days === 365 ? 'Месяц' : 'Неделя'} с ${shortDay.format(new Date(item.week))}: ${item.count} просмотров, ${item.clicks} переходов`}>
           <span style={bar(item.count / maxWeek)}>{item.count > 0 && <b>{item.count}</b>}</span><small>{shortDay.format(new Date(item.week))}</small>
         </li>)}</ol>
       </section>
       <section className="bc-card" aria-labelledby="bc-cards-stores">
-        <div className="bc-card-head"><h2 id="bc-cards-stores">Куда переходят</h2><span className="bc-muted">30 дней</span></div>
+        <div className="bc-card-head"><h2 id="bc-cards-stores">Куда переходят</h2><span className="bc-muted">{period}</span></div>
         {data.retailers.length ? <ul className="bc-cards-stores">{data.retailers.map(item => <li key={item.retailer} style={bar(item.count / maxRetailer)}><span>{item.retailer}</span><b>{number.format(item.count)}</b></li>)}</ul>
           : <p className="bc-muted">Переходов в магазины пока не было. Они появятся, когда участники начнут нажимать на цены в карточках.</p>}
         <p className="bc-muted bc-search-note">Переход — нажатие на цену магазина в карточке напитка. Акции Едадила без ссылки не считаются.</p>
       </section>
     </div>
     <section aria-labelledby="bc-cards-drinks" className="bc-stack">
-      <div className="bc-section-head"><h2 id="bc-cards-drinks">По напиткам</h2><span className="bc-muted">30 дней · обезличено</span></div>
+      <div className="bc-section-head"><h2 id="bc-cards-drinks">По напиткам</h2><span className="bc-muted">{period} · обезличено</span></div>
       <div className="bc-table-card"><table className="bc-table">
         <thead><tr><th>{sort.th('Напиток', 'name')}</th><th>{sort.th('Просмотры', 'views')}</th><th>{sort.th('Переходы', 'clicks')}</th><th>{sort.th('Конверсия', 'ctr')}</th><th>Чаще в магазин</th></tr></thead>
         <tbody>{items.map(item => <tr key={`${item.brand}:${item.flavor}`}>
@@ -312,16 +322,27 @@ async function Cards({ business, params }: { business: Business; params: Params 
   </>;
 }
 
+const periodName = (days: number) => days === 365 ? 'год' : `${days} дней`;
+
+/** 30 days / 90 days / year: windows beyond the plan lead to «Тариф» with a lock. */
+function HistoryPicker({ section, days, business }: { section: BusinessSection; days: number; business: Business }) {
+  const max = planInfo(business).historyDays;
+  return <div className="bc-toolbar is-inner"><nav className="bc-segments" aria-label="Период">{[30, 90, 365].map(value => value <= max
+    ? <Link key={value} href={businessHref(section, value === 30 ? {} : { days: String(value) })} aria-current={value === days ? 'page' : undefined}>{value === 365 ? 'Год' : `${value} дней`}</Link>
+    : <Link key={value} href={businessHref('plan')} className="bc-segment-locked" title={`Доступно в тарифе «${value === 365 ? 'Сеть' : 'Бренд'}»`}>{value === 365 ? 'Год' : `${value} дней`}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg></Link>)}
+  </nav></div>;
+}
+
 /** The comparison's columns; `best` marks the leader of a column (price is not a contest — cheaper is not better). */
 // An average from a handful of answers is not a lead: scores need 3 reviews, the like share 10 swipes.
 const COMPARE: { key: string; label: string; value: (item: BrandMetrics) => number | null; show: (item: BrandMetrics) => ReactNode; best: boolean; enough?: (item: BrandMetrics) => boolean }[] = [
   { key: 'drinks', label: 'Напитков в каталоге', value: item => item.drinks, show: item => number.format(item.drinks), best: true },
-  { key: 'reviews', label: 'Отзывов', value: item => item.reviews, show: item => <>{number.format(item.reviews)}{item.reviews30 > 0 && <small> +{number.format(item.reviews30)} за 30 дн.</small>}</>, best: true },
+  { key: 'reviews', label: 'Отзывов', value: item => item.reviews, show: item => <>{number.format(item.reviews)}{item.reviews30 > 0 && <small> +{number.format(item.reviews30)} за период</small>}</>, best: true },
   { key: 'score', label: 'Оценка', value: item => item.score, show: item => item.score === null ? '—' : <span title={`Вкус ${decimal(item.taste)}, дизайн ${decimal(item.design)}`}>{decimal(item.score)}<small> вкус {decimal(item.taste)} · дизайн {decimal(item.design)}</small></span>, best: true, enough: item => item.reviews >= 3 },
   { key: 'likes', label: 'Лайки в дейтинге', value: item => item.likeShare, show: item => item.likeShare === null ? '—' : <>{Math.round(item.likeShare * 100)}%<small> из {number.format(item.swipes)} свайпов</small></>, best: true, enough: item => item.swipes >= 10 },
-  { key: 'searches', label: 'Поиски, 30 дн.', value: item => item.searches30, show: item => number.format(item.searches30), best: true },
-  { key: 'views', label: 'Просмотры карточек, 30 дн.', value: item => item.views30, show: item => number.format(item.views30), best: true },
-  { key: 'clicks', label: 'Переходы в магазины, 30 дн.', value: item => item.clicks30, show: item => number.format(item.clicks30), best: true },
+  { key: 'searches', label: 'Поиски', value: item => item.searches30, show: item => number.format(item.searches30), best: true },
+  { key: 'views', label: 'Просмотры карточек', value: item => item.views30, show: item => number.format(item.views30), best: true },
+  { key: 'clicks', label: 'Переходы в магазины', value: item => item.clicks30, show: item => number.format(item.clicks30), best: true },
   { key: 'price', label: 'Цена 0,5 л (медиана)', value: item => item.price500, show: item => item.price500 === null ? '—' : `${number.format(item.price500)} ₽`, best: false },
 ];
 
@@ -330,8 +351,10 @@ const COMPARE: { key: string; label: string; value: (item: BrandMetrics) => numb
  * dating swipes, searches, card views and store taps, price. The leader of each column is marked; the attention bar
  * shows each side's share of card views among the compared brands.
  */
-async function Competitors({ business }: { business: Business }) {
-  const data = await getCompetitors(business.id);
+async function Competitors({ business, params }: { business: Business; params: Params }) {
+  const days = historyWindow(params.days, planInfo(business).historyDays);
+  const data = await getCompetitors(business.id, days);
+  const period = periodName(days);
   if (!data.own) return <Empty title="Сравнение появится с первым напитком" text="Сравниваем бренды ваших подтверждённых напитков с конкурентами из каталога." action={<Link className="bc-button" href={businessHref('drinks')}>Прикрепить напитки</Link>} />;
   const sides = [data.own, ...data.rivals];
   const leaders = Object.fromEntries(COMPARE.filter(column => column.best).map(column => {
@@ -341,21 +364,22 @@ async function Competitors({ business }: { business: Business }) {
   }));
   const attention = sides.reduce((sum, item) => sum + item.views30, 0);
   return <>
+    <HistoryPicker section="competitors" days={days} business={business} />
     <section className="bc-card" aria-labelledby="bc-competitors-pick">
-      <div className="bc-card-head"><h2 id="bc-competitors-pick">С кем сравниваем</h2><span className="bc-muted">до {MAX_COMPETITORS} брендов · видит вся команда</span></div>
-      <CompetitorPicker picked={data.picked} options={data.options} suggested={data.suggested} max={MAX_COMPETITORS} />
+      <div className="bc-card-head"><h2 id="bc-competitors-pick">С кем сравниваем</h2><span className="bc-muted">до {planInfo(business).competitors} брендов · видит вся команда</span></div>
+      <CompetitorPicker picked={data.picked} options={data.options} suggested={data.suggested} max={planInfo(business).competitors} />
     </section>
     {data.rivals.length > 0 && <section className="bc-card" aria-labelledby="bc-competitors-attention">
-      <div className="bc-card-head"><h2 id="bc-competitors-attention">Доля внимания</h2><span className="bc-muted">просмотры карточек · 30 дней</span></div>
+      <div className="bc-card-head"><h2 id="bc-competitors-attention">Доля внимания</h2><span className="bc-muted">просмотры карточек · {period}</span></div>
       {attention ? <>
         <div className="bc-attention-bar" role="img" aria-label={sides.map(item => `${item.label}: ${Math.round(item.views30 / attention * 100)}%`).join(', ')}>
           {sides.map((item, index) => item.views30 > 0 && <span key={item.label} data-side={index} style={{ flexGrow: item.views30 }} />)}
         </div>
         <ul className="bc-attention-legend">{sides.map((item, index) => <li key={item.label} data-side={index}><i aria-hidden="true" />{item.own ? <b>{item.label}</b> : item.label}<span>{Math.round(item.views30 / attention * 100)}%</span></li>)}</ul>
-      </> : <p className="bc-muted">За 30 дней карточки сравниваемых брендов ещё не открывали.</p>}
+      </> : <p className="bc-muted">За {period} карточки сравниваемых брендов ещё не открывали.</p>}
     </section>}
     <section aria-labelledby="bc-competitors-table" className="bc-stack">
-      <div className="bc-section-head"><h2 id="bc-competitors-table">Сравнение</h2><span className="bc-muted">все напитки брендов · синим — лидер</span></div>
+      <div className="bc-section-head"><h2 id="bc-competitors-table">Сравнение</h2><span className="bc-muted">все напитки брендов · {period} · синим — лидер</span></div>
       {/* Wide screens: metrics as rows, the brands (at most four) as columns — the comparison reads across a line. */}
       <div className="bc-table-card bc-compare-matrix"><table>
         <thead><tr><th>Показатель</th>{sides.map(item => <th key={item.label} data-own={item.own || undefined}>{item.label}{item.own && <span className="bc-pill bc-search-named">вы</span>}</th>)}</tr></thead>
@@ -677,6 +701,7 @@ async function Settings({ business, role, userId, params }: { business: Business
   const tab = shown.find(item => item.key === params.tab)?.key ?? 'company';
   const tabs = <div className="bc-toolbar is-inner"><BusinessSegments label="Настройки" items={shown.map(item => ({ href: businessHref('settings', item.key === 'company' ? {} : { tab: item.key }), label: item.label, current: item.key === tab }))} /></div>;
   if (tab === 'log') {
+    if (!hasFeature(business, 'log')) return <>{tabs}<Upsell feature="log" /></>;
     const entries = await listBusinessAudit(business.id);
     return <>{tabs}
       <section aria-labelledby="bc-log" className="bc-stack">
@@ -784,6 +809,90 @@ function CompanySummary({ business }: { business: Business }) {
   </section>;
 }
 
+/** «Купить» until the payment page exists: a letter to us with the company and the plan in the subject. */
+const buyHref = (plan: 'brand' | 'network', company: string) =>
+  `mailto:hello@canrush.ru?${new URLSearchParams({ subject: `Тариф «${PLANS[plan].title}» — ${company}`, body: `Хотим подключить или продлить тариф «${PLANS[plan].title}» для компании «${company}».` }).toString().replace(/\+/g, '%20')}`;
+
+const PROMO_LABELS: Record<string, string> = { picks: '«Тебе понравится»', dating: 'Дейтинг напитков', catalog: 'Каталог', stories: 'Истории' };
+const PROMO_STATUS: Record<string, { label: string; tone: string }> = {
+  new: { label: 'Новая', tone: 'mid' }, contacted: { label: 'Связались', tone: 'mid' }, running: { label: 'Идёт', tone: 'good' }, done: { label: 'Завершено', tone: 'good' }, declined: { label: 'Отказ', tone: 'bad' },
+};
+
+/** A section the plan does not include: what it gives, from which plan, and the way to it. */
+function Upsell({ feature }: { feature: PlanFeature }) {
+  const plan = planFor(feature);
+  return <div className="bc-upsell">
+    <span className="bc-upsell-lock" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></svg></span>
+    <div><span className="bc-pill" data-tone="good">Доступно в тарифе «{plan.title}»</span><h2>{FEATURE_LABELS[feature]}</h2>
+      <p className="bc-muted">В тарифе «{plan.title}» — от {rubles(plan.monthly)} в месяц: {plan.features.map(item => FEATURE_LABELS[item].toLowerCase().replace('csv', 'CSV')).join(', ')}, команда до {plan.members} человек.</p></div>
+    <Link className="bc-button" href={businessHref('plan')}>Выбрать тариф</Link>
+  </div>;
+}
+
+/**
+ * «Тариф и продвижение» in the manner of linear.app: the plan in force as a strip of hairline cells (the plan and its
+ * term, then usage against the limits), the plans as on the landing (`BusinessPricing`: the owner's «Купить» writes to
+ * us until the payment page exists), the full comparison folded away, and «Дополнительные услуги» — promotion
+ * placements as columns with a request under them, and the requests sent.
+ */
+async function PlanSection({ business, role, canAct }: { business: Business; role: BusinessRole; canAct: boolean }) {
+  const current = effectivePlan(business);
+  const info = PLANS[current];
+  const [usage, promos] = await Promise.all([planUsage(business.id), listPromoRequests(business.id)]);
+  const approved = business.status === 'approved';
+  const canBuy = role === 'owner' && approved;
+  const limit = (value: number) => value === Infinity ? '∞' : String(value);
+  const meter = (label: string, used: number, max: number) => <div key={label} className="bc-billing-cell">
+    <dt>{label}</dt><dd><b>{used}</b><small> / {limit(max)}</small></dd>
+    <i aria-hidden="true"><span style={{ width: `${max === Infinity ? 8 : Math.min(100, max ? used / max * 100 : 100)}%` }} data-over={used > max || undefined} /></i>
+  </div>;
+  const paid = (key: 'brand' | 'network'): PlanAction => key === current
+    ? (canBuy ? { label: 'Продлить', href: buyHref(key, business.name) } : { label: 'Ваш тариф', current: true })
+    : canBuy ? { label: 'Купить', href: buyHref(key, business.name) } : { note: approved ? 'Купить может владелец кабинета' : 'После проверки компании' };
+  const term = current === 'start' ? 'Бесплатно навсегда' : business.planUntil ? `до ${longDay.format(business.planUntil)}` : 'Активен';
+  return <>
+    <section className="bc-billing" aria-label="Текущий тариф">
+      <div className="bc-billing-now">
+        <small>Текущий тариф</small>
+        <h2>{info.title}</h2>
+        <p>{term}</p>
+      </div>
+      <dl className="bc-billing-usage">
+        {meter('Команда', usage.members, info.members)}
+        {meter('Конкуренты', usage.competitors, info.competitors)}
+        {meter('Бренды', usage.brands, info.brands)}
+        <div className="bc-billing-cell"><dt>История</dt><dd><b>{info.historyDays === 365 ? 'год' : info.historyDays}</b>{info.historyDays !== 365 && <small> дней</small>}</dd></div>
+      </dl>
+      {business.founder && current === 'brand' && <p className="bc-billing-note">Вы среди первых компаний CanRush: «Бренд» бесплатно {term}</p>}
+      {business.plan !== 'start' && current === 'start' && <p className="bc-billing-note">Срок тарифа «{PLANS[business.plan].title}» закончился — кабинет работает как «Старт», данные сохранены.</p>}
+    </section>
+
+    <section className="bc-pricing" aria-labelledby="plans-title">
+      <header className="bc-pricing-head"><h2 id="plans-title">Тарифы</h2>
+        <p>Оплата за год — два месяца в подарок. Тариф включается или продлевается после оплаты, автосписаний нет.</p></header>
+      <BusinessPricing current={current} founder={business.founder} badges={{ [current]: 'Ваш тариф' }} actions={{
+        start: current === 'start' ? { label: 'Ваш тариф', current: true } : { note: 'Включится сам, когда закончится срок платного тарифа' },
+        brand: paid('brand'), network: paid('network'),
+      }} />
+      <details className="bc-pricing-compare"><summary>Сравнить все возможности</summary><BusinessCompare title="Сравнение тарифов" /></details>
+    </section>
+
+    <section className="bc-pricing" aria-labelledby="addons-title">
+      <header className="bc-pricing-head"><h2 id="addons-title">Дополнительные услуги</h2>
+        <p>Покажем ваш напиток тем, кому нравятся похожие вкусы. Размещение согласуем с вами и зарегистрируем в ОРД — с пометкой «Реклама», как требует закон.</p></header>
+      <PromoAddons canOrder={canAct && approved} />
+      {!(canAct && approved) && <p className="bc-muted">Заказать могут владелец и менеджеры подтверждённой компании.</p>}
+      {promos.length > 0 && <div className="bc-addon-requests"><h3>Ваши заявки</h3>
+        <ul>{promos.map(item => <li key={item.id}>
+          <b>{PROMO_LABELS[item.placement] ?? item.placement}</b>
+          <span>{rubles(item.budget)}</span>
+          <small>{longDay.format(item.createdAt)}{item.erid ? ` · erid ${item.erid}` : ''}</small>
+          <span className="bc-pill" data-tone={PROMO_STATUS[item.status]?.tone ?? 'mid'}>{PROMO_STATUS[item.status]?.label ?? item.status}</span>
+        </li>)}</ul></div>}
+    </section>
+  </>;
+}
+
 /**
  * «Заказы и чаты» inside the cabinet: the same orders as /messages — a sortable table (sold and bought), and an order's
  * chat (`?order=`) with the market's own chat component. The list refreshes itself like the inbox.
@@ -888,8 +997,9 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     : section === 'new-listing' ? <Link className="bc-button is-outline" href={businessHref('market')}>К объявлениям</Link>
     : section === 'orders' ? (params.order ? <Link className="bc-button is-outline" href={businessHref('orders')}>Все заказы</Link> : <Link className="bc-button" href={businessHref('new-listing')}>Новое объявление</Link>)
     : section === 'settings' ? undefined
-    : <>{approved && <a className="bc-button is-outline" href={`/business/cabinet/export${section === 'search' || section === 'cards' || section === 'competitors' ? `?kind=${section}` : ''}`} download
-        title={section === 'search' ? 'Запросы за 30 дней' : section === 'cards' ? 'Просмотры и переходы по напиткам' : section === 'competitors' ? 'Сравнение с конкурентами' : 'Все отзывы'}>Экспорт CSV</a>}
+    : section === 'plan' ? undefined
+    : <>{approved && hasFeature(business, 'export') && <a className="bc-button is-outline" href={`/business/cabinet/export${section === 'search' || section === 'cards' || section === 'competitors' ? `?kind=${section}` : ''}`} download
+        title={section === 'search' ? 'Частые запросы' : section === 'cards' ? 'Просмотры и переходы по напиткам' : section === 'competitors' ? 'Сравнение с конкурентами' : 'Все отзывы'}>Экспорт CSV</a>}
       {canAct && <Link className="bc-button" href={businessHref('drinks')}>Прикрепить напиток</Link>}</>;
   const toolbar = section === 'overview' || section === 'reviews' || section === 'insights' || section === 'search' || section === 'cards' || section === 'competitors' || section === 'brand'
     ? <BusinessSegments label="Аналитика" items={[
@@ -902,6 +1012,8 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
       { href: businessHref('brand'), label: 'Бренд', current: section === 'brand' },
     ]} />
     : undefined;
+  // A section beyond the plan shows what it gives and the way to the plan, not the data.
+  const gated = (feature: PlanFeature, content: ReactNode) => hasFeature(business, feature) ? content : <Upsell feature={feature} />;
   const locked = (title: string) => <Empty title={title} text="Команда подтвердит компанию и её напитки — и здесь появятся отзывы, оценки и метрики бренда." action={<Link className="bc-button" href={businessHref('drinks')}>Прикрепить напитки</Link>} />;
   const waiting = approved ? (await countReviewQueue(business.id)).unanswered : 0;
   return <BusinessShell business={business} active={section} title={TITLES[section]} actions={actions} toolbar={toolbar} unread={counts?.notifications ?? 0} unreadMessages={counts?.messages ?? 0}
@@ -913,10 +1025,11 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     {section === 'overview' && <BusinessChecklist businessId={business.id} steps={await getOnboarding(business)} />}
     {section === 'overview' && (approved ? <Overview business={business} canReply={canAct} /> : locked('Аналитика появится после проверки'))}
     {section === 'reviews' && (approved ? <Reviews business={business} params={params} canReply={canAct} /> : locked('Отзывы появятся после проверки'))}
-    {section === 'insights' && (approved ? <Insights business={business} /> : locked('Разбор появится после проверки'))}
-    {section === 'search' && (approved ? <Search business={business} /> : locked('Поиск появится после проверки'))}
-    {section === 'cards' && (approved ? <Cards business={business} params={params} /> : locked('Аналитика карточек появится после проверки'))}
-    {section === 'competitors' && (approved ? <Competitors business={business} /> : locked('Сравнение с конкурентами появится после проверки'))}
+    {section === 'insights' && (!approved ? locked('Разбор появится после проверки') : gated('insights', <Insights business={business} />))}
+    {section === 'search' && (!approved ? locked('Поиск появится после проверки') : gated('search', <Search business={business} params={params} />))}
+    {section === 'cards' && (!approved ? locked('Аналитика карточек появится после проверки') : gated('cards', <Cards business={business} params={params} />))}
+    {section === 'competitors' && (!approved ? locked('Сравнение с конкурентами появится после проверки') : gated('competitors', <Competitors business={business} params={params} />))}
+    {section === 'plan' && <PlanSection business={business} role={role} canAct={canAct} />}
     {section === 'brand' && (approved ? <Brand business={business} params={params} /> : locked('Метрики бренда появятся после проверки'))}
     {section === 'drinks' && <Drinks business={business} params={params} userId={session.user.id} canAct={canAct} />}
     {section === 'drink-edit' && (approved ? <DrinkEditSection business={business} params={params} canAct={canAct} /> : locked('Править карточки можно после проверки'))}

@@ -5,6 +5,9 @@
   --bc-line: var(--theme-line, var(--color-control));
   --bc-panel: var(--color-surface);
   --bc-soft: var(--color-subtle);
+  /* The sidebar and the frame around the work area, and what stands raised on it (search, current item, company). */
+  --bc-frame: var(--color-subtle);
+  --bc-raised: var(--bc-panel);
   --bc-text: var(--color-ink);
   --bc-muted: var(--color-muted-strong);
   /* Status tones: saturated enough to read on white and on the dark themes (the site's own danger is pastel in dark). */
@@ -12,14 +15,14 @@
   --bc-bad: #d92d20;
   --bc-mid: #b54708;
 }
-:root[data-site-theme=graphite] :is(.bc-root, .bc-apply, .admin-app, .bc-row-menu) { --bc-good: #47cd89; --bc-bad: #ff8577; --bc-mid: #fdb022; }
+:root[data-site-theme=graphite] :is(.bc-root, .bc-apply, .admin-app, .bc-row-menu) { --bc-good: #47cd89; --bc-bad: #ff8577; --bc-mid: #fdb022; --bc-frame: #0b0d12; --bc-raised: #1b1f28; }
 @media (prefers-color-scheme: dark) {
-  :root[data-site-theme=system] :is(.bc-root, .bc-apply, .admin-app, .bc-row-menu) { --bc-good: #47cd89; --bc-bad: #ff8577; --bc-mid: #fdb022; }
+  :root[data-site-theme=system] :is(.bc-root, .bc-apply, .admin-app, .bc-row-menu) { --bc-good: #47cd89; --bc-bad: #ff8577; --bc-mid: #fdb022; --bc-frame: #0b0d12; --bc-raised: #1b1f28; }
 }
 .bc-root {
   --bc-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", Arial, sans-serif;
   min-height: 100dvh;
-  background: var(--bc-soft);
+  background: var(--bc-frame);
   color: var(--bc-text);
   font-family: var(--bc-font);
   font-size: .9375rem;
@@ -35,7 +38,7 @@
 .bc-brand-mark { width: 40px; height: 40px; flex: none; border-radius: 12px; background: var(--color-brand) url("/brand/logo-mark-white.svg") center / 20px no-repeat; }
 .bc-brand strong { font-size: 1.125rem; font-weight: 700; letter-spacing: -.01em; }
 .bc-brand small { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); font-size: .75rem; font-weight: 600; }
-.bc-search { position: relative; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px 0 12px; border: 1px solid var(--bc-line); border-radius: 12px; background: var(--bc-panel); color: var(--bc-muted); }
+.bc-search { position: relative; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px 0 12px; border: 1px solid var(--bc-line); border-radius: 12px; background: var(--bc-raised); color: var(--bc-muted); }
 .bc-search input[type="search"] { flex: 1; min-width: 0; height: 42px; border: 0; background: transparent; color: var(--bc-text); font-size: .9375rem; outline: none; }
 .bc-search input::placeholder { color: var(--bc-muted); }
 .bc-search:focus-within { border-color: var(--bc-text); }
@@ -44,7 +47,7 @@
 .bc-nav { display: grid; gap: 2px; }
 .bc-nav-top, .bc-nav-group > summary { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--bc-text); font-size: .9375rem; text-decoration: none; cursor: pointer; }
 .bc-nav-top:hover, .bc-nav-group > summary:hover { background: color-mix(in srgb, var(--bc-text) 6%, transparent); }
-.bc-nav-top[aria-current="page"] { background: var(--bc-panel); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / 6%); }
+.bc-nav-top[aria-current="page"] { background: var(--bc-raised); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / 6%); }
 .bc-nav-top svg, .bc-nav-group > summary svg { flex: none; color: var(--bc-muted); }
 .bc-nav-group > summary { list-style: none; }
 .bc-nav-group > summary::-webkit-details-marker { display: none; }
@@ -68,7 +71,7 @@
 .bc-workspace-items a svg { flex: none; color: var(--bc-muted); }
 .bc-workspace-items a[aria-current="page"] { font-weight: 600; background: var(--bc-soft); }
 @media (prefers-reduced-motion: reduce) { .bc-workspace-chevron { transition: none; } }
-.bc-workspace { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--bc-line); border-radius: 14px; background: var(--bc-panel); color: var(--bc-text); text-decoration: none; }
+.bc-workspace { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--bc-line); border-radius: 14px; background: var(--bc-raised); color: var(--bc-text); text-decoration: none; }
 .bc-workspace-logo { display: grid; flex: none; width: 40px; height: 40px; place-items: center; border-radius: 10px; background: var(--color-brand); color: #fff; font-weight: 700; }
 .bc-workspace-text { display: grid; min-width: 0; flex: 1; }
 .bc-workspace-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
@@ -237,7 +240,7 @@
 
 /* Phones: the sidebar is a drawer over the page. */
 @media (max-width: 959px) {
-  .bc-sidebar-wrap { position: fixed; inset: 0 auto 0 0; z-index: 50; width: min(300px, 86vw); background: var(--bc-soft); box-shadow: 0 0 40px rgb(0 0 0 / 25%); transform: translateX(-105%); transition: transform 200ms ease-out; }
+  .bc-sidebar-wrap { position: fixed; inset: 0 auto 0 0; z-index: 50; width: min(300px, 86vw); background: var(--bc-frame); box-shadow: 0 0 40px rgb(0 0 0 / 25%); transform: translateX(-105%); transition: transform 200ms ease-out; }
   .bc-root[data-nav-open] .bc-sidebar-wrap { transform: none; }
   .bc-scrim { position: fixed; inset: 0; z-index: 40; border: 0; background: rgb(0 0 0 / 40%); opacity: 0; pointer-events: none; transition: opacity 200ms ease-out; }
   .bc-root[data-nav-open] .bc-scrim { opacity: 1; pointer-events: auto; }
@@ -548,3 +551,140 @@
 /* The application's consent to «Условия для бизнеса». */
 .bc-terms-consent { display: flex; align-items: flex-start; gap: 10px; font-size: .875rem; line-height: 1.45; cursor: pointer; }
 .bc-terms-consent input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--color-brand); }
+
+/* Plans: a section beyond the plan, the window picker's locked periods and «Тариф и продвижение». */
+.bc-upsell { display: grid; justify-items: start; gap: 14px; padding: 24px; border: 1px dashed color-mix(in srgb, var(--color-brand) 45%, var(--bc-line)); border-radius: 18px; background: color-mix(in srgb, var(--color-brand) 5%, var(--bc-panel)); }
+.bc-upsell > div { display: grid; justify-items: start; gap: 8px; }
+.bc-upsell h2 { font-size: 1.25rem; }
+.bc-upsell-lock { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 14px; background: color-mix(in srgb, var(--color-brand) 14%, var(--bc-panel)); color: var(--color-brand); }
+.bc-segment-locked { display: inline-flex; align-items: center; gap: 6px; opacity: .6; }
+/* «Тариф и продвижение» in the manner of linear.app: no cards — the plan in force is a strip of hairline cells
+   (plan and term, then usage with a thin bar), sections open with a big heading and a lead, the plans and the
+   comparison are the landing's own (below), and «Дополнительные услуги» are columns split by hairlines like the plans. */
+.bc-billing { display: grid; border-block: 1px solid var(--bc-line); }
+.bc-billing-now { display: grid; gap: 4px; padding: 20px 0; border-bottom: 1px solid var(--bc-line); }
+.bc-billing-now small, .bc-billing-cell dt { color: var(--bc-muted); font-size: .8125rem; font-weight: 500; }
+.bc-billing-now h2 { font-size: 1.75rem; letter-spacing: -0.03em; }
+.bc-billing-now p { margin: 0; color: var(--bc-muted); font-size: .875rem; }
+.bc-billing-usage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.bc-billing-cell { display: grid; align-content: start; gap: 6px; padding: 16px 16px 16px 0; }
+.bc-billing-cell:nth-child(2n) { padding-left: 16px; border-left: 1px solid var(--bc-line); }
+.bc-billing-cell:nth-child(n + 3) { border-top: 1px solid var(--bc-line); }
+.bc-billing-cell dd { margin: 0; }
+.bc-billing-cell b { font-size: 1.375rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.bc-billing-cell small { color: var(--bc-muted); font-size: .875rem; }
+.bc-billing-cell i { height: 3px; overflow: hidden; border-radius: 999px; background: var(--bc-soft); }
+.bc-billing-cell i span { display: block; height: 100%; border-radius: inherit; background: var(--bc-text); }
+.bc-billing-cell i span[data-over] { background: var(--bc-mid); }
+.bc-billing-note { grid-column: 1 / -1; margin: 0; padding: 14px 0; border-top: 1px solid var(--bc-line); color: var(--bc-muted); font-size: .875rem; line-height: 1.5; }
+
+.bc-pricing { display: grid; gap: 20px; padding-top: 40px; container-type: inline-size; }
+.bc-pricing-head { display: grid; gap: 8px; }
+.bc-pricing-head h2 { font-size: clamp(1.75rem, 7vw, 2.5rem); line-height: 1.05; letter-spacing: -0.04em; }
+.bc-pricing-head p { max-width: 40em; margin: 0; color: var(--bc-muted); font-size: .9375rem; line-height: 1.55; }
+.bc-pricing-compare summary { display: flex; align-items: center; gap: 8px; min-height: 44px; color: var(--bc-text); font-weight: 600; cursor: pointer; list-style: none; }
+.bc-pricing-compare summary::-webkit-details-marker { display: none; }
+.bc-pricing-compare summary::before { color: var(--bc-muted); font-weight: 400; content: "+"; font-size: 1.25rem; line-height: 1; }
+.bc-pricing-compare[open] summary::before { content: "−"; }
+.bc-pricing-compare .biz-compare h3 { display: none; }
+
+.bc-addons { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--bc-line); }
+.bc-addon { display: flex; flex-direction: column; gap: 8px; padding: 24px 0; border-bottom: 1px solid var(--bc-line); }
+.bc-addon h3 { margin: 6px 0 0; color: var(--bc-text); font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; }
+.bc-addon p { margin: 0; color: var(--bc-muted); font-size: .875rem; line-height: 1.5; }
+/* The price leads, like a plan's; it sits at the foot of every column so the four line up. */
+.bc-addon .bc-addon-price { display: grid; gap: 2px; margin-top: auto; padding-top: 16px; }
+.bc-addon-price b { color: var(--bc-text); font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.bc-addon-price small { color: var(--bc-muted); font-size: .8125rem; }
+.bc-addon .biz-plan-cta { margin-top: 8px; }
+.bc-addon[data-picked] .biz-plan-cta { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+.bc-addon-icon { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border: 1px solid var(--bc-line); border-radius: 12px; color: var(--color-brand); }
+.bc-addon-form { padding: 20px 0 4px; }
+.bc-addon-form-head { display: flex; align-items: center; gap: 12px; }
+.bc-addon-form-head h3 { margin: 0; font-size: 1.0625rem; }
+.bc-addon-form-actions { display: grid; gap: 8px; }
+.bc-addon-requests { display: grid; gap: 8px; }
+.bc-addon-requests h3 { margin: 12px 0 0; font-size: 1rem; }
+.bc-addon-requests ul { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--bc-line); }
+.bc-addon-requests li { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--bc-line); font-size: .875rem; }
+.bc-addon-requests li > span:not(.bc-pill) { font-variant-numeric: tabular-nums; }
+.bc-addon-requests small { color: var(--bc-muted); }
+.bc-addon-requests .bc-pill { grid-column: 2; grid-row: 1 / span 3; }
+.biz-plan-cta:is(button) { width: 100%; font: inherit; font-weight: 700; cursor: pointer; }
+@container (min-width: 620px) {
+  .bc-addons { grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid var(--bc-line); }
+  .bc-addon { padding: 24px 20px; border-bottom: 0; }
+  .bc-addon:first-child { padding-left: 0; }
+  .bc-addon:last-child { padding-right: 0; }
+  .bc-addon + .bc-addon { border-left: 1px solid var(--bc-line); }
+}
+@media (min-width: 640px) {
+  .bc-billing { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+  .bc-billing-now { padding-right: 20px; border-right: 1px solid var(--bc-line); border-bottom: 0; }
+  .bc-billing-usage { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .bc-billing-cell, .bc-billing-cell:nth-child(2n) { padding: 20px 0 20px 20px; border-top: 0; }
+  .bc-billing-cell + .bc-billing-cell { border-left: 1px solid var(--bc-line); }
+  .bc-addon-form-actions { display: flex; }
+  .bc-addon-requests li { grid-template-columns: minmax(0, 1.4fr) 1fr 1.4fr auto; }
+  .bc-addon-requests .bc-pill { grid-column: auto; grid-row: auto; }
+}
+
+/* Plans and «Сравнение тарифов» in the manner of linear.app/pricing — shared by the landing («6.0 Тарифы») and the
+   cabinet («Тариф и продвижение»), which is why they live here: the landing loads this file too. Columns split by
+   hairlines — name, price, the yearly switch, the list that builds on the plan before, the button at the foot — and
+   a table grouped by topic with ticks, crosses and numbers. The columns follow their own width (a container query),
+   because the cabinet's work area is narrower than the window. */
+.biz-plans-box { container-type: inline-size; }
+.biz-plans { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--theme-line, #dfe3e8); }
+.biz-plan { display: flex; flex-direction: column; gap: 14px; padding: 28px 0; border-bottom: 1px solid var(--theme-line, #dfe3e8); }
+.biz-plan h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; color: var(--color-ink); font-size: 1.375rem; letter-spacing: -0.02em; }
+.biz-plan-badge { padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 12%, transparent); color: var(--color-brand); font-size: .75rem; font-weight: 700; letter-spacing: 0; }
+.biz-plan-price { margin: 0; }
+.biz-plan-price b { color: var(--color-ink); font-size: 1.375rem; font-variant-numeric: tabular-nums; }
+.biz-plan-price small { color: var(--color-muted-strong); font-size: 1rem; }
+.biz-plan-term { display: flex; align-items: center; min-height: 44px; padding: 10px 0; border-block: 1px solid var(--theme-line, #dfe3e8); color: var(--color-muted-strong); font-size: .9375rem; }
+.biz-switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
+.biz-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.biz-switch span { position: relative; flex: none; width: 36px; height: 20px; border-radius: 999px; background: var(--color-control); transition: background-color 150ms ease-out; }
+.biz-switch span::after { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 20%); transition: transform 180ms cubic-bezier(.2, .8, .2, 1); content: ""; }
+.biz-switch input:checked + span { background: var(--color-brand); }
+.biz-switch input:checked + span::after { transform: translateX(16px); }
+.biz-switch input:focus-visible + span { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.biz-plan ul { display: grid; gap: 12px; margin: 4px 0 8px; padding: 0; list-style: none; }
+.biz-plan li { position: relative; padding-left: 26px; color: var(--color-ink); font-size: .9375rem; line-height: 1.4; }
+.biz-plan li::before { position: absolute; top: 1px; left: 0; width: 17px; height: 17px; border-radius: 50%; background: var(--color-ink); content: ""; }
+/* The tick is drawn in the page's surface colour, so it reads on the ink circle in light and dark themes alike. */
+.biz-plan li::after { position: absolute; top: 5px; left: 6px; width: 4px; height: 7px; border: solid var(--color-surface); border-width: 0 2px 2px 0; transform: rotate(45deg); content: ""; }
+.biz-plan[data-featured] li::after { border-color: #fff; }
+.biz-plan[data-featured] li::before { background-color: var(--color-brand); }
+.biz-plan li.is-previous { color: var(--color-muted-strong); font-weight: 600; }
+.biz-plan li.is-previous::before { background: none; color: var(--color-muted-strong); content: "+"; font-weight: 800; text-align: center; line-height: 17px; }
+.biz-plan li.is-previous::after { display: none; }
+.biz-plan-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; margin-top: auto; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 999px; background: var(--color-subtle); color: var(--color-ink); font-weight: 700; text-decoration: none; transition: transform 150ms ease-out, background-color 150ms ease-out; }
+.biz-plan-cta:hover { transform: translateY(-1px); background: var(--color-control); }
+.biz-plan-cta.is-primary { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+.biz-plan-cta.is-primary:hover { background: color-mix(in srgb, var(--color-brand) 88%, #000); }
+.biz-plan-cta.is-current { border-style: dashed; background: transparent; color: var(--color-muted-strong); pointer-events: none; }
+.biz-plan-note { margin: auto 0 0; padding: 12px 0; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.45; }
+
+.biz-compare { display: grid; gap: 12px; }
+.biz-compare h3 { margin: 24px 0 0; color: var(--color-ink); font-size: clamp(1.5rem, 6vw, 2rem); letter-spacing: -0.03em; }
+.biz-compare table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .875rem; }
+.biz-compare thead th { position: sticky; top: 0; z-index: 1; padding: 14px 4px; border-bottom: 1px solid var(--theme-line, #dfe3e8); background: var(--color-surface); color: var(--color-ink); font-weight: 700; text-align: center; }
+.biz-compare thead th:first-child { width: 46%; }
+.biz-compare tbody th { padding: 13px 8px 13px 0; color: var(--color-muted-strong); font-weight: 500; text-align: left; }
+.biz-compare td { padding: 13px 4px; color: var(--color-ink); text-align: center; font-variant-numeric: tabular-nums; }
+.biz-compare tbody tr + tr > * { border-top: 1px solid color-mix(in srgb, var(--theme-line, #dfe3e8) 70%, transparent); }
+.biz-compare-group th { padding: 32px 0 10px !important; color: var(--color-ink) !important; font-size: 1.125rem; font-weight: 700 !important; }
+.biz-yes, .biz-no { display: inline-block; width: 17px; height: 17px; border-radius: 50%; vertical-align: middle; }
+.biz-yes { background: var(--color-brand) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12 4 4 8-8'/%3E%3C/svg%3E") center / 10px no-repeat; }
+.biz-no { background: linear-gradient(45deg, transparent 45%, currentColor 45% 55%, transparent 55%), linear-gradient(-45deg, transparent 45%, currentColor 45% 55%, transparent 55%); color: color-mix(in srgb, var(--color-ink) 35%, transparent); width: 12px; height: 12px; }
+@container (min-width: 620px) {
+  .biz-plans { grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--theme-line, #dfe3e8); }
+  .biz-plan { padding: 32px 28px; border-bottom: 0; }
+  .biz-plan:first-child { padding-left: 0; }
+  .biz-plan:last-child { padding-right: 0; }
+  .biz-plan + .biz-plan { border-left: 1px solid var(--theme-line, #dfe3e8); }
+}
+@media (min-width: 900px) { .biz-compare table { font-size: .9375rem; } .biz-compare thead th:first-child { width: 40%; } }
+@media (prefers-reduced-motion: reduce) { .biz-switch span, .biz-switch span::after, .biz-plan-cta { transition: none; } .biz-plan-cta:hover { transform: none; } }

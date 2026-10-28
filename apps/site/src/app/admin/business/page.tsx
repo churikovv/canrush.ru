@@ -3,7 +3,9 @@ import '@/styles/admin.css';
 import '@/styles/business-cabinet.css';
 import { AdminShell } from '@/components/admin-shell';
 import { BrandShell } from '@/components/brand-shell';
-import { BusinessDrinkModeration, BusinessModeration, DrinkEditModeration } from '@/components/business-forms';
+import { BusinessDrinkModeration, BusinessModeration, DrinkEditModeration, PromoModeration } from '@/components/business-forms';
+import { listPromoRequests } from '@/lib/business-billing';
+import { PLANS, PROMO_PLACEMENTS, effectivePlan, rubles } from '@/lib/business-plans';
 import { getBrandProfile, listDrinkEditsForAdmin } from '@/lib/brand-drink-edits';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import { getCatalogDrink } from '@/lib/catalog-drinks';
@@ -21,6 +23,7 @@ const TABS = [
   { key: 'pending', label: 'На проверке', empty: 'Новых заявок нет' },
   { key: 'drinks', label: 'Напитки компаний', empty: 'Все напитки проверены' },
   { key: 'edits', label: 'Правки карточек', empty: 'Правок на проверке нет' },
+  { key: 'promo', label: 'Продвижение', empty: 'Заявок на продвижение нет' },
   { key: 'approved', label: 'Подтверждённые', empty: 'Пока ни одной компании' },
   { key: 'rejected', label: 'Отклонённые', empty: 'Отклонённых нет' },
 ] as const;
@@ -33,7 +36,8 @@ export default async function AdminBusinessPage({ searchParams }: { searchParams
   const admin = await requireSiteAdmin();
   const requested = (await searchParams).tab;
   const tab = TABS.find(item => item.key === requested) ?? TABS[0];
-  const businesses = tab.key === 'drinks' || tab.key === 'edits' ? [] : await listBusinessesForAdmin(tab.key as BusinessStatus);
+  const businesses = tab.key === 'drinks' || tab.key === 'edits' || tab.key === 'promo' ? [] : await listBusinessesForAdmin(tab.key as BusinessStatus);
+  const promos = tab.key === 'promo' ? await listPromoRequests(null) : [];
   const edits = tab.key === 'edits' ? await Promise.all((await listDrinkEditsForAdmin()).map(async edit => {
     const [profile, ingredients, added, group] = await Promise.all([getBrandProfile(edit.brand, edit.flavor), getProductIngredients(edit.brand, edit.flavor), getCatalogDrink(edit.brand, edit.flavor),
       loadAllCatalogGroups().then(groups => groups.find(item => item.brand === edit.brand && item.flavor === edit.flavor))]);
@@ -43,7 +47,13 @@ export default async function AdminBusinessPage({ searchParams }: { searchParams
   return <BrandShell headerAction={<Link className="admin-back-link" href="/profile/settings">Вернуться в настройки</Link>} surfaceClassName="admin-surface">
     <AdminShell active="business" email={admin.email} role={admin.role} title="Компании" subtitle="Заявки бизнеса, напитки, которые компании прикрепляют к себе, и их правки карточек.">
       <nav className="market-filters" aria-label="Компании">{TABS.map(item => <Link key={item.key} href={item.key === 'pending' ? '/admin/business' : `/admin/business?tab=${item.key}`} aria-current={item.key === tab.key ? 'page' : undefined}>{item.label}</Link>)}</nav>
-      {tab.key === 'edits' ? edits.length ? <div className="bc-content">{edits.map(({ edit, now }) => <article key={edit.id} className="bc-panel bc-edit-review">
+      {tab.key === 'promo' ? promos.length ? <div className="bc-content">{promos.map(item => <article key={item.id} className="bc-panel">
+          <div className="bc-panel-head"><h2>{item.business} · {PROMO_PLACEMENTS.find(place => place.value === item.placement)?.label ?? item.placement}</h2><small>{rubles(item.budget)} · {when.format(item.createdAt)} · {item.status}</small></div>
+          {item.comment && <p className="bc-about">{item.comment}</p>}
+          {item.erid && <p className="bc-muted">erid: {item.erid}</p>}
+          {admin.role === 'admin' ? <PromoModeration id={item.id} erid={item.erid} /> : <p className="bc-muted">Продвижение ведёт администратор.</p>}
+        </article>)}</div> : <div className="admin-data-panel"><div className="admin-empty-result"><strong>{tab.empty}</strong></div></div>
+      : tab.key === 'edits' ? edits.length ? <div className="bc-content">{edits.map(({ edit, now }) => <article key={edit.id} className="bc-panel bc-edit-review">
           <div className="bc-panel-head"><h2><Link href={`/catalog/${catalogGroupSlug(edit.brand, edit.flavor)}`}>{edit.name}</Link></h2><small>{edit.business}{edit.author ? ` · @${edit.author}` : ''} · {when.format(edit.createdAt)}</small></div>
           {edit.note && <p className="bc-about">Комментарий: {edit.note}</p>}
           <dl className="bc-edit-diff">
@@ -68,7 +78,7 @@ export default async function AdminBusinessPage({ searchParams }: { searchParams
       </table></div></div> : <div className="admin-data-panel"><div className="admin-empty-result"><strong>{tab.empty}</strong></div></div>
         : businesses.length ? <div className="bc-content">{businesses.map(item => <article key={item.id} className="bc-panel">
           <div className="bc-panel-head"><h2>{item.name}</h2><small>{BUSINESS_KINDS.find(kind => kind.value === item.kind)?.label} · {when.format(item.createdAt)}</small></div>
-          <p>{item.owner ? <Link href={`/profile/${item.owner}`}>@{item.owner}</Link> : 'Без ника'} · напитков {item.drinks}{item.pendingDrinks ? `, на проверке ${item.pendingDrinks}` : ''}</p>
+          <p>{item.owner ? <Link href={`/profile/${item.owner}`}>@{item.owner}</Link> : 'Без ника'} · напитков {item.drinks}{item.pendingDrinks ? `, на проверке ${item.pendingDrinks}` : ''}{item.status === 'approved' ? ` · тариф «${PLANS[effectivePlan(item)].title}»${effectivePlan(item) !== 'start' && item.planUntil ? ` до ${when.format(item.planUntil)}` : ''}${item.founder ? ' · пилот' : ''}` : ''}</p>
           <ul className="bc-contacts">
             {item.website && <li><a href={item.website} target="_blank" rel="noopener noreferrer">{item.website}</a></li>}
             {item.telegram && <li><a href={`https://t.me/${item.telegram}`} target="_blank" rel="noopener noreferrer">@{item.telegram}</a></li>}

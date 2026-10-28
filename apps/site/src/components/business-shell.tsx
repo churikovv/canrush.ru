@@ -2,8 +2,9 @@ import type { ReactNode } from 'react';
 import { BusinessFrame, BusinessNotifications } from '@/components/business-shell-client';
 import Link from '@/components/navigation-progress';
 import { BUSINESS_KINDS, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
+import { planInfo, type BusinessPlan } from '@/lib/business-plans';
 
-export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings';
+export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings' | 'plan';
 export const businessHref = (section: BusinessSection, params: Record<string, string> = {}) =>
   `/business/cabinet?${new URLSearchParams({ ...(section !== 'overview' ? { section } : {}), ...params })}`.replace(/\?$/, '');
 
@@ -38,7 +39,7 @@ const NAV: { label: string; icon: BusinessIconName; section?: BusinessSection; i
  * toolbar row (segmented tabs, search, filter, sort) and the section. On phones the sidebar is a drawer.
  */
 export function BusinessShell({ business, active, title, actions, toolbar, unread, unreadMessages, badges = {}, children }: {
-  business: { name: string; kind: BusinessKind; status: BusinessStatus; logoId: string | null };
+  business: { name: string; kind: BusinessKind; status: BusinessStatus; logoId: string | null; plan?: BusinessPlan; planUntil?: Date | null };
   active: BusinessSection; title: string; actions?: ReactNode; toolbar?: ReactNode; unread: number; unreadMessages: number;
   /** Counters beside sections, like reviews waiting for an answer. */
   badges?: Partial<Record<BusinessSection, { count: number; label: string }>>; children: ReactNode;
@@ -70,11 +71,12 @@ export function BusinessShell({ business, active, title, actions, toolbar, unrea
         <span className="bc-workspace-logo" aria-hidden="true">{business.logoId
           // eslint-disable-next-line @next/next/no-img-element -- the logo is served from the database
           ? <img src={`/api/business-logos/${business.logoId}`} alt="" width={40} height={40} /> : business.name.slice(0, 2).toUpperCase()}</span>
-        <span className="bc-workspace-text"><strong>{business.name}</strong><small>{BUSINESS_KINDS.find(item => item.value === business.kind)?.label}</small></span>
+        <span className="bc-workspace-text"><strong>{business.name}</strong><small>{BUSINESS_KINDS.find(item => item.value === business.kind)?.label} · {planInfo(business).title}</small></span>
         <span className="bc-workspace-chevron"><BusinessIcon name="chevron" size={16} /></span>
       </summary>
       <div className="bc-dropdown-menu bc-workspace-items">
         <Link href={businessHref('settings')} aria-current={active === 'settings' ? 'page' : undefined}><BusinessIcon name="settings" size={18} />Настройки</Link>
+        <Link href={businessHref('plan')} aria-current={active === 'plan' ? 'page' : undefined}><BusinessIcon name="chart" size={18} />Тариф и продвижение</Link>
         <Link href="/"><BusinessIcon name="site" size={18} />Сайт CanRush</Link>
         <a href="mailto:hello@canrush.ru"><BusinessIcon name="help" size={18} />Помощь и поддержка</a>
       </div>

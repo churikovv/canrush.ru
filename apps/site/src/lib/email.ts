@@ -122,9 +122,10 @@ export async function sendBusinessInviteEmail(to: string, business: string, invi
 }
 
 /** The good news after the team approves a company: what opened in the cabinet, and a button to it. */
-export function renderBusinessApprovedEmail(business: string, link: string): MagicLinkEmailContent {
+export function renderBusinessApprovedEmail(business: string, link: string, pilotUntil: Date | null = null): MagicLinkEmailContent {
   const safe = { business: escapeHtml(business), link: escapeHtml(link) };
-  const opened = ['аналитика отзывов, поиска и карточек ваших напитков', 'разбор отзывов нейросетью', 'ответы на отзывы от имени компании', 'новые напитки в каталоге — сразу, без модерации', 'объявления в маркете от имени компании'];
+  const opened = ['ответы на отзывы от имени компании и шаблоны', 'новые напитки в каталоге — сразу, без модерации', 'правки карточек и объявления от имени компании'];
+  if (pilotUntil) opened.unshift('тариф «Бренд» бесплатно до ' + new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' }).format(pilotUntil) + ': аналитика поиска, карточек и конкурентов, разбор нейросетью, отчёт на почту');
   return {
     subject: `Компания «${business}» подтверждена — CanRush для бизнеса`,
     text: [
@@ -143,9 +144,9 @@ export function renderBusinessApprovedEmail(business: string, link: string): Mag
 }
 
 /** Sends the approval letter to the company's owner, from «<name> для бизнеса». */
-export async function sendBusinessApprovedEmail(to: string, business: string): Promise<void> {
+export async function sendBusinessApprovedEmail(to: string, business: string, pilotUntil: Date | null = null): Promise<void> {
   const smtp = getSmtpEnv();
-  const content = renderBusinessApprovedEmail(business, new URL('/business/cabinet', getAuthEnv().authUrl).toString());
+  const content = renderBusinessApprovedEmail(business, new URL('/business/cabinet', getAuthEnv().authUrl).toString(), pilotUntil);
   await getTransporter().sendMail({
     from: { name: `${smtp.fromName} для бизнеса`, address: smtp.user },
     to, subject: content.subject, text: content.text, html: content.html,

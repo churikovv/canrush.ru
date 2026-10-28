@@ -1,12 +1,13 @@
 import { getPool } from '@/db/pool';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import { isCountedCatalogDrink } from '@/lib/home-metrics';
-import { BusinessError } from '@/lib/business-fields';
+import { BusinessError, historyWindow } from '@/lib/business-fields';
 import { brandSearchNames } from '@/lib/search-log-fields';
 import { logBusiness } from '@/lib/business';
+import { planInfo, type BusinessPlan } from '@/lib/business-plans';
 
-/** How many brands a company compares itself with. */
-export const MAX_COMPETITORS = 3;
+/** The most brands any plan compares with («Сеть»); each plan has its own number (`PLANS`). */
+export const MAX_COMPETITORS = 10;
 
 /** One side of the comparison: the company's own brands together, or one competitor brand. */
 export interface BrandMetrics {
@@ -36,22 +37,23 @@ const ownBrands = async (businessId: string) =>
  * last 30 days, average scores, swipes, searches that showed or named a brand, card views and store taps for 30 days,
  * and the median price of 0.5 l.
  */
-export async function brandMetrics(brands: string[], label: string, own: boolean, groups?: Awaited<ReturnType<typeof loadAllCatalogGroups>>): Promise<BrandMetrics> {
+export async function brandMetrics(brands: string[], label: string, own: boolean, groups?: Awaited<ReturnType<typeof loadAllCatalogGroups>>, days = 30): Promise<BrandMetrics> {
+  const window = historyWindow(days, 365);
   const catalog = (groups ?? await loadAllCatalogGroups()).filter(group => brands.includes(group.brand) && isCountedCatalogDrink(group));
   const names = [...new Set(brands.flatMap(brandSearchNames))];
   const row = (await getPool().query<Omit<BrandMetrics, 'label' | 'brands' | 'own' | 'drinks' | 'price500'>>(
     `with r as (select * from review r where r.brand = any($1::text[]) and not exists(select 1 from "userBlock" b where b."userId" = r."userId"))
      select (select count(*)::int from r) as reviews,
-       (select count(*)::int from r where "createdAt" > now() - interval '30 days') as reviews30,
+       (select count(*)::int from r where "createdAt" > now() - interval '${window} days') as reviews30,
        (select round(avg((taste + design) / 2.0)::numeric, 1)::float8 from r) as score,
        (select round(avg(taste)::numeric, 1)::float8 from r) as taste,
        (select round(avg(design)::numeric, 1)::float8 from r) as design,
        (select count(*)::int from "drinkSwipe" s where s.brand = any($1::text[])) as swipes,
        (select (count(*) filter (where liked))::float8 / nullif(count(*), 0) from "drinkSwipe" s where s.brand = any($1::text[])) as "likeShare",
-       (select count(*)::int from "searchQuery" q where q."createdAt" > now() - interval '30 days'
+       (select count(*)::int from "searchQuery" q where q."createdAt" > now() - interval '${window} days'
           and (q.brands && $1::text[] or exists(select 1 from unnest($2::text[]) as n(name) where strpos(q.query, n.name) > 0))) as "searches30",
-       (select count(*)::int from "catalogEvent" e where e.brand = any($1::text[]) and e.kind = 'view' and e."createdAt" > now() - interval '30 days') as "views30",
-       (select count(*)::int from "catalogEvent" e where e.brand = any($1::text[]) and e.kind = 'store' and e."createdAt" > now() - interval '30 days') as "clicks30"`,
+       (select count(*)::int from "catalogEvent" e where e.brand = any($1::text[]) and e.kind = 'view' and e."createdAt" > now() - interval '${window} days') as "views30",
+       (select count(*)::int from "catalogEvent" e where e.brand = any($1::text[]) and e.kind = 'store' and e."createdAt" > now() - interval '${window} days') as "clicks30"`,
     [brands, names])).rows[0]!;
   const prices = catalog.flatMap(group => group.variants.filter(variant => variant.volumeMl && variant.price > 0).map(variant => variant.price / variant.volumeMl! * 500));
   const price = median(prices);
@@ -62,7 +64,7 @@ export async function brandMetrics(brands: string[], label: string, own: boolean
  * «Конкуренты» of the cabinet: the company's brands as one side, each picked competitor as another; the options are
  * the catalog's brands without the company's own, the suggestions — the most reviewed of them.
  */
-export async function getCompetitors(businessId: string): Promise<Competitors> {
+export async function getCompetitors(businessId: string, days = 30): Promise<Competitors> {
   const [brands, picked, groups] = await Promise.all([
     ownBrands(businessId),
     getPool().query<{ brand: string }>(`select brand from "businessCompetitor" where "businessId" = $1 order by "createdAt", brand`, [businessId]).then(result => result.rows.map(row => row.brand)),
@@ -72,23 +74,26 @@ export async function getCompetitors(businessId: string): Promise<Competitors> {
   const popular = (await getPool().query<{ brand: string }>(
     `select brand from review where brand = any($1::text[]) group by brand order by count(*) desc limit 8`, [options])).rows.map(row => row.brand);
   const [own, ...rivals] = await Promise.all([
-    brands.length ? brandMetrics(brands, brands.length === 1 ? brands[0]! : 'Ваши бренды', true, groups) : Promise.resolve(null),
-    ...picked.map(brand => brandMetrics([brand], brand, false, groups)),
+    brands.length ? brandMetrics(brands, brands.length === 1 ? brands[0]! : 'Ваши бренды', true, groups, days) : Promise.resolve(null),
+    ...picked.map(brand => brandMetrics([brand], brand, false, groups, days)),
   ]);
   return { own: own ?? null, rivals: rivals as BrandMetrics[], picked, options, suggested: popular.filter(brand => !picked.includes(brand)).slice(0, 5) };
 }
 
 /** Adds a competitor brand: a catalog brand, not the company's own, at most MAX_COMPETITORS. */
 export async function addCompetitor(businessId: string, brand: string, userId: string | null = null): Promise<void> {
-  const [brands, groups] = await Promise.all([ownBrands(businessId), loadAllCatalogGroups()]);
+  const [brands, groups, row] = await Promise.all([ownBrands(businessId), loadAllCatalogGroups(),
+    getPool().query<{ plan: BusinessPlan; planUntil: Date | null }>(`select plan, "planUntil" from business where id = $1`, [businessId]).then(result => result.rows[0])]);
+  const plan = planInfo(row ?? {});
+  if (!plan.competitors) throw new BusinessError('Сравнение с конкурентами — в тарифах «Бренд» и «Сеть».');
   const known = groups.find(group => isCountedCatalogDrink(group) && group.brand.toLowerCase() === brand.trim().toLowerCase())?.brand;
   if (!known) throw new BusinessError('Выберите бренд из каталога.');
   if (brands.includes(known)) throw new BusinessError('Это ваш бренд.');
   const result = await getPool().query(`insert into "businessCompetitor"("businessId", brand)
-    select $1, $2 where (select count(*) from "businessCompetitor" where "businessId" = $1) < $3 on conflict do nothing`, [businessId, known, MAX_COMPETITORS]);
+    select $1, $2 where (select count(*) from "businessCompetitor" where "businessId" = $1) < $3 on conflict do nothing`, [businessId, known, plan.competitors]);
   if (!result.rowCount) {
     const exists = await getPool().query(`select 1 from "businessCompetitor" where "businessId" = $1 and brand = $2`, [businessId, known]);
-    throw new BusinessError(exists.rowCount ? 'Этот бренд уже в сравнении.' : `Сравнивать можно до ${MAX_COMPETITORS} брендов.`);
+    throw new BusinessError(exists.rowCount ? 'Этот бренд уже в сравнении.' : `В тарифе «${plan.title}» — до ${plan.competitors} брендов в сравнении.`);
   }  await logBusiness(businessId, userId, 'competitor', known);
 }
 

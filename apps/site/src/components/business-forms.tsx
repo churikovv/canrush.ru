@@ -1,6 +1,6 @@
 'use client';
-import { startTransition, useActionState, useEffect, useEffectEvent, useRef, useState, useTransition } from 'react';
-import { answerBusinessInviteAction, deleteReviewReplyAction, inviteBusinessMemberAction, replyReviewAction, leaveBusinessAction, removeBusinessLogoAction, removeBusinessMemberAction, saveBusinessNotificationsAction, uploadBusinessLogoAction, moderateBusinessAction, moderateBusinessDrinkAction, removeBusinessDrinkAction, requestBusinessDrinkAction, saveBusinessAction, addCompetitorAction, removeCompetitorAction, saveWeeklyReportAction, saveReplyTemplateAction, deleteReplyTemplateAction, setMemberRoleAction, requestDrinkEditAction, moderateDrinkEditAction } from '@/app/business/cabinet/actions';
+import { startTransition, useActionState, useEffect, useEffectEvent, useRef, useState, useTransition, type ReactNode } from 'react';
+import { answerBusinessInviteAction, deleteReviewReplyAction, inviteBusinessMemberAction, replyReviewAction, leaveBusinessAction, removeBusinessLogoAction, removeBusinessMemberAction, saveBusinessNotificationsAction, uploadBusinessLogoAction, moderateBusinessAction, moderateBusinessDrinkAction, removeBusinessDrinkAction, requestBusinessDrinkAction, saveBusinessAction, addCompetitorAction, removeCompetitorAction, saveWeeklyReportAction, saveReplyTemplateAction, deleteReplyTemplateAction, setMemberRoleAction, requestDrinkEditAction, moderateDrinkEditAction, requestPromoAction, setPromoStatusAction } from '@/app/business/cabinet/actions';
 import { saveThemeSettings } from '@/app/profile/settings/theme-actions';
 import { ActionToast } from '@/components/action-toast';
 import { FormAlert } from '@/components/form-alert';
@@ -10,6 +10,7 @@ import { PriceFilterInput } from '@/components/price-filter-input';
 import { BUSINESS_KINDS, BUSINESS_ROLES, type BusinessMemberRole, MAX_BUSINESS_REPLY, MAX_REPLY_TEMPLATES, MAX_REPLY_TEMPLATE_TITLE, REPLY_TEMPLATE_FIELDS, fillReplyTemplate, replyTemplateTitle, type BusinessKind } from '@/lib/business-fields';
 import type { ReplyTemplate } from '@/lib/business';
 import { DRINK_EDIT_LIMITS } from '@/lib/brand-drink-edit-fields';
+import { PROMO_PLACEMENTS, type PromoPlacement } from '@/lib/business-plans';
 import type { SiteTheme } from '@/lib/site-theme';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
 
@@ -469,5 +470,72 @@ export function DrinkEditForm({ brand, flavor, current }: { brand: string; flavo
     <label className="bc-field"><span>Комментарий для проверки (необязательно)</span><input value={fields.note} onChange={set('note')} maxLength={DRINK_EDIT_LIMITS.note} placeholder="Например, новый дизайн банки с марта" /></label>
     {state.error && <FormAlert>{state.error}</FormAlert>}
     <button className="bc-button" disabled={pending || !anything}>{pending ? 'Отправляем…' : 'Отправить на проверку'}</button>
+  </form>;
+}
+
+const ADDON_ICONS: Record<PromoPlacement, ReactNode> = {
+  picks: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.5 6.5l2.5 2.5M15 15l2.5 2.5M17.5 6.5 15 9M9 15l-2.5 2.5" />,
+  dating: <path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z" />,
+  catalog: <><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></>,
+  stories: <><circle cx="12" cy="12" r="8" strokeDasharray="4 2.2" /><circle cx="12" cy="12" r="4.5" /></>,
+};
+
+/**
+ * «Дополнительные услуги» in the manner of linear.app: the placements as columns split by hairlines — a line icon, the
+ * name, what it does and «Заказать». Picking one opens the request under the columns (budget and a note); it goes to
+ * the team, which agrees the placement and registers it in ОРД. Without `canOrder` the columns only describe.
+ */
+export function PromoAddons({ canOrder }: { canOrder: boolean }) {
+  const [state, action, pending] = useActionState(requestPromoAction, {});
+  const [placement, setPlacement] = useState<PromoPlacement | null>(null);
+  const [sent, setSent] = useState<object | null>(null);
+  const form = useRef<HTMLFormElement>(null);
+  const picked = PROMO_PLACEMENTS.find(item => item.value === placement);
+  // A new request after one went through: the alert stays until another placement is picked.
+  if (state.done && sent !== state) { setSent(state); setPlacement(null); }
+  const pick = (value: PromoPlacement) => {
+    setPlacement(value);
+    requestAnimationFrame(() => form.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+  };
+  return <>
+    <ul className="bc-addons">{PROMO_PLACEMENTS.map(item => <li key={item.value} className="bc-addon" data-picked={placement === item.value || undefined}>
+      <span className="bc-addon-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{ADDON_ICONS[item.value]}</svg></span>
+      <h3>{item.label}</h3>
+      <p>{item.hint}</p>
+      <p className="bc-addon-price"><b>от 1 000 ₽</b><small>бюджет · по заявке</small></p>
+      {canOrder && <button type="button" className="biz-plan-cta" aria-pressed={placement === item.value} onClick={() => pick(item.value)}>{placement === item.value ? 'Выбрано' : 'Заказать'}</button>}
+    </li>)}</ul>
+    {state.done && !placement && <FormAlert tone="success" title="Заявка отправлена">Свяжемся с вами, согласуем размещение и зарегистрируем его в ОРД — реклама выйдет с пометкой «Реклама».</FormAlert>}
+    {picked && <form ref={form} className="bc-form bc-addon-form" onSubmit={event => {
+      event.preventDefault();
+      const data = new FormData(event.currentTarget); data.set('placement', picked.value);
+      startTransition(() => action(data));
+    }}>
+      <div className="bc-addon-form-head"><span className="bc-addon-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{ADDON_ICONS[picked.value]}</svg></span>
+        <div><h3>Заявка: {picked.label}</h3><p className="bc-muted">{picked.hint}</p></div></div>
+      <label className="bc-field"><span>Бюджет, ₽</span><input name="budget" required inputMode="numeric" maxLength={11} placeholder="30 000" /></label>
+      <label className="bc-field"><span>Что продвигаем (необязательно)</span><textarea name="comment" rows={3} maxLength={1000} placeholder="Новинка, сроки, города" /></label>
+      {state.error && <FormAlert>{state.error}</FormAlert>}
+      <div className="bc-addon-form-actions">
+        <button className="bc-button" disabled={pending}>{pending ? 'Отправляем…' : 'Отправить заявку'}</button>
+        <button type="button" className="bc-button is-ghost" onClick={() => setPlacement(null)} disabled={pending}>Отмена</button>
+      </div>
+    </form>}
+  </>;
+}
+
+/** Admin: a promotion request's progress and its ОРД token. */
+export function PromoModeration({ id, erid }: { id: string; erid: string | null }) {
+  const [state, action, pending] = useActionState(setPromoStatusAction.bind(null, id), {});
+  if (state.done) return <span className="bc-pill" data-tone="good">Сохранено</span>;
+  return <form action={action} className="bc-moderation is-inline">
+    <input name="erid" maxLength={100} defaultValue={erid ?? ''} placeholder="erid из ОРД" disabled={pending} />
+    <div>
+      <button className="bc-button is-outline" name="status" value="contacted" disabled={pending}>Связались</button>
+      <button className="bc-button" name="status" value="running" disabled={pending}>Запущено</button>
+      <button className="bc-button is-ghost" name="status" value="done" disabled={pending}>Завершено</button>
+      <button className="bc-button is-ghost" name="status" value="declined" disabled={pending}>Отказ</button>
+    </div>
+    {state.error && <FormAlert>{state.error}</FormAlert>}
   </form>;
 }

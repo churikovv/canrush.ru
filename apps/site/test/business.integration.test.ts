@@ -15,12 +15,14 @@ const { parseBusinessInput } = await import('../src/lib/business-fields');
 
 const owner = randomUUID(), fan = randomUUID(), staff = randomUUID();
 const staffEmail = `${staff}@example.com`;
+const admin = randomUUID();
+const adminEmail = `${admin}@example.com`;
 const input = (name: string) => { const form = new FormData(); form.set('name', name); form.set('kind', 'brand'); return parseBusinessInput(form); };
 
 beforeAll(async () => {
-  for (const id of [owner, fan, staff]) await pool.query(
+  for (const id of [owner, fan, staff, admin]) await pool.query(
     `insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Business test',$2,true,now(),now(),$3)`, [id, `${id}@example.com`, `bz_${id.slice(0, 12)}`]);
-  await pool.query(`insert into "siteAdmin"(email, role) values ($1, 'moderator')`, [staffEmail]);
+  await pool.query(`insert into "siteAdmin"(email, role) values ($1, 'moderator'), ($2, 'admin')`, [staffEmail, adminEmail]);
 });
 afterAll(async () => {
   await pool.query('delete from review where brand = any($1::text[])', [[brand, rival]]);
@@ -30,11 +32,13 @@ afterAll(async () => {
   await pool.query('delete from "drinkSwipe" where brand = $1', [brand]);
   await pool.query('delete from "catalogEvent" where brand = $1', [brand]);
   await pool.query('delete from "brandDrinkProfile" where brand = $1', [brand]);
+  await pool.query(`delete from "adminAuditLog" where "adminEmail" = $1`, [adminEmail]);
+  await pool.query('delete from "siteAdmin" where email = $1', [adminEmail]);
   await pool.query(`delete from "marketListing" where "sellerId" = any($1::text[])`, [[owner, fan]]);
   await pool.query('delete from "adminAuditLog" where "adminEmail" = $1', [staffEmail]);
   await pool.query('delete from "siteAdmin" where email = $1', [staffEmail]);
   await pool.query('delete from notification where "userId" = any($1::text[])', [[owner, fan, staff]]);
-  await pool.query('delete from "user" where id = any($1::text[])', [[owner, fan, staff]]);
+  await pool.query('delete from "user" where id = any($1::text[])', [[owner, fan, staff, admin]]);
   await pool.end();
 });
 
@@ -53,7 +57,9 @@ it('applies, attaches drinks through moderation and counts only approved ones', 
   await expect(business.moderateBusiness(staff, company.id, 'rejected', ' ')).rejects.toThrow('причину');
   const approvedMail = vi.fn(async () => undefined);
   await business.moderateBusiness(staff, company.id, 'approved', '', approvedMail);
-  expect(approvedMail).toHaveBeenCalledWith(`${owner}@example.com`, 'Energy Lab');
+  expect((approvedMail.mock.calls[0] as unknown[]).slice(0, 2)).toEqual([`${owner}@example.com`, 'Energy Lab']);
+  // The analytics below needs a paid plan; the pilot depends on how many founders the test database already has.
+  await pool.query(`update business set plan = 'brand', "planUntil" = now() + interval '30 days' where id = $1`, [company.id]);
   // Approving again (an edit of the decision) sends nothing new.
   await business.moderateBusiness(staff, company.id, 'approved', '', approvedMail);
   expect(approvedMail).toHaveBeenCalledTimes(1);
@@ -337,4 +343,43 @@ it('queues unanswered reviews, keeps team roles, the log and brand card edits', 
   expect(steps.find(step => step.key === 'team')?.done).toBe(true);
   expect(steps.find(step => step.key === 'verified')?.done).toBe(true);
   await business.leaveBusiness(fan);
+});
+
+it('keeps plans: the free start, invoices that extend a plan and promotion requests', async () => {
+  const billing = await import('../src/lib/business-billing');
+  const plans = await import('../src/lib/business-plans');
+  const competitors = await import('../src/lib/business-competitors');
+  const company = (await business.getOwnBusiness(owner))!;
+  // On «Старт» (the paid plan ran out) competitors are closed and the team is capped.
+  await pool.query(`update business set plan = 'brand', "planUntil" = now() - interval '1 day' where id = $1`, [company.id]);
+  const expired = (await business.getOwnBusiness(owner))!;
+  expect(plans.effectivePlan(expired)).toBe('start');
+  expect(plans.hasFeature(expired, 'search')).toBe(false);
+  await expect(competitors.addCompetitor(company.id, `${brand} Rival`)).rejects.toThrow('тарифах «Бренд» и «Сеть»');
+
+  // The owner asks for an invoice (one open at a time); the admin marks it paid and the plan runs a month from today.
+  const form = new FormData();
+  for (const [key, value] of Object.entries({ plan: 'brand', period: 'month', payer: 'ООО «Энерджи Лаб»', inn: '7700000000', email: 'pay@example.com' })) form.set(key, value);
+  await expect(billing.requestPlan(fan, plans.parsePlanRequest(form))).rejects.toThrow('владелец');
+  await billing.requestPlan(owner, plans.parsePlanRequest(form));
+  await expect(billing.requestPlan(owner, plans.parsePlanRequest(form))).rejects.toThrow('уже есть');
+  const [request] = await billing.listPlanRequests(company.id);
+  expect(request).toMatchObject({ plan: 'brand', period: 'month', status: 'pending', amount: company.founder ? plans.FOUNDER_MONTHLY : 4900 });
+  await expect(billing.setPlanRequestStatus(staff, request!.id, 'paid', '')).rejects.toThrow('администратор');
+  await billing.setPlanRequestStatus(admin, request!.id, 'paid', 'Счёт №1');
+  const paid = (await business.getOwnBusiness(owner))!;
+  expect(plans.effectivePlan(paid)).toBe('brand');
+  expect(Math.round((new Date(paid.planUntil!).getTime() - Date.now()) / 86_400_000)).toBeGreaterThanOrEqual(27);
+  await expect(billing.setPlanRequestStatus(admin, request!.id, 'cancelled', '')).rejects.toThrow('закрыта');
+
+  // Promotion: a request, and «Запущено» only with the ОРД token.
+  const promo = new FormData(); promo.set('placement', 'picks'); promo.set('budget', '30 000'); promo.set('comment', 'Новинка');
+  await billing.requestPromo(owner, plans.parsePromoRequest(promo));
+  const [created] = await billing.listPromoRequests(company.id);
+  expect(created).toMatchObject({ placement: 'picks', budget: 30000, status: 'new' });
+  await expect(billing.setPromoStatus(admin, created!.id, 'running', '')).rejects.toThrow('erid');
+  await billing.setPromoStatus(admin, created!.id, 'running', 'Kra23abc');
+  expect((await billing.listPromoRequests(company.id))[0]).toMatchObject({ status: 'running', erid: 'Kra23abc' });
+  await pool.query(`delete from "businessPromoRequest" where "businessId" = $1`, [company.id]);
+  await pool.query(`delete from "businessPlanRequest" where "businessId" = $1`, [company.id]);
 });

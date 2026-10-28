@@ -77,3 +77,28 @@ describe('reply templates', () => {
     expect(replyTemplateTitle('Спасибо за подробный отзыв, мы обязательно передадим технологам')).toBe('Спасибо за подробный отзыв,…');
   });
 });
+
+describe('plans', async () => {
+  const plans = await import('../src/lib/business-plans');
+  const { historyWindow, monthlySeries } = await import('../src/lib/business-fields');
+  it('falls back to «Старт» when a paid plan ran out', () => {
+    expect(plans.effectivePlan({ plan: 'brand', planUntil: new Date(Date.now() + 86_400_000) })).toBe('brand');
+    expect(plans.effectivePlan({ plan: 'network', planUntil: new Date(Date.now() - 1000) })).toBe('start');
+    expect(plans.hasFeature({ plan: 'start' }, 'competitors')).toBe(false);
+    expect(plans.planFor('search').key).toBe('brand');
+  });
+  it('keeps the analytics window within the plan', () => {
+    expect(historyWindow('365', 365)).toBe(365);
+    expect(historyWindow('365', 90)).toBe(30);
+    expect(historyWindow('45', 365)).toBe(30);
+    expect(monthlySeries([{ week: '2026-10-01', count: 4 }], '2026-10-28').slice(-2)).toEqual([{ week: '2026-09-01', count: 0 }, { week: '2026-10-01', count: 4 }]);
+  });
+  it('reads the invoice request and prices it, founders included', () => {
+    const form = new FormData();
+    for (const [key, value] of Object.entries({ plan: 'network', period: 'year', payer: ' ИП  Иванов ', inn: '7700-0000-0000', email: 'Pay@Example.com' })) form.set(key, value);
+    expect(plans.parsePlanRequest(form)).toEqual({ plan: 'network', period: 'year', payer: 'ИП Иванов', inn: '770000000000', email: 'pay@example.com', comment: null });
+    form.set('inn', '123'); expect(() => plans.parsePlanRequest(form)).toThrow('ИНН');
+    expect(plans.planPrice('brand', 'month', true)).toBe(plans.FOUNDER_MONTHLY);
+    expect(plans.planPrice('network', 'year')).toBe(149000);
+  });
+});

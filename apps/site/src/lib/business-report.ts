@@ -1,4 +1,5 @@
 import { getPool } from '@/db/pool';
+import { PAID_PLAN_SQL } from '@/lib/business';
 import { flavorName } from '@/lib/catalog-query';
 import { brandSearchNames } from '@/lib/search-log-fields';
 import { isTelegramPlaceholderEmail } from '@/lib/telegram-init-data';
@@ -79,8 +80,8 @@ export async function getWeeklyReport(businessId: string, from: string): Promise
 type ReportMail = (to: string, report: WeeklyReport) => Promise<void>;
 
 /**
- * Sends the report of the week starting `from` to the owner and the active team of every approved company with
- * approved drinks — unless they turned it off, are banned or have only a Telegram placeholder address. Each letter is
+ * Sends the report of the week starting `from` to the owner and the active team of every approved company on a paid
+ * plan («Бренд», «Сеть») with approved drinks — unless they turned it off, are banned or have only a Telegram placeholder address. Each letter is
  * claimed in `businessWeeklyReport` first, so a second pass or another instance sends nothing twice; a failed letter
  * is marked and not retried. A pause between letters keeps the SMTP calm.
  */
@@ -92,7 +93,7 @@ export async function runWeeklyReports(from: string, send?: ReportMail, pauseMs 
      from business b
      join lateral (select b."ownerId" as id union select m."userId" from "businessMember" m where m."businessId" = b.id and m.status = 'active') t on true
      join "user" u on u.id = t.id
-     where b.status = 'approved' and exists(select 1 from "businessDrink" d where d."businessId" = b.id and d.status = 'approved')
+     where b.status = 'approved' and ${PAID_PLAN_SQL} and exists(select 1 from "businessDrink" d where d."businessId" = b.id and d.status = 'approved')
        and not exists(select 1 from "businessReportOptOut" o where o."userId" = u.id)
        and not exists(select 1 from "userBlock" x where x."userId" = u.id)
        and not exists(select 1 from "businessWeeklyReport" r where r."businessId" = b.id and r."userId" = u.id and r.week = $1)

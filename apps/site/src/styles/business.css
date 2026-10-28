@@ -402,3 +402,16 @@
 .biz-log li:last-child { border-bottom: 0; }
 .biz-log b { color: var(--color-ink); }
 .biz-log small { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+/* «6.0 Тарифы»: the chapter around the plans; the plans and the comparison table themselves are in
+   business-cabinet.css, shared with the cabinet. */
+.biz-pricing { position: relative; display: grid; gap: 28px; padding-top: 56px; scroll-margin-top: 80px; }
+.biz-pricing::before { position: absolute; top: 0; left: 50%; width: 100vw; height: 1px; background: var(--theme-line, #dfe3e8); transform: translateX(-50%); content: ""; }
+.biz-pricing-head { display: grid; gap: 14px; }
+.biz-pricing-head h2 { font-size: clamp(2.5rem, 11vw, 4.5rem); line-height: 1; letter-spacing: -0.045em; }
+.biz-pricing-head p { max-width: 36em; color: var(--color-muted-strong); font-size: 1.0625rem; line-height: 1.55; }
+.biz-pricing-note { max-width: 48em; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.5; }
+@media (min-width: 900px) {
+  .biz-pricing { padding-top: 88px; gap: 40px; }
+  .biz-pricing-head { grid-template-columns: 1fr 1fr; align-items: end; column-gap: 48px; }
+}

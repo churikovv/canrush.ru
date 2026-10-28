@@ -10,15 +10,20 @@ import { DIGEST_COOLDOWN_HOURS, DIGEST_DAILY_LIMIT, DIGEST_MIN_REVIEWS, type Rev
 import { writeReviewDigest } from '@/lib/review-digest';
 import { brandSearchNames } from '@/lib/search-log-fields';
 import { frozenMessage } from '@/lib/moderation';
+import { PILOT_COMPANIES, PILOT_DAYS, planInfo, type BusinessPlan } from '@/lib/business-plans';
 import { isTelegramPlaceholderEmail } from '@/lib/telegram-init-data';
-import { BUSINESS_ROLES, BusinessError, isBusinessMemberRole, type BusinessMemberRole, MAX_PENDING_BUSINESS_DRINKS, MAX_REPLY_TEMPLATES, parseBusinessReply, parseReplyTemplate, weeklySeries, type BusinessInput, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
+import { BUSINESS_ROLES, BusinessError, isBusinessMemberRole, type BusinessMemberRole, MAX_PENDING_BUSINESS_DRINKS, MAX_REPLY_TEMPLATES, parseBusinessReply, parseReplyTemplate, weeklySeries, monthlySeries, historyWindow, type BusinessInput, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
 
 export interface Business {
   id: string; ownerId: string; name: string; kind: BusinessKind; website: string | null; telegram: string | null;
   contactEmail: string | null; about: string | null; status: BusinessStatus; moderationNote: string | null; createdAt: Date; reviewedAt: Date | null;
   logoId: string | null;
+  /** The plan as stored and its end (migration 0133); `effectivePlan` tells what is in force. */
+  plan: BusinessPlan; planUntil: Date | null; founder: boolean;
 }
-const COLUMNS = `b.id, b."ownerId", b.name, b.kind, b.website, b.telegram, b."contactEmail", b.about, b.status, b."moderationNote", b."createdAt", b."reviewedAt", b."logoId"`;
+const COLUMNS = `b.id, b."ownerId", b.name, b.kind, b.website, b.telegram, b."contactEmail", b.about, b.status, b."moderationNote", b."createdAt", b."reviewedAt", b."logoId", b.plan, b."planUntil", b.founder`;
+/** SQL: the company (alias `b`) is on a paid plan right now. */
+export const PAID_PLAN_SQL = `(b.plan <> 'start' and b."planUntil" > now())`;
 
 export async function getOwnBusiness(userId: string): Promise<Business | null> {
   return (await getPool().query<Business>(`select ${COLUMNS} from business b where b."ownerId" = $1`, [userId])).rows[0] ?? null;
@@ -97,6 +102,10 @@ export async function requestBusinessDrink(userId: string, brand: string, flavor
   const option = (await storeDrinkOptions()).find(item => item.brand === brand && item.flavor === flavor);
   if (!option) throw new BusinessError('Такого напитка нет в каталоге. Добавьте его как новый.');
   const db = getPool();
+  // A new brand beyond the plan's brands: one brand on «Старт» and «Бренд», any on «Сеть».
+  const plan = planInfo(business);
+  const brands = (await db.query<{ brand: string }>(`select distinct brand from "businessDrink" where "businessId" = $1 and status <> 'rejected'`, [business.id])).rows.map(row => row.brand);
+  if (!brands.includes(option.brand) && brands.length >= plan.brands) throw new BusinessError(`В тарифе «${plan.title}» — напитки ${plan.brands === 1 ? 'одного бренда' : `${plan.brands} брендов`}. Несколько брендов в одном кабинете — в тарифе «Сеть».`);
   const pending = (await db.query<{ count: number }>(`select count(*)::int as count from "businessDrink" where "businessId" = $1 and status = 'pending'`, [business.id])).rows[0]!.count;
   if (pending >= MAX_PENDING_BUSINESS_DRINKS) throw new BusinessError(`На проверке уже ${MAX_PENDING_BUSINESS_DRINKS} напитков — дождитесь решения.`);
   const result = await db.query(
@@ -161,7 +170,12 @@ export async function inviteBusinessMember(ownerId: string, rawTarget: string, s
   const target = rawTarget.trim();
   const [{ count }] = (await db.query<{ count: number }>(
     `select (select count(*) from "businessMember" where "businessId" = $1) + (select count(*) from "businessEmailInvite" where "businessId" = $1) as count`, [business.id])).rows as [{ count: number }];
-  if (Number(count) >= MAX_BUSINESS_MEMBERS) throw new BusinessError(`В команде может быть до ${MAX_BUSINESS_MEMBERS} человек вместе с приглашениями.`);
+  // The plan caps the team (the owner counts as one); MAX_BUSINESS_MEMBERS stays the hard ceiling.
+  const plan = planInfo(business);
+  const limit = Math.min(MAX_BUSINESS_MEMBERS, plan.members - 1);
+  if (Number(count) >= limit) throw new BusinessError(limit < MAX_BUSINESS_MEMBERS
+    ? `В тарифе «${plan.title}» команда до ${plan.members} человек вместе с вами и приглашениями — больше в тарифах выше.`
+    : `В команде может быть до ${MAX_BUSINESS_MEMBERS} человек вместе с приглашениями.`);
   const owner = (await db.query<{ email: string; name: string }>(
     `select lower(email) as email, case when trim(name) <> '' and name not like '%@%' then name else coalesce('@' || username, 'Владелец компании') end as name from "user" where id = $1`, [ownerId])).rows[0]!;
 
@@ -477,26 +491,29 @@ export interface BusinessSearch {
  * «Поиск» in the cabinet, from the anonymous `searchQuery` log (search-log.ts): searches whose results showed one of
  * the company's brands (brands of its approved drinks) or whose text named one (the brand and its search aliases).
  */
-export async function getBusinessSearch(businessId: string, today = moscowDay(), topLimit = 20): Promise<BusinessSearch> {
+/** `days` — the window (30, 90 or 365, checked by the page against the plan); the change is against the window before it. */
+export async function getBusinessSearch(businessId: string, today = moscowDay(), topLimit = 20, days = 30): Promise<BusinessSearch> {
+  const window = historyWindow(days, 365);
   const db = getPool();
   const brands = [...new Set((await db.query<{ brand: string }>(`select distinct brand from "businessDrink" where "businessId" = $1 and status = 'approved'`, [businessId])).rows.map(row => row.brand))];
-  const empty: BusinessSearch = { brands, total30: 0, previous30: 0, shown30: 0, named30: 0, missed30: 0, weekly: weeklySeries([], today), top: [], missed: [] };
+  const empty: BusinessSearch = { brands, total30: 0, previous30: 0, shown30: 0, named30: 0, missed30: 0, weekly: window === 365 ? monthlySeries([], today) : weeklySeries([], today), top: [], missed: [] };
   if (!brands.length) return empty;
   const names = [...new Set(brands.flatMap(brandSearchNames))];
   const scope = `with s as (
       select q.*, q.brands && $1::text[] as shown, exists(select 1 from unnest($2::text[]) as n(name) where strpos(q.query, n.name) > 0) as named
-      from "searchQuery" q where q."createdAt" > now() - interval '13 weeks'),
+      from "searchQuery" q where q."createdAt" > now() - interval '${Math.max(91, window * 2)} days'),
     m as (select * from s where shown or named)`;
-  const recent = `"createdAt" > now() - interval '30 days'`;
+  const recent = `"createdAt" > now() - interval '${window} days'`;
+  const bucket = window === 365 ? 'month' : 'week';
   const [totals, weekly, top, missed] = await Promise.all([
     db.query<Omit<BusinessSearch, 'brands' | 'weekly' | 'top' | 'missed'>>(`${scope}
       select count(*) filter (where ${recent})::int as total30,
-        count(*) filter (where "createdAt" <= now() - interval '30 days' and "createdAt" > now() - interval '60 days')::int as previous30,
+        count(*) filter (where "createdAt" <= now() - interval '${window} days' and "createdAt" > now() - interval '${window * 2} days')::int as previous30,
         count(*) filter (where shown and ${recent})::int as shown30, count(*) filter (where named and ${recent})::int as named30,
         count(*) filter (where named and results = 0 and ${recent})::int as missed30
       from m`, [brands, names]),
     db.query<{ week: string; count: number }>(`${scope}
-      select date_trunc('week', "createdAt" at time zone 'Europe/Moscow')::date::text as week, count(*)::int as count from m group by 1`, [brands, names]),
+      select date_trunc('${bucket}', "createdAt" at time zone 'Europe/Moscow')::date::text as week, count(*)::int as count from m group by 1`, [brands, names]),
     db.query<BusinessSearch['top'][number]>(`${scope}
       select query, count(*)::int as count, round(avg(results))::int as results, bool_or(named) as named,
         array_agg(distinct scope order by scope) as scopes, max("createdAt") as "lastAt"
@@ -505,7 +522,7 @@ export async function getBusinessSearch(businessId: string, today = moscowDay(),
       select query, count(*)::int as count, max("createdAt") as "lastAt"
       from m where named and results = 0 and ${recent} group by query order by count(*) desc, max("createdAt") desc limit 10`, [brands, names]),
   ]);
-  return { ...empty, ...totals.rows[0]!, weekly: weeklySeries(weekly.rows, today), top: top.rows, missed: missed.rows };
+  return { ...empty, ...totals.rows[0]!, weekly: window === 365 ? monthlySeries(weekly.rows, today) : weeklySeries(weekly.rows, today), top: top.rows, missed: missed.rows };
 }
 
 export interface BusinessCards {
@@ -522,23 +539,26 @@ export interface BusinessCards {
  * Drink card analytics for the company's approved drinks (`catalogEvent`, anonymous): views of the drink page and
  * taps on a store offer, 30 days against the 30 before, by week, by drink (with the most tapped store) and by store.
  */
-export async function getBusinessCards(businessId: string, today = moscowDay()): Promise<BusinessCards> {
+export async function getBusinessCards(businessId: string, today = moscowDay(), days = 30): Promise<BusinessCards> {
+  const window = historyWindow(days, 365);
+  const bucket = window === 365 ? 'month' : 'week';
+  const series = window === 365 ? monthlySeries : weeklySeries;
   const db = getPool();
   const own = (await db.query<{ brand: string; flavor: string }>(`select brand, flavor from "businessDrink" where "businessId" = $1 and status = 'approved' order by brand, flavor`, [businessId])).rows;
-  const empty: BusinessCards = { drinks: own.length, views30: 0, previousViews30: 0, clicks30: 0, previousClicks30: 0, weekly: weeklySeries([], today).map(item => ({ ...item, clicks: 0 })), items: [], retailers: [] };
+  const empty: BusinessCards = { drinks: own.length, views30: 0, previousViews30: 0, clicks30: 0, previousClicks30: 0, weekly: series([], today).map(item => ({ ...item, clicks: 0 })), items: [], retailers: [] };
   if (!own.length) return empty;
   const params = [own.map(row => row.brand), own.map(row => row.flavor)];
   const scope = `with d as (select * from unnest($1::text[], $2::text[]) as t(brand, flavor)),
-    e as (select e.* from "catalogEvent" e join d on d.brand = e.brand and d.flavor = e.flavor where e."createdAt" > now() - interval '13 weeks')`;
-  const recent = `"createdAt" > now() - interval '30 days'`;
-  const before = `"createdAt" <= now() - interval '30 days' and "createdAt" > now() - interval '60 days'`;
+    e as (select e.* from "catalogEvent" e join d on d.brand = e.brand and d.flavor = e.flavor where e."createdAt" > now() - interval '${Math.max(91, window * 2)} days')`;
+  const recent = `"createdAt" > now() - interval '${window} days'`;
+  const before = `"createdAt" <= now() - interval '${window} days' and "createdAt" > now() - interval '${window * 2} days'`;
   const [totals, weekly, items, retailers, groups] = await Promise.all([
     db.query<Pick<BusinessCards, 'views30' | 'previousViews30' | 'clicks30' | 'previousClicks30'>>(`${scope}
       select count(*) filter (where kind = 'view' and ${recent})::int as "views30", count(*) filter (where kind = 'view' and ${before})::int as "previousViews30",
         count(*) filter (where kind = 'store' and ${recent})::int as "clicks30", count(*) filter (where kind = 'store' and ${before})::int as "previousClicks30"
       from e`, params),
     db.query<{ week: string; count: number; clicks: number }>(`${scope}
-      select date_trunc('week', "createdAt" at time zone 'Europe/Moscow')::date::text as week,
+      select date_trunc('${bucket}', "createdAt" at time zone 'Europe/Moscow')::date::text as week,
         count(*) filter (where kind = 'view')::int as count, count(*) filter (where kind = 'store')::int as clicks
       from e group by 1`, params),
     db.query<{ brand: string; flavor: string; views: number; clicks: number; retailer: string | null }>(`${scope}
@@ -557,7 +577,7 @@ export async function getBusinessCards(businessId: string, today = moscowDay()):
   const covers = new Map(groups.map(group => [JSON.stringify([group.brand, group.flavor]), group.coverImageUrl ?? null]));
   return {
     ...empty, ...totals.rows[0]!,
-    weekly: weeklySeries(weekly.rows, today).map(item => ({ ...item, clicks: clicksByWeek.get(item.week) ?? 0 })),
+    weekly: series(weekly.rows, today).map(item => ({ ...item, clicks: clicksByWeek.get(item.week) ?? 0 })),
     items: items.rows.map(row => ({ ...row, name: `${row.brand} · ${flavorName(row.flavor)}`, cover: covers.get(JSON.stringify([row.brand, row.flavor])) ?? null }))
       .sort((a, b) => b.views - a.views || b.clicks - a.clicks || a.name.localeCompare(b.name, 'ru-RU')),
     retailers: retailers.rows,
@@ -686,7 +706,7 @@ async function staffEmail(adminId: string): Promise<string> {
   return row.email;
 }
 
-type ApprovedMail = (to: string, business: string) => Promise<void>;
+type ApprovedMail = (to: string, business: string, pilotUntil: Date | null) => Promise<void>;
 
 /**
  * The team's decision on a company. Approving one that was not approved yet sends its owner the good-news letter
@@ -697,7 +717,7 @@ export async function moderateBusiness(adminId: string, id: string, status: 'app
   const email = await staffEmail(adminId);
   if (status === 'rejected' && !note.trim()) throw new BusinessError('Напишите причину отказа.');
   const db = await getPool().connect();
-  let letter: { to: string; business: string } | null = null;
+  let letter: { to: string; business: string; pilotUntil: Date | null } | null = null;
   try {
     await db.query('begin');
     const before = (await db.query<{ status: BusinessStatus; name: string; email: string }>(
@@ -705,11 +725,15 @@ export async function moderateBusiness(adminId: string, id: string, status: 'app
     if (!before) throw new BusinessError('Компания не найдена.');
     await db.query(`update business set status = $2, "moderationNote" = $3, "reviewedBy" = $4, "reviewedAt" = now() where id = $1`, [id, status, status === 'rejected' ? note.trim().slice(0, 500) : null, adminId]);
     await db.query('insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, $2, $3, $4)', [email, status === 'approved' ? 'approve' : 'reject', 'business', id]);
+    // The pilot: the first PILOT_COMPANIES approved companies get «Бренд» for PILOT_DAYS and the founder price after.
+    const pilot = status === 'approved' && before.status !== 'approved' ? (await db.query<{ planUntil: Date }>(
+      `update business set plan = 'brand', "planUntil" = now() + make_interval(days => $3), founder = true
+       where id = $1 and not founder and plan = 'start' and (select count(*) from business where founder) < $2 returning "planUntil"`, [id, PILOT_COMPANIES, PILOT_DAYS])).rows[0]?.planUntil ?? null : null;
     await db.query('commit');
-    if (status === 'approved' && before.status !== 'approved' && !isTelegramPlaceholderEmail(before.email)) letter = { to: before.email, business: before.name };
+    if (status === 'approved' && before.status !== 'approved' && !isTelegramPlaceholderEmail(before.email)) letter = { to: before.email, business: before.name, pilotUntil: pilot };
   } catch (error) { await db.query('rollback'); throw error; } finally { db.release(); }
   if (!letter) return;
-  try { await (sendMail ?? (await import('@/lib/email')).sendBusinessApprovedEmail)(letter.to, letter.business); }
+  try { await (sendMail ?? (await import('@/lib/email')).sendBusinessApprovedEmail)(letter.to, letter.business, letter.pilotUntil); }
   catch (error) { console.error('[business] approval email failed', error instanceof Error ? error.message : 'unknown'); }
 }
 
