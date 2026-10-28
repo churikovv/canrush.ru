@@ -2,7 +2,6 @@ import '@/styles/shared.css';
 import '@/styles/admin.css';
 import '@/styles/business-cabinet.css';
 import { AdminShell } from '@/components/admin-shell';
-import { BrandShell } from '@/components/brand-shell';
 import { BusinessDrinkModeration, BusinessModeration, DrinkEditModeration, PromoModeration } from '@/components/business-forms';
 import { listPromoRequests } from '@/lib/business-billing';
 import { PLANS, PROMO_PLACEMENTS, effectivePlan, rubles } from '@/lib/business-plans';
@@ -44,8 +43,7 @@ export default async function AdminBusinessPage({ searchParams }: { searchParams
     return { edit, now: { fullName: profile?.fullName ?? added?.fullName ?? null, ingredients: profile?.ingredients ?? ingredients?.ingredients ?? added?.ingredients ?? null, description: profile?.description ?? null, cover: group?.coverImageUrl ?? null } };
   })) : [];
   const drinks = tab.key === 'drinks' ? await listPendingBusinessDrinks() : [];
-  return <BrandShell headerAction={<Link className="admin-back-link" href="/profile/settings">Вернуться в настройки</Link>} surfaceClassName="admin-surface">
-    <AdminShell active="business" email={admin.email} role={admin.role} title="Компании" subtitle="Заявки бизнеса, напитки, которые компании прикрепляют к себе, и их правки карточек.">
+  return <AdminShell active="business" email={admin.email} role={admin.role} title="Компании" subtitle="Заявки бизнеса, напитки, которые компании прикрепляют к себе, и их правки карточек.">
       <nav className="market-filters" aria-label="Компании">{TABS.map(item => <Link key={item.key} href={item.key === 'pending' ? '/admin/business' : `/admin/business?tab=${item.key}`} aria-current={item.key === tab.key ? 'page' : undefined}>{item.label}</Link>)}</nav>
       {tab.key === 'promo' ? promos.length ? <div className="bc-content">{promos.map(item => <article key={item.id} className="bc-panel">
           <div className="bc-panel-head"><h2>{item.business} · {PROMO_PLACEMENTS.find(place => place.value === item.placement)?.label ?? item.placement}</h2><small>{rubles(item.budget)} · {when.format(item.createdAt)} · {item.status}</small></div>
@@ -89,5 +87,4 @@ export default async function AdminBusinessPage({ searchParams }: { searchParams
           {item.status === 'pending' && <BusinessModeration id={item.id} />}
         </article>)}</div> : <div className="admin-data-panel"><div className="admin-empty-result"><strong>{tab.empty}</strong></div></div>}
     </AdminShell>
-  </BrandShell>;
 }

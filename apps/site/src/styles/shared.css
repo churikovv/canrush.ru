@@ -184,11 +184,7 @@ button.tier-list-card-likes[aria-pressed="true"] svg { animation: tier-like-pop 
   .catalog-search-field { grid-column: 1 / -1; }
   .catalog-search-field input { font-size: 16px; }
 }
-.admin-sidebar-brand small { color: var(--theme-muted, #59616b); font-size: .75rem; }
 .admin-table-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; color: var(--theme-muted, #59616b); font-size: .8125rem; }
-@media (max-width: 959px) {
-  .admin-sidebar-group a { flex: none; border: 1px solid var(--theme-line, #dfe3e8); background: var(--theme-panel, #fff); white-space: nowrap; }
-}
 .tier-screenshot-formats button { min-height: 40px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; color: var(--color-muted-strong); font: inherit; font-size: .875rem; font-weight: 700; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
 @media (max-width: 639px) {
   .tier-screenshot-control, .tier-screenshot-control > button { width: 100%; }

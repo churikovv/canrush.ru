@@ -1,8 +1,8 @@
 import '@/styles/shared.css';
 import '@/styles/tierlists.css';
+import '@/styles/business-cabinet.css';
 import '@/styles/admin.css';
 import Image from 'next/image';
-import { BrandShell } from '@/components/brand-shell';
 import Link from '@/components/navigation-progress';
 import { StoreCard } from '@/components/store-card';
 import { StoreModeration } from '@/components/store-moderation';
@@ -45,8 +45,7 @@ export default async function AdminStoresPage({ searchParams }: { searchParams: 
     if ((next.page ?? 1) > 1) search.set('page', String(next.page));
     return `/admin/stores${search.size ? `?${search}` : ''}`;
   };
-  return <BrandShell headerAction={<Link className="admin-back-link" href="/profile/settings">Вернуться в настройки</Link>} surfaceClassName="admin-surface">
-    <AdminShell active="stores" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
+  return <AdminShell active="stores" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
       {admin.role === 'admin' && <StoreTransferBanner />}
       <div className="admin-drink-toolbar">
         <nav className="market-filters" aria-label="Магазины">{TABS.map(item => <Link key={item.key} href={href({ tab: item.key, q: '' })} aria-current={item.key === tab.key ? 'page' : undefined}>{item.label}</Link>)}</nav>
@@ -66,5 +65,4 @@ export default async function AdminStoresPage({ searchParams }: { searchParams: 
         : <div className="admin-data-panel"><div className="admin-empty-result"><strong>{query ? 'Ничего не нашлось' : tab.empty[0]}</strong><span>{query ? 'Попробуйте другое название, адрес или ник.' : tab.empty[1]}</span></div></div>}
       {(page > 1 || hasMore) && <nav className="admin-table-pagination" aria-label="Страницы магазинов"><span>Страница {page}</span><div>{page > 1 && <Link href={href({ page: page - 1 })}>← Назад</Link>}{hasMore && <Link href={href({ page: page + 1 })}>Далее →</Link>}</div></nav>}
     </AdminShell>
-  </BrandShell>;
 }

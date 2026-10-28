@@ -1,7 +1,7 @@
 import '@/styles/shared.css';
+import '@/styles/business-cabinet.css';
 import '@/styles/admin.css';
 import { notFound } from 'next/navigation';
-import { BrandShell } from '@/components/brand-shell';
 import Link from '@/components/navigation-progress';
 import { AdminShell } from '@/components/admin-shell';
 import { ContestDrawForm, ContestWinnerActions } from '@/components/contest-admin-controls';
@@ -32,8 +32,7 @@ export default async function AdminContestPage({ params }: { params: Promise<{ k
   const current = draws.find(draw => draw.status !== 'unreachable');
   const excluded = new Set(draws.filter(draw => draw.status === 'unreachable').map(draw => draw.winnerId));
   const phase = contestPhase(contest, new Date());
-  return <BrandShell headerAction={<Link className="admin-back-link" href="/profile">Вернуться в профиль</Link>} surfaceClassName="admin-surface">
-    <AdminShell active="contest" email={admin.email} title={contest.title}
+  return <AdminShell active="contest" email={admin.email} title={contest.title}
       subtitle={`${contest.prize} · банка в календаре до ${contest.lastDayLabel}, итоги ${contest.resultsLabel}${phase === 'open' ? ' · приём идёт' : ''}.`}
       actions={<Link className="community-button community-button-secondary" href="/admin/contest">Все конкурсы</Link>}>
       <div className="admin-metrics">{[
@@ -74,5 +73,4 @@ export default async function AdminContestPage({ params }: { params: Promise<{ k
         </tbody></table></div> : <div className="admin-empty-result"><strong>Пока никто не отметил банку</strong><span>Участники появятся здесь после первой отметки в календаре.</span></div>}
       </section>
     </AdminShell>
-  </BrandShell>;
 }

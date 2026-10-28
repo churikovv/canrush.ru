@@ -1,9 +1,9 @@
 import '@/styles/shared.css';
+import '@/styles/business-cabinet.css';
 import '@/styles/admin.css';
 import '@/styles/catalog.css';
 import Image from 'next/image';
 import { AdminShell } from '@/components/admin-shell';
-import { BrandShell } from '@/components/brand-shell';
 import { CatalogDrinkAdminMenu } from '@/components/catalog-drink-admin';
 import { CatalogDrinkModeration } from '@/components/catalog-drink-moderation';
 import Link from '@/components/navigation-progress';
@@ -44,8 +44,7 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
     if ((next.page ?? 1) > 1) search.set('page', String(next.page));
     return `/admin/drinks${search.size ? `?${search}` : ''}`;
   };
-  return <BrandShell headerAction={<Link className="admin-back-link" href="/profile/settings">Вернуться в настройки</Link>} surfaceClassName="admin-surface">
-    <AdminShell active="drinks" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
+  return <AdminShell active="drinks" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
       <div className="admin-drink-toolbar">
         <nav className="market-filters" aria-label="Напитки участников">{TABS.map(item => <Link key={item.key} href={href({ tab: item.key, q: '' })} aria-current={item.key === tab.key ? 'page' : undefined}>{item.label}</Link>)}</nav>
         <form className="admin-drink-search" action="/admin/drinks" role="search">
@@ -76,5 +75,4 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
         : <div className="admin-data-panel"><div className="admin-empty-result"><strong>{query ? 'Ничего не нашлось' : tab.empty[0]}</strong><span>{query ? 'Попробуйте другой бренд или вкус.' : tab.empty[1]}</span></div></div>}
       {(page > 1 || hasMore) && <nav className="admin-table-pagination" aria-label="Страницы напитков"><span>Страница {page}</span><div>{page > 1 && <Link href={href({ page: page - 1 })}>← Назад</Link>}{hasMore && <Link href={href({ page: page + 1 })}>Далее →</Link>}</div></nav>}
     </AdminShell>
-  </BrandShell>;
 }

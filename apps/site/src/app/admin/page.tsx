@@ -1,10 +1,9 @@
 import '@/styles/shared.css';
 import '@/styles/profile.css';
+import '@/styles/business-cabinet.css';
 import '@/styles/admin.css';
 import { AdminCampaigns } from '@/components/admin-campaigns';
 import type { Metadata } from 'next';
-import Link from '@/components/navigation-progress';
-import { BrandShell } from '@/components/brand-shell';
 import { AdminDashboard } from '@/components/admin-dashboard';
 import { requireSiteAdmin } from '@/lib/admin';
 import { redirect } from 'next/navigation';
@@ -55,19 +54,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const data = await getAdminDashboardData(query, tab, adminPage(params.page), admin.role === 'admin');
 
   return (
-    <BrandShell
-      headerAction={<Link className="admin-back-link" href="/profile/settings">Вернуться в настройки</Link>}
-      surfaceClassName="admin-surface"
-    >
-      <AdminDashboard
-        campaignPanel={tab === 'campaigns' ? <AdminCampaigns days={[0,7,30,90].includes(Number(params.days)) ? Number(params.days) : 30} page={adminPage(params.page)} /> : undefined}
-        admin={admin}
-        data={data}
-        tab={tab}
-        query={query}
-        notice={params.notice ? NOTICES[params.notice] : undefined}
-        error={params.error ? ERRORS[params.error] : undefined}
-      />
-    </BrandShell>
+    <AdminDashboard
+      campaignPanel={tab === 'campaigns' ? <AdminCampaigns days={[0,7,30,90].includes(Number(params.days)) ? Number(params.days) : 30} page={adminPage(params.page)} /> : undefined}
+      admin={admin}
+      data={data}
+      tab={tab}
+      query={query}
+      notice={params.notice ? NOTICES[params.notice] : undefined}
+      error={params.error ? ERRORS[params.error] : undefined}
+    />
   );
 }

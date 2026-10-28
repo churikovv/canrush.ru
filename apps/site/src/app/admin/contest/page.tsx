@@ -1,7 +1,7 @@
 import '@/styles/shared.css';
+import '@/styles/business-cabinet.css';
 import '@/styles/admin.css';
 import Image from 'next/image';
-import { BrandShell } from '@/components/brand-shell';
 import Link from '@/components/navigation-progress';
 import { AdminShell } from '@/components/admin-shell';
 import { requireFullAdmin } from '@/lib/admin';
@@ -19,8 +19,7 @@ export default async function AdminContestsPage() {
   const admin = await requireFullAdmin();
   const now = new Date();
   const cards = await Promise.all([...CONTESTS].sort((a, b) => b.resultsDay.localeCompare(a.resultsDay)).map(async contest => ({ contest, phase: contestPhase(contest, now), overview: await getContestOverview(contest) })));
-  return <BrandShell headerAction={<Link className="admin-back-link" href="/profile">Вернуться в профиль</Link>} surfaceClassName="admin-surface">
-    <AdminShell active="contest" email={admin.email} title="Конкурсы" subtitle="Выберите конкурс, чтобы посмотреть участников и провести розыгрыш.">
+  return <AdminShell active="contest" email={admin.email} title="Конкурсы" subtitle="Выберите конкурс, чтобы посмотреть участников и провести розыгрыш.">
       <div className="contest-cards">{cards.map(({ contest, phase, overview }) => <Link key={contest.key} href={`/admin/contest/${contest.key}`} className="contest-card" data-phase={phase}>
         <span className="contest-card-art"><Image src={contest.image.src} width={contest.image.width} height={contest.image.height} alt="" sizes="160px" /></span>
         <span className="contest-card-body">
@@ -34,5 +33,4 @@ export default async function AdminContestsPage() {
       </Link>)}</div>
       <p className="admin-chart-note">Новый конкурс добавляется записью в <code>CONTESTS</code> (<code>src/lib/contest.ts</code>): даты, приз, картинка, тексты баннера и тег победителя.</p>
     </AdminShell>
-  </BrandShell>;
 }
