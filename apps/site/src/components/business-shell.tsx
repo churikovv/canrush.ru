@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { BusinessFrame } from '@/components/business-shell-client';
+import { BusinessFrame, BusinessNotifications } from '@/components/business-shell-client';
 import Link from '@/components/navigation-progress';
 import { BUSINESS_KINDS, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
 
-export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'brand' | 'drinks' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings';
+export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings';
 export const businessHref = (section: BusinessSection, params: Record<string, string> = {}) =>
   `/business/cabinet?${new URLSearchParams({ ...(section !== 'overview' ? { section } : {}), ...params })}`.replace(/\?$/, '');
 
@@ -17,7 +17,6 @@ const ICONS = {
   help: <><path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3v4ZM3 19a2 2 0 0 0 2 2h1v-6H3v4Z" /></>,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
   chevron: <path d="m6 9 6 6 6-6" />,
-  bell: <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" />,
   chat: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />,
 };
 export type BusinessIconName = keyof typeof ICONS;
@@ -28,22 +27,25 @@ export function BusinessIcon({ name, size = 20 }: { name: BusinessIconName; size
 type NavLeaf = { label: string; section?: BusinessSection; href?: string };
 const NAV: { label: string; icon: BusinessIconName; section?: BusinessSection; items?: NavLeaf[] }[] = [
   { label: 'Обзор', icon: 'home', section: 'overview' },
-  { label: 'Аналитика', icon: 'chart', items: [{ label: 'Отзывы', section: 'reviews' }, { label: 'Разбор нейросетью', section: 'insights' }, { label: 'Поиск', section: 'search' }, { label: 'Бренд', section: 'brand' }] },
+  { label: 'Аналитика', icon: 'chart', items: [{ label: 'Отзывы', section: 'reviews' }, { label: 'Разбор нейросетью', section: 'insights' }, { label: 'Поиск', section: 'search' }, { label: 'Карточки', section: 'cards' }, { label: 'Конкуренты', section: 'competitors' }, { label: 'Бренд', section: 'brand' }] },
   { label: 'Каталог', icon: 'can', items: [{ label: 'Напитки', section: 'drinks' }, { label: 'Новый напиток', section: 'new-drink' }] },
   { label: 'Продажи', icon: 'bag', items: [{ label: 'Объявления', section: 'market' }, { label: 'Новое объявление', section: 'new-listing' }, { label: 'Заказы и чаты', section: 'orders' }] },
 ];
 
 /**
  * The cabinet as its own app, without the site's header: a full-height sidebar (brand, ⌘K search over reviews, grouped
- * sections, settings and help, the company card with its kind at the bottom — its status is in the page's banner), a top bar with icon buttons and actions, an optional
+ * sections, and the company card with its kind at the bottom, which opens settings, the site and help — its status is in the page's banner), a top bar with icon buttons and actions, an optional
  * toolbar row (segmented tabs, search, filter, sort) and the section. On phones the sidebar is a drawer.
  */
-export function BusinessShell({ business, active, title, actions, toolbar, unread, unreadMessages, children }: {
+export function BusinessShell({ business, active, title, actions, toolbar, unread, unreadMessages, badges = {}, children }: {
   business: { name: string; kind: BusinessKind; status: BusinessStatus; logoId: string | null };
-  active: BusinessSection; title: string; actions?: ReactNode; toolbar?: ReactNode; unread: number; unreadMessages: number; children: ReactNode;
+  active: BusinessSection; title: string; actions?: ReactNode; toolbar?: ReactNode; unread: number; unreadMessages: number;
+  /** Counters beside sections, like reviews waiting for an answer. */
+  badges?: Partial<Record<BusinessSection, { count: number; label: string }>>; children: ReactNode;
 }) {
   const leaf = (item: NavLeaf) => item.section
-    ? <Link key={item.label} href={businessHref(item.section)} aria-current={item.section === active ? 'page' : undefined}>{item.label}</Link>
+    ? <Link key={item.label} href={businessHref(item.section)} aria-current={item.section === active ? 'page' : undefined}>{item.label}
+      {badges[item.section] && badges[item.section]!.count > 0 && <span className="bc-nav-badge" aria-label={badges[item.section]!.label}>{badges[item.section]!.count > 99 ? '99+' : badges[item.section]!.count}</span>}</Link>
     : <Link key={item.label} href={item.href!}>{item.label}</Link>;
   const sidebar = <aside className="bc-sidebar" aria-label="Кабинет">
     <Link className="bc-brand" href={businessHref('overview')}>
@@ -62,18 +64,21 @@ export function BusinessShell({ business, active, title, actions, toolbar, unrea
       </details>
       : <Link key={item.label} className="bc-nav-top" href={businessHref(item.section!)} aria-current={item.section === active ? 'page' : undefined}><BusinessIcon name={item.icon} /><span>{item.label}</span></Link>)}
     </nav>
-    <div className="bc-nav-bottom">
-      <Link className="bc-nav-top" href={businessHref('settings')} aria-current={active === 'settings' ? 'page' : undefined}><BusinessIcon name="settings" /><span>Настройки</span></Link>
-      <Link className="bc-nav-top" href="/"><BusinessIcon name="site" /><span>Сайт CanRush</span></Link>
-      <a className="bc-nav-top" href="mailto:hello@canrush.ru"><BusinessIcon name="help" /><span>Помощь и поддержка</span></a>
-    </div>
-    <Link className="bc-workspace" href={businessHref('settings')}>
-      <span className="bc-workspace-logo" aria-hidden="true">{business.logoId
-        // eslint-disable-next-line @next/next/no-img-element -- the logo is served from the database
-        ? <img src={`/api/business-logos/${business.logoId}`} alt="" width={40} height={40} /> : business.name.slice(0, 2).toUpperCase()}</span>
-      <span className="bc-workspace-text"><strong>{business.name}</strong><small>{BUSINESS_KINDS.find(item => item.value === business.kind)?.label}</small></span>
-      <span className="bc-workspace-chevron"><BusinessIcon name="chevron" size={16} /></span>
-    </Link>
+    {/* The company card at the bottom opens settings, the site and help — a menu above it, like a workspace switcher. */}
+    <details className="bc-dropdown bc-workspace-menu">
+      <summary className="bc-workspace" aria-label={`${business.name}: настройки и помощь`}>
+        <span className="bc-workspace-logo" aria-hidden="true">{business.logoId
+          // eslint-disable-next-line @next/next/no-img-element -- the logo is served from the database
+          ? <img src={`/api/business-logos/${business.logoId}`} alt="" width={40} height={40} /> : business.name.slice(0, 2).toUpperCase()}</span>
+        <span className="bc-workspace-text"><strong>{business.name}</strong><small>{BUSINESS_KINDS.find(item => item.value === business.kind)?.label}</small></span>
+        <span className="bc-workspace-chevron"><BusinessIcon name="chevron" size={16} /></span>
+      </summary>
+      <div className="bc-dropdown-menu bc-workspace-items">
+        <Link href={businessHref('settings')} aria-current={active === 'settings' ? 'page' : undefined}><BusinessIcon name="settings" size={18} />Настройки</Link>
+        <Link href="/"><BusinessIcon name="site" size={18} />Сайт CanRush</Link>
+        <a href="mailto:hello@canrush.ru"><BusinessIcon name="help" size={18} />Помощь и поддержка</a>
+      </div>
+    </details>
   </aside>;
   return <BusinessFrame sidebar={sidebar}>
     <header className="bc-topbar">
@@ -82,9 +87,7 @@ export function BusinessShell({ business, active, title, actions, toolbar, unrea
         <Link className="bc-icon-button" href={businessHref('orders')} aria-label={unreadMessages ? `Заказы и чаты: ${unreadMessages} новых сообщений` : 'Заказы и чаты'} title="Заказы и чаты">
           <BusinessIcon name="chat" />{unreadMessages > 0 && <span className="bc-dot" aria-hidden="true" />}
         </Link>
-        <Link className="bc-icon-button" href="/notifications" aria-label={unread ? `Уведомления: ${unread} новых` : 'Уведомления'} title="Уведомления">
-          <BusinessIcon name="bell" />{unread > 0 && <span className="bc-dot" aria-hidden="true" />}
-        </Link>
+        <BusinessNotifications unread={unread} />
         {actions && <span className="bc-topbar-divider" aria-hidden="true" />}
         {actions}
       </div>

@@ -71,7 +71,8 @@
 @media (max-width: 359px) { .market-grid { grid-template-columns: 1fr; } }
 .market-gallery-open { display: block; width: 100%; padding: 0; border: 0; border-radius: 16px; background: var(--color-subtle); cursor: zoom-in; overflow: hidden; }
 .market-form .market-any-city { display: flex; align-items: center; gap: 10px; font-weight: 400; min-height: 44px; }
-.market-any-city input { width: 20px; height: 20px; accent-color: var(--color-brand); }
+/* `.store-form input` (the wizard's form class) would stretch the box to a full-width field. */
+.market-any-city input, .store-form .market-any-city input { flex: none; width: 20px; min-height: 0; height: 20px; margin: 0; padding: 0; accent-color: var(--color-brand); }
 .market-dropzone.market-dropzone-compact { display: inline-flex; padding: 0; border: 0; background: none; }
 .market-dropzone-compact:has(button:disabled) { opacity: .6; }
 .market-search-filters { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)) auto; align-items: end; gap: 16px; margin: 24px 0 32px; }
@@ -268,3 +269,22 @@
 .market-listing-preview p b { color: var(--color-ink); }
 .market-listing-preview-text { display: -webkit-box; overflow: hidden; font-size: .875rem; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
 @media (max-width: 479px) { .market-listing-preview { grid-template-columns: 88px minmax(0, 1fr); gap: 12px; padding: 12px; } }
+
+/* Listings on behalf of a company (migration 0126): its logo and name on the card and the seller card. */
+.market-company-logo { display: inline-grid; place-items: center; flex: none; overflow: hidden; border-radius: 10px; background: color-mix(in srgb, var(--color-brand) 16%, transparent); color: var(--color-brand-deep); font-size: .75rem; font-weight: 800; }
+.market-company-logo img { width: 100%; height: 100%; object-fit: cover; }
+.market-seller-card .market-company-logo { border-radius: 12px; font-size: 1rem; }
+.market-card-company { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; color: var(--color-ink); font-size: .8125rem; font-weight: 600; overflow-wrap: anywhere; }
+.market-card-company .market-company-logo { border-radius: 6px; font-size: .625rem; }
+.market-company-badge { margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand-deep); font-size: .6875rem; font-weight: 700; }
+.market-seller-card.is-company .market-seller-text small a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+.market-listing-author { display: grid; gap: 8px; margin: 0 0 16px; padding: 0; border: 0; }
+.market-listing-author legend { margin-bottom: 8px; font-weight: 700; }
+.store-form .market-listing-author label { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 16px; cursor: pointer; }
+.store-form .market-listing-author label:has(input:checked) { border-color: var(--color-brand); background: color-mix(in srgb, var(--color-brand) 7%, transparent); }
+.store-form .market-listing-author input { flex: none; width: 18px; min-height: 0; height: 18px; margin: 0; padding: 0; accent-color: var(--color-brand); }
+.market-listing-author .market-company-logo { width: 40px; height: 40px; font-size: .9375rem; }
+.market-listing-author .market-company-logo.is-person { border-radius: 50%; }
+.market-listing-author label > span:last-child { display: grid; gap: 2px; min-width: 0; }
+.market-listing-author small { color: var(--color-muted-strong); font-size: .8125rem; }

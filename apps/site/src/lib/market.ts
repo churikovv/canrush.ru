@@ -6,7 +6,11 @@ import type { MarketEvent } from './telegram-bot/format';
 import { enqueueTelegram, type MarketPayload } from './telegram-bot/outbox';
 import { enqueuePush } from './push/outbox';
 
-export interface Listing extends ListingInput { id: string; sellerId: string; sellerName: string; username: string | null; closed: boolean; createdAt: string; photos: string[] }
+export interface Listing extends ListingInput {
+  id: string; sellerId: string; sellerName: string; username: string | null; closed: boolean; createdAt: string; photos: string[];
+  /** Set when the listing is published on behalf of an approved company (migration 0126): its name and logo. */
+  businessId: string | null; businessName: string | null; businessLogoId: string | null;
+}
 export interface MarketOrder { id: string; listingId: string; buyerId: string; sellerId: string; status: OrderStatus; title: string; price: number; unitPrice: number; quantity: number; city: string; delivery: Delivery[]; closed: boolean; buyerName: string; sellerName: string; buyerUsername: string | null; sellerUsername: string | null; photoId: string | null; updatedAt: string; unread: number }
 export interface MarketMessage { id: string; senderId: string; text: string; createdAt: string; photos: string[] }
 async function transaction<T>(work: (db: PoolClient) => Promise<T>) {
@@ -28,24 +32,38 @@ async function savePhotos(db: PoolClient, kind: 'listingId' | 'messageId', id: s
   if (photos.length > 5) throw new MarketError('Можно добавить не более 5 фотографий.');
   for (const [position, photo] of photos.entries()) await db.query(`insert into "marketPhoto"("${kind}",position,data,thumbnail) values($1,$2,$3,$4)`, [id, position, photo.data, photo.thumbnail]);
 }
-export async function createListing(userId: string, input: ListingInput, photos: PreparedReviewPhoto[]) {
+/**
+ * A new listing. With `businessId` it is published on behalf of that company: only its owner or an active team member,
+ * and only while the company is approved. The seller is still the member — orders and the chat go to them.
+ */
+export async function createListing(userId: string, input: ListingInput, photos: PreparedReviewPhoto[], businessId: string | null = null) {
   if (!photos.length || photos.length > 5) throw new MarketError('Добавьте от 1 до 5 фотографий.');
   return transaction(async db => {
     await allowed(db, userId); await cooldown(db, userId, 'lastMarketListingAt', 60);
+    if (businessId && !(await db.query(`select 1 from business b where b.id=$1 and b.status='approved' and (b."ownerId"=$2 or exists(select 1 from "businessMember" m where m."businessId"=b.id and m."userId"=$2 and m.status='active' and m.role='manager'))`, [businessId, userId])).rowCount)
+      throw new MarketError('Публиковать от имени компании можно после её проверки — владельцу и менеджерам команды.');
     const quantity = parseQuantity(input.quantity);
-    const { rows } = await db.query('insert into "marketListing"("sellerId",title,description,city,price,delivery,quantity,brand,"anyCity") values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id', [userId, input.title, input.description, input.city, input.price, input.delivery, quantity, input.brand ?? null, input.anyCity ?? false]);
+    const { rows } = await db.query('insert into "marketListing"("sellerId",title,description,city,price,delivery,quantity,brand,"anyCity","businessId") values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id', [userId, input.title, input.description, input.city, input.price, input.delivery, quantity, input.brand ?? null, input.anyCity ?? false, businessId]);
     await db.query(`update "user" set "profileLayout"=jsonb_set("profileLayout",'{hidden}',("profileLayout"->'hidden')-'listings') where id=$1`, [userId]);
-    const id = rows[0].id as string; await savePhotos(db, 'listingId', id, photos); return id;
+    const id = rows[0].id as string; await savePhotos(db, 'listingId', id, photos);
+    if (businessId) await db.query(`insert into "businessAuditLog"("businessId", "userId", action, target) values ($1, $2, 'listing', $3)`, [businessId, userId, input.title.slice(0, 200)]);
+    return id;
   });
 }
 const listingSelect = `select l.*,case when trim(u.name)<>'' and u.name not like '%@%' then u.name else coalesce(u.username,'Участник') end as "sellerName",u.username,
-  array(select p.id::text from "marketPhoto" p where p."listingId"=l.id order by position) as photos
-  from "marketListing" l join "user" u on u.id=l."sellerId"`;
+  array(select p.id::text from "marketPhoto" p where p."listingId"=l.id order by position) as photos,
+  b.name as "businessName",b."logoId" as "businessLogoId"
+  from "marketListing" l join "user" u on u.id=l."sellerId" left join business b on b.id=l."businessId" and b.status='approved'`;
 export async function getListings(page = 1, mine?: string, archive = false, seller?: string, filters: MarketFilters = {}) {
   const { rows } = await getPool().query(`${listingSelect} where l."deletedAt" is null and ($8::text is null or strpos(lower(concat_ws(' ',l.title,l.description,l.brand)),lower($8))>0) and ($5::text is null or lower(l.brand)=lower($5)) and ($6::text is null or l."anyCity" or lower(l.city)=lower($6)) and ($7::text is null or $7=any(l.delivery)) and ($4::text is null or u.username=$4) and (not $3::boolean or l.closed) and
     ($1::text is not null and l."sellerId"=$1 or $1::text is null and not l.closed and not exists(select 1 from "userBlock" where "userId"=l."sellerId"))
     order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24, Boolean(mine && archive), seller ?? null, filters.brand || null, filters.city || null, filters.delivery || null, filters.q?.trim().slice(0,200) || null]);
   return { items: rows.slice(0, 24).map(row => ({ ...row, createdAt: row.createdAt.toISOString() }) as Listing), hasMore: rows.length > 24 };
+}
+/** The cabinet's listings: the member's own and every listing published on behalf of their company, newest first. */
+export async function getCabinetListings(userId: string, businessId: string | null) {
+  const { rows } = await getPool().query(`${listingSelect} where l."deletedAt" is null and (l."sellerId"=$1 or l."businessId"=$2) order by l."createdAt" desc,l.id desc limit 200`, [userId, businessId]);
+  return rows.map(row => ({ ...row, createdAt: row.createdAt.toISOString() }) as Listing);
 }
 export async function getListing(id: string, viewer?: string, admin = false) {
   marketId(id);

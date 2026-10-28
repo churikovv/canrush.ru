@@ -28,8 +28,10 @@ const EMPTY: Fields = { title: '', description: '', price: '', quantity: '', cit
  * the market and in the business cabinet (`inCabinet`: after publishing it returns to the cabinet's listings). Each
  * step is checked before moving on, and the last one runs the server's own `parseListing`, so its messages match.
  */
-export function MarketListingForm({ brands, inCabinet = false }: { brands: string[]; inCabinet?: boolean }) {
+export function MarketListingForm({ brands, inCabinet = false, company = null }: { brands: string[]; inCabinet?: boolean; company?: { name: string; logoId: string | null } | null }) {
   const [step, setStep] = useState(0);
+  // In the cabinet of an approved company the listing goes out on its behalf unless «Лично» is picked.
+  const [asCompany, setAsCompany] = useState(Boolean(company));
   const [reached, setReached] = useState(0);
   const [fields, setFields] = useState<Fields>(EMPTY);
   const [brand, setBrand] = useState('');
@@ -51,6 +53,7 @@ export function MarketListingForm({ brands, inCabinet = false }: { brands: strin
     data.set('price', fields.price); data.set('quantity', fields.quantity);
     if (anyCity) data.set('anyCity', 'on'); else data.set('city', fields.city);
     fields.delivery.forEach(value => data.append('delivery', value));
+    if (company && asCompany) data.set('asBusiness', '1');
     return data;
   }
   /** What keeps a step from being finished, or '' when it is ready. */
@@ -127,17 +130,25 @@ export function MarketListingForm({ brands, inCabinet = false }: { brands: strin
 
     <section className="form-card" aria-labelledby="listing-step-check" tabIndex={-1} hidden={step !== LAST_STEP}>
       <FormStep n={5} id="listing-step-check" title="Проверка" hint="Так объявление увидят в маркете. Если что-то не так — вернитесь к нужному шагу." />
+      {company && <fieldset className="market-listing-author"><legend>Опубликовать от имени</legend>
+        <label><input type="radio" name="listing-author" checked={asCompany} onChange={() => setAsCompany(true)} />
+          <span className="market-company-logo" aria-hidden="true">{company.logoId ? <Image src={`/api/business-logos/${company.logoId}`} width={40} height={40} unoptimized alt="" /> : company.name.slice(0, 1).toUpperCase()}</span>
+          <span><strong>{company.name}</strong><small>Компания: название и логотип в маркете</small></span></label>
+        <label><input type="radio" name="listing-author" checked={!asCompany} onChange={() => setAsCompany(false)} />
+          <span className="market-company-logo is-person" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg></span>
+          <span><strong>Лично</strong><small>Как обычное объявление участника</small></span></label>
+      </fieldset>}
       {preview && <div className="market-listing-preview">
         <span className="market-listing-preview-cover">{photoUrl ? <Image src={photoUrl} width={160} height={160} unoptimized alt="" /> : null}</span>
         <div>
-          <small>{preview.brand}{photos.length > 1 ? ` · ${photos.length} фото` : ''}</small>
+          <small>{preview.brand}{photos.length > 1 ? ` · ${photos.length} фото` : ''}{company && asCompany ? ` · ${company.name}` : ''}</small>
           <strong>{preview.title}</strong>
           <p><b>{formatPrice(preview.price)}</b> за банку · {preview.quantity} шт.</p>
           <p>{preview.city} · {preview.delivery.map(value => DELIVERY[value]).join(', ')}</p>
           <p className="market-listing-preview-text">{preview.description}</p>
         </div>
       </div>}
-      <p className="market-note">Оплату и доставку вы согласуете с покупателем в переписке. CanRush не принимает платежи и не оформляет доставку.</p>
+      <p className="market-note">{company && asCompany ? 'Заказы и переписка придут вам, а покупатель увидит компанию. ' : ''}Оплату и доставку вы согласуете с покупателем в переписке. CanRush не принимает платежи и не оформляет доставку.</p>
     </section>
 
     <div className="form-submit store-form-footer">

@@ -41,8 +41,7 @@
 .bc-search:focus-within { border-color: var(--bc-text); }
 .bc-kbd { display: flex; gap: 4px; }
 .bc-kbd kbd { display: inline-grid; min-width: 24px; height: 24px; place-items: center; padding: 0 4px; border-radius: 6px; background: var(--bc-soft); color: var(--bc-muted); font: 600 .75rem var(--bc-font); }
-.bc-nav, .bc-nav-bottom { display: grid; gap: 2px; }
-.bc-nav-bottom { margin-top: auto; }
+.bc-nav { display: grid; gap: 2px; }
 .bc-nav-top, .bc-nav-group > summary { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--bc-text); font-size: .9375rem; text-decoration: none; cursor: pointer; }
 .bc-nav-top:hover, .bc-nav-group > summary:hover { background: color-mix(in srgb, var(--bc-text) 6%, transparent); }
 .bc-nav-top[aria-current="page"] { background: var(--bc-panel); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / 6%); }
@@ -56,6 +55,19 @@
 .bc-nav-items a:hover { color: var(--bc-text); background: color-mix(in srgb, var(--bc-text) 6%, transparent); }
 .bc-nav-items a[aria-current="page"] { color: var(--bc-text); font-weight: 600; }
 .bc-nav-items a[aria-current="page"]::before { position: absolute; left: -14px; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--bc-text); content: ""; }
+/* The company card opens a menu above it: settings, the site, help. */
+.bc-workspace-menu { margin-top: auto; }
+.bc-workspace { list-style: none; cursor: pointer; }
+.bc-workspace::-webkit-details-marker { display: none; }
+.bc-workspace:hover { border-color: color-mix(in srgb, var(--bc-text) 20%, var(--bc-line)); }
+.bc-workspace:focus-visible { outline: 2px solid var(--color-focus, var(--color-brand)); outline-offset: 2px; }
+.bc-workspace-chevron { transition: transform 150ms ease-out; }
+.bc-workspace-menu[open] .bc-workspace-chevron { transform: rotate(180deg); }
+.bc-dropdown.bc-workspace-menu .bc-workspace-items { top: auto; right: 0; bottom: calc(100% + 6px); left: 0; min-width: 0; }
+.bc-workspace-items a { gap: 10px; min-height: 44px; }
+.bc-workspace-items a svg { flex: none; color: var(--bc-muted); }
+.bc-workspace-items a[aria-current="page"] { font-weight: 600; background: var(--bc-soft); }
+@media (prefers-reduced-motion: reduce) { .bc-workspace-chevron { transition: none; } }
 .bc-workspace { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--bc-line); border-radius: 14px; background: var(--bc-panel); color: var(--bc-text); text-decoration: none; }
 .bc-workspace-logo { display: grid; flex: none; width: 40px; height: 40px; place-items: center; border-radius: 10px; background: var(--color-brand); color: #fff; font-weight: 700; }
 .bc-workspace-text { display: grid; min-width: 0; flex: 1; }
@@ -373,3 +385,166 @@
 .bc-button.is-danger { border-color: transparent; background: transparent; color: var(--bc-bad); box-shadow: none; margin-left: auto; }
 @media (pointer: coarse) { .bc-reply-dialog textarea { font-size: 1rem; } }
 @media (max-width: 639px) { .bc-reply-actions .bc-button { width: 100%; } .bc-button.is-danger { margin-left: 0; } .bc-reply-dialog { margin: auto 0 0; width: 100vw; max-width: none; border-radius: 20px 20px 0 0; } }
+
+/* «Карточки»: where taps on store offers go — each row is filled to its share of the busiest store. */
+.bc-cards-stores { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.bc-cards-stores li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-brand) 14%, transparent) calc(var(--v) * 100%), var(--bc-soft) 0); }
+.bc-cards-stores span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bc-cards-stores b { flex: none; color: var(--color-brand); }
+
+/* Settings → «Компания» after applying: the checked data, read-only. */
+.bc-company-data { display: grid; gap: 0; margin: 0 0 12px; }
+.bc-company-data > div { display: grid; grid-template-columns: minmax(120px, 200px) 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--bc-line); }
+.bc-company-data > div:last-child { border-bottom: 0; }
+.bc-company-data dt { color: var(--bc-muted); }
+.bc-company-data dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+@media (max-width: 639px) { .bc-company-data > div { grid-template-columns: 1fr; gap: 2px; } }
+
+/* The bell's panel: under the button on wide screens, across the screen on phones. */
+.bc-notify { position: relative; }
+.bc-notify-panel { position: absolute; z-index: 40; top: calc(100% + 8px); right: 0; display: grid; grid-template-rows: auto auto 1fr; width: min(400px, calc(100vw - 32px)); max-height: min(560px, calc(100dvh - 120px)); overflow: hidden; border: 1px solid var(--bc-line); border-radius: 16px; background: var(--bc-panel); box-shadow: 0 20px 44px -16px rgb(10 25 60 / .4); text-align: left; }
+.bc-notify-panel header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 16px 16px 10px; border-bottom: 1px solid var(--bc-line); }
+.bc-notify-panel header strong { font-size: 1rem; }
+.bc-notify-panel header span { font-size: .8125rem; }
+.bc-notify-error { margin: 10px 16px 0; color: var(--bc-bad); font-size: .875rem; }
+.bc-notify-list { overflow-y: auto; overscroll-behavior: contain; padding: 6px; }
+.bc-notify-list ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.bc-notify-list a { display: flex; gap: 10px; padding: 10px; border-radius: 10px; color: var(--bc-text); text-decoration: none; }
+.bc-notify-list a:hover { background: var(--bc-soft); }
+.bc-notify-list a > span:last-child { display: grid; gap: 2px; min-width: 0; }
+.bc-notify-list strong { font-size: .875rem; font-weight: 600; overflow-wrap: anywhere; }
+.bc-notify-list small { color: var(--bc-muted); font-size: .8125rem; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bc-notify-list time { color: var(--bc-muted); font-size: .75rem; }
+.bc-notify-dot { flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: transparent; }
+.bc-notify-list li[data-unread] .bc-notify-dot { background: var(--color-brand); }
+.bc-notify-list li[data-unread] a { background: color-mix(in srgb, var(--color-brand) 6%, transparent); }
+.bc-notify-empty { display: grid; gap: 4px; padding: 24px 12px; text-align: center; }
+.bc-notify-more { width: 100%; min-height: 44px; margin-top: 4px; border: 0; border-radius: 10px; background: var(--bc-soft); color: var(--bc-text); font: inherit; font-weight: 600; cursor: pointer; }
+@media (max-width: 639px) {
+  .bc-notify { position: static; }
+  .bc-notify-panel { position: fixed; top: var(--bc-notify-top, 72px); right: 16px; left: 16px; width: auto; max-height: calc(100dvh - var(--bc-notify-top, 72px) - 24px); }
+}
+
+/* «Конкуренты»: the picker, the attention bar and the comparison table. Sides are told apart by tone, not by colour
+   names: you are the brand blue, competitors are neutral greys of different depth. */
+.bc-competitor-picker { display: grid; gap: 14px; }
+.bc-competitor-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.bc-competitor-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 4px 0 14px; border: 1px solid var(--bc-line); border-radius: 999px; background: var(--bc-soft); font-weight: 600; }
+.bc-competitor-chip button { display: grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--bc-muted); font-size: 1.125rem; cursor: pointer; }
+.bc-competitor-chip button:hover { background: color-mix(in srgb, var(--bc-text) 8%, transparent); color: var(--bc-text); }
+.bc-competitor-add { display: flex; flex-wrap: wrap; gap: 8px; }
+.bc-competitor-field { flex: 1 1 240px; min-width: 0; }
+.bc-competitor-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: .875rem; }
+.bc-competitor-suggest-chip { min-height: 36px; padding: 0 12px; border: 1px dashed var(--bc-line); border-radius: 999px; background: transparent; color: var(--bc-text); font: inherit; cursor: pointer; }
+.bc-competitor-suggest-chip:hover { border-style: solid; background: var(--bc-soft); }
+@media (max-width: 639px) { .bc-competitor-add .bc-button { width: 100%; } }
+
+.bc-attention-bar { display: flex; gap: 3px; height: 14px; overflow: hidden; border-radius: 999px; background: var(--bc-soft); }
+.bc-attention-bar span { min-width: 4px; }
+.bc-root [data-side="0"] { --side: var(--color-brand); }
+.bc-root [data-side="1"] { --side: color-mix(in srgb, var(--bc-text) 70%, var(--bc-panel)); }
+.bc-root [data-side="2"] { --side: color-mix(in srgb, var(--bc-text) 45%, var(--bc-panel)); }
+.bc-root [data-side="3"] { --side: color-mix(in srgb, var(--bc-text) 25%, var(--bc-panel)); }
+.bc-attention-bar span { background: var(--side); }
+.bc-attention-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 12px 0 0; padding: 0; list-style: none; font-size: .875rem; }
+.bc-attention-legend li { display: flex; align-items: center; gap: 8px; }
+.bc-attention-legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--side); }
+.bc-attention-legend span { color: var(--bc-muted); font-variant-numeric: tabular-nums; }
+
+.bc-compare td small { display: block; color: var(--bc-muted); font-size: .75rem; font-weight: 400; }
+.bc-compare tr[data-own] td { background: color-mix(in srgb, var(--color-brand) 5%, transparent); }
+.bc-compare td[data-best] { color: var(--color-brand); font-weight: 700; }
+.bc-compare td[data-best]::before { color: var(--bc-muted); font-weight: 400; }
+.bc-compare td .bc-pill { margin-left: 8px; }
+@media (max-width: 959px) {
+  .bc-compare tr[data-own] td { background: none; }
+  .bc-compare tr[data-own] { background: color-mix(in srgb, var(--color-brand) 5%, var(--bc-panel)); }
+  .bc-compare-value { text-align: right; }
+  .bc-compare td small { display: inline; margin-left: 6px; }
+}
+.bc-compare-matrix { display: none; overflow: hidden; border: 1px solid var(--bc-line); border-radius: 14px; }
+.bc-compare-matrix table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .9375rem; }
+.bc-compare-matrix thead th { padding: 14px 16px; background: var(--bc-soft); color: var(--bc-text); font-weight: 600; text-align: left; }
+.bc-compare-matrix thead th:first-child { width: 28%; color: var(--bc-muted); font-weight: 500; }
+.bc-compare-matrix tbody th { padding: 12px 16px; color: var(--bc-muted); font-weight: 400; text-align: left; }
+.bc-compare-matrix td { padding: 12px 16px; vertical-align: top; font-variant-numeric: tabular-nums; }
+.bc-compare-matrix tbody tr + tr > * { border-top: 1px solid var(--bc-line); }
+.bc-compare-matrix [data-own] { background: color-mix(in srgb, var(--color-brand) 5%, transparent); }
+.bc-compare-matrix td[data-best] { color: var(--color-brand); font-weight: 700; }
+.bc-compare-matrix td small { display: block; color: var(--bc-muted); font-size: .75rem; font-weight: 400; }
+.bc-compare-matrix .bc-pill { margin-left: 8px; }
+@media (min-width: 960px) { .bc-compare-matrix { display: block; } .bc-compare-cards { display: none; } }
+
+/* Reply templates in the reply dialog: chips above the field (tap — put it in, × — delete), «Сохранить как шаблон» below. */
+.bc-templates { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.bc-templates-label { margin-right: 2px; color: var(--bc-muted); font-size: .8125rem; font-weight: 600; }
+.bc-templates-empty { font-size: .8125rem; }
+.bc-template-chip { display: inline-flex; align-items: center; max-width: 100%; border: 1px solid var(--bc-line); border-radius: 999px; background: var(--bc-panel); }
+.bc-template-chip button { min-height: 36px; border: 0; background: none; color: var(--bc-text); font: inherit; font-size: .875rem; cursor: pointer; }
+.bc-template-chip > button:first-child { overflow: hidden; padding: 0 4px 0 12px; text-overflow: ellipsis; white-space: nowrap; }
+.bc-template-chip:hover { border-color: var(--color-brand); background: color-mix(in srgb, var(--color-brand) 6%, transparent); }
+.bc-template-remove { display: grid; width: 32px; place-items: center; border-radius: 50%; color: var(--bc-muted) !important; font-size: 1.0625rem !important; }
+.bc-template-remove:hover { color: var(--bc-bad) !important; }
+.bc-reply-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bc-link-button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; margin-left: -10px; border: 0; border-radius: 10px; background: none; color: var(--color-brand); font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; }
+.bc-link-button:hover:not(:disabled) { background: color-mix(in srgb, var(--color-brand) 8%, transparent); }
+.bc-link-button:disabled { color: var(--bc-muted); cursor: default; }
+.bc-template-save { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--bc-line); border-radius: 14px; background: var(--bc-soft); }
+.bc-template-save small { font-size: .8125rem; line-height: 1.45; }
+.bc-template-save-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 639px) { .bc-template-save-actions .bc-button { flex: 1 1 100%; } }
+
+/* Reviews waiting for an answer: the badge in the sidebar and the banner on the overview. */
+.bc-nav-badge { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .75rem; font-weight: 700; line-height: 1.5; text-align: center; }
+.bc-queue-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 16px; border: 1px solid color-mix(in srgb, var(--color-brand) 30%, var(--bc-line)); border-radius: 16px; background: color-mix(in srgb, var(--color-brand) 6%, var(--bc-panel)); }
+.bc-queue-banner > div { display: grid; flex: 1 1 260px; gap: 2px; min-width: 0; }
+.bc-queue-banner .bc-kpi-icon { color: var(--color-brand); }
+@media (max-width: 639px) { .bc-queue-banner .bc-button { width: 100%; } }
+
+/* First steps on the overview. */
+.bc-checklist .bc-card-head > div { display: grid; gap: 2px; }
+.bc-link-button.is-muted { color: var(--bc-muted); }
+.bc-checklist-bar { height: 6px; margin: 4px 0 12px; overflow: hidden; border-radius: 999px; background: var(--bc-soft); }
+.bc-checklist-bar span { display: block; height: 100%; border-radius: inherit; background: var(--color-brand); transition: width 300ms ease-out; }
+.bc-checklist ol { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.bc-checklist li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; }
+.bc-checklist li[data-next] { background: color-mix(in srgb, var(--color-brand) 6%, transparent); }
+.bc-checklist-mark { display: grid; flex: none; width: 24px; height: 24px; place-items: center; border: 2px solid var(--bc-line); border-radius: 50%; }
+.bc-checklist li[data-done] .bc-checklist-mark { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+.bc-checklist li[data-done] strong { color: var(--bc-muted); font-weight: 500; }
+.bc-checklist-text { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.bc-checklist-text small { font-size: .8125rem; line-height: 1.4; }
+.bc-checklist li .bc-button { flex: none; }
+@media (max-width: 639px) { .bc-checklist li { flex-wrap: wrap; } .bc-checklist li .bc-button { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .bc-checklist-bar span { transition: none; } }
+
+/* Team roles: the role cards in the invite form and the owner's select in the table. */
+.bc-role-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin: 0; padding: 0; border: 0; }
+.bc-role-pick legend { margin-bottom: 6px; font-weight: 600; }
+.bc-role-cell { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.bc-role-select { min-height: 40px; padding: 0 10px; border: 1px solid var(--bc-line); border-radius: 10px; background: var(--bc-panel); color: var(--bc-text); font: inherit; }
+@media (pointer: coarse) { .bc-role-select { font-size: 1rem; } }
+
+/* «Правка карточки»: the can photo with its picker beside the fields. */
+.bc-drink-edit-photo { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 12px; border: 1px solid var(--bc-line); border-radius: 14px; }
+.bc-drink-edit-photo > div { display: grid; flex: 1 1 220px; gap: 6px; justify-items: start; }
+.bc-drink-edit-cover { display: grid; flex: none; width: 96px; height: 96px; place-items: center; overflow: hidden; border-radius: 12px; background: var(--bc-soft); font-size: 1.5rem; }
+.bc-drink-edit-cover img { width: 100%; height: 100%; object-fit: contain; }
+.bc-file-button { cursor: pointer; }
+.bc-file-button:focus-within { outline: 2px solid var(--color-focus, var(--color-brand)); outline-offset: 2px; }
+.bc-row-actions .bc-button.is-outline { white-space: nowrap; }
+
+/* Admin: a card edit — what the card shows now against what the brand proposes. */
+.bc-edit-diff { display: grid; gap: 12px; margin: 12px 0; }
+.bc-edit-diff > div { display: grid; gap: 6px; }
+.bc-edit-diff dt { color: var(--bc-muted); font-size: .8125rem; font-weight: 600; }
+.bc-edit-diff dd { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin: 0; }
+.bc-edit-diff dd > span { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--bc-soft); white-space: pre-line; overflow-wrap: anywhere; }
+.bc-edit-diff small { color: var(--bc-muted); font-size: .75rem; }
+.bc-edit-after { border: 1px solid color-mix(in srgb, var(--color-brand) 40%, var(--bc-line)); background: color-mix(in srgb, var(--color-brand) 6%, var(--bc-panel)) !important; }
+.bc-edit-photos img { width: 120px; height: 120px; border-radius: 10px; object-fit: contain; background: #fff; }
+
+/* The application's consent to «Условия для бизнеса». */
+.bc-terms-consent { display: flex; align-items: flex-start; gap: 10px; font-size: .875rem; line-height: 1.45; cursor: pointer; }
+.bc-terms-consent input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--color-brand); }

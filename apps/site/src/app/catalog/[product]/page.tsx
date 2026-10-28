@@ -7,6 +7,8 @@ import { selectedCity } from '@/lib/location';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound, permanentRedirect } from 'next/navigation';
+import { logCatalogView } from '@/lib/catalog-events';
+import { brandIngredients, getBrandProfile } from '@/lib/brand-drink-edits';
 import { BrandShell } from '@/components/brand-shell';
 import { CatalogProductDetail } from '@/components/catalog-product-detail';
 import { ProfileNavigation } from '@/components/profile-navigation';
@@ -74,8 +76,9 @@ export default async function CatalogProductPage({
   }
   // Not an energy drink (an excluded brand): gone from the catalog; its page stays only while reviews hang on it.
   if (isExcludedEnergyBrand(group.brand) && !(await getReviewSummary(group.brand, group.flavor)).count) notFound();
+  await logCatalogView(group.brand, group.flavor);
 
-  const [favorite, reviews, summary, userReview, fileIngredients, swipes, added] = await Promise.all([
+  const [favorite, reviews, summary, userReview, fileIngredients, swipes, added, brand] = await Promise.all([
     session ? isFavorite(session.user.id, group.brand, group.flavor) : Promise.resolve(false),
     getReviewsForProduct(group.brand, group.flavor, session?.user.id ?? null),
     getReviewSummary(group.brand, group.flavor),
@@ -83,9 +86,10 @@ export default async function CatalogProductPage({
     getProductIngredients(group.brand, group.flavor),
     getSwipeCounts(group.brand, group.flavor),
     getCatalogDrink(group.brand, group.flavor),
+    getBrandProfile(group.brand, group.flavor).catch(() => null),
   ]);
-  // A drink a member added has no ingredient file: its label text from the request stands in.
-  const ingredients = fileIngredients ?? (added ? catalogDrinkIngredients(added) : null);
+  // The brand's own composition (an approved edit) comes first; a member's drink has no file, its label text stands in.
+  const ingredients = (brand && brandIngredients(brand, group.brand, group.flavor, fileIngredients?.volumeMl ?? added?.volumes[0])) ?? fileIngredients ?? (added ? catalogDrinkIngredients(added) : null);
 
   // One page now: the description and prices, with the reviews in a sheet over it (radar only when there are reviews).
   const [priceHistory, reviewDigest, radar] = await Promise.all([
@@ -110,7 +114,8 @@ export default async function CatalogProductPage({
         reviewDigest={reviewDigest}
         radar={radar}
         addedBy={added && group.variants.length === 0 ? added : undefined}
-        fullName={added?.fullName || undefined}
+        fullName={brand?.fullName || added?.fullName || undefined}
+        brand={brand ? { business: brand.business, description: brand.description } : null}
       />
     </BrandShell>
   );

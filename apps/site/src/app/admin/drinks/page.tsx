@@ -68,6 +68,7 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
           <CatalogDrinkAdminMenu key={drink.updatedAt.toISOString()} brands={brands} flavors={flavors} drink={{ id: drink.id, brand: drink.brand, flavor: drink.flavor, name: drink.name, fullName: drink.fullName, volumes: drink.volumes, ingredients: drink.ingredients, status: drink.status, photo: drink.photo, version: drink.updatedAt.toISOString() }} />
         </div>
         {drink.ingredients && <p className="admin-drink-card-ingredients">{drink.ingredients}</p>}
+        {drink.business && <p className="admin-drink-card-note">Опубликован без проверки компанией «{drink.business}»</p>}
         {drink.status === 'rejected' && drink.moderationNote && <p className="admin-drink-card-note">Причина: {drink.moderationNote}</p>}
         {drink.status === 'pending' && (() => { const card = catalogCard(drink.brand, drink.flavor); return card && <p className="admin-drink-card-match">Совпадает с карточкой каталога — <Link href={`/catalog/${catalogGroupSlug(card.brand, card.flavor)}`}>сравнить</Link>. Автор отправил свою версию: смените вкус в «Редактировать» или склейте; опубликовать как есть нельзя.</p>; })()}
         {drink.status === 'pending' && <CatalogDrinkModeration id={drink.id} version={drink.updatedAt.toISOString()} />}

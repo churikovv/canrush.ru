@@ -1,15 +1,10 @@
 /* «CanRush для бизнеса» (/business): mobile first, sections with a cabinet screen (example data) and copy, alternating
    on desktop; planned features sit apart under «Скоро». */
-.biz { display: grid; gap: 56px; padding-bottom: 24px; }
-.biz h1, .biz h2 { margin: 0; color: var(--color-ink); letter-spacing: -0.025em; }
-.biz p { margin: 0; }
+.biz { display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; padding-bottom: 24px; }
+.biz :is(h1, h2):not(.biz-real *) { margin: 0; color: var(--color-ink); letter-spacing: -0.025em; }
+.biz p:not(.biz-real *) { margin: 0; }
 
-.biz-hero { display: grid; gap: 28px; padding-top: 8px; }
-.biz-hero-copy { display: grid; gap: 16px; }
-.biz-badge { justify-self: start; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); font-size: .8125rem; font-weight: 700; }
-.biz-hero h1 { font-size: clamp(2.125rem, 9vw, 3.5rem); line-height: 1.04; text-wrap: balance; }
-.biz-lead { color: var(--color-muted-strong); font-size: 1.0625rem; line-height: 1.5; max-width: 34em; }
-.biz-actions { display: grid; gap: 10px; margin-top: 4px; }
+.biz-actions { display: grid; gap: 10px; }
 .biz-button { display: inline-flex; min-height: 56px; align-items: center; justify-content: center; padding: 14px 24px; border: 2px solid var(--color-brand); border-radius: 16px; background: var(--color-brand); color: #fff; font-weight: 700; text-decoration: none; text-align: center; transition: background-color var(--motion-fast, 150ms) ease-out, border-color var(--motion-fast, 150ms) ease-out; }
 .biz-button:hover { background: color-mix(in srgb, var(--color-brand) 86%, #000); border-color: color-mix(in srgb, var(--color-brand) 86%, #000); }
 .biz-button.is-ghost { border-color: transparent; background: var(--color-subtle); color: var(--color-ink); }
@@ -20,24 +15,9 @@
 .biz-button.is-outline:hover { border-color: #fff; background: #ffffff1a; }
 
 /* Hero: the owner's «Для бизнеса» art on a soft brand plate, two small cards floating over it like cabinet widgets. */
-.biz-hero-art { position: relative; display: grid; place-items: center; min-height: 300px; padding: 24px; border-radius: 32px; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--color-brand) 22%, var(--color-subtle)), var(--color-subtle) 70%); }
-.biz-hero-art img { width: min(78%, 360px); height: auto; filter: drop-shadow(0 18px 30px rgb(0 0 0 / 18%)); }
-.biz-float { position: static; display: grid; gap: 2px; max-width: none; padding: 10px 12px; border-radius: 16px; background: var(--color-surface); color: var(--color-ink); box-shadow: 0 10px 30px rgb(0 0 0 / 14%); }
-.biz-float small { color: var(--color-muted-strong); font-size: .75rem; line-height: 1.3; }
-.biz-float b { font-size: .9375rem; }
-.biz-float.is-top { top: 18px; left: 14px; }
 /* On a phone the two cards sit side by side under the art, so they never cover its sign. */
-.biz-hero-art { grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
-.biz-hero-art img { grid-column: 1 / -1; justify-self: center; }
-.biz-float.is-top b { color: var(--color-brand); font-size: 1.25rem; }
-.biz-float.is-bottom { right: 14px; bottom: 18px; grid-template-columns: auto 1fr; column-gap: 8px; align-items: center; }
-.biz-float.is-bottom b { grid-column: 2; }
-.biz-float-icon { display: grid; grid-row: span 2; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--color-brand) 16%, transparent); color: var(--color-brand); }
 
 /* Example screens: drawn in the cabinet's look, labelled so nobody takes the numbers as real. */
-.biz-mock { position: relative; display: grid; align-content: center; min-height: 240px; padding: 28px 20px 40px; border-radius: 28px; background: var(--color-subtle); overflow: clip; }
-.biz-mock::before { position: absolute; top: -60px; right: -60px; width: 180px; height: 180px; border-radius: 50%; background: color-mix(in srgb, var(--color-brand) 16%, transparent); content: ""; }
-.biz-mock-note { position: absolute; bottom: 12px; left: 20px; color: var(--color-muted-strong); font-size: .75rem; }
 .biz-card { position: relative; display: grid; gap: 14px; width: 100%; max-width: 380px; margin-inline: auto; padding: 16px; border-radius: 20px; background: var(--color-surface); color: var(--color-ink); box-shadow: 0 10px 30px rgb(0 0 0 / 10%); }
 .biz-card small { color: var(--color-muted-strong); font-size: .8125rem; }
 .biz-card-head, .biz-card-row { display: flex; align-items: center; gap: 12px; }
@@ -76,12 +56,6 @@
 .biz-avatar.is-brand { background: var(--color-brand); color: #fff; }
 
 /* «Скоро»: what is planned, kept apart from what the cabinet does today. */
-.biz-soon { display: grid; gap: 16px; }
-.biz-soon h2 { font-size: clamp(1.625rem, 6.5vw, 2.25rem); }
-.biz-soon ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.biz-soon li { display: grid; gap: 6px; padding: 16px; border: 1px dashed var(--color-control); border-radius: 20px; }
-.biz-soon li b::after { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .75rem; font-weight: 700; vertical-align: 2px; content: "скоро"; }
-.biz-soon li span { color: var(--color-muted-strong); line-height: 1.45; }
 .biz-spark { display: flex; align-items: flex-end; gap: 4px; height: 56px; }
 .biz-spark span { flex: 1; height: calc(var(--v) * 100%); border-radius: 4px 4px 2px 2px; background: color-mix(in srgb, var(--color-brand) calc(30% + var(--v) * 70%), transparent); }
 .biz-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -94,62 +68,17 @@
 .biz-status { padding: 3px 8px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .75rem; font-weight: 700; }
 .biz-status.is-done { background: var(--color-control); color: var(--color-ink); }
 
-.biz-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.biz-stats li { display: grid; gap: 4px; padding: 16px; border-radius: 20px; background: var(--color-subtle); }
-.biz-stats b { color: var(--color-brand); font-size: clamp(1.625rem, 7vw, 2.25rem); line-height: 1; letter-spacing: -0.02em; }
-.biz-stats span { color: var(--color-muted-strong); font-size: .875rem; line-height: 1.3; }
 
-.biz-features { display: grid; gap: 56px; scroll-margin-top: 80px; }
-.biz-feature { display: grid; gap: 20px; }
-.biz-feature-copy { display: grid; gap: 12px; align-content: center; }
-.biz-kicker { color: var(--color-brand); font-size: .875rem; font-weight: 700; }
-.biz-feature h2 { font-size: clamp(1.625rem, 6.5vw, 2.25rem); line-height: 1.1; }
-.biz-feature-copy p:not([class]) { color: var(--color-muted-strong); line-height: 1.55; }
-.biz-points { display: grid; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; }
-.biz-points li { position: relative; padding-left: 28px; color: var(--color-ink); font-weight: 600; line-height: 1.4; }
-.biz-points li::before { position: absolute; top: 1px; left: 0; display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--color-brand) 16%, transparent); color: var(--color-brand); font-size: .75rem; font-weight: 800; content: "✓"; }
 
-.biz-start { display: grid; gap: 20px; }
-.biz-start h2, .biz-faq h2 { font-size: clamp(1.625rem, 6.5vw, 2.25rem); }
-.biz-start ol { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.biz-start li { display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: start; padding: 16px; border-radius: 20px; background: var(--color-subtle); }
-.biz-start li > b { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 14px; background: var(--color-brand); color: #fff; font-size: 1.125rem; }
-.biz-start li div { display: grid; gap: 4px; }
-.biz-start li span { color: var(--color-muted-strong); line-height: 1.45; }
 
-.biz-faq { display: grid; gap: 8px; }
-.biz-faq h2 { margin-bottom: 12px; }
-.biz-faq details { border-radius: 16px; background: var(--color-subtle); }
-.biz-faq summary { display: flex; min-height: 56px; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; font-weight: 700; cursor: pointer; list-style: none; }
-.biz-faq summary::-webkit-details-marker { display: none; }
-.biz-faq summary::after { flex: none; width: 10px; height: 10px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translateY(-3px); transition: transform 150ms ease-out; content: ""; }
-.biz-faq details[open] summary::after { transform: rotate(-135deg) translateY(-3px); }
-.biz-faq details p { padding: 0 18px 16px; color: var(--color-muted-strong); line-height: 1.55; }
 
-.biz-final { display: grid; gap: 12px; padding: 28px 20px; border-radius: 28px; background: var(--color-brand); color: #fff; text-align: center; }
-.biz-final h2 { color: #fff; font-size: clamp(1.75rem, 7vw, 2.5rem); line-height: 1.1; }
-.biz-final p { color: #ffffffd9; line-height: 1.5; }
 
 @media (min-width: 640px) {
   .biz-actions { display: flex; flex-wrap: wrap; }
-  .biz-stats { grid-template-columns: repeat(4, 1fr); }
-  .biz-final { justify-items: center; padding: 48px 32px; }
-  .biz-final .biz-actions { justify-content: center; }
-  .biz-start ol { grid-template-columns: repeat(3, 1fr); }
-  .biz-start li { grid-template-columns: 1fr; }
-  .biz-soon ul { grid-template-columns: repeat(3, 1fr); }
-  .biz-hero-art { grid-template-columns: 1fr; min-height: 380px; }
-  .biz-float { position: absolute; max-width: 46%; }
 }
 @media (min-width: 960px) {
   .biz { gap: 88px; }
-  .biz-hero { grid-template-columns: 1.1fr 1fr; align-items: center; gap: 48px; padding-top: 24px; }
-  .biz-mock { min-height: 340px; padding: 40px 32px 48px; }
-  .biz-features { gap: 88px; }
-  .biz-feature { grid-template-columns: 1fr 1fr; align-items: center; gap: 56px; }
-  .biz-feature:nth-child(even) .biz-mock { order: 2; }
 }
-@media (prefers-reduced-motion: reduce) { .biz-button, .biz-faq summary::after { transition: none; } }
 /* «Аналитика поиска» and «Ответы от имени компании» screens. */
 .biz-queries { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .biz-queries li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-control); font-size: .9375rem; }
@@ -160,3 +89,316 @@
 .biz-review.is-brand { margin-left: 24px; padding: 10px; border-left: 3px solid var(--color-brand); border-radius: 4px 14px 14px 4px; background: color-mix(in srgb, var(--color-brand) 10%, transparent); }
 .biz-review p { font-size: .9375rem; line-height: 1.4; }
 .biz-review i { margin-left: 4px; padding: 2px 6px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .6875rem; font-style: normal; vertical-align: 2px; }
+
+/* ── Hero: centred like a product page — the «Новое» pill, the headline in an ink-to-muted fill, the actions, then the
+   cabinet's overview under a soft brand glow. Everything enters in a short stagger (CSS only: it plays before
+   hydration), the pill's shine, the glow's breath, the chart and the bell are the small motions; all of them stop
+   under `prefers-reduced-motion`. */
+.biz-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 18px; padding-top: 12px; text-align: center; }
+.biz-hero > * { animation: biz-rise 640ms cubic-bezier(.2, .8, .2, 1) both; }
+.biz-hero > :nth-child(2) { animation-delay: 70ms; }
+.biz-hero > :nth-child(3) { animation-delay: 140ms; }
+.biz-hero > :nth-child(4) { animation-delay: 210ms; }
+.biz-hero > .biz-showcase { animation-duration: 900ms; animation-delay: 320ms; }
+@keyframes biz-rise { from { opacity: 0; transform: translateY(14px); } }
+
+.biz-pill { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; max-width: 100%; padding: 4px 14px 4px 4px; overflow: hidden; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 999px; background: var(--color-surface); color: var(--color-muted-strong); font-size: .875rem; font-weight: 600; text-decoration: none; isolation: isolate; transition: border-color 150ms ease-out, color 150ms ease-out; }
+.biz-pill::after { position: absolute; inset: 0; z-index: -1; background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--color-brand) 16%, transparent) 50%, transparent 65%); transform: translateX(-100%); animation: biz-shine 6s ease-in-out 1.2s infinite; content: ""; }
+@keyframes biz-shine { 0%, 70% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.biz-pill:hover { border-color: color-mix(in srgb, var(--color-brand) 50%, var(--theme-line, #dfe3e8)); color: var(--color-ink); }
+.biz-pill-tag { padding: 5px 10px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .75rem; }
+.biz-pill-arrow { flex: none; transition: transform 200ms cubic-bezier(.2, .8, .2, 1); }
+.biz-pill:hover .biz-pill-arrow { transform: translateX(3px); }
+
+.biz-hero > h1 { max-width: 15ch; font-size: clamp(2.375rem, 11vw, 4.5rem); line-height: 1; letter-spacing: -0.045em; text-wrap: balance; }
+/* The second line fades from ink to muted, like light falling on it; plain ink where `background-clip: text` is unknown. */
+.biz-hero > h1 span { background: linear-gradient(180deg, var(--color-ink) 30%, color-mix(in srgb, var(--color-ink) 55%, transparent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) { .biz-hero > h1 span { color: var(--color-ink); } }
+.biz-lead { max-width: 36em; color: var(--color-muted-strong); font-size: 1.0625rem; line-height: 1.55; text-wrap: pretty; }
+.biz-hero .biz-actions { width: 100%; margin-top: 6px; }
+.biz-cta { gap: 10px; min-width: 240px; padding-inline: 32px; }
+.biz-cta svg { flex: none; transition: transform 200ms cubic-bezier(.2, .8, .2, 1); }
+.biz-cta:hover svg { transform: translateX(4px); }
+.biz-hero .biz-button:not(.is-ghost) { box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--color-brand) 70%, transparent); }
+.biz-button { transition: background-color 150ms ease-out, border-color 150ms ease-out, transform 200ms cubic-bezier(.2, .8, .2, 1), box-shadow 200ms ease-out; }
+.biz-button:hover { transform: translateY(-2px); }
+.biz-button:active { transform: translateY(0) scale(.97); }
+
+.biz-showcase { position: relative; width: 100%; min-width: 0; margin-top: 40px; }
+.biz-glow { position: absolute; top: -70px; left: 50%; z-index: 0; width: 120%; height: 240px; border-radius: 50%; background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--color-brand) 34%, transparent), transparent 70%); transform: translateX(-50%); pointer-events: none; animation: biz-breathe 6s ease-in-out infinite; }
+@keyframes biz-breathe { 50% { opacity: .65; transform: translateX(-50%) scale(1.04); } }
+.biz-showcase-mascot { position: absolute; top: -90px; right: 6px; z-index: 2; width: 96px; height: auto; filter: drop-shadow(0 12px 18px rgb(0 0 0 / 22%)); animation: biz-peek 900ms cubic-bezier(.34, 1.56, .64, 1) 900ms both; }
+@keyframes biz-peek { from { opacity: 0; transform: translateY(24px) rotate(6deg); } }
+.biz-showcase-note { position: relative; z-index: 1; display: block; margin-top: 10px; color: var(--color-muted-strong); font-size: .75rem; }
+
+@media (min-width: 640px) {
+  .biz-hero .biz-actions { justify-content: center; width: auto; }
+  .biz-showcase { margin-top: 56px; }
+  .biz-showcase-mascot { top: -148px; right: 8px; width: 150px; }
+}
+/* Desktop: the cabinet at a huge scale — wider than the page column (centred by negative margins, the page clips the
+   x-overflow), tall, with its sidebar, fading out at the bottom through a mask, like a product shot. It settles from a
+   slight tilt on entry. */
+@media (min-width: 960px) {
+  .biz-hero { padding-top: 32px; gap: 22px; }
+  .biz-showcase { --wide: min(1440px, calc(100vw - 64px)); width: var(--wide); margin-inline: calc((100% - var(--wide)) / 2); margin-top: 72px; perspective: 2400px; }
+  .biz-glow { top: -140px; width: 90%; height: 420px; }
+  /* Stands on the screen's top edge — 14 px over its border, above the top bar's buttons — at any width. */
+  .biz-showcase-mascot { top: -181px; right: 3%; width: 180px; }
+  /* The note sits over the fade, where the screen dissolves. */
+  .biz-showcase-note { position: absolute; bottom: 9%; left: 50%; z-index: 2; margin: 0; padding: 6px 14px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 999px; background: var(--color-surface); transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .biz-button, .biz-pill-arrow, .biz-cta svg { transition: none; }
+  .biz-button:hover, .biz-button:active, .biz-pill:hover .biz-pill-arrow, .biz-cta:hover svg { transform: none; }
+}
+
+/* The preview is the cabinet's own markup (`.bc-root` and friends from business-cabinet.css): here it is a picture in a
+   frame, so the app-shell parts that hold the viewport — 100dvh heights, the sticky sidebar, the phone drawer, the
+   burger's gap — are set back to plain flow. A fixed height with a fading mask cuts it like a product shot. */
+.biz-screen { position: relative; z-index: 1; height: 600px; overflow: clip; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 22px; background: var(--color-subtle);
+  box-shadow: 0 30px 60px -30px rgb(10 25 60 / 35%); text-align: left;
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); }
+.biz-real.bc-root { min-height: 0; height: 100%; pointer-events: none; user-select: none; }
+.biz-real .bc-main { min-height: 0; }
+.biz-real .bc-sidebar-wrap { display: none; }
+.biz-real .bc-topbar h1 { padding-left: 0; }
+.biz-real .bc-topbar-actions { width: auto; }
+.biz-real .bc-topbar-actions .bc-button, .biz-real .bc-topbar-divider { display: none; }
+.biz-real-placeholder { flex: 1; min-width: 0; color: var(--bc-muted); font-size: .9375rem; }
+.biz-real .bc-kpi { animation: biz-rise 500ms cubic-bezier(.2, .8, .2, 1) both; }
+.biz-real .bc-kpi:nth-child(1) { animation-delay: 700ms; }
+.biz-real .bc-kpi:nth-child(2) { animation-delay: 780ms; }
+.biz-real .bc-kpi:nth-child(3) { animation-delay: 860ms; }
+.biz-real .bc-kpi:nth-child(4) { animation-delay: 940ms; }
+.biz-real .bc-chart span { transform-origin: bottom; animation: biz-grow 700ms cubic-bezier(.2, .8, .2, 1) calc(1000ms + var(--i) * 45ms) both; }
+@keyframes biz-grow { from { transform: scaleY(0); } }
+@media (min-width: 640px) {
+  .biz-real .bc-topbar-actions .bc-button { display: inline-flex; }
+}
+@media (min-width: 960px) {
+  .biz-screen { height: clamp(680px, 58vw, 940px); border-radius: 28px; transform-origin: 50% 0; animation: biz-tilt 1200ms cubic-bezier(.2, .8, .2, 1) 320ms both;
+    -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 94%); mask-image: linear-gradient(to bottom, #000 45%, transparent 94%); }
+  @keyframes biz-tilt { from { transform: rotateX(14deg) scale(.96); } }
+  .biz-real .bc-sidebar-wrap { display: block; position: static; height: auto; }
+  .biz-real .bc-topbar-divider { display: block; }
+  .biz-real-workspace { margin-top: auto; }
+}
+
+/* «CanRush сегодня»: a heading with a pulsing «живые данные», then `BusinessStats` — one card open in the brand blue with
+   the figure in detail, the others as pills stacked above and below it (nearer pills wider). */
+.biz-numbers { display: grid; gap: 14px; }
+.biz-numbers-head { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.biz-numbers-head h2 { font-size: clamp(1.375rem, 5vw, 1.75rem); }
+.biz-live { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, #16a34a 12%, transparent); color: #15803d; font-size: .8125rem; font-weight: 700; }
+:root[data-site-theme=graphite] .biz-live { color: #4ade80; }
+@media (prefers-color-scheme: dark) { :root[data-site-theme=system] .biz-live { color: #4ade80; } }
+.biz-live i { position: relative; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.biz-live i::after { position: absolute; inset: 0; border-radius: 50%; background: currentColor; animation: biz-live 2s ease-out infinite; content: ""; }
+@keyframes biz-live { to { opacity: 0; transform: scale(2.8); } }
+
+.biz-stack { display: grid; justify-items: center; gap: 8px; width: 100%; max-width: 640px; margin-inline: auto; }
+/* The other figures: plain theme surfaces with the brand blue only in the icon and on hover. */
+.biz-stack-pill { --w: 100%; display: flex; align-items: center; gap: 12px; width: var(--w); min-height: 56px; padding: 0 20px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 999px;
+  background: var(--color-surface); color: var(--color-ink); font: inherit; font-weight: 700; cursor: pointer;
+  transition: transform 220ms cubic-bezier(.2, .8, .2, 1), border-color 200ms ease-out, background-color 200ms ease-out; animation: biz-rise 420ms cubic-bezier(.2, .8, .2, 1) both; }
+.biz-stack-pill[data-distance="1"] { --w: 90%; }
+.biz-stack-pill[data-distance="2"] { --w: 80%; }
+.biz-stack-pill[data-distance="3"] { --w: 70%; }
+.biz-stack-pill:hover { border-color: var(--color-brand); background: color-mix(in srgb, var(--color-brand) 6%, var(--color-surface)); transform: translateY(-2px); }
+.biz-stack-pill:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
+.biz-stack-pill svg { flex: none; color: var(--color-brand); }
+.biz-stack-pill b { margin-left: auto; color: var(--color-brand); font-variant-numeric: tabular-nums; }
+
+/* The open card in the CanRush blue — flat, like the final call to action: white type, white strokes, the brand mark
+   as a large watermark in the corner, tiles a shade deeper. No glows or colour fades. */
+.biz-story { --deep: color-mix(in srgb, #002a6b 32%, var(--color-brand)); position: relative; display: grid; gap: 18px; width: 100%; padding: 20px; overflow: hidden; border-radius: 30px;
+  background: var(--color-brand); color: #fff; isolation: isolate; box-shadow: 0 24px 50px -28px color-mix(in srgb, var(--color-brand) 80%, #000);
+  animation: biz-story-in 520ms cubic-bezier(.2, .8, .2, 1) both; }
+.biz-story::after { position: absolute; right: -36px; bottom: -44px; z-index: -1; width: 220px; height: 220px; background: url("/brand/logo-mark-white.svg") center / contain no-repeat; opacity: .1; transform: rotate(-12deg); content: ""; }
+@keyframes biz-story-in { from { opacity: 0; transform: scale(.97) translateY(8px); } }
+.biz-story-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+.biz-story-title { display: inline-flex; align-items: center; gap: 10px; font-size: 1.0625rem; font-weight: 800; }
+.biz-story-ring { position: relative; display: grid; width: 64px; height: 64px; place-items: center; }
+.biz-story-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.biz-story-ring-track { fill: none; stroke: #ffffff40; stroke-width: 4; }
+.biz-story-ring-fill { fill: none; stroke: #fff; stroke-width: 4; stroke-linecap: round; }
+.biz-story-ring b { font-size: .8125rem; font-variant-numeric: tabular-nums; }
+.biz-story-ring-label { margin: -10px 0 0; color: #ffffffcc; font-size: .75rem; text-align: center; }
+.biz-story-next { justify-self: end; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: #fff; color: var(--color-brand); font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; transition: transform 150ms ease-out; }
+.biz-story-next:hover { transform: translateX(2px); }
+.biz-story-next:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.biz-story-figures { display: flex; justify-content: space-between; gap: 12px; }
+.biz-story-figures > div { display: grid; gap: 4px; min-width: 0; }
+.biz-story-figures > div:last-child { text-align: right; }
+.biz-story-figures small { color: #ffffffcc; font-size: .75rem; font-weight: 600; }
+.biz-story-figures strong { color: #fff; font-size: clamp(1.875rem, 8.5vw, 3rem); font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -0.03em; white-space: nowrap; }
+.biz-story-picture { display: grid; gap: 10px; margin: 0; padding: 14px; border-radius: 20px; background: var(--deep); }
+.biz-story-picture figcaption { color: #ffffffcc; font-size: .75rem; font-weight: 600; }
+.biz-story-bars { display: flex; align-items: flex-end; gap: 6px; height: 88px; }
+.biz-story-bars span { flex: 1; border-radius: 6px 6px 2px 2px; background: #ffffff59; }
+.biz-story-bars span:last-child { background: #fff; }
+.biz-story-split { display: flex; gap: 4px; height: 14px; overflow: hidden; border-radius: 999px; background: #ffffff26; }
+.biz-story-split span { min-width: 4px; transition: flex-grow 80ms linear; }
+.biz-story [data-part="0"] { --part: #fff; }
+.biz-story [data-part="1"] { --part: #ffffff73; }
+.biz-story [data-part="2"] { --part: #ff3b4e; }
+.biz-story-split span { background: var(--part); }
+.biz-story-legend { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: .8125rem; }
+.biz-story-legend li { display: flex; align-items: center; gap: 8px; color: #ffffffe0; }
+.biz-story-legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--part); }
+.biz-story-legend b { margin-left: auto; color: #fff; font-variant-numeric: tabular-nums; }
+.biz-story-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.biz-story-chips li { padding: 6px 12px; border-radius: 999px; background: #fff; color: var(--color-brand); font-size: .8125rem; font-weight: 700; }
+.biz-story-chips li.is-more { border: 1px dashed #ffffff99; background: transparent; color: #fff; }
+.biz-story-foot { display: grid; gap: 4px; margin: 0; padding-left: 12px; border-left: 3px solid #fff; }
+.biz-story-foot > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.biz-story-foot dt { min-width: 128px; color: #ffffffcc; font-size: .75rem; }
+.biz-story-foot dd { margin: 0; color: #fff; font-size: .9375rem; font-weight: 700; }
+@media (max-width: 479px) {
+  .biz-story-head { grid-template-columns: 1fr auto; }
+  .biz-story-ring { grid-row: 1; grid-column: 2; }
+  .biz-story-next { grid-column: 1 / -1; justify-self: stretch; justify-content: center; }
+  .biz-story-ring-label { margin-top: -6px; text-align: left; }
+}
+@media (min-width: 640px) {
+  .biz-story { gap: 22px; padding: 28px 32px; border-radius: 34px; }
+  .biz-story::after { width: 300px; height: 300px; right: -50px; bottom: -70px; }
+  .biz-story-bars { height: 110px; }
+  .biz-story-foot { grid-template-columns: 1fr 1fr; padding-left: 16px; }
+  .biz-story-foot > div { display: grid; gap: 2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .biz-stack-pill, .biz-story, .biz-live i::after { animation: none; transition: none; }
+  .biz-stack-pill:hover, .biz-story-next:hover { transform: none; }
+}
+
+/* ── Below the numbers, in the manner of linear.app but in CanRush colours: three principles with line art, then
+   chapters «1.0 Аналитика» … each opened by a hairline across the page — a big heading, the lead and a link, a wide
+   frame of cabinet screens fading at the bottom, and the capabilities as a two-column «+» list that opens. Then
+   «Скоро», three steps, questions beside their heading and the closing call. Quiet surfaces, the brand blue for
+   numbers, accents and the final panel. */
+.biz-principles { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.biz-principle { display: grid; gap: 8px; padding: 20px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 22px; background: var(--color-surface); transition: border-color 200ms ease-out, transform 220ms cubic-bezier(.2, .8, .2, 1); }
+.biz-principle:hover { border-color: color-mix(in srgb, var(--color-brand) 45%, var(--theme-line, #dfe3e8)); transform: translateY(-3px); }
+.biz-principle-art { display: grid; place-items: center; height: 150px; margin: -4px -4px 8px; border-radius: 16px; background: var(--color-subtle); }
+.biz-principle-art svg { width: min(100%, 220px); height: auto; overflow: visible; }
+.biz-principle strong { color: var(--color-ink); font-size: 1.0625rem; }
+.biz-principle p { color: var(--color-muted-strong); line-height: 1.5; }
+.biz-art-line { stroke: color-mix(in srgb, var(--color-ink) 55%, transparent); stroke-width: 1.5; }
+.biz-art-line.is-faint { stroke: color-mix(in srgb, var(--color-ink) 22%, transparent); }
+.biz-art-line.is-dashed { stroke: var(--color-brand); stroke-dasharray: 4 5; }
+.biz-art-accent { fill: color-mix(in srgb, var(--color-brand) 14%, transparent); stroke: var(--color-brand); stroke-width: 1.8; }
+.biz-art-accent-fill { fill: var(--color-brand); }
+.biz-art-check { stroke: #fff; stroke-width: 3.5; stroke-linecap: round; }
+.biz-art-accent-text { stroke: var(--color-brand); stroke-width: 2.5; stroke-linecap: round; }
+.biz-principle:hover .biz-art-accent, .biz-principle:hover .biz-art-accent-fill { animation: biz-pop 420ms cubic-bezier(.34, 1.56, .64, 1); transform-box: fill-box; transform-origin: center; }
+@keyframes biz-pop { 50% { transform: scale(1.06); } }
+
+.biz-chapters { display: grid; scroll-margin-top: 80px; }
+.biz-chapter { position: relative; display: grid; gap: 28px; padding: 56px 0; }
+/* The hairline runs across the whole window, like linear.app's section rules (the page clips the x-overflow). */
+.biz-chapter::before, .biz-soon::before { position: absolute; top: 0; left: 50%; width: 100vw; height: 1px; background: var(--theme-line, #dfe3e8); transform: translateX(-50%); content: ""; }
+.biz-kicker { display: flex; align-items: center; gap: 10px; color: var(--color-muted-strong); font-size: .875rem; font-weight: 700; }
+.biz-kicker b { color: var(--color-brand); font-variant-numeric: tabular-nums; }
+.biz-chapter-head { display: grid; gap: 14px; }
+.biz-chapter-head h2 { font-size: clamp(2rem, 9vw, 3.5rem); line-height: 1.02; letter-spacing: -0.04em; }
+.biz-chapter-lead { display: grid; gap: 14px; align-content: start; }
+.biz-chapter-lead p { max-width: 34em; color: var(--color-muted-strong); font-size: 1.0625rem; line-height: 1.55; }
+.biz-more { justify-self: start; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--color-ink); font-weight: 700; text-decoration: none; }
+.biz-more svg { transition: transform 200ms cubic-bezier(.2, .8, .2, 1); }
+.biz-more:hover { color: var(--color-brand); }
+.biz-more:hover svg { transform: translateX(4px); }
+
+.biz-frame { position: relative; display: grid; gap: 14px; padding: 18px; overflow: clip; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 28px; background: var(--color-subtle);
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent); mask-image: linear-gradient(to bottom, #000 70%, transparent); }
+.biz-frame-screen { min-width: 0; }
+.biz-frame-screen:nth-child(n + 3) { display: none; }
+.biz-frame .biz-card { max-width: none; height: 100%; box-shadow: 0 1px 2px rgb(0 0 0 / 6%); }
+
+.biz-caps { display: grid; gap: 4px; }
+.biz-caps-title { margin-bottom: 6px !important; color: var(--color-muted-strong); font-size: .875rem; font-weight: 700; }
+.biz-caps ul { display: grid; align-content: start; margin: 0; padding: 0; list-style: none; }
+.biz-caps summary { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; color: var(--color-ink); font-weight: 600; cursor: pointer; list-style: none; }
+.biz-caps summary::-webkit-details-marker { display: none; }
+.biz-caps summary:hover { color: var(--color-brand); }
+.biz-caps-plus { position: relative; width: 12px; height: 12px; color: var(--color-muted-strong); transition: transform 200ms cubic-bezier(.2, .8, .2, 1); }
+.biz-caps-plus::before, .biz-caps-plus::after { position: absolute; top: 5px; left: 0; width: 12px; height: 2px; border-radius: 1px; background: currentColor; content: ""; }
+.biz-caps-plus::after { transform: rotate(90deg); }
+.biz-caps details[open] .biz-caps-plus { color: var(--color-brand); transform: rotate(45deg); }
+.biz-caps details p { max-width: 32em; margin: 0 0 12px; color: var(--color-muted-strong); line-height: 1.5; animation: biz-rise 260ms cubic-bezier(.2, .8, .2, 1) both; }
+.biz-caps details:focus-within summary { outline: none; }
+.biz-caps summary:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; border-radius: 6px; }
+
+.biz-soon { position: relative; display: grid; gap: 14px; padding-top: 56px; }
+.biz-soon h2 { font-size: clamp(1.75rem, 7vw, 2.5rem); letter-spacing: -0.03em; }
+.biz-soon h2::after { margin-left: 12px; padding: 4px 10px; border: 1px dashed var(--theme-line, #dfe3e8); border-radius: 999px; color: var(--color-muted-strong); font-size: .8125rem; font-weight: 700; letter-spacing: 0; vertical-align: middle; content: "скоро"; }
+.biz-soon > div { display: grid; gap: 10px; }
+.biz-soon > div p { max-width: 36em; color: var(--color-muted-strong); font-size: 1.0625rem; line-height: 1.55; }
+
+.biz-start { display: grid; gap: 20px; }
+.biz-start h2, .biz-faq h2 { font-size: clamp(2rem, 8vw, 3rem); line-height: 1.04; letter-spacing: -0.04em; }
+.biz-start ol { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.biz-start li { display: grid; gap: 8px; padding: 20px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 22px; background: var(--color-surface); }
+.biz-start li > b { color: var(--color-brand); font-size: 2.25rem; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -0.04em; }
+.biz-start li strong { margin-top: 12px; color: var(--color-ink); font-size: 1.0625rem; }
+.biz-start li span { color: var(--color-muted-strong); line-height: 1.45; }
+
+.biz-faq { display: grid; gap: 20px; }
+.biz-faq-list { display: grid; border-top: 1px solid var(--theme-line, #dfe3e8); }
+.biz-faq details { border-bottom: 1px solid var(--theme-line, #dfe3e8); }
+.biz-faq summary { display: flex; min-height: 64px; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; color: var(--color-ink); font-size: 1.0625rem; font-weight: 700; cursor: pointer; list-style: none; }
+.biz-faq summary::-webkit-details-marker { display: none; }
+.biz-faq summary::after { flex: none; width: 14px; height: 14px; background: linear-gradient(currentColor, currentColor) center / 14px 2px no-repeat, linear-gradient(currentColor, currentColor) center / 2px 14px no-repeat; color: var(--color-muted-strong); transition: transform 200ms cubic-bezier(.2, .8, .2, 1); content: ""; }
+.biz-faq details[open] summary::after { color: var(--color-brand); transform: rotate(45deg); }
+.biz-faq summary:hover { color: var(--color-brand); }
+.biz-faq details p { max-width: 40em; padding: 0 0 20px; color: var(--color-muted-strong); line-height: 1.6; animation: biz-rise 260ms cubic-bezier(.2, .8, .2, 1) both; }
+
+.biz-final { position: relative; display: grid; justify-items: center; gap: 14px; padding: 40px 20px; overflow: hidden; border-radius: 32px; background: var(--color-brand); color: #fff; text-align: center; isolation: isolate; }
+.biz-final::after { position: absolute; right: -40px; bottom: -60px; z-index: -1; width: 240px; height: 240px; background: url("/brand/logo-mark-white.svg") center / contain no-repeat; opacity: .1; transform: rotate(-12deg); content: ""; }
+.biz-final h2 { color: #fff; font-size: clamp(2rem, 9vw, 3.5rem); line-height: 1.02; letter-spacing: -0.04em; }
+.biz-final p { color: #ffffffd9; font-size: 1.0625rem; line-height: 1.5; }
+.biz-final .biz-actions { width: 100%; }
+
+@media (min-width: 640px) {
+  .biz-actions { display: flex; flex-wrap: wrap; }
+  .biz-principles { grid-template-columns: repeat(3, 1fr); }
+  .biz-frame { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 24px; }
+  .biz-caps { grid-template-columns: repeat(2, 1fr); column-gap: 32px; }
+  .biz-caps-title { grid-column: 1 / -1; }
+  .biz-caps ul + ul { padding-left: 32px; border-left: 1px solid var(--theme-line, #dfe3e8); }
+  .biz-start ol { grid-template-columns: repeat(3, 1fr); }
+  .biz-final { padding: 64px 32px; }
+  .biz-final .biz-actions { justify-content: center; width: auto; }
+}
+@media (min-width: 960px) {
+  .biz { gap: 96px; }
+  .biz-chapter { gap: 40px; padding: 88px 0; }
+  .biz-chapter-head { grid-template-columns: 1fr 1fr; align-items: end; column-gap: 48px; }
+  .biz-chapter-head .biz-kicker { grid-column: 1 / -1; }
+  .biz-frame { --wide: min(1280px, calc(100vw - 64px)); width: var(--wide); margin-inline: calc((100% - var(--wide)) / 2); padding: 32px; border-radius: 32px; }
+  .biz-frame[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .biz-frame-screen:nth-child(n + 3) { display: block; }
+  .biz-soon { padding-top: 88px; }
+  .biz-soon > div { grid-template-columns: 1fr 1fr; align-items: end; column-gap: 48px; }
+  .biz-faq { grid-template-columns: 1fr 1.6fr; align-items: start; column-gap: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .biz-button, .biz-faq summary::after, .biz-caps-plus, .biz-more svg, .biz-principle { transition: none; }
+  .biz-principle:hover, .biz-more:hover svg { transform: none; }
+  .biz-caps details p, .biz-faq details p, .biz-principle:hover .biz-art-accent, .biz-principle:hover .biz-art-accent-fill { animation: none; }
+}
+/* Extra screens of the chapters. */
+.biz-share { display: flex; gap: 4px; height: 12px; overflow: hidden; border-radius: 999px; }
+.biz-share span:nth-child(1) { background: var(--color-brand); }
+.biz-share span:nth-child(2) { background: color-mix(in srgb, var(--color-ink) 45%, var(--color-subtle)); }
+.biz-share span:nth-child(3) { background: color-mix(in srgb, var(--color-ink) 22%, var(--color-subtle)); }
+.biz-chips.is-templates span { border: 1px dashed color-mix(in srgb, var(--color-brand) 50%, transparent); background: transparent; color: var(--color-brand); }
+.biz-members { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.biz-members li { display: flex; align-items: center; gap: 10px; }
+.biz-members strong { flex: 1; color: var(--color-ink); }
+.biz-log { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: .875rem; color: var(--color-muted-strong); }
+.biz-log li { display: flex; align-items: baseline; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--color-control); }
+.biz-log li:last-child { border-bottom: 0; }
+.biz-log b { color: var(--color-ink); }
+.biz-log small { margin-left: auto; font-variant-numeric: tabular-nums; }

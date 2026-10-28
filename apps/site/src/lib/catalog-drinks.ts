@@ -10,6 +10,8 @@ export type CatalogDrinkStatus = 'pending' | 'published' | 'rejected';
 export interface CatalogDrink {
   id: string; brand: string; flavor: string; name: string; /** The full name from the can, '' when not given. */ fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus;
   moderationNote: string; createdAt: Date; updatedAt: Date; href: string; photo: string;
+  /** The company whose cabinet published it without the queue (migration 0127), or null. */
+  business: string | null;
   /** Avatar, tag and XP as every author row shows them; `drinks` — how many of their drinks are published. */
   author: { id: string; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; drinks: number };
 }
@@ -32,14 +34,15 @@ const COLUMNS = `d.id, d.brand, d.flavor, d."fullName", d.volumes, d.ingredients
   coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
   case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
     when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
-  (select count(*)::int from "catalogDrink" o where o."ownerId" = d."ownerId" and o.status = 'published') as drinks`;
-interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number }
+  (select count(*)::int from "catalogDrink" o where o."ownerId" = d."ownerId" and o.status = 'published') as drinks,
+  (select name from business where id = d."businessId") as business`;
+interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number; business: string | null }
 /** The photo's address carries `updatedAt` in the path: a new photo gets a new URL past the hour of public caching. */
 const drinkPhotoUrl = (id: string, updatedAt: Date) => `/api/catalog-drinks/${id}/${updatedAt.getTime()}`;
 const toDrink = (row: Row): CatalogDrink => ({
   id: row.id, brand: row.brand, flavor: row.flavor, name: flavorName(row.flavor), fullName: row.fullName, volumes: row.volumes, ingredients: row.ingredients,
   status: row.status, moderationNote: row.moderationNote, createdAt: row.createdAt, updatedAt: row.updatedAt,
-  href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: drinkPhotoUrl(row.id, row.updatedAt),
+  href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: drinkPhotoUrl(row.id, row.updatedAt), business: row.business ?? null,
   author: { id: row.ownerId, username: row.username, name: row.name, avatarId: row.avatarId, tag: row.tag, xp: Number(row.xp), drinks: row.drinks },
 });
 const VISIBLE_AUTHOR = 'not exists(select 1 from "userBlock" b where b."userId" = d."ownerId")';
@@ -94,7 +97,13 @@ const lower = (value: string) => value.toLocaleLowerCase('ru-RU');
  * merges it, publishing it as is fails (`catalog_drink_identity` holds one published drink per identity). The member's
  * own waiting request for the same drink is refused (`catalog_drink_owner_pending` catches a race).
  */
-export async function submitCatalogDrink(userId: string, input: CatalogDrinkInput, photo: PreparedReviewPhoto | undefined, confirmMatch = false): Promise<string> {
+/**
+ * `businessId` — sent from the cabinet of an approved company: checked again in the transaction (approved, the member
+ * is its owner or active teammate), and then the drink is published at once, without the queue, with the company kept
+ * on the row. A drink that matched something (the «всё равно отправить» path) still goes to moderation — publishing it
+ * would hide a parser card or clash with a published drink. Attaching it to the company stays a moderated request.
+ */
+export async function submitCatalogDrink(userId: string, input: CatalogDrinkInput, photo: PreparedReviewPhoto | undefined, confirmMatch = false, businessId: string | null = null): Promise<{ id: string; published: boolean; href: string }> {
   if (!photo) throw new CatalogDrinkError('Добавьте фото банки.');
   const files = await readAllCatalogGroups();
   const published = await catalogDrinkGroups();
@@ -119,13 +128,19 @@ export async function submitCatalogDrink(userId: string, input: CatalogDrinkInpu
     if (counts.rows[0]!.pending >= MAX_PENDING_DRINKS || counts.rows[0]!.recent) {
       throw new CatalogDrinkError(`Подождите минуту между заявками. Одновременно на проверке может быть до ${MAX_PENDING_DRINKS} напитков.`);
     }
-    const result = await db.query<{ id: string }>(`insert into "catalogDrink"("ownerId", brand, flavor, "fullName", volumes, ingredients, photo, thumbnail)
-      values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`, [userId, identity.brand, identity.flavor, input.fullName, input.volumes, input.ingredients, photo.data, photo.thumbnail]);
+    // Only a clean submission skips the queue: no parser card, no published or waiting drink under this identity.
+    const company = businessId && !member && !waiting && !files.some(same) ? (await db.query<{ id: string }>(
+      `select b.id from business b where b.id = $1 and b.status = 'approved'
+         and (b."ownerId" = $2 or exists(select 1 from "businessMember" m where m."businessId" = b.id and m."userId" = $2 and m.status = 'active' and m.role = 'manager'))`, [businessId, userId])).rows[0]?.id ?? null : null;
+    const result = await db.query<{ id: string }>(`insert into "catalogDrink"("ownerId", brand, flavor, "fullName", volumes, ingredients, photo, thumbnail, status, "businessId", "reviewedAt")
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case when $9 = 'published' then now() end) returning id`,
+      [userId, identity.brand, identity.flavor, input.fullName, input.volumes, input.ingredients, photo.data, photo.thumbnail, company ? 'published' : 'pending', businessId && company ? company : null]);
+    if (company) await db.query(`insert into "businessAuditLog"("businessId", "userId", action, target) values ($1, $2, 'drink-new', $3)`, [company, userId, `${identity.brand} · ${flavorName(identity.flavor)}`]);
     await db.query('commit');
-    return result.rows[0]!.id;
+    return { id: result.rows[0]!.id, published: Boolean(company), href: `/catalog/${catalogGroupSlug(identity.brand, identity.flavor)}` };
   } catch (error) {
     await db.query('rollback');
-    if ((error as { code?: string }).code === '23505') throw new CatalogDrinkError('Этот напиток уже ждёт проверки.');
+    if ((error as { code?: string }).code === '23505') throw new CatalogDrinkError(businessId ? 'Такой напиток уже есть в каталоге или ждёт проверки.' : 'Этот напиток уже ждёт проверки.');
     throw error;
   } finally { db.release(); }
 }

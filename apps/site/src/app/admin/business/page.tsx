@@ -3,7 +3,11 @@ import '@/styles/admin.css';
 import '@/styles/business-cabinet.css';
 import { AdminShell } from '@/components/admin-shell';
 import { BrandShell } from '@/components/brand-shell';
-import { BusinessDrinkModeration, BusinessModeration } from '@/components/business-forms';
+import { BusinessDrinkModeration, BusinessModeration, DrinkEditModeration } from '@/components/business-forms';
+import { getBrandProfile, listDrinkEditsForAdmin } from '@/lib/brand-drink-edits';
+import { loadAllCatalogGroups } from '@/lib/catalog';
+import { getCatalogDrink } from '@/lib/catalog-drinks';
+import { getProductIngredients } from '@/lib/ingredients';
 import Link from '@/components/navigation-progress';
 import { requireSiteAdmin } from '@/lib/admin';
 import { listBusinessesForAdmin, listPendingBusinessDrinks } from '@/lib/business';
@@ -16,6 +20,7 @@ const when = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: '
 const TABS = [
   { key: 'pending', label: 'На проверке', empty: 'Новых заявок нет' },
   { key: 'drinks', label: 'Напитки компаний', empty: 'Все напитки проверены' },
+  { key: 'edits', label: 'Правки карточек', empty: 'Правок на проверке нет' },
   { key: 'approved', label: 'Подтверждённые', empty: 'Пока ни одной компании' },
   { key: 'rejected', label: 'Отклонённые', empty: 'Отклонённых нет' },
 ] as const;
@@ -28,12 +33,31 @@ export default async function AdminBusinessPage({ searchParams }: { searchParams
   const admin = await requireSiteAdmin();
   const requested = (await searchParams).tab;
   const tab = TABS.find(item => item.key === requested) ?? TABS[0];
-  const businesses = tab.key === 'drinks' ? [] : await listBusinessesForAdmin(tab.key as BusinessStatus);
+  const businesses = tab.key === 'drinks' || tab.key === 'edits' ? [] : await listBusinessesForAdmin(tab.key as BusinessStatus);
+  const edits = tab.key === 'edits' ? await Promise.all((await listDrinkEditsForAdmin()).map(async edit => {
+    const [profile, ingredients, added, group] = await Promise.all([getBrandProfile(edit.brand, edit.flavor), getProductIngredients(edit.brand, edit.flavor), getCatalogDrink(edit.brand, edit.flavor),
+      loadAllCatalogGroups().then(groups => groups.find(item => item.brand === edit.brand && item.flavor === edit.flavor))]);
+    return { edit, now: { fullName: profile?.fullName ?? added?.fullName ?? null, ingredients: profile?.ingredients ?? ingredients?.ingredients ?? added?.ingredients ?? null, description: profile?.description ?? null, cover: group?.coverImageUrl ?? null } };
+  })) : [];
   const drinks = tab.key === 'drinks' ? await listPendingBusinessDrinks() : [];
   return <BrandShell headerAction={<Link className="admin-back-link" href="/profile/settings">Вернуться в настройки</Link>} surfaceClassName="admin-surface">
-    <AdminShell active="business" email={admin.email} role={admin.role} title="Компании" subtitle="Заявки бизнеса и напитки, которые компании прикрепляют к себе.">
+    <AdminShell active="business" email={admin.email} role={admin.role} title="Компании" subtitle="Заявки бизнеса, напитки, которые компании прикрепляют к себе, и их правки карточек.">
       <nav className="market-filters" aria-label="Компании">{TABS.map(item => <Link key={item.key} href={item.key === 'pending' ? '/admin/business' : `/admin/business?tab=${item.key}`} aria-current={item.key === tab.key ? 'page' : undefined}>{item.label}</Link>)}</nav>
-      {tab.key === 'drinks' ? drinks.length ? <div className="bc-panel"><div className="bc-table-wrap"><table className="bc-table">
+      {tab.key === 'edits' ? edits.length ? <div className="bc-content">{edits.map(({ edit, now }) => <article key={edit.id} className="bc-panel bc-edit-review">
+          <div className="bc-panel-head"><h2><Link href={`/catalog/${catalogGroupSlug(edit.brand, edit.flavor)}`}>{edit.name}</Link></h2><small>{edit.business}{edit.author ? ` · @${edit.author}` : ''} · {when.format(edit.createdAt)}</small></div>
+          {edit.note && <p className="bc-about">Комментарий: {edit.note}</p>}
+          <dl className="bc-edit-diff">
+            {edit.hasPhoto && <div><dt>Фото</dt><dd className="bc-edit-photos">
+              {/* eslint-disable-next-line @next/next/no-img-element -- the current cover and the proposed photo */}
+              <span><small>Сейчас</small>{now.cover ? <img src={now.cover} alt="" /> : '—'}</span>
+              {/* eslint-disable-next-line @next/next/no-img-element -- served to staff only */}
+              <span><small>Предлагают</small><img src={`/api/brand-drink-edits/${edit.id}`} alt="" /></span></dd></div>}
+            {([['fullName', 'Полное название'], ['ingredients', 'Состав'], ['description', 'Описание от бренда']] as const).filter(([key]) => edit[key]).map(([key, label]) => <div key={key}><dt>{label}</dt>
+              <dd><span className="bc-edit-before"><small>Сейчас</small>{now[key] || '—'}</span><span className="bc-edit-after"><small>Предлагают</small>{edit[key]}</span></dd></div>)}
+          </dl>
+          <DrinkEditModeration id={edit.id} />
+        </article>)}</div> : <div className="admin-data-panel"><div className="admin-empty-result"><strong>{tab.empty}</strong></div></div>
+      : tab.key === 'drinks' ? drinks.length ? <div className="bc-panel"><div className="bc-table-wrap"><table className="bc-table">
         <thead><tr><th>Компания</th><th>Напиток</th><th>Заявка</th><th>Решение</th></tr></thead>
         <tbody>{drinks.map(item => <tr key={`${item.businessId}:${item.brand}:${item.flavor}`}>
           <td data-label="Компания"><strong>{item.business}</strong></td>

@@ -9,10 +9,11 @@ import { CatalogDrinkError, parseCatalogDrink, parseCatalogDrinkEdit } from '@/l
 import { CatalogDrinkDuplicate, deleteCatalogDrink, moderateCatalogDrink, submitCatalogDrink, updateCatalogDrink } from '@/lib/catalog-drinks';
 import { mergeCatalogDrink, searchMergeTargets } from '@/lib/catalog-drink-merge';
 import { ensureOwnProfile } from '@/lib/profile';
+import { getCabinet } from '@/lib/business';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 
 /** `confirmable` — the duplicate is a parser card: the form offers «Всё равно отправить» (`confirmMatch`). */
-export interface CatalogDrinkState { error?: string; duplicate?: string; confirmable?: boolean; saved?: boolean }
+export interface CatalogDrinkState { error?: string; duplicate?: string; confirmable?: boolean; saved?: boolean; /** The card's address when the drink went to the catalog without moderation (an approved company). */ published?: string }
 const KNOWN_FLAVORS = new Set(BASIC_FLAVORS.map(flavor => flavor.key));
 
 export async function submitCatalogDrinkAction(_previous: CatalogDrinkState, form: FormData): Promise<CatalogDrinkState> {
@@ -23,10 +24,13 @@ export async function submitCatalogDrinkAction(_previous: CatalogDrinkState, for
     const input = parseCatalogDrink(form, KNOWN_FLAVORS);
     const { photos } = await prepareReviewPhotos(form);
     if (photos.length > 1) return { error: 'Добавьте одно фото банки.' };
-    await submitCatalogDrink(session.user.id, input, photos[0], form.get('confirmMatch') === '1');
+    // From the business cabinet: the member's company, checked again in `submitCatalogDrink`.
+    const businessId = form.get('business') === '1' ? (await getCabinet(session.user.id))?.business.id ?? null : null;
+    const result = await submitCatalogDrink(session.user.id, input, photos[0], form.get('confirmMatch') === '1', businessId);
     revalidatePath('/catalog/new');
     revalidatePath('/admin/drinks');
-    return { saved: true };
+    if (result.published) { revalidatePath('/catalog', 'layout'); revalidatePath('/business/cabinet'); }
+    return { saved: true, published: result.published ? result.href : undefined };
   } catch (error) {
     if (error instanceof CatalogDrinkDuplicate) return { error: error.message, duplicate: error.href, confirmable: error.confirmable };
     return { error: error instanceof CatalogDrinkError || error instanceof ReviewPhotoError || isFrozenError(error) ? error.message : 'Не удалось отправить напиток. Попробуйте ещё раз.' };

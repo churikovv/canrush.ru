@@ -7,7 +7,9 @@ const pool = new Pool({ connectionString: url, max: 4 });
 const brand = `Biz ${randomUUID().slice(0, 8)}`;
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
 vi.mock('../src/lib/store-catalog', () => ({ storeDrinkOptions: async () => [{ brand, flavor: 'mango', label: `${brand} · mango` }, { brand, flavor: 'peach', label: `${brand} · peach` }] }));
-vi.mock('../src/lib/catalog', () => ({ loadAllCatalogGroups: async () => [{ brand, flavor: 'mango', variants: [], minPrice: 0 }, { brand, flavor: 'peach', variants: [], minPrice: 0 }] }));
+const rival = `${brand} Rival`;
+vi.mock('../src/lib/catalog', () => ({ loadAllCatalogGroups: async () => [{ brand, flavor: 'mango', variants: [], minPrice: 0 }, { brand, flavor: 'peach', variants: [], minPrice: 0 },
+  { brand: rival, flavor: 'mango', variants: [{ price: 120, volumeMl: 250 }, { price: 200, volumeMl: 500 }], minPrice: 120 }] }));
 const business = await import('../src/lib/business');
 const { parseBusinessInput } = await import('../src/lib/business-fields');
 
@@ -21,11 +23,14 @@ beforeAll(async () => {
   await pool.query(`insert into "siteAdmin"(email, role) values ($1, 'moderator')`, [staffEmail]);
 });
 afterAll(async () => {
-  await pool.query('delete from review where brand = $1', [brand]);
+  await pool.query('delete from review where brand = any($1::text[])', [[brand, rival]]);
   await pool.query('delete from "businessReviewDigest" where brand = $1', [brand]);
   await pool.query(`delete from "telegramJobRun" where job like 'business-digest:' || $1 || ':%'`, [brand]);
   await pool.query(`delete from "searchQuery" where brands && array[$1]::text[] or strpos(query, lower($1)) > 0`, [brand]);
   await pool.query('delete from "drinkSwipe" where brand = $1', [brand]);
+  await pool.query('delete from "catalogEvent" where brand = $1', [brand]);
+  await pool.query('delete from "brandDrinkProfile" where brand = $1', [brand]);
+  await pool.query(`delete from "marketListing" where "sellerId" = any($1::text[])`, [[owner, fan]]);
   await pool.query('delete from "adminAuditLog" where "adminEmail" = $1', [staffEmail]);
   await pool.query('delete from "siteAdmin" where email = $1', [staffEmail]);
   await pool.query('delete from notification where "userId" = any($1::text[])', [[owner, fan, staff]]);
@@ -34,7 +39,9 @@ afterAll(async () => {
 });
 
 it('applies, attaches drinks through moderation and counts only approved ones', async () => {
-  await business.saveBusiness(owner, input('Energy Lab'));
+  await expect(business.saveBusiness(owner, input('Energy Lab'), null)).rejects.toThrow('условия');
+  await business.saveBusiness(owner, input('Energy Lab'), '2026-10-28');
+  expect((await pool.query(`select "termsVersion", "termsAcceptedAt" is not null as accepted from business where "ownerId" = $1`, [owner])).rows[0]).toEqual({ termsVersion: '2026-10-28', accepted: true });
   const company = (await business.getOwnBusiness(owner))!;
   expect(company).toMatchObject({ name: 'Energy Lab', status: 'pending' });
   await business.requestBusinessDrink(owner, brand, 'mango');
@@ -44,7 +51,12 @@ it('applies, attaches drinks through moderation and counts only approved ones', 
   // Only the team decides, and a refusal of a company needs a reason.
   await expect(business.moderateBusiness(fan, company.id, 'approved', '')).rejects.toThrow('команда');
   await expect(business.moderateBusiness(staff, company.id, 'rejected', ' ')).rejects.toThrow('причину');
-  await business.moderateBusiness(staff, company.id, 'approved', '');
+  const approvedMail = vi.fn(async () => undefined);
+  await business.moderateBusiness(staff, company.id, 'approved', '', approvedMail);
+  expect(approvedMail).toHaveBeenCalledWith(`${owner}@example.com`, 'Energy Lab');
+  // Approving again (an edit of the decision) sends nothing new.
+  await business.moderateBusiness(staff, company.id, 'approved', '', approvedMail);
+  expect(approvedMail).toHaveBeenCalledTimes(1);
   await business.moderateBusinessDrink(staff, company.id, brand, 'mango', 'approved', '');
   await business.moderateBusinessDrink(staff, company.id, brand, 'peach', 'rejected', 'Не ваш вкус');
 
@@ -172,4 +184,157 @@ it('counts searches with the brand and lets the company answer a review', async 
   await pool.query('delete from notification where "userId" = $1', [author]);
   await pool.query('delete from review where id = $1', [review]);
   await pool.query('delete from "user" where id = $1', [author]);
+});
+
+it('counts drink card views and store taps of approved drinks', async () => {
+  const company = (await business.getOwnBusiness(owner))!;
+  // mango is the company's approved drink; peach is not, so its events stay out.
+  await pool.query(`insert into "catalogEvent"(brand, flavor, kind, retailer, "createdAt") values
+    ($1, 'mango', 'view', null, now()), ($1, 'mango', 'view', null, now()), ($1, 'mango', 'view', null, now()), ($1, 'mango', 'view', null, now()),
+    ($1, 'mango', 'store', 'Лента', now()), ($1, 'mango', 'store', 'Лента', now()), ($1, 'mango', 'store', 'Магнит', now()),
+    ($1, 'mango', 'view', null, now() - interval '40 days'), ($1, 'peach', 'view', null, now())`, [brand]);
+  const cards = await business.getBusinessCards(company.id);
+  expect(cards).toMatchObject({ views30: 4, previousViews30: 1, clicks30: 3, previousClicks30: 0 });
+  expect(cards.items.find(item => item.flavor === 'mango')).toMatchObject({ views: 4, clicks: 3, retailer: 'Лента' });
+  expect(cards.items.some(item => item.flavor === 'peach')).toBe(false);
+  expect(cards.retailers).toEqual([{ retailer: 'Лента', count: 2 }, { retailer: 'Магнит', count: 1 }]);
+  expect(cards.weekly.reduce((sum, week) => sum + week.count, 0)).toBe(5);
+});
+
+it('publishes a listing on behalf of the approved company only for its team', async () => {
+  const market = await import('../src/lib/market');
+  const company = (await business.getOwnBusiness(owner))!;
+  const photo = { data: Buffer.from('test'), thumbnail: Buffer.from('thumb') };
+  const lot = { title: 'Лимитка', description: 'Шесть банок', city: 'Москва', price: 15000, quantity: 6, delivery: ['pickup' as const] };
+  await expect(market.createListing(fan, lot, [photo], company.id)).rejects.toThrow('менеджерам команды');
+  const id = await market.createListing(owner, lot, [photo], company.id);
+  expect(await market.getListing(id)).toMatchObject({ sellerId: owner, businessId: company.id, businessName: 'Energy Lab' });
+  expect((await market.getCabinetListings(fan, company.id)).map(item => item.id)).toContain(id);
+  expect((await market.getCabinetListings(fan, null)).map(item => item.id)).not.toContain(id);
+});
+
+it('compares the company with competitor brands', async () => {
+  const competitors = await import('../src/lib/business-competitors');
+  const company = (await business.getOwnBusiness(owner))!;
+  await expect(competitors.addCompetitor(company.id, brand)).rejects.toThrow('ваш бренд');
+  await expect(competitors.addCompetitor(company.id, 'Нет такого')).rejects.toThrow('из каталога');
+  await competitors.addCompetitor(company.id, rival.toUpperCase());
+  await expect(competitors.addCompetitor(company.id, rival)).rejects.toThrow('уже в сравнении');
+  await pool.query(`insert into review("userId", brand, flavor, design, taste, text) values ($1, $2, 'mango', 9, 9, 'Отлично')`, [fan, rival]);
+  const data = await competitors.getCompetitors(company.id);
+  expect(data.picked).toEqual([rival]);
+  expect(data.options).toEqual([rival]);
+  // Brand-wide: every review and card view of the brand, not only the approved drink.
+  const own = (await pool.query<{ reviews: number; views: number }>(`select (select count(*)::int from review where brand = $1) as reviews,
+    (select count(*)::int from "catalogEvent" where brand = $1 and kind = 'view' and "createdAt" > now() - interval '30 days') as views`, [brand])).rows[0]!;
+  expect(data.own).toMatchObject({ label: brand, own: true, drinks: 2, reviews: own.reviews, views30: own.views, clicks30: 3 });
+  expect(data.rivals[0]).toMatchObject({ label: rival, own: false, drinks: 1, reviews: 1, score: 9, price500: 220 });
+});
+
+it('builds the weekly report and sends it once per member', async () => {
+  const report = await import('../src/lib/business-report');
+  const { moscowDay } = await import('../src/lib/drink-calendar-fields');
+  const company = (await business.getOwnBusiness(owner))!;
+  expect(report.reportedWeek('2026-11-02')).toBe('2026-10-26');
+  expect(report.reportedWeek('2026-11-08')).toBe('2026-10-26');
+  // The week running now, so the rows written by the tests above fall into it.
+  const monday = new Date(`${report.reportedWeek(moscowDay())}T00:00:00Z`); monday.setUTCDate(monday.getUTCDate() + 7);
+  const week = monday.toISOString().slice(0, 10);
+  const data = (await report.getWeeklyReport(company.id, week))!;
+  // Reviews of the approved drink only (mango), written by the tests above this week.
+  const mango = (await pool.query<{ count: number; score: number; all: number; views: number }>(`select count(*) filter (where flavor = 'mango')::int as count,
+    round(avg((taste + design) / 2.0) filter (where flavor = 'mango')::numeric, 1)::float8 as score, count(*)::int as all,
+    (select count(*)::int from "catalogEvent" where brand = $1 and kind = 'view' and "createdAt" > now() - interval '1 day') as views from review where brand = $1`, [brand])).rows[0]!;
+  expect(data).toMatchObject({ business: 'Energy Lab', from: week, reviews: { now: mango.count, before: 0, score: mango.score }, views: { now: 4 }, clicks: { now: 3 } });
+  expect(data.latest.length).toBe(Math.min(3, mango.count));
+  expect(data.latest.every(item => item.drink.includes(brand))).toBe(true);
+  expect(data.rivals).toEqual([{ label: brand, own: true, reviews: mango.all, views: mango.views }, { label: rival, own: false, reviews: 1, views: 0 }]);
+
+  const send = vi.fn(async () => undefined);
+  try {
+    await report.runWeeklyReports(week, send, 0);
+    const mine = send.mock.calls.filter(call => (call as unknown[])[0] === `${owner}@example.com`);
+    expect(mine).toHaveLength(1);
+    await report.runWeeklyReports(week, send, 0);
+    expect(send.mock.calls.filter(call => (call as unknown[])[0] === `${owner}@example.com`)).toHaveLength(1);
+    // Turned off: nothing next time.
+    await pool.query(`delete from "businessWeeklyReport" where week = $1`, [week]);
+    await pool.query(`insert into "businessReportOptOut"("userId") values ($1)`, [owner]);
+    send.mockClear();
+    await report.runWeeklyReports(week, send, 0);
+    expect(send.mock.calls.some(call => (call as unknown[])[0] === `${owner}@example.com`)).toBe(false);
+  } finally {
+    await pool.query(`delete from "businessWeeklyReport" where week = $1`, [week]);
+    await pool.query(`delete from "businessReportOptOut" where "userId" = $1`, [owner]);
+  }
+});
+
+it('keeps reply templates for the whole team', async () => {
+  const company = (await business.getOwnBusiness(owner))!;
+  await expect(business.saveReplyTemplate(fan, 'Чужой', 'Текст')).rejects.toThrow('подтверждённой компании');
+  const saved = await business.saveReplyTemplate(owner, ' Спасибо ', 'Спасибо, {автор}! Рады, что {напиток} зашёл.');
+  expect(saved).toMatchObject({ title: 'Спасибо', text: 'Спасибо, {автор}! Рады, что {напиток} зашёл.' });
+  await expect(business.saveReplyTemplate(owner, 'Спасибо', 'Другой')).rejects.toThrow('уже есть');
+  expect((await business.listReplyTemplates(company.id)).map(item => item.title)).toEqual(['Спасибо']);
+  await business.deleteReplyTemplate(fan, saved.id).catch(() => undefined);
+  expect(await business.listReplyTemplates(company.id)).toHaveLength(1);
+  await business.deleteReplyTemplate(owner, saved.id);
+  expect(await business.listReplyTemplates(company.id)).toEqual([]);
+});
+
+it('queues unanswered reviews, keeps team roles, the log and brand card edits', async () => {
+  const edits = await import('../src/lib/brand-drink-edits');
+  const { parseDrinkEdit } = await import('../src/lib/brand-drink-edit-fields');
+  const company = (await business.getOwnBusiness(owner))!;
+  // The reply queue: «Без ответа» and «Низкие оценки» agree with their counters.
+  const queue = await business.countReviewQueue(company.id);
+  const unanswered = await business.listBusinessReviews(company.id, { view: 'unanswered', limit: 100 });
+  const low = await business.listBusinessReviews(company.id, { view: 'low', limit: 100 });
+  expect(unanswered.total).toBe(queue.unanswered);
+  expect(unanswered.items.every(item => !item.reply)).toBe(true);
+  expect(low.total).toBe(queue.low);
+  expect(low.items.every(item => item.taste + item.design < 10)).toBe(true);
+  const reviewId = (await business.listBusinessReviews(company.id, { limit: 1 })).items[0]!.id;
+
+  // An analyst looks only; the owner switches the role and it acts.
+  // The fan's invitation from the team test above waits; the owner makes it an analyst's, and the fan accepts.
+  await expect(business.inviteBusinessMember(owner, `@bz_${fan.slice(0, 12)}`, undefined, 'analyst')).rejects.toThrow('уже в команде или приглашён');
+  await business.setBusinessMemberRole(owner, `user:${fan}`, 'analyst');
+  await business.answerBusinessInvite(fan, company.id, true);
+  expect(await business.getCabinet(fan)).toMatchObject({ role: 'analyst' });
+  await expect(business.replyToReview(fan, reviewId, 'Спасибо!')).rejects.toThrow('Аналитик');
+  await expect(business.saveReplyTemplate(fan, 'Шаблон', 'Текст')).rejects.toThrow('Аналитик');
+  const form = new FormData(); form.set('fullName', '  Biz   Mango Zero '); form.set('description', 'Манго и лайм.');
+  const input = parseDrinkEdit(form, false);
+  expect(input).toEqual({ fullName: 'Biz Mango Zero', ingredients: null, description: 'Манго и лайм.', note: null });
+  expect(() => parseDrinkEdit(new FormData(), false)).toThrow('хотя бы одно');
+  await expect(edits.requestDrinkEdit(fan, brand, 'mango', input)).rejects.toThrow('Аналитик');
+  await business.setBusinessMemberRole(owner, `user:${fan}`, 'manager');
+  expect(await business.getCabinet(fan)).toMatchObject({ role: 'manager' });
+
+  // A card edit of an approved drink only, one waiting at a time; staff decide; a later edit keeps untouched fields.
+  await expect(edits.requestDrinkEdit(fan, brand, 'peach', input)).rejects.toThrow('подтверждённые');
+  const first = await edits.requestDrinkEdit(fan, brand, 'mango', input, { data: Buffer.from('photo'), thumbnail: Buffer.from('thumb') });
+  await expect(edits.requestDrinkEdit(owner, brand, 'mango', input)).rejects.toThrow('ждёт проверки');
+  expect(await edits.getDrinkEditPhoto(first, owner, false, 'thumbnail')).toEqual(Buffer.from('thumb'));
+  expect(await edits.getDrinkEditPhoto(first, staff, false, 'thumbnail')).toBeNull();
+  await expect(edits.moderateDrinkEdit(fan, first, 'approved', '')).rejects.toThrow('команда');
+  await edits.moderateDrinkEdit(staff, first, 'approved', '');
+  expect(await edits.getBrandProfile(brand, 'mango')).toMatchObject({ business: 'Energy Lab', fullName: 'Biz Mango Zero', description: 'Манго и лайм.', ingredients: null, photo: expect.stringMatching(/^\/api\/brand-drink-photos\//u) });
+  const composition = 'Вода питьевая, сахар, регулятор кислотности лимонная кислота, таурин, кофеин.';
+  const second = await edits.requestDrinkEdit(owner, brand, 'mango', { fullName: null, ingredients: composition, description: null, note: 'новый состав' });
+  await expect(edits.moderateDrinkEdit(staff, second, 'rejected', ' ')).rejects.toThrow('причину');
+  await edits.moderateDrinkEdit(staff, second, 'approved', '');
+  const profile = (await edits.getBrandProfile(brand, 'mango'))!;
+  expect(profile).toMatchObject({ fullName: 'Biz Mango Zero', description: 'Манго и лайм.', ingredients: composition });
+  expect(edits.brandIngredients(profile, brand, 'mango', 450)).toMatchObject({ status: 'source_reported', sourceName: 'Бренд «Energy Lab»', ingredients: composition });
+  expect((await edits.listDrinkEdits(company.id)).map(edit => edit.status)).toEqual(['approved', 'approved']);
+
+  // The team's log and the first steps.
+  const log = (await business.listBusinessAudit(company.id)).map(entry => entry.action);
+  expect(log).toEqual(expect.arrayContaining(['invite', 'member-role', 'drink-edit', 'competitor']));
+  const steps = await business.getOnboarding(company);
+  expect(steps.find(step => step.key === 'team')?.done).toBe(true);
+  expect(steps.find(step => step.key === 'verified')?.done).toBe(true);
+  await business.leaveBusiness(fan);
 });

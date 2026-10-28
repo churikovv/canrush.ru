@@ -733,3 +733,9 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 }
 /* The chart's tip is a small card like the other tips (`.review-hint-card`), not a grey line. */
 .catalog-price-history .price-history-hint { margin: 16px 0 0; color: var(--color-muted-strong); font-size: .8125rem; }
+
+/* Data confirmed by the brand (an approved card edit from its cabinet): a quiet mark and the brand's own words. */
+.catalog-brand-verified { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 12px; padding: 5px 12px 5px 8px; border-radius: 12px; background: color-mix(in srgb, var(--color-brand) 10%, transparent); color: var(--color-brand); font-size: .8125rem; font-weight: 700; }
+.catalog-brand-description { margin: 0 0 16px; padding: 14px 16px; border-radius: 16px; background: var(--color-subtle); }
+.catalog-brand-description h2 { margin: 0 0 4px; color: var(--color-muted-strong); font-size: .8125rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+.catalog-brand-description p { margin: 0; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }

@@ -39,7 +39,7 @@ export function DrinkJuiceOption({ checked, onChange }: { checked: boolean; onCh
  * then a preview of the catalog card before it goes to moderation.
  */
 /** `inCabinet` — the business cabinet's form: the done screen leads back to the company's drinks. */
-export function CatalogDrinkForm({ brands, flavors, inCabinet = false }: { brands: string[]; flavors: { key: string; label: string }[]; inCabinet?: boolean }) {
+export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified = false }: { brands: string[]; flavors: { key: string; label: string }[]; inCabinet?: boolean; verified?: boolean }) {
   const [state, action, pending] = useActionState(submitCatalogDrinkAction, {});
   const [step, setStep] = useState(0);
   const [reached, setReached] = useState(0);
@@ -98,6 +98,11 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false }: { brand
     setOtherVolume(''); setProblem('');
   }
 
+  if (state.saved && state.published) return <section className="market-empty catalog-drink-done">
+    <h2>Напиток в каталоге</h2>
+    <p>Компания подтверждена, поэтому «{brand} · {drinkName}» опубликован сразу, без модерации. Чтобы видеть его отзывы в аналитике, прикрепите напиток к компании — это одна заявка.</p>
+    <div className="market-empty-actions"><Link href={state.published} className="community-button">Открыть карточку</Link><Link href="/business/cabinet?section=drinks" className="community-button community-button-secondary">Прикрепить к компании</Link></div>
+  </section>;
   if (state.saved) return <section className="market-empty catalog-drink-done">
     <h2>Напиток отправлен на проверку</h2>
     <p>Модератор сверит фото и название. После публикации «{brand} · {drinkName}» появится в каталоге — {inCabinet ? 'и его можно будет прикрепить к компании в один клик.' : 'его можно будет оценить, добавить в избранное и отметить в календаре.'}</p>
@@ -116,6 +121,7 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false }: { brand
     // DOM while the cards still show the choice: a second send («Всё равно отправить») took «С сахаром» and no juice.
     form.set('sugar', sugar);
     if (juice) form.set('juice', '1'); else form.delete('juice');
+    if (inCabinet && verified) form.set('business', '1');
     photos.forEach(photo => form.append('photos', photo));
     startTransition(() => action(form));
   }}><fieldset disabled={pending}>

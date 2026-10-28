@@ -10,7 +10,8 @@ import { DIGEST_COOLDOWN_HOURS, DIGEST_DAILY_LIMIT, DIGEST_MIN_REVIEWS, type Rev
 import { writeReviewDigest } from '@/lib/review-digest';
 import { brandSearchNames } from '@/lib/search-log-fields';
 import { frozenMessage } from '@/lib/moderation';
-import { BusinessError, MAX_PENDING_BUSINESS_DRINKS, parseBusinessReply, weeklySeries, type BusinessInput, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
+import { isTelegramPlaceholderEmail } from '@/lib/telegram-init-data';
+import { BUSINESS_ROLES, BusinessError, isBusinessMemberRole, type BusinessMemberRole, MAX_PENDING_BUSINESS_DRINKS, MAX_REPLY_TEMPLATES, parseBusinessReply, parseReplyTemplate, weeklySeries, type BusinessInput, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
 
 export interface Business {
   id: string; ownerId: string; name: string; kind: BusinessKind; website: string | null; telegram: string | null;
@@ -24,30 +25,62 @@ export async function getOwnBusiness(userId: string): Promise<Business | null> {
 }
 
 /**
- * Applies for a company account or edits it. A new or rejected company goes (back) to the team's queue; an approved or
- * pending one keeps its status. Blocked members cannot apply.
+ * Applies for a company account, or sends a rejected one again with fixes — back to the team's queue. Once applied, the
+ * data is what the team checks: a company on review or approved cannot change it here (the cabinet shows it read-only,
+ * changes go through support), so an approved name cannot be swapped without a new check. Blocked members cannot apply.
  */
-export async function saveBusiness(userId: string, input: BusinessInput): Promise<void> {
+export async function saveBusiness(userId: string, input: BusinessInput, termsVersion: string | null): Promise<void> {
+  if (!termsVersion) throw new BusinessError('Примите условия для бизнеса, чтобы отправить заявку.');
   const db = getPool();
   if ((await db.query('select 1 from "userBlock" where "userId" = $1', [userId])).rowCount) throw new BusinessError('Этому аккаунту бизнес-кабинет недоступен.');
+  const current = (await db.query<{ status: BusinessStatus }>('select status from business where "ownerId" = $1', [userId])).rows[0];
+  if (current && current.status !== 'rejected') throw new BusinessError(current.status === 'pending' ? 'Заявка уже на проверке — данные можно будет поправить после решения.' : 'Данные подтверждённой компании меняются через поддержку: hello@canrush.ru.');
   await db.query(
-    `insert into business("ownerId", name, kind, website, telegram, "contactEmail", about) values ($1, $2, $3, $4, $5, $6, $7)
+    `insert into business("ownerId", name, kind, website, telegram, "contactEmail", about, "termsAcceptedAt", "termsVersion") values ($1, $2, $3, $4, $5, $6, $7, now(), $8)
      on conflict ("ownerId") do update set name = excluded.name, kind = excluded.kind, website = excluded.website, telegram = excluded.telegram,
-       "contactEmail" = excluded."contactEmail", about = excluded.about, "updatedAt" = now(),
+       "contactEmail" = excluded."contactEmail", about = excluded.about, "updatedAt" = now(), "termsAcceptedAt" = now(), "termsVersion" = excluded."termsVersion",
        status = case when business.status = 'rejected' then 'pending' else business.status end,
        "moderationNote" = case when business.status = 'rejected' then null else business."moderationNote" end`,
-    [userId, input.name, input.kind, input.website, input.telegram, input.contactEmail, input.about]);
+    [userId, input.name, input.kind, input.website, input.telegram, input.contactEmail, input.about, termsVersion]);
 }
 
-export type BusinessRole = 'owner' | 'manager';
+export type BusinessRole = 'owner' | BusinessMemberRole;
 
 /** The company whose cabinet the member opens: their own, or the one whose team they joined. */
 export async function getCabinet(userId: string): Promise<{ business: Business; role: BusinessRole } | null> {
   const own = await getOwnBusiness(userId);
   if (own) return { business: own, role: 'owner' };
-  const member = (await getPool().query<Business>(
-    `select ${COLUMNS} from business b join "businessMember" m on m."businessId" = b.id where m."userId" = $1 and m.status = 'active'`, [userId])).rows[0];
-  return member ? { business: member, role: 'manager' } : null;
+  const member = (await getPool().query<Business & { role: BusinessMemberRole }>(
+    `select ${COLUMNS}, m.role from business b join "businessMember" m on m."businessId" = b.id where m."userId" = $1 and m.status = 'active'`, [userId])).rows[0];
+  if (!member) return null;
+  const { role, ...business } = member;
+  return { business, role };
+}
+
+/** The company of a member who may act for it (owner or manager): an analyst only looks. */
+async function editorCabinet(userId: string): Promise<Business> {
+  const cabinet = await getCabinet(userId);
+  if (!cabinet) throw new BusinessError('Сначала расскажите о компании.');
+  if (cabinet.role === 'analyst') throw new BusinessError('У роли «Аналитик» только просмотр — попросите владельца кабинета сменить роль.');
+  return cabinet.business;
+}
+
+/**
+ * One line of the team's action log (`businessAuditLog`): who did what to which object. Never fails the action itself.
+ */
+export async function logBusiness(businessId: string, userId: string | null, action: string, target: string | null = null): Promise<void> {
+  await getPool().query(`insert into "businessAuditLog"("businessId", "userId", action, target) values ($1, $2, $3, $4)`, [businessId, userId, action, target?.slice(0, 200) ?? null])
+    .catch(error => console.error('[business] audit log failed', error instanceof Error ? error.message : 'unknown'));
+}
+
+export interface BusinessAuditEntry { id: string; action: string; target: string | null; createdAt: Date; actor: string; username: string | null }
+
+/** The latest actions of the team, newest first. */
+export async function listBusinessAudit(businessId: string, limit = 100): Promise<BusinessAuditEntry[]> {
+  return (await getPool().query<BusinessAuditEntry>(
+    `select a.id::text, a.action, a.target, a."createdAt", u.username,
+       case when u.id is null then 'Бывший участник' when trim(u.name) <> '' and u.name not like '%@%' then u.name else coalesce(u.username, 'Участник') end as actor
+     from "businessAuditLog" a left join "user" u on u.id = a."userId" where a."businessId" = $1 order by a."createdAt" desc, a.id desc limit $2`, [businessId, limit])).rows;
 }
 
 async function ownBusinessOrThrow(userId: string): Promise<Business> {
@@ -60,6 +93,7 @@ async function ownBusinessOrThrow(userId: string): Promise<Business> {
 /** Asks to attach a catalog drink to the company; the team approves it. A rejected request can be sent again. */
 export async function requestBusinessDrink(userId: string, brand: string, flavor: string): Promise<void> {
   const business = await ownBusinessOrThrow(userId);
+  await editorCabinet(userId);
   const option = (await storeDrinkOptions()).find(item => item.brand === brand && item.flavor === flavor);
   if (!option) throw new BusinessError('Такого напитка нет в каталоге. Добавьте его как новый.');
   const db = getPool();
@@ -71,12 +105,13 @@ export async function requestBusinessDrink(userId: string, brand: string, flavor
        where "businessDrink".status = 'rejected'`,
     [business.id, option.brand, option.flavor]);
   if (!result.rowCount) throw new BusinessError('Этот напиток уже прикреплён или ждёт проверки.');
+  await logBusiness(business.id, userId, 'drink-request', `${option.brand} · ${flavorName(option.flavor)}`);
 }
 
 export async function removeBusinessDrink(userId: string, brand: string, flavor: string): Promise<void> {
-  const cabinet = await getCabinet(userId);
-  if (!cabinet) return;
-  await getPool().query(`delete from "businessDrink" where "businessId" = $1 and brand = $2 and flavor = $3`, [cabinet.business.id, brand, flavor]);
+  const business = await editorCabinet(userId);
+  const removed = await getPool().query(`delete from "businessDrink" where "businessId" = $1 and brand = $2 and flavor = $3`, [business.id, brand, flavor]);
+  if (removed.rowCount) await logBusiness(business.id, userId, 'drink-remove', `${brand} · ${flavorName(flavor)}`);
 }
 
 // ── Team ────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -85,7 +120,7 @@ export const MAX_BUSINESS_MEMBERS = 10;
 /** Invitation letters a company may send a day — the form must not become a way to spam addresses. */
 export const BUSINESS_INVITES_PER_DAY = 20;
 /** A team row: a member (or their pending invitation), or an invitation still waiting for its address to sign in. */
-export interface BusinessMember { key: string; userId: string | null; email: string | null; username: string | null; name: string; avatarId: string | null; status: 'pending' | 'active'; createdAt: Date }
+export interface BusinessMember { key: string; userId: string | null; email: string | null; username: string | null; name: string; avatarId: string | null; status: 'pending' | 'active'; role: BusinessMemberRole; createdAt: Date }
 
 /**
  * The team as the owner sees it. An invitation sent by email shows only that email until it is accepted — the owner
@@ -98,10 +133,10 @@ export async function listBusinessMembers(businessId: string): Promise<BusinessM
        case when m.status = 'pending' and m."invitedEmail" is not null then m."invitedEmail"
             when trim(u.name) <> '' and u.name not like '%@%' then u.name else coalesce(u.username, 'Участник') end as name,
        case when m.status = 'pending' and m."invitedEmail" is not null then null else (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') end as "avatarId",
-       m.status, m."createdAt"
+       m.status, m.role, m."createdAt"
      from "businessMember" m join "user" u on u.id = m."userId" where m."businessId" = $1
      union all
-     select 'email:' || e.email, null, e.email, null, e.email, null, 'pending', e."createdAt" from "businessEmailInvite" e where e."businessId" = $1
+     select 'email:' || e.email, null, e.email, null, e.email, null, 'pending', e.role, e."createdAt" from "businessEmailInvite" e where e."businessId" = $1
      order by status, "createdAt"`, [businessId]);
   return rows.sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1));
 }
@@ -120,7 +155,7 @@ type InviteMail = (to: string, business: string, inviter: string) => Promise<voi
  * pending member at once (with a site notification), one without waits until someone signs in with it. Either way the
  * owner gets the same answer. Nickname: a site notification only.
  */
-export async function inviteBusinessMember(ownerId: string, rawTarget: string, sendMail?: InviteMail): Promise<'email' | 'username'> {
+export async function inviteBusinessMember(ownerId: string, rawTarget: string, sendMail?: InviteMail, role: BusinessMemberRole = 'manager'): Promise<'email' | 'username'> {
   const business = await ownerBusinessOrThrow(ownerId);
   const db = getPool();
   const target = rawTarget.trim();
@@ -142,15 +177,16 @@ export async function inviteBusinessMember(ownerId: string, rawTarget: string, s
       `select id, exists(select 1 from "userBlock" b where b."userId" = u.id) as blocked from "user" u where lower(u.email) = $1`, [email])).rows[0];
     let inserted: number;
     if (user && !user.blocked) {
-      inserted = (await db.query(`insert into "businessMember"("businessId", "userId", "invitedBy", "invitedEmail") values ($1, $2, $3, $4) on conflict do nothing`, [business.id, user.id, ownerId, email])).rowCount ?? 0;
+      inserted = (await db.query(`insert into "businessMember"("businessId", "userId", "invitedBy", "invitedEmail", role) values ($1, $2, $3, $4, $5) on conflict do nothing`, [business.id, user.id, ownerId, email, role])).rowCount ?? 0;
       if (inserted) await db.query(`insert into notification("userId", "actorId", kind, "eventKey", payload) values ($1, $2, 'business-invite', $3, $4) on conflict ("userId", "eventKey") do nothing`,
         [user.id, ownerId, `business-invite:${business.id}`, JSON.stringify({ business: business.name })]);
     } else if (user) {
       return 'email'; // a banned account: the same answer as for any address, and no letter
     } else {
-      inserted = (await db.query(`insert into "businessEmailInvite"("businessId", email, "invitedBy") values ($1, $2, $3) on conflict do nothing`, [business.id, email, ownerId])).rowCount ?? 0;
+      inserted = (await db.query(`insert into "businessEmailInvite"("businessId", email, "invitedBy", role) values ($1, $2, $3, $4) on conflict do nothing`, [business.id, email, ownerId, role])).rowCount ?? 0;
     }
     if (!inserted) throw new BusinessError('На этот адрес приглашение уже отправлено.');
+    await logBusiness(business.id, ownerId, 'invite', email);
     try { await (sendMail ?? (await import('@/lib/email')).sendBusinessInviteEmail)(email, business.name, owner.name); }
     catch (error) {
       console.error('[business] invite email failed', error instanceof Error ? error.message : 'unknown');
@@ -165,8 +201,9 @@ export async function inviteBusinessMember(ownerId: string, rawTarget: string, s
   if (!user) throw new BusinessError('Участника с таким ником нет. Пригласите по почте — так надёжнее.');
   if (user.id === ownerId) throw new BusinessError('Вы уже владелец этого кабинета.');
   if ((await db.query('select 1 from "userBlock" where "userId" = $1', [user.id])).rowCount) throw new BusinessError('Этого участника нельзя пригласить.');
-  const inserted = await db.query(`insert into "businessMember"("businessId", "userId", "invitedBy") values ($1, $2, $3) on conflict do nothing`, [business.id, user.id, ownerId]);
+  const inserted = await db.query(`insert into "businessMember"("businessId", "userId", "invitedBy", role) values ($1, $2, $3, $4) on conflict do nothing`, [business.id, user.id, ownerId, role]);
   if (!inserted.rowCount) throw new BusinessError('Этот участник уже в команде или приглашён.');
+  await logBusiness(business.id, ownerId, 'invite', `@${username}`);
   await db.query(`insert into notification("userId", "actorId", kind, "eventKey", payload) values ($1, $2, 'business-invite', $3, $4) on conflict ("userId", "eventKey") do nothing`,
     [user.id, ownerId, `business-invite:${business.id}`, JSON.stringify({ business: business.name })]);
   return 'username';
@@ -177,6 +214,25 @@ export async function removeBusinessMember(ownerId: string, key: string): Promis
   const business = await ownerBusinessOrThrow(ownerId);
   if (key.startsWith('email:')) await getPool().query(`delete from "businessEmailInvite" where "businessId" = $1 and email = $2`, [business.id, key.slice(6)]);
   else if (key.startsWith('user:')) await getPool().query(`delete from "businessMember" where "businessId" = $1 and "userId" = $2`, [business.id, key.slice(5)]);
+  else return;
+  await logBusiness(business.id, ownerId, 'member-remove', await memberLabel(key));
+}
+
+/** «@nick» or the address of a team row key, for the log. */
+async function memberLabel(key: string): Promise<string> {
+  if (key.startsWith('email:')) return key.slice(6);
+  const user = (await getPool().query<{ username: string | null; name: string }>(`select username, name from "user" where id = $1`, [key.slice(5)])).rows[0];
+  return user?.username ? `@${user.username}` : user?.name ?? 'участник';
+}
+
+/** The owner changes a teammate's (or an invitation's) role. */
+export async function setBusinessMemberRole(ownerId: string, key: string, role: unknown): Promise<void> {
+  const business = await ownerBusinessOrThrow(ownerId);
+  if (!isBusinessMemberRole(role)) throw new BusinessError('Выберите роль.');
+  const result = key.startsWith('email:')
+    ? await getPool().query(`update "businessEmailInvite" set role = $3 where "businessId" = $1 and email = $2 and role <> $3`, [business.id, key.slice(6), role])
+    : key.startsWith('user:') ? await getPool().query(`update "businessMember" set role = $3 where "businessId" = $1 and "userId" = $2 and role <> $3`, [business.id, key.slice(5), role]) : null;
+  if (result?.rowCount) await logBusiness(business.id, ownerId, 'member-role', `${await memberLabel(key)} → ${BUSINESS_ROLES.find(item => item.value === role)!.label}`);
 }
 
 export interface BusinessInvite { businessId: string; business: string; kind: string; inviter: string | null; createdAt: Date }
@@ -184,8 +240,8 @@ export async function listBusinessInvites(userId: string): Promise<BusinessInvit
   // Invitations sent to this member's email before they had an account become ordinary pending invitations now.
   await getPool().query(
     `with mine as (select lower(email) as email from "user" where id = $1),
-       moved as (delete from "businessEmailInvite" e using mine where e.email = mine.email returning e."businessId", e."invitedBy", e.email, e."createdAt")
-     insert into "businessMember"("businessId", "userId", "invitedBy", "invitedEmail", "createdAt") select "businessId", $1, "invitedBy", email, "createdAt" from moved
+       moved as (delete from "businessEmailInvite" e using mine where e.email = mine.email returning e."businessId", e."invitedBy", e.email, e.role, e."createdAt")
+     insert into "businessMember"("businessId", "userId", "invitedBy", "invitedEmail", role, "createdAt") select "businessId", $1, "invitedBy", email, role, "createdAt" from moved
      on conflict do nothing`, [userId]);
   return (await getPool().query<BusinessInvite>(
     `select b.id as "businessId", b.name as business, b.kind, u.username as inviter, m."createdAt" from "businessMember" m
@@ -222,6 +278,7 @@ export async function setBusinessLogo(ownerId: string, data: Buffer): Promise<st
     await db.query(`update business set "logoId" = $2, "updatedAt" = now() where id = $1`, [business.id, id]);
     await db.query(`delete from "businessLogo" where "businessId" = $1 and id <> $2`, [business.id, id]);
     await db.query('commit');
+    await logBusiness(business.id, ownerId, 'logo');
     return id;
   } catch (error) { await db.query('rollback'); throw error; } finally { db.release(); }
 }
@@ -229,6 +286,7 @@ export async function setBusinessLogo(ownerId: string, data: Buffer): Promise<st
 export async function removeBusinessLogo(ownerId: string): Promise<void> {
   const business = await ownerBusinessOrThrow(ownerId);
   await getPool().query(`delete from "businessLogo" where "businessId" = $1`, [business.id]);
+  await logBusiness(business.id, ownerId, 'logo-remove');
 }
 
 export async function getBusinessLogo(id: string): Promise<Buffer | null> {
@@ -320,12 +378,21 @@ const REVIEW_ORDER: Record<BusinessReviewSort, string> = {
 };
 
 /** Reviews of the company's approved drinks: a page of `size`, filtered by drink and text, in the chosen order. */
-export async function listBusinessReviews(businessId: string, options: { page?: number; size?: number; drink?: { brand: string; flavor: string }; q?: string; sort?: BusinessReviewSort; limit?: number } = {}): Promise<{ items: BusinessReview[]; total: number }> {
+/** Which reviews: all, the ones the company has not answered yet, or the low ones (average below 5). */
+export type BusinessReviewView = 'all' | 'unanswered' | 'low';
+const REVIEW_VIEW: Record<BusinessReviewView, string> = {
+  all: 'true',
+  unanswered: 'not exists(select 1 from "reviewCompanyReply" c where c."reviewId" = r.id)',
+  low: '(r.taste + r.design) < 10',
+};
+
+export async function listBusinessReviews(businessId: string, options: { page?: number; size?: number; drink?: { brand: string; flavor: string }; q?: string; sort?: BusinessReviewSort; limit?: number; view?: BusinessReviewView } = {}): Promise<{ items: BusinessReview[]; total: number }> {
   const db = getPool();
   const size = options.limit ?? options.size ?? 20, page = options.page ?? 1;
   const where = `exists(select 1 from "businessDrink" d where d."businessId" = $1 and d.status = 'approved' and d.brand = r.brand and d.flavor = r.flavor)
     and ($2::text is null or (r.brand = $2 and r.flavor = $3)) and not exists(select 1 from "userBlock" b where b."userId" = r."userId")
-    and ($4::text is null or strpos(lower(r.text), lower($4)) > 0 or strpos(lower(u.username), lower($4)) > 0)`;
+    and ($4::text is null or strpos(lower(r.text), lower($4)) > 0 or strpos(lower(u.username), lower($4)) > 0)
+    and ${REVIEW_VIEW[options.view ?? 'all']}`;
   const args = [businessId, options.drink?.brand ?? null, options.drink?.flavor ?? null, options.q?.trim().slice(0, 80) || null];
   const [{ rows }, total] = await Promise.all([
     db.query<Omit<BusinessReview, 'name'>>(
@@ -340,6 +407,15 @@ export async function listBusinessReviews(businessId: string, options: { page?: 
   return { items: rows.map(row => ({ ...row, name: `${row.brand} · ${flavorName(row.flavor)}`, reply: row.reply ? { text: row.reply.text, updatedAt: new Date(row.reply.updatedAt) } : null })), total: total.rows[0]!.count };
 }
 
+/** How many reviews of the company's approved drinks wait for an answer, and how many of them are low. */
+export async function countReviewQueue(businessId: string): Promise<{ unanswered: number; low: number; lowUnanswered: number }> {
+  return (await getPool().query<{ unanswered: number; low: number; lowUnanswered: number }>(
+    `select count(*) filter (where ${REVIEW_VIEW.unanswered})::int as unanswered, count(*) filter (where ${REVIEW_VIEW.low})::int as low,
+       count(*) filter (where ${REVIEW_VIEW.unanswered} and ${REVIEW_VIEW.low})::int as "lowUnanswered"
+     from review r where exists(select 1 from "businessDrink" d where d."businessId" = $1 and d.status = 'approved' and d.brand = r.brand and d.flavor = r.flavor)
+       and not exists(select 1 from "userBlock" b where b."userId" = r."userId")`, [businessId])).rows[0]!;
+}
+
 /**
  * The company's public reply to a review (`reviewCompanyReply`, migration 0124): the owner or an active member of an
  * approved company, only on a review of one of its approved drinks; writing again edits it. The review's author is
@@ -350,23 +426,34 @@ export async function replyToReview(userId: string, reviewId: string, value: unk
   const business = await replyBusiness(userId, reviewId);
   const frozen = await frozenMessage(userId);
   if (frozen) throw new BusinessError(frozen);
-  const saved = await getPool().query(
+  const saved = await getPool().query<{ created: boolean }>(
     `insert into "reviewCompanyReply"("reviewId", "businessId", "authorId", text) values ($1, $2, $3, $4)
      on conflict ("reviewId") do update set text = excluded.text, "authorId" = excluded."authorId", "updatedAt" = now()
-       where "reviewCompanyReply"."businessId" = excluded."businessId"`, [reviewId, business.id, userId, text]);
+       where "reviewCompanyReply"."businessId" = excluded."businessId" returning (xmax = 0) as created`, [reviewId, business.id, userId, text]);
   if (!saved.rowCount) throw new BusinessError('На этот отзыв уже ответила другая компания.');
+  await logBusiness(business.id, userId, saved.rows[0]!.created ? 'reply' : 'reply-edit', await reviewLabel(reviewId));
+}
+
+/** «Burn · Манго, @автор» — the review a log line is about. */
+async function reviewLabel(reviewId: string): Promise<string> {
+  const row = (await getPool().query<{ brand: string; flavor: string; username: string | null }>(
+    `select r.brand, r.flavor, u.username from review r join "user" u on u.id = r."userId" where r.id = $1`, [reviewId])).rows[0];
+  return row ? `${row.brand} · ${flavorName(row.flavor)}${row.username ? `, @${row.username}` : ''}` : 'отзыв';
 }
 
 /** Removes the company's reply (owner or active member). */
 export async function deleteReviewReply(userId: string, reviewId: string): Promise<void> {
   const business = await replyBusiness(userId, reviewId);
-  await getPool().query(`delete from "reviewCompanyReply" where "reviewId" = $1 and "businessId" = $2`, [reviewId, business.id]);
+  const removed = await getPool().query(`delete from "reviewCompanyReply" where "reviewId" = $1 and "businessId" = $2`, [reviewId, business.id]);
+  if (removed.rowCount) await logBusiness(business.id, userId, 'reply-delete', await reviewLabel(reviewId));
 }
 
 async function replyBusiness(userId: string, reviewId: string): Promise<Business> {
   if (!/^[0-9a-f-]{36}$/i.test(reviewId)) throw new BusinessError('Отзыв не найден.');
-  const business = (await getCabinet(userId))?.business ?? null;
+  const cabinet = await getCabinet(userId);
+  const business = cabinet?.business ?? null;
   if (!business || business.status !== 'approved') throw new BusinessError('Отвечать может подтверждённая компания.');
+  if (cabinet!.role === 'analyst') throw new BusinessError('У роли «Аналитик» только просмотр — отвечать могут владелец и менеджеры.');
   const db = getPool();
   if ((await db.query(`select 1 from "userBlock" where "userId" = $1`, [userId])).rowCount) throw new BusinessError('Аккаунт заблокирован.');
   const owned = await db.query(`select 1 from review r join "businessDrink" d on d.brand = r.brand and d.flavor = r.flavor
@@ -390,7 +477,7 @@ export interface BusinessSearch {
  * «Поиск» in the cabinet, from the anonymous `searchQuery` log (search-log.ts): searches whose results showed one of
  * the company's brands (brands of its approved drinks) or whose text named one (the brand and its search aliases).
  */
-export async function getBusinessSearch(businessId: string, today = moscowDay()): Promise<BusinessSearch> {
+export async function getBusinessSearch(businessId: string, today = moscowDay(), topLimit = 20): Promise<BusinessSearch> {
   const db = getPool();
   const brands = [...new Set((await db.query<{ brand: string }>(`select distinct brand from "businessDrink" where "businessId" = $1 and status = 'approved'`, [businessId])).rows.map(row => row.brand))];
   const empty: BusinessSearch = { brands, total30: 0, previous30: 0, shown30: 0, named30: 0, missed30: 0, weekly: weeklySeries([], today), top: [], missed: [] };
@@ -413,12 +500,68 @@ export async function getBusinessSearch(businessId: string, today = moscowDay())
     db.query<BusinessSearch['top'][number]>(`${scope}
       select query, count(*)::int as count, round(avg(results))::int as results, bool_or(named) as named,
         array_agg(distinct scope order by scope) as scopes, max("createdAt") as "lastAt"
-      from m where ${recent} group by query order by count(*) desc, max("createdAt") desc limit 20`, [brands, names]),
+      from m where ${recent} group by query order by count(*) desc, max("createdAt") desc limit $3`, [brands, names, topLimit]),
     db.query<BusinessSearch['missed'][number]>(`${scope}
       select query, count(*)::int as count, max("createdAt") as "lastAt"
       from m where named and results = 0 and ${recent} group by query order by count(*) desc, max("createdAt") desc limit 10`, [brands, names]),
   ]);
   return { ...empty, ...totals.rows[0]!, weekly: weeklySeries(weekly.rows, today), top: top.rows, missed: missed.rows };
+}
+
+export interface BusinessCards {
+  /** Approved drinks of the company: card views and taps on store offers in the last 30 days and the 30 before. */
+  drinks: number;
+  views30: number; previousViews30: number; clicks30: number; previousClicks30: number;
+  /** Views per week for 12 weeks, store taps in the same weeks. */
+  weekly: { week: string; count: number; clicks: number }[];
+  items: { brand: string; flavor: string; name: string; cover: string | null; views: number; clicks: number; retailer: string | null }[];
+  retailers: { retailer: string; count: number }[];
+}
+
+/**
+ * Drink card analytics for the company's approved drinks (`catalogEvent`, anonymous): views of the drink page and
+ * taps on a store offer, 30 days against the 30 before, by week, by drink (with the most tapped store) and by store.
+ */
+export async function getBusinessCards(businessId: string, today = moscowDay()): Promise<BusinessCards> {
+  const db = getPool();
+  const own = (await db.query<{ brand: string; flavor: string }>(`select brand, flavor from "businessDrink" where "businessId" = $1 and status = 'approved' order by brand, flavor`, [businessId])).rows;
+  const empty: BusinessCards = { drinks: own.length, views30: 0, previousViews30: 0, clicks30: 0, previousClicks30: 0, weekly: weeklySeries([], today).map(item => ({ ...item, clicks: 0 })), items: [], retailers: [] };
+  if (!own.length) return empty;
+  const params = [own.map(row => row.brand), own.map(row => row.flavor)];
+  const scope = `with d as (select * from unnest($1::text[], $2::text[]) as t(brand, flavor)),
+    e as (select e.* from "catalogEvent" e join d on d.brand = e.brand and d.flavor = e.flavor where e."createdAt" > now() - interval '13 weeks')`;
+  const recent = `"createdAt" > now() - interval '30 days'`;
+  const before = `"createdAt" <= now() - interval '30 days' and "createdAt" > now() - interval '60 days'`;
+  const [totals, weekly, items, retailers, groups] = await Promise.all([
+    db.query<Pick<BusinessCards, 'views30' | 'previousViews30' | 'clicks30' | 'previousClicks30'>>(`${scope}
+      select count(*) filter (where kind = 'view' and ${recent})::int as "views30", count(*) filter (where kind = 'view' and ${before})::int as "previousViews30",
+        count(*) filter (where kind = 'store' and ${recent})::int as "clicks30", count(*) filter (where kind = 'store' and ${before})::int as "previousClicks30"
+      from e`, params),
+    db.query<{ week: string; count: number; clicks: number }>(`${scope}
+      select date_trunc('week', "createdAt" at time zone 'Europe/Moscow')::date::text as week,
+        count(*) filter (where kind = 'view')::int as count, count(*) filter (where kind = 'store')::int as clicks
+      from e group by 1`, params),
+    db.query<{ brand: string; flavor: string; views: number; clicks: number; retailer: string | null }>(`${scope}
+      select d.brand, d.flavor,
+        (select count(*)::int from e where e.brand = d.brand and e.flavor = d.flavor and e.kind = 'view' and e.${recent}) as views,
+        (select count(*)::int from e where e.brand = d.brand and e.flavor = d.flavor and e.kind = 'store' and e.${recent}) as clicks,
+        (select e.retailer from e where e.brand = d.brand and e.flavor = d.flavor and e.kind = 'store' and e.${recent}
+          group by e.retailer order by count(*) desc, e.retailer limit 1) as retailer
+      from d`, params),
+    db.query<{ retailer: string; count: number }>(`${scope}
+      select retailer, count(*)::int as count from e where kind = 'store' and retailer is not null and ${recent}
+      group by retailer order by count(*) desc, retailer limit 10`, params),
+    loadAllCatalogGroups(),
+  ]);
+  const clicksByWeek = new Map(weekly.rows.map(row => [row.week, row.clicks]));
+  const covers = new Map(groups.map(group => [JSON.stringify([group.brand, group.flavor]), group.coverImageUrl ?? null]));
+  return {
+    ...empty, ...totals.rows[0]!,
+    weekly: weeklySeries(weekly.rows, today).map(item => ({ ...item, clicks: clicksByWeek.get(item.week) ?? 0 })),
+    items: items.rows.map(row => ({ ...row, name: `${row.brand} · ${flavorName(row.flavor)}`, cover: covers.get(JSON.stringify([row.brand, row.flavor])) ?? null }))
+      .sort((a, b) => b.views - a.views || b.clicks - a.clicks || a.name.localeCompare(b.name, 'ru-RU')),
+    retailers: retailers.rows,
+  };
 }
 
 export interface BrandDrink { brand: string; flavor: string; name: string; cover: string | null; reviews: number; score: number | null; likes: number; skips: number; yours: boolean }
@@ -543,16 +686,31 @@ async function staffEmail(adminId: string): Promise<string> {
   return row.email;
 }
 
-export async function moderateBusiness(adminId: string, id: string, status: 'approved' | 'rejected', note: string): Promise<void> {
+type ApprovedMail = (to: string, business: string) => Promise<void>;
+
+/**
+ * The team's decision on a company. Approving one that was not approved yet sends its owner the good-news letter
+ * (`sendBusinessApprovedEmail`) after the commit — not to a Telegram placeholder address; a failed letter does not undo
+ * the decision.
+ */
+export async function moderateBusiness(adminId: string, id: string, status: 'approved' | 'rejected', note: string, sendMail?: ApprovedMail): Promise<void> {
   const email = await staffEmail(adminId);
   if (status === 'rejected' && !note.trim()) throw new BusinessError('Напишите причину отказа.');
   const db = await getPool().connect();
+  let letter: { to: string; business: string } | null = null;
   try {
     await db.query('begin');
+    const before = (await db.query<{ status: BusinessStatus; name: string; email: string }>(
+      `select b.status, b.name, u.email from business b join "user" u on u.id = b."ownerId" where b.id = $1 for update of b`, [id])).rows[0];
+    if (!before) throw new BusinessError('Компания не найдена.');
     await db.query(`update business set status = $2, "moderationNote" = $3, "reviewedBy" = $4, "reviewedAt" = now() where id = $1`, [id, status, status === 'rejected' ? note.trim().slice(0, 500) : null, adminId]);
     await db.query('insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, $2, $3, $4)', [email, status === 'approved' ? 'approve' : 'reject', 'business', id]);
     await db.query('commit');
+    if (status === 'approved' && before.status !== 'approved' && !isTelegramPlaceholderEmail(before.email)) letter = { to: before.email, business: before.name };
   } catch (error) { await db.query('rollback'); throw error; } finally { db.release(); }
+  if (!letter) return;
+  try { await (sendMail ?? (await import('@/lib/email')).sendBusinessApprovedEmail)(letter.to, letter.business); }
+  catch (error) { console.error('[business] approval email failed', error instanceof Error ? error.message : 'unknown'); }
 }
 
 export async function moderateBusinessDrink(adminId: string, businessId: string, brand: string, flavor: string, status: 'approved' | 'rejected', note: string): Promise<void> {
@@ -565,4 +723,62 @@ export async function moderateBusinessDrink(adminId: string, businessId: string,
     await db.query('insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, $2, $3, $4)', [email, status === 'approved' ? 'approve' : 'reject', 'business-drink', `${businessId}:${brand}:${flavor}`]);
     await db.query('commit');
   } catch (error) { await db.query('rollback'); throw error; } finally { db.release(); }
+}
+
+// ── Шаблоны ответов ────────────────────────────────────────────────────────────────────────────────────────────────
+
+export interface ReplyTemplate { id: string; title: string; text: string }
+
+export async function listReplyTemplates(businessId: string): Promise<ReplyTemplate[]> {
+  return (await getPool().query<ReplyTemplate>(`select id, title, text from "businessReplyTemplate" where "businessId" = $1 order by "createdAt", title`, [businessId])).rows;
+}
+
+/** The company whose replies the member may write and keep templates for: approved, owner or active teammate. */
+async function replyingCompany(userId: string): Promise<Business> {
+  const business = await editorCabinet(userId).catch(error => { if ((error as Error).message.startsWith('Сначала')) return null; throw error; });
+  if (!business || business.status !== 'approved') throw new BusinessError('Шаблоны доступны подтверждённой компании.');
+  return business;
+}
+
+/** Saves a template for the whole team; at most MAX_REPLY_TEMPLATES, titles unique within the company. */
+export async function saveReplyTemplate(userId: string, title: unknown, text: unknown): Promise<ReplyTemplate> {
+  const business = await replyingCompany(userId);
+  const input = parseReplyTemplate(title, text);
+  const result = await getPool().query<ReplyTemplate>(`insert into "businessReplyTemplate"("businessId", title, text, "createdBy")
+    select $1, $2, $3, $4 where (select count(*) from "businessReplyTemplate" where "businessId" = $1) < $5 returning id, title, text`,
+  [business.id, input.title, input.text, userId, MAX_REPLY_TEMPLATES]).catch((error: { code?: string }) => {
+    if (error.code === '23505') throw new BusinessError('Шаблон с таким названием уже есть.');
+    throw error;
+  });
+  if (!result.rows[0]) throw new BusinessError(`Можно сохранить до ${MAX_REPLY_TEMPLATES} шаблонов — удалите ненужный.`);
+  await logBusiness(business.id, userId, 'template', input.title);
+  return result.rows[0];
+}
+
+export async function deleteReplyTemplate(userId: string, id: string): Promise<void> {
+  const business = await replyingCompany(userId);
+  if (!/^[0-9a-f-]{36}$/.test(id)) throw new BusinessError('Шаблон не найден.');
+  const removed = await getPool().query<{ title: string }>(`delete from "businessReplyTemplate" where id = $1 and "businessId" = $2 returning title`, [id, business.id]);
+  if (removed.rows[0]) await logBusiness(business.id, userId, 'template-delete', removed.rows[0].title);
+}
+
+// ── Стартовый чек-лист ─────────────────────────────────────────────────────────────────────────────────────────────
+
+export interface OnboardingStep { key: 'verified' | 'logo' | 'drink' | 'team' | 'reply' | 'competitors'; done: boolean }
+
+/** What a new company has already set up: the checklist on the overview disappears once every step is done. */
+export async function getOnboarding(business: Business): Promise<OnboardingStep[]> {
+  const row = (await getPool().query<{ drink: boolean; team: boolean; reply: boolean; competitors: boolean }>(
+    `select exists(select 1 from "businessDrink" where "businessId" = $1 and status <> 'rejected') as drink,
+       exists(select 1 from "businessMember" where "businessId" = $1) or exists(select 1 from "businessEmailInvite" where "businessId" = $1) as team,
+       exists(select 1 from "reviewCompanyReply" where "businessId" = $1) as reply,
+       exists(select 1 from "businessCompetitor" where "businessId" = $1) as competitors`, [business.id])).rows[0]!;
+  return [
+    { key: 'verified', done: business.status === 'approved' },
+    { key: 'logo', done: Boolean(business.logoId) },
+    { key: 'drink', done: row.drink },
+    { key: 'team', done: row.team },
+    { key: 'reply', done: row.reply },
+    { key: 'competitors', done: row.competitors },
+  ];
 }

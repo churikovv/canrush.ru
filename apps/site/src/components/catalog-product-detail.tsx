@@ -1,6 +1,7 @@
 import { isAssortmentFlavor } from '@canrush/shared';
 import { CatalogVolumeTabs } from '@/components/catalog-volume-tabs';
 import { CatalogPriceHistory } from '@/components/catalog-price-history';
+import { CatalogOfferClicks } from '@/components/catalog-offer-clicks';
 import type { PriceSeries } from '@/lib/price-history';
 import { CoverImage } from '@/components/cover-image';
 import Link from '@/components/navigation-progress';
@@ -46,10 +47,12 @@ interface CatalogProductDetailProps {
   reviewDigest?: DrinkSummary | null;
   /** The reviews tab: the rating card's radar against the catalog average. */
   radar?: { drink: DrinkRadar; catalog: DrinkRadar; country: string | null } | null;
+  /** The brand's own data (an approved edit from its cabinet): the «data confirmed by the brand» mark and its description. */
+  brand?: { business: string | null; description: string | null } | null;
 }
 
 
-export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar, brand }: CatalogProductDetailProps) {
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
   const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
 
@@ -83,6 +86,8 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
 
         <h1>{flavorName(group.flavor)}</h1>
         {fullName && <p className="catalog-full-name">{fullName}</p>}
+        {brand && <p className="catalog-brand-verified"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>Данные подтверждены брендом{brand.business ? ` «${brand.business}»` : ''}</p>}
+        {brand?.description && <section className="catalog-brand-description" aria-label="От бренда"><h2>От бренда</h2><p>{brand.description}</p></section>}
         {addedBy && <ul className="catalog-added-facts" aria-label="О напитке">
           <li className="catalog-added-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M16 11h6" /></svg>От участника</li>
           {addedBy.volumes.map(volume => <li key={volume}>{volumeLabel(volume)}</li>)}
@@ -115,6 +120,7 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
             </CatalogReviewsSheet>
             <section className="catalog-product-section" aria-label="Цены в магазинах">
               {volumeGroups.length > 0 ? (
+                <CatalogOfferClicks brand={group.brand} flavor={group.flavor}>
                 <CatalogVolumeTabs labels={volumeGroups.map(({volumeMl})=>volumeLabel(volumeMl) ?? "Объём не указан")}>
                   {volumeGroups.map(({ volumeMl, offers }) => (
                     <section className="catalog-store-volume" key={volumeMl ?? 'unknown'} aria-labelledby={`volume-${volumeMl ?? 'unknown'}`}>
@@ -142,6 +148,7 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
                               href={offer.url}
                               target="_blank"
                               rel="noreferrer"
+                              data-retailer={name}
                               key={`${name}:${offer.volumeMl ?? 'unknown'}:${offer.url}`}
                             >
                               {content}
@@ -158,6 +165,7 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
                     </section>
                   ))}
                 </CatalogVolumeTabs>
+                </CatalogOfferClicks>
               ) : (
                 addedBy ? <div className="catalog-added-empty">
                   <span className="catalog-added-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9 5 3h14l2 6M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Zm2 5v7h14v-7" /></svg></span>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { brandSearchNames, normalizeSearchQuery } from '../src/lib/search-log-fields';
-import { BusinessError, csvCell, parseBusinessInput, parseBusinessReply, MAX_BUSINESS_REPLY, sortRows, percentChange, weekStart, weeklySeries } from '../src/lib/business-fields';
+import { BusinessError, csvCell, fillReplyTemplate, parseReplyTemplate, replyTemplateTitle, parseBusinessInput, parseBusinessReply, MAX_BUSINESS_REPLY, sortRows, percentChange, weekStart, weeklySeries } from '../src/lib/business-fields';
 
 const form = (values: Record<string, string>) => { const data = new FormData(); for (const [key, value] of Object.entries(values)) data.set(key, value); return data; };
 
@@ -58,5 +58,22 @@ describe('company replies and the search log', () => {
   it('normalises queries and brand names the same way', () => {
     expect(normalizeSearchQuery('  Burn   МАНГО  Ёлка ')).toBe('burn манго елка');
     expect(brandSearchNames('100 Kwt')).toEqual(['100 kwt', '100 квт', 'сто киловатт', 'киловатт']);
+  });
+});
+
+describe('reply templates', () => {
+  it('fills the placeholders for one review', () => {
+    expect(fillReplyTemplate('{Автор}, спасибо! Рады, что {напиток} понравился, {автор}.', { author: 'Анна', drink: 'Burn · Манго' }))
+      .toBe('Анна, спасибо! Рады, что Burn · Манго понравился, Анна.');
+  });
+  it('checks the title and keeps the reply rules for the text', () => {
+    expect(parseReplyTemplate('  Спасибо   за отзыв ', ' Спасибо!\n\n\n\nЖдём ещё. ')).toEqual({ title: 'Спасибо за отзыв', text: 'Спасибо!\n\nЖдём ещё.' });
+    expect(() => parseReplyTemplate(' ', 'Текст')).toThrow('Назовите');
+    expect(() => parseReplyTemplate('a'.repeat(41), 'Текст')).toThrow('до 40');
+    expect(() => parseReplyTemplate('Пусто', '  ')).toThrow('Напишите ответ');
+  });
+  it('suggests a title from the first words', () => {
+    expect(replyTemplateTitle('Спасибо!')).toBe('Спасибо!');
+    expect(replyTemplateTitle('Спасибо за подробный отзыв, мы обязательно передадим технологам')).toBe('Спасибо за подробный отзыв,…');
   });
 });

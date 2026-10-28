@@ -10,6 +10,7 @@ import { ensureOwnProfile } from '@/lib/profile';
 import { MarketError, parseListing, type OrderStatus } from '@/lib/market-fields';
 import { createListing, closeListing, reopenListing, deleteArchivedListing, startOrder, changeOrderStatus, sendMarketMessage, getOrder, getMessages, markMessagesRead } from '@/lib/market';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
+import { getCabinet } from '@/lib/business';
 
 export interface MarketActionState { error?: string; id?: string; success?: boolean }
 async function currentUser() {
@@ -27,7 +28,10 @@ export async function createListingAction(form: FormData): Promise<MarketActionS
     const input = parseListing(form);
     const { photos } = await prepareReviewPhotos(form);
     await ensureOwnProfile(user);
-    const id = await createListing(user.id, input, photos);
+    // «От имени компании» in the cabinet: the company of this member, checked again inside `createListing`.
+    const businessId = form.get('asBusiness') === '1' ? (await getCabinet(user.id))?.business.id ?? null : null;
+    if (form.get('asBusiness') === '1' && !businessId) throw new MarketError('Компания не найдена.');
+    const id = await createListing(user.id, input, photos, businessId);
     revalidatePath('/market'); return { id };
   } catch (error) { return failure(error); }
 }

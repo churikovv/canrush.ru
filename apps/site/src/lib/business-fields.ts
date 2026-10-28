@@ -91,3 +91,51 @@ export function parseBusinessReply(value: unknown): string {
   if (text.length > MAX_BUSINESS_REPLY) throw new BusinessError(`Ответ — до ${MAX_BUSINESS_REPLY} символов.`);
   return text;
 }
+
+/** Saved replies a company keeps (`businessReplyTemplate`). */
+export const MAX_REPLY_TEMPLATES = 30;
+export const MAX_REPLY_TEMPLATE_TITLE = 40;
+/** Placeholders a template may hold; picking it fills them for the review being answered. */
+export const REPLY_TEMPLATE_FIELDS = [{ key: '{автор}', label: 'имя автора' }, { key: '{напиток}', label: 'напиток' }] as const;
+
+/** A template as stored: the title (one line, up to 40) and the text by the reply's own rules. */
+export function parseReplyTemplate(title: unknown, text: unknown): { title: string; text: string } {
+  const name = typeof title === 'string' ? title.replace(/\s+/g, ' ').trim() : '';
+  if (!name) throw new BusinessError('Назовите шаблон.');
+  if (name.length > MAX_REPLY_TEMPLATE_TITLE) throw new BusinessError(`Название шаблона — до ${MAX_REPLY_TEMPLATE_TITLE} символов.`);
+  return { title: name, text: parseBusinessReply(text) };
+}
+
+/** A title suggested for a new template: the first words of its text, cut on a word. */
+export function replyTemplateTitle(text: string): string {
+  const line = text.replace(/\s+/g, ' ').trim();
+  if (line.length <= 28) return line;
+  const cut = line.slice(0, 28);
+  return `${cut.slice(0, cut.lastIndexOf(' ') > 12 ? cut.lastIndexOf(' ') : 28).trim()}…`;
+}
+
+/** The template's text for one review: `{автор}` and `{напиток}` filled in (any case). */
+export function fillReplyTemplate(text: string, values: { author: string; drink: string }): string {
+  return text.replace(/\{автор\}/giu, values.author).replace(/\{напиток\}/giu, values.drink);
+}
+
+/** Who is who in a company's team: the owner manages everything, a manager works, an analyst only looks. */
+export type BusinessMemberRole = 'manager' | 'analyst';
+export const BUSINESS_ROLES: { value: BusinessMemberRole; label: string; hint: string }[] = [
+  { value: 'manager', label: 'Менеджер', hint: 'Отвечает на отзывы, добавляет напитки и объявления от компании' },
+  { value: 'analyst', label: 'Аналитик', hint: 'Только смотрит аналитику, сравнивает и выгружает отчёты' },
+];
+export const isBusinessMemberRole = (value: unknown): value is BusinessMemberRole => value === 'manager' || value === 'analyst';
+
+/** Lines of the team's action log (`businessAuditLog`). */
+export const BUSINESS_AUDIT_LABELS: Record<string, string> = {
+  'reply': 'Ответил на отзыв', 'reply-edit': 'Изменил ответ на отзыв', 'reply-delete': 'Удалил ответ на отзыв',
+  'template': 'Сохранил шаблон ответа', 'template-delete': 'Удалил шаблон ответа',
+  'drink-request': 'Отправил напиток на прикрепление', 'drink-remove': 'Открепил напиток',
+  'drink-new': 'Опубликовал новый напиток', 'drink-edit': 'Предложил правку карточки',
+  'listing': 'Опубликовал объявление от компании',
+  'invite': 'Пригласил в команду', 'member-remove': 'Убрал из команды', 'member-role': 'Сменил роль',
+  'logo': 'Обновил логотип', 'logo-remove': 'Удалил логотип',
+  'competitor': 'Добавил конкурента', 'competitor-remove': 'Убрал конкурента',
+  'export': 'Выгрузил CSV',
+};

@@ -4,13 +4,18 @@ import { revalidatePath } from 'next/cache';
 import { requireSiteAdmin } from '@/lib/admin';
 import { auth } from '@/lib/auth';
 import sharp from 'sharp';
-import { answerBusinessInvite, deleteReviewReply, inviteBusinessMember, replyToReview, leaveBusiness, moderateBusiness, moderateBusinessDrink, removeBusinessDrink, removeBusinessLogo, removeBusinessMember, requestBusinessDrink, saveBusiness, setBusinessLogo } from '@/lib/business';
+import { answerBusinessInvite, setBusinessMemberRole, deleteReplyTemplate, deleteReviewReply, getCabinet, saveReplyTemplate, type ReplyTemplate, inviteBusinessMember, replyToReview, leaveBusiness, moderateBusiness, moderateBusinessDrink, removeBusinessDrink, removeBusinessLogo, removeBusinessMember, requestBusinessDrink, saveBusiness, setBusinessLogo } from '@/lib/business';
 import { getPool } from '@/db/pool';
 import { MAX_REVIEW_PHOTO_BYTES, REVIEW_PHOTO_TYPES } from '@/lib/review-photo-limits';
 import { encodeStillPhoto } from '@/lib/review-photos';
 import { BusinessError, parseBusinessInput } from '@/lib/business-fields';
 import { isFrozenError } from '@/lib/moderation';
 import { ensureOwnProfile } from '@/lib/profile';
+import { LEGAL_DETAILS } from '@/lib/legal';
+import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
+import { parseDrinkEdit } from '@/lib/brand-drink-edit-fields';
+import { moderateDrinkEdit, requestDrinkEdit } from '@/lib/brand-drink-edits';
+import { addCompetitor, removeCompetitor } from '@/lib/business-competitors';
 
 export interface BusinessActionState { error?: string; done?: boolean }
 
@@ -27,7 +32,8 @@ async function member() {
 export async function saveBusinessAction(_state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
   try {
     const user = await member();
-    await saveBusiness(user.id, parseBusinessInput(form));
+    // The checkbox of the application form: the accepted edition of «Условия для бизнеса» is kept with the company.
+    await saveBusiness(user.id, parseBusinessInput(form), form.get('terms') === 'on' ? LEGAL_DETAILS.businessTermsEffectiveDateIso : null);
   } catch (error) { return { error: message(error, 'Не удалось сохранить. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
@@ -98,7 +104,7 @@ export async function removeBusinessLogoAction(): Promise<BusinessActionState> {
 
 export async function inviteBusinessMemberAction(_state: BusinessActionState & { via?: string }, form: FormData): Promise<BusinessActionState & { via?: string }> {
   let via: string;
-  try { via = await inviteBusinessMember((await member()).id, String(form.get('target') ?? '')); }
+  try { via = await inviteBusinessMember((await member()).id, String(form.get('target') ?? ''), undefined, form.get('role') === 'analyst' ? 'analyst' : 'manager'); }
   catch (error) { return { error: message(error, 'Не удалось пригласить.') }; }
   revalidatePath('/business/cabinet');
   return { done: true, via };
@@ -150,5 +156,81 @@ export async function deleteReviewReplyAction(reviewId: string): Promise<Busines
   catch (error) { return { error: message(error, 'Не удалось удалить ответ.') }; }
   revalidatePath('/business/cabinet');
   revalidatePath('/catalog/[product]', 'page');
+  return { done: true };
+}
+
+/** The company of the member, approved: competitors and the like are part of the analytics. */
+async function approvedCompany(userId: string) {
+  const business = (await getCabinet(userId))?.business;
+  if (!business || business.status !== 'approved') throw new BusinessError('Сравнение доступно подтверждённой компании.');
+  return business;
+}
+
+/** «Конкуренты»: the owner or any teammate adds a catalog brand to compare with. */
+export async function addCompetitorAction(_state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
+  try { const user = await member(); await addCompetitor((await approvedCompany(user.id)).id, String(form.get('brand') ?? ''), user.id); }
+  catch (error) { return { error: message(error, 'Не удалось добавить бренд.') }; }
+  revalidatePath('/business/cabinet');
+  return { done: true };
+}
+
+export async function removeCompetitorAction(brand: string): Promise<BusinessActionState> {
+  try { const user = await member(); await removeCompetitor((await approvedCompany(user.id)).id, brand, user.id); }
+  catch (error) { return { error: message(error, 'Не удалось убрать бренд.') }; }
+  revalidatePath('/business/cabinet');
+  return { done: true };
+}
+
+/** The weekly report by email, on by default: the switch writes or removes the member's opt-out. */
+export async function saveWeeklyReportAction(enabled: boolean): Promise<BusinessActionState> {
+  try {
+    const user = await member();
+    if (enabled) await getPool().query(`delete from "businessReportOptOut" where "userId" = $1`, [user.id]);
+    else await getPool().query(`insert into "businessReportOptOut"("userId") values ($1) on conflict do nothing`, [user.id]);
+  } catch (error) { return { error: message(error, 'Не удалось сохранить.') }; }
+  revalidatePath('/business/cabinet');
+  return { done: true };
+}
+
+/** A reply template saved from the reply dialog, for the whole team. */
+export async function saveReplyTemplateAction(title: string, text: string): Promise<BusinessActionState & { template?: ReplyTemplate }> {
+  try { const template = await saveReplyTemplate((await member()).id, title, text); revalidatePath('/business/cabinet'); return { done: true, template }; }
+  catch (error) { return { error: message(error, 'Не удалось сохранить шаблон.') }; }
+}
+
+export async function deleteReplyTemplateAction(id: string): Promise<BusinessActionState> {
+  try { await deleteReplyTemplate((await member()).id, id); }
+  catch (error) { return { error: message(error, 'Не удалось удалить шаблон.') }; }
+  revalidatePath('/business/cabinet');
+  return { done: true };
+}
+
+export async function setMemberRoleAction(key: string, role: string): Promise<BusinessActionState> {
+  try { await setBusinessMemberRole((await member()).id, key, role); }
+  catch (error) { return { error: message(error, 'Не удалось сменить роль.') }; }
+  revalidatePath('/business/cabinet');
+  return { done: true };
+}
+
+/** A proposed correction of a drink card: only the changed fields and an optional new photo of the can. */
+export async function requestDrinkEditAction(form: FormData): Promise<BusinessActionState> {
+  try {
+    const user = await member();
+    const { photos } = await prepareReviewPhotos(form);
+    if (photos.length > 1) return { error: 'Добавьте одно фото банки.' };
+    const input = parseDrinkEdit(form, photos.length > 0);
+    await requestDrinkEdit(user.id, String(form.get('brand') ?? ''), String(form.get('flavor') ?? ''), input, photos[0]);
+  } catch (error) { return { error: error instanceof ReviewPhotoError ? error.message : message(error, 'Не удалось отправить правку.') }; }
+  revalidatePath('/business/cabinet');
+  return { done: true };
+}
+
+/** The team's decision on a card edit; a refusal needs a reason the company sees. */
+export async function moderateDrinkEditAction(id: string, _state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
+  try {
+    const admin = await requireSiteAdmin();
+    await moderateDrinkEdit(admin.userId, id, form.get('status') === 'approved' ? 'approved' : 'rejected', String(form.get('note') ?? ''));
+  } catch (error) { return { error: message(error, 'Не удалось сохранить решение.') }; }
+  revalidatePath('/admin/business'); revalidatePath('/catalog', 'layout'); revalidatePath('/business/cabinet');
   return { done: true };
 }

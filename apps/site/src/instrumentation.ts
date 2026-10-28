@@ -13,4 +13,9 @@ export async function register() {
     const { startReviewDigestWorker } = await import('@/lib/review-digest-worker');
     startReviewDigestWorker();
   }
+  // Letters to companies: production only, unless a developer opts in with BUSINESS_REPORT_WORKER=on.
+  if (process.env.BUSINESS_REPORT_WORKER === 'on' || (process.env.NODE_ENV === 'production' && process.env.BUSINESS_REPORT_WORKER !== 'off')) {
+    const { startBusinessReportWorker } = await import('@/lib/business-report-worker');
+    startBusinessReportWorker();
+  }
 }

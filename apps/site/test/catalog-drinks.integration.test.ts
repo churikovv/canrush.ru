@@ -35,7 +35,7 @@ it('sends a drink for moderation, refuses duplicates and blocked accounts', asyn
   await expect(drinks.submitCatalogDrink(author, { ...input('apple'), brand: 'файлбренд' }, photo)).rejects.toMatchObject({ href: expect.stringMatching(/^\/catalog\//u), confirmable: true });
   await expect(drinks.submitCatalogDrink(author, input('mango'), undefined)).rejects.toThrow('фото');
   await expect(drinks.submitCatalogDrink(banned, input('mango'), photo)).rejects.toThrow('ограничено');
-  const id = await drinks.submitCatalogDrink(author, input('mango', 'Тест Ultra Paradise'), photo);
+  const id = (await drinks.submitCatalogDrink(author, input('mango', 'Тест Ultra Paradise'), photo)).id;
   expect((await drinks.listOwnCatalogDrinks(author)).map(drink => [drink.id, drink.status, drink.name])).toEqual([[id, 'pending', 'Манго']]);
   // The minute between requests, then the live request itself, stop a second one.
   await expect(drinks.submitCatalogDrink(author, input('kiwi'), photo)).rejects.toThrow('минуту');
@@ -154,7 +154,7 @@ it('takes a version of a parser card after the warning, but will not publish it 
   const member = randomUUID();
   await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Drinks test',$2,true,now(),now(),$3)`, [member, `${member}@example.com`, `cd_${member.slice(0, 12)}`]);
   try {
-    const id = await drinks.submitCatalogDrink(member, { ...input('apple'), brand: 'Файлбренд' }, photo, true);
+    const id = (await drinks.submitCatalogDrink(member, { ...input('apple'), brand: 'Файлбренд' }, photo, true)).id;
     const [request] = (await drinks.listOwnCatalogDrinks(member)).filter(drink => drink.id === id);
     expect(request).toMatchObject({ brand: 'Файлбренд', flavor: 'apple', status: 'pending' });
     expect(await drinks.catalogFileMatch('файлбренд', 'APPLE')).toMatchObject({ brand: 'Файлбренд' });
@@ -169,10 +169,10 @@ it("takes another member's version after the warning: one waiting request per me
   const [first, second] = [randomUUID(), randomUUID()];
   for (const id of [first, second]) await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Drinks test',$2,true,now(),now(),$3)`, [id, `${id}@example.com`, `cd_${id.slice(0, 12)}`]);
   try {
-    const firstId = await drinks.submitCatalogDrink(first, input('pear'), photo);
+    const firstId = (await drinks.submitCatalogDrink(first, input('pear'), photo)).id;
     // Waiting in another member's request: a warning that links to the public queue.
     await expect(drinks.submitCatalogDrink(second, input('pear'), photo)).rejects.toMatchObject({ href: expect.stringMatching(/^\/catalog\/pending\?q=/u), confirmable: true });
-    const secondId = await drinks.submitCatalogDrink(second, input('pear'), photo, true);
+    const secondId = (await drinks.submitCatalogDrink(second, input('pear'), photo, true)).id;
     // The member's own waiting request is not sent twice, warning or not.
     await expect(drinks.submitCatalogDrink(second, input('pear'), photo, true)).rejects.toThrow('ждёт проверки');
     const version = async (owner: string, id: string) => (await drinks.listOwnCatalogDrinks(owner)).find(drink => drink.id === id)!.updatedAt.toISOString();
@@ -180,8 +180,31 @@ it("takes another member's version after the warning: one waiting request per me
     await expect(drinks.moderateCatalogDrink(admin, secondId, 'published', '', await version(second, secondId))).rejects.toThrow('уже опубликован');
     // Juice makes it a drink of its own: no warning.
     await pool.query(`update "catalogDrink" set "createdAt" = now() - interval '2 minutes' where "ownerId" = $1`, [second]);
-    await expect(drinks.submitCatalogDrink(second, input('pear:juice'), photo)).resolves.toEqual(expect.any(String));
+    await expect(drinks.submitCatalogDrink(second, input('pear:juice'), photo)).resolves.toMatchObject({ id: expect.any(String), published: false });
   } finally {
     await pool.query('delete from "user" where id = any($1::text[])', [[first, second]]);
+  }
+});
+
+it('publishes a drink from an approved company cabinet without the queue', async () => {
+  const [owner, outsider] = [randomUUID(), randomUUID()];
+  for (const id of [owner, outsider]) await pool.query(
+    `insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Company test',$2,true,now(),now(),$3)`, [id, `${id}@example.com`, `cd_${id.slice(0, 12)}`]);
+  try {
+    const company = (await pool.query<{ id: string }>(`insert into business("ownerId", name, kind, status) values ($1, 'Drinks Co', 'brand', 'approved') returning id`, [owner])).rows[0]!.id;
+    const own = await drinks.submitCatalogDrink(owner, input('yuzu'), photo, false, company);
+    expect(own).toMatchObject({ published: true, href: expect.stringMatching(/^\/catalog\//u) });
+    expect((await pool.query(`select status, "businessId" from "catalogDrink" where id = $1`, [own.id])).rows[0]).toEqual({ status: 'published', businessId: company });
+    expect((await drinks.listCatalogDrinks('published', 1, 50, brand)).items.find(item => item.id === own.id)?.business).toBe('Drinks Co');
+    // Not a member of the company, or a company on review: the usual queue.
+    const foreign = await drinks.submitCatalogDrink(outsider, input('lychee'), photo, false, company);
+    expect(foreign.published).toBe(false);
+    await pool.query(`update business set status = 'pending' where id = $1`, [company]);
+    await pool.query(`update "catalogDrink" set "createdAt" = now() - interval '2 minutes' where "ownerId" = $1`, [owner]);
+    expect((await drinks.submitCatalogDrink(owner, input('guava'), photo, false, company)).published).toBe(false);
+  } finally {
+    await pool.query('delete from "catalogDrink" where "ownerId" = any($1::text[])', [[owner, outsider]]);
+    await pool.query('delete from business where "ownerId" = $1', [owner]);
+    await pool.query('delete from "user" where id = any($1::text[])', [[owner, outsider]]);
   }
 });

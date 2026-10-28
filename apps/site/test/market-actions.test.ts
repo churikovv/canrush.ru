@@ -1,11 +1,12 @@
 import { beforeEach, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ session: vi.fn(), blocked: vi.fn(), create: vi.fn(), close: vi.fn(), start: vi.fn(), status: vi.fn(), send: vi.fn(), order: vi.fn(), messages: vi.fn(), read: vi.fn(), photos: vi.fn() }));
+const mocks = vi.hoisted(() => ({ session: vi.fn(), blocked: vi.fn(), create: vi.fn(), close: vi.fn(), start: vi.fn(), status: vi.fn(), send: vi.fn(), order: vi.fn(), messages: vi.fn(), read: vi.fn(), photos: vi.fn(), cabinet: vi.fn() }));
 vi.mock('next/headers', () => ({ headers: async () => new Headers() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('../src/lib/auth', () => ({ auth: { api: { getSession: mocks.session } } }));
 vi.mock('../src/lib/profile', () => ({ ensureOwnProfile: vi.fn() }));
 vi.mock('../src/lib/moderation', () => ({ isUserBlocked: mocks.blocked, frozenMessage: async () => null, isFrozenError: () => false }));
 vi.mock('../src/lib/market', () => ({ createListing: mocks.create, closeListing: mocks.close, startOrder: mocks.start, changeOrderStatus: mocks.status, sendMarketMessage: mocks.send, getOrder: mocks.order, getMessages: mocks.messages, markMessagesRead: mocks.read }));
+vi.mock('../src/lib/business', () => ({ getCabinet: mocks.cabinet }));
 vi.mock('../src/lib/review-photos', () => ({ prepareReviewPhotos: mocks.photos, ReviewPhotoError: class extends Error {} }));
 import { createListingAction, listingAction, orderStatusAction, sendMessageAction, loadMessagesAction, readMessagesAction } from '../src/app/market/actions';
 const form = () => { const data = new FormData(); for (const [key, value] of Object.entries({ brand: 'Monster', title: 'Test', description: 'Test', city: 'Москва', price: '100', quantity: '6', delivery: 'pickup', text: 'Hello', userId: 'spoofed' })) data.set(key, value); return data; };
@@ -21,10 +22,18 @@ it('rejects anonymous actions before photo processing or writes', async () => {
   await readMessagesAction('id', 'message'); expect(mocks.read).not.toHaveBeenCalled();
 });
 it('uses session identity, never the submitted user ID', async () => {
-  await createListingAction(form()); expect(mocks.create).toHaveBeenCalledWith('authenticated', expect.objectContaining({ price: 10000 }), []);
+  await createListingAction(form()); expect(mocks.create).toHaveBeenCalledWith('authenticated', expect.objectContaining({ price: 10000 }), [], null);
   await listingAction('id', 'order'); expect(mocks.start).toHaveBeenCalledWith('authenticated', 'id', 1);
   await sendMessageAction('id', form()); expect(mocks.send).toHaveBeenCalledWith('authenticated', 'id', 'Hello', []);
   await orderStatusAction('id', 'confirmed'); expect(mocks.status).toHaveBeenCalledWith('authenticated', 'id', 'confirmed');
+});
+it('publishes for the company of the session member only', async () => {
+  const company = form(); company.set('asBusiness', '1'); company.set('businessId', 'spoofed');
+  mocks.cabinet.mockResolvedValue({ business: { id: 'company' }, role: 'manager' });
+  await createListingAction(company); expect(mocks.create).toHaveBeenCalledWith('authenticated', expect.anything(), [], 'company');
+  expect(mocks.cabinet).toHaveBeenCalledWith('authenticated');
+  mocks.create.mockClear(); mocks.cabinet.mockResolvedValue(null);
+  expect((await createListingAction(company)).error).toContain('Компания не найдена'); expect(mocks.create).not.toHaveBeenCalled();
 });
 it('checks blocks and conversation membership before decoding attachments', async () => {
   mocks.blocked.mockResolvedValue(true);
