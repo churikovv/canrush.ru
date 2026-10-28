@@ -37,8 +37,12 @@ android {
     buildTypes {
         release {
             if (keystorePropertiesFile.exists()) signingConfig signingConfigs.release
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // R8 for Google Play's DEX check (obfuscation, optimization, shrinking ≥ 25% each): rename, optimise and drop
+            // unused native code and resources. `-optimize` — plain proguard-android.txt carries -dontoptimize. Plugins
+            // survive through Capacitor's own consumer rules (@CapacitorPlugin, @PluginMethod); no app-wide keeps here.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

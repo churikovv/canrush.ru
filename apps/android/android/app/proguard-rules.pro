@@ -1,21 +1,9 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Release build is minified by R8 (app/build.gradle) for Google Play's DEX optimization check.
+# Capacitor ships consumer rules for @CapacitorPlugin classes, @PluginMethod methods and plugin callbacks, so the
+# app's own plugins (CanrushBars, CanrushImage, CanrushPush, TelegramLinks) need nothing here; MainActivity and the
+# RuStore messaging service are kept through the manifest. Add a rule only for a crash reproduced in a release build,
+# and keep it narrow (one class or package) — a broad -keep drops the obfuscation score again.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Readable crash stack traces with the mapping file uploaded to Play; file names are hidden.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
