@@ -2,7 +2,8 @@ import Link from '@/components/navigation-progress';
 import { BirdSpeech, DrinkBird } from '@/components/drink-bird';
 import { DrinkHeatLegend, DrinkHeatmap } from '@/components/drink-heatmap';
 import { getDrinkEntries, getDrinkOverview } from '@/lib/drink-calendar';
-import { birdLine, birdMood, cans, days, heatmapWeeks } from '@/lib/drink-calendar-fields';
+import { birdLine, birdMood, cans, days, flameTier, heatmapWeeks } from '@/lib/drink-calendar-fields';
+import { StreakFlame } from '@/components/streak-flame';
 
 const WEEKS = 53;
 
@@ -32,7 +33,7 @@ export async function DrinkCalendarBlock({ userId, username, isOwn }: { userId: 
     </div>
     <DrinkHeatmap weeks={weeks} counts={overview.dayCounts} drinks={drinks} label={`За последний год: ${cans(yearTotal)}, рекордная серия — ${days(overview.best)}.`} />
     <div className="drink-heatmap-foot">
-      <dl className="drink-banner-stats">{streak ? <div data-stat="streak"><dt>Серия</dt><dd>{days(streak)}</dd></div> : <div data-stat="no-streak"><dt className="sr-only">Серия</dt><dd>Серии нет</dd></div>}</dl>
+      <dl className="drink-banner-stats">{streak ? <div data-stat="streak" data-flame={flameTier(streak)}><dt>Серия</dt><dd><StreakFlame length={streak} state={overview.current?.end === overview.today ? 'alive' : 'waiting'} />{days(streak)}</dd></div> : <div data-stat="no-streak"><dt className="sr-only">Серия</dt><dd>Серии нет</dd></div>}</dl>
       <DrinkHeatLegend />
     </div>
     {isOwn && <div className="drink-calendar-actions"><Link className="community-button" href={`${href}#add-drink`}>Отметить энергетик</Link></div>}

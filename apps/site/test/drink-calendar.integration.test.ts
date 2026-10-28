@@ -56,4 +56,29 @@ describe.sequential('drink calendar storage', () => {
     expect(await xp('drink-day')).toHaveLength(7);
     expect(await xp('drink-streak')).toHaveLength(2);
   });
+
+  it('restores one forgotten day: the runs join, milestones pay once, no can, once per 15 days', async () => {
+    const other = randomUUID();
+    await pool.query(`insert into "user" (id, name, email, "emailVerified", username, "createdAt", "updatedAt") values ($1, 'Restore test', $2, true, $3, now(), now())`, [other, `${other}@example.com`, `test_${other.replaceAll('-', '').slice(0, 16)}`]);
+    try {
+      const from = '2032-05-01';
+      for (const shift of [0, 1, 2, 3, 5, 6]) await calendar.addDrink(other, drink(addDays(from, shift)), addDays(from, shift));
+      const today = addDays(from, 6);
+      expect((await calendar.getDrinkOverview(other, today)).restore).toEqual({ day: addDays(from, 4), length: 7 });
+      expect(await calendar.restoreStreak(other, today)).toEqual({ length: 7, xp: 70, day: addDays(from, 4) });
+      const overview = await calendar.getDrinkOverview(other, today);
+      expect(overview).toMatchObject({ total: 6, current: { start: from, length: 7 }, restored: [addDays(from, 4)], restore: null });
+      expect(overview.dayCounts[addDays(from, 4)]).toBeUndefined();
+      const paid = (await pool.query<{ key: string }>(`select "sourceKey" as key from "profileExperience" where "userId" = $1 and reason = 'drink-streak' order by 1`, [other])).rows.map(row => row.key);
+      expect(paid).toEqual([`${from}:3`, `${from}:7`]);
+      // The 7 tag counts restored days too.
+      expect((await pool.query('select 1 from "profileAchievement" where "userId" = $1 and key = $2', [other, 'streak-7'])).rowCount).toBe(1);
+      await expect(calendar.restoreStreak(other, today)).rejects.toThrow('вернуть нечего');
+      // Another gap within 15 days of the restore: not yet.
+      await pool.query(`update "drinkStreakRestore" set "createdAt" = $2::date where "userId" = $1`, [other, today]);
+      await calendar.addDrink(other, drink(addDays(from, 8)), addDays(from, 8));
+      expect((await calendar.getDrinkOverview(other, addDays(from, 8))).restore).toEqual({ availableOn: addDays(today, 15) });
+      await expect(calendar.restoreStreak(other, addDays(from, 8))).rejects.toThrow('раз в 15 дней');
+    } finally { await pool.query('delete from "user" where id = $1', [other]); }
+  });
 });

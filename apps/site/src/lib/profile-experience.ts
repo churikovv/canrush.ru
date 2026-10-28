@@ -33,7 +33,7 @@ export async function getLeaderboard(): Promise<LeaderboardRow[]> {
       (select count(*)::int from review where "userId" = u.id) as reviews,
       (select count(*)::int from "drinkLog" where "userId" = u.id) as cans,
       (select count(*)::int from "tierList" where "userId" = u.id and status = 'published') as "tierLists",
-      array(select distinct day::text from "drinkLog" where "userId" = u.id and day > (now() at time zone 'Europe/Moscow')::date - 400) as days
+      array(select distinct day::text from "drinkStreakDay" where "userId" = u.id and day > (now() at time zone 'Europe/Moscow')::date - 400) as days
     from top r join "user" u on u.id = r.id
     order by r.xp desc, r.username`);
   const today = moscowDay();

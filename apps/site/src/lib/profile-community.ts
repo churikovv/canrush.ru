@@ -67,7 +67,7 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(*)::int from "betaEngine" where "userId" = u.id) as "betaEngine",
     (select count(*)::int from "drinkLog" where "userId" = u.id) as "drinkLogs",
     (select coalesce(max(n), 0)::int from (select count(*) as n from (select day - (row_number() over (order by day))::int as run
-      from (select distinct day from "drinkLog" where "userId" = u.id) d) s group by run) t) as "drinkStreak"
+      from (select distinct day from "drinkStreakDay" where "userId" = u.id) d) s group by run) t) as "drinkStreak"
     from "user" u where u.id = $1`, [userId, viewerId ?? null, DETAILED_REVIEW_CHARS, `${FAN_XP_SINCE}T00:00:00+03:00`]);
   const row = result.rows[0];
   if (!row) throw new CommunityError('Профиль не найден.');

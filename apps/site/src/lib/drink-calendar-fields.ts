@@ -158,3 +158,35 @@ export function nextMilestone(length: number): number {
 }
 /** Flame colour tier of a streak: matches the 7 / 14 / 30 day tags. */
 export function streakTier(length: number): 0 | 7 | 14 | 30 { return length >= 30 ? 30 : length >= 14 ? 14 : length >= 7 ? 7 : 0; }
+
+/** «Вернуть огонёк»: one restore per this many days, for a missed day no older than this. */
+export const STREAK_RESTORE_COOLDOWN_DAYS = 15;
+export const STREAK_RESTORE_WINDOW_DAYS = 3;
+export type StreakRestore = { day: string; length: number } | { availableOn: string } | null;
+
+/**
+ * The missed day a member may restore: the most recent day in the last few that is the only gap after a run of two
+ * or more days — the run before it ended the day before, and the day after it is logged, or it is yesterday (the
+ * streak is about to go out). Restoring it joins the runs: `length` is the streak it brings back. Within the cooldown
+ * after the last restore the answer is the date it becomes possible again instead.
+ */
+export function streakRestore(streakDays: Iterable<string>, today: string, lastRestore: string | null): StreakRestore {
+  const have = new Set(streakDays);
+  const runs = drinkStreaks(have);
+  for (let back = 1; back <= STREAK_RESTORE_WINDOW_DAYS; back += 1) {
+    const day = addDays(today, -back);
+    if (have.has(day) || !have.has(addDays(day, -1))) continue;
+    const after = addDays(day, 1);
+    if (back > 1 && !have.has(after)) continue;
+    const before = streakOn(runs, addDays(day, -1))!;
+    if (before.length < 2) continue;
+    if (lastRestore && dayDiff(lastRestore, today) < STREAK_RESTORE_COOLDOWN_DAYS) return { availableOn: addDays(lastRestore, STREAK_RESTORE_COOLDOWN_DAYS) };
+    const next = have.has(after) ? streakOn(runs, after)! : null;
+    return { day, length: before.length + 1 + (next?.length ?? 0) };
+  }
+  return null;
+}
+
+/** Flame colours like TikTok's streaks, the top tier in the brand blue: orange, pink from 30, purple from 100, blue from 200. */
+export type FlameTier = 'orange' | 'pink' | 'purple' | 'blue';
+export function flameTier(length: number): FlameTier { return length >= 200 ? 'blue' : length >= 100 ? 'purple' : length >= 30 ? 'pink' : 'orange'; }

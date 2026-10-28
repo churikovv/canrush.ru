@@ -6,21 +6,78 @@ import { ROLE_TAGS } from '@/lib/profile-achievements';
 import { storeDrinkOptions } from '@/lib/store-catalog';
 import {
   DRINKS_PER_DAY, DRINK_DAY_XP, DRINK_EDIT_WINDOW_DAYS, DrinkCalendarError, addDays, bestStreak, currentStreak, drinkStreaks,
-  moscowDay, reachedMilestones, streakOn, streakReward, type DrinkInput, type DrinkStreak,
+  moscowDay, reachedMilestones, streakOn, streakReward, streakRestore, type DrinkInput, type DrinkStreak, type StreakRestore,
 } from '@/lib/drink-calendar-fields';
 
 export interface DrinkEntry { id: string; day: string; name: string; brand: string | null; flavor: string | null; price: number | null; store: string | null; href?: string; cover?: string }
-export interface DrinkOverview { today: string; dayCounts: Record<string, number>; streaks: DrinkStreak[]; current: DrinkStreak | null; best: number; total: number }
+export interface DrinkOverview {
+  today: string; dayCounts: Record<string, number>; streaks: DrinkStreak[]; current: DrinkStreak | null; best: number; total: number;
+  /** Days brought back with «Вернуть огонёк»: streak days without a can. */
+  restored: string[];
+  /** What «Вернуть огонёк» offers now (only meaningful to the owner). */
+  restore: StreakRestore;
+}
 
 const catalogKey = (brand: string, flavor: string) => JSON.stringify([brand, flavor]);
 
-/** Day counts for all time; streaks are short lists of runs, so they are derived in memory. */
+/**
+ * Day counts for all time; streaks are short lists of runs, so they are derived in memory. Restored days count for
+ * streaks but not as cans.
+ */
 export async function getDrinkOverview(userId: string, today = moscowDay()): Promise<DrinkOverview> {
-  const { rows } = await getPool().query<{ day: string; count: number }>(
-    'select day::text as day, count(*)::int as count from "drinkLog" where "userId" = $1 group by day order by day', [userId]);
+  const [{ rows }, restores] = await Promise.all([
+    getPool().query<{ day: string; count: number }>('select day::text as day, count(*)::int as count from "drinkLog" where "userId" = $1 group by day order by day', [userId]),
+    getPool().query<{ day: string; created: string }>(`select day::text as day, ("createdAt" at time zone 'Europe/Moscow')::date::text as created
+      from "drinkStreakRestore" where "userId" = $1 order by "createdAt"`, [userId]),
+  ]);
   const dayCounts = Object.fromEntries(rows.map(row => [row.day, row.count]));
-  const streaks = drinkStreaks(rows.map(row => row.day));
-  return { today, dayCounts, streaks, current: currentStreak(streaks, today), best: bestStreak(streaks), total: rows.reduce((sum, row) => sum + row.count, 0) };
+  const restored = restores.rows.map(row => row.day);
+  const streakDays = [...rows.map(row => row.day), ...restored];
+  const streaks = drinkStreaks(streakDays);
+  return {
+    today, dayCounts, streaks, current: currentStreak(streaks, today), best: bestStreak(streaks), total: rows.reduce((sum, row) => sum + row.count, 0),
+    restored, restore: streakRestore(streakDays, today, restores.rows.at(-1)?.created ?? null),
+  };
+}
+
+/** Streak days inside a transaction: cans and restored days (the `drinkStreakDay` view). */
+async function streakDays(client: { query: ReturnType<typeof getPool>['query'] }, userId: string): Promise<string[]> {
+  return (await client.query<{ day: string }>('select distinct day::text as day from "drinkStreakDay" where "userId" = $1 order by day', [userId])).rows.map(row => row.day);
+}
+
+/** Pays the milestones the streak around `day` has reached; keys by its first day, so nothing pays twice. */
+async function payStreak(client: { query: ReturnType<typeof getPool>['query'] }, userId: string, awards: [string, string, number][]): Promise<number> {
+  const paid = await client.query<{ points: number }>(`insert into "profileExperience" ("userId", reason, "sourceKey", points)
+    select $1, a.reason, a.key, a.points from unnest($2::text[], $3::text[], $4::int[]) as a(reason, key, points)
+    where not exists(select 1 from "userBlock" where "userId" = $1) on conflict do nothing returning points`,
+  [userId, awards.map(item => item[0]), awards.map(item => item[1]), awards.map(item => item[2])]);
+  return paid.rows.reduce((sum, row) => sum + row.points, 0);
+}
+
+/**
+ * «Вернуть огонёк»: fills the one missed day `streakRestore` offers, at most once per cooldown, checked again under a
+ * lock on the member. The joined streak pays its milestones as a logged can would (keyed by its first day, so the
+ * part already paid stays paid); the restored day itself pays nothing.
+ */
+export async function restoreStreak(userId: string, today = moscowDay()): Promise<{ length: number; xp: number; day: string }> {
+  const client = await getPool().connect();
+  try {
+    await client.query('begin');
+    await client.query('select 1 from "user" where id = $1 for no key update', [userId]);
+    const last = (await client.query<{ created: string }>(`select ("createdAt" at time zone 'Europe/Moscow')::date::text as created
+      from "drinkStreakRestore" where "userId" = $1 order by "createdAt" desc limit 1`, [userId])).rows[0]?.created ?? null;
+    const offer = streakRestore(await streakDays(client, userId), today, last);
+    if (!offer) throw new DrinkCalendarError('Сейчас вернуть нечего: огонёк возвращается за один пропущенный день в последние три дня.');
+    if ('availableOn' in offer) throw new DrinkCalendarError('Огонёк можно вернуть раз в 15 дней.');
+    await client.query('insert into "drinkStreakRestore" ("userId", day) values ($1, $2::date)', [userId, offer.day]);
+    const streak = streakOn(drinkStreaks(await streakDays(client, userId)), offer.day)!;
+    const xp = await payStreak(client, userId, reachedMilestones(streak).map(goal => ['drink-streak', `${streak.start}:${goal}`, streakReward(goal)]));
+    await client.query('commit');
+    // A joined streak can reach the 7 / 14 / 30 tags: grant them now, as a logged can does.
+    await getProfileCommunity(userId).catch(() => null);
+    return { length: streak.length, xp, day: offer.day };
+  } catch (error) { await client.query('rollback'); throw error; }
+  finally { client.release(); }
 }
 
 /** Cans in [from, to]. Price and store are the owner's private notes and stay out of other viewers' pages. */
@@ -66,16 +123,11 @@ export async function addDrink(userId: string, input: DrinkInput, today = moscow
     if ((count.rows[0]?.count ?? 0) >= DRINKS_PER_DAY) throw new DrinkCalendarError(`За один день можно отметить не больше ${DRINKS_PER_DAY} банок.`);
     await client.query('insert into "drinkLog" ("userId", day, name, brand, flavor, price, store) values ($1, $2::date, $3, $4, $5, $6, $7)',
       [userId, input.day, name, brand ?? null, flavor ?? null, input.price, input.store]);
-    const days = await client.query<{ day: string }>('select distinct day::text as day from "drinkLog" where "userId" = $1 order by day', [userId]);
-    streak = streakOn(drinkStreaks(days.rows.map(row => row.day)), input.day);
+    streak = streakOn(drinkStreaks(await streakDays(client, userId)), input.day);
     const awards: [string, string, number][] = [['drink-day', input.day, DRINK_DAY_XP]];
     if (streak) for (const goal of reachedMilestones(streak)) awards.push(['drink-streak', `${streak.start}:${goal}`, streakReward(goal)]);
-    const paid = await client.query<{ points: number }>(`insert into "profileExperience" ("userId", reason, "sourceKey", points)
-      select $1, a.reason, a.key, a.points from unnest($2::text[], $3::text[], $4::int[]) as a(reason, key, points)
-      where not exists(select 1 from "userBlock" where "userId" = $1) on conflict do nothing returning points`,
-    [userId, awards.map(item => item[0]), awards.map(item => item[1]), awards.map(item => item[2])]);
+    xp = await payStreak(client, userId, awards);
     await client.query('commit');
-    xp = paid.rows.reduce((sum, row) => sum + row.points, 0);
   } catch (error) { await client.query('rollback'); throw error; }
   finally { client.release(); }
   // Grants the calendar tags (and their XP) right away instead of on the next profile view.

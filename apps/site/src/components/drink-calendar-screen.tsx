@@ -7,6 +7,8 @@ import Image from 'next/image';
 import { BirdSpeech, DrinkBird } from '@/components/drink-bird';
 import { DrinkLogForm } from '@/components/drink-log-form';
 import { DrinkMonth } from '@/components/drink-month';
+import { DrinkStatsButton, DrinkStreakHero } from '@/components/drink-streak-hero';
+import { StreakRestore } from '@/components/streak-restore';
 import { DrinkSummaryActions } from '@/components/drink-share-button';
 import { ProfileBackButton } from '@/components/profile-back-button';
 import { ProfileNavigation } from '@/components/profile-navigation';
@@ -60,20 +62,38 @@ export async function DrinkCalendarScreen({ username, requested }: { username: s
         <DrinkBird mood={mood} size={56} />
         <div className="drink-banner-text">
           <BirdSpeech text={birdLine(mood, streak, isOwn)} />
-          <dl className="drink-banner-stats">
-            {streak ? <div data-stat="streak"><dt>Серия</dt><dd>{days(streak)}</dd></div> : <div data-stat="no-streak"><dt className="sr-only">Серия</dt><dd>Серии нет</dd></div>}
-            <div><dt>Рекорд</dt><dd>{days(overview.best)}</dd></div>
-            <div><dt>Всего</dt><dd>{cans(overview.total)}</dd></div>
-          </dl>
-          <div className="drink-banner-goal">
-            <span>{streak
-              ? <>До бонуса за {days(goal)} — ещё <b>{days(goal - streak)}</b>{overview.current?.end === overview.today ? '' : ', отметьте сегодня'}</>
-              : isOwn ? 'Отметьте энергетик сегодня и завтра — начнётся серия' : 'Птица ждёт новую серию'}</span>
-            <span className="drink-banner-bar" aria-hidden="true"><span style={{ width: `${Math.round(streak / goal * 100)}%` }} /></span>
-          </div>
+          <DrinkStatsButton streak={streak} alive={overview.current?.end === overview.today} best={overview.best} total={overview.total} isOwn={isOwn} stats={{
+            title: monthTitle(month), cans: summary.cans, days: summary.days, daysInMonth: list.length, unique: summary.unique,
+            spent: summary.priced ? formatPrice(summary.spent) : null,
+          }}>
+            {summary.cans > 0 && <div className="drink-summary-card drink-stats-summary">
+            <h3>Итог месяца</h3>
+        {summary.top && <div className="drink-summary-top">
+          {topCover ? <Image src={topCover} width={56} height={56} alt="" unoptimized={topCover.startsWith('/')} /> : <span className="drink-summary-bolt" aria-hidden="true">⚡</span>}
+          <span><small>Чаще всего</small><strong>{summary.top.name}</strong></span>
+          <b className="drink-summary-times">× {summary.top.count}</b>
+        </div>}
+        <ul className="drink-summary-pills">
+          <li><b>{summary.unique}</b> {pluralRu(summary.unique, 'напиток', 'напитка', 'напитков')}</li>
+          {isOwn && summary.priced > 0 && <li><b>{formatPrice(Math.round(summary.spent / summary.priced))}</b> за банку</li>}
+        </ul>
+        {isOwn && summary.priced < summary.cans && <p className="review-hint-card drink-summary-note">
+              <span className="review-meter-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>
+              </span>
+              <span><b>Цена указана у {summary.priced} из {cans(summary.cans)}</b>Расходы и средняя считаются по ним — цену можно добавить, когда отмечаете банку.</span>
+            </p>}
+        {isOwn && <DrinkSummaryActions title="Мой месяц на Canrush" text={shareText} path={`${base}?month=${month}`} shot={{
+          title: monthTitle(month), author: `@${profile.username} · календарь выпитого`, cans: summary.cans, days: summary.days, monthDays: list.length,
+          unique: summary.unique, best: overview.best, top: summary.top, spent: summary.priced ? summary.spent : null, weeks: monthWeeks(month),
+          counts: Object.fromEntries(list.map(day => [day, byDay[day]?.length ?? 0])), streakDays: list.filter(day => overview.streaks.some(item => item.length > 1 && item.start <= day && day <= item.end)),
+        }} />}
+          </div>}
+          </DrinkStatsButton>
         </div>
         {isOwn && <DrinkLogForm options={options} stores={stores} today={overview.today} yesterday={addDays(overview.today, -1)} />}
       </div>
+      {isOwn && overview.restore && <StreakRestore offer={overview.restore} />}
 
       <section className="community-panel drink-month-panel" aria-labelledby="drink-month-title">
         <nav className="drink-month-nav" aria-label="Месяцы">
@@ -85,34 +105,11 @@ export async function DrinkCalendarScreen({ username, requested }: { username: s
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
           </Link> : <span aria-hidden="true" />}
         </nav>
-        <dl className="drink-month-metrics">
-          <div><dt>Банок</dt><dd>{summary.cans}</dd></div>
-          <div><dt>Дней</dt><dd>{summary.days}<span> из {list.length}</span></dd></div>
-          {isOwn ? <div><dt>Расходы</dt><dd>{summary.priced ? formatPrice(summary.spent) : '—'}</dd></div>
-            : <div><dt>Разных</dt><dd>{summary.unique}</dd></div>}
-        </dl>
-        <DrinkMonth key={month} weeks={monthWeeks(month)} entries={byDay} streaks={overview.streaks} today={overview.today} isOwn={isOwn} />
+        <DrinkStreakHero streak={streak} alive={overview.current?.end === overview.today} goal={goal} isOwn={isOwn} />
+        <DrinkMonth key={month} weeks={monthWeeks(month)} entries={byDay} streaks={overview.streaks} restored={overview.restored} today={overview.today} isOwn={isOwn} />
       </section>
 
-      {summary.cans > 0 && <section className="community-panel drink-summary-card" aria-labelledby="drink-summary-title">
-        <h2 id="drink-summary-title">Итог месяца</h2>
-        {summary.top && <div className="drink-summary-top">
-          {topCover ? <Image src={topCover} width={56} height={56} alt="" unoptimized={topCover.startsWith('/')} /> : <span className="drink-summary-bolt" aria-hidden="true">⚡</span>}
-          <span><small>Чаще всего</small><strong>{summary.top.name}</strong></span>
-          <b className="drink-summary-times">× {summary.top.count}</b>
-        </div>}
-        <ul className="drink-summary-pills">
-          <li><b>{summary.unique}</b> {pluralRu(summary.unique, 'напиток', 'напитка', 'напитков')}</li>
-          {isOwn && summary.priced > 0 && <li><b>{formatPrice(Math.round(summary.spent / summary.priced))}</b> за банку</li>}
-          {overview.best > 1 && <li>рекорд <b>{days(overview.best)}</b></li>}
-        </ul>
-        {isOwn && summary.priced < summary.cans && <p className="drink-summary-note">Цена указана у {summary.priced} из {cans(summary.cans)}.</p>}
-        {isOwn && <DrinkSummaryActions title="Мой месяц на Canrush" text={shareText} path={`${base}?month=${month}`} shot={{
-          title: monthTitle(month), author: `@${profile.username} · календарь выпитого`, cans: summary.cans, days: summary.days, monthDays: list.length,
-          unique: summary.unique, best: overview.best, top: summary.top, spent: summary.priced ? summary.spent : null, weeks: monthWeeks(month),
-          counts: Object.fromEntries(list.map(day => [day, byDay[day]?.length ?? 0])), streakDays: list.filter(day => overview.streaks.some(item => item.length > 1 && item.start <= day && day <= item.end)),
-        }} />}
-      </section>}
+
 
     </section>
   </BrandShell>;

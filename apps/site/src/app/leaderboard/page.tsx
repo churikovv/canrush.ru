@@ -7,6 +7,8 @@ import { AvatarFrame } from '@/components/avatar-frame';
 import { BrandShell } from '@/components/brand-shell';
 import { LevelTierGlyph } from '@/components/level-badge';
 import { MonthlyTop } from '@/components/monthly-top';
+import { StreakFlame } from '@/components/streak-flame';
+import { flameTier } from '@/lib/drink-calendar-fields';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { experienceLevel } from '@/lib/experience-level';
 import { levelRank } from '@/lib/level-tier';
@@ -17,7 +19,6 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Рейтинг участников' };
 
 const icon = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
-const Flame = () => <svg {...icon} fill="currentColor" stroke="none"><path d="M12.6 2.2c.4 2.6-.6 4.3-1.9 5.8-1.4 1.6-3.2 3.1-3.2 6.1A4.6 4.6 0 0 0 12 18.8a4.6 4.6 0 0 0 4.5-4.7c0-1.4-.5-2.6-1.3-3.6.1 1.4-.4 2.4-1.3 2.9.4-3.3-.4-8.3-1.3-11.2ZM6 13.8c0-.9.1-1.7.4-2.4-.9 1-1.9 2.6-1.9 4.6A7.5 7.5 0 0 0 12 23.5 7.5 7.5 0 0 0 19.5 16c0-1-.2-2-.6-2.9A6.3 6.3 0 0 1 12 20.6 6.4 6.4 0 0 1 6 13.8Z" /></svg>;
 const Star = () => <svg {...icon}><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9L12 3.5Z" /></svg>;
 const Can = () => <svg {...icon}><path d="M8 3h8l1 3v13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6l1-3ZM7 7h10M7 17h10" /></svg>;
 const Layers = () => <svg {...icon}><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 13 9 5 9-5" /></svg>;
@@ -42,7 +43,7 @@ function Row({ user }: { user: LeaderboardRow }) {
     <span className="lb-main">
       <span className="lb-name">
         <strong>{user.username}</strong>
-        {user.streak > 0 && <span className="lb-chip lb-streak" title={`Серия ${user.streak} ${plural(user.streak, 'день', 'дня', 'дней')} подряд`}><Flame />{user.streak}<span className="sr-only"> {plural(user.streak, 'день', 'дня', 'дней')} подряд</span></span>}
+        {user.streak > 0 && <span className="lb-chip lb-streak" data-flame={flameTier(user.streak)} title={`Серия ${user.streak} ${plural(user.streak, 'день', 'дня', 'дней')} подряд`}><StreakFlame length={user.streak} size={14} />{user.streak}<span className="sr-only"> {plural(user.streak, 'день', 'дня', 'дней')} подряд</span></span>}
         {user.tag && <span className="profile-tag" data-tag={user.tag}>{profileTagLabel(user.tag)}{user.tag === 'engine' && user.engineNumber && <small> №{String(user.engineNumber).padStart(3, '0')}</small>}</span>}
       </span>
       <span className="lb-stats">

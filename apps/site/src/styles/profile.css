@@ -878,11 +878,6 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 .drink-month-nav h2 { margin: 0; font-size: 1.125rem; }
 .drink-month-nav a { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; color: #006eff; text-decoration: none; }
 .drink-month-nav a:hover { background: var(--theme-subtle, #f3f4f6); }
-.drink-month-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; }
-.drink-month-metrics div { display: grid; gap: 4px; min-width: 0; padding: 10px 12px; border-radius: 14px; background: var(--theme-subtle, #f3f4f6); }
-.drink-month-metrics dt { color: var(--theme-muted, #59616b); font-size: .6875rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
-.drink-month-metrics dd { margin: 0; overflow: hidden; color: var(--theme-text, #111); font-size: 1.125rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.drink-month-metrics dd span { color: var(--theme-muted, #59616b); font-size: .75rem; font-weight: 600; }
 .drink-month { display: grid; }
 .drink-month-grid { display: grid; gap: 2px; }
 .drink-month-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
@@ -948,9 +943,7 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 .drink-day-info li { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 0; }
 .drink-day-info li + li { border-top: 1px solid var(--theme-line, #e3e7ec); }
 .drink-day-info-icon { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 12px; background: var(--theme-subtle, #f3f4f6); color: var(--theme-muted, #59616b); }
-.drink-day-info-icon.is-streak { background: linear-gradient(0deg, #ff5a00, #ff9f1a); }
-.drink-day-info-icon.is-streak::before { content: ''; width: 14px; height: 18px; background: #fff3c4; -webkit-mask: var(--flame) center / contain no-repeat; mask: var(--flame) center / contain no-repeat;
-  --flame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 22'%3E%3Cpath d='M9 0c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1-9Z'/%3E%3C/svg%3E"); }
+.drink-day-info-icon.is-streak { background: color-mix(in srgb, #ff8a00 14%, transparent); }
 .drink-day-info-text { display: grid; flex: 1; gap: 2px; min-width: 0; }
 .drink-day-info-text strong { color: var(--theme-text, #111); font-size: .9375rem; }
 .drink-day-info-text small { color: var(--theme-muted, #59616b); font-size: .8125rem; }
@@ -976,7 +969,9 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 .drink-summary-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .drink-summary-pills li { padding: 6px 12px; border-radius: 999px; background: var(--theme-subtle, #f3f4f6); color: var(--theme-muted, #59616b); font-size: .8125rem; }
 .drink-summary-pills b { color: var(--theme-text, #111); font-variant-numeric: tabular-nums; }
-.drink-summary-card .drink-summary-note { margin: -4px 0 0; color: var(--theme-muted, #59616b); font-size: .75rem; }
+.drink-summary-card .drink-summary-note { margin: 0; }
+.drink-summary-note > span:last-child { display: grid; gap: 2px; font-weight: 500; }
+.drink-summary-note b { color: var(--theme-text, #111); font-size: .875rem; }
 .drink-summary-card .drink-share { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .drink-summary-card .drink-share :is(button, a) { min-height: 44px; }
 .drink-share { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -986,7 +981,7 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 
 @media (max-width: 759px) {
   .drink-month-panel { padding: 16px 12px; }
-  .drink-month-nav, .drink-month-metrics { padding-inline: 4px; }
+  .drink-month-nav { padding-inline: 4px; }
   .drink-month-mark, .drink-month-mark img, .drink-month-can { width: 32px; height: 32px; }
   .drink-month-day { min-height: 56px; }
 }
@@ -1274,3 +1269,111 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 @media (max-width: 639px) {
   .tg-settings-link, .tg-settings-bot .tg-settings-link, .tg-settings-danger form, .tg-settings-unlink { width: 100%; }
 }
+
+/* Streak flame (streak-flame.tsx), like TikTok's: the tongue sways from its base, the core flickers faster, a soft
+   glow in the tier's colour. Tiers — orange, pink from 30 days, purple from 100, the brand blue from 200 — set the
+   gradient through variables (`data-flame`, not `data-tier`: tier lists own that); month pills, the banner and the
+   leaderboard chips take the same colours. `waiting` (today not logged)
+   dims and breathes, `out` is grey. The glow is a filter on the root <svg>: Safari ignores filters on inner elements. */
+[data-flame] { --flame-base: #ff3d00; --flame-mid: #ff8a00; --flame-tip: #ffd23f; --flame-core: #fff6d6; --flame-core-tip: #ffe17a; --flame-glow: rgb(255 120 0 / .45); }
+.streak-flame { flex: none; overflow: visible; vertical-align: -0.2em; filter: drop-shadow(0 0 3px var(--flame-glow)); }
+[data-flame=pink] { --flame-base: #ff1f6b; --flame-mid: #ff4fa3; --flame-tip: #ffb8dc; --flame-core: #fff1f8; --flame-core-tip: #ffc6e3; --flame-glow: rgb(255 60 150 / .45); }
+[data-flame=purple] { --flame-base: #6a1fff; --flame-mid: #a64bff; --flame-tip: #e2b8ff; --flame-core: #f8efff; --flame-core-tip: #dcbcff; --flame-glow: rgb(150 70 255 / .5); }
+[data-flame=blue] { --flame-base: #0046c7; --flame-mid: #006eff; --flame-tip: #8cc6ff; --flame-core: #eef7ff; --flame-core-tip: #b9ddff; --flame-glow: rgb(0 110 255 / .55); }
+.streak-flame-stop-base { stop-color: var(--flame-base); }
+.streak-flame-stop-mid { stop-color: var(--flame-mid); }
+.streak-flame-stop-tip { stop-color: var(--flame-tip); }
+.streak-flame-stop-core { stop-color: var(--flame-core); }
+.streak-flame-stop-core-tip { stop-color: var(--flame-core-tip); }
+.streak-flame :is(.streak-flame-outer, .streak-flame-core) { transform-box: fill-box; transform-origin: 50% 100%; }
+.streak-flame .streak-flame-outer { animation: streak-sway 1.6s ease-in-out infinite; }
+.streak-flame .streak-flame-core { animation: streak-core .9s ease-in-out infinite alternate; }
+.streak-flame[data-state=waiting] { filter: saturate(.45) drop-shadow(0 0 2px var(--flame-glow)); opacity: .8; animation: streak-breathe 2.4s ease-in-out infinite; }
+.streak-flame[data-state=out] { filter: grayscale(1); opacity: .45; }
+.streak-flame[data-state=out] :is(.streak-flame-outer, .streak-flame-core) { animation: none; }
+@keyframes streak-sway { 0%, 100% { transform: scale(1, 1) skewX(0deg); } 25% { transform: scale(.96, 1.05) skewX(-3deg); } 50% { transform: scale(1.02, .97) skewX(1deg); } 75% { transform: scale(.97, 1.04) skewX(3deg); } }
+@keyframes streak-core { 0% { transform: scale(.92, .88); opacity: .85; } 100% { transform: scale(1.05, 1.08); opacity: 1; } }
+@keyframes streak-breathe { 0%, 100% { opacity: .55; } 50% { opacity: .9; } }
+@media (prefers-reduced-motion: reduce) { .streak-flame, .streak-flame :is(.streak-flame-outer, .streak-flame-core) { animation: none !important; } }
+
+/* The banner's streak chip carries the flame; its tint follows the tier. */
+.drink-banner-stats [data-stat=streak] { display: inline-flex; align-items: center; gap: 4px; background: color-mix(in srgb, var(--flame-mid) 18%, var(--theme-subtle, #f3f4f6)); }
+.drink-banner-stats [data-stat=streak] dd::before { content: none; }
+.drink-banner-stats [data-stat=streak] dd { display: inline-flex; align-items: center; gap: 3px; }
+/* Month pills of a streak day take the streak's tier; a restored day has a dashed outline and no can. */
+.drink-month-streak[data-flame] { background: linear-gradient(0deg, var(--flame-base), var(--flame-mid)); }
+.drink-month-day[data-restored] .drink-month-mark::after { content: ''; position: absolute; inset: 2px; border: 2px dashed color-mix(in srgb, #ff8a00 70%, transparent); border-radius: 9px; }
+.drink-month-restored { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: color-mix(in srgb, #ff8a00 12%, transparent); color: #ff7a00; }
+
+/* The progress to the next bonus burns in the streak's colour. */
+.drink-banner-goal[data-flame] .drink-banner-bar span { background: linear-gradient(90deg, var(--flame-tip), var(--flame-mid), var(--flame-base)); }
+
+/* «Вернуть огонёк»: a card under the banner while a missed day can be filled. */
+.streak-restore { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid color-mix(in srgb, #ff8a00 35%, var(--theme-line, #e3e7ec)); background: color-mix(in srgb, #ff8a00 8%, var(--theme-panel, #fff)); }
+.streak-restore > div { display: grid; flex: 1 1 200px; gap: 2px; min-width: 0; }
+.streak-restore strong { color: var(--theme-text, #111); font-size: .9375rem; }
+.streak-restore small { color: var(--theme-muted, #59616b); font-size: .8125rem; line-height: 1.4; }
+.streak-restore button { min-height: 44px; padding: 0 18px; border: 0; border-radius: 999px; background: linear-gradient(90deg, #ff3d00, #ff8a00); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+.streak-restore button:disabled { opacity: .6; cursor: default; }
+.streak-restore.is-later { border-style: dashed; background: transparent; }
+@media (max-width: 639px) { .streak-restore button { width: 100%; } }
+
+/* The month panel's head: the big fire with the number in its chip, the state in one line and the progress to the
+   next streak bonus, tinted by the tier. */
+.drink-streak-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; margin: 0 0 16px; padding: 14px 18px 14px 10px; overflow: hidden; border-radius: 22px;
+  background: radial-gradient(110% 130% at 0% 100%, color-mix(in srgb, var(--flame-mid) 34%, transparent), transparent 62%), color-mix(in srgb, var(--flame-mid) 10%, var(--theme-subtle, #f3f4f6)); }
+.drink-streak-hero[data-state=out] { background: var(--theme-subtle, #f3f4f6); }
+.drink-streak-hero-text { display: grid; gap: 10px; min-width: 0; }
+.drink-streak-hero-text > strong { color: var(--theme-text, #111); font-size: 1rem; font-weight: 800; line-height: 1.3; }
+.drink-streak-hero-goal { display: grid; gap: 6px; color: var(--theme-muted, #59616b); font-size: .8125rem; line-height: 1.35; }
+.drink-streak-hero-goal b { color: var(--theme-text, #111); }
+.drink-streak-hero-bar { display: block; height: 8px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--theme-text, #111) 10%, transparent); }
+.drink-streak-hero-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--flame-tip), var(--flame-mid), var(--flame-base)); transition: width 400ms ease-out; }
+/* «Статистика» in the bird banner, under its line. */
+.drink-stats-button { display: inline-flex; align-items: center; gap: 8px; justify-self: start; min-height: 40px; margin-top: 8px; padding: 0 14px; border: 1px solid var(--theme-line, #e3e7ec); border-radius: 999px; background: var(--theme-subtle, #f3f4f6); color: var(--theme-text, #111); font: inherit; font-size: .8125rem; font-weight: 700; cursor: pointer; }
+.drink-stats-button:hover { background: var(--theme-panel, #fff); }
+@media (pointer: coarse) { .drink-stats-button { min-height: 44px; } }
+
+/* The stats sheet's head takes the streak's colours instead of the day sheet's blue. */
+.drink-stats-hero { background: linear-gradient(180deg, color-mix(in srgb, var(--flame-mid) 24%, var(--theme-panel, #fff)), color-mix(in srgb, var(--flame-mid) 8%, var(--theme-panel, #fff))); }
+.drink-stats-hero .drink-day-figures { border-top-color: color-mix(in srgb, var(--flame-mid) 22%, transparent); }
+.drink-stats-flame { display: grid; place-items: center; min-height: 100px; margin: 8px 0 0; }
+
+/* The big streak fire (streak-fire.tsx): three layers swaying at their own pace from the base, side tongues tearing
+   off upward, embers rising, a breathing glow, the number in a chip at the foot. Only transforms and opacity animate.
+   A burst — a ring and sparks thrown out — plays once when the streak has grown. */
+.streak-fire { position: relative; display: inline-grid; place-items: center; width: 96px; height: 112px; flex: none; }
+.streak-fire-glow { position: absolute; left: 50%; bottom: 14px; width: 84px; height: 84px; border-radius: 50%; background: radial-gradient(circle, var(--flame-mid) 0%, color-mix(in srgb, var(--flame-base) 50%, transparent) 38%, transparent 70%); opacity: .55; filter: blur(6px); transform: translateX(-50%); animation: fire-glow 2.2s ease-in-out infinite; }
+.streak-fire-svg { position: relative; overflow: visible; filter: drop-shadow(0 4px 10px var(--flame-glow)); }
+.streak-fire-svg path { transform-box: fill-box; transform-origin: 50% 100%; }
+.streak-fire .fire-outer { animation: fire-outer 1.15s cubic-bezier(.45, .05, .55, .95) infinite; }
+.streak-fire .fire-mid { animation: fire-mid .82s cubic-bezier(.45, .05, .55, .95) infinite; }
+.streak-fire .fire-core { animation: fire-core .5s ease-in-out infinite alternate; }
+.streak-fire .fire-tongue { opacity: 0; animation: fire-tongue 1.3s ease-out infinite; }
+.streak-fire .fire-tongue-right { animation-delay: .62s; }
+.streak-fire-embers { position: absolute; left: 50%; bottom: 30px; width: 0; height: 0; }
+.streak-fire-embers i { position: absolute; left: var(--x); bottom: 0; width: 4px; height: 4px; border-radius: 50%; background: var(--flame-tip); box-shadow: 0 0 6px var(--flame-mid); opacity: 0; animation: fire-ember 2.4s ease-out infinite; }
+.streak-fire-count { position: absolute; left: 50%; bottom: 0; min-width: 34px; padding: 1px 10px; border: 3px solid var(--theme-panel, #fff); border-radius: 999px; background: linear-gradient(0deg, var(--flame-base), var(--flame-mid)); color: #fff; font-size: 1.125rem; font-weight: 900; line-height: 1.35; text-align: center; font-variant-numeric: tabular-nums; transform: translateX(-50%); }
+.streak-fire[data-state=waiting] .streak-fire-svg { filter: saturate(.5) drop-shadow(0 4px 8px var(--flame-glow)); }
+.streak-fire[data-state=waiting] :is(.fire-outer, .fire-mid) { animation-duration: 1.8s, 1.4s; }
+.streak-fire[data-state=waiting] .streak-fire-glow { opacity: .3; }
+.streak-fire[data-state=out] { filter: grayscale(1); opacity: .5; }
+.streak-fire[data-state=out] :is(.streak-fire-glow, .streak-fire-embers, .fire-tongue) { display: none; }
+.streak-fire[data-state=out] .streak-fire-svg path { animation: none; }
+.streak-fire-burst { position: absolute; left: 50%; top: 48%; width: 0; height: 0; pointer-events: none; }
+.streak-fire-ring { position: absolute; left: -40px; top: -40px; width: 80px; height: 80px; border: 4px solid var(--flame-mid); border-radius: 50%; opacity: 0; animation: fire-ring .7s ease-out forwards; }
+.streak-fire-burst i { position: absolute; left: calc(var(--s) / -2); top: calc(var(--s) / -2); width: var(--s); height: var(--s); border-radius: 50%; background: var(--flame-tip); box-shadow: 0 0 8px var(--flame-mid); opacity: 0; animation: fire-spark .9s cubic-bezier(.2, .7, .3, 1) forwards; }
+.streak-fire:has(.streak-fire-burst) .streak-fire-svg { animation: fire-flare .7s ease-out; }
+@keyframes fire-outer { 0%, 100% { transform: scale(1, 1) skewX(0); } 20% { transform: scale(.95, 1.07) skewX(-4deg); } 45% { transform: scale(1.04, .95) skewX(2deg); } 70% { transform: scale(.97, 1.05) skewX(4deg); } }
+@keyframes fire-mid { 0%, 100% { transform: scale(1, 1) skewX(0); } 30% { transform: scale(1.05, .92) skewX(5deg); } 60% { transform: scale(.93, 1.1) skewX(-5deg); } }
+@keyframes fire-core { 0% { transform: scale(.86, .82) translateY(2%); opacity: .82; } 100% { transform: scale(1.08, 1.12); opacity: 1; } }
+@keyframes fire-tongue { 0% { transform: translateY(0) scale(1); opacity: 0; } 15% { opacity: .95; } 100% { transform: translateY(-46%) scale(.35); opacity: 0; } }
+@keyframes fire-ember { 0% { transform: translate(0, 0) scale(1); opacity: 0; } 12% { opacity: 1; } 100% { transform: translate(calc(var(--x) * -.6), -78px) scale(.3); opacity: 0; } }
+@keyframes fire-glow { 0%, 100% { transform: translateX(-50%) scale(.92); opacity: .45; } 50% { transform: translateX(-50%) scale(1.08); opacity: .7; } }
+@keyframes fire-ring { 0% { transform: scale(.35); opacity: .9; } 100% { transform: scale(1.7); opacity: 0; } }
+@keyframes fire-spark { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(var(--x), var(--y)) scale(.2); opacity: 0; } }
+@keyframes fire-flare { 0% { transform: scale(1); } 30% { transform: scale(1.18, 1.25); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .streak-fire *, .streak-fire-svg { animation: none !important; } .streak-fire .fire-tongue, .streak-fire-embers, .streak-fire-burst { display: none; } }
+/* «Итог месяца» inside the stats sheet: a card in the sheet's column, like the info group under it. */
+.drink-stats-summary { margin: 16px 16px 0; padding: 16px; border-radius: 20px; background: var(--theme-panel, #fff); }
+.drink-stats-summary h3 { margin: 0; color: var(--theme-text, #111); font-size: 1rem; }

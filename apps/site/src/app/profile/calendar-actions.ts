@@ -3,7 +3,7 @@
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
-import { addDrink, deleteDrink } from '@/lib/drink-calendar';
+import { addDrink, deleteDrink, restoreStreak } from '@/lib/drink-calendar';
 import { DrinkCalendarError, moscowDay, parseDrinkForm } from '@/lib/drink-calendar-fields';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import { isUserBlocked } from '@/lib/moderation';
@@ -36,5 +36,21 @@ export async function deleteDrinkAction(id: string): Promise<{ error?: string }>
     return {};
   } catch (error) {
     return { error: error instanceof DrinkCalendarError ? error.message : 'Не удалось удалить запись.' };
+  }
+}
+
+/** «Вернуть огонёк»: fills the missed day the calendar offers, once per 15 days. */
+export async function restoreStreakAction(): Promise<{ error?: string; length?: number; xp?: number }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { error: 'Войдите в аккаунт и повторите действие.' };
+  try {
+    if (await isUserBlocked(session.user.id)) return { error: 'Записи для этого аккаунта ограничены.' };
+    const result = await restoreStreak(session.user.id);
+    revalidatePath('/profile', 'layout');
+    revalidatePath('/calendar');
+    revalidatePath('/leaderboard');
+    return { length: result.length, xp: result.xp };
+  } catch (error) {
+    return { error: error instanceof DrinkCalendarError ? error.message : 'Не удалось вернуть огонёк. Попробуйте ещё раз.' };
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DrinkCalendarError, addDays, birdMood, canEditDay, currentStreak, drinkStreaks, heatmapWeeks, isDay, monthSummary, monthWeeks,
+  DrinkCalendarError, addDays, flameTier, streakRestore, birdMood, canEditDay, currentStreak, drinkStreaks, heatmapWeeks, isDay, monthSummary, monthWeeks,
   parseDrinkForm, parseDrinkPrice, reachedMilestones, shiftMonth, streakOn,
 } from '../src/lib/drink-calendar-fields';
 
@@ -52,5 +52,25 @@ describe('drink calendar helpers', () => {
     expect(monthSummary([
       { day: '2026-10-01', name: 'Burn', price: 10000 }, { day: '2026-10-01', name: 'Burn', price: null }, { day: '2026-10-02', name: 'Flash', price: 8000 },
     ])).toEqual({ cans: 3, days: 2, unique: 2, top: { name: 'Burn', count: 2 }, spent: 18000, priced: 2 });
+  });
+
+  it('offers to restore one missed day after a streak, at most once per 15 days', () => {
+    const run = (from: string, count: number) => Array.from({ length: count }, (_, index) => addDays(from, index));
+    // Yesterday missed after four days: restoring it keeps the streak alive.
+    expect(streakRestore(run('2031-03-01', 4), '2031-03-06', null)).toEqual({ day: '2031-03-05', length: 5 });
+    // A gap the day before yesterday, logged since: the runs join.
+    expect(streakRestore([...run('2031-03-01', 4), '2031-03-06', '2031-03-07'], '2031-03-07', null)).toEqual({ day: '2031-03-05', length: 7 });
+    // Nothing to restore: no gap, a gap of two days, a gap too old, or a single day before the gap.
+    expect(streakRestore(run('2031-03-01', 7), '2031-03-07', null)).toBeNull();
+    expect(streakRestore(run('2031-03-01', 4), '2031-03-07', null)).toBeNull();
+    expect(streakRestore([...run('2031-03-01', 4), ...run('2031-03-06', 4)], '2031-03-09', null)).toBeNull();
+    expect(streakRestore(['2031-03-04'], '2031-03-06', null)).toBeNull();
+    // Within 15 days of the last restore: the date it becomes possible again.
+    expect(streakRestore(run('2031-03-01', 4), '2031-03-06', '2031-02-25')).toEqual({ availableOn: '2031-03-12' });
+    expect(streakRestore(run('2031-03-01', 4), '2031-03-06', '2031-02-19')).toEqual({ day: '2031-03-05', length: 5 });
+  });
+
+  it('colours the flame like TikTok, the top tier in the brand blue', () => {
+    expect([1, 29, 30, 99, 100, 199, 200].map(flameTier)).toEqual(['orange', 'orange', 'pink', 'pink', 'purple', 'purple', 'blue']);
   });
 });

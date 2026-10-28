@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { deleteDrinkAction } from '@/app/profile/calendar-actions';
 import type { DrinkEntry } from '@/lib/drink-calendar';
-import { canEditDay, cans, dayDiff, dayTitle, days, streakOn, type DrinkStreak } from '@/lib/drink-calendar-fields';
+import { canEditDay, cans, dayDiff, dayTitle, days, flameTier, streakOn, type DrinkStreak } from '@/lib/drink-calendar-fields';
+import { StreakFlame } from '@/components/streak-flame';
 import { formatPrice } from '@/lib/market-fields';
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -20,7 +21,8 @@ function CanSilhouette() {
 }
 
 /** Month grid of cans; a tap on a day opens that day in its own sheet. */
-export function DrinkMonth({ weeks, entries, streaks, today, isOwn }: { weeks: (string | null)[][]; entries: Record<string, DrinkEntry[]>; streaks: DrinkStreak[]; today: string; isOwn: boolean }) {
+export function DrinkMonth({ weeks, entries, streaks, restored = [], today, isOwn }: { weeks: (string | null)[][]; entries: Record<string, DrinkEntry[]>; streaks: DrinkStreak[]; restored?: string[]; today: string; isOwn: boolean }) {
+  const back = new Set(restored);
   const dialog = useRef<HTMLDialogElement>(null);
   const [shown, setShown] = useState<string | null>(null);
 
@@ -35,15 +37,17 @@ export function DrinkMonth({ weeks, entries, streaks, today, isOwn }: { weeks: (
         const run = streakOn(streaks, day);
         const streakDay = run && run.length > 1 ? dayDiff(run.start, day) + 1 : 0;
         const cover = items.find(item => item.cover)?.cover;
+        const isRestored = back.has(day) && !items.length;
         return <span key={day} className="drink-month-cell">
           <button type="button" className="drink-month-day" data-has={items.length ? '' : undefined} data-future={day > today || undefined} data-today={day === today || undefined}
-            data-streak={streakDay ? '' : undefined} disabled={day > today} aria-haspopup="dialog"
-            aria-label={`${dayTitle(day)}: ${items.length ? cans(items.length) : 'нет отметок'}${streakDay ? `, ${streakDay}-й день серии` : ''}`}
+            data-streak={streakDay ? '' : undefined} data-restored={isRestored || undefined} disabled={day > today} aria-haspopup="dialog"
+            aria-label={`${dayTitle(day)}: ${items.length ? cans(items.length) : isRestored ? 'огонёк возвращён' : 'нет отметок'}${streakDay ? `, ${streakDay}-й день серии` : ''}`}
             onClick={() => open(day)}>
             <span className="drink-month-mark" aria-hidden="true">
-              {items.length ? cover ? <Image src={cover} width={36} height={36} alt="" unoptimized={local(cover)} /> : <span className="drink-month-can">⚡</span> : <CanSilhouette />}
+              {items.length ? cover ? <Image src={cover} width={36} height={36} alt="" unoptimized={local(cover)} /> : <span className="drink-month-can">⚡</span>
+                : isRestored ? <span className="drink-month-restored"><StreakFlame length={run?.length ?? 1} size={16} /></span> : <CanSilhouette />}
               {items.length > 1 && <small className="drink-month-count">{items.length}</small>}
-              {streakDay > 0 && <span className="drink-month-streak">{streakDay}</span>}
+              {streakDay > 0 && <span className="drink-month-streak" data-flame={flameTier(streakDay)}>{streakDay}</span>}
             </span>
             <span className="drink-month-number">{Number(day.slice(8))}</span>
           </button>
@@ -54,7 +58,7 @@ export function DrinkMonth({ weeks, entries, streaks, today, isOwn }: { weeks: (
 
     <dialog ref={dialog} className="drink-day-sheet" aria-labelledby="drink-day-title" onClose={() => setShown(null)}
       onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
-      {shown && <DrinkDay key={shown} day={shown} list={entries[shown] ?? []} streaks={streaks} today={today} isOwn={isOwn} onClose={() => dialog.current?.close()} />}
+      {shown && <DrinkDay key={shown} day={shown} list={entries[shown] ?? []} streaks={streaks} restored={back.has(shown)} today={today} isOwn={isOwn} onClose={() => dialog.current?.close()} />}
     </dialog>
   </div>;
 }
@@ -63,7 +67,7 @@ export function DrinkMonth({ weeks, entries, streaks, today, isOwn }: { weeks: (
  * One day, like a drink card in a tracker app: a tinted head with the cans, the date and the streak, three figures
  * (cans, day of the streak, spent) and the list of cans with their notes; the owner removes recent cans here.
  */
-function DrinkDay({ day, list, streaks, today, isOwn, onClose }: { day: string; list: DrinkEntry[]; streaks: DrinkStreak[]; today: string; isOwn: boolean; onClose: () => void }) {
+function DrinkDay({ day, list, streaks, restored, today, isOwn, onClose }: { day: string; list: DrinkEntry[]; streaks: DrinkStreak[]; restored: boolean; today: string; isOwn: boolean; onClose: () => void }) {
   const [error, setError] = useState('');
   const [pending, startTransition] = useTransition();
   const streak = streakOn(streaks, day);
@@ -107,11 +111,11 @@ function DrinkDay({ day, list, streaks, today, isOwn, onClose }: { day: string; 
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
       </button>}
     </li>)}</ul>
-      : <p className="drink-day-empty">{isOwn ? 'В этот день банок не было.' : 'В этот день отметок нет.'}</p>}
+      : <p className="drink-day-empty">{restored ? 'Банок не отмечено — огонёк возвращён, серия не прервалась.' : isOwn ? 'В этот день банок не было.' : 'В этот день отметок нет.'}</p>}
 
     {(inRun || locked) && <ul className="drink-day-info">
       {inRun && <li>
-        <span className="drink-day-info-icon is-streak" aria-hidden="true" />
+        <span className="drink-day-info-icon is-streak" aria-hidden="true"><StreakFlame length={streak.length} size={16} /></span>
         <span className="drink-day-info-text"><strong>Серия {days(streak.length)}</strong><small>{dayTitle(streak.start)} — {dayTitle(streak.end)}</small></span>
         <span className="drink-day-info-chip">день {dayDiff(streak.start, day) + 1}</span>
       </li>}
