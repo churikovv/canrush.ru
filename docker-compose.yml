@@ -103,6 +103,7 @@ services:
       TELEGRAM_WORKER: "off"
       PUSH_WORKER: "off"
       DIGEST_WORKER: "off"
+      DRINK_CHECK_WORKER: "off"
       BUSINESS_REPORT_WORKER: "off"
     volumes: *site-volumes
     ports:

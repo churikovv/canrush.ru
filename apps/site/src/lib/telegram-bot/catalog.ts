@@ -1,5 +1,6 @@
 import { isResolvedFlavor, type CatalogGroup, type CityId } from '@canrush/shared';
 import { activeOffers, readAllCatalogGroups, readCityCatalog } from '@/lib/catalog-files';
+import { withCardEdits } from '@/lib/catalog-card-edits';
 import { catalogOffers, catalogRetailerName, matchesCatalogQuery } from '@/lib/catalog-query';
 import { getReviewSummaries } from '@/lib/reviews';
 
@@ -26,14 +27,14 @@ const key = (brand: string, flavor: string) => `${brand}\u0000${flavor}`;
 
 async function cityGroups(cityId: CityId, now = Date.now()): Promise<CatalogGroup[]> {
   const data = await readCityCatalog(cityId);
-  return activeOffers(data?.groups ?? [], now).filter(group => isResolvedFlavor(group.flavor));
+  return (await withCardEdits(activeOffers(data?.groups ?? [], now))).filter(group => isResolvedFlavor(group.flavor));
 }
 
 /** Drinks matching a free-text query: local offers first, then the rest of the catalog without prices. */
 export async function searchProducts(cityId: CityId, query: string, limit: number): Promise<BotProduct[]> {
   const local = (await cityGroups(cityId)).filter(group => matchesCatalogQuery(group, query));
   const seen = new Set(local.map(group => key(group.brand, group.flavor)));
-  const archive = local.length >= limit ? [] : (await readAllCatalogGroups())
+  const archive = local.length >= limit ? [] : (await withCardEdits(await readAllCatalogGroups()))
     .filter(group => isResolvedFlavor(group.flavor) && !seen.has(key(group.brand, group.flavor)) && matchesCatalogQuery(group, query));
   const groups = [...local, ...archive].slice(0, 40);
   const ratings = await getReviewSummaries(groups.map(({ brand, flavor }) => ({ brand, flavor })));

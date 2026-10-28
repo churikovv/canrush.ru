@@ -5,6 +5,7 @@ import { readAllCatalogGroups } from '@/lib/catalog-files';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { CatalogDrinkError, MAX_PENDING_DRINKS, type CatalogDrinkEdit, type CatalogDrinkInput } from '@/lib/catalog-drink-fields';
 import type { PreparedReviewPhoto } from '@/lib/review-photos';
+import { SUSPECT } from '@/lib/drink-duplicate-check';
 
 export type CatalogDrinkStatus = 'pending' | 'published' | 'rejected';
 export interface CatalogDrink {
@@ -192,11 +193,16 @@ export async function listPendingCatalogDrinks(page = 1, size = 20): Promise<{ i
  * The admin's lists: requests oldest first (the queue), published and rejected newest first. `query` matches brand,
  * flavour key and full name. Blocked authors' requests stay out of the queue, as in moderation.
  */
-export async function listCatalogDrinks(status: CatalogDrinkStatus, page = 1, size = 20, query = ''): Promise<{ items: CatalogDrink[]; hasMore: boolean }> {
+/**
+ * The admin's lists. Requests the neural network took for a duplicate come first (`catalogDrinkCheck`, migration 0139);
+ * `suspects` — only published drinks it suspects and the team has not cleared («Возможные дубли»).
+ */
+export async function listCatalogDrinks(status: CatalogDrinkStatus, page = 1, size = 20, query = '', { suspects = false }: { suspects?: boolean } = {}): Promise<{ items: CatalogDrink[]; hasMore: boolean }> {
+  const flagged = `exists(select 1 from "catalogDrinkCheck" c where c."drinkId" = d.id and c.verdict = 'duplicate' and c."dismissedAt" is null)`;
   const { rows } = await getPool().query<Row>(`select ${COLUMNS} from "catalogDrink" d join "user" u on u.id = d."ownerId"
-    where d.status = $1 ${status === 'pending' ? `and ${VISIBLE_AUTHOR}` : ''}
+    where d.status = $1 ${status === 'pending' ? `and ${VISIBLE_AUTHOR}` : ''} ${suspects ? `and ${SUSPECT}` : ''}
       and ($4 = '' or concat_ws(' ', d.brand, d.flavor, d."fullName") ilike '%' || $4 || '%')
-    order by ${status === 'pending' ? 'd."createdAt"' : 'coalesce(d."reviewedAt", d."createdAt") desc'} limit $2 offset $3`,
+    order by ${status === 'pending' ? `${flagged} desc, d."createdAt"` : suspects ? `${flagged} desc, d.brand, d.flavor` : 'coalesce(d."reviewedAt", d."createdAt") desc'} limit $2 offset $3`,
   [status, size + 1, (page - 1) * size, query.trim().replace(/[\\%_]/gu, match => `\\${match}`)]);
   return { items: rows.slice(0, size).map(toDrink), hasMore: rows.length > size };
 }

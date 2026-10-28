@@ -64,3 +64,13 @@ export function getGigaChat(): GigaChatClient | null {
   if (shared === undefined) { const key = process.env.GIGACHAT_AUTH_KEY?.trim(); shared = key ? new GigaChatClient(key) : null; }
   return shared;
 }
+
+let sharedMax: GigaChatClient | null | undefined;
+/**
+ * GigaChat-2-Max, the larger model, for checks where the small one is too careless (duplicate drinks: on real requests
+ * it found more twins and called fewer different drinks the same). Null without `GIGACHAT_AUTH_KEY`.
+ */
+export function getGigaChatMax(): GigaChatClient | null {
+  if (sharedMax === undefined) { const key = process.env.GIGACHAT_AUTH_KEY?.trim(); sharedMax = key ? new GigaChatClient(key, 'GigaChat-2-Max') : null; }
+  return sharedMax;
+}

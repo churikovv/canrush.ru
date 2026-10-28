@@ -273,3 +273,27 @@
   .support-admin-back { display: none; }
   .support-admin-list { position: sticky; top: 16px; }
 }
+
+/* The neural network's duplicate hint on a drink's card (/admin/drinks): a warning card for «duplicate», a calmer one for
+   «unsure», a quiet line for «new» and «failed». */
+.admin-drink-check { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; align-items: start; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.45; }
+.admin-drink-check[data-verdict="new"], .admin-drink-check[data-verdict="failed"] { display: block; padding: 0; background: none; }
+.admin-drink-check[data-verdict="duplicate"] { background: color-mix(in srgb, #e8590c 12%, var(--color-surface)); color: var(--color-text); box-shadow: inset 0 0 0 1px color-mix(in srgb, #e8590c 35%, transparent); }
+.admin-drink-check[data-verdict="duplicate"] > svg { color: #e8590c; }
+.admin-drink-check > svg { margin-top: 1px; }
+.admin-drink-check strong { color: var(--color-ink); font-size: .875rem; }
+.admin-drink-check strong a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.admin-drink-check p { margin: 2px 0 0; }
+.admin-drink-check form { grid-column: 1 / -1; }
+.admin-drink-check form .community-button { width: 100%; min-height: 40px; }
+@media (min-width: 640px) { .admin-drink-check form .community-button { width: auto; } }
+/* A parser card the team merged away or hid: still listed, quieter. */
+.admin-drink-card[data-muted] .admin-drink-card-cover, .admin-drink-card[data-muted] .admin-drink-card-text strong { opacity: .55; }
+.admin-card-cover-empty { display: block; width: 72px; height: 90px; border-radius: 10px; background: var(--color-subtle); }
+/* «Карточки каталога»: all / the neural network's queue / its own merges; the quick answers under a doubtful card. */
+.admin-card-views { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.admin-card-views a { padding: 6px 12px; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .8125rem; font-weight: 700; text-decoration: none; }
+.admin-card-views a[aria-current="page"] { background: var(--color-ink); color: var(--color-surface); }
+.admin-card-queue-actions { display: grid; grid-column: 1 / -1; gap: 8px; }
+.admin-card-queue-actions .community-button { width: 100%; min-height: 40px; }
+@media (min-width: 640px) { .admin-card-queue-actions { display: flex; flex-wrap: wrap; } .admin-card-queue-actions .community-button { width: auto; } }

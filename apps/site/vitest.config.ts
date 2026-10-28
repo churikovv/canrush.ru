@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     exclude: [
-      'test/support.integration.test.ts', 'test/articles.integration.test.ts', 'test/business.integration.test.ts', 'test/review-digest.integration.test.ts',
+      'test/catalog-card-check.integration.test.ts', 'test/catalog-card-edits.integration.test.ts', 'test/drink-duplicate-check.integration.test.ts', 'test/support.integration.test.ts', 'test/articles.integration.test.ts', 'test/business.integration.test.ts', 'test/review-digest.integration.test.ts',
       'test/vulkan-fruit-alias-migration.integration.test.ts', 'test/pulse-alias-migration.integration.test.ts', 'test/gorilla-alias-migration.integration.test.ts', 'test/cosmos-alias-migration.integration.test.ts', 'test/flash-alias-migration.integration.test.ts', 'test/adrenaline-alias-migration.integration.test.ts', 'test/imported-alias-migration.integration.test.ts', 'test/reviewed-alias-migration.integration.test.ts', 'test/profile-compatibility-history.integration.test.ts', 'test/stores.integration.test.ts',
       'test/wall-discussions.integration.test.ts', 'test/tier-discussions.integration.test.ts',
       'test/favorite-removal.integration.test.ts',

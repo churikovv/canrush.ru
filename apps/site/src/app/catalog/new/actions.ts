@@ -2,6 +2,9 @@
 import { isFrozenError } from '@/lib/moderation';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
+import { checkDrinkDuplicates, dismissDrinkCheck } from '@/lib/drink-duplicate-check';
+import { getGigaChatMax } from '@/lib/gigachat';
 import { auth } from '@/lib/auth';
 import { requireSiteAdmin } from '@/lib/admin';
 import { BASIC_FLAVORS } from '@/lib/catalog-query';
@@ -29,6 +32,9 @@ export async function submitCatalogDrinkAction(_previous: CatalogDrinkState, for
     const result = await submitCatalogDrink(session.user.id, input, photos[0], form.get('confirmMatch') === '1', businessId);
     revalidatePath('/catalog/new');
     revalidatePath('/admin/drinks');
+    // The neural network's duplicate hint for moderators, after the answer; the worker retries what fails here.
+    const model = getGigaChatMax();
+    if (model) after(() => checkDrinkDuplicates(model, result.id).catch(() => undefined));
     if (result.published) { revalidatePath('/catalog', 'layout'); revalidatePath('/business/cabinet'); }
     return { saved: true, published: result.published ? result.href : undefined };
   } catch (error) {
@@ -99,4 +105,11 @@ export async function mergeCatalogDrinkAction(id: string, version: string, _prev
   } catch (error) {
     return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось склеить напиток.' };
   }
+}
+
+/** «Не дубль»: the team clears the neural network's suspicion of a published drink. */
+export async function dismissDrinkCheckAction(id: string): Promise<void> {
+  const admin = await requireSiteAdmin();
+  await dismissDrinkCheck(admin.userId, admin.email, id);
+  revalidatePath('/admin/drinks');
 }

@@ -7,6 +7,7 @@ import type { QueryResultRow } from 'pg';
 import { getPool } from '@/db/pool';
 import { withCatalogDrinks } from '@/lib/catalog-drinks';
 import { withBrandCovers } from '@/lib/brand-covers';
+import { withCardEdits } from '@/lib/catalog-card-edits';
 
 interface FavoriteRow extends QueryResultRow {
   brand: string;
@@ -20,16 +21,17 @@ export const loadCatalogSnapshot = cache(async () => {
   const status = data?.status === 'stale' || (generatedAt && Date.now() - Date.parse(generatedAt) > 24 * 60 * 60 * 1000) ? 'stale' : data?.status ?? (generatedAt ? 'ok' : 'unavailable');
   const covers = new Map((await readAllCatalogGroups()).filter(group => isResolvedFlavor(group.flavor)).map(group => [JSON.stringify([group.brand, group.flavor]), group.coverImageUrl]));
   const groups = activeOffers(data?.groups ?? []).map(group => ({ ...group, coverImageUrl: isResolvedFlavor(group.flavor) ? covers.get(JSON.stringify([group.brand, group.flavor])) ?? group.coverImageUrl : group.coverImageUrl }));
-  return { city, groups: await withBrandCovers(groups), generatedAt, status };
+  // The team's merges, hidden cards, names and covers (catalogCardEdit) go over the parser's files, the brands' photos over those.
+  return { city, groups: await withBrandCovers(await withCardEdits(groups)), generatedAt, status };
 });
 export async function loadCatalogGroups(): Promise<CatalogGroup[]> { return (await loadCatalogSnapshot()).groups; }
 /**
  * Every product identity: the parser's files plus drinks members added and moderators published (catalogDrink).
  * A file group wins over a member's drink with the same identity; the database being away leaves the files alone.
  */
-export const loadAllCatalogGroups = cache(async (): Promise<CatalogGroup[]> => withBrandCovers(await withCatalogDrinks(await readAllCatalogGroups(), { archived: true })));
+export const loadAllCatalogGroups = cache(async (): Promise<CatalogGroup[]> => withBrandCovers(await withCatalogDrinks(await withCardEdits(await readAllCatalogGroups()), { archived: true })));
 /** Drinks in shops of any city plus member-added ones, which have no offers yet. */
-export const loadTierPickerGroups = cache(async (): Promise<CatalogGroup[]> => withBrandCovers(await withCatalogDrinks(await readTierPickerGroups())));
+export const loadTierPickerGroups = cache(async (): Promise<CatalogGroup[]> => withBrandCovers(await withCatalogDrinks(await withCardEdits(await readTierPickerGroups()))));
 
 function groupKey(brand: string, flavor: string): string {
   return `${brand}\u0000${flavor}`;
