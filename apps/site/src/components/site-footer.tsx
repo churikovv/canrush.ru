@@ -15,6 +15,9 @@ function subscribeToPointer(onChange: () => void) {
   return () => query.removeEventListener('change', onChange);
 }
 
+/** The Android app's page in RuStore, with the marks RuStore asks for on its button (they count taps on it). */
+const RUSTORE_URL = 'https://www.rustore.ru/catalog/app/ru.canrush.app?utm_source=available_in_rustore&utm_medium=ru.canrush.app&rsm=1&mt_link_id=iios36&mt_sub1=ru.canrush.app';
+
 export function SiteFooter() {
   const footerRef = useRef<HTMLElement>(null);
   const reducedMotion = useReducedMotion();
@@ -107,7 +110,14 @@ export function SiteFooter() {
         </div>
 
         <div className="footer-bottom">
-          <p className="footer-copyright">canrush.ru © 2026</p>
+          <div className="footer-bottom-start">
+            <p className="footer-copyright">canrush.ru © 2026</p>
+            {/* RuStore's own «Скачайте из RuStore» button (their developer kit, dark variant for the dark footer). */}
+            <a className="footer-rustore" href={RUSTORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Скачайте CanRush из RuStore (откроется в новой вкладке)">
+              {/* eslint-disable-next-line @next/next/no-img-element -- a static vector badge, nothing to optimize */}
+              <img src="/brand/rustore-badge.svg" width={166} height={60} alt="Скачайте из RuStore" />
+            </a>
+          </div>
           <div className="footer-legal"><p>Используя сайт, вы подтверждаете своё совершеннолетие. Если вам нет 18 лет, покиньте сайт.</p>
           <p>
             Сайт не аффилирован и не одобрен производителями или ретейлерами. Информация представлена

@@ -398,6 +398,13 @@ select {
   .footer-partner-socials a { gap: 6px; font-size: .8125rem; }
 }
 .brand-footer .footer-partner strong { color: #fff; font-size: 1.0625rem; font-weight: 800; letter-spacing: .02em; }
+/* RuStore's official button under the copyright; only a focus ring and a slight lift of our own. */
+.footer-bottom-start { display: grid; gap: 14px; justify-items: start; }
+.footer-rustore { display: inline-flex; border-radius: 8px; transition: transform 150ms ease-out; }
+.footer-rustore:hover { transform: translateY(-1px); }
+.footer-rustore:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 3px; }
+.footer-rustore img { display: block; width: 166px; height: auto; }
+@media (prefers-reduced-motion: reduce) { .footer-rustore { transition: none; } .footer-rustore:hover { transform: none; } }
 .brand-footer .footer-legal {
   font-size: 0.75rem;
   line-height: 1.5;
