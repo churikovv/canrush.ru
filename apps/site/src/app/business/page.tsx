@@ -48,29 +48,20 @@ const weeks = (rows: { week: string; count: number }[]) => {
 
 /**
  * Live numbers for «CanRush сегодня»: each card's headline and the details under it — growth, activity, the share of
- * high scores, what is on sale now — straight from the database and the catalog (members without a nickname and
- * banned ones are left out, as everywhere).
+ * high scores, what is on sale now — straight from the database and the catalog. The members card is off for now.
  */
 const pillOf = (value: number) => { const { to, plus } = rounded(value); return `${count.format(to)}${plus ? '+' : ''}`; };
 
 async function stats(): Promise<BusinessStory[]> {
-  const people = `u.username is not null and not exists(select 1 from "userBlock" b where b."userId" = u.id)`;
-  const [row, signups, reviewWeeks, groups, added] = await Promise.all([
-    getPool().query<{ members: number; new30: number; active30: number; calendar30: number; reviewers: number; reviews: number; reviews30: number; score: number | null; high: number; photos: number; replies: number; stores: number }>(
-      `select (select count(*) from "user" u where ${people})::int as members,
-         (select count(*) from "user" u where ${people} and u."createdAt" > now() - interval '30 days')::int as new30,
-         (select count(*) from "user" u where ${people} and u."lastSeenAt" > now() - interval '30 days')::int as active30,
-         (select count(distinct "userId") from "drinkLog" where day > current_date - 30)::int as calendar30,
-         (select count(distinct "userId") from review)::int as reviewers,
-         (select count(*) from review)::int as reviews,
+  const [row, reviewWeeks, groups, added] = await Promise.all([
+    getPool().query<{ reviews: number; reviews30: number; score: number | null; high: number; photos: number; replies: number; stores: number }>(
+      `select (select count(*) from review)::int as reviews,
          (select count(*) from review where "createdAt" > now() - interval '30 days')::int as reviews30,
          (select round(avg((taste + design) / 2.0)::numeric, 1)::float8 from review) as score,
          (select count(*) from review where taste + design >= 16)::int as high,
          (select count(distinct "reviewId") from "reviewPhoto")::int as photos,
          (select count(*) from "reviewCompanyReply")::int as replies,
          (select count(*) from "marketStore" where status = 'published')::int as stores`).then(result => result.rows[0]).catch(() => undefined),
-    getPool().query<{ week: string; count: number }>(`select date_trunc('week', "createdAt")::date::text as week, count(*)::int as count from "user" u
-      where ${people} and u."createdAt" > now() - interval '12 weeks' group by 1`).then(result => result.rows).catch(() => []),
     getPool().query<{ week: string; count: number }>(`select date_trunc('week', "createdAt")::date::text as week, count(*)::int as count from review
       where "createdAt" > now() - interval '12 weeks' group by 1`).then(result => result.rows).catch(() => []),
     loadAllCatalogGroups().catch(() => []),
@@ -79,13 +70,8 @@ async function stats(): Promise<BusinessStory[]> {
   const drinks = groups.filter(isCountedCatalogDrink);
   const onSale = drinks.filter(group => group.variants.length > 0).length;
   const retailers = new Set(drinks.flatMap(group => group.variants.map(catalogRetailerName))).size;
-  const members = row?.members ?? 0, reviews = row?.reviews ?? 0;
+  const reviews = row?.reviews ?? 0;
   return [
-    { key: 'members', icon: 'people', title: 'Участники', pill: pillOf(members),
-      ring: members ? { value: (row?.active30 ?? 0) / members, label: 'заходили за месяц' } : null,
-      left: { label: 'С профилем', ...rounded(members) }, right: { label: 'Новых за 30 дней', to: row?.new30 ?? 0, plus: false, prefix: '+' },
-      visual: { kind: 'bars', values: weeks(signups), caption: 'Регистрации по неделям' },
-      foot: [{ label: 'Отмечали банки', value: `${count.format(row?.calendar30 ?? 0)} за 30 дней` }, { label: 'Пишут отзывы', value: `${count.format(row?.reviewers ?? 0)} участников` }] },
     { key: 'reviews', icon: 'reviews', title: 'Отзывы', pill: pillOf(reviews),
       ring: reviews ? { value: (row?.high ?? 0) / reviews, label: 'оценок 8 и выше' } : null,
       left: { label: 'На напитки', ...rounded(reviews) }, right: { label: 'Средняя оценка', to: row?.score ?? 0, plus: false, decimals: 1, suffix: ' / 10' },
