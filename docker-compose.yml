@@ -7,6 +7,8 @@
 
 x-site-env: &site-env
   NODE_ENV: production
+  # Idle keep-alive sockets live longer than nginx keeps them (4 s), so nginx never reuses one Node has closed.
+  KEEP_ALIVE_TIMEOUT: "65000"
   DATABASE_URL: postgresql://${POSTGRES_USER:-canrush}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-canrush}
   BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://canrush.ru}
   BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
