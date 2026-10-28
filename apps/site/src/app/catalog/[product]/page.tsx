@@ -9,6 +9,8 @@ import { headers } from 'next/headers';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { logCatalogView } from '@/lib/catalog-events';
 import { brandIngredients, getBrandProfile } from '@/lib/brand-drink-edits';
+import { getBrandStores } from '@/lib/brand-drink-stores';
+import { getBrandPrices } from '@/lib/brand-drink-prices';
 import { BrandShell } from '@/components/brand-shell';
 import { CatalogProductDetail } from '@/components/catalog-product-detail';
 import { ProfileNavigation } from '@/components/profile-navigation';
@@ -78,7 +80,7 @@ export default async function CatalogProductPage({
   if (isExcludedEnergyBrand(group.brand) && !(await getReviewSummary(group.brand, group.flavor)).count) notFound();
   await logCatalogView(group.brand, group.flavor);
 
-  const [favorite, reviews, summary, userReview, fileIngredients, swipes, added, brand] = await Promise.all([
+  const [favorite, reviews, summary, userReview, fileIngredients, swipes, added, brand, brandStores, ceilings] = await Promise.all([
     session ? isFavorite(session.user.id, group.brand, group.flavor) : Promise.resolve(false),
     getReviewsForProduct(group.brand, group.flavor, session?.user.id ?? null),
     getReviewSummary(group.brand, group.flavor),
@@ -87,6 +89,8 @@ export default async function CatalogProductPage({
     getSwipeCounts(group.brand, group.flavor),
     getCatalogDrink(group.brand, group.flavor),
     getBrandProfile(group.brand, group.flavor).catch(() => null),
+    getBrandStores(group.brand, group.flavor).catch(() => []),
+    getBrandPrices(group.brand, group.flavor).catch(() => []),
   ]);
   // The brand's own composition (an approved edit) comes first; a member's drink has no file, its label text stands in.
   const ingredients = (brand && brandIngredients(brand, group.brand, group.flavor, fileIngredients?.volumeMl ?? added?.volumes[0])) ?? fileIngredients ?? (added ? catalogDrinkIngredients(added) : null);
@@ -116,6 +120,8 @@ export default async function CatalogProductPage({
         addedBy={added && group.variants.length === 0 ? added : undefined}
         fullName={brand?.fullName || added?.fullName || undefined}
         brand={brand ? { business: brand.business, description: brand.description } : null}
+        brandStores={brandStores}
+        ceilings={ceilings}
       />
     </BrandShell>
   );

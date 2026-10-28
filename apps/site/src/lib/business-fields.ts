@@ -150,6 +150,8 @@ export const BUSINESS_AUDIT_LABELS: Record<string, string> = {
   'template': 'Сохранил шаблон ответа', 'template-delete': 'Удалил шаблон ответа',
   'drink-request': 'Отправил напиток на прикрепление', 'drink-remove': 'Открепил напиток',
   'drink-new': 'Опубликовал новый напиток', 'drink-edit': 'Предложил правку карточки',
+  'drink-store': 'Добавил магазин, где купить напиток', 'drink-store-remove': 'Убрал магазин, где купить напиток',
+  'drink-price': 'Задал рекомендованную цену', 'drink-price-remove': 'Убрал рекомендованную цену',
   'listing': 'Опубликовал объявление от компании',
   'invite': 'Пригласил в команду', 'member-remove': 'Убрал из команды', 'member-role': 'Сменил роль',
   'logo': 'Обновил логотип', 'logo-remove': 'Удалил логотип',

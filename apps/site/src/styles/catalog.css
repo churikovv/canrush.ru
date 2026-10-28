@@ -739,3 +739,14 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 .catalog-brand-description { margin: 0 0 16px; padding: 14px 16px; border-radius: 16px; background: var(--color-subtle); }
 .catalog-brand-description h2 { margin: 0 0 4px; color: var(--color-muted-strong); font-size: .8125rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
 .catalog-brand-description p { margin: 0; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+
+/* «Где купить» from the brand under the prices: the same list as the offers, a store glyph instead of a chain badge. */
+.catalog-brand-stores-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.catalog-brand-stores-head h2 { margin: 0; color: var(--color-ink); font-size: 1rem; font-weight: 800; }
+.catalog-brand-stores-head span { color: var(--color-muted-strong); font-size: .8125rem; }
+.catalog-brand-store-icon { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border-radius: 10px; background: color-mix(in srgb, var(--color-brand) 12%, var(--color-subtle)); color: var(--color-brand); }
+
+/* The brand's recommended price over a volume's offers; offers above it say so, quietly — a guide, not a verdict. */
+.catalog-price-ceiling { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-brand) 10%, var(--color-subtle)); color: var(--color-ink); font-size: .875rem; line-height: 1.4; }
+.catalog-price-ceiling svg { flex: none; color: var(--color-brand); }
+.catalog-store-offer.is-over-ceiling small em { color: var(--color-muted-strong); font-style: normal; }

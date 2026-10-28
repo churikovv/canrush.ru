@@ -8,6 +8,8 @@ import { runParser } from './run.js';
 import { startSchedule } from './schedule.js';
 import { applyLocalImages, downloadProductImages, loadLatestData, localizeArchivedCovers, saveLatestData } from './images.js';
 import { downloadRetailerIcons } from './retailer-icons.js';
+import { runWholesale } from './wholesale/run.js';
+import { WHOLESALE_SOURCES, type WholesaleSource } from '@canrush/shared';
 
 type Flags = Record<string, string | boolean>;
 
@@ -98,7 +100,7 @@ async function main(): Promise<void> {
   const hasSubcommand = first !== undefined && !first.startsWith('--');
   const command = hasSubcommand && first ? first : 'run';
   const flags = parseFlags(hasSubcommand ? argv.slice(1) : argv);
-  const sources = parseSources(flags);
+  const sources = command === 'wholesale' ? undefined : parseSources(flags);
   if (flags.cities !== undefined && typeof flags.cities !== 'string') throw new Error('Укажите --cities=all или список городов.');
   const cities = typeof flags.cities === 'string' ? parseCities(flags.cities) : undefined;
   if (cities && sources && (sources.length !== 1 || sources[0] !== 'edadeal')) throw new Error('Региональный прогон поддерживает только --source=edadeal.');
@@ -126,8 +128,17 @@ async function main(): Promise<void> {
       await runDownloadIcons();
       return;
     }
+    case 'wholesale': {
+      // Wholesale suppliers for the business cabinet: a separate file, never the retail catalog.
+      const requested = typeof flags.source === 'string' ? flags.source.split(',').map(item => item.trim()) : undefined;
+      const unknown = requested?.filter(item => !(WHOLESALE_SOURCES as readonly string[]).includes(item));
+      if (unknown?.length) throw new Error(`Неизвестные оптовые источники: ${unknown.join(', ')}. Доступны: ${WHOLESALE_SOURCES.join(', ')}`);
+      const file = await runWholesale({ sources: requested as WholesaleSource[] | undefined });
+      for (const [source, state] of Object.entries(file.sources)) console.log(`  ${source.padEnd(12)} ${state.status.toUpperCase().padEnd(12)} товаров: ${state.count}${state.error ? ` — ${state.error}` : ''}`);
+      return;
+    }
     default:
-      throw new Error(`Неизвестная команда: "${command}". Доступны: run, reindex-catalog, download-images, download-icons`);
+      throw new Error(`Неизвестная команда: "${command}". Доступны: run, reindex-catalog, download-images, download-icons, wholesale`);
   }
 }
 

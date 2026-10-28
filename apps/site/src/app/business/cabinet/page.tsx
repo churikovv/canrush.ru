@@ -8,7 +8,7 @@ import { cookies, headers } from 'next/headers';
 import { parseSiteTheme, SITE_THEME_COOKIE } from '@/lib/site-theme';
 import { redirect } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
-import { BusinessDrinkAttach, BusinessDrinkRemove, BusinessDrinkRequest, BusinessForm, BusinessInviteAnswer, BusinessInviteForm, BusinessLeave, BusinessLogoForm, BusinessMemberRemove, BusinessMemberRole, BusinessNotificationsForm, BusinessReplyButton, BusinessThemeForm, CompetitorPicker, DrinkEditForm, PromoAddons, WeeklyReportSwitch } from '@/components/business-forms';
+import { BusinessDrinkAttach, BusinessDrinkRemove, BusinessDrinkRequest, BusinessForm, BusinessInviteAnswer, BusinessInviteForm, BusinessLeave, BusinessLogoForm, BusinessMemberRemove, BusinessMemberRole, BusinessNotificationsForm, BusinessReplyButton, BusinessThemeForm, CompetitorPicker, DrinkEditForm, DrinkPriceForm, DrinkPriceRemove, DrinkStoreForm, DrinkStoreRemove, PromoAddons, WeeklyReportSwitch } from '@/components/business-forms';
 import { CatalogDrinkForm } from '@/components/catalog-drink-form';
 import { MarketListingForm } from '@/components/market-listing-form';
 import { MarketChat } from '@/components/market-chat';
@@ -24,6 +24,8 @@ import Link from '@/components/navigation-progress';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { getPool } from '@/db/pool';
 import { loadAllCatalogGroups } from '@/lib/catalog';
+import { readWholesale, wholesaleRows, wholesaleSourceName } from '@/lib/wholesale';
+import type { WholesaleSource, WholesaleSourceState } from '@canrush/shared';
 import { BASIC_FLAVORS } from '@/lib/catalog-query';
 import { volumeLabel } from '@/lib/catalog-drink-fields';
 import { getCatalogDrink, listOwnCatalogDrinks, type CatalogDrinkStatus } from '@/lib/catalog-drinks';
@@ -34,9 +36,13 @@ import { getGigaChat } from '@/lib/gigachat';
 import { DIGEST_MIN_REVIEWS, DIGEST_SENTIMENT_LABELS } from '@/lib/review-digest-fields';
 import { BUSINESS_REVIEW_SORTS, MAX_BUSINESS_MEMBERS, getBusinessAnalytics, getBusinessCards, getBusinessSearch, digestDue, getCabinet, listBusinessInvites, listBusinessMembers, listBusinessAudit, listDrinkDigests, refreshBusinessDigests, type BusinessRole, listBrandDrinks, listBusinessDrinks, listBusinessReviews, listReplyTemplates, type ReplyTemplate, type Business, type BusinessReview, type BusinessReviewSort, type BusinessReviewView, countReviewQueue, getOnboarding } from '@/lib/business';
 import { historyWindow, BUSINESS_AUDIT_LABELS, BUSINESS_KINDS, BUSINESS_ROLES, BUSINESS_STATUS_LABELS, percentChange, sortRows, type BusinessStatus } from '@/lib/business-fields';
-import { catalogGroupSlug } from '@/lib/catalog-query';
+import { catalogGroupSlug, catalogRetailerName } from '@/lib/catalog-query';
 import { isTelegramPlaceholderEmail } from '@/lib/telegram-init-data';
 import { getBrandProfile, listDrinkEdits, type DrinkEdit, type DrinkEditStatus } from '@/lib/brand-drink-edits';
+import { countDrinkStores, listDrinkStores, storeOptions, type DrinkStore } from '@/lib/brand-drink-stores';
+import { countDrinkPrices, listDrinkPrices } from '@/lib/brand-drink-prices';
+import { sameVolume } from '@/lib/brand-drink-price-fields';
+import { MAX_DRINK_STORES } from '@/lib/brand-drink-store-fields';
 import { FEATURE_LABELS, PLANS, effectivePlan, hasFeature, planFor, planInfo, rubles, type PlanFeature } from '@/lib/business-plans';
 import { listPromoRequests, planUsage } from '@/lib/business-billing';
 import { BusinessPricing, type PlanAction } from '@/components/business-pricing';
@@ -49,12 +55,12 @@ import { storeDrinkOptions } from '@/lib/store-catalog';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Кабинет бизнеса', robots: { index: false, follow: false } };
 
-type Params = { section?: string; page?: string; size?: string; drink?: string; q?: string; sort?: string; status?: string; view?: string; created?: string; by?: string; dir?: string; order?: string; tab?: string; days?: string };
+type Params = { section?: string; source?: string; page?: string; size?: string; drink?: string; q?: string; sort?: string; status?: string; view?: string; created?: string; by?: string; dir?: string; order?: string; tab?: string; days?: string };
 const number = new Intl.NumberFormat('ru-RU');
 const longDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' });
 const longDayTime = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
 const shortDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow' });
-const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', insights: 'Разбор нейросетью', search: 'Поиск', cards: 'Карточки', competitors: 'Конкуренты', brand: 'Бренд', drinks: 'Напитки', 'drink-edit': 'Правка карточки', 'new-drink': 'Новый напиток', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки', plan: 'Тариф и продвижение' };
+const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', insights: 'Разбор нейросетью', search: 'Поиск', cards: 'Карточки', competitors: 'Конкуренты', brand: 'Бренд', drinks: 'Напитки', 'drink-edit': 'Правка карточки', 'drink-stores': 'Где купить', 'drink-price': 'Рекомендованная цена', wholesale: 'Оптовые цены', 'new-drink': 'Новый напиток', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки', plan: 'Тариф и продвижение' };
 const ORDER_TONE: Record<OrderStatus, string> = { new: 'mid', confirmed: 'good', completed: 'good', cancelled: 'bad' };
 const DRINK_REQUEST: Record<CatalogDrinkStatus, { label: string; tone: string }> = { pending: { label: 'На модерации', tone: 'mid' }, published: { label: 'В каталоге', tone: 'good' }, rejected: { label: 'Нужно исправить', tone: 'bad' } };
 const SECTIONS = Object.keys(TITLES) as BusinessSection[];
@@ -441,6 +447,87 @@ async function Brand({ business, params }: { business: Business; params: Params 
   </>;
 }
 
+const WHOLESALE_SIZES = [20, 50, 100];
+const money = (value: number) => `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`;
+
+/**
+ * «Оптовые цены»: what wholesale suppliers ask per can (the parser's `wholesale.json`, a stream apart from shop prices),
+ * matched to catalog cards by the same normalization — the case size and its price, the cheapest supplier and how many
+ * sell it, the minimal order, and the cheapest shop price of the same can with the markup. Search, «Ваши бренды»,
+ * sorting by any column and pages; a row opens the supplier's page.
+ */
+async function Wholesale({ business, params }: { business: Business; params: Params }) {
+  const [file, groups, drinks] = await Promise.all([readWholesale(), loadAllCatalogGroups(), listBusinessDrinks(business.id)]);
+  if (!file?.offers.length) return <Empty title="Оптовых цен пока нет" text="Прайсы поставщиков обновляются раз в сутки — загляните позже." />;
+  const brands = new Set(drinks.filter(item => item.status === 'approved').map(item => item.brand));
+  const all = wholesaleRows(file.offers, groups);
+  const yours = params.view === 'yours';
+  const sources = (Object.keys(file.sources) as WholesaleSource[]).filter(source => all.some(row => row.source === source));
+  const source = sources.find(item => item === params.source);
+  const query = (params.q ?? '').trim().toLowerCase().replaceAll('ё', 'е');
+  const filtered = all.filter(row => (!yours || (row.brand && brands.has(row.brand))) && (!source || row.source === source)
+    && (!query || `${row.title} ${row.name} ${row.supplier}`.toLowerCase().replaceAll('ё', 'е').includes(query)));
+  const sort = tableSort(params, 'wholesale', { view: yours ? 'yours' : undefined, q: params.q || undefined, source });
+  const sorted = sortRows(filtered, sort.by ?? 'price', sort.by ? sort.dir : 'asc', {
+    name: row => row.title, volume: row => row.volumeMl ?? 0, price: row => row.price, pack: row => row.price * row.packSize,
+    retail: row => row.retail ?? Infinity, markup: row => row.markup ?? -Infinity, suppliers: row => row.suppliers, order: row => row.minOrder ?? 0,
+  });
+  const size = WHOLESALE_SIZES.includes(Number(params.size)) ? Number(params.size) : 20;
+  const page = Math.min(Math.max(1, Number(params.page) || 1), Math.max(1, Math.ceil(sorted.length / size)));
+  const rows = sorted.slice((page - 1) * size, page * size);
+  const link = (extra: Record<string, string | undefined>) => businessHref('wholesale', Object.fromEntries(Object.entries({ view: yours ? 'yours' : undefined, source, q: params.q || undefined, by: params.by, dir: params.by ? params.dir : undefined, ...extra }).filter((entry): entry is [string, string] => Boolean(entry[1]))));
+  const matched = all.filter(row => row.slug);
+  const markups = matched.map(row => row.markup).filter((value): value is number => value !== null).sort((a, b) => a - b);
+  const median = markups.length ? markups[Math.floor(markups.length / 2)]! : null;
+  return <>
+    <div className="bc-kpis">
+      <Kpi icon="box" value={number.format(all.length)} label={`Товаров у ${sources.length} ${sources.length === 1 ? 'источника' : 'источников'}`} />
+      <Kpi icon="catalog" value={number.format(matched.length)} label="Совпали с карточками каталога" />
+      <Kpi icon="check" value={number.format(all.filter(row => row.brand && brands.has(row.brand)).length)} label="Ваших брендов" />
+      <Kpi icon="ratio" value={median === null ? '—' : `${median}%`} label="Медианная наценка магазинов на банку" />
+    </div>
+    <div className="bc-toolbar is-inner">
+      <BusinessSegments label="Какие товары" items={[
+        { href: link({ view: undefined, page: undefined }), label: 'Все', current: !yours, count: all.length },
+        { href: link({ view: 'yours', page: undefined }), label: 'Ваши бренды', current: yours, count: all.filter(row => row.brand && brands.has(row.brand)).length },
+      ]} />
+      {sources.length > 1 && <BusinessSegments label="Источник" items={[
+        { href: link({ source: undefined, page: undefined }), label: 'Все источники', current: !source },
+        ...sources.map(item => ({ href: link({ source: item, page: undefined }), label: wholesaleSourceName(item).name, current: source === item, count: all.filter(row => row.source === item).length })),
+      ]} />}
+      <form className="bc-search is-inline" action="/business/cabinet" role="search">
+        <input type="hidden" name="section" value="wholesale" />{yours && <input type="hidden" name="view" value="yours" />}{source && <input type="hidden" name="source" value={source} />}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+        <input name="q" type="search" defaultValue={params.q ?? ''} placeholder="Напиток или поставщик" aria-label="Поиск по оптовым ценам" maxLength={80} />
+      </form>
+    </div>
+    {rows.length ? <div className="bc-table-card"><table className="bc-table bc-wholesale">
+      <thead><tr><th>{sort.th('Напиток', 'name')}</th><th>{sort.th('Объём', 'volume')}</th><th>{sort.th('Цена за банку', 'price')}</th><th>{sort.th('Упаковка', 'pack')}</th><th>{sort.th('В магазинах от', 'retail')}</th><th>{sort.th('Наценка', 'markup')}</th><th>{sort.th('Поставщики', 'suppliers')}</th><th>{sort.th('Мин. заказ', 'order')}</th></tr></thead>
+      <tbody>{rows.map(row => <tr key={`${row.source}:${row.sourceId}`}>
+        <td>{row.slug
+          ? <Link className="bc-drink" href={`/catalog/${row.slug}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- local covers */}
+            <span className="bc-drink-cover">{row.cover ? <img src={row.cover} alt="" loading="lazy" /> : '⚡'}</span>
+            <span><strong>{row.title}</strong><small>{row.name}</small></span>
+          </Link>
+          : <span className="bc-drink"><span className="bc-drink-cover">⚡</span><span><strong>{row.title}</strong><small>нет в каталоге CanRush</small></span></span>}</td>
+        <td data-label="Объём" className="bc-nowrap">{row.volumeMl ? `${row.volumeMl} мл` : '—'}{row.packaging !== 'can' && <small className="bc-muted">{row.packaging === 'pet' ? 'ПЭТ' : 'стекло'}</small>}</td>
+        <td data-label="За банку" className="bc-nowrap"><b>{money(row.price)}</b>{row.inStock === false && <small className="bc-muted">нет в наличии</small>}</td>
+        <td data-label="Упаковка" className="bc-nowrap">×{row.packSize} · {money(Math.round(row.price * row.packSize))}</td>
+        <td data-label="В магазинах" className="bc-nowrap">{row.retail === null ? <span className="bc-muted">—</span> : money(row.retail)}</td>
+        <td data-label="Наценка">{row.markup === null ? <span className="bc-muted">—</span> : <span className="bc-pill" data-tone={row.markup >= 30 ? 'good' : row.markup >= 0 ? 'mid' : 'bad'}>{row.markup > 0 ? '+' : ''}{row.markup}%</span>}</td>
+        <td data-label="Поставщики"><a className="bc-link" href={row.url} target="_blank" rel="nofollow noopener noreferrer">{row.supplier}</a>
+          {(row.supplier !== wholesaleSourceName(row.source).name || row.suppliers > 1) && <small className="bc-muted">{[row.supplier !== wholesaleSourceName(row.source).name && wholesaleSourceName(row.source).name, row.suppliers > 1 && `и ещё ${row.suppliers - 1}`].filter(Boolean).join(' · ')}</small>}
+          {row.others > 0 && (row.cheapest ? <span className="bc-pill bc-wholesale-best" data-tone="good">Дешевле всего</span> : <small className="bc-muted">есть дешевле в другом источнике</small>)}</td>
+        <td data-label="Мин. заказ" className="bc-nowrap">{row.minOrder ? money(row.minOrder) : '—'}</td>
+      </tr>)}</tbody>
+    </table>
+    <BusinessPagination page={page} size={size} total={sorted.length} sizes={WHOLESALE_SIZES} href={(to, perPage) => link({ page: to > 1 ? String(to) : undefined, size: perPage !== 20 ? String(perPage) : undefined })} />
+    </div> : <Empty title="Ничего не нашлось" text="Попробуйте другое название или поставщика." />}
+    <p className="bc-muted bc-wholesale-note">{(Object.entries(file.sources) as [WholesaleSource, WholesaleSourceState][]).map(([source, state]) => `${wholesaleSourceName(source).name} (${wholesaleSourceName(source).region}): ${state.fetchedAt ? `обновлено ${longDayTime.format(new Date(state.fetchedAt))}` : 'пока не загружено'}${state.status === 'stale' ? ', показаны прошлые цены' : ''}`).join(' · ')}. Цена — у самого дешёвого поставщика, за банку, при доставке; заказ — кратно упаковке. В магазинах — самая низкая цена той же банки по городам CanRush; у ПЭТ и стекла её нет — в рознице это другой товар.</p>
+  </>;
+}
+
 /** Drinks the owner sent to the catalog as new ones: their moderation, and «Прикрепить» once published. */
 function DrinkRequests({ requests, attached }: { requests: Awaited<ReturnType<typeof listOwnCatalogDrinks>>; attached: Set<string> }) {
   return <section aria-labelledby="bc-requests" className="bc-stack">
@@ -464,7 +551,7 @@ function DrinkRequests({ requests, attached }: { requests: Awaited<ReturnType<ty
 }
 
 async function Drinks({ business, params, userId, canAct }: { business: Business; params: Params; userId: string; canAct: boolean }) {
-  const [drinks, options, requests, edits] = await Promise.all([listBusinessDrinks(business.id), storeDrinkOptions(), listOwnCatalogDrinks(userId), listDrinkEdits(business.id)]);
+  const [drinks, options, requests, edits, places, ceilings] = await Promise.all([listBusinessDrinks(business.id), storeDrinkOptions(), listOwnCatalogDrinks(userId), listDrinkEdits(business.id), countDrinkStores(business.id), countDrinkPrices(business.id)]);
   const status = (['approved', 'pending', 'rejected'] as const).find(item => item === params.status);
   const sort = tableSort(params, 'drinks', { status });
   const items = sortRows(status ? drinks.filter(item => item.status === status) : drinks, sort.by, sort.dir, {
@@ -508,7 +595,11 @@ async function Drinks({ business, params, userId, canAct }: { business: Business
         <td data-label="Банки">{item.cans}</td>
         <td data-label="Статус"><StatusPill status={item.status} /></td>
         <td className="bc-cell-menu">{canAct && <span className="bc-row-actions">
-          {item.status === 'approved' && <Link className="bc-button is-outline" href={businessHref('drink-edit', { drink: catalogGroupSlug(item.brand, item.flavor) })}>Править карточку</Link>}
+          {item.status === 'approved' && <BusinessRowMenu label="Действия с напитком" items={[
+            { href: businessHref('drink-stores', { drink: catalogGroupSlug(item.brand, item.flavor) }), label: `Где купить${places.get(JSON.stringify([item.brand, item.flavor])) ? ` · ${places.get(JSON.stringify([item.brand, item.flavor]))}` : ''}` },
+            { href: businessHref('drink-price', { drink: catalogGroupSlug(item.brand, item.flavor) }), label: `Рекомендованная цена${ceilings.get(JSON.stringify([item.brand, item.flavor])) ? ` · ${ceilings.get(JSON.stringify([item.brand, item.flavor]))}` : ''}` },
+            { href: businessHref('drink-edit', { drink: catalogGroupSlug(item.brand, item.flavor) }), label: 'Править карточку' },
+          ]} />}
           <BusinessDrinkRemove brand={item.brand} flavor={item.flavor} /></span>}</td>
       </tr>)}</tbody>
     </table></div> : <Empty title={status ? 'Здесь пусто' : 'Напитков пока нет'} text={status ? 'Напитков с таким статусом нет.' : 'Найдите свои напитки в каталоге и прикрепите их.'} />}
@@ -559,6 +650,75 @@ async function DrinkEditSection({ business, params, canAct }: { business: Busine
         }} />
       </>}
   </section>;
+}
+
+/**
+ * «Где купить» for one approved drink: what the drink page shows under the prices — chains, stores of the CanRush map
+ * and the company's own stores — with the form to add more and a cross to take one away.
+ */
+async function DrinkStoresSection({ business, params, canAct }: { business: Business; params: Params; canAct: boolean }) {
+  const drinks = (await listBusinessDrinks(business.id)).filter(item => item.status === 'approved');
+  const drink = drinks.find(item => catalogGroupSlug(item.brand, item.flavor) === params.drink);
+  if (!canAct) return <Empty title="Только для владельца и менеджеров" text="У роли «Аналитик» только просмотр." />;
+  if (!drink) return <Empty title="Выберите напиток" text="Магазины указываются для подтверждённых напитков компании — «⋯» → «Где купить» в разделе «Напитки»." action={<Link className="bc-button" href={businessHref('drinks')}>К напиткам</Link>} />;
+  const [places, stores, groups] = await Promise.all([listDrinkStores(business.id, drink.brand, drink.flavor), storeOptions(), loadAllCatalogGroups()]);
+  const retailers = [...new Set(groups.flatMap(group => group.variants.map(catalogRetailerName)))].sort((a, b) => a.localeCompare(b, 'ru'));
+  const KIND: Record<DrinkStore['kind'], string> = { retailer: 'Сеть', store: 'Карта CanRush', custom: 'Свой магазин' };
+  return <>
+    <section className="bc-card">
+      <div className="bc-card-head"><h2>{drink.name}</h2><Link className="bc-link" href={`/catalog/${catalogGroupSlug(drink.brand, drink.flavor)}`}>Открыть карточку</Link></div>
+      <p className="bc-muted">Покажем на странице напитка блок «Где купить» от компании «{business.name}»: сети, магазины с карты CanRush и ваши магазины со ссылкой или адресом. До {MAX_DRINK_STORES} мест.</p>
+      {places.length ? <ul className="bc-store-list">{places.map(place => <li key={place.id}>
+        <span className="bc-pill">{KIND[place.kind]}</span>
+        <span><b>{place.name}</b><small>{[place.city, place.address].filter(Boolean).join(', ') || (place.url ? new URL(place.url).hostname : '')}</small></span>
+        <DrinkStoreRemove id={place.id} name={place.name} />
+      </li>)}</ul> : <p className="bc-store-empty">Пока ни одного места — добавьте первое ниже.</p>}
+    </section>
+    {places.length < MAX_DRINK_STORES && <section className="bc-card bc-form-card">
+      <div className="bc-card-head"><h2>Добавить место</h2></div>
+      <DrinkStoreForm brand={drink.brand} flavor={drink.flavor} stores={stores} retailers={retailers}
+        taken={places.map(place => place.storeId ?? place.retailer ?? '').filter(Boolean)} />
+    </section>}
+  </>;
+}
+
+/**
+ * «Рекомендованная цена» for one approved drink: the ceiling «до N ₽» per can volume, set next to what shops ask now —
+ * per volume the cheapest and dearest offer across cities and how many offers are above the ceiling. The drink page
+ * shows the ceiling and marks those offers.
+ */
+async function DrinkPriceSection({ business, params, canAct }: { business: Business; params: Params; canAct: boolean }) {
+  const drinks = (await listBusinessDrinks(business.id)).filter(item => item.status === 'approved');
+  const drink = drinks.find(item => catalogGroupSlug(item.brand, item.flavor) === params.drink);
+  if (!canAct) return <Empty title="Только для владельца и менеджеров" text="У роли «Аналитик» только просмотр." />;
+  if (!drink) return <Empty title="Выберите напиток" text="Цену задают для подтверждённых напитков компании — «⋯» → «Рекомендованная цена» в разделе «Напитки»." action={<Link className="bc-button" href={businessHref('drinks')}>К напиткам</Link>} />;
+  const [ceilings, groups, added] = await Promise.all([listDrinkPrices(business.id, drink.brand, drink.flavor), loadAllCatalogGroups(), getCatalogDrink(drink.brand, drink.flavor)]);
+  const offers = groups.find(group => group.brand === drink.brand && group.flavor === drink.flavor)?.variants.filter(offer => offer.price > 0 && offer.volumeMl) ?? [];
+  const volumes = [...new Set([...offers.map(offer => offer.volumeMl!), ...(added?.volumes ?? [])])].sort((a, b) => a - b);
+  const money = (value: number) => `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`;
+  const shops = (volume: number) => offers.filter(offer => sameVolume(offer.volumeMl, volume)).map(offer => offer.price);
+  return <>
+    <section className="bc-card">
+      <div className="bc-card-head"><h2>{drink.name}</h2><Link className="bc-link" href={`/catalog/${catalogGroupSlug(drink.brand, drink.flavor)}`}>Открыть карточку</Link></div>
+      <p className="bc-muted">Примерный потолок цены в магазине: на странице напитка рядом с ценами появится «Бренд «{business.name}» рекомендует: до N ₽», а предложения дороже получат пометку. Магазины эту цену не обязаны соблюдать — это ориентир для покупателей.</p>
+      {volumes.length > 0 && <ul className="bc-store-list">{volumes.map(volume => {
+        const prices = shops(volume);
+        const ceiling = ceilings.find(item => sameVolume(volume, item.volumeMl));
+        const over = ceiling ? prices.filter(price => price > ceiling.maxPrice).length : 0;
+        return <li key={volume}>
+          <span className="bc-pill">{volume} мл</span>
+          <span><b>{prices.length ? `В магазинах ${money(Math.min(...prices))} – ${money(Math.max(...prices))}` : 'В магазинах пока нет'}</b>
+            <small>{ceiling ? `Ваша цена: до ${money(ceiling.maxPrice)}${prices.length ? ` · дороже — ${over} из ${prices.length}` : ''}` : 'Цена не задана'}</small></span>
+          {ceiling && <DrinkPriceRemove id={ceiling.id} volume={ceiling.volumeMl} />}
+        </li>;
+      })}</ul>}
+      {ceilings.filter(item => !volumes.some(volume => sameVolume(volume, item.volumeMl))).map(item => <p key={item.id} className="bc-muted">{item.volumeMl} мл: до {money(item.maxPrice)} <DrinkPriceRemove id={item.id} volume={item.volumeMl} /></p>)}
+    </section>
+    <section className="bc-card bc-form-card">
+      <div className="bc-card-head"><h2>Задать цену</h2><span className="bc-muted">повторное сохранение объёма заменит цену</span></div>
+      <DrinkPriceForm brand={drink.brand} flavor={drink.flavor} volumes={volumes} />
+    </section>
+  </>;
 }
 
 /** «Новый напиток» inside the cabinet: the catalog's step form; after moderation the drink is attached in one click. */
@@ -997,7 +1157,7 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     : section === 'new-listing' ? <Link className="bc-button is-outline" href={businessHref('market')}>К объявлениям</Link>
     : section === 'orders' ? (params.order ? <Link className="bc-button is-outline" href={businessHref('orders')}>Все заказы</Link> : <Link className="bc-button" href={businessHref('new-listing')}>Новое объявление</Link>)
     : section === 'settings' ? undefined
-    : section === 'plan' ? undefined
+    : section === 'plan' || section === 'wholesale' ? undefined
     : <>{approved && hasFeature(business, 'export') && <a className="bc-button is-outline" href={`/business/cabinet/export${section === 'search' || section === 'cards' || section === 'competitors' ? `?kind=${section}` : ''}`} download
         title={section === 'search' ? 'Частые запросы' : section === 'cards' ? 'Просмотры и переходы по напиткам' : section === 'competitors' ? 'Сравнение с конкурентами' : 'Все отзывы'}>Экспорт CSV</a>}
       {canAct && <Link className="bc-button" href={businessHref('drinks')}>Прикрепить напиток</Link>}</>;
@@ -1031,8 +1191,11 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     {section === 'competitors' && (!approved ? locked('Сравнение с конкурентами появится после проверки') : gated('competitors', <Competitors business={business} params={params} />))}
     {section === 'plan' && <PlanSection business={business} role={role} canAct={canAct} />}
     {section === 'brand' && (approved ? <Brand business={business} params={params} /> : locked('Метрики бренда появятся после проверки'))}
+    {section === 'wholesale' && gated('wholesale', <Wholesale business={business} params={params} />)}
     {section === 'drinks' && <Drinks business={business} params={params} userId={session.user.id} canAct={canAct} />}
     {section === 'drink-edit' && (approved ? <DrinkEditSection business={business} params={params} canAct={canAct} /> : locked('Править карточки можно после проверки'))}
+    {section === 'drink-stores' && (approved ? <DrinkStoresSection business={business} params={params} canAct={canAct} /> : locked('Магазины можно указать после проверки'))}
+    {section === 'drink-price' && (approved ? <DrinkPriceSection business={business} params={params} canAct={canAct} /> : locked('Цену можно указать после проверки'))}
     {section === 'new-drink' && <NewDrink verified={approved && canAct} />}
     {section === 'new-listing' && <NewListing userId={session.user.id} business={business} asCompany={canAct} />}
     {section === 'orders' && <Orders userId={session.user.id} params={params} />}

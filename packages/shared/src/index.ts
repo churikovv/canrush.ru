@@ -4,3 +4,4 @@ export * from './cities.js';
 export * from './product-identity.js';
 
 export * from './reviewed-product-aliases.js';
+export * from './wholesale.js';

@@ -10,6 +10,7 @@
     "schedule": "tsx src/index.ts --schedule",
     "download-images": "tsx src/index.ts download-images",
     "download-icons": "tsx src/index.ts download-icons",
+    "wholesale": "tsx src/index.ts wholesale",
     "test": "vitest run",
     "ingredients": "tsx src/ingredients/cli.ts",
     "ingredients:publish": "tsx src/ingredients/publish-cli.ts",

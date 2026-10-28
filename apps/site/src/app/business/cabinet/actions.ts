@@ -17,6 +17,10 @@ import { parsePromoRequest, PlanRequestError } from '@/lib/business-plans';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { parseDrinkEdit } from '@/lib/brand-drink-edit-fields';
 import { moderateDrinkEdit, requestDrinkEdit } from '@/lib/brand-drink-edits';
+import { DrinkStoreError, parseDrinkStore } from '@/lib/brand-drink-store-fields';
+import { addDrinkStore, removeDrinkStore } from '@/lib/brand-drink-stores';
+import { DrinkPriceError, parseDrinkPrice } from '@/lib/brand-drink-price-fields';
+import { removeDrinkPrice, setDrinkPrice } from '@/lib/brand-drink-prices';
 import { addCompetitor, removeCompetitor } from '@/lib/business-competitors';
 
 export interface BusinessActionState { error?: string; done?: boolean }
@@ -224,6 +228,36 @@ export async function requestDrinkEditAction(form: FormData): Promise<BusinessAc
     await requestDrinkEdit(user.id, String(form.get('brand') ?? ''), String(form.get('flavor') ?? ''), input, photos[0]);
   } catch (error) { return { error: error instanceof ReviewPhotoError ? error.message : message(error, 'Не удалось отправить правку.') }; }
   revalidatePath('/business/cabinet');
+  return { done: true };
+}
+
+/** «Где купить»: a store of the CanRush map, a chain or the company's own store for one of its approved drinks. */
+export async function addDrinkStoreAction(brand: string, flavor: string, _state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
+  try { await addDrinkStore((await member()).id, brand, flavor, parseDrinkStore(form)); }
+  catch (error) { return { error: error instanceof DrinkStoreError ? error.message : message(error, 'Не удалось добавить магазин.') }; }
+  revalidatePath('/business/cabinet'); revalidatePath('/catalog/[product]', 'page');
+  return { done: true };
+}
+
+export async function removeDrinkStoreAction(id: string): Promise<BusinessActionState> {
+  try { await removeDrinkStore((await member()).id, id); }
+  catch (error) { return { error: message(error, 'Не удалось убрать магазин.') }; }
+  revalidatePath('/business/cabinet'); revalidatePath('/catalog/[product]', 'page');
+  return { done: true };
+}
+
+/** The brand's recommended ceiling «до N ₽» for one can volume of its approved drink. */
+export async function setDrinkPriceAction(brand: string, flavor: string, _state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
+  try { await setDrinkPrice((await member()).id, brand, flavor, parseDrinkPrice(form)); }
+  catch (error) { return { error: error instanceof DrinkPriceError ? error.message : message(error, 'Не удалось сохранить цену.') }; }
+  revalidatePath('/business/cabinet'); revalidatePath('/catalog/[product]', 'page');
+  return { done: true };
+}
+
+export async function removeDrinkPriceAction(id: string): Promise<BusinessActionState> {
+  try { await removeDrinkPrice((await member()).id, id); }
+  catch (error) { return { error: message(error, 'Не удалось убрать цену.') }; }
+  revalidatePath('/business/cabinet'); revalidatePath('/catalog/[product]', 'page');
   return { done: true };
 }
 

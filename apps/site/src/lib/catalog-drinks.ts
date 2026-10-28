@@ -35,7 +35,7 @@ const COLUMNS = `d.id, d.brand, d.flavor, d."fullName", d.volumes, d.ingredients
   case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
     when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
   (select count(*)::int from "catalogDrink" o where o."ownerId" = d."ownerId" and o.status = 'published') as drinks,
-  (select name from business where id = d."businessId") as business`;
+  (select name from business where id = d."businessId" and status = 'approved') as business`;
 interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number; business: string | null }
 /** The photo's address carries `updatedAt` in the path: a new photo gets a new URL past the hour of public caching. */
 const drinkPhotoUrl = (id: string, updatedAt: Date) => `/api/catalog-drinks/${id}/${updatedAt.getTime()}`;
@@ -52,14 +52,27 @@ const VISIBLE_AUTHOR = 'not exists(select 1 from "userBlock" b where b."userId" 
  * Every page that loads the catalog reads it, so it stays one cheap scan; the author's avatar, XP and tag (COLUMNS)
  * are only for the drink's own page and the admin.
  */
-const getPublishedDrinkIdentities = cache(async () => (await getPool().query<{ id: string; brand: string; flavor: string; fullName: string; updatedAt: Date }>(
-  `select d.id, d.brand, d.flavor, d."fullName", d."updatedAt" from "catalogDrink" d
+const getPublishedDrinkIdentities = cache(async () => (await getPool().query<{ id: string; brand: string; flavor: string; fullName: string; updatedAt: Date; byBrand: boolean }>(
+  `select d.id, d.brand, d.flavor, d."fullName", d."updatedAt",
+     exists(select 1 from business b where b.id = d."businessId" and b.status = 'approved') as "byBrand" from "catalogDrink" d
    where d.status = 'published' and ${VISIBLE_AUTHOR} order by d."reviewedAt" desc nulls last, d."createdAt" desc`)).rows);
 
-/** The same drinks as catalog groups: no offers yet, the member's photo as the cover. */
+type PublishedDrink = Awaited<ReturnType<typeof getPublishedDrinkIdentities>>[number];
+const drinkGroup = (drink: PublishedDrink): CatalogGroup => ({ brand: drink.brand, flavor: drink.flavor, variants: [], minPrice: 0,
+  coverImageUrl: drinkPhotoUrl(drink.id, drink.updatedAt), ...(drink.fullName ? { fullName: drink.fullName } : {}) });
+
+/** The same drinks as catalog groups: no offers yet, the member's or the brand's photo as the cover. */
 export async function catalogDrinkGroups(): Promise<CatalogGroup[]> {
-  return (await getPublishedDrinkIdentities()).map(drink => ({ brand: drink.brand, flavor: drink.flavor, variants: [], minPrice: 0,
-    coverImageUrl: drinkPhotoUrl(drink.id, drink.updatedAt), ...(drink.fullName ? { fullName: drink.fullName } : {}) }));
+  return (await getPublishedDrinkIdentities()).map(drinkGroup);
+}
+
+/**
+ * The same, split by who added them: drinks an approved company published from its cabinet are the brand's own
+ * product and stand in the catalog like any drink; members' drinks keep their block «Добавлены участниками».
+ */
+export async function catalogDrinkGroupsByOrigin(): Promise<{ brands: CatalogGroup[]; members: CatalogGroup[] }> {
+  const drinks = await getPublishedDrinkIdentities();
+  return { brands: drinks.filter(drink => drink.byBrand).map(drinkGroup), members: drinks.filter(drink => !drink.byBrand).map(drinkGroup) };
 }
 
 /**
@@ -84,7 +97,9 @@ export function catalogDrinkIngredients(drink: CatalogDrink): PublishedIngredien
   if (!drink.ingredients) return null;
   return {
     brand: drink.brand, flavor: drink.flavor, productTitle: `${drink.brand} ${drink.name}`, volumeMl: drink.volumes[0] ?? 0, market: 'RU',
-    ingredients: drink.ingredients, sourceName: 'Участник CanRush', fetchedAt: drink.createdAt.toISOString(), status: 'unverified',
+    ingredients: drink.ingredients, fetchedAt: drink.createdAt.toISOString(),
+    // A company's drink: the label as the brand gave it; a member's stays unverified.
+    ...(drink.business ? { sourceName: `Бренд «${drink.business}»`, status: 'source_reported' as const } : { sourceName: 'Участник CanRush', status: 'unverified' as const }),
   };
 }
 

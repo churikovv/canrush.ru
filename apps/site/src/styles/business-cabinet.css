@@ -632,6 +632,46 @@
   .bc-addon-requests .bc-pill { grid-column: auto; grid-row: auto; }
 }
 
+/* «Где купить» for a drink: the list of places (kind pill, name, where, a cross) and the picker — segments that are
+   buttons here, a filter, and the matches as full-width rows that add on tap. */
+.bc-segments button { display: inline-flex; flex: none; min-height: 36px; align-items: center; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; color: var(--bc-muted); font: inherit; font-weight: 500; white-space: nowrap; cursor: pointer; }
+.bc-segments button:hover { color: var(--bc-text); }
+.bc-segments button[aria-selected="true"] { background: var(--bc-panel); color: var(--bc-text); font-weight: 600; box-shadow: 0 1px 3px rgb(0 0 0 / 10%); }
+.bc-store-form { display: grid; gap: 16px; }
+.bc-store-form .bc-segments { justify-self: start; }
+.bc-store-form-row { display: grid; gap: 14px; }
+.bc-store-options { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--bc-line); }
+.bc-store-options button { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px; width: 100%; min-height: 52px; padding: 10px 4px; border: 0; border-bottom: 1px solid var(--bc-line); background: transparent; color: var(--bc-text); font: inherit; text-align: left; cursor: pointer; }
+.bc-store-options button:hover { background: color-mix(in srgb, var(--bc-text) 4%, transparent); }
+.bc-store-options b { font-weight: 600; }
+.bc-store-options small { grid-column: 1; color: var(--bc-muted); font-size: .8125rem; }
+.bc-store-options span { grid-column: 2; grid-row: 1 / span 2; color: var(--color-brand); font-size: .875rem; font-weight: 600; }
+.bc-store-list { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--bc-line); }
+.bc-store-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; padding: 12px 0; border-bottom: 1px solid var(--bc-line); }
+.bc-store-list li > .bc-pill { grid-column: 1; justify-self: start; }
+.bc-store-list li > span:not(.bc-pill) { display: grid; grid-column: 1; min-width: 0; }
+.bc-store-list li > span small { overflow: hidden; color: var(--bc-muted); font-size: .8125rem; text-overflow: ellipsis; white-space: nowrap; }
+.bc-store-list li > button { grid-column: 2; grid-row: 1 / span 2; }
+.bc-store-empty { color: var(--bc-muted); font-size: .875rem; }
+@media (pointer: coarse) { .bc-store-form input { font-size: 1rem; } }
+@media (min-width: 640px) {
+  .bc-store-form-row { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .bc-store-list li { grid-template-columns: 120px minmax(0, 1fr) auto; }
+  .bc-store-list li > span:not(.bc-pill) { grid-column: 2; }
+  .bc-store-list li > button { grid-column: 3; grid-row: auto; }
+}
+
+/* «Оптовые цены»: the price per can leads its cell; the note under the table says where the prices come from. */
+.bc-wholesale td b { font-variant-numeric: tabular-nums; }
+.bc-wholesale td small.bc-muted { display: block; }
+.bc-wholesale-note { line-height: 1.5; }
+.bc-wholesale-best { margin-top: 6px; padding: 2px 10px; font-size: .75rem; }
+
+/* «Рекомендованная цена»: the drink's own cans as chips above the volume field. */
+.bc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.bc-chip { min-height: 36px; padding: 0 14px; border: 1px solid var(--bc-line); border-radius: 999px; background: var(--bc-panel); color: var(--bc-text); font: inherit; font-weight: 500; cursor: pointer; }
+.bc-chip[aria-pressed="true"] { border-color: var(--color-brand); background: color-mix(in srgb, var(--color-brand) 12%, var(--bc-panel)); color: var(--color-brand); font-weight: 600; }
+
 /* Plans and «Сравнение тарифов» in the manner of linear.app/pricing — shared by the landing («6.0 Тарифы») and the
    cabinet («Тариф и продвижение»), which is why they live here: the landing loads this file too. Columns split by
    hairlines — name, price, the yearly switch, the list that builds on the plan before, the button at the foot — and

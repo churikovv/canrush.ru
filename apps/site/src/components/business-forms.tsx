@@ -1,6 +1,6 @@
 'use client';
 import { startTransition, useActionState, useEffect, useEffectEvent, useRef, useState, useTransition, type ReactNode } from 'react';
-import { answerBusinessInviteAction, deleteReviewReplyAction, inviteBusinessMemberAction, replyReviewAction, leaveBusinessAction, removeBusinessLogoAction, removeBusinessMemberAction, saveBusinessNotificationsAction, uploadBusinessLogoAction, moderateBusinessAction, moderateBusinessDrinkAction, removeBusinessDrinkAction, requestBusinessDrinkAction, saveBusinessAction, addCompetitorAction, removeCompetitorAction, saveWeeklyReportAction, saveReplyTemplateAction, deleteReplyTemplateAction, setMemberRoleAction, requestDrinkEditAction, moderateDrinkEditAction, requestPromoAction, setPromoStatusAction } from '@/app/business/cabinet/actions';
+import { answerBusinessInviteAction, deleteReviewReplyAction, inviteBusinessMemberAction, replyReviewAction, leaveBusinessAction, removeBusinessLogoAction, removeBusinessMemberAction, saveBusinessNotificationsAction, uploadBusinessLogoAction, moderateBusinessAction, moderateBusinessDrinkAction, removeBusinessDrinkAction, requestBusinessDrinkAction, saveBusinessAction, addCompetitorAction, removeCompetitorAction, saveWeeklyReportAction, saveReplyTemplateAction, deleteReplyTemplateAction, setMemberRoleAction, requestDrinkEditAction, moderateDrinkEditAction, requestPromoAction, setPromoStatusAction, addDrinkStoreAction, removeDrinkStoreAction, setDrinkPriceAction, removeDrinkPriceAction } from '@/app/business/cabinet/actions';
 import { saveThemeSettings } from '@/app/profile/settings/theme-actions';
 import { ActionToast } from '@/components/action-toast';
 import { FormAlert } from '@/components/form-alert';
@@ -10,6 +10,8 @@ import { PriceFilterInput } from '@/components/price-filter-input';
 import { BUSINESS_KINDS, BUSINESS_ROLES, type BusinessMemberRole, MAX_BUSINESS_REPLY, MAX_REPLY_TEMPLATES, MAX_REPLY_TEMPLATE_TITLE, REPLY_TEMPLATE_FIELDS, fillReplyTemplate, replyTemplateTitle, type BusinessKind } from '@/lib/business-fields';
 import type { ReplyTemplate } from '@/lib/business';
 import { DRINK_EDIT_LIMITS } from '@/lib/brand-drink-edit-fields';
+import { DRINK_STORE_LIMITS, type DrinkStoreKind } from '@/lib/brand-drink-store-fields';
+import type { StoreOption } from '@/lib/brand-drink-stores';
 import { PROMO_PLACEMENTS, type PromoPlacement } from '@/lib/business-plans';
 import type { SiteTheme } from '@/lib/site-theme';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
@@ -522,6 +524,94 @@ export function PromoAddons({ canOrder }: { canOrder: boolean }) {
       </div>
     </form>}
   </>;
+}
+
+const STORE_KINDS: { value: DrinkStoreKind; label: string }[] = [{ value: 'retailer', label: 'Сеть' }, { value: 'store', label: 'Магазин на карте' }, { value: 'custom', label: 'Свой магазин' }];
+const matches = (value: string, query: string) => value.toLowerCase().replaceAll('ё', 'е').includes(query.toLowerCase().replaceAll('ё', 'е').trim());
+
+/**
+ * «Где купить» for one drink: a chain from the catalog, a store from the CanRush map (filter, then pick — each match is a
+ * submit button carrying its id), or the company's own store with a link and/or an address. The list under it is the
+ * server's, so it refreshes after each change.
+ */
+export function DrinkStoreForm({ brand, flavor, stores, retailers, taken }: { brand: string; flavor: string; stores: StoreOption[]; retailers: string[]; taken: string[] }) {
+  const [state, action, pending] = useActionState(addDrinkStoreAction.bind(null, brand, flavor), {});
+  const [kind, setKind] = useState<DrinkStoreKind>('retailer');
+  const [query, setQuery] = useState('');
+  const [sent, setSent] = useState<object | null>(null);
+  const [round, setRound] = useState(0);
+  // A place went in: clear the filter, and remount the own-store form so its fields are empty for the next one.
+  if (state.done && sent !== state) { setSent(state); setQuery(''); setRound(value => value + 1); }
+  const used = new Set(taken.map(item => item.toLowerCase()));
+  const found = kind === 'store'
+    ? stores.filter(item => !used.has(item.id) && (!query.trim() || matches(`${item.name} ${item.address} ${item.city}`, query))).slice(0, 8)
+    : retailers.filter(item => !used.has(item.toLowerCase()) && (!query.trim() || matches(item, query))).slice(0, 12);
+  return <div className="bc-store-form">
+    <div className="bc-segments" role="tablist" aria-label="Что добавить">{STORE_KINDS.map(item => <button key={item.value} type="button" role="tab" aria-selected={kind === item.value} onClick={() => { setKind(item.value); setQuery(''); }}>{item.label}</button>)}</div>
+    {kind === 'custom'
+      ? <form key={round} action={action} className="bc-form">
+        <input type="hidden" name="kind" value="custom" />
+        <label className="bc-field"><span>Название</span><input name="name" required maxLength={DRINK_STORE_LIMITS.name} placeholder="Фирменный магазин" /></label>
+        <label className="bc-field"><span>Ссылка на магазин или товар</span><input name="url" inputMode="url" maxLength={DRINK_STORE_LIMITS.url} placeholder="shop.example.ru/energy" /></label>
+        <div className="bc-store-form-row">
+          <label className="bc-field"><span>Адрес</span><input name="address" maxLength={DRINK_STORE_LIMITS.address} placeholder="ул. Тверская, 1" /></label>
+          <label className="bc-field"><span>Город</span><input name="city" maxLength={DRINK_STORE_LIMITS.city} placeholder="Москва" /></label>
+        </div>
+        <p className="bc-muted">Нужна ссылка или адрес — можно и то и другое. Адрес откроется на карте.</p>
+        {state.error && <FormAlert>{state.error}</FormAlert>}
+        <button className="bc-button" disabled={pending}>{pending ? 'Добавляем…' : 'Добавить магазин'}</button>
+      </form>
+      : <form action={action} className="bc-form">
+        <input type="hidden" name="kind" value={kind} />
+        <label className="bc-field"><span>{kind === 'store' ? 'Найти магазин на карте CanRush' : 'Найти сеть'}</span>
+          <input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={kind === 'store' ? 'Название, адрес или город' : 'Пятёрочка, Магнит…'} /></label>
+        {found.length ? <ul className="bc-store-options">{found.map(item => typeof item === 'string'
+          ? <li key={item}><button name="retailer" value={item} disabled={pending}><b>{item}</b><span>Добавить</span></button></li>
+          : <li key={item.id}><button name="storeId" value={item.id} disabled={pending}><b>{item.name}</b><small>{[item.city, item.address].filter(Boolean).join(', ')}</small><span>Добавить</span></button></li>)}</ul>
+          : <p className="bc-muted">{kind === 'store' ? 'Такого магазина на карте нет — добавьте его как свой магазин.' : 'Такой сети нет в каталоге — добавьте её как свой магазин.'}</p>}
+        {state.error && <FormAlert>{state.error}</FormAlert>}
+      </form>}
+  </div>;
+}
+
+export function DrinkStoreRemove({ id, name }: { id: string; name: string }) {
+  const [pending, start] = useTransition();
+  return <button type="button" className="bc-icon-button" aria-label={`Убрать «${name}»`} title="Убрать" disabled={pending} onClick={() => start(async () => {
+    const result = await removeDrinkStoreAction(id); if (result.error) window.alert(result.error);
+  })}>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+  </button>;
+}
+
+/**
+ * The brand's price ceiling: a volume (the drink's own cans as chips, or any 100–2000 ml) and «до N ₽». Saving the
+ * same volume again replaces its ceiling.
+ */
+export function DrinkPriceForm({ brand, flavor, volumes }: { brand: string; flavor: string; volumes: number[] }) {
+  const [state, action, pending] = useActionState(setDrinkPriceAction.bind(null, brand, flavor), {});
+  const [volume, setVolume] = useState(volumes[0] ? String(volumes[0]) : '');
+  const [sent, setSent] = useState<object | null>(null);
+  const [round, setRound] = useState(0);
+  if (state.done && sent !== state) { setSent(state); setRound(value => value + 1); }
+  return <form key={round} action={action} className="bc-form">
+    {volumes.length > 0 && <div className="bc-chips" role="group" aria-label="Объём банки">{volumes.map(item => <button key={item} type="button" className="bc-chip" aria-pressed={volume === String(item)} onClick={() => setVolume(String(item))}>{item} мл</button>)}</div>}
+    <div className="bc-store-form-row">
+      <label className="bc-field"><span>Объём, мл</span><input name="volume" inputMode="numeric" required value={volume} onChange={event => setVolume(event.target.value.replace(/\D/g, ''))} maxLength={4} placeholder="450" /></label>
+      <label className="bc-field"><span>Цена в магазине до, ₽</span><input name="price" inputMode="decimal" required maxLength={9} placeholder="119,90" /></label>
+    </div>
+    {state.error && <FormAlert>{state.error}</FormAlert>}
+    {state.done && <FormAlert tone="success" title="Цена сохранена">Покажем её на странице напитка рядом с ценами магазинов.</FormAlert>}
+    <button className="bc-button" disabled={pending}>{pending ? 'Сохраняем…' : 'Сохранить цену'}</button>
+  </form>;
+}
+
+export function DrinkPriceRemove({ id, volume }: { id: string; volume: number }) {
+  const [pending, start] = useTransition();
+  return <button type="button" className="bc-icon-button" aria-label={`Убрать цену для ${volume} мл`} title="Убрать" disabled={pending} onClick={() => start(async () => {
+    const result = await removeDrinkPriceAction(id); if (result.error) window.alert(result.error);
+  })}>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+  </button>;
 }
 
 /** Admin: a promotion request's progress and its ОРД token. */

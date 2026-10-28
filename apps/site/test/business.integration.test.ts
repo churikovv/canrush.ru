@@ -32,6 +32,9 @@ afterAll(async () => {
   await pool.query('delete from "drinkSwipe" where brand = $1', [brand]);
   await pool.query('delete from "catalogEvent" where brand = $1', [brand]);
   await pool.query('delete from "brandDrinkProfile" where brand = $1', [brand]);
+  // Before the users: deleting the owner (its company) and the admin (the edit's reviewer) in one statement cascades
+  // into the same edit rows in an order that sometimes trips the company key.
+  await pool.query('delete from "brandDrinkEdit" where brand = $1', [brand]);
   await pool.query(`delete from "adminAuditLog" where "adminEmail" = $1`, [adminEmail]);
   await pool.query('delete from "siteAdmin" where email = $1', [adminEmail]);
   await pool.query(`delete from "marketListing" where "sellerId" = any($1::text[])`, [[owner, fan]]);
@@ -382,4 +385,70 @@ it('keeps plans: the free start, invoices that extend a plan and promotion reque
   expect((await billing.listPromoRequests(company.id))[0]).toMatchObject({ status: 'running', erid: 'Kra23abc' });
   await pool.query(`delete from "businessPromoRequest" where "businessId" = $1`, [company.id]);
   await pool.query(`delete from "businessPlanRequest" where "businessId" = $1`, [company.id]);
+});
+
+it('lists where to buy a drink: chains and own stores of approved drinks only', async () => {
+  const stores = await import('../src/lib/brand-drink-stores');
+  const { parseDrinkStore, MAX_DRINK_STORES } = await import('../src/lib/brand-drink-store-fields');
+  const company = (await business.getOwnBusiness(owner))!;
+  const form = (fields: Record<string, string>) => { const data = new FormData(); for (const [key, value] of Object.entries(fields)) data.set(key, value); return parseDrinkStore(data); };
+  expect(form({ kind: 'custom', name: ' Фирменный  магазин ', url: 'shop.example.ru/energy' })).toEqual({ kind: 'custom', name: 'Фирменный магазин', url: 'https://shop.example.ru/energy', address: null, city: null });
+  expect(() => form({ kind: 'custom', name: 'Без адреса' })).toThrow('ссылку');
+  expect(() => form({ kind: 'custom', name: 'Скрипт', url: 'javascript:alert(1)' })).toThrow('http');
+  expect(() => form({ kind: 'store', storeId: 'nope' })).toThrow('из списка');
+
+  // Only for the company's approved drinks, and a store must be on the CanRush map.
+  await expect(stores.addDrinkStore(owner, brand, 'peach', form({ kind: 'retailer', retailer: 'Пятёрочка' }))).rejects.toThrow('подтверждённых');
+  await expect(stores.addDrinkStore(owner, brand, 'mango', form({ kind: 'store', storeId: randomUUID() }))).rejects.toThrow('не найден');
+  await stores.addDrinkStore(owner, brand, 'mango', form({ kind: 'retailer', retailer: 'Пятёрочка' }));
+  await expect(stores.addDrinkStore(owner, brand, 'mango', form({ kind: 'retailer', retailer: 'пятёрочка' }))).rejects.toThrow('уже в списке');
+  await stores.addDrinkStore(owner, brand, 'mango', form({ kind: 'custom', name: 'Фирменный магазин', address: 'ул. Тверская, 1', city: 'Москва' }));
+  const list = await stores.listDrinkStores(company.id, brand, 'mango');
+  expect(list.map(item => [item.kind, item.name])).toEqual([['retailer', 'Пятёрочка'], ['custom', 'Фирменный магазин']]);
+  expect((await stores.countDrinkStores(company.id)).get(JSON.stringify([brand, 'mango']))).toBe(2);
+
+  // The drink page shows them while the company and the drink stay approved.
+  expect((await stores.getBrandStores(brand, 'mango')).map(item => item.name)).toEqual(['Пятёрочка', 'Фирменный магазин']);
+  await pool.query(`update "businessDrink" set status = 'pending' where "businessId" = $1 and brand = $2 and flavor = 'mango'`, [company.id, brand]);
+  expect(await stores.getBrandStores(brand, 'mango')).toEqual([]);
+  await pool.query(`update "businessDrink" set status = 'approved' where "businessId" = $1 and brand = $2 and flavor = 'mango'`, [company.id, brand]);
+
+  // A cap per drink; someone outside the company can neither add nor remove.
+  for (let index = list.length; index < MAX_DRINK_STORES; index += 1) await stores.addDrinkStore(owner, brand, 'mango', form({ kind: 'retailer', retailer: `Сеть ${index}` }));
+  await expect(stores.addDrinkStore(owner, brand, 'mango', form({ kind: 'retailer', retailer: 'Лишняя' }))).rejects.toThrow(`Не больше ${MAX_DRINK_STORES}`);
+  await expect(stores.addDrinkStore(staff, brand, 'mango', form({ kind: 'retailer', retailer: 'Ещё' }))).rejects.toThrow('подтверждённая компания');
+  await expect(stores.removeDrinkStore(staff, list[0]!.id)).rejects.toThrow();
+  await stores.removeDrinkStore(owner, list[0]!.id);
+  expect((await stores.listDrinkStores(company.id, brand, 'mango')).some(item => item.id === list[0]!.id)).toBe(false);
+  await pool.query(`delete from "brandDrinkStore" where "businessId" = $1`, [company.id]);
+});
+
+it('keeps a recommended price ceiling per can volume of approved drinks', async () => {
+  const prices = await import('../src/lib/brand-drink-prices');
+  const { parseDrinkPrice } = await import('../src/lib/brand-drink-price-fields');
+  const company = (await business.getOwnBusiness(owner))!;
+  const form = (volume: string, price: string) => { const data = new FormData(); data.set('volume', volume); data.set('price', price); return parseDrinkPrice(data); };
+  expect(form(' 450 ', '119,9')).toEqual({ volumeMl: 450, maxPrice: 119.9 });
+  expect(() => form('50', '100')).toThrow('от 100 до 2000');
+  expect(() => form('450', '1,999')).toThrow('двух знаков');
+  expect(() => form('450', '0')).toThrow('больше нуля');
+
+  await expect(prices.setDrinkPrice(owner, brand, 'peach', form('450', '99'))).rejects.toThrow('подтверждённых');
+  await prices.setDrinkPrice(owner, brand, 'mango', form('450', '129.90'));
+  await prices.setDrinkPrice(owner, brand, 'mango', form('450', '119.90'));
+  await prices.setDrinkPrice(owner, brand, 'mango', form('250', '89'));
+  const list = await prices.listDrinkPrices(company.id, brand, 'mango');
+  expect(list.map(item => [item.volumeMl, item.maxPrice])).toEqual([[250, 89], [450, 119.9]]);
+  expect((await prices.countDrinkPrices(company.id)).get(JSON.stringify([brand, 'mango']))).toBe(2);
+  expect((await prices.getBrandPrices(brand, 'mango')).map(item => item.maxPrice)).toEqual([89, 119.9]);
+
+  // Gone from the drink page while the drink is not approved for the company; outsiders cannot change it.
+  await pool.query(`update "businessDrink" set status = 'pending' where "businessId" = $1 and brand = $2 and flavor = 'mango'`, [company.id, brand]);
+  expect(await prices.getBrandPrices(brand, 'mango')).toEqual([]);
+  await pool.query(`update "businessDrink" set status = 'approved' where "businessId" = $1 and brand = $2 and flavor = 'mango'`, [company.id, brand]);
+  await expect(prices.setDrinkPrice(staff, brand, 'mango', form('450', '10'))).rejects.toThrow('подтверждённая компания');
+  await expect(prices.removeDrinkPrice(staff, list[0]!.id)).rejects.toThrow();
+  await prices.removeDrinkPrice(owner, list[0]!.id);
+  expect((await prices.listDrinkPrices(company.id, brand, 'mango')).map(item => item.volumeMl)).toEqual([450]);
+  await pool.query(`delete from "brandDrinkPrice" where "businessId" = $1`, [company.id]);
 });

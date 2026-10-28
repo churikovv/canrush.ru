@@ -18,6 +18,9 @@ const COMPARE_GROUPS: { title: string; rows: [string, ...(boolean | string)[]][]
     ['Роли: менеджер и аналитик', true, true, true],
     [FEATURE_LABELS.log, ...PLAN_ORDER.map(plan => yes(plan, 'log'))],
   ] },
+  { title: 'Закупки', rows: [
+    [FEATURE_LABELS.wholesale, ...PLAN_ORDER.map(plan => yes(plan, 'wholesale'))],
+  ] },
 ];
 
 /** «Сравнение тарифов»: every capability per plan — a tick, a cross or the number — grouped like linear.app/pricing. */

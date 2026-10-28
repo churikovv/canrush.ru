@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import type { CityId, SourceName } from '@canrush/shared';
 import { runRegionalParser } from './regions.js';
 import { runParser } from './run.js';
+import { runWholesale } from './wholesale/run.js';
 
 export interface ScheduleOptions {
   sources?: SourceName[];
@@ -29,6 +30,8 @@ export function startSchedule(options: ScheduleOptions = {}): void {
         if (options.sources?.some(source => source !== 'edadeal') && !options.cities) await runParser({ sources: options.sources });
         else await runRegionalParser({ cities: options.cities });
       } catch (err) { console.error('[canrush-parser] ошибка планового запуска:', err); }
+      // Wholesale prices for the business cabinet: their own file; a failure keeps the last prices as stale.
+      try { await runWholesale(); } catch (err) { console.error('[canrush-parser] ошибка оптового прогона:', err); }
       finally { running = false; }
     },
     { timezone: 'Europe/Moscow' },

@@ -172,3 +172,20 @@ export function dedupeProducts(products: Product[]): Product[] {
   }
   return [...map.values()];
 }
+
+/**
+ * Brand, flavour and volume of a product title by the catalog's rules — for streams that are not retail offers
+ * (wholesale suppliers), so their products land on the same catalog identities. The retail-only fields are dropped.
+ */
+export function normalizeIdentity(
+  name: string,
+  brand: string | undefined,
+  knownBrands: string[],
+  brandAliases: BrandAliases,
+  knownFlavors: string[],
+  flavorAliases: FlavorAliases,
+): Pick<Product, 'brand' | 'flavor' | 'volumeMl'> {
+  // The source tag is irrelevant here: only the identity of the result is used.
+  const product = normalizeProduct('edadeal', { sourceId: '', name, brand, price: 0, url: '' }, knownBrands, undefined, brandAliases, knownFlavors, flavorAliases);
+  return { brand: product.brand, flavor: product.flavor, volumeMl: product.volumeMl };
+}

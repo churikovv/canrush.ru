@@ -5,7 +5,7 @@ import Link from '@/components/navigation-progress';
 import { BUSINESS_KINDS, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
 import { planInfo, type BusinessPlan } from '@/lib/business-plans';
 
-export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings' | 'plan';
+export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'drink-stores' | 'drink-price' | 'wholesale' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings' | 'plan';
 export const businessHref = (section: BusinessSection, params: Record<string, string> = {}) =>
   `/business/cabinet?${new URLSearchParams({ ...(section !== 'overview' ? { section } : {}), ...params })}`.replace(/\?$/, '');
 
@@ -20,6 +20,7 @@ const ICONS = {
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
   chevron: <path d="m6 9 6 6 6-6" />,
   chat: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />,
+  truck: <><path d="M2 6h12v10H2zM14 9h4l4 4v3h-8" /><circle cx="6.5" cy="17.5" r="1.8" /><circle cx="17.5" cy="17.5" r="1.8" /></>,
 };
 export type BusinessIconName = keyof typeof ICONS;
 export function BusinessIcon({ name, size = 20 }: { name: BusinessIconName; size?: number }) {
@@ -31,6 +32,7 @@ const NAV: { label: string; icon: BusinessIconName; section?: BusinessSection; i
   { label: 'Аналитика', icon: 'chart', items: [{ label: 'Отзывы', section: 'reviews' }, { label: 'Разбор нейросетью', section: 'insights' }, { label: 'Поиск', section: 'search' }, { label: 'Карточки', section: 'cards' }, { label: 'Конкуренты', section: 'competitors' }, { label: 'Бренд', section: 'brand' }] },
   { label: 'Каталог', icon: 'can', items: [{ label: 'Напитки', section: 'drinks' }, { label: 'Новый напиток', section: 'new-drink' }] },
   { label: 'Продажи', icon: 'bag', items: [{ label: 'Объявления', section: 'market' }, { label: 'Новое объявление', section: 'new-listing' }, { label: 'Заказы и чаты', section: 'orders' }] },
+  { label: 'Закупки', icon: 'truck', items: [{ label: 'Оптовые цены', section: 'wholesale' }] },
 ];
 
 /**

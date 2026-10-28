@@ -1,7 +1,7 @@
 /** Business plans — shared by the server (limits) and the pages (cards, locks). Prices in rubles. */
 export type BusinessPlan = 'start' | 'brand' | 'network';
 /** What a plan opens beyond «Старт». */
-export type PlanFeature = 'search' | 'cards' | 'competitors' | 'insights' | 'report' | 'export' | 'log';
+export type PlanFeature = 'search' | 'cards' | 'competitors' | 'insights' | 'report' | 'export' | 'log' | 'wholesale';
 
 export interface PlanInfo {
   key: BusinessPlan; title: string; monthly: number; yearly: number; hint: string;
@@ -14,7 +14,7 @@ export interface PlanInfo {
   features: PlanFeature[];
 }
 
-const ALL: PlanFeature[] = ['search', 'cards', 'competitors', 'insights', 'report', 'export', 'log'];
+const ALL: PlanFeature[] = ['search', 'cards', 'competitors', 'insights', 'report', 'export', 'log', 'wholesale'];
 export const PLANS: Record<BusinessPlan, PlanInfo> = {
   start: { key: 'start', title: 'Старт', monthly: 0, yearly: 0, hint: 'Отзывы, ответы покупателям и карточки напитков', members: 2, competitors: 0, historyDays: 30, brands: 1, features: [] },
   brand: { key: 'brand', title: 'Бренд', monthly: 4900, yearly: 49000, hint: 'Вся аналитика одного бренда и команда', members: 5, competitors: 3, historyDays: 90, brands: 1, features: ALL },
@@ -29,7 +29,7 @@ export const PILOT_DAYS = 90;
 
 export const FEATURE_LABELS: Record<PlanFeature, string> = {
   search: 'Аналитика поиска', cards: 'Аналитика карточек', competitors: 'Сравнение с конкурентами', insights: 'Разбор отзывов нейросетью',
-  report: 'Еженедельный отчёт на почту', export: 'Экспорт CSV', log: 'Журнал действий команды',
+  report: 'Еженедельный отчёт на почту', export: 'Экспорт CSV', log: 'Журнал действий команды', wholesale: 'Оптовые цены поставщиков',
 };
 
 /** The plan in force: a paid plan past its date is «Старт» again. */

@@ -6,7 +6,7 @@ import { CatalogControls } from '@/components/catalog-controls';
 import { CatalogGrid } from '@/components/catalog-grid';
 import { CatalogProductCard } from '@/components/catalog-product-card';
 import { loadAllCatalogGroups, loadCatalogSnapshot } from '@/lib/catalog';
-import { catalogDrinkGroups, countPendingCatalogDrinks } from '@/lib/catalog-drinks';
+import { catalogDrinkGroupsByOrigin, countPendingCatalogDrinks } from '@/lib/catalog-drinks';
 import {
   filterCatalogGroups,
   flavorName,
@@ -50,13 +50,17 @@ export async function CatalogBrowser({ params, basePath = '/catalog', keep = {},
   const snapshot = await loadCatalogSnapshot();
   const { groups, city } = snapshot;
   const searching = Boolean(first(params.q).trim());
-  const currentKeys = new Set(groups.map(group => JSON.stringify([group.brand, group.flavor])));
+  const inShops = new Set(groups.map(group => JSON.stringify([group.brand, group.flavor])));
   // Drinks members added stay listed after the shop offers until shops have them; the archive waits for a search.
+  // Drinks a company published are the brand's own and join the main list right after those in shops, unlabelled.
   // The badge on «На модерации»; the catalog still renders if the database is slow or down.
   const pendingCount = await countPendingCatalogDrinks().catch(() => 0);
-  const added = (await catalogDrinkGroups().catch(() => [])).filter(group => !currentKeys.has(JSON.stringify([group.brand, group.flavor])));
+  const origin = await catalogDrinkGroupsByOrigin().catch(() => ({ brands: [], members: [] }));
+  const branded = origin.brands.filter(group => !inShops.has(JSON.stringify([group.brand, group.flavor])));
+  const currentKeys = new Set([...inShops, ...branded.map(group => JSON.stringify([group.brand, group.flavor]))]);
+  const added = origin.members.filter(group => !currentKeys.has(JSON.stringify([group.brand, group.flavor])));
   const addedKeys = new Set(added.map(group => JSON.stringify([group.brand, group.flavor])));
-  const allGroups = searching ? await loadAllCatalogGroups() : [...groups, ...added];
+  const allGroups = searching ? await loadAllCatalogGroups() : [...groups, ...branded, ...added];
   const archived = allGroups.filter(group => !currentKeys.has(JSON.stringify([group.brand, group.flavor])) && !addedKeys.has(JSON.stringify([group.brand, group.flavor])) && !isExcludedEnergyBrand(group.brand) && !/^(?:unknown|unresolved)(?::|$)/.test(group.flavor) && !(group.brand === 'Volt Energy' && group.flavor === 'mango') && !isAssortmentFlavor(group.flavor)).map(group => ({ ...group, variants: [], minPrice: 0 }));
   const brands = [...new Set(allGroups.map((group) => group.brand))].sort((a, b) => a.localeCompare(b, 'ru-RU'));
   const flavorValues = [...new Set(allGroups.map((group) => group.flavor))];
@@ -73,7 +77,8 @@ export async function CatalogBrowser({ params, basePath = '/catalog', keep = {},
   const limit = catalogLimit(first(params.limit));
   const ratingSummaries = filters.sort === 'rating' ? await getReviewSummaries(allGroups) : undefined;
   const discussions = filters.sort === 'comments' ? await getDiscussionCounts() : undefined;
-  const filtered = filterCatalogGroups(groups, filters, ratingSummaries, discussions);
+  // Brand drinks have no prices yet (minPrice 0), so they follow the shop list instead of topping a price sort.
+  const filtered = [...filterCatalogGroups(groups, filters, ratingSummaries, discussions), ...filterCatalogGroups(branded, filters, ratingSummaries, discussions)];
   const addedFiltered = filterCatalogGroups(added, filters, ratingSummaries, discussions);
   const archivedFiltered = searching ? filterCatalogGroups(archived, filters, ratingSummaries, discussions) : [];
   const totalCount = filtered.length + addedFiltered.length + archivedFiltered.length;
