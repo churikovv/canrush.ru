@@ -113,6 +113,11 @@ function describeNotification(row: any): NotificationItem {
       title = `${actor} приглашает вас в команду «${p.business}»`;
       detail = 'Кабинет CanRush для бизнеса: аналитика, напитки и объявления компании';
       href = '/business/cabinet';
+    } else if (row.kind==='support-reply') {
+      // The team answered the member's «Помощь» chat (migration 0137); always on — it answers their own question.
+      title = 'Поддержка CanRush ответила';
+      detail = row.payload.text ?? '';
+      href = '/support';
     } else if (row.kind==='price') {
       const p = row.payload; city = p.city;
       title = `${p.price < p.before ? 'Цена снизилась' : 'Цена выросла'}: ${p.brand} · ${flavorName(p.flavor)}`;

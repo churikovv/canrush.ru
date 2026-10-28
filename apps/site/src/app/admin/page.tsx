@@ -4,6 +4,7 @@ import '@/styles/business-cabinet.css';
 import '@/styles/admin.css';
 import { AdminCampaigns } from '@/components/admin-campaigns';
 import type { Metadata } from 'next';
+import { getAdminQueues } from '@/lib/admin-queues';
 import { AdminDashboard } from '@/components/admin-dashboard';
 import { requireSiteAdmin } from '@/lib/admin';
 import { redirect } from 'next/navigation';
@@ -55,6 +56,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   return (
     <AdminDashboard
+      queues={await getAdminQueues()}
       campaignPanel={tab === 'campaigns' ? <AdminCampaigns days={[0,7,30,90].includes(Number(params.days)) ? Number(params.days) : 30} page={adminPage(params.page)} /> : undefined}
       admin={admin}
       data={data}

@@ -1,3 +1,4 @@
+import type { AdminQueues } from '@/lib/admin-queues';
 import { CONTENT_REPORT_KINDS, REPORT_REASONS } from '@/lib/profile-report-fields';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
@@ -34,7 +35,7 @@ function DataTable({ columns, children, label }: { columns: string[]; children: 
   return <div className="admin-table-scroll" tabIndex={0} role="region" aria-label={label}><table className="admin-table"><thead><tr>{columns.map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead><tbody>{children}</tbody></table></div>;
 }
 
-export function AdminDashboard({ admin, data, query, tab, notice, error, campaignPanel }: Props) {
+export function AdminDashboard({ admin, data, query, tab, notice, error, campaignPanel, queues }: Props & { queues?: Partial<AdminQueues> }) {
   const label = ADMIN_TABS.find(item => item.key === tab)!.label;
   const pages = Math.max(1, Math.ceil(data.total / ADMIN_PAGE_SIZE));
   const context = <><input type="hidden" name="query" value={query} /><input type="hidden" name="tab" value={tab} /><input type="hidden" name="page" value={data.page} /></>;
@@ -44,7 +45,7 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
   const maxOnline = Math.max(1, ...data.onlineByHour.map(hour => hour.peak));
   const maxSwipes = Math.max(1, ...data.swipesByDay.map(day => day.count));
   const onlinePeak = data.onlineByHour.reduce<(typeof data.onlineByHour)[number] | null>((best, hour) => hour.peak > 0 && hour.peak >= (best?.peak ?? 0) ? hour : best, null);
-  return <AdminShell active={tab} email={admin.email} role={admin.role} title={label} subtitle={SUBTITLES[tab]}>
+  return <AdminShell queues={queues} active={tab} email={admin.email} role={admin.role} title={label} subtitle={SUBTITLES[tab]}>
     {notice && <div className="admin-feedback admin-feedback-success" role="status">{notice}</div>}
     {error && <div className="admin-feedback admin-feedback-error" role="alert">{error}</div>}
     {tab === 'analytics' && metrics && <>

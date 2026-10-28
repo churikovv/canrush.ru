@@ -34,6 +34,7 @@ import { TELEGRAM_BOT_OPTIONS } from '@/lib/telegram-bot/settings';
 import { LEGAL_DETAILS } from '@/lib/legal';
 import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
 import { saveNotificationSettings, saveTelegramBotSettings, unlinkTelegram } from './actions';
+import { supportUnreadForUser } from '@/lib/support';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Профиль и настройки', robots: { index: false, follow: false } };
@@ -46,6 +47,7 @@ const ICONS = {
   blocked: <svg {...ICON}><circle cx="12" cy="12" r="9" /><path d="m5.6 5.6 12.8 12.8" /></svg>,
   email: <svg {...ICON}><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></svg>,
   about: <svg {...ICON}><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>,
+  help: <svg {...ICON}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" /><path d="M9.5 8.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.4M12 14.5h.01" /></svg>,
   admin: <svg {...ICON}><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm-3 10 2 2 4-4" /></svg>,
 };
 const blockedDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' });
@@ -106,6 +108,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     getBlockedMembers(session.user.id),
   ]);
   const preferences = new Map(preferenceRows.map(row => [row.kind, row.enabled]));
+  // «Помощь»: the member's chat with the team is its own screen (/support); the row says when the team has answered.
+  const supportUnread = await supportUnreadForUser(session.user.id);
   const botChat = telegram && telegramLinked ? (await getPool().query<Record<string, boolean> & { city: string | null; blocked: boolean }>(`select c.*, c."blockedAt" is not null as blocked from "telegramChat" c
     join account a on a."providerId" = $2 and a."accountId" = c."telegramId"::text where a."userId" = $1`, [session.user.id, TELEGRAM_PROVIDER_ID])).rows[0] : undefined;
 
@@ -190,6 +194,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   ] }, ...(siteRole ? [{ key: 'admin', title: 'Администрирование', rows: [
     { key: 'admin', title: 'Админ-панель', value: 'Аналитика, жалобы, модерация', tone: 'admin', icon: ICONS.admin, href: '/admin' } satisfies SettingsRow,
   ] }] : []), { key: 'about', title: 'О CanRush', rows: [
+    { key: 'help', title: 'Помощь и поддержка', value: supportUnread ? 'Новый ответ поддержки' : 'Напишите команде CanRush', tone: supportUnread ? 'admin' : undefined, icon: ICONS.help, href: '/support' } satisfies SettingsRow,
     { key: 'about', title: 'Документы и связь', value: 'Соглашение, политика, удаление аккаунта', icon: ICONS.about, panel:
       <Panel id="about" title="Документы и связь"><AboutLinks /></Panel> },
   ] }];

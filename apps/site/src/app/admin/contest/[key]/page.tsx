@@ -4,6 +4,7 @@ import '@/styles/admin.css';
 import { notFound } from 'next/navigation';
 import Link from '@/components/navigation-progress';
 import { AdminShell } from '@/components/admin-shell';
+import { getAdminQueues } from '@/lib/admin-queues';
 import { ContestDrawForm, ContestWinnerActions } from '@/components/contest-admin-controls';
 import { requireFullAdmin } from '@/lib/admin';
 import { contestPhase, DRAW_STATUS_LABELS, findContest } from '@/lib/contest';
@@ -32,7 +33,7 @@ export default async function AdminContestPage({ params }: { params: Promise<{ k
   const current = draws.find(draw => draw.status !== 'unreachable');
   const excluded = new Set(draws.filter(draw => draw.status === 'unreachable').map(draw => draw.winnerId));
   const phase = contestPhase(contest, new Date());
-  return <AdminShell active="contest" email={admin.email} title={contest.title}
+  return <AdminShell queues={await getAdminQueues()} active="contest" email={admin.email} title={contest.title}
       subtitle={`${contest.prize} · банка в календаре до ${contest.lastDayLabel}, итоги ${contest.resultsLabel}${phase === 'open' ? ' · приём идёт' : ''}.`}
       actions={<Link className="community-button community-button-secondary" href="/admin/contest">Все конкурсы</Link>}>
       <div className="admin-metrics">{[

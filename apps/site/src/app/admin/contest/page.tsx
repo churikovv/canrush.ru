@@ -4,6 +4,7 @@ import '@/styles/admin.css';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { AdminShell } from '@/components/admin-shell';
+import { getAdminQueues } from '@/lib/admin-queues';
 import { requireFullAdmin } from '@/lib/admin';
 import { CONTESTS, contestPhase, DRAW_STATUS_LABELS, type ContestPhase } from '@/lib/contest';
 import { getContestOverview } from '@/lib/contest-db';
@@ -19,7 +20,7 @@ export default async function AdminContestsPage() {
   const admin = await requireFullAdmin();
   const now = new Date();
   const cards = await Promise.all([...CONTESTS].sort((a, b) => b.resultsDay.localeCompare(a.resultsDay)).map(async contest => ({ contest, phase: contestPhase(contest, now), overview: await getContestOverview(contest) })));
-  return <AdminShell active="contest" email={admin.email} title="Конкурсы" subtitle="Выберите конкурс, чтобы посмотреть участников и провести розыгрыш.">
+  return <AdminShell queues={await getAdminQueues()} active="contest" email={admin.email} title="Конкурсы" subtitle="Выберите конкурс, чтобы посмотреть участников и провести розыгрыш.">
       <div className="contest-cards">{cards.map(({ contest, phase, overview }) => <Link key={contest.key} href={`/admin/contest/${contest.key}`} className="contest-card" data-phase={phase}>
         <span className="contest-card-art"><Image src={contest.image.src} width={contest.image.width} height={contest.image.height} alt="" sizes="160px" /></span>
         <span className="contest-card-body">

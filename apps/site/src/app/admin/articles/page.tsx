@@ -3,6 +3,7 @@ import '@/styles/business-cabinet.css';
 import '@/styles/admin.css';
 import '@/styles/news.css';
 import { AdminShell } from '@/components/admin-shell';
+import { getAdminQueues } from '@/lib/admin-queues';
 import Link from '@/components/navigation-progress';
 import { requireSiteAdmin } from '@/lib/admin';
 import { listArticlesForAdmin } from '@/lib/articles';
@@ -24,7 +25,7 @@ export default async function AdminArticlesPage({ searchParams }: { searchParams
   const page = Math.min(1000, Math.max(1, parseInt(params.page ?? '1', 10) || 1));
   const { items, hasMore } = await listArticlesForAdmin(tab.key, page, 24);
   const href = (key: string, to = 1) => `/admin/articles?${new URLSearchParams({ ...(key !== 'pending' ? { tab: key } : {}), ...(to > 1 ? { page: String(to) } : {}) })}`;
-  return <AdminShell active="articles" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
+  return <AdminShell queues={await getAdminQueues()} active="articles" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
       <nav className="market-filters" aria-label="Статьи">{TABS.map(item => <Link key={item.key} href={href(item.key)} aria-current={item.key === tab.key ? 'page' : undefined}>{item.label}</Link>)}</nav>
       {items.length ? <ul className="admin-article-list">{items.map(article => <li key={article.id}>
         <Link href={`/news/${article.id}`}>

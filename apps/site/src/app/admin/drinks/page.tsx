@@ -4,6 +4,7 @@ import '@/styles/admin.css';
 import '@/styles/catalog.css';
 import Image from 'next/image';
 import { AdminShell } from '@/components/admin-shell';
+import { getAdminQueues } from '@/lib/admin-queues';
 import { CatalogDrinkAdminMenu } from '@/components/catalog-drink-admin';
 import { CatalogDrinkModeration } from '@/components/catalog-drink-moderation';
 import Link from '@/components/navigation-progress';
@@ -44,7 +45,7 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
     if ((next.page ?? 1) > 1) search.set('page', String(next.page));
     return `/admin/drinks${search.size ? `?${search}` : ''}`;
   };
-  return <AdminShell active="drinks" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
+  return <AdminShell queues={await getAdminQueues()} active="drinks" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
       <div className="admin-drink-toolbar">
         <nav className="market-filters" aria-label="Напитки участников">{TABS.map(item => <Link key={item.key} href={href({ tab: item.key, q: '' })} aria-current={item.key === tab.key ? 'page' : undefined}>{item.label}</Link>)}</nav>
         <form className="admin-drink-search" action="/admin/drinks" role="search">

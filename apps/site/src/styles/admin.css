@@ -241,3 +241,35 @@
 .admin-store-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .admin-store-edit { min-height: 40px; }
 @media (max-width: 639px) { .admin-store-edit { width: 100%; } }
+
+/* «Поддержка» (admin/support): the threads and the open chat side by side from 960 px; on phones the list, or the
+   thread with a way back. Unread threads carry a blue dot and bold text. */
+.support-admin { display: grid; gap: 16px; min-width: 0; }
+.support-admin-list, .support-admin-thread { display: grid; align-content: start; gap: 12px; min-width: 0; }
+.support-admin-threads { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--bc-line); }
+.support-admin-threads a { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 8px; border-bottom: 1px solid var(--bc-line); color: var(--bc-text); text-decoration: none; }
+.support-admin-threads a:hover { background: color-mix(in srgb, var(--bc-text) 4%, transparent); }
+.support-admin-threads a[aria-current="page"] { background: color-mix(in srgb, var(--color-brand) 10%, transparent); }
+.support-admin-avatar { display: grid; place-items: center; width: 40px; height: 40px; overflow: hidden; border-radius: 50%; background: var(--bc-soft); color: var(--bc-muted); font-weight: 700; }
+.support-admin-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.support-admin-text { display: grid; gap: 2px; min-width: 0; }
+.support-admin-text strong { overflow: hidden; font-size: .9375rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.support-admin-text strong small { color: var(--bc-muted); font-weight: 500; }
+.support-admin-text > span { overflow: hidden; color: var(--bc-muted); font-size: .8125rem; text-overflow: ellipsis; white-space: nowrap; }
+.support-admin-threads a[data-unread] .support-admin-text > span { color: var(--bc-text); font-weight: 600; }
+.support-admin-meta { display: grid; justify-items: end; gap: 6px; color: var(--bc-muted); font-size: .75rem; white-space: nowrap; }
+.support-admin-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-brand); }
+.support-admin-thread-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.support-admin-thread-head > div { display: grid; flex: 1 1 200px; gap: 2px; min-width: 0; }
+.support-admin-thread-head small { color: var(--bc-muted); font-size: .8125rem; overflow-wrap: anywhere; }
+.support-admin-thread-head a:not(.bc-link) { color: inherit; }
+.support-admin-back { flex-basis: 100%; }
+.support-admin-thread .support-chat { height: clamp(420px, calc(100dvh - 200px), 860px); }
+@media (max-width: 959px) {
+  .support-admin[data-thread] .support-admin-list, .support-admin:not([data-thread]) .support-admin-thread { display: none; }
+}
+@media (min-width: 960px) {
+  .support-admin { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); align-items: start; }
+  .support-admin-back { display: none; }
+  .support-admin-list { position: sticky; top: 16px; }
+}

@@ -3,8 +3,9 @@ import Link from '@/components/navigation-progress';
 import { DashboardShell } from '@/components/dashboard-shell';
 import { adminHref, type AdminTab } from '@/lib/admin-tabs';
 import { SITE_ROLE_LABELS, type SiteRole } from '@/lib/admin-roles';
+import type { AdminQueues } from '@/lib/admin-queues';
 
-export type AdminSection = AdminTab | 'stores' | 'drinks' | 'contest' | 'articles' | 'business';
+export type AdminSection = AdminTab | 'stores' | 'drinks' | 'contest' | 'articles' | 'business' | 'support';
 /** Sections a moderator does not see: administrators, contests and campaigns. */
 export const ADMIN_ONLY_SECTIONS: ReadonlySet<AdminSection> = new Set(['campaigns', 'contest', 'admins']);
 
@@ -27,6 +28,7 @@ const ICONS: Record<AdminIconName, ReactNode> = {
   reports: <path d="M4 22V4m0 0h13l-2 4 2 4H4" />,
   settings: <><circle cx="12" cy="12" r="3" /><path d="M12 2v3m0 14v3M4.9 4.9 7 7m10 10 2.1 2.1M2 12h3m14 0h3M4.9 19.1 7 17m10-10 2.1-2.1" /></>,
   site: <path d="M10 14 21 3m0 0h-6m6 0v6M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6" />,
+  support: <><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" /><path d="M8 9h8M8 13h5" /></>,
   admins: <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm-3 10 2 2 4-4" />,
 };
 
@@ -36,12 +38,12 @@ const ICONS: Record<AdminIconName, ReactNode> = {
  */
 const OVERVIEW = { key: 'analytics', label: 'Аналитика' } as const;
 const GROUPS: { title: string; icon: AdminIconName; items: { key: AdminSection; label: string }[] }[] = [
-  { title: 'Модерация', icon: 'reports', items: [{ key: 'reports', label: 'Жалобы' }, { key: 'users', label: 'Участники' }, { key: 'market', label: 'Объявления' }] },
+  { title: 'Модерация', icon: 'reports', items: [{ key: 'support', label: 'Поддержка' }, { key: 'reports', label: 'Жалобы' }, { key: 'users', label: 'Участники' }, { key: 'market', label: 'Объявления' }] },
   { title: 'Каталог', icon: 'drinks', items: [{ key: 'drinks', label: 'Напитки' }, { key: 'stores', label: 'Магазины' }, { key: 'articles', label: 'Статьи' }, { key: 'business', label: 'Компании' }] },
   { title: 'Продвижение', icon: 'campaigns', items: [{ key: 'campaigns', label: 'Кампании' }, { key: 'contest', label: 'Конкурс' }] },
   { title: 'Команда', icon: 'admins', items: [{ key: 'admins', label: 'Администраторы' }] },
 ];
-const sectionHref = (key: AdminSection) => key === 'stores' ? '/admin/stores' : key === 'drinks' ? '/admin/drinks' : key === 'contest' ? '/admin/contest' : key === 'articles' ? '/admin/articles' : key === 'business' ? '/admin/business' : adminHref(key);
+const sectionHref = (key: AdminSection) => key === 'support' ? '/admin/support' : key === 'stores' ? '/admin/stores' : key === 'drinks' ? '/admin/drinks' : key === 'contest' ? '/admin/contest' : key === 'articles' ? '/admin/articles' : key === 'business' ? '/admin/business' : adminHref(key);
 
 export function AdminIcon({ section, size = 18 }: { section: AdminIconName; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[section]}</svg>;
@@ -52,14 +54,28 @@ export function AdminIcon({ section, size = 18 }: { section: AdminIconName; size
  * with «Админ», a search over members, the grouped sections a role may open, and the account card at the bottom
  * (role, the way back to settings and to the site). On phones the sidebar is the same drawer.
  */
-export function AdminShell({ active, email, role = 'admin', title, subtitle, actions, children }: { active: AdminSection; email: string; role?: SiteRole; title: string; subtitle?: string; actions?: ReactNode; children: ReactNode }) {
+/** How each queue reads to a screen reader beside its badge. */
+const QUEUE_LABELS: Record<keyof AdminQueues, string> = {
+  support: 'ждут ответа', reports: 'открытых жалоб', drinks: 'на проверке', stores: 'на проверке', articles: 'на проверке', business: 'ждут решения',
+};
+
+export function AdminShell({ active, email, role = 'admin', title, subtitle, actions, queues, children }: {
+  active: AdminSection; email: string; role?: SiteRole; title: string; subtitle?: string; actions?: ReactNode;
+  /** What waits in each section (`getAdminQueues`): badges beside the sections, and on a folded group its total. */
+  queues?: Partial<AdminQueues>; children: ReactNode;
+}) {
+  const badge = (key: AdminSection) => {
+    const count = queues?.[key as keyof AdminQueues] ?? 0;
+    return count > 0 ? { count, label: `${QUEUE_LABELS[key as keyof AdminQueues]}: ${count}` } : undefined;
+  };
   const groups = GROUPS.map(group => ({ ...group, items: group.items.filter(item => role === 'admin' || !ADMIN_ONLY_SECTIONS.has(item.key)) })).filter(group => group.items.length);
   return <DashboardShell className="admin-root ym-hide-content ym-disable-clickmap" label="Админ" home={sectionHref(OVERVIEW.key)} menuLabel="Разделы администрирования"
     title={title} subtitle={subtitle} actions={actions}
     search={{ action: '/admin', placeholder: 'Найти участника…', label: 'Поиск участников', hidden: { tab: 'users' } }}
     nav={[
       { label: OVERVIEW.label, icon: <AdminIcon section={OVERVIEW.key} size={20} />, href: sectionHref(OVERVIEW.key), current: active === OVERVIEW.key },
-      ...groups.map(group => ({ label: group.title, icon: <AdminIcon section={group.icon} size={20} />, items: group.items.map(item => ({ label: item.label, href: sectionHref(item.key), current: item.key === active })) })),
+      ...groups.map(group => ({ label: group.title, icon: <AdminIcon section={group.icon} size={20} />, items: group.items.map(item => ({ label: item.label, href: sectionHref(item.key), current: item.key === active,
+        badge: badge(item.key) })) })),
     ]}
     account={{
       name: email, label: `${email}: настройки`, caption: SITE_ROLE_LABELS[role], logo: email.slice(0, 1).toUpperCase(),

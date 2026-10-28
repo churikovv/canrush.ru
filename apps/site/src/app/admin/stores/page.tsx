@@ -8,6 +8,7 @@ import { StoreCard } from '@/components/store-card';
 import { StoreModeration } from '@/components/store-moderation';
 import { StoreTransferBanner } from '@/components/store-transfer-banner';
 import { AdminShell } from '@/components/admin-shell';
+import { getAdminQueues } from '@/lib/admin-queues';
 import { requireSiteAdmin } from '@/lib/admin';
 import { listStoresForAdmin, type StoreAuthor, type StoreStatus } from '@/lib/stores';
 import { withCatalogLinks } from '@/lib/store-catalog';
@@ -45,7 +46,7 @@ export default async function AdminStoresPage({ searchParams }: { searchParams: 
     if ((next.page ?? 1) > 1) search.set('page', String(next.page));
     return `/admin/stores${search.size ? `?${search}` : ''}`;
   };
-  return <AdminShell active="stores" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
+  return <AdminShell queues={await getAdminQueues()} active="stores" email={admin.email} role={admin.role} title={tab.title} subtitle={tab.subtitle}>
       {admin.role === 'admin' && <StoreTransferBanner />}
       <div className="admin-drink-toolbar">
         <nav className="market-filters" aria-label="Магазины">{TABS.map(item => <Link key={item.key} href={href({ tab: item.key, q: '' })} aria-current={item.key === tab.key ? 'page' : undefined}>{item.label}</Link>)}</nav>

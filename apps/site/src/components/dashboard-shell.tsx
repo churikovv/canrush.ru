@@ -27,6 +27,11 @@ export function DashboardShell({ label, home, search, nav, account, title, subti
     {item.icon}{item.label}
     {item.badge && item.badge.count > 0 && <span className="bc-nav-badge" aria-label={item.badge.label}>{item.badge.count > 99 ? '99+' : item.badge.count}</span>}
   </Link>;
+  // A folded group still shows what waits inside it: the total of its sections' badges (hidden while open).
+  const groupBadge = (items: DashboardLeaf[]) => {
+    const count = items.reduce((sum, item) => sum + (item.badge?.count ?? 0), 0);
+    return count > 0 && <span className="bc-nav-badge bc-nav-group-badge" aria-label={`ждут: ${count}`}>{count > 99 ? '99+' : count}</span>;
+  };
   const sidebar = <aside className="bc-sidebar" aria-label={menuLabel ?? 'Разделы'}>
     <Link className="bc-brand" href={home}><span className="bc-brand-mark" aria-hidden="true" /><strong>CanRush</strong><small>{label}</small></Link>
     {search && <form className="bc-search" action={search.action} role="search">
@@ -37,7 +42,7 @@ export function DashboardShell({ label, home, search, nav, account, title, subti
     </form>}
     <nav className="bc-nav">{nav.map(item => item.items
       ? <details key={item.label} className="bc-nav-group" open>
-        <summary>{item.icon}<span>{item.label}</span><span className="bc-caret">{chevron}</span></summary>
+        <summary>{item.icon}<span>{item.label}</span>{groupBadge(item.items)}<span className="bc-caret">{chevron}</span></summary>
         <div className="bc-nav-items">{item.items.map(leaf)}</div>
       </details>
       : <Link key={item.label} className="bc-nav-top" href={item.href!} aria-current={item.current ? 'page' : undefined}>{item.icon}<span>{item.label}</span></Link>)}
