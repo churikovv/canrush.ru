@@ -44,7 +44,7 @@ interface CatalogProductDetailProps {
   /** Dating in the community: how many swiped the drink right («нравится») and left («пропустить»). */
   swipes?: SwipeCounts;
   /** A drink a member added (catalogDrink) that shops do not have yet: who added it, when, and the volumes they gave. */
-  addedBy?: Pick<CatalogDrink, 'author' | 'volumes' | 'createdAt' | 'business'>;
+  addedBy?: Pick<CatalogDrink, 'author' | 'volumes' | 'createdAt' | 'business' | 'discontinued'>;
   /** The full name a member gave the drink («Monster Ultra Paradise»), shown under the flavour. */
   fullName?: string;
   /** The review summary written by the model (nightly or from a company cabinet): its praise and complaints sit under the rating card, unsigned. */
@@ -101,6 +101,7 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
           {addedBy.business
             ? <li className="catalog-added-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>От бренда «{addedBy.business}»</li>
             : <li className="catalog-added-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M16 11h6" /></svg>От участника</li>}
+          {addedBy.discontinued && <li className="catalog-added-archived"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 4h18v4H3zM5 8v12h14V8M10 12h4" /></svg>Снят с производства</li>}
           {addedBy.volumes.map(volume => <li key={volume}>{volumeLabel(volume)}</li>)}
         </ul>}
         {swipes && (swipes.liked > 0 || swipes.skipped > 0) && <section className="catalog-swipe-card" aria-label={`В дейтинге: свайпнули ${swipes.liked}, пропустили ${swipes.skipped}`}>
@@ -184,7 +185,10 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
                 </CatalogVolumeTabs>
                 </CatalogOfferClicks>
               ) : (
-                addedBy ? <div className="catalog-added-empty">
+                addedBy?.discontinued ? <div className="catalog-added-empty">
+                  <span className="catalog-added-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h18v4H3zM5 8v12h14V8M10 12h4" /></svg></span>
+                  <div><strong>Больше не производится</strong><p>Напиток в архиве каталога: его сняли с производства, в магазинах его уже не ищем. Отзывы, коллекции и календарь работают как раньше.</p></div>
+                </div> : addedBy ? <div className="catalog-added-empty">
                   <span className="catalog-added-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9 5 3h14l2 6M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Zm2 5v7h14v-7" /></svg></span>
                   <div><strong>Цен пока нет</strong><p>{addedBy.business
                     ? `Напиток добавил бренд «${addedBy.business}» — в магазинах из нашего мониторинга его ещё не нашли.${brandStores.length ? ' Где он продаётся, бренд указал ниже.' : ''}`

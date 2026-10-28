@@ -35,6 +35,17 @@ export function DrinkJuiceOption({ checked, onChange }: { checked: boolean; onCh
 }
 
 /**
+ * «Больше не производится» — a switch: the drink is published straight into the catalog's archive (found by search,
+ * out of the main list), for cans that are gone from shops but people still review and collect.
+ */
+export function DrinkDiscontinuedOption({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  return <label className="catalog-drink-discontinued">
+    <span><b>Больше не производится</b><small>Напиток снят с производства — он попадёт в архив каталога, его найдут поиском</small></span>
+    <input type="checkbox" role="switch" name="discontinued" value="1" checked={checked} onChange={event => onChange(event.target.checked)} />
+  </label>;
+}
+
+/**
  * «Добавить напиток»: four steps like the store form — brand and flavour, a can photo, volumes and the label text,
  * then a preview of the catalog card before it goes to moderation.
  */
@@ -48,6 +59,7 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified 
   const [picked, setPicked] = useState<PickedFlavor[]>([]);
   const [sugar, setSugar] = useState<DrinkSugar>('regular');
   const [juice, setJuice] = useState(false);
+  const [discontinued, setDiscontinued] = useState(false);
   const [fullName, setFullName] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [photosBusy, setPhotosBusy] = useState(false);
@@ -121,6 +133,7 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified 
     // DOM while the cards still show the choice: a second send («Всё равно отправить») took «С сахаром» and no juice.
     form.set('sugar', sugar);
     if (juice) form.set('juice', '1'); else form.delete('juice');
+    if (discontinued) form.set('discontinued', '1'); else form.delete('discontinued');
     if (inCabinet && verified) form.set('business', '1');
     photos.forEach(photo => form.append('photos', photo));
     startTransition(() => action(form));
@@ -149,6 +162,7 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified 
         </label>)}
       </fieldset>
       <DrinkJuiceOption checked={juice} onChange={setJuice} />
+      <DrinkDiscontinuedOption checked={discontinued} onChange={setDiscontinued} />
       <div className="form-field">
         <label htmlFor="catalog-drink-full-name"><span className="form-label">Полное название {<FormOptional />}</span></label>
         <input id="catalog-drink-full-name" type="text" name="fullName" maxLength={MAX_DRINK_FULL_NAME} autoComplete="off" value={fullName} onChange={event => setFullName(event.target.value)} placeholder="Monster Ultra Paradise" aria-describedby="catalog-drink-full-name-note" />
@@ -188,13 +202,16 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified 
         <div>
           <small>{brand.trim()}</small>
           <strong>{drinkName}</strong>
+          {discontinued && <span className="catalog-drink-archived">В архиве · больше не производится</span>}
           {fullName.trim() && <p>{fullName.trim()}</p>}
           <p>{volumes.map(volumeLabel).join(' · ')}</p>
           <p className="catalog-drink-preview-text">{ingredients.trim() || 'Состав не указан — его можно будет дополнить позже.'}</p>
         </div>
       </div>
       <ul className="catalog-drink-rules">
-        <li>Цен у нового напитка пока нет — они появятся, когда его найдут в магазинах.</li>
+        {discontinued
+          ? <li>Напиток попадёт в архив каталога: его найдут поиском, а в общем списке, тирлистах и дейтинге его не будет.</li>
+          : <li>Цен у нового напитка пока нет — они появятся, когда его найдут в магазинах.</li>}
         <li>Отзывы, избранное, календарь, коллекции, тирлисты, дейтинг и рекомендации заработают сразу после публикации.</li>
       </ul>
     </section>

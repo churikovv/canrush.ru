@@ -25,7 +25,7 @@ describe('catalog drink form', () => {
 
   it('reads brand, flavour, volumes and the label text', () => {
     expect(parseCatalogDrink(form([['brand', ' Burn '], ['flavor', 'apple'], ['volume', '450'], ['volume', '250'], ['volume', '450'], ['ingredients', 'Вода,  сахар\r\n\r\n\r\nтаурин']]), known))
-      .toEqual({ brand: 'Burn', flavor: 'apple', fullName: '', volumes: [250, 450], ingredients: 'Вода, сахар\n\nтаурин' });
+      .toEqual({ brand: 'Burn', flavor: 'apple', fullName: '', volumes: [250, 450], ingredients: 'Вода, сахар\n\nтаурин', discontinued: false });
   });
 
   it('reads the optional full name from the can, spaces collapsed, up to 80 characters', () => {
@@ -37,7 +37,7 @@ describe('catalog drink form', () => {
 
   it('reads the admin edit with the same brand, flavour and sugar inputs, volumes from one field', () => {
     expect(parseCatalogDrinkEdit(form([['brand', ' Burn '], ['flavor', 'mango'], ['customFlavor', 'лемонграсс'], ['sugar', 'free'], ['fullName', 'Burn  Lime'], ['volumes', '500, 250; 500'], ['ingredients', 'Вода']]), known))
-      .toEqual({ brand: 'Burn', flavor: 'blend:mango+Лемонграсс:sugarfree', fullName: 'Burn Lime', volumes: [250, 500], ingredients: 'Вода' });
+      .toEqual({ brand: 'Burn', flavor: 'blend:mango+Лемонграсс:sugarfree', fullName: 'Burn Lime', volumes: [250, 500], ingredients: 'Вода', discontinued: false });
     expect(() => parseCatalogDrinkEdit(form([['brand', 'Burn'], ['flavor', 'apple'], ['volumes', '50']]), known)).toThrow('объёмов');
     expect(() => parseCatalogDrinkEdit(form([['brand', 'Burn'], ['volumes', '450']]), known)).toThrow('Укажите вкус');
   });

@@ -27,7 +27,7 @@ export async function loadCatalogGroups(): Promise<CatalogGroup[]> { return (awa
  * Every product identity: the parser's files plus drinks members added and moderators published (catalogDrink).
  * A file group wins over a member's drink with the same identity; the database being away leaves the files alone.
  */
-export const loadAllCatalogGroups = cache(async (): Promise<CatalogGroup[]> => withBrandCovers(await withCatalogDrinks(await readAllCatalogGroups())));
+export const loadAllCatalogGroups = cache(async (): Promise<CatalogGroup[]> => withBrandCovers(await withCatalogDrinks(await readAllCatalogGroups(), { archived: true })));
 /** Drinks in shops of any city plus member-added ones, which have no offers yet. */
 export const loadTierPickerGroups = cache(async (): Promise<CatalogGroup[]> => withBrandCovers(await withCatalogDrinks(await readTierPickerGroups())));
 

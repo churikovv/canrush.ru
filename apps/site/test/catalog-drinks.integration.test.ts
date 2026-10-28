@@ -97,13 +97,25 @@ it('lets an admin list, correct, rename, re-photograph and delete drinks', async
   expect(updated!.photo).not.toBe(mango.photo);
   expect((await drinks.getCatalogDrinkPhoto(mango.id, null, false))!.data.toString()).toBe('new photo');
 
+  // «Больше не производится»: the drink leaves the main list and the shop-only lists but stays in the whole catalog.
+  const archived = await drinks.getCatalogDrink(brand, 'mango');
+  await drinks.updateCatalogDrink(admin, adminEmail, mango.id, archived!.updatedAt.toISOString(), { ...edit, discontinued: true });
+  expect(await drinks.getCatalogDrink(brand, 'mango')).toMatchObject({ discontinued: true });
+  const has = (groups: { brand: string; flavor: string }[]) => groups.some(group => group.brand === brand && group.flavor === 'mango');
+  expect(has((await drinks.catalogDrinkGroupsByOrigin()).members)).toBe(false);
+  expect(has(await drinks.withCatalogDrinks([]))).toBe(false);
+  expect(has(await drinks.withCatalogDrinks([], { archived: true }))).toBe(true);
+  const back = await drinks.getCatalogDrink(brand, 'mango');
+  await drinks.updateCatalogDrink(admin, adminEmail, mango.id, back!.updatedAt.toISOString(), { ...edit, discontinued: false });
+  expect(has((await drinks.catalogDrinkGroupsByOrigin()).members)).toBe(true);
+
   // Renaming a published drink moves what members left on it; the old address leads to the new one.
   await pool.query(`insert into review(id, "userId", brand, flavor, design, taste, text, "createdAt", "updatedAt") values (gen_random_uuid(), $1, $2, 'mango', 8, 8, 'Отзыв', now(), now())`, [stranger, brand]);
   await pool.query(`insert into "drinkLog"("userId", brand, flavor, name, day) values ($1, $2, 'mango', 'Тест', current_date)`, [stranger, brand]);
   await pool.query(`insert into "drinkSwipe"("userId", brand, flavor, liked) values ($1, $2, 'mango', true)`, [stranger, brand]);
   const { catalogGroupSlug } = await import('../src/lib/catalog-query');
   const oldSlug = catalogGroupSlug(brand, 'mango');
-  await drinks.updateCatalogDrink(admin, adminEmail, mango.id, updated!.updatedAt.toISOString(), { ...edit, flavor: 'blend:mango+peach' });
+  await drinks.updateCatalogDrink(admin, adminEmail, mango.id, (await drinks.getCatalogDrink(brand, 'mango'))!.updatedAt.toISOString(), { ...edit, flavor: 'blend:mango+peach' });
   expect(await drinks.getCatalogDrink(brand, 'mango')).toBeNull();
   expect(await drinks.getCatalogDrink(brand, 'blend:mango+peach')).toMatchObject({ id: mango.id });
   const moved = await pool.query<{ table: string; n: number }>(`select 'review' as table, count(*)::int as n from review where brand = $1 and flavor = 'blend:mango+peach'
@@ -123,7 +135,7 @@ it('lets an admin list, correct, rename, re-photograph and delete drinks', async
   expect(await drinks.getCatalogDrink(brand, 'blend:mango+pear')).toBeNull();
   expect((await pool.query(`select count(*)::int as n from "profileExperience" where "userId" = $1 and reason = 'catalog-drink'`, [author])).rows[0]).toEqual({ n: 3 });
   expect((await pool.query(`select action from "adminAuditLog" where "targetId" = $1 order by id`, [mango.id])).rows.map(row => row.action))
-    .toEqual(['catalog-drink-edit-photo', 'catalog-drink-rename', 'catalog-drink-rename', 'catalog-drink-delete']);
+    .toEqual(['catalog-drink-edit-photo', 'catalog-drink-archive', 'catalog-drink-unarchive', 'catalog-drink-rename', 'catalog-drink-rename', 'catalog-drink-delete']);
   await pool.query(`delete from "adminAuditLog" where "targetType" = 'catalog-drink' and "adminEmail" = $1`, [adminEmail]);
   await pool.query(`delete from "catalogDrinkRename" where "fromBrand" = $1`, [brand]);
   await pool.query(`delete from review where brand = $1; `.trim(), [brand]);

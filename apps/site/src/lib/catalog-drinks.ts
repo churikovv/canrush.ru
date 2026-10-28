@@ -9,6 +9,7 @@ import type { PreparedReviewPhoto } from '@/lib/review-photos';
 export type CatalogDrinkStatus = 'pending' | 'published' | 'rejected';
 export interface CatalogDrink {
   id: string; brand: string; flavor: string; name: string; /** The full name from the can, '' when not given. */ fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus;
+  /** No longer made: in the catalog's archive, not in the main list. */ discontinued: boolean;
   moderationNote: string; createdAt: Date; updatedAt: Date; href: string; photo: string;
   /** The company whose cabinet published it without the queue (migration 0127), or null. */
   business: string | null;
@@ -29,19 +30,19 @@ export async function catalogFileMatch(brand: string, flavor: string): Promise<C
   return (await readAllCatalogGroups()).find(group => lower(group.brand) === lower(brand) && lower(group.flavor) === lower(flavor));
 }
 
-const COLUMNS = `d.id, d.brand, d.flavor, d."fullName", d.volumes, d.ingredients, d.status, d."moderationNote", d."createdAt", d."updatedAt",
+const COLUMNS = `d.id, d.brand, d.flavor, d."fullName", d.volumes, d.ingredients, d.status, d.discontinued, d."moderationNote", d."createdAt", d."updatedAt",
   d."ownerId", u.username, u.name, (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
   coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
   case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
     when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
   (select count(*)::int from "catalogDrink" o where o."ownerId" = d."ownerId" and o.status = 'published') as drinks,
   (select name from business where id = d."businessId" and status = 'approved') as business`;
-interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number; business: string | null }
+interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; discontinued: boolean; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number; business: string | null }
 /** The photo's address carries `updatedAt` in the path: a new photo gets a new URL past the hour of public caching. */
 const drinkPhotoUrl = (id: string, updatedAt: Date) => `/api/catalog-drinks/${id}/${updatedAt.getTime()}`;
 const toDrink = (row: Row): CatalogDrink => ({
   id: row.id, brand: row.brand, flavor: row.flavor, name: flavorName(row.flavor), fullName: row.fullName, volumes: row.volumes, ingredients: row.ingredients,
-  status: row.status, moderationNote: row.moderationNote, createdAt: row.createdAt, updatedAt: row.updatedAt,
+  status: row.status, discontinued: row.discontinued, moderationNote: row.moderationNote, createdAt: row.createdAt, updatedAt: row.updatedAt,
   href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: drinkPhotoUrl(row.id, row.updatedAt), business: row.business ?? null,
   author: { id: row.ownerId, username: row.username, name: row.name, avatarId: row.avatarId, tag: row.tag, xp: Number(row.xp), drinks: row.drinks },
 });
@@ -52,8 +53,8 @@ const VISIBLE_AUTHOR = 'not exists(select 1 from "userBlock" b where b."userId" 
  * Every page that loads the catalog reads it, so it stays one cheap scan; the author's avatar, XP and tag (COLUMNS)
  * are only for the drink's own page and the admin.
  */
-const getPublishedDrinkIdentities = cache(async () => (await getPool().query<{ id: string; brand: string; flavor: string; fullName: string; updatedAt: Date; byBrand: boolean }>(
-  `select d.id, d.brand, d.flavor, d."fullName", d."updatedAt",
+const getPublishedDrinkIdentities = cache(async () => (await getPool().query<{ id: string; brand: string; flavor: string; fullName: string; updatedAt: Date; byBrand: boolean; discontinued: boolean }>(
+  `select d.id, d.brand, d.flavor, d."fullName", d."updatedAt", d.discontinued,
      exists(select 1 from business b where b.id = d."businessId" and b.status = 'approved') as "byBrand" from "catalogDrink" d
    where d.status = 'published' and ${VISIBLE_AUTHOR} order by d."reviewedAt" desc nulls last, d."createdAt" desc`)).rows);
 
@@ -61,9 +62,12 @@ type PublishedDrink = Awaited<ReturnType<typeof getPublishedDrinkIdentities>>[nu
 const drinkGroup = (drink: PublishedDrink): CatalogGroup => ({ brand: drink.brand, flavor: drink.flavor, variants: [], minPrice: 0,
   coverImageUrl: drinkPhotoUrl(drink.id, drink.updatedAt), ...(drink.fullName ? { fullName: drink.fullName } : {}) });
 
-/** The same drinks as catalog groups: no offers yet, the member's or the brand's photo as the cover. */
-export async function catalogDrinkGroups(): Promise<CatalogGroup[]> {
-  return (await getPublishedDrinkIdentities()).map(drinkGroup);
+/**
+ * The same drinks as catalog groups: no offers yet, the member's or the brand's photo as the cover. Discontinued ones
+ * only with `archived` — like the parser's archive they live on for reviews, search and the official tier list.
+ */
+export async function catalogDrinkGroups({ archived = true }: { archived?: boolean } = {}): Promise<CatalogGroup[]> {
+  return (await getPublishedDrinkIdentities()).filter(drink => archived || !drink.discontinued).map(drinkGroup);
 }
 
 /**
@@ -71,16 +75,18 @@ export async function catalogDrinkGroups(): Promise<CatalogGroup[]> {
  * product and stand in the catalog like any drink; members' drinks keep their block «Добавлены участниками».
  */
 export async function catalogDrinkGroupsByOrigin(): Promise<{ brands: CatalogGroup[]; members: CatalogGroup[] }> {
-  const drinks = await getPublishedDrinkIdentities();
+  // Discontinued drinks are left out: the catalog finds them in its archive (`loadAllCatalogGroups`) while searching.
+  const drinks = (await getPublishedDrinkIdentities()).filter(drink => !drink.discontinued);
   return { brands: drinks.filter(drink => drink.byBrand).map(drinkGroup), members: drinks.filter(drink => !drink.byBrand).map(drinkGroup) };
 }
 
 /**
  * `groups` plus the published member drinks they do not already have — for lists that otherwise take only drinks in
- * shops (the tier list picker, the dating deck, «Тебе понравится»).
+ * shops (the tier list picker, the dating deck, «Тебе понравится»), which skip discontinued drinks; the whole catalog
+ * (`archived`) keeps them, as it keeps the parser's archive.
  */
-export async function withCatalogDrinks(groups: CatalogGroup[]): Promise<CatalogGroup[]> {
-  const added = await catalogDrinkGroups().catch(() => []);
+export async function withCatalogDrinks(groups: CatalogGroup[], { archived = false }: { archived?: boolean } = {}): Promise<CatalogGroup[]> {
+  const added = await catalogDrinkGroups({ archived }).catch(() => []);
   const known = new Set(groups.map(group => JSON.stringify([group.brand, group.flavor])));
   return [...groups, ...added.filter(group => !known.has(JSON.stringify([group.brand, group.flavor])))];
 }
@@ -147,9 +153,9 @@ export async function submitCatalogDrink(userId: string, input: CatalogDrinkInpu
     const company = businessId && !member && !waiting && !files.some(same) ? (await db.query<{ id: string }>(
       `select b.id from business b where b.id = $1 and b.status = 'approved'
          and (b."ownerId" = $2 or exists(select 1 from "businessMember" m where m."businessId" = b.id and m."userId" = $2 and m.status = 'active' and m.role = 'manager'))`, [businessId, userId])).rows[0]?.id ?? null : null;
-    const result = await db.query<{ id: string }>(`insert into "catalogDrink"("ownerId", brand, flavor, "fullName", volumes, ingredients, photo, thumbnail, status, "businessId", "reviewedAt")
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case when $9 = 'published' then now() end) returning id`,
-      [userId, identity.brand, identity.flavor, input.fullName, input.volumes, input.ingredients, photo.data, photo.thumbnail, company ? 'published' : 'pending', businessId && company ? company : null]);
+    const result = await db.query<{ id: string }>(`insert into "catalogDrink"("ownerId", brand, flavor, "fullName", volumes, ingredients, photo, thumbnail, status, "businessId", "reviewedAt", discontinued)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case when $9 = 'published' then now() end, $11) returning id`,
+      [userId, identity.brand, identity.flavor, input.fullName, input.volumes, input.ingredients, photo.data, photo.thumbnail, company ? 'published' : 'pending', businessId && company ? company : null, input.discontinued ?? false]);
     if (company) await db.query(`insert into "businessAuditLog"("businessId", "userId", action, target) values ($1, $2, 'drink-new', $3)`, [company, userId, `${identity.brand} · ${flavorName(identity.flavor)}`]);
     await db.query('commit');
     return { id: result.rows[0]!.id, published: Boolean(company), href: `/catalog/${catalogGroupSlug(identity.brand, identity.flavor)}` };
@@ -207,7 +213,7 @@ export async function updateCatalogDrink(adminId: string, adminEmail: string, id
   const db = await getPool().connect();
   try {
     await db.query('begin');
-    const current = (await db.query<{ brand: string; flavor: string; status: CatalogDrinkStatus }>(`select d.brand, d.flavor, d.status from "catalogDrink" d
+    const current = (await db.query<{ brand: string; flavor: string; status: CatalogDrinkStatus; discontinued: boolean }>(`select d.brand, d.flavor, d.status, d.discontinued from "catalogDrink" d
       where d.id = $2 and date_trunc('milliseconds', d."updatedAt") = $3::timestamptz and ${ADMIN} for update`, [adminId, id, version])).rows[0];
     if (!current) throw new CatalogDrinkError('Напиток изменился или удалён. Обновите страницу.');
     const files = await readAllCatalogGroups();
@@ -220,8 +226,8 @@ export async function updateCatalogDrink(adminId: string, adminEmail: string, id
       if (other) throw new CatalogDrinkDuplicate('Такой напиток уже есть в каталоге.', `/catalog/${catalogGroupSlug(other.brand, other.flavor)}`);
     }
     await db.query(`update "catalogDrink" set brand = $2, flavor = $3, "fullName" = $4, volumes = $5, ingredients = $6,
-        photo = coalesce($7, photo), thumbnail = coalesce($8, thumbnail), "updatedAt" = clock_timestamp() where id = $1`,
-    [id, identity.brand, identity.flavor, edit.fullName, edit.volumes, edit.ingredients, photo?.data ?? null, photo?.thumbnail ?? null]);
+        photo = coalesce($7, photo), thumbnail = coalesce($8, thumbnail), discontinued = $9, "updatedAt" = clock_timestamp() where id = $1`,
+    [id, identity.brand, identity.flavor, edit.fullName, edit.volumes, edit.ingredients, photo?.data ?? null, photo?.thumbnail ?? null, edit.discontinued ?? false]);
     if (renamed && current.status === 'published') {
       await db.query('select move_drink_identity($1, $2, $3, $4)', [current.brand, current.flavor, identity.brand, identity.flavor]);
       // Earlier renames of this drink lead straight to the newest address.
@@ -229,7 +235,8 @@ export async function updateCatalogDrink(adminId: string, adminEmail: string, id
       await db.query('insert into "catalogDrinkRename"("drinkId", "fromBrand", "fromFlavor", "toBrand", "toFlavor") values ($1, $2, $3, $4, $5)', [id, current.brand, current.flavor, identity.brand, identity.flavor]);
     }
     await db.query('insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, $2, $3, $4)',
-      [adminEmail, renamed ? 'catalog-drink-rename' : photo ? 'catalog-drink-edit-photo' : 'catalog-drink-edit', 'catalog-drink', id]);
+      [adminEmail, renamed ? 'catalog-drink-rename' : photo ? 'catalog-drink-edit-photo'
+        : (edit.discontinued ?? false) !== current.discontinued ? (edit.discontinued ? 'catalog-drink-archive' : 'catalog-drink-unarchive') : 'catalog-drink-edit', 'catalog-drink', id]);
     await db.query('commit');
   } catch (error) {
     await db.query('rollback');

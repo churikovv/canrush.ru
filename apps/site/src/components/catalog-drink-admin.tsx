@@ -7,12 +7,12 @@ import { FormAlert } from '@/components/form-alert';
 import { EditIcon, TrashIcon } from '@/components/action-icons';
 import { MoreActions } from '@/components/more-actions';
 import { CatalogDrinkBrandInput, CatalogDrinkFlavorInput, type PickedFlavor } from '@/components/catalog-drink-flavor-input';
-import { DrinkJuiceOption, SUGAR_OPTIONS } from '@/components/catalog-drink-form';
+import { DrinkDiscontinuedOption, DrinkJuiceOption, SUGAR_OPTIONS } from '@/components/catalog-drink-form';
 import { deleteCatalogDrinkAction, mergeCatalogDrinkAction, searchMergeTargetsAction, updateCatalogDrinkAction } from '@/app/catalog/new/actions';
 import { MAX_DRINK_FULL_NAME, MAX_DRINK_INGREDIENTS, splitDrinkFlavorKey, type DrinkSugar } from '@/lib/catalog-drink-fields';
 import type { CatalogDrink } from '@/lib/catalog-drinks';
 
-export type AdminDrink = Pick<CatalogDrink, 'id' | 'brand' | 'flavor' | 'name' | 'fullName' | 'volumes' | 'ingredients' | 'status' | 'photo'> & { version: string };
+export type AdminDrink = Pick<CatalogDrink, 'id' | 'brand' | 'flavor' | 'name' | 'fullName' | 'volumes' | 'ingredients' | 'status' | 'photo' | 'discontinued'> & { version: string };
 type Options = { brands: string[]; flavors: { key: string; label: string }[] };
 const subscribeNever = () => () => {};
 
@@ -133,6 +133,7 @@ function EditForm({ drink, brands, flavors, titleId, onDone }: { drink: AdminDri
   const [picked, setPicked] = useState<PickedFlavor[]>(initial.picked);
   const [sugar, setSugar] = useState<DrinkSugar>(initial.sugar);
   const [juice, setJuice] = useState(initial.juice);
+  const [discontinued, setDiscontinued] = useState(drink.discontinued);
   const [problem, setProblem] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const preview = useMemo(() => photo ? URL.createObjectURL(photo) : '', [photo]);
@@ -143,6 +144,7 @@ function EditForm({ drink, brands, flavors, titleId, onDone }: { drink: AdminDri
   return <form action={form => {
     form.set('sugar', sugar);
     if (juice) form.set('juice', '1'); else form.delete('juice');
+    if (discontinued) form.set('discontinued', '1'); else form.delete('discontinued');
     action(form);
   }} className="store-form admin-drink-edit-form">
     <h2 id={titleId}>Редактировать напиток</h2>
@@ -168,6 +170,7 @@ function EditForm({ drink, brands, flavors, titleId, onDone }: { drink: AdminDri
         </label>)}
       </fieldset>
       <DrinkJuiceOption checked={juice} onChange={setJuice} />
+      <DrinkDiscontinuedOption checked={discontinued} onChange={setDiscontinued} />
       <label>Полное название<input name="fullName" defaultValue={drink.fullName} maxLength={MAX_DRINK_FULL_NAME} placeholder="Monster Ultra Paradise" /></label>
       <label>Объёмы, мл<input name="volumes" defaultValue={drink.volumes.join(', ')} required inputMode="numeric" placeholder="250, 450" /></label>
       <label>Состав<textarea name="ingredients" rows={4} maxLength={MAX_DRINK_INGREDIENTS} defaultValue={drink.ingredients} /></label>

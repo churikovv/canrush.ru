@@ -62,10 +62,11 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
             <small>{drink.brand}</small>
             <strong>{drink.status === 'published' ? <Link href={drink.href}>{drink.name}</Link> : drink.name}</strong>
             {drink.fullName && <span className="admin-drink-card-full">{drink.fullName}</span>}
+            {drink.discontinued && <span className="catalog-drink-archived">В архиве · больше не производится</span>}
             <span className="admin-drink-card-meta">{drink.volumes.map(volumeLabel).join(' · ')} · {drink.author.username ? <Link href={`/profile/${drink.author.username}`}>@{drink.author.username}</Link> : drink.author.name} · {submitted.format(drink.createdAt)}</span>
             {drink.flavor !== drink.name && <code title="Ключ вкуса">{drink.flavor}</code>}
           </div>
-          <CatalogDrinkAdminMenu key={drink.updatedAt.toISOString()} brands={brands} flavors={flavors} drink={{ id: drink.id, brand: drink.brand, flavor: drink.flavor, name: drink.name, fullName: drink.fullName, volumes: drink.volumes, ingredients: drink.ingredients, status: drink.status, photo: drink.photo, version: drink.updatedAt.toISOString() }} />
+          <CatalogDrinkAdminMenu key={drink.updatedAt.toISOString()} brands={brands} flavors={flavors} drink={{ id: drink.id, brand: drink.brand, flavor: drink.flavor, name: drink.name, fullName: drink.fullName, volumes: drink.volumes, ingredients: drink.ingredients, status: drink.status, photo: drink.photo, discontinued: drink.discontinued, version: drink.updatedAt.toISOString() }} />
         </div>
         {drink.ingredients && <p className="admin-drink-card-ingredients">{drink.ingredients}</p>}
         {drink.business && <p className="admin-drink-card-note">Опубликован без проверки компанией «{drink.business}»</p>}

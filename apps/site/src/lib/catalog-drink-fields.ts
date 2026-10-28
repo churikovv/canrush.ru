@@ -10,7 +10,8 @@ export const MAX_DRINK_FULL_NAME = 80;
 /** Pending requests one member may have at once. */
 export const MAX_PENDING_DRINKS = 50;
 
-export interface CatalogDrinkInput { brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string }
+/** `discontinued` — no longer made: the published drink goes to the catalog's archive (migration 0138). */
+export interface CatalogDrinkInput { brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; discontinued?: boolean }
 
 const collapse = (value: string) => value.replace(/\s+/gu, ' ').trim();
 const capitalise = (value: string) => value.charAt(0).toLocaleUpperCase('ru-RU') + value.slice(1);
@@ -54,7 +55,7 @@ export function customFlavorProblem(value: string): string | null {
 
 /** Reads and checks the form; `knownFlavors` are the keys the browser could offer. */
 export function parseCatalogDrink(form: FormData, knownFlavors: ReadonlySet<string>): CatalogDrinkInput {
-  return { ...parseIdentity(form, knownFlavors), fullName: parseFullName(form), volumes: parseVolumes(form), ingredients: parseIngredients(form) };
+  return { ...parseIdentity(form, knownFlavors), fullName: parseFullName(form), volumes: parseVolumes(form), ingredients: parseIngredients(form), discontinued: form.get('discontinued') === '1' };
 }
 
 /** Brand, the flavours picked from the list or typed (`flavor`/`customFlavor`), juice and the sugar choice, as one catalog key. */
