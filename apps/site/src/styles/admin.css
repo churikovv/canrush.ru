@@ -303,3 +303,7 @@ div.admin-drink-card-match > p { margin: 0; }
 .admin-drink-add-volume { display: grid; gap: 8px; }
 .admin-drink-add-volume .community-button { min-height: 44px; }
 @media (min-width: 640px) { .admin-drink-add-volume .community-button { width: fit-content; } }
+/* A drink request's extra photos (the back, the can in hand): thumbnails that open the full photo. */
+.admin-drink-extras { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-drink-extras a { display: block; width: 56px; height: 56px; overflow: hidden; border-radius: 10px; background: var(--color-subtle); }
+.admin-drink-extras img { width: 100%; height: 100%; object-fit: cover; }

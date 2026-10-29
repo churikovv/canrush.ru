@@ -24,6 +24,8 @@ const CONTENT_SOURCES: Record<ContentReportKind, string> = {
   store: 'select "ownerId" as author, name || E\'\\n\' || description as excerpt from "marketStore" where id=$1',
   story: 'select "userId" as author, case when caption = \'\' then \'История без подписи\' else caption end as excerpt from "story" where id=$1',
   article: 'select "authorId" as author, case when title = \'\' then \'Статья без названия\' else title end as excerpt from article where id=$1 and status = \'published\'',
+  // The author may have left; the company's owner answers for its wall then.
+  'business-post': 'select coalesce(p."authorId", b."ownerId") as author, case when p.text = \'\' then p."fileName" else p.text end as excerpt from "businessPost" p join business b on b.id = p."businessId" where p.id=$1',
 };
 
 async function submit(

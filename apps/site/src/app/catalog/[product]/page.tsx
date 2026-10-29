@@ -122,8 +122,9 @@ export default async function CatalogProductPage({
         reviewDigest={reviewDigest}
         radar={radar}
         addedBy={added && group.variants.length === 0 ? added : undefined}
+        photos={added?.photos ?? []}
         fullName={brand?.fullName || added?.fullName || undefined}
-        brand={brand ? { business: brand.business, description: brand.description } : null}
+        brand={brand ? { business: brand.business, businessId: brand.businessId, description: brand.description } : null}
         brandStores={brandStores}
         ceilings={ceilings}
       />

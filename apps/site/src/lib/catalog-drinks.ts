@@ -3,7 +3,7 @@ import { cache } from 'react';
 import { getPool } from '@/db/pool';
 import { readAllCatalogGroups } from '@/lib/catalog-files';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
-import { CatalogDrinkError, MAX_PENDING_DRINKS, type CatalogDrinkEdit, type CatalogDrinkInput } from '@/lib/catalog-drink-fields';
+import { CatalogDrinkError, MAX_DRINK_EXTRA_PHOTOS, MAX_PENDING_DRINKS, type CatalogDrinkEdit, type CatalogDrinkInput } from '@/lib/catalog-drink-fields';
 import type { PreparedReviewPhoto } from '@/lib/review-photos';
 import { SUSPECT } from '@/lib/drink-duplicate-check';
 
@@ -14,8 +14,12 @@ export interface CatalogDrink {
   moderationNote: string; createdAt: Date; updatedAt: Date; href: string; photo: string;
   /** The company whose cabinet published it without the queue (migration 0127), or null. */
   business: string | null;
+  /** The approved company that published it, for a link to its profile (/company/<id>). */
+  businessId: string | null;
   /** Avatar, tag and XP as every author row shows them; `drinks` — how many of their drinks are published. */
   author: { id: string; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; drinks: number };
+  /** Ids of the extra photos in order (served by `/api/catalog-drink-photos/<id>`), besides the cover. */
+  photos: string[];
 }
 /**
  * A duplicate of a drink the catalog already has or that waits in another member's request: the form links to it.
@@ -37,15 +41,18 @@ const COLUMNS = `d.id, d.brand, d.flavor, d."fullName", d.volumes, d.ingredients
   case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
     when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
   (select count(*)::int from "catalogDrink" o where o."ownerId" = d."ownerId" and o.status = 'published') as drinks,
-  (select name from business where id = d."businessId" and status = 'approved') as business`;
-interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; discontinued: boolean; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number; business: string | null }
+  (select name from business where id = d."businessId" and status = 'approved') as business,
+  (select id from business where id = d."businessId" and status = 'approved') as "businessId",
+  array(select p.id::text from "catalogDrinkPhoto" p where p."drinkId" = d.id order by p.position) as photos`;
+interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; discontinued: boolean; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number; business: string | null; businessId: string | null; photos: string[] }
 /** The photo's address carries `updatedAt` in the path: a new photo gets a new URL past the hour of public caching. */
 const drinkPhotoUrl = (id: string, updatedAt: Date) => `/api/catalog-drinks/${id}/${updatedAt.getTime()}`;
 const toDrink = (row: Row): CatalogDrink => ({
   id: row.id, brand: row.brand, flavor: row.flavor, name: flavorName(row.flavor), fullName: row.fullName, volumes: row.volumes, ingredients: row.ingredients,
   status: row.status, discontinued: row.discontinued, moderationNote: row.moderationNote, createdAt: row.createdAt, updatedAt: row.updatedAt,
-  href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: drinkPhotoUrl(row.id, row.updatedAt), business: row.business ?? null,
+  href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: drinkPhotoUrl(row.id, row.updatedAt), business: row.business ?? null, businessId: row.businessId ?? null,
   author: { id: row.ownerId, username: row.username, name: row.name, avatarId: row.avatarId, tag: row.tag, xp: Number(row.xp), drinks: row.drinks },
+  photos: row.photos ?? [],
 });
 const VISIBLE_AUTHOR = 'not exists(select 1 from "userBlock" b where b."userId" = d."ownerId")';
 
@@ -120,17 +127,29 @@ const lower = (value: string) => value.toLocaleLowerCase('ru-RU');
  * own waiting request for the same drink is refused (`catalog_drink_owner_pending` catches a race).
  */
 /**
+ * A typed brand and flavour as the catalog keys them. The reviewed aliases go first, on what the member typed: they are
+ * written for the stores' raw names («Adrenaline Game Fuel» + «Оригинальный» is the catalog's Adrenaline Rush · Game
+ * Fuel), and the canonical flavour would turn «original» into «game_fuel» before they could match, leaving the
+ * drink under its own brand and past the duplicate check. Then the flavour is made canonical and the aliases run again.
+ */
+function drinkIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
+  const typed = reviewedProductIdentity(brand, flavor);
+  return reviewedProductIdentity(typed.brand, canonicalProductFlavor(typed.brand, typed.flavor));
+}
+
+/**
  * `businessId` — sent from the cabinet of an approved company: checked again in the transaction (approved, the member
  * is its owner or active teammate), and then the drink is published at once, without the queue, with the company kept
  * on the row. A drink that matched something (the «всё равно отправить» path) still goes to moderation — publishing it
  * would hide a parser card or clash with a published drink. Attaching it to the company stays a moderated request.
  */
-export async function submitCatalogDrink(userId: string, input: CatalogDrinkInput, photo: PreparedReviewPhoto | undefined, confirmMatch = false, businessId: string | null = null): Promise<{ id: string; published: boolean; href: string }> {
+export async function submitCatalogDrink(userId: string, input: CatalogDrinkInput, photo: PreparedReviewPhoto | undefined, confirmMatch = false, businessId: string | null = null, extras: PreparedReviewPhoto[] = []): Promise<{ id: string; published: boolean; href: string }> {
   if (!photo) throw new CatalogDrinkError('Добавьте фото банки.');
+  if (extras.length > MAX_DRINK_EXTRA_PHOTOS) throw new CatalogDrinkError(`Дополнительных фото — не больше ${MAX_DRINK_EXTRA_PHOTOS}.`);
   const files = await readAllCatalogGroups();
   const published = await catalogDrinkGroups();
   const brand = [...files, ...published].find(group => lower(group.brand) === lower(input.brand))?.brand ?? input.brand;
-  const identity = reviewedProductIdentity(brand, canonicalProductFlavor(brand, input.flavor));
+  const identity = drinkIdentity(brand, input.flavor);
   const same = (group: CatalogGroup) => lower(group.brand) === lower(identity.brand) && lower(group.flavor) === lower(identity.flavor);
   const member = published.find(same);
   if (member && !confirmMatch) throw new CatalogDrinkDuplicate('Такой напиток уже добавил другой участник. Если в вашей банке есть сок или часть сахара заменена подсластителем, отметьте это на первом шаге. Если у вас другая версия — новый дизайн или состав, — всё равно отправьте её: модератор сверит и переименует или объединит.', `/catalog/${catalogGroupSlug(member.brand, member.flavor)}`, true);
@@ -157,6 +176,7 @@ export async function submitCatalogDrink(userId: string, input: CatalogDrinkInpu
     const result = await db.query<{ id: string }>(`insert into "catalogDrink"("ownerId", brand, flavor, "fullName", volumes, ingredients, photo, thumbnail, status, "businessId", "reviewedAt", discontinued)
       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case when $9 = 'published' then now() end, $11) returning id`,
       [userId, identity.brand, identity.flavor, input.fullName, input.volumes, input.ingredients, photo.data, photo.thumbnail, company ? 'published' : 'pending', businessId && company ? company : null, input.discontinued ?? false]);
+    for (const [position, extra] of extras.entries()) await db.query(`insert into "catalogDrinkPhoto"("drinkId", position, data, thumbnail) values ($1, $2, $3, $4)`, [result.rows[0]!.id, position, extra.data, extra.thumbnail]);
     if (company) await db.query(`insert into "businessAuditLog"("businessId", "userId", action, target) values ($1, $2, 'drink-new', $3)`, [company, userId, `${identity.brand} · ${flavorName(identity.flavor)}`]);
     await db.query('commit');
     return { id: result.rows[0]!.id, published: Boolean(company), href: `/catalog/${catalogGroupSlug(identity.brand, identity.flavor)}` };
@@ -225,7 +245,7 @@ export async function updateCatalogDrink(adminId: string, adminEmail: string, id
     const files = await readAllCatalogGroups();
     const published = (await catalogDrinkGroups()).filter(group => !(group.brand === current.brand && group.flavor === current.flavor));
     const brand = [...files, ...published].find(group => lower(group.brand) === lower(edit.brand))?.brand ?? edit.brand;
-    const identity = reviewedProductIdentity(brand, canonicalProductFlavor(brand, edit.flavor));
+    const identity = drinkIdentity(brand, edit.flavor);
     const renamed = identity.brand !== current.brand || identity.flavor !== current.flavor;
     if (renamed) {
       const other = [...files, ...published].find(group => lower(group.brand) === lower(identity.brand) && lower(group.flavor) === lower(identity.flavor));
@@ -319,6 +339,15 @@ export async function listOwnCatalogDrinks(userId: string): Promise<CatalogDrink
 }
 
 /** Photo bytes: published drinks for everyone, others only for their author and admins. */
+/** An extra photo of a member's drink: public with the published drink, else to its author and the team. */
+export async function getCatalogDrinkExtraPhoto(id: string, userId: string | null, thumbnail: boolean): Promise<{ data: Buffer; published: boolean } | null> {
+  const { rows } = await getPool().query<{ data: Buffer; published: boolean }>(`select ${thumbnail ? 'p.thumbnail' : 'p.data'} as data,
+      d.status = 'published' and ${VISIBLE_AUTHOR} as published
+    from "catalogDrinkPhoto" p join "catalogDrink" d on d.id = p."drinkId" where p.id = $1 and ((d.status = 'published' and ${VISIBLE_AUTHOR}) or d."ownerId" = $2
+      or exists(select 1 from "user" u join "siteAdmin" a on lower(u.email) = a.email where u.id = $2))`, [id, userId]);
+  return rows[0] ?? null;
+}
+
 export async function getCatalogDrinkPhoto(id: string, userId: string | null, thumbnail: boolean): Promise<{ data: Buffer; published: boolean } | null> {
   const { rows } = await getPool().query<{ data: Buffer; published: boolean }>(`select ${thumbnail ? 'd.thumbnail' : 'd.photo'} as data,
       d.status = 'published' and ${VISIBLE_AUTHOR} as published

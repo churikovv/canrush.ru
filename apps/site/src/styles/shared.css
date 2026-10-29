@@ -226,6 +226,9 @@ button.tier-list-card-likes[aria-pressed="true"] svg { animation: tier-like-pop 
 .store-search { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr) auto; align-items: end; gap: 16px; margin: 24px 0; }
 .store-search label, .store-form label, .store-moderation label { display: grid; gap: 8px; min-width: 0; font-size: .875rem; }
 .store-search input, .store-search select, .store-form input:not([type=hidden]), .store-form select, .store-form textarea, .store-moderation textarea { width: 100%; min-height: 44px; border: 1px solid var(--color-control); border-radius: 8px; padding: 10px 12px; color: var(--color-ink); background: var(--theme-panel,#fff); font: inherit; }
+/* Next does not unload CSS on client-side navigation and may add this file again after a section's file, so a section's
+   rule for a special input inside `.store-form` (a radio, a switch, a chip field) must outweigh the rule above
+   (0,2,1) — write it as `.store-form .<own class> input:not([type=hidden])`, not by relying on file order. */
 /* These fields inherit the label's 14px; touch screens need 16px, or iOS Safari zooms in on focus. */
 @media (pointer: coarse) { :is(.store-search input, .store-search select, .store-form input:not([type=hidden]), .store-form select, .store-form textarea, .store-moderation textarea) { font-size: 1rem; } }
 .store-search input:focus-visible, .store-search select:focus-visible, .store-form input:focus-visible, .store-form select:focus-visible, .store-form textarea:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }

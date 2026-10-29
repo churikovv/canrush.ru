@@ -35,7 +35,10 @@ it('sends a drink for moderation, refuses duplicates and blocked accounts', asyn
   await expect(drinks.submitCatalogDrink(author, { ...input('apple'), brand: 'файлбренд' }, photo)).rejects.toMatchObject({ href: expect.stringMatching(/^\/catalog\//u), confirmable: true });
   await expect(drinks.submitCatalogDrink(author, input('mango'), undefined)).rejects.toThrow('фото');
   await expect(drinks.submitCatalogDrink(banned, input('mango'), photo)).rejects.toThrow('ограничено');
-  const id = (await drinks.submitCatalogDrink(author, input('mango', 'Тест Ultra Paradise'), photo)).id;
+  await expect(drinks.submitCatalogDrink(author, input('mango'), photo, false, null, Array(6).fill(photo))).rejects.toThrow('не больше 5');
+  // Optional photos besides the cover (migration 0153), kept in their order.
+  const extras = [{ data: Buffer.from('back'), thumbnail: Buffer.from('back-thumb') }, { data: Buffer.from('shelf'), thumbnail: Buffer.from('shelf-thumb') }];
+  const id = (await drinks.submitCatalogDrink(author, input('mango', 'Тест Ultra Paradise'), photo, false, null, extras)).id;
   expect((await drinks.listOwnCatalogDrinks(author)).map(drink => [drink.id, drink.status, drink.name])).toEqual([[id, 'pending', 'Манго']]);
   // The minute between requests, then the live request itself, stop a second one.
   await expect(drinks.submitCatalogDrink(author, input('kiwi'), photo)).rejects.toThrow('минуту');
@@ -48,6 +51,12 @@ it('publishes after moderation into the catalog, with the photo public only then
   expect(pending).toBeDefined();
   expect(await drinks.getCatalogDrinkPhoto(pending!.id, stranger, false)).toBeNull();
   expect(await drinks.getCatalogDrinkPhoto(pending!.id, author, true)).toMatchObject({ published: false });
+  expect(pending!.photos).toHaveLength(2);
+  const [back, shelf] = pending!.photos;
+  // Under review the extra photos are the author's and the team's only.
+  expect(await drinks.getCatalogDrinkExtraPhoto(back!, stranger, false)).toBeNull();
+  expect((await drinks.getCatalogDrinkExtraPhoto(shelf!, author, true))?.data.toString()).toBe('shelf-thumb');
+  expect((await drinks.getCatalogDrinkExtraPhoto(back!, admin, false))?.data.toString()).toBe('back');
   expect((await drinks.catalogDrinkGroups()).some(group => group.brand === brand)).toBe(false);
   await expect(drinks.moderateCatalogDrink(stranger, pending!.id, 'published', '', pending!.updatedAt.toISOString())).rejects.toThrow('Обновите');
   await expect(drinks.moderateCatalogDrink(admin, pending!.id, 'rejected', '', pending!.updatedAt.toISOString())).rejects.toThrow('причину');
@@ -58,7 +67,9 @@ it('publishes after moderation into the catalog, with the photo public only then
   for (const query of ['ultra paradise', 'Paradise', 'манго']) expect(matchesCatalogQuery(group!, query)).toBe(true);
   expect(matchesCatalogQuery(group!, 'zero ultra')).toBe(false);
   expect(await drinks.getCatalogDrinkPhoto(pending!.id, null, false)).toMatchObject({ published: true });
+  expect(await drinks.getCatalogDrinkExtraPhoto(back!, null, false)).toMatchObject({ published: true });
   const drink = await drinks.getCatalogDrink(brand, 'mango');
+  expect(drink!.photos).toEqual([back, shelf]);
   expect(drinks.catalogDrinkIngredients(drink!)).toMatchObject({ ingredients: 'Вода', status: 'unverified', volumeMl: 450 });
   // Now the published drink itself is the duplicate — a warning, as with a parser card (see the last tests).
   await expect(drinks.submitCatalogDrink(stranger, input('mango'), photo)).rejects.toMatchObject({ message: expect.stringContaining('другой участник'), confirmable: true });
@@ -172,6 +183,18 @@ it('takes a version of a parser card after the warning, but will not publish it 
     expect(await drinks.catalogFileMatch('файлбренд', 'APPLE')).toMatchObject({ brand: 'Файлбренд' });
     await expect(drinks.moderateCatalogDrink(admin, id, 'published', '', request!.updatedAt.toISOString())).rejects.toThrow('склейте');
     await drinks.moderateCatalogDrink(admin, id, 'rejected', 'Та же банка', request!.updatedAt.toISOString());
+  } finally {
+    await pool.query('delete from "user" where id = $1', [member]);
+  }
+});
+
+it('applies the brand alias before the flavor: Game Fuel «Оригинальный» is the Adrenaline Rush game_fuel line', async () => {
+  const member = randomUUID();
+  await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Drinks test',$2,true,now(),now(),$3)`, [member, `${member}@example.com`, `cd_${member.slice(0, 12)}`]);
+  try {
+    const id = (await drinks.submitCatalogDrink(member, { ...input('original'), brand: 'Adrenaline Game Fuel' }, photo)).id;
+    const [request] = (await drinks.listOwnCatalogDrinks(member)).filter(drink => drink.id === id);
+    expect(request).toMatchObject({ brand: 'Adrenaline Rush', flavor: 'game_fuel' });
   } finally {
     await pool.query('delete from "user" where id = $1', [member]);
   }

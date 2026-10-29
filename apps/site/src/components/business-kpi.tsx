@@ -20,11 +20,13 @@ export const KPI_ICONS = {
   ratio: <path d="M19 5 5 19M7.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm9 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />,
 };
 
-/** A KPI card like the reference: an icon in a raised square, the number with its change in colour, the label below. */
+/**
+ * A KPI in the manner of Linear's insights: a small muted label with its icon on top, then the number and its change in
+ * colour; the cards sit as cells of one hairline frame (`.bc-kpis`), not as separate raised boxes.
+ */
 export function Kpi({ icon, value, label, delta, deltaLabel }: { icon: keyof typeof KPI_ICONS; value: string; label: string; delta?: number | null; deltaLabel?: string }) {
   return <div className="bc-kpi">
-    <span className="bc-kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{KPI_ICONS[icon]}</svg></span>
+    <span className="bc-kpi-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{KPI_ICONS[icon]}</svg>{label}</span>
     <div className="bc-kpi-value"><strong>{value}</strong>{delta !== undefined && delta !== null && <b data-trend={delta > 0 ? 'up' : delta < 0 ? 'down' : undefined}>{delta > 0 ? '+' : ''}{number.format(delta)}{deltaLabel}</b>}</div>
-    <span className="bc-kpi-label">{label}</span>
   </div>;
 }

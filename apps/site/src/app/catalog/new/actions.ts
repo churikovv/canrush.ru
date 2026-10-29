@@ -27,9 +27,13 @@ export async function submitCatalogDrinkAction(_previous: CatalogDrinkState, for
     const input = parseCatalogDrink(form, KNOWN_FLAVORS);
     const { photos } = await prepareReviewPhotos(form);
     if (photos.length > 1) return { error: 'Добавьте одно фото банки.' };
+    // Optional photos besides the cover come in their own field: decoded and re-encoded the same way.
+    const extraForm = new FormData();
+    for (const extra of form.getAll('extraPhotos')) extraForm.append('photos', extra);
+    const { photos: extras } = await prepareReviewPhotos(extraForm);
     // From the business cabinet: the member's company, checked again in `submitCatalogDrink`.
     const businessId = form.get('business') === '1' ? (await getCabinet(session.user.id))?.business.id ?? null : null;
-    const result = await submitCatalogDrink(session.user.id, input, photos[0], form.get('confirmMatch') === '1', businessId);
+    const result = await submitCatalogDrink(session.user.id, input, photos[0], form.get('confirmMatch') === '1', businessId, extras);
     revalidatePath('/catalog/new');
     revalidatePath('/admin/drinks');
     // The neural network's duplicate hint for moderators, after the answer; the worker retries what fails here.

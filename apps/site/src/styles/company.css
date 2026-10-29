@@ -1,0 +1,229 @@
+/* /company/<id>: a company's public profile. Loaded after globals.css and shared.css. */
+.company-page { display: grid; gap: 16px; width: 100%; max-width: 980px; margin: 0 auto; }
+.company-muted { color: var(--color-muted-strong); font-size: .8125rem; }
+
+.company-about { margin: 0; color: var(--color-muted-strong); line-height: 1.5; white-space: pre-line; }
+.company-store-button { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
+
+.company-section { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--color-control); border-radius: 20px; background: var(--color-surface); }
+.company-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.company-section h2 { margin: 0; font-size: 1.125rem; }
+.company-empty { margin: 0; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.5; }
+
+.company-store { grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+.company-store p { margin: 4px 0 0; color: var(--color-muted-strong); font-size: .875rem; overflow-wrap: anywhere; }
+.company-store-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); }
+.company-store-link { color: var(--color-brand); font-size: .875rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.company-store > .company-store-link { grid-column: 1 / -1; }
+
+/* The wall: a composer for the team, then posts as rows with a PDF card. */
+.company-composer { display: grid; gap: 10px; padding: 12px; border-radius: 16px; background: var(--color-subtle); }
+.company-composer textarea { width: 100%; min-height: 64px; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--color-control); border-radius: 12px; background: var(--color-surface); color: var(--color-text); font: inherit; resize: vertical; }
+.company-publish { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
+.company-publish:disabled { opacity: .5; cursor: not-allowed; }
+@media (pointer: coarse) { .company-composer textarea { font-size: 1rem; } }
+
+.company-posts { display: grid; margin: 0; padding: 0; list-style: none; }
+.company-post { display: grid; gap: 10px; padding: 14px 0; }
+.company-post + .company-post { border-top: 1px solid var(--color-control); }
+.company-post-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.company-post-head .market-company-logo { border-radius: 10px; }
+.company-post-meta { display: grid; min-width: 0; }
+.company-post-meta small { color: var(--color-muted-strong); font-size: .75rem; }
+.company-post-text { margin: 0; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+
+.company-file { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--color-control); border-radius: 16px; background: var(--color-subtle); color: var(--color-ink); text-decoration: none; transition: border-color var(--motion-fast) ease-out; }
+a.company-file:hover { border-color: var(--color-brand); }
+.company-file-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: color-mix(in srgb, #e5484d 14%, transparent); color: #e5484d; }
+.company-file-text { display: grid; min-width: 0; }
+.company-file-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.company-file-text small { color: var(--color-muted-strong); font-size: .75rem; }
+.company-file-open { color: var(--color-brand); font-size: .875rem; font-weight: 700; }
+.company-file-remove { width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--color-muted-strong); font-size: 1.5rem; cursor: pointer; }
+.company-file.is-draft { background: var(--color-surface); }
+
+.company-drinks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.company-drinks a { display: grid; gap: 4px; color: var(--color-ink); text-decoration: none; }
+.company-drinks small { color: var(--color-muted-strong); font-size: .75rem; }
+.company-drink-cover { position: relative; display: block; aspect-ratio: 1; overflow: hidden; border-radius: 16px; background: var(--color-subtle); }
+.company-drink-cover img { position: absolute; inset: 0; width: 100%; height: 100%; margin: auto; object-fit: contain; padding: 8px; box-sizing: border-box; }
+
+@media (min-width: 640px) {
+  .company-section { padding: 20px; }
+  .company-store { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .company-store > .company-store-link { grid-column: auto; }
+  .company-drinks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 960px) {
+  .company-page { gap: 20px; }
+  .company-drinks { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+/* A page of a presentation laid open (pdf-pages.tsx): white, its own ratio once known. */
+.pdf-slide { position: relative; aspect-ratio: 16 / 9; scroll-snap-align: start; overflow: hidden; background: #fff; }
+.pdf-slide canvas { display: block; width: 100%; height: 100%; }
+.pdf-slide.is-loading { display: grid; place-items: center; color: #5b6270; font-size: .875rem; }
+.pdf-slides-note { margin: 0; color: var(--color-muted-strong); font-size: .875rem; }
+
+/* «Презентация»: the main deck in its own block, every page at full width one under another (PdfPages). */
+.company-presentation .company-section-head { flex-wrap: wrap; }
+.company-presentation h2 { overflow-wrap: anywhere; }
+.pdf-pages { display: grid; gap: 12px; }
+.pdf-pages > .pdf-slide { border: 1px solid var(--color-control); border-radius: 12px; box-shadow: 0 1px 2px rgb(0 0 0 / 6%); }
+@media (min-width: 960px) { .pdf-pages { gap: 16px; } }
+
+/* The PDF drop zone of the composer: a big dashed block — drag a deck onto it or tap to pick one. The sheet floats
+   gently, a hovering file lights the zone up and lifts the sheet, a picked file turns it into a ready card. */
+.company-composer { gap: 12px; }
+.company-drop { --drop: var(--color-brand); position: relative; display: grid; justify-items: center; gap: 8px; padding: 28px 16px 24px; border: 2px dashed color-mix(in srgb, var(--drop) 45%, var(--color-control)); border-radius: 20px; background: color-mix(in srgb, var(--drop) 6%, var(--color-surface)); text-align: center; cursor: pointer; transition: border-color 160ms ease-out, background-color 160ms ease-out, transform 200ms cubic-bezier(.2, .9, .3, 1.2); }
+.company-drop:hover { border-color: var(--drop); }
+#company-post-file:focus-visible + .company-drop { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+.company-drop[data-over] { border-style: solid; border-color: var(--drop); background: color-mix(in srgb, var(--drop) 16%, var(--color-surface)); transform: scale(1.015); }
+.company-drop-art { position: relative; display: grid; place-items: center; width: 84px; height: 84px; }
+.company-drop-sheet { position: relative; display: grid; place-items: center; width: 60px; height: 74px; border-radius: 12px; background: var(--color-surface); color: #e5484d; box-shadow: 0 6px 16px rgb(0 0 0 / 14%), inset 0 0 0 1px var(--color-control); animation: drop-float 3.2s ease-in-out infinite; }
+.company-drop-sheet svg { width: 30px; height: 30px; }
+.company-drop-sheet b { position: absolute; bottom: -8px; padding: 2px 8px; border-radius: 6px; background: #e5484d; color: #fff; font-size: .6875rem; letter-spacing: .04em; }
+.company-drop-arrow { position: absolute; top: -6px; right: -4px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--drop); color: #fff; box-shadow: 0 4px 12px color-mix(in srgb, var(--drop) 40%, transparent); }
+.company-drop[data-over] .company-drop-sheet { animation: none; transform: translateY(-8px) rotate(-4deg); transition: transform 220ms cubic-bezier(.2, .9, .3, 1.3); }
+.company-drop[data-over] .company-drop-arrow { animation: drop-bounce 700ms ease-in-out infinite; }
+.company-drop-title { font-size: 1.0625rem; line-height: 1.3; }
+.company-drop-hint { color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.4; }
+.company-drop .is-touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .company-drop .is-pointer { display: none; }
+  .company-drop .is-touch { display: inline; }
+}
+
+.company-drop.is-ready { grid-template-columns: auto minmax(0, 1fr); justify-items: stretch; align-items: center; gap: 14px; padding: 16px; border-style: solid; border-color: color-mix(in srgb, var(--color-success, #1f9d55) 55%, var(--color-control)); background: color-mix(in srgb, var(--color-success, #1f9d55) 8%, var(--color-surface)); text-align: left; cursor: default; animation: drop-ready 380ms cubic-bezier(.2, .9, .3, 1.25) both; }
+.company-drop-done { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: var(--color-success, #1f9d55); color: #fff; animation: drop-pop 420ms 80ms cubic-bezier(.2, .9, .3, 1.5) both; }
+.company-drop-done path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: drop-check 360ms 260ms ease-out forwards; }
+.company-drop-file { display: grid; min-width: 0; }
+.company-drop-file strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.company-drop-file small { color: var(--color-muted-strong); font-size: .8125rem; }
+.company-drop-actions { grid-column: 1 / -1; display: flex; gap: 8px; }
+.company-drop-link { display: inline-flex; flex: 1; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; border: 1px solid var(--color-control); border-radius: 12px; background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: .875rem; font-weight: 700; cursor: pointer; }
+.company-drop-link.is-danger { color: var(--color-danger, #d93838); }
+
+@keyframes drop-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes drop-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes drop-ready { from { transform: scale(.97); opacity: .4; } to { transform: none; opacity: 1; } }
+@keyframes drop-pop { from { transform: scale(.4); } to { transform: none; } }
+@keyframes drop-check { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .company-drop, .company-drop-sheet, .company-drop-arrow, .company-drop.is-ready, .company-drop-done { animation: none; transition: none; }
+  .company-drop[data-over] { transform: none; }
+  .company-drop-done path { animation: none; stroke-dashoffset: 0; }
+}
+@media (min-width: 640px) {
+  .company-drop { padding: 36px 24px 30px; }
+  .company-drop.is-ready { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .company-drop-actions { grid-column: auto; }
+  .company-drop-link { flex: none; }
+}
+.company-presentation-meta { display: inline-flex; align-items: center; gap: 4px; }
+
+/* Photos in a post: a picker row in the composer (previews with ×, «Добавить фото»), a grid in the post. */
+.company-photo-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.company-photo-draft { position: relative; width: 72px; height: 72px; }
+.company-photo-draft img { width: 100%; height: 100%; border-radius: 12px; object-fit: cover; }
+.company-photo-draft button { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 28px; height: 28px; border: 2px solid var(--color-subtle); border-radius: 50%; background: var(--color-ink); color: var(--color-surface); font-size: 1rem; line-height: 1; cursor: pointer; }
+.company-photo-add { display: grid; place-items: center; align-content: center; gap: 2px; min-width: 72px; height: 72px; padding: 0 12px; border: 1px dashed var(--color-control); border-radius: 12px; background: var(--color-surface); color: var(--color-ink); font-size: .75rem; font-weight: 700; cursor: pointer; }
+.company-photo-add small { color: var(--color-muted-strong); font-weight: 500; }
+.company-photo-add:hover { border-color: var(--color-brand); }
+#company-post-photos:focus-visible ~ .company-photo-row .company-photo-add { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.company-photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; overflow: hidden; border-radius: 16px; }
+.company-photos[data-count="1"] { grid-template-columns: 1fr; }
+.company-photos[data-count="3"] > :first-child { grid-column: 1 / -1; }
+.company-photo { display: block; aspect-ratio: 4 / 3; padding: 0; border: 0; background: var(--color-subtle); cursor: zoom-in; }
+.company-photos[data-count="1"] .company-photo { aspect-ratio: 16 / 10; }
+.company-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* «Другие презентации» under the open one: rows that open a deck in the block, with the post's «⋯». */
+.company-decks { display: grid; gap: 8px; padding-top: 6px; }
+.company-decks h3 { margin: 0; font-size: .9375rem; }
+.company-decks ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.company-decks li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; }
+.company-deck { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-subtle); color: var(--color-ink); text-decoration: none; }
+.company-deck:hover { border-color: var(--color-brand); }
+
+/* The brand's head, as on the reference: a wide banner, the round logo with a blue check half over it, the name with
+   the check, «Официальный профиль», subscribe, numbers and tabs as pills. */
+.company-head { overflow: hidden; border: 1px solid var(--color-control); border-radius: 24px; background: var(--color-surface); }
+.company-banner { position: relative; aspect-ratio: 3 / 1; min-height: 120px; background: var(--color-subtle); }
+.company-banner img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.company-banner-blank { position: absolute; inset: 0; background: linear-gradient(135deg, var(--color-brand), color-mix(in srgb, var(--color-brand) 55%, #000)); }
+.company-head-body { display: grid; gap: 8px; padding: 0 16px 14px; }
+.company-head-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.company-avatar { position: relative; flex: none; display: block; border: 4px solid var(--color-surface); border-radius: 50%; background: var(--color-surface); }
+.company-avatar .market-company-logo { border-radius: 50%; font-size: 2.25rem; }
+.company-avatar-check { position: absolute; right: 2px; bottom: 2px; display: grid; place-items: center; width: 28px; height: 28px; border: 3px solid var(--color-surface); border-radius: 50%; background: var(--color-brand); color: #fff; }
+.company-avatar-check svg { width: 14px; height: 14px; }
+.company-head-actions { display: flex; align-items: center; gap: 8px; padding-bottom: 6px; }
+.company-follow { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 20px; border-color: var(--color-brand); border-radius: 999px; background: var(--color-brand); color: #fff; font-weight: 700; text-decoration: none; }
+.company-follow.is-following { border-color: var(--color-control); background: var(--color-subtle); color: var(--color-ink); }
+.company-icon-button { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--color-control); border-radius: 50%; background: var(--color-surface); color: var(--color-ink); }
+.company-head h1 { display: flex; align-items: center; gap: 6px; margin: 4px 0 0; font-size: 1.5rem; line-height: 1.2; overflow-wrap: anywhere; }
+.company-check { display: inline-grid; flex: none; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--color-brand); color: #fff; vertical-align: middle; }
+.company-check svg { width: 12px; height: 12px; }
+.company-post-meta .company-check { width: 16px; height: 16px; margin-left: 4px; }
+.company-post-meta .company-check svg { width: 10px; height: 10px; }
+.company-post-meta strong { display: inline-flex; align-items: center; }
+.company-official { margin: 0; color: var(--color-muted-strong); font-size: .875rem; }
+.company-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 2px 0 0; color: var(--color-muted-strong); font-size: .875rem; }
+.company-stats b { color: var(--color-brand); font-weight: 800; }
+.company-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 4px 16px 16px; scrollbar-width: none; }
+.company-tabs::-webkit-scrollbar { display: none; }
+.company-tabs a { flex: none; display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border: 1px solid var(--color-control); border-radius: 999px; background: var(--color-subtle); color: var(--color-ink); font-size: .875rem; font-weight: 700; text-decoration: none; }
+.company-tabs a[aria-current="page"] { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+.company-hidden-note { margin: 0; text-align: center; }
+.company-deck-title { margin: 0; font-size: 1.125rem; overflow-wrap: anywhere; }
+.company-post .company-post-head, .company-presentation .company-post-head { margin-bottom: 2px; }
+.company-post .market-company-logo, .company-presentation .company-post-head .market-company-logo { border-radius: 50%; }
+
+
+.company-facts { display: grid; gap: 0; margin: 4px 0 0; }
+.company-facts > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-top: 1px solid var(--color-control); }
+.company-facts dt { color: var(--color-muted-strong); font-size: .875rem; }
+.company-facts dd { margin: 0; overflow-wrap: anywhere; }
+.company-facts a { display: inline-flex; align-items: center; gap: 6px; color: var(--color-brand); font-weight: 600; text-decoration: none; }
+.company-store > .company-store-button { grid-column: 1 / -1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; }
+
+@media (min-width: 640px) {
+  .company-head-body { padding: 0 24px 16px; }
+  .company-head h1 { font-size: 2rem; }
+  .company-tabs { padding: 4px 24px 18px; }
+    .company-store > .company-store-button { grid-column: auto; width: auto; padding-inline: 18px; }
+}
+/* The phone's row under the banner: an 88px logo, then subscribe and settings on one line without wrapping. */
+.company-head-top { margin-top: -44px; }
+.company-head-actions { min-width: 0; }
+.company-follow { flex: none; padding: 0 14px; font-size: .875rem; white-space: nowrap; }
+.company-head-top { gap: 8px; flex-wrap: wrap; }
+.company-follow-long { display: none; }
+@media (min-width: 420px) { .company-follow-long { display: inline; } .company-follow-short { display: none; } }
+.company-head-actions { gap: 6px; }
+.company-avatar .market-company-logo img { width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 640px) {
+  .company-head-top { margin-top: -60px; }
+  /* The logo is drawn at 88px with an inline size; wider screens get the bigger avatar of the reference. */
+  .company-avatar .market-company-logo { width: 112px !important; height: 112px !important; }
+  .company-follow { padding: 0 22px; font-size: .9375rem; }
+}
+
+
+/* «Презентация» in «Лента»: the deck's name row, then its pages; the team's upload sits at the block's end. */
+.company-deck-head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; }
+.company-deck-upload { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; }
+@media (min-width: 640px) { .company-deck-upload { width: fit-content; padding-inline: 18px; } }
+/* The news composer is the home feed's own (feed.css); here it keeps the page's gap instead of the feed's spacing. */
+.company-page > .feed-composer { margin: 0; }
+
+/* «О бренде»: the long story keeps its paragraphs; contacts as tappable rows with an icon (phone, mail, site, map). */
+.company-story { white-space: pre-line; color: var(--color-ink); }
+.company-bio { white-space: normal; }
+.company-contacts { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.company-contacts a { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; min-height: 52px; padding: 8px 12px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-subtle); color: var(--color-ink); text-decoration: none; overflow-wrap: anywhere; }
+.company-contacts a:hover { border-color: var(--color-brand); }
+.company-contacts small { display: block; color: var(--color-muted-strong); font-size: .75rem; }
+.company-contact-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); }
+@media (min-width: 640px) { .company-contacts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

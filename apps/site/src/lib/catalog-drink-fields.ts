@@ -5,6 +5,8 @@ export const DRINK_VOLUME_PRESETS = [250, 330, 450, 500] as const;
 export const MAX_DRINK_VOLUMES = 6;
 export const MAX_DRINK_FLAVORS = 3;
 export const MAX_DRINK_INGREDIENTS = 1500;
+/** Optional photos besides the can on the cover (migration 0153): the back, the can in hand, the shelf. */
+export const MAX_DRINK_EXTRA_PHOTOS = 5;
 /** The optional full name from the can, «Monster Ultra Paradise»: search finds the drink by it. */
 export const MAX_DRINK_FULL_NAME = 80;
 /** Pending requests one member may have at once. */

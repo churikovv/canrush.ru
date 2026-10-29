@@ -130,30 +130,21 @@ export function BusinessDrinkAttach({ brand, flavor }: { brand: string; flavor: 
 }
 
 /** The company logo: the current one (or initials), «Загрузить» picks a file and uploads at once, «Убрать» drops it. */
-export function BusinessLogoForm({ name, logoId, editable }: { name: string; logoId: string | null; editable: boolean }) {
+/** The logo's line in «Внешний вид» of the profile settings: no preview of its own — the profile head preview shows it. */
+export function BusinessLogoForm({ logoId, editable }: { logoId: string | null; editable: boolean }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState('');
   const input = useRef<HTMLInputElement>(null);
   const run = (task: () => Promise<{ error?: string }>) => start(async () => { setError(''); const result = await task().catch(() => ({ error: 'Нет связи с сервером.' })); if (result.error) setError(result.error); });
-  return <div className="bc-logo-form">
-    <span className="bc-logo-preview">
-      {/* eslint-disable-next-line @next/next/no-img-element -- the logo is served from the database */}
-      {logoId ? <img src={`/api/business-logos/${logoId}`} alt="" width={72} height={72} /> : <span aria-hidden="true">{name.slice(0, 2).toUpperCase()}</span>}
-    </span>
-    <div className="bc-logo-copy">
-      <strong>Логотип компании</strong>
-      <span className="bc-muted">Квадрат JPG, PNG или WebP до 5 МБ — виден в кабинете и команде.</span>
-      {editable && <div className="bc-logo-actions">
-        <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={event => {
-          const file = event.target.files?.[0]; event.target.value = '';
-          if (file) { const form = new FormData(); form.set('logo', file); run(() => uploadBusinessLogoAction(form)); }
-        }} />
-        <button type="button" className="bc-button is-outline" disabled={pending} onClick={() => input.current?.click()}>{pending ? 'Загружаем…' : logoId ? 'Заменить' : 'Загрузить'}</button>
-        {logoId && <button type="button" className="bc-button is-ghost" disabled={pending} onClick={() => run(removeBusinessLogoAction)}>Убрать</button>}
-      </div>}
-      {error && <small className="bc-note" role="alert">{error}</small>}
-    </div>
+  const actions = editable && <div className="bc-logo-actions">
+    <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={event => {
+      const file = event.target.files?.[0]; event.target.value = '';
+      if (file) { const form = new FormData(); form.set('logo', file); run(() => uploadBusinessLogoAction(form)); }
+    }} />
+    <button type="button" className="bc-button is-outline" disabled={pending} onClick={() => input.current?.click()}>{pending ? 'Загружаем…' : logoId ? 'Заменить' : 'Загрузить'}</button>
+    {logoId && <button type="button" className="bc-button is-ghost" disabled={pending} onClick={() => run(removeBusinessLogoAction)}>Убрать</button>}
   </div>;
+  return <div className="bc-look-row"><span><strong>Логотип</strong><small className="bc-muted">Квадрат · JPG, PNG или WebP до 5 МБ — аватар профиля, ответов и объявлений</small>{error && <small className="bc-note" role="alert">{error}</small>}</span>{actions}</div>;
 }
 
 /** «Пригласить»: a work email (the main way — a letter goes out) or a CanRush nickname; the answer never says whether the address has an account. */

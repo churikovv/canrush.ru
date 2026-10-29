@@ -476,7 +476,7 @@
 .catalog-flavor-input { position: relative; margin-top: 8px; }
 .catalog-flavor-field { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 52px; padding: 6px 8px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); cursor: text; }
 .catalog-flavor-field:focus-within { border-color: var(--color-brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 22%, transparent); }
-.store-form .catalog-flavor-field input { flex: 1; min-width: 140px; min-height: 36px; padding: 0 6px; border: 0; background: transparent; box-shadow: none; outline: none; }
+.store-form .catalog-flavor-field input:not([type=hidden]) { flex: 1; min-width: 140px; min-height: 36px; padding: 0 6px; border: 0; background: transparent; box-shadow: none; outline: none; }
 .catalog-flavor-plus { color: var(--color-muted-strong); font-weight: 800; }
 .catalog-flavor-chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 6px 5px 12px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .875rem; font-weight: 700; animation: flavor-chip-in 180ms ease-out; }
 .catalog-flavor-chip[data-own] { background: color-mix(in srgb, var(--color-brand) 16%, var(--color-surface)); color: var(--color-brand); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand) 50%, transparent); }
@@ -499,7 +499,7 @@
 .store-form .catalog-drink-discontinued:has(input:checked) { border-color: color-mix(in srgb, var(--color-brand) 60%, transparent); background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface)); }
 .catalog-drink-discontinued > span { display: grid; gap: 2px; min-width: 0; }
 .catalog-drink-discontinued small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 400; line-height: 1.4; }
-.store-form .catalog-drink-discontinued input { position: relative; flex: none; appearance: none; width: 48px; height: 28px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 999px; background: var(--color-control); cursor: pointer; transition: background-color 150ms ease-out; }
+.store-form .catalog-drink-discontinued input:not([type=hidden]) { position: relative; flex: none; appearance: none; width: 48px; height: 28px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 999px; background: var(--color-control); cursor: pointer; transition: background-color 150ms ease-out; }
 .store-form .catalog-drink-discontinued input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .3); transition: transform 150ms ease-out; }
 .store-form .catalog-drink-discontinued input:checked { background: var(--color-brand); }
 .store-form .catalog-drink-discontinued input:checked::after { transform: translateX(20px); }
@@ -509,7 +509,7 @@
 .catalog-drink-sugar legend { grid-column: 1 / -1; margin-bottom: 8px; padding: 0; }
 .store-form .catalog-drink-sugar-option { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); cursor: pointer; transition: border-color 150ms ease-out, background-color 150ms ease-out; }
 .store-form .catalog-drink-sugar-option:has(input:checked) { border-color: color-mix(in srgb, var(--color-brand) 60%, transparent); background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface)); }
-.store-form .catalog-drink-sugar-option input { flex: none; width: 18px; height: 18px; min-height: 0; margin: 2px 0 0; accent-color: var(--color-brand); }
+.store-form .catalog-drink-sugar-option input:not([type=hidden]) { flex: none; width: 18px; height: 18px; min-height: 0; margin: 2px 0 0; accent-color: var(--color-brand); }
 .catalog-drink-sugar-option span { display: grid; gap: 2px; min-width: 0; }
 .catalog-drink-sugar-option small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 500; line-height: 1.3; }
 @media (max-width: 639px) { .store-form .catalog-drink-sugar { grid-template-columns: 1fr; } }
@@ -766,3 +766,26 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 /* «Выпускается и в 330 мл»: a can volume the card knows (a merged request) that no shop sells — one step under the prices. */
 .catalog-unsold-volumes { margin: 16px 0 0; }
 @media (min-width: 960px) { .catalog-unsold-volumes { margin-top: 20px; } }
+/* «Ещё фото» on the can step of the drink request: optional photos besides the cover, a count on the preview's cover. */
+.catalog-drink-extras { display: grid; gap: 6px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-control); }
+.catalog-drink-extras-hint { margin: 0; color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.45; }
+.catalog-drink-preview-cover { position: relative; }
+.catalog-drink-preview-more { position: absolute; right: 6px; bottom: 6px; padding: 2px 8px; border-radius: 999px; background: rgb(0 0 0 / 65%); color: #fff; font-size: .75rem; font-weight: 700; }
+
+/* The drink's photos in a row (drink-photo-gallery.tsx): the cover, then the author's extra photos; swipe, arrows, dots. */
+.drink-gallery { position: relative; width: 100%; max-width: 420px; }
+.drink-gallery-track { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+.drink-gallery-track::-webkit-scrollbar { display: none; }
+.drink-gallery-track:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; border-radius: 16px; }
+.drink-gallery-slide { display: grid; place-items: center; min-width: 0; scroll-snap-align: center; }
+.drink-gallery-slide.is-photo { aspect-ratio: 1; width: 278px; max-width: 100%; margin: 0 auto; padding: 0; border: 0; border-radius: 16px; overflow: hidden; background: var(--color-subtle); cursor: zoom-in; }
+.drink-gallery-slide.is-photo img { width: 100%; height: 100%; object-fit: cover; }
+.drink-gallery-dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+.drink-gallery-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--color-control); transition: width 150ms ease-out, background-color 150ms ease-out; }
+.drink-gallery-dots span[data-current] { width: 18px; border-radius: 3px; background: var(--color-brand); }
+.drink-gallery-arrow { position: absolute; top: calc(50% - 30px); display: none; place-items: center; width: 40px; height: 40px; border: 1px solid var(--color-control); border-radius: 50%; background: var(--color-surface); color: var(--color-ink); font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.drink-gallery-arrow.is-prev { left: 0; }
+.drink-gallery-arrow.is-next { right: 0; }
+.drink-gallery-arrow:disabled { opacity: 0; pointer-events: none; }
+@media (hover: hover) and (pointer: fine) { .drink-gallery-arrow { display: grid; } }
+@media (prefers-reduced-motion: reduce) { .drink-gallery-dots span { transition: none; } }

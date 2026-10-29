@@ -72,7 +72,7 @@
 .market-gallery-open { display: block; width: 100%; padding: 0; border: 0; border-radius: 16px; background: var(--color-subtle); cursor: zoom-in; overflow: hidden; }
 .market-form .market-any-city { display: flex; align-items: center; gap: 10px; font-weight: 400; min-height: 44px; }
 /* `.store-form input` (the wizard's form class) would stretch the box to a full-width field. */
-.market-any-city input, .store-form .market-any-city input { flex: none; width: 20px; min-height: 0; height: 20px; margin: 0; padding: 0; accent-color: var(--color-brand); }
+.market-any-city input:not([type=hidden]), .store-form .market-any-city input:not([type=hidden]) { flex: none; width: 20px; min-height: 0; height: 20px; margin: 0; padding: 0; accent-color: var(--color-brand); }
 .market-dropzone.market-dropzone-compact { display: inline-flex; padding: 0; border: 0; background: none; }
 .market-dropzone-compact:has(button:disabled) { opacity: .6; }
 .market-search-filters { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)) auto; align-items: end; gap: 16px; margin: 24px 0 32px; }
@@ -283,7 +283,7 @@
 .market-listing-author legend { margin-bottom: 8px; font-weight: 700; }
 .store-form .market-listing-author label { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 16px; cursor: pointer; }
 .store-form .market-listing-author label:has(input:checked) { border-color: var(--color-brand); background: color-mix(in srgb, var(--color-brand) 7%, transparent); }
-.store-form .market-listing-author input { flex: none; width: 18px; min-height: 0; height: 18px; margin: 0; padding: 0; accent-color: var(--color-brand); }
+.store-form .market-listing-author input:not([type=hidden]) { flex: none; width: 18px; min-height: 0; height: 18px; margin: 0; padding: 0; accent-color: var(--color-brand); }
 .market-listing-author .market-company-logo { width: 40px; height: 40px; font-size: .9375rem; }
 .market-listing-author .market-company-logo.is-person { border-radius: 50%; }
 .market-listing-author label > span:last-child { display: grid; gap: 2px; min-width: 0; }

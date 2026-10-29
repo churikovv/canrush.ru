@@ -51,6 +51,8 @@ import { getCompetitors, type BrandMetrics } from '@/lib/business-competitors';
 import { getCabinetListings, getMessages, getOrder, getOrders } from '@/lib/market';
 import { ORDER_STATUS, formatPrice, type OrderStatus } from '@/lib/market-fields';
 import { storeDrinkOptions } from '@/lib/store-catalog';
+import { CompanyBannerForm, CompanyProfileSettingsForm } from '@/components/company-profile-form';
+import { companyStoreOptions, getCompanyProfileSettings } from '@/lib/business-profile';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Кабинет бизнеса', robots: { index: false, follow: false } };
@@ -843,7 +845,7 @@ async function Insights({ business }: { business: Business }) {
 }
 
 const SETTINGS_TABS = [
-  { key: 'company', label: 'Компания' }, { key: 'team', label: 'Команда' }, { key: 'log', label: 'Журнал' }, { key: 'notifications', label: 'Уведомления' }, { key: 'theme', label: 'Оформление' }, { key: 'documents', label: 'Документы' },
+  { key: 'company', label: 'Компания' }, { key: 'profile', label: 'Профиль' }, { key: 'team', label: 'Команда' }, { key: 'log', label: 'Журнал' }, { key: 'notifications', label: 'Уведомления' }, { key: 'theme', label: 'Оформление' }, { key: 'documents', label: 'Документы' },
 ] as const;
 const DOCUMENTS = [
   { href: '/terms', title: 'Пользовательское соглашение', note: 'Правила CanRush для всех аккаунтов, и для компаний тоже' },
@@ -875,6 +877,24 @@ async function Settings({ business, role, userId, params }: { business: Business
             <td data-label="Когда" className="bc-nowrap">{longDayTime.format(entry.createdAt)}</td>
           </tr>)}</tbody>
         </table></div> : <Empty title="Пока пусто" text="Здесь появятся ответы на отзывы, шаблоны, напитки, объявления и изменения команды." />}
+      </section>
+    </>;
+  }
+  if (tab === 'profile') {
+    const [stores, settings] = await Promise.all([companyStoreOptions(business), getCompanyProfileSettings(business)]);
+    // eslint-disable-next-line @next/next/no-img-element -- the logo is served from the database
+    const logo = business.logoId ? <img src={`/api/business-logos/${business.logoId}`} alt="" width={72} height={72} /> : <span aria-hidden="true">{business.name.slice(0, 2).toUpperCase()}</span>;
+    return <>{tabs}
+      <section className="bc-card bc-profile-intro">
+        <div><h2>Профиль компании</h2>
+          <p className="bc-muted">{business.status === 'approved' ? 'Страница бренда на CanRush, её видят все.' : 'Профиль откроется всем, когда компанию подтвердят — пока его видите вы и команда.'} <b>Всё здесь необязательно</b> — заполните то, что хотите показать покупателям. Название, вид компании и сайт меняются через поддержку.</p></div>
+        <Link className="bc-button is-outline" href={`/company/${business.id}`}>Открыть профиль</Link>
+      </section>
+      <section className="bc-card"><div className="bc-card-head"><h2>Внешний вид</h2></div>
+        <CompanyBannerForm bannerId={settings.bannerId} editable={owner} logo={logo} logoActions={<BusinessLogoForm logoId={business.logoId} editable={owner} />} />
+      </section>
+      <section className="bc-card">
+        <CompanyProfileSettingsForm info={settings.info} stores={stores} storeId={settings.storeId} hidden={settings.hidden} editable={owner} />
       </section>
     </>;
   }
@@ -939,7 +959,6 @@ async function Settings({ business, role, userId, params }: { business: Business
     </section>
   </>;
   return <>{tabs}
-    <section className="bc-card"><BusinessLogoForm name={business.name} logoId={business.logoId} editable={owner} /></section>
     {business.status === 'rejected' && owner
       ? <section className="bc-card"><div className="bc-card-head"><h2>Компания</h2><span className="bc-muted">исправьте и отправьте снова</span></div>
         <BusinessForm apply initial={business} />
@@ -1161,22 +1180,11 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     : <>{approved && hasFeature(business, 'export') && <a className="bc-button is-outline" href={`/business/cabinet/export${section === 'search' || section === 'cards' || section === 'competitors' ? `?kind=${section}` : ''}`} download
         title={section === 'search' ? 'Частые запросы' : section === 'cards' ? 'Просмотры и переходы по напиткам' : section === 'competitors' ? 'Сравнение с конкурентами' : 'Все отзывы'}>Экспорт CSV</a>}
       {canAct && <Link className="bc-button" href={businessHref('drinks')}>Прикрепить напиток</Link>}</>;
-  const toolbar = section === 'overview' || section === 'reviews' || section === 'insights' || section === 'search' || section === 'cards' || section === 'competitors' || section === 'brand'
-    ? <BusinessSegments label="Аналитика" items={[
-      { href: businessHref('overview'), label: 'Сводка', current: section === 'overview' },
-      { href: businessHref('reviews'), label: 'Отзывы', current: section === 'reviews' },
-      { href: businessHref('insights'), label: 'Разбор', current: section === 'insights' },
-      { href: businessHref('search'), label: 'Поиск', current: section === 'search' },
-      { href: businessHref('cards'), label: 'Карточки', current: section === 'cards' },
-      { href: businessHref('competitors'), label: 'Конкуренты', current: section === 'competitors' },
-      { href: businessHref('brand'), label: 'Бренд', current: section === 'brand' },
-    ]} />
-    : undefined;
   // A section beyond the plan shows what it gives and the way to the plan, not the data.
   const gated = (feature: PlanFeature, content: ReactNode) => hasFeature(business, feature) ? content : <Upsell feature={feature} />;
   const locked = (title: string) => <Empty title={title} text="Команда подтвердит компанию и её напитки — и здесь появятся отзывы, оценки и метрики бренда." action={<Link className="bc-button" href={businessHref('drinks')}>Прикрепить напитки</Link>} />;
   const waiting = approved ? (await countReviewQueue(business.id)).unanswered : 0;
-  return <BusinessShell business={business} active={section} title={TITLES[section]} actions={actions} toolbar={toolbar} unread={counts?.notifications ?? 0} unreadMessages={counts?.messages ?? 0}
+  return <BusinessShell business={business} active={section} title={TITLES[section]} actions={actions} unread={counts?.notifications ?? 0} unreadMessages={counts?.messages ?? 0}
     badges={{ reviews: { count: waiting, label: `без ответа: ${waiting}` } }}>
     {business.status === 'pending' && <FormAlert tone="warning" title="Компания на проверке">Обычно это занимает пару дней. Пока можно прикрепить напитки и заполнить настройки — аналитика откроется после подтверждения.</FormAlert>}
     {business.status === 'rejected' && <FormAlert title="Компания не прошла проверку" actions={section !== 'settings' ? <Link className="bc-button is-outline" href={businessHref('settings')}>Исправить</Link> : undefined}>

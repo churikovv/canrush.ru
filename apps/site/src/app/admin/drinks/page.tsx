@@ -108,6 +108,9 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
           <CatalogDrinkAdminMenu key={drink.updatedAt.toISOString()} brands={brands} flavors={flavors} drink={{ id: drink.id, brand: drink.brand, flavor: drink.flavor, name: drink.name, fullName: drink.fullName, volumes: drink.volumes, ingredients: drink.ingredients, status: drink.status, photo: drink.photo, discontinued: drink.discontinued, version: drink.updatedAt.toISOString() }} />
         </div>
         {drink.ingredients && <p className="admin-drink-card-ingredients">{drink.ingredients}</p>}
+        {drink.photos.length > 0 && <div className="admin-drink-extras" aria-label="Ещё фото от автора">{drink.photos.map((photo, index) => <a key={photo} href={`/api/catalog-drink-photos/${photo}`} target="_blank" rel="noreferrer" aria-label={`Фото ${index + 2} целиком`}>
+          <Image src={`/api/catalog-drink-photos/${photo}?size=thumbnail`} width={56} height={56} unoptimized alt="" />
+        </a>)}</div>}
         {drink.business && <p className="admin-drink-card-note">Опубликован без проверки компанией «{drink.business}»</p>}
         {drink.status === 'rejected' && drink.moderationNote && <p className="admin-drink-card-note">Причина: {drink.moderationNote}</p>}
         {drink.status === 'pending' && (() => {

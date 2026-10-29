@@ -21,19 +21,42 @@ const ICONS = {
   chevron: <path d="m6 9 6 6 6-6" />,
   chat: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />,
   truck: <><path d="M2 6h12v10H2zM14 9h4l4 4v3h-8" /><circle cx="6.5" cy="17.5" r="1.8" /><circle cx="17.5" cy="17.5" r="1.8" /></>,
+  star: <path d="m12 2.5 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.3l6.5-.9z" />,
+  spark: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" />,
+  eye: <><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></>,
+  versus: <path d="M4 5l5 7-5 7M20 5l-5 7 5 7" />,
+  tag: <><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9Z" /><circle cx="8" cy="8" r="1.5" /></>,
+  user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
 };
 export type BusinessIconName = keyof typeof ICONS;
 export function BusinessIcon({ name, size = 20 }: { name: BusinessIconName; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[name]}</svg>;
 }
 
-const NAV: { label: string; icon: BusinessIconName; section?: BusinessSection; items?: { label: string; section: BusinessSection }[] }[] = [
-  { label: 'Обзор', icon: 'home', section: 'overview' },
-  { label: 'Аналитика', icon: 'chart', items: [{ label: 'Отзывы', section: 'reviews' }, { label: 'Разбор нейросетью', section: 'insights' }, { label: 'Поиск', section: 'search' }, { label: 'Карточки', section: 'cards' }, { label: 'Конкуренты', section: 'competitors' }, { label: 'Бренд', section: 'brand' }] },
-  { label: 'Каталог', icon: 'can', items: [{ label: 'Напитки', section: 'drinks' }, { label: 'Новый напиток', section: 'new-drink' }] },
-  { label: 'Продажи', icon: 'bag', items: [{ label: 'Объявления', section: 'market' }, { label: 'Новое объявление', section: 'new-listing' }, { label: 'Заказы и чаты', section: 'orders' }] },
-  { label: 'Закупки', icon: 'truck', items: [{ label: 'Оптовые цены', section: 'wholesale' }] },
-];
+type Space = 'analytics' | 'manage';
+/**
+ * The cabinet in two halves, each with its own entry at the top of the sidebar: «Аналитика» — numbers to read, and
+ * «Управление» — what the team does (answers reviews, keeps drinks and listings, takes orders). The sidebar lists only
+ * the half that is open; the section's own sub-pages (a new drink, a card's edit) light up their parent.
+ */
+const SPACES: Record<Space, { label: string; icon: BusinessIconName; items: { label: string; icon: BusinessIconName; section: BusinessSection; also?: BusinessSection[] }[] }> = {
+  analytics: { label: 'Аналитика', icon: 'chart', items: [
+    { label: 'Сводка', icon: 'home', section: 'overview' },
+    { label: 'Разбор нейросетью', icon: 'spark', section: 'insights' },
+    { label: 'Поиск', icon: 'search', section: 'search' },
+    { label: 'Карточки', icon: 'eye', section: 'cards' },
+    { label: 'Конкуренты', icon: 'versus', section: 'competitors' },
+    { label: 'Бренд', icon: 'tag', section: 'brand' },
+  ] },
+  manage: { label: 'Управление', icon: 'settings', items: [
+    { label: 'Отзывы и ответы', icon: 'star', section: 'reviews' },
+    { label: 'Напитки', icon: 'can', section: 'drinks', also: ['new-drink', 'drink-edit', 'drink-stores', 'drink-price'] },
+    { label: 'Объявления', icon: 'bag', section: 'market', also: ['new-listing'] },
+    { label: 'Заказы и чаты', icon: 'chat', section: 'orders' },
+    { label: 'Оптовые цены', icon: 'truck', section: 'wholesale' },
+  ] },
+};
+const spaceOf = (section: BusinessSection): Space => SPACES.manage.items.some(item => item.section === section || item.also?.includes(section)) || section === 'settings' || section === 'plan' ? 'manage' : 'analytics';
 
 /**
  * The cabinet on the shared dashboard frame (`DashboardShell`): ⌘K search over reviews, grouped sections, and the
@@ -41,17 +64,23 @@ const NAV: { label: string; icon: BusinessIconName; section?: BusinessSection; i
  * in the page's banner. The top bar carries the chats and the bell before the section's actions.
  */
 export function BusinessShell({ business, active, title, actions, toolbar, unread, unreadMessages, badges = {}, children }: {
-  business: { name: string; kind: BusinessKind; status: BusinessStatus; logoId: string | null; plan?: BusinessPlan; planUntil?: Date | null };
+  business: { id?: string; name: string; kind: BusinessKind; status: BusinessStatus; logoId: string | null; plan?: BusinessPlan; planUntil?: Date | null };
   active: BusinessSection; title: string; actions?: ReactNode; toolbar?: ReactNode; unread: number; unreadMessages: number;
   /** Counters beside sections, like reviews waiting for an answer. */
   badges?: Partial<Record<BusinessSection, { count: number; label: string }>>; children: ReactNode;
 }) {
+  const space = spaceOf(active);
   return <DashboardShell label="Бизнес" home={businessHref('overview')} menuLabel="Меню кабинета" title={title} actions={actions} toolbar={toolbar}
     search={{ action: '/business/cabinet', placeholder: 'Поиск…', label: 'Поиск по отзывам', hidden: { section: 'reviews' } }}
-    nav={NAV.map(item => ({
-      label: item.label, icon: <BusinessIcon name={item.icon} />,
-      ...(item.section ? { href: businessHref(item.section), current: item.section === active } : {}),
-      items: item.items?.map(leaf => ({ label: leaf.label, href: businessHref(leaf.section), current: leaf.section === active, badge: badges[leaf.section] })),
+    switcher={<nav className="bc-space-switch" aria-label="Часть кабинета">{(Object.keys(SPACES) as Space[]).map(key => {
+      const waiting = key === 'manage' ? SPACES.manage.items.reduce((sum, item) => sum + (badges[item.section]?.count ?? 0), 0) : 0;
+      return <Link key={key} href={businessHref(SPACES[key].items[0]!.section)} aria-current={key === space ? 'true' : undefined}>
+        <BusinessIcon name={SPACES[key].icon} size={18} /><span className="bc-space-label">{SPACES[key].label}</span>{key !== space && waiting > 0 && <span className="bc-nav-badge" aria-label={`ждут: ${waiting}`}>{waiting > 99 ? '99+' : waiting}</span>}
+      </Link>;
+    })}</nav>}
+    nav={SPACES[space].items.map(item => ({
+      label: item.label, icon: <BusinessIcon name={item.icon} />, href: businessHref(item.section),
+      current: item.section === active || Boolean(item.also?.includes(active)), badge: badges[item.section],
     }))}
     account={{
       name: business.name, label: `${business.name}: настройки и помощь`,
@@ -60,6 +89,7 @@ export function BusinessShell({ business, active, title, actions, toolbar, unrea
       logo: business.logoId ? <img src={`/api/business-logos/${business.logoId}`} alt="" width={40} height={40} /> : business.name.slice(0, 2).toUpperCase(),
       menu: <>
         <Link href={businessHref('settings')} aria-current={active === 'settings' ? 'page' : undefined}><BusinessIcon name="settings" size={18} />Настройки</Link>
+        {business.id && <Link href={`/company/${business.id}`}><BusinessIcon name="bag" size={18} />Профиль компании</Link>}
         <Link href={businessHref('plan')} aria-current={active === 'plan' ? 'page' : undefined}><BusinessIcon name="chart" size={18} />Тариф и продвижение</Link>
         <Link href="/"><BusinessIcon name="site" size={18} />Сайт CanRush</Link>
         <a href="mailto:hello@canrush.ru"><BusinessIcon name="help" size={18} />Помощь и поддержка</a>

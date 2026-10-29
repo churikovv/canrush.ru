@@ -103,6 +103,12 @@ function describeNotification(row: any): NotificationItem {
       title = `Новый отзыв: ${p.brand} · ${flavorName(p.flavor)}`;
       detail = `${actor} · вкус ${p.taste}, дизайн ${p.design} · ${p.business}`;
       href = '/business/cabinet?section=reviews';
+    } else if (row.kind==='company-post') {
+      // A company the member subscribed to published news or a presentation (migration 0151); off in the settings.
+      const p = row.payload;
+      title = `${p.business}: ${p.file ? 'новая презентация' : 'новая публикация'}`;
+      detail = p.text || (p.file ? String(p.file).replace(/\.pdf$/i, '') : '');
+      href = `/company/${p.businessId}`;
     } else if (row.kind==='business-reply') {
       // The company of the drink answered the member's review (migration 0124); off in the notification settings.
       const p = row.payload;

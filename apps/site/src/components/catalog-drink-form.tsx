@@ -7,7 +7,7 @@ import { FormOptional, FormStep } from '@/components/form-step';
 import { MarketPhotoPicker } from '@/components/market-photo-picker';
 import { submitCatalogDrinkAction } from '@/app/catalog/new/actions';
 import { CatalogDrinkBrandInput, CatalogDrinkFlavorInput, type PickedFlavor } from '@/components/catalog-drink-flavor-input';
-import { DRINK_JUICE_NAME, DRINK_SUGAR_NAME, DRINK_VOLUME_PRESETS, MAX_DRINK_FLAVORS, MAX_DRINK_FULL_NAME, MAX_DRINK_INGREDIENTS, MAX_DRINK_VOLUMES, volumeLabel, type DrinkSugar } from '@/lib/catalog-drink-fields';
+import { DRINK_JUICE_NAME, DRINK_SUGAR_NAME, DRINK_VOLUME_PRESETS, MAX_DRINK_EXTRA_PHOTOS, MAX_DRINK_FLAVORS, MAX_DRINK_FULL_NAME, MAX_DRINK_INGREDIENTS, MAX_DRINK_VOLUMES, volumeLabel, type DrinkSugar } from '@/lib/catalog-drink-fields';
 
 const STEPS = [
   { id: 'drink-step-name', title: 'Бренд и вкус' },
@@ -18,7 +18,7 @@ const STEPS = [
 const LAST_STEP = STEPS.length - 1;
 /** A version with a sweetener is a drink of its own, so it can sit next to the regular can in the catalog. */
 export const SUGAR_OPTIONS: { value: DrinkSugar; title: string; hint: string }[] = [
-  { value: 'regular', title: 'С сахаром', hint: 'Обычная банка' },
+  { value: 'regular', title: 'С сахаром', hint: 'Обычный энергетик' },
   { value: 'free', title: 'Без сахара', hint: 'Zero, Sugar Free, Light' },
   { value: 'sweetener', title: 'С сахарозаменителем', hint: 'Часть сахара заменена подсластителем' },
 ];
@@ -63,11 +63,14 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified 
   const [fullName, setFullName] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [photosBusy, setPhotosBusy] = useState(false);
+  // Optional photos besides the cover: the back with the label, the can in hand, the shelf.
+  const [extras, setExtras] = useState<File[]>([]);
+  const [extrasBusy, setExtrasBusy] = useState(false);
   const [volumes, setVolumes] = useState<number[]>([]);
   const [otherVolume, setOtherVolume] = useState('');
   const [ingredients, setIngredients] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
-  const busy = pending || photosBusy;
+  const busy = pending || photosBusy || extrasBusy;
 
   // The same name the catalog will show (flavorName on the key the server builds).
   // Parts in the server's order (sorted keys and own names), shown by their labels.
@@ -136,6 +139,7 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified 
     if (discontinued) form.set('discontinued', '1'); else form.delete('discontinued');
     if (inCabinet && verified) form.set('business', '1');
     photos.forEach(photo => form.append('photos', photo));
+    extras.forEach(photo => form.append('extraPhotos', photo));
     startTransition(() => action(form));
   }}><fieldset disabled={pending}>
     <p className="store-form-counter" aria-live="polite">Шаг {step + 1} из {STEPS.length} · <b>{STEPS[step]!.title}</b></p>
@@ -174,6 +178,11 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified 
     <section className="form-card store-photo-section" aria-labelledby="drink-step-photo" tabIndex={-1} hidden={step !== 1}>
       <FormStep n={2} id="drink-step-photo" title="Фото банки" hint="Банка целиком, этикетка спереди и читается, лучше на светлом фоне — фото станет обложкой в каталоге." />
       <MarketPhotoPicker compact crop={false} maxPhotos={1} onChange={setPhotos} onBusyChange={setPhotosBusy} disabled={pending} />
+      <div className="catalog-drink-extras">
+        <span className="form-label">Ещё фото {<FormOptional />}</span>
+        <p className="catalog-drink-extras-hint">Обратная сторона с составом, банка в руке, полка в магазине — до {MAX_DRINK_EXTRA_PHOTOS}. На странице напитка их можно будет листать.</p>
+        <MarketPhotoPicker compact crop={false} maxPhotos={MAX_DRINK_EXTRA_PHOTOS} onChange={setExtras} onBusyChange={setExtrasBusy} disabled={pending} />
+      </div>
     </section>
 
     <section className="form-card" aria-labelledby="drink-step-details" tabIndex={-1} hidden={step !== 2}>
@@ -198,7 +207,7 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified 
     <section className="form-card" aria-labelledby="drink-step-check" tabIndex={-1} hidden={step !== 3}>
       <FormStep n={4} id="drink-step-check" title="Проверка" hint="Так напиток будет выглядеть в каталоге. Модератор проверит фото и название перед публикацией." />
       <div className="catalog-drink-preview">
-        <span className="catalog-drink-preview-cover">{photoUrl ? <Image src={photoUrl} width={160} height={200} unoptimized alt="" /> : null}</span>
+        <span className="catalog-drink-preview-cover">{photoUrl ? <Image src={photoUrl} width={160} height={200} unoptimized alt="" /> : null}{extras.length > 0 && <span className="catalog-drink-preview-more">+{extras.length} фото</span>}</span>
         <div>
           <small>{brand.trim()}</small>
           <strong>{drinkName}</strong>

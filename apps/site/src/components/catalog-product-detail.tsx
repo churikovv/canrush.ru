@@ -22,6 +22,7 @@ import type { DrinkStore } from '@/lib/brand-drink-stores';
 import type { DrinkPrice } from '@/lib/brand-drink-prices';
 import { sameVolume } from '@/lib/brand-drink-price-fields';
 import { volumesWithoutOffers } from '@/lib/catalog-card-edit-fields';
+import { DrinkPhotoGallery } from '@/components/drink-photo-gallery';
 import { mapSearchUrl } from '@/lib/brand-drink-store-fields';
 
 const PRICE_FORMATTER = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -45,7 +46,7 @@ interface CatalogProductDetailProps {
   /** Dating in the community: how many swiped the drink right («нравится») and left («пропустить»). */
   swipes?: SwipeCounts;
   /** A drink a member added (catalogDrink) that shops do not have yet: who added it, when, and the volumes they gave. */
-  addedBy?: Pick<CatalogDrink, 'author' | 'volumes' | 'createdAt' | 'business' | 'discontinued'>;
+  addedBy?: Pick<CatalogDrink, 'author' | 'volumes' | 'createdAt' | 'business' | 'businessId' | 'discontinued'>;
   /** The full name a member gave the drink («Monster Ultra Paradise»), shown under the flavour. */
   fullName?: string;
   /** The review summary written by the model (nightly or from a company cabinet): its praise and complaints sit under the rating card, unsigned. */
@@ -53,15 +54,17 @@ interface CatalogProductDetailProps {
   /** The reviews tab: the rating card's radar against the catalog average. */
   radar?: { drink: DrinkRadar; catalog: DrinkRadar; country: string | null } | null;
   /** The brand's own data (an approved edit from its cabinet): the «data confirmed by the brand» mark and its description. */
-  brand?: { business: string | null; description: string | null } | null;
+  brand?: { business: string | null; businessId?: string | null; description: string | null } | null;
   /** «Где купить» from the brand's cabinet: chains, stores of the CanRush map and the brand's own stores. */
   brandStores?: DrinkStore[];
   /** The brand's recommended ceiling «до N ₽» per can volume, from its cabinet. */
   ceilings?: DrinkPrice[];
+  /** Extra photos of a member-added drink besides the cover (ids for `/api/catalog-drink-photos/<id>`). */
+  photos?: string[];
 }
 
 
-export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [] }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [] }: CatalogProductDetailProps) {
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
   const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
   // Cans the card is known in that no shop sells yet (a member's request for another volume merged into the card).
@@ -69,8 +72,8 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
 
   return (
     <article className="catalog-product-detail">
-      <div className="catalog-product-visual">
-        {group.coverImageUrl ? (
+      {(() => {
+        const cover = group.coverImageUrl ? (
           <CoverImage
             src={group.coverImageUrl}
             width={278}
@@ -81,8 +84,10 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
           />
         ) : (
           <span aria-hidden="true" />
-        )}
-      </div>
+        );
+        // A member's drink with more photos: the cover first, then the rest in a swipeable row.
+        return <div className="catalog-product-visual">{photos.length ? <DrinkPhotoGallery cover={cover} photos={photos} label={`${group.brand}, ${flavorName(group.flavor)}`} /> : cover}</div>;
+      })()}
 
       <div className="catalog-product-information">
         <div className="catalog-product-heading-row">
@@ -97,12 +102,12 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
 
         <h1>{flavorName(group.flavor)}</h1>
         {fullName && <p className="catalog-full-name">{fullName}</p>}
-        {brand && <p className="catalog-brand-verified"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>Данные подтверждены брендом{brand.business ? ` «${brand.business}»` : ''}</p>}
+        {brand && <p className="catalog-brand-verified"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>Данные подтверждены брендом{brand.business ? <>{' '}{brand.businessId ? <Link href={`/company/${brand.businessId}`}>«{brand.business}»</Link> : `«${brand.business}»`}</> : ''}</p>}
         {brand?.description && <section className="catalog-brand-description" aria-label="От бренда"><h2>От бренда</h2><p>{brand.description}</p></section>}
         {addedBy && <ul className="catalog-added-facts" aria-label="О напитке">
           {/* A company's own drink is the brand's product, not a member's find: the brand's mark, no author card below. */}
           {addedBy.business
-            ? <li className="catalog-added-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>От бренда «{addedBy.business}»</li>
+            ? <li className="catalog-added-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>От бренда {addedBy.businessId ? <Link href={`/company/${addedBy.businessId}`}>«{addedBy.business}»</Link> : `«${addedBy.business}»`}</li>
             : <li className="catalog-added-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M16 11h6" /></svg>От участника</li>}
           {addedBy.discontinued && <li className="catalog-added-archived"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 4h18v4H3zM5 8v12h14V8M10 12h4" /></svg>Снят с производства</li>}
           {addedBy.volumes.map(volume => <li key={volume}>{volumeLabel(volume)}</li>)}

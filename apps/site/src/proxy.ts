@@ -21,6 +21,8 @@ export function proxy(request: NextRequest) {
     "connect-src 'self' https://mc.yandex.ru https://api-maps.yandex.ru https://*.api-maps.yandex.ru https://*.maps.yandex.net https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
     "child-src blob: https://mc.yandex.ru",
     "frame-src blob: https://mc.yandex.ru",
+    // pdf.js draws companies' presentations in a worker from our own bundle (company profiles).
+    "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

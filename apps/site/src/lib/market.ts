@@ -201,3 +201,10 @@ export async function getMarketFilterOptions() {
   const { rows } = await getPool().query<{brand:string|null;city:string;anyCity:boolean}>(`select distinct brand,city,"anyCity" from "marketListing" l where not closed and "deletedAt" is null and not exists(select 1 from "userBlock" b where b."userId"=l."sellerId")`);
   return { brands: [...new Set(rows.flatMap(row=>row.brand?[row.brand]:[]))].sort((a,b)=>a.localeCompare(b,'ru')), cities: [...new Set(rows.filter(row=>!row.anyCity).map(row=>row.city))].sort((a,b)=>a.localeCompare(b,'ru')) };
 }
+
+/** A company's open listings for its public profile (/company/<id>), newest first. */
+export async function getCompanyListings(businessId: string, limit = 12): Promise<Listing[]> {
+  const { rows } = await getPool().query(`${listingSelect} where l."businessId"=$1 and l."deletedAt" is null and not l.closed
+    and not exists(select 1 from "userBlock" where "userId"=l."sellerId") order by l."createdAt" desc, l.id desc limit $2`, [businessId, limit]);
+  return rows.map(row => ({ ...row, createdAt: row.createdAt.toISOString() }) as Listing);
+}

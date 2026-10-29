@@ -126,7 +126,7 @@ export function BusinessNotifications({ unread: initialUnread }: { unread: numbe
 
 const ONBOARDING: Record<string, { title: string; text: string; href: string; action: string }> = {
   verified: { title: 'Компания на проверке', text: 'Команда CanRush проверит данные — обычно пару дней. Мы напишем на почту.', href: '/business/cabinet?section=settings', action: 'Данные компании' },
-  logo: { title: 'Добавьте логотип', text: 'Он стоит у ответов на отзывы и у объявлений компании.', href: '/business/cabinet?section=settings', action: 'Загрузить' },
+  logo: { title: 'Добавьте логотип', text: 'Он стоит у ответов на отзывы и у объявлений компании.', href: '/business/cabinet?section=settings&tab=profile', action: 'Загрузить' },
   drink: { title: 'Прикрепите напитки', text: 'Аналитика, ответы и сравнение считаются по подтверждённым напиткам.', href: '/business/cabinet?section=drinks', action: 'К напиткам' },
   team: { title: 'Пригласите команду', text: 'Коллеги смогут отвечать на отзывы и смотреть аналитику.', href: '/business/cabinet?section=settings&tab=team', action: 'Пригласить' },
   reply: { title: 'Ответьте на первый отзыв', text: 'Ответ компании видят все под отзывом, а автор получает уведомление.', href: '/business/cabinet?section=reviews&view=unanswered', action: 'К отзывам' },

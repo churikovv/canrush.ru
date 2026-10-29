@@ -14,7 +14,7 @@ export interface DrinkEdit {
   status: DrinkEditStatus; moderationNote: string | null; createdAt: Date; reviewedAt: Date | null;
 }
 /** What the card shows from the brand once an edit is approved. */
-export interface BrandProfile { id: string; business: string | null; fullName: string | null; ingredients: string | null; description: string | null; photo: string | null; updatedAt: Date }
+export interface BrandProfile { id: string; business: string | null; /** The approved company, for a link to its profile. */ businessId: string | null; fullName: string | null; ingredients: string | null; description: string | null; photo: string | null; updatedAt: Date }
 
 const EDIT_COLUMNS = `e.id, e.brand, e.flavor, b.name as business, u.username as author, e."fullName", e.ingredients, e.description, e.note,
   e.photo is not null as "hasPhoto", e.status, e."moderationNote", e."createdAt", e."reviewedAt"`;
@@ -80,10 +80,10 @@ export async function moderateDrinkEdit(adminId: string, id: string, status: 'ap
 
 /** The brand's data of one drink for its page, or null. */
 export async function getBrandProfile(brand: string, flavor: string): Promise<BrandProfile | null> {
-  const row = (await getPool().query<{ id: string; business: string | null; fullName: string | null; ingredients: string | null; description: string | null; hasPhoto: boolean; updatedAt: Date }>(
-    `select p.id, b.name as business, p."fullName", p.ingredients, p.description, p.photo is not null as "hasPhoto", p."updatedAt"
+  const row = (await getPool().query<{ id: string; business: string | null; businessId: string | null; fullName: string | null; ingredients: string | null; description: string | null; hasPhoto: boolean; updatedAt: Date }>(
+    `select p.id, b.name as business, case when b.status = 'approved' then b.id end as "businessId", p."fullName", p.ingredients, p.description, p.photo is not null as "hasPhoto", p."updatedAt"
      from "brandDrinkProfile" p left join business b on b.id = p."businessId" where p.brand = $1 and p.flavor = $2`, [brand, flavor])).rows[0];
-  return row ? { id: row.id, business: row.business, fullName: row.fullName, ingredients: row.ingredients, description: row.description, photo: row.hasPhoto ? photoUrl(row.id, row.updatedAt) : null, updatedAt: row.updatedAt } : null;
+  return row ? { id: row.id, business: row.business, businessId: row.businessId, fullName: row.fullName, ingredients: row.ingredients, description: row.description, photo: row.hasPhoto ? photoUrl(row.id, row.updatedAt) : null, updatedAt: row.updatedAt } : null;
 }
 
 /** The composition the brand gave, in the shape of the «Состав» block: a reviewed source, the brand itself. */
