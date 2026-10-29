@@ -23,9 +23,8 @@
 .company-publish:disabled { opacity: .5; cursor: not-allowed; }
 @media (pointer: coarse) { .company-composer textarea { font-size: 1rem; } }
 
-.company-posts { display: grid; margin: 0; padding: 0; list-style: none; }
-.company-post { display: grid; gap: 10px; padding: 14px 0; }
-.company-post + .company-post { border-top: 1px solid var(--color-control); }
+/* A news post is a card of its own (`.company-section`): its padding comes from there, on phones too. */
+.company-post { gap: 10px; }
 .company-post-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
 .company-post-head .market-company-logo { border-radius: 10px; }
 .company-post-meta { display: grid; min-width: 0; }
