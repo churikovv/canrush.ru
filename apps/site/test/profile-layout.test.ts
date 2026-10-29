@@ -17,7 +17,14 @@ it('restores mandatory blocks in saved or submitted layouts without changing ord
 it('keeps existing arrangements and adds a hidden favorites block', () => {
   const order = DEFAULT_PROFILE_LAYOUT.order.filter(key => key !== 'favorites');
   expect(parseProfileLayout({ order, hidden: ['wall'] })).toEqual({ order: [...order, 'favorites'], hidden: ['wall', 'favorites'] });
-  expect(DEFAULT_PROFILE_LAYOUT.hidden).toEqual(['favorites', 'listings', 'drinks']);
+  expect(DEFAULT_PROFILE_LAYOUT.hidden).toEqual(['favorites', 'listings', 'drinks', 'cards']);
+});
+
+it('adds the gacha cards hidden before the wall to layouts saved before them', () => {
+  const order = DEFAULT_PROFILE_LAYOUT.order.filter(key => key !== 'cards');
+  const parsed = parseProfileLayout({ order, hidden: [] });
+  expect(parsed?.order[parsed.order.indexOf('wall') - 1]).toBe('cards');
+  expect(parsed?.hidden).toEqual(['cards']);
 });
 
 it('adds the calendar right after the level to layouts saved before it existed', () => {

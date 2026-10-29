@@ -487,6 +487,16 @@ a.profile-hub-row { text-decoration: none; }
 /* Small, intermittent accents sit outside the portrait instead of rotating around it. */
 .avatar-frame { position: absolute; inset: -15%; width: 130%; height: 130%; max-width: none; pointer-events: none; z-index: 1; overflow: visible; color: #2a8cff; --fx-core: #dcefff; }
 .avatar-frame-pulse { color: #f3a51b; --fx-core: #fff8de; }
+.avatar-frame-pumpkin { color: #ff8a1e; filter: drop-shadow(0 0 2px rgb(255 138 30 / .55)); }
+/* «Тыквенная» (Банкомат): летучие мыши машут крыльями, тыква покачивается, лицо мерцает как свеча. */
+.avatar-frame-pumpkin .frame-bat { transform-box: fill-box; transform-origin: center; animation: frame-bat-flap .45s ease-in-out infinite alternate, frame-bat-hover 3.2s ease-in-out infinite; animation-delay: var(--fx-delay, 0s); }
+.avatar-frame-pumpkin .frame-pumpkin { transform-box: fill-box; transform-origin: 50% 100%; animation: frame-pumpkin-sway 3.6s ease-in-out infinite; }
+.avatar-frame-pumpkin .frame-pumpkin-face { animation: frame-pumpkin-flicker 1.8s steps(1) infinite; }
+@keyframes frame-bat-flap { from { scale: 1 1; } to { scale: 1 .45; } }
+@keyframes frame-bat-hover { 0%, 100% { translate: 0 0; } 50% { translate: 1.5px -2px; } }
+@keyframes frame-pumpkin-sway { 0%, 100% { rotate: -5deg; } 50% { rotate: 5deg; } }
+@keyframes frame-pumpkin-flicker { 0%, 100% { opacity: 1; } 30% { opacity: .65; } 34% { opacity: 1; } 70% { opacity: .8; } }
+@media (prefers-reduced-motion: reduce) { .avatar-frame-pumpkin .frame-bat, .avatar-frame-pumpkin .frame-pumpkin, .avatar-frame-pumpkin .frame-pumpkin-face { animation: none; } }
 .avatar-frame-prism { color: #f06a92; --fx-core: #fff2f6; }
 .avatar-frame-abyss { color: #8d0716; --fx-core: #ff4d5c; }
 .avatar-frame-nova { color: #ffcf3a; --fx-core: #ffffff; }
@@ -1423,3 +1433,10 @@ a.settings-row:focus-visible { outline: 2px solid var(--color-focus); outline-of
 /* «Итог месяца» inside the stats sheet: a card in the sheet's column, like the info group under it. */
 .drink-stats-summary { margin: 16px 16px 0; padding: 16px; border-radius: 20px; background: var(--theme-panel, #fff); }
 .drink-stats-summary h3 { margin: 0; color: var(--theme-text, #111); font-size: 1rem; }
+
+/* «Карточки Банкомата» в профиле: та же сетка, что у избранного, рамка — цвет редкости. */
+.profile-gacha-cards > a { --rarity: #8a919b; padding: 6px; border: 2px solid var(--rarity); border-radius: 14px; }
+.profile-gacha-cards > a[data-rarity="rare"] { --rarity: var(--color-brand, #006eff); }
+.profile-gacha-cards > a[data-rarity="epic"] { --rarity: #8b5cf6; }
+.profile-gacha-cards > a[data-rarity="legendary"] { --rarity: #f2a516; }
+.profile-gacha-cards small { color: var(--rarity); font-size: .6875rem; font-weight: 800; text-transform: uppercase; }

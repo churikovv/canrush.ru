@@ -7,7 +7,7 @@ import type { ReviewInteraction } from '@/lib/review-discussions';
 import { displayName } from '@/components/wall-post';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { profileTagKey, profileTagLabel } from '@/lib/profile-achievements';
-import type { FeedReviewGroup } from '@/lib/profile-community';
+import type { FeedGachaRow, FeedReviewGroup } from '@/lib/profile-community';
 import type { TierListProduct, TierListSummary } from '@/lib/tier-list-types';
 
 const eventTime = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' });
@@ -43,6 +43,27 @@ export function FeedTierListEvent({ list, products, viewer }: { list: TierListSu
   return <article className="feed-event" id={`feed-tierlist-${list.id}`}>
     <EventHead author={{ username: list.author.username, name: list.author.name, avatarId: list.author.avatarId ?? null, tag: list.author.tag ?? null }} action="опубликовал тирлист" at={list.publishedAt ?? list.createdAt} />
     <TierListCard list={list} products={products} viewer={viewer} />
+  </article>;
+}
+
+/** «Вытащил легенду»: лучшая эпическая или легендарная банка дня из Банкомата — карточка в цвете редкости. */
+export function FeedGachaEvent({ pull, covers }: { pull: FeedGachaRow; covers: Map<string, string> }) {
+  const cover = covers.get(`${pull.brand}\u0000${pull.flavor}`);
+  const label = pull.rarity === 'legendary' ? 'легендарную' : 'эпическую';
+  const action = `достал из Банкомата ${label} банку${pull.count > 1 ? ` · за день ${pull.count}` : ''}`;
+  return <article className="feed-event" id={`feed-gacha-${pull.key}`}>
+    <EventHead author={pull} action={action} at={pull.createdAt} />
+    <div className="feed-gacha" data-rarity={pull.rarity}>
+      <Link className="feed-gacha-card" href={`/catalog/${catalogGroupSlug(pull.brand, pull.flavor)}`}>
+        <span className="feed-gacha-cover">{cover ? <Image src={cover} width={96} height={96} sizes="96px" unoptimized alt="" /> : pull.brand.slice(0, 2).toLocaleUpperCase('ru-RU')}</span>
+        <span className="feed-gacha-copy">
+          <span className="feed-gacha-rarity">{pull.rarity === 'legendary' ? 'Легендарная' : 'Эпическая'}</span>
+          <b>{pull.brand}</b>
+          <span>{flavorName(pull.flavor)}</span>
+        </span>
+      </Link>
+      <Link className="feed-gacha-try" href="/gacha">Крутить Банкомат</Link>
+    </div>
   </article>;
 }
 

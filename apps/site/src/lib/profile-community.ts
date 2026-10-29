@@ -141,7 +141,9 @@ export interface FeedReviewGroup { key: string; createdAt: Date; reviews: Review
  * list or a day of a member's reviews.
  */
 export type FeedItem = { kind: 'post'; post: FeedPostRow } | { kind: 'rank-up'; rankUp: RankUpRow }
-  | { kind: 'tierlist'; tierList: TierListSummary } | { kind: 'reviews'; group: FeedReviewGroup };
+  | { kind: 'tierlist'; tierList: TierListSummary } | { kind: 'reviews'; group: FeedReviewGroup } | { kind: 'gacha'; pull: FeedGachaRow };
+/** Лучшая эпическая или легендарная банка, которую участник вытащил из Банкомата за московский день (`count` — сколько таких за день). */
+export interface FeedGachaRow { key: string; userId: string; brand: string; flavor: string; rarity: 'epic' | 'legendary'; count: number; createdAt: Date; username: string; name: string; avatarId: string | null; xp: number; tag: string | null }
 
 // The author `u` as every timeline row shows them: avatar, XP and the selected tag.
 const AUTHOR_COLUMNS = `u.username, u.name,
@@ -192,11 +194,16 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
         from review r join "user" u on u.id = r."userId"
         where not $5::boolean and ${FEED_EVENT_AUTHOR('r."userId"')}
         group by r."userId", (r."createdAt" at time zone 'Europe/Moscow')::date
+        union all
+        select p."userId" || '|' || to_char((p."createdAt" at time zone 'Europe/Moscow')::date, 'YYYY-MM-DD'), 'gacha', max(p."createdAt")
+        from "gachaPull" p join "user" u on u.id = p."userId"
+        where not $5::boolean and p.rarity in ('epic', 'legendary') and ${FEED_EVENT_AUTHOR('p."userId"')}
+        group by p."userId", (p."createdAt" at time zone 'Europe/Moscow')::date
       ) entry order by "createdAt" desc, id desc limit $3 offset $4`,
   [following, viewerId, COMMUNITY_PAGE_SIZE, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE, saved]);
   const total = entries[0]?.total ?? 0;
   const idsOf = (kind: FeedItem['kind']) => entries.filter(entry => entry.kind === kind).map(entry => entry.id);
-  const [posts, rankUps, tierLists, reviewDays] = await Promise.all([
+  const [posts, rankUps, tierLists, reviewDays, gachaDays] = await Promise.all([
     getPool().query<FeedPostRow>(`select ${WALL_POST_COLUMNS}, o.username as "ownerUsername", o.name as "ownerName",
       (select id::text from "profileImage" where "userId"=o.id and kind='avatar') as "ownerAvatarId"
       from "profileComment" c join "user" u on u.id = c."userId" join "user" o on o.id = c."profileId" where c.id = any($1::uuid[])`, [idsOf('post')]),
@@ -204,7 +211,14 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
       from "rankUp" r join "user" u on u.id = r."userId" where r.id = any($1::uuid[])`, [idsOf('rank-up')]),
     getPublishedTierListsByIds(idsOf('tierlist')),
     getReviewsByAuthorDays(idsOf('reviews')),
+    idsOf('gacha').length ? getPool().query<FeedGachaRow>(`select distinct on (p.key) p.key, p."userId", p.brand, p.flavor, p.rarity, p."createdAt",
+        (select count(*) from "gachaPull" q where q."userId" = p."userId" and q.rarity in ('epic', 'legendary')
+          and (q."createdAt" at time zone 'Europe/Moscow')::date = (p."createdAt" at time zone 'Europe/Moscow')::date)::int as count, ${AUTHOR_COLUMNS}
+      from (select *, "userId" || '|' || to_char(("createdAt" at time zone 'Europe/Moscow')::date, 'YYYY-MM-DD') as key from "gachaPull" where rarity in ('epic', 'legendary')) p
+      join "user" u on u.id = p."userId" where p.key = any($1::text[])
+      order by p.key, case p.rarity when 'legendary' then 0 else 1 end, p."createdAt"`, [idsOf('gacha')]).then(result => result.rows) : Promise.resolve([] as FeedGachaRow[]),
   ]);
+  const gachaByKey = new Map(gachaDays.map(row => [row.key, row]));
   const tierListById = new Map(tierLists.map(list => [list.id, list]));
   const postById = new Map(posts.rows.map(post => [post.id, post]));
   const rankUpById = new Map(rankUps.rows.map(rankUp => [rankUp.id, rankUp]));
@@ -215,6 +229,8 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
     if (rankUp) return [{ kind: 'rank-up', rankUp }];
     const tierList = entry.kind === 'tierlist' ? tierListById.get(entry.id) : undefined;
     if (tierList) return [{ kind: 'tierlist', tierList }];
+    const pull = entry.kind === 'gacha' ? gachaByKey.get(entry.id) : undefined;
+    if (pull) return [{ kind: 'gacha', pull }];
     const reviews = entry.kind === 'reviews' ? reviewDays.get(entry.id) : undefined;
     return reviews?.length ? [{ kind: 'reviews', group: { key: entry.id, createdAt: reviews[0]!.createdAt, reviews } }] : [];
   });

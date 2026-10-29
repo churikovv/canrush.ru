@@ -11,8 +11,10 @@ const count = new Intl.NumberFormat('ru-RU');
  * `public/brand/home`) standing over the plate (catalog, prices, stores, tier lists, each with its live number), then one row of small icons for the month's
  * the top, the giveaway, the beta «Двигатель» places, drink dating and the market. The row scrolls sideways on phones.
  */
-export function HomeServices({ metrics, contest, joined, engine }: {
+export function HomeServices({ metrics, contest, joined, engine, gachaBanner = false }: {
   metrics: HomeMetrics;
+  /** The season's «Банкомат» banner is on the page: its small icon steps aside */
+  gachaBanner?: boolean;
   contest: { contest: Contest; phase: 'open' | 'results' } | null;
   joined: boolean;
   engine: BetaEngine;
@@ -29,6 +31,7 @@ export function HomeServices({ metrics, contest, joined, engine }: {
     { key: 'leaderboard', href: '/leaderboard', label: 'Лидеры', note: 'таблица', art: '/brand/home/leaderboard.png' },
     ...(contest ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: contest.phase === 'open' ? (joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`) : 'итоги', art: '/brand/home/contest.png' }] : []),
     ...(engine.taken < BETA_ENGINE_PLACES ? [{ key: 'engine', href: '/engine', label: 'Бета сайта', note: 'каждый важен', art: '/brand/achievements/engine.png' }] : []),
+    ...(gachaBanner ? [] : [{ key: 'gacha', href: '/gacha', label: 'Банкомат', note: 'карточки банок', art: '/brand/home/gacha.svg' }]),
     { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: '/brand/home/dating.png' },
     { key: 'market', href: '/search?type=market', label: 'Маркет', note: 'объявления', art: '/brand/home/market.png' },
     // The landing for brands, distributors and shops (CanRush для бизнеса).
@@ -40,7 +43,7 @@ export function HomeServices({ metrics, contest, joined, engine }: {
       <span className="go-tile-label">{item.label}{item.note && <small> · {item.note}</small>}</span>
     </Link></li>)}</ul>
     <ul className="go-icons">{small.map(item => <li key={item.key}><Link className="go-icon" href={item.href} data-icon={item.key}>
-      <span className="go-icon-plate"><Image src={item.art} width={120} height={120} sizes="72px" alt="" /></span>
+      <span className="go-icon-plate"><Image src={item.art} width={120} height={120} sizes="72px" alt="" unoptimized={item.art.endsWith('.svg')} /></span>
       <span className="go-icon-label">{item.label}</span>
       <small>{item.note}</small>
     </Link></li>)}</ul>

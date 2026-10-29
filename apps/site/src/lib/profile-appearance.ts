@@ -27,6 +27,8 @@ export const PROFILE_FRAMES = [
   { key: 'liquid', level: 15, label: 'Жидкая энергия' },
   { key: 'can', level: 18, label: 'Холодная банка' },
   { key: 'legend', level: 20, label: 'Корона Легенды' },
+  // Эксклюзив Банкомата (`gachaCosmetic`): уровнем не открывается, только с «Тыквенного автомата».
+  { key: 'pumpkin', level: 999, label: 'Тыквенная', special: 'Тыквенный автомат' },
 ] as const;
 export type ProfileAppearance = { theme: typeof PROFILE_THEMES[number]['key']; frame: typeof PROFILE_FRAMES[number]['key'] };
 export const DEFAULT_PROFILE_APPEARANCE: ProfileAppearance = { theme: 'default', frame: 'none' };
@@ -38,7 +40,7 @@ export function parseProfileAppearance(value: unknown): ProfileAppearance | null
 
 /** The nearest level that opens new cosmetics, with everything it opens; null when all are open. */
 export function nextAppearanceUnlock(level: number): { level: number; themes: string[]; frames: string[] } | null {
-  const next = Math.min(...[...PROFILE_THEMES, ...PROFILE_FRAMES].map(item => item.level).filter(required => required > level));
+  const next = Math.min(...[...PROFILE_THEMES, ...PROFILE_FRAMES].filter(item => !('special' in item)).map(item => item.level).filter(required => required > level));
   if (!Number.isFinite(next)) return null;
   return {
     level: next,
@@ -47,8 +49,8 @@ export function nextAppearanceUnlock(level: number): { level: number; themes: st
   };
 }
 
-/** Existing equipped cosmetics remain usable; new choices require earned levels. */
-export function canUseProfileAppearance(value: ProfileAppearance, level: number, current = DEFAULT_PROFILE_APPEARANCE): boolean {
+/** Existing equipped cosmetics remain usable; new choices require earned levels or, for the gacha's frames, owning them. */
+export function canUseProfileAppearance(value: ProfileAppearance, level: number, current = DEFAULT_PROFILE_APPEARANCE, owned: readonly string[] = []): boolean {
   return (value.theme === current.theme || PROFILE_THEMES.some(item => item.key === value.theme && item.level <= level))
-    && (value.frame === current.frame || PROFILE_FRAMES.some(item => item.key === value.frame && item.level <= level));
+    && (value.frame === current.frame || owned.includes(value.frame) || PROFILE_FRAMES.some(item => item.key === value.frame && item.level <= level));
 }

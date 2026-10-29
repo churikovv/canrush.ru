@@ -25,6 +25,33 @@ const TENDRILS = [
 const ABYSS_EMBERS = [{ x: 3, y: 63, dx: -2, delay: 0 }, { x: 8, y: 78, dx: -3, delay: -1.1 }, { x: 97, y: 63, dx: 2, delay: -.6 }, { x: 92, y: 78, dx: 3, delay: -1.9 }, { x: 26, y: 93, dx: -4, delay: -2.5 }, { x: 74, y: 93, dx: 4, delay: -1.5 }];
 const NOVA_COLORS = ['#ff3d9a', '#ff8a1e', '#ffd23a', '#3ce8ff', '#7c5cff'];
 
+const BAT = 'M0 0C-2-3-5-3.6-8-2.4-6.6-1.8-6-.6-6.2.8-4.6-.4-3-.2-1.8 1.2-1.2.2-.5 0 0 .6.5 0 1.2.2 1.8 1.2 3-.2 4.6-.4 6.2.8 6-.6 6.6-1.8 8-2.4 5-3.6 2-3 0 0Z';
+const BATS = [{ x: 15, y: 16, scale: 1, delay: 0 }, { x: 88, y: 26, scale: .7, delay: -.45 }, { x: 93, y: 56, scale: .55, delay: -.9 }];
+
+/** «Тыквенная» — эксклюзив Тыквенного автомата: оранжевое кольцо-лоза, тыква со светящимся лицом и летучие мыши. */
+function PumpkinFrame() {
+  return <>
+    <circle className="frame-pumpkin-ring" cx="50" cy="50" r="44" stroke="currentColor" strokeWidth="2.4" strokeDasharray="10 3 2 3" strokeLinecap="round" />
+    <path className="frame-pumpkin-vine" d="M62 7C70 3 76 6 77 11M38 95C32 99 26 98 24 93" stroke="#3f8f3a" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M75 9C78 6 82 7 82 10C79 11 77 11 75 9Z" fill="#3f8f3a" />
+    {BATS.map(bat => <g key={`${bat.x}-${bat.y}`} transform={`translate(${bat.x} ${bat.y}) scale(${bat.scale})`}>
+      <g className="frame-fx frame-bat" style={fx(bat.delay)}><path d={BAT} fill="#2a1f3d" /><circle cx="-.9" cy=".3" r=".35" fill="#ffcf4a" /><circle cx=".9" cy=".3" r=".35" fill="#ffcf4a" /></g>
+    </g>)}
+    <g transform="translate(17 83)">
+      <g className="frame-fx frame-pumpkin">
+        <path d="M0-9.5C1-12 2.5-12.8 3.6-12.4" stroke="#3f8f3a" strokeWidth="1.8" strokeLinecap="round" />
+        <ellipse cx="-5" cy="0" rx="6" ry="8.5" fill="#e86a10" />
+        <ellipse cx="5" cy="0" rx="6" ry="8.5" fill="#e86a10" />
+        <ellipse cx="0" cy="0" rx="6.4" ry="9.2" fill="#ff8a1e" stroke="#c4560a" strokeWidth=".8" />
+        <g className="frame-fx frame-pumpkin-face" fill="#ffe27a">
+          <path d="M-5.6-2.6-3.2-5.4-1.4-2.6Z" /><path d="M5.6-2.6 3.2-5.4 1.4-2.6Z" />
+          <path d="M-6 1.6C-3 5.6 3 5.6 6 1.6L3.6 2.8 2.4 1.4 1 3 0 1.6-1 3-2.4 1.4-3.6 2.8Z" />
+        </g>
+      </g>
+    </g>
+  </>;
+}
+
 const fx = (delay: number, extra: Record<string, string> = {}) => ({ '--fx-delay': `${delay}s`, ...extra }) as CSSProperties;
 
 function SparkGlint({ delay }: { delay?: number }) {
@@ -42,6 +69,7 @@ export function AvatarFrame({ frame }: { frame: ProfileAppearance['frame'] }) {
   if (frame === 'none') return null;
   if (isHeavyFrame(frame)) return <HeavyAvatarFrame frame={frame} />;
   const ring = frame === 'abyss' || frame === 'nova';
+  if (frame === 'pumpkin') return <svg className="avatar-frame avatar-frame-pumpkin" viewBox="0 0 100 100" fill="none" aria-hidden="true" focusable="false"><PumpkinFrame /></svg>;
   return <>
     {ring && <span className={`avatar-ring avatar-ring-${frame}`} aria-hidden="true"><span className="avatar-ring-band" /></span>}
     <svg className={`avatar-frame avatar-frame-${frame}`} viewBox="0 0 100 100" fill="none" aria-hidden="true" focusable="false">

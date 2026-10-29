@@ -3742,3 +3742,51 @@ html[data-native-app] .pull-refresh:not([data-state="pulling"]) { transition: tr
 .form-alert-actions a:not(.community-button) { display: inline-flex; align-items: center; min-height: 36px; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--alert) 14%, transparent); color: inherit; font-size: .875rem; font-weight: 700; text-decoration: none; }
 .form-alert-actions a:not(.community-button):hover { background: color-mix(in srgb, var(--alert) 22%, transparent); }
 @media (max-width: 639px) { .form-alert-actions > * { flex: 1 1 100%; justify-content: center; } .form-alert-actions .community-button { width: 100%; } }
+
+/* Game UI (the «Банкомат» page and its home banner): a chunky key — a darker base under a raised glossy face that
+   sinks when pressed — and dark glass chips. Here, not in gacha.css, because the home page renders them. */
+.game-chip { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 4px 12px 4px 6px; border: 2px solid rgb(140 200 255 / .45); border-radius: 999px; background: rgb(14 8 44 / .72); color: #fff; font-size: 1rem; font-weight: 900; font-variant-numeric: tabular-nums; box-shadow: inset 0 1px 0 rgb(255 255 255 / .18), 0 0 14px rgb(60 160 255 / .35); backdrop-filter: blur(6px); }
+.game-chip .gacha-shard-icon { color: #5fd6ff; }
+/* The button: a darker base (the «side» of a 3D key) under a raised, glossy face that sinks when pressed. */
+.game-btn { --face: #ff8a1e; --face-top: #ffc15a; --base: #a5410a; --ink: #fff; position: relative; display: block; padding: 0 0 7px; border: 0; border-radius: 20px; background: var(--base); color: var(--ink); font: inherit; text-decoration: none; cursor: pointer; box-shadow: 0 12px 26px -8px rgb(0 0 0 / .8); -webkit-tap-highlight-color: transparent; }
+.game-btn[data-tone="violet"] { --face: #7a4dff; --face-top: #b49bff; --base: #3b1c9e; }
+.game-btn-face { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 64px; padding: 8px 14px; border: 3px solid rgb(0 0 0 / .55); border-radius: 20px; background: linear-gradient(var(--face-top), var(--face) 55%); box-shadow: inset 0 3px 0 rgb(255 255 255 / .55), inset 0 -4px 0 rgb(0 0 0 / .12); transform: translateY(-1px); transition: transform 90ms ease-out; overflow: hidden; }
+.game-btn-face::after { content: ""; position: absolute; top: 6px; left: 12%; width: 40%; height: 9px; border-radius: 999px; background: rgb(255 255 255 / .45); }
+.game-btn-label { font-size: 1.375rem; font-weight: 900; letter-spacing: .01em; line-height: 1; text-transform: uppercase; text-shadow: 0 2px 0 rgb(0 0 0 / .35); -webkit-text-stroke: .5px rgb(0 0 0 / .25); }
+.game-btn-price { display: inline-flex; align-items: center; gap: 3px; padding: 1px 9px; border-radius: 999px; background: rgb(0 0 0 / .28); font-size: .8125rem; font-weight: 800; }
+.game-btn-price .gacha-cap-icon { color: #ffd34d; --gacha-cap-core: #fff8e6; }
+.game-btn:hover .game-btn-face { filter: brightness(1.06); }
+.game-btn:active:not(:disabled) .game-btn-face { transform: translateY(6px); box-shadow: inset 0 2px 0 rgb(255 255 255 / .35); }
+.game-btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.game-btn:disabled { cursor: default; filter: grayscale(.75) brightness(.7); }
+.game-btn[data-tone="orange"]:not(:disabled) .game-btn-face { animation: game-btn-glow 2.2s ease-in-out infinite; }
+@keyframes game-btn-glow { 0%, 100% { box-shadow: inset 0 3px 0 rgb(255 255 255 / .55), inset 0 -4px 0 rgb(0 0 0 / .12), 0 0 0 rgb(255 140 30 / 0); } 50% { box-shadow: inset 0 3px 0 rgb(255 255 255 / .55), inset 0 -4px 0 rgb(0 0 0 / .12), 0 0 22px rgb(255 140 30 / .75); } }
+@media (prefers-reduced-motion: reduce) { .game-btn[data-tone="orange"] .game-btn-face { animation: none; } .game-btn-face { transition: none; } }
+
+/* The season's «Банкомат» banner on the home page (GachaHomeBanner): the machine's loop on the left, a game panel
+   with the season, the frame's chance and a chunky «Крутить» key on the right — nothing covers the machine. */
+.gacha-home { position: relative; display: grid; grid-template-columns: 1.05fr 1fr; overflow: hidden; margin: 4px 0 18px; border: 3px solid #05030f; border-radius: 24px; background: #1b104c; color: #fff; text-decoration: none; box-shadow: 0 0 0 2px rgb(122 77 255 / .55), 0 18px 40px -18px rgb(80 40 220 / .8); isolation: isolate; -webkit-tap-highlight-color: transparent; }
+.gacha-home-art { position: relative; min-height: 220px; overflow: hidden; }
+.gacha-home-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 52% 60%;
+  -webkit-mask-image: linear-gradient(90deg, #000 55%, transparent); mask-image: linear-gradient(90deg, #000 55%, transparent); }  /* melts into the panel (an overlay would sit under the video layer) */
+.gacha-home-panel { position: relative; display: flex; background: linear-gradient(90deg, #1b104c, #140a3c); flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 12px 14px 4px; }
+.gacha-home-caps { align-self: flex-end; min-height: 28px; padding: 2px 10px 2px 5px; font-size: .875rem; }
+.gacha-home-title { display: grid; font-size: 1.125rem; font-weight: 900; line-height: 1.05; letter-spacing: .01em; text-transform: uppercase; text-shadow: 0 2px 0 rgb(0 0 0 / .5); }
+.gacha-home-when { color: #ffbe7a; font-size: .75rem; font-weight: 800; }
+.gacha-home-prize { padding: 4px 9px; border: 2px solid rgb(255 179 107 / .55); border-radius: 10px; background: rgb(20 8 40 / .6); color: #ffd2a3; font-size: .6875rem; font-weight: 800; line-height: 1.25; }
+.gacha-home-cta { align-self: stretch; margin-top: auto; }
+.gacha-home-cta .game-btn-face { min-height: 54px; padding: 6px 8px; }
+.gacha-home-cta .game-btn-label { font-size: 1.125rem; }
+.gacha-home:hover .gacha-home-cta .game-btn-face { filter: brightness(1.08); }
+.gacha-home:active .gacha-home-cta .game-btn-face { transform: translateY(6px); }
+.gacha-home:focus-visible { outline: 3px solid var(--color-focus, #006eff); outline-offset: 3px; }
+@media (min-width: 640px) {
+  .gacha-home { grid-template-columns: 1.25fr 1fr; }
+  .gacha-home-art { min-height: 260px; }
+  .gacha-home-panel { gap: 8px; padding: 22px 22px 20px 8px; }
+  .gacha-home-title { font-size: 1.625rem; }
+  .gacha-home-when { font-size: .875rem; }
+  .gacha-home-prize { font-size: .8125rem; }
+  .gacha-home-cta .game-btn-face { min-height: 66px; }
+  .gacha-home-cta .game-btn-label { font-size: 1.5rem; }
+}

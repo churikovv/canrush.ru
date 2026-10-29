@@ -66,7 +66,7 @@ function PrefixedInput({ prefix, ...props }: InputHTMLAttributes<HTMLInputElemen
 /** Text fields accept a full t.me link or @name; the field shows only the name after the prefix. */
 const bareTelegram = (value: string) => value.trim().replace(/^https?:\/\//i, '').replace(/^(?:www\.)?(?:t\.me|telegram\.me)\//i, '').replace(/^@+/, '').replace(/\/$/, '');
 
-export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, settings = [], accountRows = [] }: { level?: number; xp?: number; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { picker: ReactNode; earned: number; total: number; selected?: string }; settings?: SettingsGroup[]; accountRows?: SettingsRow[] }) {
+export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedFrames = [], tags, settings = [], accountRows = [] }: { level?: number; xp?: number; ownedFrames?: readonly string[]; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { picker: ReactNode; earned: number; total: number; selected?: string }; settings?: SettingsGroup[]; accountRows?: SettingsRow[] }) {
   const initialName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
   // The open section lives in ?section= (native history, synced with useSearchParams), so the phone's back gesture
   // returns to the list of sections instead of leaving the editor.
@@ -276,7 +276,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, tags, 
         </section>
       </div>
       <div id="profile-panel-appearance" tabIndex={-1} aria-label="Оформление" hidden={tab !== 'appearance'} className="profile-editor-panel">
-        <ProfileAppearanceEditor level={level} xp={xp} current={profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE} value={appearance} onChange={setAppearance} disabled={pending} />
+        <ProfileAppearanceEditor level={level} xp={xp} owned={ownedFrames} current={profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE} value={appearance} onChange={setAppearance} disabled={pending} />
       </div>
       <div id="profile-panel-images" tabIndex={-1} aria-label="Аватар и баннер" hidden={tab !== 'images'} className="profile-editor-panel">
         <section className="community-panel profile-editor-images" aria-labelledby="profile-images-title">

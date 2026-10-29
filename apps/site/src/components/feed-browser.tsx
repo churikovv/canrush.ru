@@ -1,5 +1,5 @@
 import Link from '@/components/navigation-progress';
-import { FeedReviewsEvent, FeedTierListEvent } from '@/components/feed-activity';
+import { FeedGachaEvent, FeedReviewsEvent, FeedTierListEvent } from '@/components/feed-activity';
 import { WallComposer } from '@/components/profile-community-controls';
 import { PagePagination } from '@/components/page-pagination';
 import { RankUpCard } from '@/components/rank-up-card';
@@ -26,7 +26,7 @@ export async function renderFeedItems(items: FeedItem[], viewerId: string | null
   const posts = items.flatMap(item => item.kind === 'post' ? [item.post] : []);
   const tierLists = items.flatMap(item => item.kind === 'tierlist' ? [item.tierList] : []);
   const reviewIds = items.flatMap(item => item.kind === 'reviews' ? item.group.reviews.map(review => review.id) : []);
-  const hasEvents = tierLists.length > 0 || reviewIds.length > 0;
+  const hasEvents = tierLists.length > 0 || reviewIds.length > 0 || items.some(item => item.kind === 'gacha');
   const [interactions, groups, tierViewer, reviewVotes] = await Promise.all([
     getWallInteractions(posts.map(post => post.id), viewerId),
     hasEvents ? loadAllCatalogGroups() : Promise.resolve([]),
@@ -37,6 +37,7 @@ export async function renderFeedItems(items: FeedItem[], viewerId: string | null
   const covers = new Map(groups.flatMap(group => group.coverImageUrl ? [[`${group.brand}\u0000${group.flavor}`, group.coverImageUrl] as const] : []));
   return items.map(item => item.kind === 'rank-up' ? <RankUpCard key={item.rankUp.id} rankUp={item.rankUp} />
     : item.kind === 'tierlist' ? <FeedTierListEvent key={`tierlist-${item.tierList.id}`} list={item.tierList} products={tierProducts} viewer={tierViewer} />
+    : item.kind === 'gacha' ? <FeedGachaEvent key={`gacha-${item.pull.key}`} pull={item.pull} covers={covers} />
     : item.kind === 'reviews' ? <FeedReviewsEvent key={`reviews-${item.group.key}`} group={item.group} covers={covers} votes={reviewVotes} viewerId={viewerId} />
     : <WallPost key={item.post.id} post={item.post} owner={{ username: item.post.ownerUsername, name: item.post.ownerName, avatarId: item.post.ownerAvatarId }} interaction={interactions.get(item.post.id)} canDelete={viewerId === item.post.userId || viewerId === item.post.profileId} canEdit={viewerId === item.post.userId} />);
 }

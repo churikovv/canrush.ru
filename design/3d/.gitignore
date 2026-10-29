@@ -1,0 +1,9 @@
+# Renders and previews: rebuilt by build_vending.py and render_halloween.py
+preview-*.png
+anim-*.mp4
+halloween-*.mp4
+halloween-still.png
+halloween-burst-frames.png
+frames/
+frames-halloween/
+*.blend1

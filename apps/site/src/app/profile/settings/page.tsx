@@ -157,11 +157,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const profile = await ensureOwnProfile(session.user);
   const telegram = getTelegramEnv();
   const telegramOnly = isTelegramPlaceholderEmail(session.user.email);
-  const [ratings, wall, listings, experience, friends, favorites, community, siteRole, preferenceRows, telegramLinked, blocked] = await Promise.all([
+  const [ratings, wall, listings, experience, friends, favorites, community, siteRole, preferenceRows, telegramLinked, blocked, ownedFrames] = await Promise.all([
     getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getFavoriteGroups(profile.id), getProfileCommunity(profile.id, profile.id), siteRoleForEmail(session.user.email),
     getPool().query<{ kind: string; enabled: boolean }>('select kind,enabled from "notificationPreference" where "userId"=$1', [session.user.id]).then(result => result.rows),
     getPool().query('select 1 from "account" where "userId" = $1 and "providerId" = $2 limit 1', [session.user.id, TELEGRAM_PROVIDER_ID]).then(result => (result.rowCount ?? 0) > 0),
     getBlockedMembers(session.user.id),
+    getPool().query<{ key: string }>('select key from "gachaCosmetic" where "userId" = $1', [session.user.id]).then(result => result.rows.map(row => row.key)),
   ]);
   const preferences = new Map(preferenceRows.map(row => [row.kind, row.enabled]));
   // «Помощь»: the member's chat with the team is its own screen (/support); the row says when the team has answered.
@@ -280,7 +281,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     </Panel> }];
 
   return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-    <ProfileEditForm level={experienceLevel(experience[profile.username]?.xp ?? 0).level} xp={experience[profile.username]?.xp ?? 0} profile={profile} layoutPreviews={layoutPreviews}
+    <ProfileEditForm level={experienceLevel(experience[profile.username]?.xp ?? 0).level} xp={experience[profile.username]?.xp ?? 0} ownedFrames={ownedFrames} profile={profile} layoutPreviews={layoutPreviews}
       tags={{ earned: earned.length, total: achievements.length, selected: profileTagLabel(community.tags[0]), picker: <AchievementPicker key={community.tags.join(',')} earned={earned} selected={community.tags} progress={community.progress} isOwn viewerIsAdmin={viewerIsAdmin} /> }}
       settings={settings} accountRows={accountRows} />
   </BrandShell>;

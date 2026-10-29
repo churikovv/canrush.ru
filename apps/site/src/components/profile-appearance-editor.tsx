@@ -9,9 +9,9 @@ import { levelRank } from '@/lib/level-tier';
 import { PROFILE_THEMES, PROFILE_FRAMES, DEFAULT_PROFILE_APPEARANCE, nextAppearanceUnlock, type ProfileAppearance } from '@/lib/profile-appearance';
 import { useAnchoredPopover } from '@/lib/use-anchored-popover';
 
-type Choice<K extends string> = { key: K; level: number; label: string; description?: string };
+type Choice<K extends string> = { key: K; level: number; label: string; description?: string; special?: string };
 
-export function ProfileAppearanceEditor({ value, onChange, disabled, level, xp, current }: { level: number; xp?: number; current: ProfileAppearance; value: ProfileAppearance; onChange: (value: ProfileAppearance) => void; disabled: boolean }) {
+export function ProfileAppearanceEditor({ value, onChange, disabled, level, xp, current, owned = [] }: { level: number; xp?: number; current: ProfileAppearance; value: ProfileAppearance; onChange: (value: ProfileAppearance) => void; disabled: boolean; owned?: readonly string[] }) {
   return <section className="profile-appearance-editor" aria-labelledby="appearance-title">
     <div className="community-section-heading"><h2 id="appearance-title">Оформление</h2><button type="button" className="community-button community-button-secondary" disabled={disabled} onClick={() => onChange(DEFAULT_PROFILE_APPEARANCE)}>Сбросить оформление</button></div>
     <p className="community-section-note">Цвет и рамка видны всем посетителям. Шапка сверху показывает ваш выбор до сохранения.</p>
@@ -19,7 +19,7 @@ export function ProfileAppearanceEditor({ value, onChange, disabled, level, xp, 
       <AppearanceLevel level={level} xp={xp ?? experienceForLevel(level)} />
       <AppearancePicker title="Цвет профиля" items={PROFILE_THEMES} value={value.theme} saved={current.theme} level={level} disabled={disabled}
         preview={key => <ThemePreview theme={key} />} onChange={theme => onChange({ ...value, theme })} />
-      <AppearancePicker title="Рамка аватарки" items={PROFILE_FRAMES} value={value.frame} saved={current.frame} level={level} disabled={disabled}
+      <AppearancePicker title="Рамка аватарки" items={PROFILE_FRAMES} value={value.frame} saved={current.frame} level={level} owned={owned} disabled={disabled}
         preview={key => <span className="appearance-frame-sample community-avatar" data-frame={key} aria-hidden="true">C<AvatarFrame frame={key} /></span>}
         onChange={frame => onChange({ ...value, frame })} note="Анимация рамок отключается, если на устройстве включено уменьшение движения." />
     </div>
@@ -47,7 +47,7 @@ function AppearanceLevel({ level, xp }: { level: number; xp: number }) {
         <p><LevelChip level={next.level} /> откроет {unlocks}</p>
         <p className="appearance-level-gap">Ещё {remaining.toLocaleString('ru-RU')} XP · отзывы, банки в трекере и тирлисты приносят опыт</p>
       </> : <p>Вам открыто всё оформление.</p>}
-      <p className="appearance-level-count">Темы {opened(PROFILE_THEMES)} из {PROFILE_THEMES.length} · Рамки {opened(PROFILE_FRAMES)} из {PROFILE_FRAMES.length}</p>
+      <p className="appearance-level-count">Темы {opened(PROFILE_THEMES)} из {PROFILE_THEMES.length} · Рамки {opened(PROFILE_FRAMES.filter(item => !('special' in item)))} из {PROFILE_FRAMES.filter(item => !('special' in item)).length}</p>
     </div>
   </section>;
 }
@@ -56,17 +56,19 @@ function ThemePreview({ theme }: { theme: string }) {
   return <span className="appearance-swatch" data-profile-theme={theme} aria-hidden="true"><i /><i /><i /><i /></span>;
 }
 
-function AppearancePicker<K extends string>({ title, items, value, saved, level, disabled, preview, onChange, note }: {
-  title: string; items: readonly Choice<K>[]; value: K; saved: K; level: number; disabled: boolean;
+function AppearancePicker<K extends string>({ title, items, value, saved, level, owned = [], disabled, preview, onChange, note }: {
+  title: string; items: readonly Choice<K>[]; value: K; saved: K; level: number; owned?: readonly string[]; disabled: boolean;
   preview: (key: K) => ReactNode; onChange: (key: K) => void; note?: string;
 }) {
   const id = useId();
   const panel = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const { trigger, position, place } = useAnchoredPopover<HTMLButtonElement>(open, 520);
-  const usable = (item: Choice<K>) => item.level <= level || item.key === saved;
-  const available = items.filter(usable);
-  const locked = items.filter(item => !usable(item));
+  const usable = (item: Choice<K>) => item.level <= level || item.key === saved || owned.includes(item.key);
+  // A gacha frame nobody owns yet stays out of the list: it is not a level reward to wait for.
+  const shown = items.filter(item => !item.special || usable(item) || item.key === value);
+  const available = shown.filter(usable);
+  const locked = shown.filter(item => !usable(item));
   const selected = items.find(item => item.key === value) ?? items[0]!;
 
   function choose(key: K) {
@@ -88,11 +90,11 @@ function AppearancePicker<K extends string>({ title, items, value, saved, level,
     return <li key={item.key}>
       <button type="button" role="radio" aria-checked={item.key === value} disabled={isLocked} className="appearance-choice" onClick={() => choose(item.key)}>
         {preview(item.key)}
-        <span className="appearance-choice-copy"><strong>{item.label}</strong>{item.description && <span>{item.description}</span>}</span>
+        <span className="appearance-choice-copy"><strong>{item.label}</strong>{item.special ? <span>Эксклюзив · {item.special}</span> : item.description && <span>{item.description}</span>}</span>
         <span className="appearance-choice-status">
           {isLocked ? <><LevelChip level={item.level} /><small>ещё {gap} {pluralRu(gap, 'уровень', 'уровня', 'уровней')}</small></>
             : item.key === value ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-label="Выбрано"><path d="m5 12.5 4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            : item.level > level ? <small>Уже установлено</small> : null}
+            : item.level > level && !item.special ? <small>Уже установлено</small> : null}
         </span>
       </button>
     </li>;
@@ -101,7 +103,7 @@ function AppearancePicker<K extends string>({ title, items, value, saved, level,
   return <section className="appearance-island" aria-labelledby={`${id}-title`}>
     <div className="appearance-island-heading">
       <h3 id={`${id}-title`}>{title}</h3>
-      <span>{available.length} из {items.length}</span>
+      <span>{available.length} из {shown.length}</span>
     </div>
     <button ref={trigger} type="button" className="appearance-trigger" popoverTarget={id} aria-expanded={open} aria-controls={id} aria-describedby={`${id}-title`} disabled={disabled} onClick={place}>
       {preview(selected.key)}

@@ -28,6 +28,8 @@ import { DrinkCalendarBlock } from '@/components/drink-calendar-block';
 import { BrandCollectionBlock } from '@/components/brand-collection';
 import { getBrandCollections } from '@/lib/brand-collection';
 import { listPublishedDrinksByOwner } from '@/lib/catalog-drinks';
+import { topCards } from '@/lib/gacha';
+import { RARITY_LABELS } from '@/lib/gacha-fields';
 import { ProfilePresence } from '@/components/profile-presence';
 import { SignInPrompt } from '@/components/sign-in-prompt';
 
@@ -48,8 +50,8 @@ function TelegramGlyph() {
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, lastSeen, friends, listings, favorites, compatibility, collection, addedDrinks] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getFavoriteGroups(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id), listPublishedDrinksByOwner(profile.id),
+  const [community, ratings, wall, presence, lastSeen, friends, listings, favorites, compatibility, collection, addedDrinks, cards] = await Promise.all([
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getFavoriteGroups(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id), listPublishedDrinksByOwner(profile.id), profile.profileLayout?.hidden.includes('cards') === false ? topCards(profile.id).catch(() => []) : Promise.resolve([]),
   ]);
   const blockedByViewer = !isOwn && viewerId ? await isBlockedByViewer(viewerId, profile.id) : false;
   const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
@@ -126,7 +128,11 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           <ProfileBlock block="drinks"><section className="community-panel" aria-labelledby="profile-drinks-title"><div className="community-section-heading"><h2 id="profile-drinks-title">Добавленные напитки {addedDrinks.total > 0 && <span>{addedDrinks.total}</span>}</h2>{isOwn && <Link href="/catalog/new">Добавить ↗</Link>}</div>
           {addedDrinks.items.length ? <div className="profile-favorites-block">{addedDrinks.items.map(drink => <Link key={drink.id} href={drink.href}>
           <Image src={drink.photo} width={120} height={120} alt="" /><strong>{drink.brand}</strong><span>{drink.name}</span></Link>)}</div>
-          : <div className="community-empty"><p>{isOwn ? 'Не нашли энергетик в каталоге? Добавьте его — после проверки он появится здесь и у всех в каталоге.' : 'Пользователь пока не добавлял напитки в каталог.'}</p>{isOwn && <Link href="/catalog/new">Добавить напиток ↗</Link>}</div>}</section></ProfileBlock></ProfileBlocks>
+          : <div className="community-empty"><p>{isOwn ? 'Не нашли энергетик в каталоге? Добавьте его — после проверки он появится здесь и у всех в каталоге.' : 'Пользователь пока не добавлял напитки в каталог.'}</p>{isOwn && <Link href="/catalog/new">Добавить напиток ↗</Link>}</div>}</section></ProfileBlock>
+          <ProfileBlock block="cards"><section className="community-panel" aria-labelledby="profile-cards-title"><div className="community-section-heading"><h2 id="profile-cards-title">Карточки Банкомата</h2><Link href={`${base}/cards`}>Альбом ↗</Link></div>
+          {cards.length ? <div className="profile-favorites-block profile-gacha-cards">{cards.map(card => <Link key={`${card.brand}:${card.flavor}`} href={card.href} data-rarity={card.rarity}>
+          <Image src={card.cover} width={120} height={120} unoptimized alt="" /><strong>{card.brand}</strong><span>{card.name}</span><small>{RARITY_LABELS[card.rarity]}{card.count > 1 ? ` · ×${card.count}` : ''}</small></Link>)}</div>
+          : <div className="community-empty"><p>{isOwn ? 'Здесь появятся лучшие карточки из Банкомата. Первая крутка в день — бесплатно.' : 'Пользователь пока не крутил Банкомат.'}</p>{isOwn && <Link href="/gacha">Открыть Банкомат ↗</Link>}</div>}</section></ProfileBlock></ProfileBlocks>
 
         </div>
 
