@@ -309,7 +309,6 @@ label.tag-picker-option:not(.is-locked):hover { background: var(--theme-subtle, 
 .wall-empty-card strong { color: var(--theme-text, #3e3e3f); }
 .profile-owner-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .notification-setting { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; border-bottom: 1px solid var(--theme-line, #dfe3e8); cursor: pointer; }
-.notification-setting input { width: 22px; height: 22px; flex-shrink: 0; accent-color: var(--color-brand); }
 .profile-settings button { margin-top: 24px; }
 .achievement-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .achievement-cards p { line-height: 1.5; }
@@ -1177,14 +1176,14 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 @media (min-width: 960px) { .favorites-list { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 359px) { .favorites-list { grid-template-columns: minmax(0, 1fr); } }
 /* Settings → «Документы и связь»: the footer's documents and contacts (the app hides the footer). */
-.settings-about-links { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.settings-about-links a { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 10px 12px; border-radius: 12px; color: var(--theme-text, var(--color-ink)); font-weight: 600; text-decoration: none; }
-.settings-about-links a:hover { background: var(--theme-subtle, var(--color-subtle)); }
-.settings-about-links a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-.settings-about-links span { display: grid; gap: 2px; }
-.settings-about-links small { color: var(--theme-muted, #59616b); font-weight: 400; font-size: .8125rem; }
-.settings-about-links svg { flex: none; color: var(--theme-muted, #59616b); }
-.settings-about-note { margin: 12px 12px 0; color: var(--theme-muted, #59616b); font-size: .75rem; line-height: 1.5; }
+/* Documents and contacts: link rows in the settings islands, the chevron or the external mark at the end. */
+a.settings-row { color: inherit; text-decoration: none; transition: background-color 120ms ease-out; }
+a.settings-row:hover { background: var(--theme-subtle, var(--color-subtle)); }
+a.settings-row:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.settings-row-tail { display: grid; place-items: center; flex: none; color: var(--theme-muted, #59616b); }
+.settings-row-tail svg { width: 18px; height: 18px; }
+.settings-about { margin-top: 0; }
+.settings-about-note { margin: 0 4px; color: var(--theme-muted, #59616b); font-size: .75rem; line-height: 1.5; }
 
 /* Activity tiles under the profile header: icon in a rounded square, the count, the label — four in a row on every width. */
 .community-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 12px 0 28px; }
@@ -1248,10 +1247,6 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 .tg-settings-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .tg-settings-chip { flex: none; padding: 4px 10px; border-radius: 999px; background: var(--theme-subtle, #eef1f5); color: var(--theme-muted, #59616b); font-size: .75rem; font-weight: 800; white-space: nowrap; }
 .tg-settings-chip.is-on { background: color-mix(in srgb, #22a861 16%, transparent); color: #1d9354; }
-.tg-settings-perks { display: grid; gap: 10px; margin: 16px 0; padding: 0; list-style: none; }
-.tg-settings-perks li { display: flex; align-items: flex-start; gap: 10px; color: var(--theme-muted, #59616b); font-size: .9375rem; line-height: 1.4; }
-.tg-settings-perks li > svg { flex: none; margin-top: 2px; color: #2aabee; }
-.tg-settings-perks b { color: var(--theme-text, #111); }
 .tg-settings-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-color: #2aabee; background: #2aabee; color: #fff; }
 .tg-settings-link:hover:not(:disabled) { border-color: #1e96d6; background: #1e96d6; }
 .tg-settings-hint { margin-top: 8px; }
@@ -1268,6 +1263,57 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 :root .tg-settings-danger .community-button-secondary.tg-settings-unlink { color: #e5484d; }
 @media (max-width: 639px) {
   .tg-settings-link, .tg-settings-bot .tg-settings-link, .tg-settings-danger form, .tg-settings-unlink { width: 100%; }
+}
+
+/* Settings switches (notifications, the bot): an iOS-style toggle on the checkbox itself, so the form posts it as
+   before. Off — a muted track that reads on every site and profile theme; on — the brand blue. */
+.settings-switch { position: relative; flex: none; appearance: none; width: 48px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--theme-muted, #59616b) 32%, transparent); cursor: pointer; transition: background-color 160ms ease-out; }
+.settings-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .3); transition: transform 160ms ease-out; }
+.settings-switch:checked { background: var(--color-brand, #006eff); }
+.settings-switch:checked::after { transform: translateX(20px); }
+.settings-switch:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .settings-switch, .settings-switch::after { transition: none; } }
+
+/* The save button of a settings panel is the main action: brand blue, full width on phones. */
+:root .profile-settings .community-button.settings-save { border-color: var(--color-brand, #006eff); background: var(--color-brand, #006eff); color: #fff; }
+:root .profile-settings .community-button.settings-save:hover { border-color: color-mix(in srgb, var(--color-brand, #006eff) 85%, #000); background: color-mix(in srgb, var(--color-brand, #006eff) 85%, #000); }
+.settings-saved { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; color: #1d9354; font-size: .875rem; font-weight: 700; }
+.settings-saved svg { flex: none; }
+
+/* The bot's delivery rows: one rounded island, a tinted icon, the label with a short hint, the switch on the right. */
+.settings-list { overflow: hidden; border: 1px solid var(--theme-line, #e4e7eb); border-radius: 18px; background: var(--theme-panel, #fff); }
+.settings-row { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 12px 14px; cursor: pointer; }
+.settings-row + .settings-row { border-top: 1px solid var(--theme-line, #edf0f3); }
+.settings-row-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 11px; background: color-mix(in srgb, var(--color-brand, #006eff) 18%, transparent); color: var(--color-brand, #006eff); }
+.settings-row-text { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.settings-row-text strong { color: var(--theme-text, #111); font-size: .9375rem; font-weight: 700; }
+.settings-row-text small { color: var(--theme-muted, #59616b); font-size: .8125rem; line-height: 1.35; }
+.settings-select { flex: none; max-width: 46%; min-height: 40px; padding: 0 32px 0 12px; border: 1px solid var(--theme-line, #e4e7eb); border-radius: 12px; background: var(--theme-subtle, #f3f5f7) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a919b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; color: var(--theme-text, #111); font: inherit; font-size: .9375rem; font-weight: 600; appearance: none; cursor: pointer; }
+.settings-select:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.telegram-bot-settings .community-section-note { margin: 0; }
+.settings-row:not(label) { cursor: default; }
+.settings-row-icon.is-telegram { background: color-mix(in srgb, #2aabee 18%, transparent); color: #2aabee; }
+/* Notifications: ten switches in three titled islands. */
+.settings-groups { display: grid; gap: 20px; margin-top: 8px; }
+.settings-group { display: grid; gap: 8px; }
+.settings-group-title { margin: 0 0 0 4px; color: var(--theme-muted, #59616b); font-size: .8125rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+.settings-groups .settings-save { margin-top: 4px; }
+/* Not linked yet: a centred invitation, what linking gives as rows, then the Telegram-blue button. */
+.tg-settings-invite { display: grid; justify-items: center; gap: 6px; padding: 24px 20px 22px; border-radius: 20px; background: color-mix(in srgb, #2aabee 12%, var(--theme-subtle, #f3f5f7)); text-align: center; }
+.tg-settings-invite .tg-settings-icon { width: 64px; height: 64px; margin-bottom: 8px; border-radius: 20px; }
+.tg-settings-invite .tg-settings-icon svg { width: 32px; height: 32px; }
+.tg-settings-invite strong { color: var(--theme-text, #111); font-size: 1.25rem; }
+.tg-settings-invite > span:last-child { max-width: 380px; color: var(--theme-muted, #59616b); font-size: .9375rem; line-height: 1.45; }
+.settings-list.tg-settings-perks { margin: 16px 0; }
+.profile-settings .tg-settings-perks + .tg-settings-link { width: 100%; min-height: 52px; margin-top: 0; border-color: #229ed9; background: #229ed9; font-weight: 800; }
+.profile-settings .tg-settings-perks + .tg-settings-link:hover:not(:disabled) { border-color: #1b8cc3; background: #1b8cc3; }
+.tg-settings-hint { text-align: center; }
+.telegram-bot-settings .settings-save { margin-top: 4px; }
+@media (pointer: coarse) { .settings-select { font-size: 1rem; } }
+@media (max-width: 639px) {
+  .profile-settings .community-button.settings-save { width: 100%; }
+  .settings-row { flex-wrap: wrap; }
+  .settings-row:has(.settings-select) .settings-select { flex: 1 1 100%; max-width: none; margin-left: 48px; }
 }
 
 /* Streak flame (streak-flame.tsx), like TikTok's: the tongue sways from its base, the core flickers faster, a soft
