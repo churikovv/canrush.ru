@@ -93,7 +93,7 @@ function MergeForm({ drink, titleId, onDone }: { drink: AdminDrink; titleId: str
   return <form action={action} onSubmit={confirmMerge} className="store-form admin-drink-edit-form admin-drink-merge">
     <h2 id={titleId}>Склеить с другой карточкой</h2>
     <p className="field-help">{published
-      ? `«${drink.brand} · ${drink.name}» — дубль? Его отзывы, избранное, тирлисты, календарь и свайпы переедут на выбранную карточку, старый адрес будет вести на неё, а сам напиток удалится. Автор получит уведомление.`
+      ? `«${drink.brand} · ${drink.name}» — дубль? Его отзывы, избранное, тирлисты, трекер и свайпы переедут на выбранную карточку, старый адрес будет вести на неё, а сам напиток удалится. Автор получит уведомление.`
       : `Заявка «${drink.brand} · ${drink.name}» удалится как дубль выбранной карточки. Автор получит уведомление.`}</p>
     <fieldset disabled={pending}>
       <label>Карточка каталога<input type="search" value={query} onChange={event => { setQuery(event.target.value); setTarget(null); }} placeholder="Бренд, вкус или название" autoComplete="off" aria-controls={listId} /></label>
@@ -148,7 +148,7 @@ function EditForm({ drink, brands, flavors, titleId, onDone }: { drink: AdminDri
     action(form);
   }} className="store-form admin-drink-edit-form">
     <h2 id={titleId}>Редактировать напиток</h2>
-    {drink.status === 'published' && <p className="field-help">Если поменять бренд или вкус, отзывы, избранное, тирлисты, календарь и свайпы переедут на новую карточку, а старый адрес будет вести на неё.</p>}
+    {drink.status === 'published' && <p className="field-help">Если поменять бренд или вкус, отзывы, избранное, тирлисты, трекер и свайпы переедут на новую карточку, а старый адрес будет вести на неё.</p>}
     <fieldset disabled={pending}>
       <div className="admin-drink-edit-photo">
         <Image src={preview || drink.photo} width={72} height={90} unoptimized alt="" />

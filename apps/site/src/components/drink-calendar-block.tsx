@@ -20,7 +20,7 @@ export async function DrinkCalendarBlock({ userId, username, isOwn }: { userId: 
   const streak = overview.current?.length ?? 0;
   const href = `/profile/${username}/calendar`;
   return <section className="community-panel drink-calendar-block" aria-labelledby="drink-calendar-title">
-    <div className="community-section-heading"><h2 id="drink-calendar-title">Календарь выпитого</h2><Link href={href}>Открыть ↗</Link></div>
+    <div className="community-section-heading"><h2 id="drink-calendar-title">Трекер выпитого</h2><Link href={href}>Открыть ↗</Link></div>
     <div className="drink-calendar-hero">
       <DrinkBird mood={mood} size={56} />
       <div className="drink-calendar-hero-text">

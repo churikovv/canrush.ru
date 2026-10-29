@@ -76,7 +76,7 @@ export function currentContest(at: Date): { contest: Contest; phase: 'open' | 'r
 /** Only the calendar is required; Telegram and the avatar are asked for so the winner can be reached and checked. */
 export function contestChecklist(entry: ContestEntry) {
   return [
-    { key: 'calendar', done: entry.cans > 0, required: true, label: 'Отметить хотя бы одну банку в календаре выпитого' },
+    { key: 'calendar', done: entry.cans > 0, required: true, label: 'Отметить хотя бы одну банку в трекере выпитого' },
     { key: 'telegram', done: entry.telegram, required: false, label: 'Указать свой Telegram в профиле, чтобы мы могли написать' },
     { key: 'avatar', done: entry.avatar, required: false, label: 'Заполнить профиль: поставить аватар' },
   ] as const;

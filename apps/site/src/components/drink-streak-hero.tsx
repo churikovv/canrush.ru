@@ -68,7 +68,7 @@ export function DrinkStatsButton({ streak, alive, best, total, stats, isOwn, chi
           <span className="drink-day-info-text"><strong>{daysLabel(best)}</strong><small>Рекордная серия</small></span></li>
         <li><span className="drink-day-info-icon" aria-hidden="true">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2h8l-1 4H9L8 2Zm1 4h6l1 3v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9l1-3Z" /></svg></span>
-          <span className="drink-day-info-text"><strong>{total} {pluralRu(total, 'банка', 'банки', 'банок')}</strong><small>Всего в календаре</small></span></li>
+          <span className="drink-day-info-text"><strong>{total} {pluralRu(total, 'банка', 'банки', 'банок')}</strong><small>Всего в трекере</small></span></li>
       </ul>
     </dialog>
   </>;

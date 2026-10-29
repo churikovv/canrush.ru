@@ -5,7 +5,7 @@ const AXES: { key: keyof ScoreProfile; label: string; hint: string }[] = [
   { key: 'design', label: 'Дизайн', hint: 'средняя оценка дизайна ×10' },
   { key: 'high', label: 'Оценки 8+', hint: 'доля отзывов со средней оценкой от 8' },
   { key: 'liked', label: 'Лайки', hint: 'доля свайпов вправо в дейтинге' },
-  { key: 'returning', label: 'Возвращаются', hint: 'доля отметивших в календаре, кто взял банку ещё раз' },
+  { key: 'returning', label: 'Возвращаются', hint: 'доля отметивших в трекере, кто взял банку ещё раз' },
 ];
 const CX = 170, CY = 128, R = 84;
 const round = (value: number) => Math.round(value * 10) / 10;

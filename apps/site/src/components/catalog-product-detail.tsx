@@ -187,7 +187,7 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
               ) : (
                 addedBy?.discontinued ? <div className="catalog-added-empty">
                   <span className="catalog-added-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h18v4H3zM5 8v12h14V8M10 12h4" /></svg></span>
-                  <div><strong>Больше не производится</strong><p>Напиток в архиве каталога: его сняли с производства, в магазинах его уже не ищем. Отзывы, коллекции и календарь работают как раньше.</p></div>
+                  <div><strong>Больше не производится</strong><p>Напиток в архиве каталога: его сняли с производства, в магазинах его уже не ищем. Отзывы, коллекции и трекер работают как раньше.</p></div>
                 </div> : addedBy ? <div className="catalog-added-empty">
                   <span className="catalog-added-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9 5 3h14l2 6M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Zm2 5v7h14v-7" /></svg></span>
                   <div><strong>Цен пока нет</strong><p>{addedBy.business

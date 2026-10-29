@@ -4,7 +4,7 @@ import { ShareTierListButton } from '@/components/share-tier-list-button';
 import { ScreenshotPreview } from '@/components/tier-screenshot-button';
 import { renderDrinkStory, renderDrinkSummary, type DrinkSummaryShot } from '@/lib/drink-screenshot';
 
-const LABELS = { title: 'Скриншот итога месяца', alt: 'Итог месяца в календаре выпитого', file: 'canrush-drink-calendar' };
+const LABELS = { title: 'Скриншот итога месяца', alt: 'Итог месяца в трекере выпитого', file: 'canrush-drink-calendar' };
 
 /** Month summary actions: the tier-list share button (toast included) and the same screenshot dialog. */
 export function DrinkSummaryActions({ shot, title, text, path }: { shot: DrinkSummaryShot; title: string; text: string; path: string }) {

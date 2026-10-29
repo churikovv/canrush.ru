@@ -1,6 +1,6 @@
 export const PROFILE_BLOCKS = [
   { key: 'experience', label: 'Уровень', area: 'main' },
-  { key: 'calendar', label: 'Календарь выпитого', area: 'main' },
+  { key: 'calendar', label: 'Трекер выпитого', area: 'main' },
   { key: 'collection', label: 'Коллекция вкусов', area: 'main' },
   { key: 'ratings', label: 'Статистика оценок', area: 'main' },
   { key: 'listings', label: 'Объявления', area: 'main' },

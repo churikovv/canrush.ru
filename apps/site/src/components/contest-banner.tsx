@@ -14,7 +14,7 @@ function Check({ done }: { done: boolean | null }) {
 /** Next step for a signed-in member: the required calendar can first, then the contact details. */
 function nextAction(entry: NonNullable<Entry>) {
   const calendar = entry.username ? `/profile/${entry.username}/calendar` : '/profile';
-  if (!entry.cans) return { href: calendar, label: 'Отметить банку в календаре' };
+  if (!entry.cans) return { href: calendar, label: 'Отметить банку в трекере' };
   if (!entry.telegram) return { href: '/profile/settings?section=telegram', label: 'Указать свой Telegram' };
   if (!entry.avatar) return { href: '/profile/settings?section=images', label: 'Поставить аватар' };
   return null;

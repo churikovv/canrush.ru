@@ -6,7 +6,7 @@ import { normalizeCollectionSearch } from '@/lib/collection-search';
 import { brandSearchTerms, transliterate } from '@/lib/search-aliases';
 import { completion, earnedCollectionXp, flavors, nextMilestone, type BrandCollection, type CollectionItem, type CollectionSummary } from '@/lib/brand-collection-fields';
 
-const SOURCE_LABELS = { review: 'отзыв', calendar: 'календарь' } as const;
+const SOURCE_LABELS = { review: 'отзыв', calendar: 'трекер' } as const;
 const PREVIEW_BRANDS = 3;
 const PREVIEW_CANS = 6;
 
@@ -82,7 +82,7 @@ export function BrandCollectionBlock({ summary, username, isOwn }: { summary: Co
             <span key={`${item.brand}:${item.flavor}`} className="brand-collection-cover" data-tried={item.tried.length > 0 || undefined}>{item.cover ? <Image src={item.cover} width={40} height={40} sizes="40px" alt="" /> : '?'}</span>)}</span>
         </Link>
       </li>)}</ul>
-    </> : <div className="community-empty"><p>{isOwn ? `В каталоге ${flavors(summary.total)} от ${summary.brands.length} брендов. Оставьте отзыв или отметьте банку в календаре — вкус попадёт в коллекцию.` : 'Коллекция пока пуста.'}</p>
+    </> : <div className="community-empty"><p>{isOwn ? `В каталоге ${flavors(summary.total)} от ${summary.brands.length} брендов. Оставьте отзыв или отметьте банку в трекере — вкус попадёт в коллекцию.` : 'Коллекция пока пуста.'}</p>
       {isOwn && <Link href={`/profile/${username}/calendar#add-drink`}>Отметить энергетик ↗</Link>}</div>}
   </section>;
 }

@@ -25,7 +25,8 @@ import { storeDrinkOptions } from '@/lib/store-catalog';
  * itself: the tab bar opens it in one request, with no redirect to wait through (the redirect left the Android app on a
  * blank dark screen while the second page loaded).
  */
-export async function DrinkCalendarScreen({ username, requested }: { username: string; requested?: string }) {
+/** `tab`: opened from the tab bar (/calendar) — no «В профиль», and month links stay on /calendar. */
+export async function DrinkCalendarScreen({ username, requested, tab = false }: { username: string; requested?: string; tab?: boolean }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const profile = await getProfileByUsername(username);
   if (!profile) notFound();
@@ -46,16 +47,17 @@ export async function DrinkCalendarScreen({ username, requested }: { username: s
   const mood = birdMood(overview.current, overview.today);
   const streak = overview.current?.length ?? 0;
   const goal = nextMilestone(streak);
-  const base = `/profile/${profile.username}/calendar`;
-  const shareText = [`${monthTitle(month)} в календаре Canrush: ${cans(summary.cans)} за ${days(summary.days)}`,
+  const profileBase = `/profile/${profile.username}/calendar`;
+  const base = tab && isOwn ? '/calendar' : profileBase;
+  const shareText = [`${monthTitle(month)} в трекере Canrush: ${cans(summary.cans)} за ${days(summary.days)}`,
     summary.top ? `любимый — ${summary.top.name}` : null,
     summary.priced ? `ушло ${formatPrice(summary.spent)}` : null,
     overview.best > 1 ? `рекордная серия — ${days(overview.best)}` : null].filter(Boolean).join(', ') + ' ⚡';
 
   return <BrandShell headerAction={<ProfileNavigation active={isOwn ? 'calendar' : 'profile'} />} surfaceClassName="profile-surface">
     <section className="community-directory drink-calendar-page" {...profileThemeAttributes(profile.profileAppearance?.theme)}>
-      <ProfileBackButton href={isOwn ? '/profile' : `/profile/${profile.username}`} />
-      <div className="profile-subpage-title"><h1>Календарь выпитого</h1>{!isOwn && <ProfileSubpageOwner profile={profile} />}</div>
+      {!(tab && isOwn) && <ProfileBackButton href={isOwn ? '/profile' : `/profile/${profile.username}`} />}
+      <div className="profile-subpage-title"><h1>Трекер выпитого</h1>{!isOwn && <ProfileSubpageOwner profile={profile} />}</div>
 
       {/* «Отметить энергетик» links elsewhere lead to #add-drink: the page lands here, at the top, and the form opens. */}
       <div className="drink-banner" id="add-drink" data-mood={mood}>
@@ -83,8 +85,8 @@ export async function DrinkCalendarScreen({ username, requested }: { username: s
               </span>
               <span><b>Цена указана у {summary.priced} из {cans(summary.cans)}</b>Расходы и средняя считаются по ним — цену можно добавить, когда отмечаете банку.</span>
             </p>}
-        {isOwn && <DrinkSummaryActions title="Мой месяц на Canrush" text={shareText} path={`${base}?month=${month}`} shot={{
-          title: monthTitle(month), author: `@${profile.username} · календарь выпитого`, cans: summary.cans, days: summary.days, monthDays: list.length,
+        {isOwn && <DrinkSummaryActions title="Мой месяц на Canrush" text={shareText} path={`${profileBase}?month=${month}`} shot={{
+          title: monthTitle(month), author: `@${profile.username} · трекер выпитого`, cans: summary.cans, days: summary.days, monthDays: list.length,
           unique: summary.unique, best: overview.best, top: summary.top, spent: summary.priced ? summary.spent : null, weeks: monthWeeks(month),
           counts: Object.fromEntries(list.map(day => [day, byDay[day]?.length ?? 0])), streakDays: list.filter(day => overview.streaks.some(item => item.length > 1 && item.start <= day && day <= item.end)),
         }} />}

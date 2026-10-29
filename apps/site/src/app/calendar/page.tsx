@@ -7,15 +7,15 @@ import { auth } from '@/lib/auth';
 import { ensureOwnProfile } from '@/lib/profile';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Календарь выпитого', robots: { index: false, follow: false } };
+export const metadata = { title: 'Трекер выпитого', robots: { index: false, follow: false } };
 
 /**
- * The tab bar's «Календарь»: the member's own drink calendar, rendered here rather than redirected to
- * /profile/<username>/calendar, so it opens in one request (month links still lead to the profile address).
+ * The tab bar's «Трекер»: the member's own drink tracker, rendered here rather than redirected to
+ * /profile/<username>/calendar, so it opens in one request. It has no «В профиль»: the tab bar is the way back.
  */
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect('/sign-in');
   const [profile, { month }] = await Promise.all([ensureOwnProfile(session.user), searchParams]);
-  return <DrinkCalendarScreen username={profile.username} requested={month} />;
+  return <DrinkCalendarScreen username={profile.username} requested={month} tab />;
 }

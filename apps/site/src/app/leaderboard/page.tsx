@@ -48,7 +48,7 @@ function Row({ user }: { user: LeaderboardRow }) {
       </span>
       <span className="lb-stats">
         <span title="Отзывы"><Star />{user.reviews}<span className="sr-only"> {plural(user.reviews, 'отзыв', 'отзыва', 'отзывов')}</span></span>
-        <span title="Банок в календаре"><Can />{user.cans}<span className="sr-only"> {plural(user.cans, 'банка', 'банки', 'банок')}</span></span>
+        <span title="Банок в трекере"><Can />{user.cans}<span className="sr-only"> {plural(user.cans, 'банка', 'банки', 'банок')}</span></span>
         <span title="Тирлисты"><Layers />{user.tierLists}<span className="sr-only"> {plural(user.tierLists, 'тирлист', 'тирлиста', 'тирлистов')}</span></span>
       </span>
     </span>

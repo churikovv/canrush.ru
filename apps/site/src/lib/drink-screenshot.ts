@@ -126,7 +126,7 @@ async function draw(data: DrinkSummaryShot, width: number, height: number): Prom
   }
   ctx.textAlign = 'left';
   ctx.fillStyle = 'rgb(255 255 255 / .9)'; ctx.font = `700 30px ${family}`;
-  ctx.fillText('canrush.ru · календарь выпитого', pad, height - pad + 8);
+  ctx.fillText('canrush.ru · трекер выпитого', pad, height - pad + 8);
   return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG.')), 'image/png'));
 }
 

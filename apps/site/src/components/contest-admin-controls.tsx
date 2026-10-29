@@ -14,7 +14,7 @@ export function ContestDrawForm({ contestKey, entries, closedReason }: { contest
   return <form action={action} className="contest-draw-form" onSubmit={event => { if (!window.confirm(`Провести розыгрыш среди ${pool} участников? Результат сохранится в истории.`)) event.preventDefault(); }}>
     <fieldset disabled={pending}>
       <legend>Кто участвует в розыгрыше</legend>
-      <label><input type="checkbox" checked disabled /> Отметил банку в календаре (обязательно)</label>
+      <label><input type="checkbox" checked disabled /> Отметил банку в трекере (обязательно)</label>
       <label><input type="checkbox" name="telegram" checked={filters.telegram} onChange={event => setFilters({ ...filters, telegram: event.target.checked })} /> Указал Telegram</label>
       <label><input type="checkbox" name="avatar" checked={filters.avatar} onChange={event => setFilters({ ...filters, avatar: event.target.checked })} /> Поставил аватар</label>
     </fieldset>

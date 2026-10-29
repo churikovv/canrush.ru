@@ -114,7 +114,7 @@ function MergeForm({ card, titleId, onDone }: { card: AdminCatalogCard; titleId:
   }
   return <form action={action} onSubmit={confirmMerge} className="store-form admin-drink-edit-form admin-drink-merge">
     <h2 id={titleId}>Склеить с другой карточкой</h2>
-    <p className="field-help">«{card.brand} · {card.name}» — дубль? Её предложения магазинов будут показываться на выбранной карточке, отзывы, избранное, тирлисты, календарь и свайпы переедут туда, а старый адрес будет вести на неё. Парсер может и дальше присылать её — склейка останется.</p>
+    <p className="field-help">«{card.brand} · {card.name}» — дубль? Её предложения магазинов будут показываться на выбранной карточке, отзывы, избранное, тирлисты, трекер и свайпы переедут туда, а старый адрес будет вести на неё. Парсер может и дальше присылать её — склейка останется.</p>
     <fieldset disabled={pending}>
       <label>Карточка каталога<input type="search" value={query} onChange={event => { setQuery(event.target.value); setTarget(null); }} placeholder="Бренд, вкус или название" autoComplete="off" aria-controls={listId} /></label>
       {target && <input type="hidden" name="targetBrand" value={target.brand} />}

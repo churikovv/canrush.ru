@@ -29,7 +29,7 @@ export default async function BrandCollectionPage({ params }: { params: Promise<
       <div className="profile-subpage-title"><h1>Коллекция вкусов</h1>{!isOwn && <ProfileSubpageOwner profile={profile} />}</div>
       <div className="community-panel brand-collection-intro">
         <BrandCollectionStats summary={summary} />
-        <p className="community-muted">Вкус попадает в коллекцию, когда {isOwn ? 'вы оставляете' : 'пользователь оставляет'} на него отзыв или отмечает банку в календаре выпитого. За 25, 50, 75 и 100% каждого бренда начисляется опыт.
+        <p className="community-muted">Вкус попадает в коллекцию, когда {isOwn ? 'вы оставляете' : 'пользователь оставляет'} на него отзыв или отмечает банку в трекере выпитого. За 25, 50, 75 и 100% каждого бренда начисляется опыт.
           {isOwn && <> Нажмите на банку, чтобы открыть карточку напитка, или <Link href={`/profile/${profile.username}/calendar#add-drink`}>отметьте энергетик</Link>.</>}</p>
       </div>
       <BrandCollectionList summary={summary} />

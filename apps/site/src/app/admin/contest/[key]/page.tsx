@@ -34,7 +34,7 @@ export default async function AdminContestPage({ params }: { params: Promise<{ k
   const excluded = new Set(draws.filter(draw => draw.status === 'unreachable').map(draw => draw.winnerId));
   const phase = contestPhase(contest, new Date());
   return <AdminShell queues={await getAdminQueues()} active="contest" email={admin.email} title={contest.title}
-      subtitle={`${contest.prize} · банка в календаре до ${contest.lastDayLabel}, итоги ${contest.resultsLabel}${phase === 'open' ? ' · приём идёт' : ''}.`}
+      subtitle={`${contest.prize} · банка в трекере до ${contest.lastDayLabel}, итоги ${contest.resultsLabel}${phase === 'open' ? ' · приём идёт' : ''}.`}
       actions={<Link className="community-button community-button-secondary" href="/admin/contest">Все конкурсы</Link>}>
       <div className="admin-metrics">{[
         { label: 'Участники', value: participants.length, note: 'Отметили банку, без админов и заблокированных' },
@@ -71,7 +71,7 @@ export default async function AdminContestPage({ params }: { params: Promise<{ k
             <td>{entry.avatar ? 'да' : <span className="admin-table-muted">нет</span>}</td>
             <td>{date(entry.createdAt)}</td>
           </tr>)}
-        </tbody></table></div> : <div className="admin-empty-result"><strong>Пока никто не отметил банку</strong><span>Участники появятся здесь после первой отметки в календаре.</span></div>}
+        </tbody></table></div> : <div className="admin-empty-result"><strong>Пока никто не отметил банку</strong><span>Участники появятся здесь после первой отметки в трекере.</span></div>}
       </section>
     </AdminShell>
 }

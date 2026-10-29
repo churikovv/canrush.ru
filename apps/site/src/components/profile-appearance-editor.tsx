@@ -45,7 +45,7 @@ function AppearanceLevel({ level, xp }: { level: number; xp: number }) {
     <div className="appearance-level-next">
       {next && unlocks ? <>
         <p><LevelChip level={next.level} /> откроет {unlocks}</p>
-        <p className="appearance-level-gap">Ещё {remaining.toLocaleString('ru-RU')} XP · отзывы, банки в календаре и тирлисты приносят опыт</p>
+        <p className="appearance-level-gap">Ещё {remaining.toLocaleString('ru-RU')} XP · отзывы, банки в трекере и тирлисты приносят опыт</p>
       </> : <p>Вам открыто всё оформление.</p>}
       <p className="appearance-level-count">Темы {opened(PROFILE_THEMES)} из {PROFILE_THEMES.length} · Рамки {opened(PROFILE_FRAMES)} из {PROFILE_FRAMES.length}</p>
     </div>

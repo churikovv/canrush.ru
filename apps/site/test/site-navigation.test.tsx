@@ -18,7 +18,7 @@ describe('site tab bar', () => {
   it('has five tabs with search in the middle and the news last', () => {
     const html = renderToStaticMarkup(createElement(SiteTabBar));
     expect(links(html).map(({ href }) => href)).toEqual(['/', '/calendar', '/search', '/community', '/news']);
-    for (const label of ['Главная', 'Календарь', 'Поиск', 'Сообщество', 'Новости']) expect(html).toContain(`>${label}</span>`);
+    for (const label of ['Главная', 'Трекер', 'Поиск', 'Сообщество', 'Новости']) expect(html).toContain(`>${label}</span>`);
     expect(html).not.toContain('/messages');
     expect(html).not.toContain('aria-current');
     expect(html).not.toContain('/profile');

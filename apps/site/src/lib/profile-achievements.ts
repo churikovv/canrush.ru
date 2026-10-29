@@ -36,7 +36,7 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
   { key: 'top', label: 'ТОП', rarity: 'legendary', description: 'Победить в гонке месяца', steps: [
     { metric: 'monthlyTop', goal: 1, label: 'Попасть в топ-3 рейтинга месяца' }] },
   { key: 'streak-30', label: 'Серия 30', rarity: 'legendary', description: 'Месяц без единого пропуска', steps: [
-    { metric: 'drinkStreak', goal: 30, label: 'Отмечать энергетик в календаре 30 дней подряд' }] },
+    { metric: 'drinkStreak', goal: 30, label: 'Отмечать энергетик в трекере 30 дней подряд' }] },
   { key: 'six-seven', label: 'Six Seven', rarity: 'legendary', description: 'Путь настоящего дегустатора', steps: [
     { metric: 'reviews', goal: 67, label: 'Оценить 67 напитков' },
     { metric: 'detailedReviews', goal: 20, label: `Написать 20 развёрнутых отзывов (от ${DETAILED_REVIEW_CHARS} символов)` },
@@ -53,13 +53,13 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
     { metric: 'monster', goal: 3, label: 'Оценить 3 вкуса Monster Energy' },
     { metric: 'monsterDetailed', goal: 3, label: `Написать 3 развёрнутых отзыва на Monster (от ${DETAILED_REVIEW_CHARS} символов)` }] },
   { key: 'streak-14', label: 'Серия 14', rarity: 'epic', description: 'Две недели на заряде', steps: [
-    { metric: 'drinkStreak', goal: 14, label: 'Отмечать энергетик в календаре 14 дней подряд' }] },
+    { metric: 'drinkStreak', goal: 14, label: 'Отмечать энергетик в трекере 14 дней подряд' }] },
   { key: 'deadinside', label: 'Deadinside', rarity: 'epic', description: 'Тирлисты, о которых говорят', steps: [
     // Lowered from 5 tier lists and 10 likes (October 2026): there was too little activity to reach it.
     { metric: 'tierLists', goal: 1, label: 'Опубликовать тирлист' },
     { metric: 'tierListLikes', goal: 1, label: 'Получить лайк на тирлисте' }] },
   { key: 'streak-7', label: 'Серия 7', rarity: 'rare', description: 'Неделя, когда птица довольна', steps: [
-    { metric: 'drinkStreak', goal: 7, label: 'Отмечать энергетик в календаре 7 дней подряд' }] },
+    { metric: 'drinkStreak', goal: 7, label: 'Отмечать энергетик в трекере 7 дней подряд' }] },
   { key: 'fan', label: 'Фан', rarity: 'rare', description: 'Неделя, когда Canrush не отпускал', steps: [
     { metric: 'weeklyXp', goal: FAN_WEEKLY_XP, label: `Набрать ${FAN_WEEKLY_XP} XP за 7 дней подряд` }] },
   { key: 'seller', label: 'Селлер', rarity: 'rare', description: 'Довести сделки до конца', steps: [
@@ -88,8 +88,8 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
     { metric: 'reviews', goal: 1, label: 'Оставить первый отзыв' }] },
   { key: 'three', label: ':3', rarity: 'common', description: 'Втянуться', steps: [
     { metric: 'reviews', goal: 3, label: 'Оценить 3 напитка' }] },
-  { key: 'drink-start', label: 'Первый глоток', rarity: 'common', description: 'Завести календарь выпитого', steps: [
-    { metric: 'drinkLogs', goal: 1, label: 'Отметить первый энергетик в календаре' }] },
+  { key: 'drink-start', label: 'Первый глоток', rarity: 'common', description: 'Завести трекер выпитого', steps: [
+    { metric: 'drinkLogs', goal: 1, label: 'Отметить первый энергетик в трекере' }] },
   { key: 'kitty', label: 'Котик', rarity: 'common', description: 'Начать собирать любимое', steps: [
     { metric: 'favorites', goal: 5, label: 'Добавить 5 напитков в избранное' }] },
   { key: 'shopper', label: 'Шоппер', rarity: 'common', description: 'Показать всем, где купить энергетики', steps: [

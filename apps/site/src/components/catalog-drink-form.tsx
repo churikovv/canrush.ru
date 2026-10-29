@@ -117,7 +117,7 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified 
   </section>;
   if (state.saved) return <section className="market-empty catalog-drink-done">
     <h2>Напиток отправлен на проверку</h2>
-    <p>Модератор сверит фото и название. После публикации «{brand} · {drinkName}» появится в каталоге — {inCabinet ? 'и его можно будет прикрепить к компании в один клик.' : 'его можно будет оценить, добавить в избранное и отметить в календаре.'}</p>
+    <p>Модератор сверит фото и название. После публикации «{brand} · {drinkName}» появится в каталоге — {inCabinet ? 'и его можно будет прикрепить к компании в один клик.' : 'его можно будет оценить, добавить в избранное и отметить в трекере.'}</p>
     {inCabinet
       ? <div className="market-empty-actions"><Link href="/business/cabinet?section=drinks" className="community-button">К напиткам компании</Link><a href="/business/cabinet?section=new-drink" className="community-button community-button-secondary">Добавить ещё</a></div>
       : <div className="market-empty-actions"><Link href="/catalog" className="community-button">В каталог</Link><a href="/catalog/new" className="community-button community-button-secondary">Добавить ещё</a></div>}
@@ -212,7 +212,7 @@ export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified 
         {discontinued
           ? <li>Напиток попадёт в архив каталога: его найдут поиском, а в общем списке, тирлистах и дейтинге его не будет.</li>
           : <li>Цен у нового напитка пока нет — они появятся, когда его найдут в магазинах.</li>}
-        <li>Отзывы, избранное, календарь, коллекции, тирлисты, дейтинг и рекомендации заработают сразу после публикации.</li>
+        <li>Отзывы, избранное, трекер, коллекции, тирлисты, дейтинг и рекомендации заработают сразу после публикации.</li>
       </ul>
     </section>
 
