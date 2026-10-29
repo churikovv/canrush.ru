@@ -1,5 +1,6 @@
 import '@/styles/shared.css';
 // Avatar frames of review authors (AvatarFrame) are styled there.
+import { drinkCompanyId, getCompanyCard } from '@/lib/business-profile';
 import '@/styles/profile.css';
 import '@/styles/catalog.css';
 import { getPriceHistory } from '@/lib/price-history-files';
@@ -96,6 +97,10 @@ export default async function CatalogProductPage({
   // The brand's own composition (an approved edit) comes first; a member's drink has no file, its label text stands in.
   const ingredients = (brand && brandIngredients(brand, group.brand, group.flavor, fileIngredients?.volumeMl ?? added?.volumes[0])) ?? fileIngredients ?? (added ? catalogDrinkIngredients(added) : null);
 
+  // The company behind the drink: the one that published it from the cabinet, else the one whose confirmation it carries.
+  const companyId = (added?.business ? added.businessId : null) ?? brand?.businessId ?? await drinkCompanyId(group.brand, group.flavor).catch(() => null);
+  const company = companyId ? await getCompanyCard(companyId, session?.user.id ?? null).catch(() => null) : null;
+
   // One page now: the description and prices, with the reviews in a sheet over it (radar only when there are reviews).
   const [priceHistory, reviewDigest, radar] = await Promise.all([
     getPriceHistory((await selectedCity()).id, group.brand, group.flavor),
@@ -127,6 +132,7 @@ export default async function CatalogProductPage({
         brand={brand ? { business: brand.business, businessId: brand.businessId, description: brand.description } : null}
         brandStores={brandStores}
         ceilings={ceilings}
+        company={company}
       />
     </BrandShell>
   );

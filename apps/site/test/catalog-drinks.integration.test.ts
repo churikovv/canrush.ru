@@ -195,6 +195,10 @@ it('applies the brand alias before the flavor: Game Fuel «Оригинальн�
     const id = (await drinks.submitCatalogDrink(member, { ...input('original'), brand: 'Adrenaline Game Fuel' }, photo)).id;
     const [request] = (await drinks.listOwnCatalogDrinks(member)).filter(drink => drink.id === id);
     expect(request).toMatchObject({ brand: 'Adrenaline Rush', flavor: 'game_fuel' });
+    // The discontinued blue «Mango Storm» can is its own drink; a store's «Game Fuel Манго» is Vitamin Power's mango.
+    await pool.query(`update "catalogDrink" set "createdAt" = now() - interval '2 minutes' where id = $1`, [id]);
+    const storm = (await drinks.submitCatalogDrink(member, { ...input('Mango Storm'), brand: 'Adrenaline Game Fuel' }, photo)).id;
+    expect((await drinks.listOwnCatalogDrinks(member)).find(drink => drink.id === storm)).toMatchObject({ brand: 'Adrenaline Rush', flavor: 'game_fuel_mango' });
   } finally {
     await pool.query('delete from "user" where id = $1', [member]);
   }

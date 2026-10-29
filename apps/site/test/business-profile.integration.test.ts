@@ -118,3 +118,17 @@ it('lets members subscribe and tells subscribers about new posts; the owner sets
   expect((await profile.getCompanyProfile(businessId, null))!.business.bannerId).toBeNull();
   for (const id of [post]) await profile.deleteCompanyPost(owner, id);
 });
+
+it('gives a drink page its company card: the confirmed company, its drinks and the viewer’s subscription', async () => {
+  expect(await profile.drinkCompanyId(brand, 'mango')).toBe(businessId);
+  expect(await profile.drinkCompanyId(brand, 'cola')).toBeNull();
+  await pool.query(`insert into "businessFollow"("businessId", "userId") values ($1, $2) on conflict do nothing`, [businessId, visitor]);
+  const card = await profile.getCompanyCard(businessId, visitor);
+  expect(card).toMatchObject({ id: businessId, name: brand, kind: 'brand', drinks: 1, following: true });
+  expect(card!.followers).toBeGreaterThanOrEqual(1);
+  expect((await profile.getCompanyCard(businessId, null))?.following).toBe(false);
+  await pool.query(`update business set status = 'rejected' where id = $1`, [businessId]);
+  expect(await profile.getCompanyCard(businessId, null)).toBeNull();
+  expect(await profile.drinkCompanyId(brand, 'mango')).toBeNull();
+  await pool.query(`update business set status = 'approved' where id = $1`, [businessId]);
+});

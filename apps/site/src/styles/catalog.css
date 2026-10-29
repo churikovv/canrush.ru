@@ -601,6 +601,22 @@
   .catalog-added-empty { grid-template-columns: 1fr; }
   .catalog-added-empty .community-button { grid-column: auto; justify-self: stretch; text-align: center; }
 }
+/* The company card (CatalogDrinkCompany): the author card's layout with the brand's logo, a check and «Подписаться». */
+.catalog-drink-company .catalog-drink-author-card { grid-template-columns: 64px minmax(0, 1fr) auto; }
+.catalog-drink-company .catalog-drink-author-avatar { background: var(--color-subtle); color: var(--color-brand); }
+.catalog-drink-company .catalog-drink-author-name strong { display: flex; align-items: center; gap: 6px; }
+.catalog-company-check { display: inline-grid; flex: none; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--color-brand); color: #fff; }
+.catalog-company-check svg { width: 11px; height: 11px; }
+.catalog-drink-company-bio { display: -webkit-box; margin: 0; overflow: hidden; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.catalog-drink-company .catalog-drink-author-stats { grid-template-columns: repeat(2, minmax(160px, 240px)); }
+.catalog-drink-company .company-follow { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 20px; border-color: var(--color-brand); border-radius: 999px; background: var(--color-brand); color: #fff; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.catalog-drink-company .company-follow.is-following { border-color: var(--color-control); background: var(--color-subtle); color: var(--color-ink); }
+.catalog-drink-company .company-follow-short { display: none; }
+@media (max-width: 639px) {
+  .catalog-drink-company .catalog-drink-author-card { grid-template-columns: 56px minmax(0, 1fr); }
+  .catalog-drink-company .company-follow { grid-column: 1 / -1; width: 100%; }
+  .catalog-drink-company .catalog-drink-author-stats { grid-template-columns: 1fr 1fr; }
+}
 @media (prefers-reduced-motion: reduce) { .catalog-flavor-chip { animation: none; } .catalog-drink-chips button, .catalog-add-button, .store-form .catalog-drink-sugar-option { transition: none; } }
 /* «Сводка» on the «Описание» tab: the model's summary of the reviews in neutral colours, then the prices. */
 /* The rating card's radar (DrinkRatingRadar): taste, design, average and favourites against the catalog, no table. */

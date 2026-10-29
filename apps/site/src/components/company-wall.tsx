@@ -1,7 +1,6 @@
 'use client';
 import { useActionState, useEffect, useRef, useState, useTransition, type DragEvent } from 'react';
-import { createCompanyPostAction, deleteCompanyPostAction, followCompanyAction, pinCompanyPresentationAction, type CompanyActionState } from '@/app/company/actions';
-import Link from '@/components/navigation-progress';
+import { createCompanyPostAction, deleteCompanyPostAction, pinCompanyPresentationAction, type CompanyActionState } from '@/app/company/actions';
 import { ContentReportButton } from '@/components/content-report-button';
 import { FormAlert } from '@/components/form-alert';
 import { MoreActions } from '@/components/more-actions';
@@ -204,27 +203,6 @@ export function CompanyPhotos({ photos }: { photos: string[] }) {
  * «Подписаться» / «Вы подписаны»: subscribers get a notification for each new post. Changes at once and goes back if
  * the server refuses; a guest is sent to sign in.
  */
-export function CompanyFollowButton({ businessId, following: initial, followers: initialCount, signedIn }: { businessId: string; following: boolean; followers: number; signedIn: boolean }) {
-  const [following, setFollowing] = useState(initial);
-  const [count, setCount] = useState(initialCount);
-  const [pending, startTransition] = useTransition();
-  if (!signedIn) return <Link className="community-button company-follow" href="/sign-in">Подписаться</Link>;
-  function toggle() {
-    const next = !following;
-    setFollowing(next);
-    setCount(current => current + (next ? 1 : -1));
-    startTransition(async () => {
-      const result = await followCompanyAction(businessId, next);
-      if (result.error) { setFollowing(!next); setCount(current => current - (next ? 1 : -1)); window.alert(result.error); }
-      else if (result.followers !== undefined) setCount(result.followers);
-    });
-  }
-  return <button type="button" className={`community-button company-follow${following ? ' is-following' : ''}`} aria-pressed={following} disabled={pending} onClick={toggle}
-    title={`${count.toLocaleString('ru-RU')} подписчиков`}>
-    {following ? <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg><span className="company-follow-long">Вы подписаны</span><span className="company-follow-short">Подписаны</span></> : 'Подписаться'}
-  </button>;
-}
-
 /**
  * The team's PDF upload inside the «Презентация» block of «Лента»: the drop zone shows at once while there is no deck,
  * and behind «Загрузить новую» once there is one, so the open presentation stays first.

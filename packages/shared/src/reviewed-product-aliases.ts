@@ -198,6 +198,15 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Pulse Up", "berry", "Pulseup", "berry"], // Edadeal spells the brand "Pulse Up" for Berry Energy only
   ["Flash Up", "mango", "Flash Up", "blend:mango+pineapple"], // Близнецы "Флэш Энергия манго", the old design of the mango + pineapple can
   ["Adrenaline Game Fuel", "mango", "Adrenaline Rush", "mango"], // the mango can moved from Game Fuel to Vitamin Power; retailers sell it as both
+  // The old blue «Game Fuel Mango Storm» can (discontinued) is a drink of its own: typed as a flavour it is the Game Fuel line's mango, not Vitamin Power's.
+  ["Adrenaline Rush", "Mango Storm", "Adrenaline Rush", "game_fuel_mango"],
+  ["Adrenaline Rush", "Mango storm", "Adrenaline Rush", "game_fuel_mango"],
+  ["Adrenaline Rush", "Game Fuel Mango Storm", "Adrenaline Rush", "game_fuel_mango"],
+  ["Adrenaline Rush", "Game Fuel Манго", "Adrenaline Rush", "game_fuel_mango"],
+  ["Adrenaline Game Fuel", "Mango Storm", "Adrenaline Rush", "game_fuel_mango"],
+  ["Adrenaline Game Fuel", "Mango storm", "Adrenaline Rush", "game_fuel_mango"],
+  ["Adrenaline Game Fuel", "Game Fuel Mango Storm", "Adrenaline Rush", "game_fuel_mango"],
+  ["Adrenaline Game Fuel", "Game Fuel Манго", "Adrenaline Rush", "game_fuel_mango"],
   ["Ninja", "peach", "Ninja Star", "peach"], // Пятёрочка "Ninja Star Energy Персик-Личи" under Edadeal's brand "Ninja"
   ["Ninja", "cherry", "Ninja Star", "cherry"], // Пятёрочка "Нинджа Стар Энерджи (Ninja Star Energy) Вишня" under Edadeal's brand "Ninja"
   ["Piranha's", "berry", "Piranha's", "original"], // member drink «slam classic energy»: the photo is the Slam Classic Energy can (0101)

@@ -233,3 +233,24 @@ export async function getCompanyProfileSettings(business: Business): Promise<{ s
   return { storeId: row?.storeId ?? null, hidden: row?.profileHidden ?? [], bannerId: row?.bannerId ?? null,
     info: { bio: row?.bio ?? null, story: row?.story ?? null, publicEmail: row?.publicEmail ?? null, phone: row?.phone ?? null, address: row?.address ?? null } };
 }
+
+/** The company card at the end of a drink's page: the brand that published or confirmed it, like a member's author card. */
+export interface CompanyCard { id: string; name: string; kind: Business['kind']; logoId: string | null; bio: string; createdAt: Date; followers: number; following: boolean; drinks: number }
+
+export async function getCompanyCard(id: string, viewerId: string | null): Promise<CompanyCard | null> {
+  if (!UUID.test(id)) return null;
+  return (await getPool().query<CompanyCard>(
+    `select b.id, b.name, b.kind, b."logoId", coalesce(nullif(b.bio, ''), b.about, '') as bio, b."createdAt",
+       (select count(*)::int from "businessFollow" f where f."businessId" = b.id) as followers,
+       exists (select 1 from "businessFollow" f where f."businessId" = b.id and f."userId" = $2) as following,
+       (select count(*)::int from (select brand, flavor from "businessDrink" where "businessId" = b.id and status = 'approved'
+          union select brand, flavor from "catalogDrink" where "businessId" = b.id and status = 'published') d) as drinks
+     from business b where b.id = $1 and b.status = 'approved'`, [id, viewerId])).rows[0] ?? null;
+}
+
+/** The approved company that attached this drink in its cabinet and had it confirmed (the oldest, if several did). */
+export async function drinkCompanyId(brand: string, flavor: string): Promise<string | null> {
+  return (await getPool().query<{ id: string }>(
+    `select b.id from "businessDrink" d join business b on b.id = d."businessId" and b.status = 'approved'
+     where d.brand = $1 and d.flavor = $2 and d.status = 'approved' order by d."createdAt" limit 1`, [brand, flavor])).rows[0]?.id ?? null;
+}

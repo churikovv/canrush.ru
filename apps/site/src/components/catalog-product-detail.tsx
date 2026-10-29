@@ -10,6 +10,8 @@ import type { DrinkRadar } from '@/lib/score-profile';
 import type { SwipeCounts } from '@/lib/drink-swipes';
 import type { CatalogDrink } from '@/lib/catalog-drinks';
 import { CatalogDrinkAuthor } from '@/components/catalog-drink-author';
+import { CatalogDrinkCompany } from '@/components/catalog-drink-company';
+import type { CompanyCard } from '@/lib/business-profile';
 import type { CatalogGroup, PublishedIngredients } from '@canrush/shared';
 import { CatalogProductIngredients } from '@/components/catalog-product-ingredients';
 import { CatalogFavoriteButton } from '@/components/catalog-favorite-button';
@@ -46,6 +48,8 @@ interface CatalogProductDetailProps {
   /** Dating in the community: how many swiped the drink right («нравится») and left («пропустить»). */
   swipes?: SwipeCounts;
   /** A drink a member added (catalogDrink) that shops do not have yet: who added it, when, and the volumes they gave. */
+  /** The company behind the drink (it published it, or the team confirmed it): its card ends the page. */
+  company?: CompanyCard | null;
   addedBy?: Pick<CatalogDrink, 'author' | 'volumes' | 'createdAt' | 'business' | 'businessId' | 'discontinued'>;
   /** The full name a member gave the drink («Monster Ultra Paradise»), shown under the flavour. */
   fullName?: string;
@@ -64,7 +68,7 @@ interface CatalogProductDetailProps {
 }
 
 
-export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [] }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
   const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
   // Cans the card is known in that no shop sells yet (a member's request for another volume merged into the card).
@@ -217,7 +221,9 @@ export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingr
 
             <CatalogProductIngredients data={ingredients} />
         </div>
-        {addedBy && !addedBy.business && <CatalogDrinkAuthor author={addedBy.author} createdAt={addedBy.createdAt} />}
+        {company
+          ? <CatalogDrinkCompany company={company} signedIn={authenticated} />
+          : addedBy && !addedBy.business && <CatalogDrinkAuthor author={addedBy.author} createdAt={addedBy.createdAt} />}
       </div>
     </article>
   );
