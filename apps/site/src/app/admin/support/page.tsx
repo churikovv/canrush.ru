@@ -46,6 +46,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
               ? <img src={`/api/profile-images/${item.avatarId}`} alt="" width={40} height={40} /> : item.name.slice(0, 1).toLocaleUpperCase('ru-RU')}</span>
             <span className="support-admin-text">
               <strong>{item.name}{item.username && <small> @{item.username}</small>}</strong>
+              {item.business && <small className="admin-support-business">Компания «{item.business}»</small>}
               <span>{item.lastFromStaff && 'Вы: '}{item.preview}</span>
             </span>
             <span className="support-admin-meta"><time dateTime={item.lastMessageAt}>{when.format(new Date(item.lastMessageAt))}</time>
@@ -58,7 +59,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
           <div className="support-admin-thread-head">
             <Link className="bc-link support-admin-back" href={href({ thread: undefined })}>← К обращениям</Link>
             <div><strong>{thread.username ? <Link href={`/profile/${thread.username}`}>{thread.name}</Link> : thread.name}</strong>
-              <small>{[thread.username && `@${thread.username}`, admin.role === 'admin' ? thread.email : null, `с ${when.format(new Date(thread.createdAt))}`].filter(Boolean).join(' · ')}</small></div>
+              <small>{[thread.username && `@${thread.username}`, admin.role === 'admin' ? thread.email : null, thread.business && `компания «${thread.business}»`, `с ${when.format(new Date(thread.createdAt))}`].filter(Boolean).join(' · ')}</small></div>
             <SupportStatusButton threadId={thread.id} status={thread.status} />
           </div>
           <SupportChat key={thread.id} staff threadId={thread.id} initial={{ thread, ...initial }} empty={<div className="market-chat-empty"><strong>Пустая переписка</strong></div>} />

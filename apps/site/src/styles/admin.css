@@ -255,6 +255,7 @@
 .support-admin-text { display: grid; gap: 2px; min-width: 0; }
 .support-admin-text strong { overflow: hidden; font-size: .9375rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .support-admin-text strong small { color: var(--bc-muted); font-weight: 500; }
+.support-admin-text .admin-support-business { justify-self: start; padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); font-size: .75rem; font-weight: 600; }
 .support-admin-text > span { overflow: hidden; color: var(--bc-muted); font-size: .8125rem; text-overflow: ellipsis; white-space: nowrap; }
 .support-admin-threads a[data-unread] .support-admin-text > span { color: var(--bc-text); font-weight: 600; }
 .support-admin-meta { display: grid; justify-items: end; gap: 6px; color: var(--bc-muted); font-size: .75rem; white-space: nowrap; }

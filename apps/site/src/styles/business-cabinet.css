@@ -298,6 +298,14 @@
 /* Orders: the unread counter and the market chat inside a cabinet card. */
 .bc-count { display: inline-grid; min-width: 24px; height: 24px; place-items: center; padding: 0 7px; border-radius: 999px; background: #ef4444; color: #fff; font-size: .75rem; font-weight: 700; }
 .bc-chat-card { max-width: 920px; padding: 0; border: 0; background: none; }
+/* «Помощь и поддержка»: the support chat as a box of its own height, the mail line under it. */
+.bc-support { display: grid; gap: 10px; }
+.bc-workspace-menu .bc-dot { position: static; flex: none; margin-left: auto; }
+.bc-support .support-chat { height: min(640px, calc(100dvh - 200px)); min-height: 380px; border: 1px solid var(--bc-line, var(--color-control)); border-radius: 16px; background: var(--color-surface); }
+.bc-support .support-screen-header h2 { margin: 0; font-size: 1.0625rem; line-height: 1.3; }
+.bc-support-mail { margin: 0; }
+/* While the cookie bar is up it covers the bottom of a phone screen: the chat ends above it. */
+html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px, calc(100dvh - 260px)); }
 /* «Рецензии GigaChat»: a card per drink — summary, three lists, and the action in the footer. */
 .bc-soon-action { grid-column: 1 / -1; justify-self: start; }
 .bc-insights-note { line-height: 1.5; }

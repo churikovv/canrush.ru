@@ -17,18 +17,20 @@ export function HomeServices({ metrics, contest, joined, engine }: {
   joined: boolean;
   engine: BetaEngine;
 }) {
+  // Sections with a switcher open in it (/search, /community), as from the tab bar: the bare pages (/catalog,
+  // /tierlists, /market…) have no «Каталог / Магазины / Маркет» or «Тирлисты / Дейтинг / Люди» row on a phone.
   const big = [
-    { key: 'catalog', href: '/catalog', label: 'Каталог', note: metrics.drinks ? count.format(metrics.drinks) : '', art: 'catalog' },
+    { key: 'catalog', href: '/search', label: 'Каталог', note: metrics.drinks ? count.format(metrics.drinks) : '', art: 'catalog' },
     { key: 'prices', href: '/prices', label: 'Цены', note: metrics.stores ? `${count.format(metrics.stores)} маг.` : '', art: 'prices' },
-    { key: 'stores', href: '/market/stores', label: 'Магазины', note: 'на карте', art: 'stores' },
-    { key: 'tierlists', href: '/tierlists', label: 'Тирлисты', note: metrics.tierLists ? count.format(metrics.tierLists) : '', art: 'tierlists' },
+    { key: 'stores', href: '/search?type=stores', label: 'Магазины', note: 'на карте', art: 'stores' },
+    { key: 'tierlists', href: '/community', label: 'Тирлисты', note: metrics.tierLists ? count.format(metrics.tierLists) : '', art: 'tierlists' },
   ];
   const small = [
     { key: 'leaderboard', href: '/leaderboard', label: 'Лидеры', note: 'таблица', art: '/brand/home/leaderboard.png' },
     ...(contest ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: contest.phase === 'open' ? (joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`) : 'итоги', art: '/brand/home/contest.png' }] : []),
     ...(engine.taken < BETA_ENGINE_PLACES ? [{ key: 'engine', href: '/engine', label: 'Бета сайта', note: 'каждый важен', art: '/brand/achievements/engine.png' }] : []),
     { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: '/brand/home/dating.png' },
-    { key: 'market', href: '/market', label: 'Маркет', note: 'объявления', art: '/brand/home/market.png' },
+    { key: 'market', href: '/search?type=market', label: 'Маркет', note: 'объявления', art: '/brand/home/market.png' },
     // The landing for brands, distributors and shops (CanRush для бизнеса).
     { key: 'business', href: '/business', label: 'Бизнес', note: 'для брендов', art: '/brand/home/business.png' },
   ];

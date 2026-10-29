@@ -22,7 +22,7 @@ describe('home metrics', () => {
       engine: { taken: 10, number: null } as never,
     }));
     const hrefs = [...html.matchAll(/href="([^"]*)"/g)].map(match => match[1]);
-    expect(hrefs.slice(0, 4)).toEqual(['/catalog', '/prices', '/market/stores', '/tierlists']);
+    expect(hrefs.slice(0, 4)).toEqual(['/search', '/prices', '/search?type=stores', '/community']);
     expect(hrefs).toContain('/leaderboard');
     expect(hrefs).toContain('/engine');
     expect(hrefs).not.toContain('/contest');

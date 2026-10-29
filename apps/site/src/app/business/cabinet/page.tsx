@@ -12,6 +12,8 @@ import { BusinessDrinkAttach, BusinessDrinkRemove, BusinessDrinkRequest, Busines
 import { CatalogDrinkForm } from '@/components/catalog-drink-form';
 import { MarketListingForm } from '@/components/market-listing-form';
 import { MarketChat } from '@/components/market-chat';
+import { SupportChat } from '@/components/support-chat';
+import { getOwnSupportThread, supportMessages, supportUnreadForUser } from '@/lib/support';
 import { MarketInboxRefresh } from '@/components/market-inbox-refresh';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { ScoreRadar } from '@/components/score-radar';
@@ -62,7 +64,7 @@ const number = new Intl.NumberFormat('ru-RU');
 const longDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' });
 const longDayTime = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
 const shortDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow' });
-const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', insights: 'Разбор нейросетью', search: 'Поиск', cards: 'Карточки', competitors: 'Конкуренты', brand: 'Бренд', drinks: 'Напитки', 'drink-edit': 'Правка карточки', 'drink-stores': 'Где купить', 'drink-price': 'Рекомендованная цена', wholesale: 'Оптовые цены', 'new-drink': 'Новый напиток', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки', plan: 'Тариф и продвижение' };
+const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', insights: 'Разбор нейросетью', search: 'Поиск', cards: 'Карточки', competitors: 'Конкуренты', brand: 'Бренд', drinks: 'Напитки', 'drink-edit': 'Правка карточки', 'drink-stores': 'Где купить', 'drink-price': 'Рекомендованная цена', wholesale: 'Оптовые цены', 'new-drink': 'Новый напиток', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки', plan: 'Тариф и продвижение', support: 'Помощь и поддержка' };
 const ORDER_TONE: Record<OrderStatus, string> = { new: 'mid', confirmed: 'good', completed: 'good', cancelled: 'bad' };
 const DRINK_REQUEST: Record<CatalogDrinkStatus, { label: string; tone: string }> = { pending: { label: 'На модерации', tone: 'mid' }, published: { label: 'В каталоге', tone: 'good' }, rejected: { label: 'Нужно исправить', tone: 'bad' } };
 const SECTIONS = Object.keys(TITLES) as BusinessSection[];
@@ -954,7 +956,7 @@ async function Settings({ business, role, userId, params }: { business: Business
       <ul className="bc-docs">{DOCUMENTS.map(doc => <li key={doc.href}><Link href={doc.href}><strong>{doc.title}</strong><small className="bc-muted">{doc.note}</small></Link></li>)}</ul>
     </section>
     <section className="bc-card"><div className="bc-card-head"><h2>Связь</h2></div>
-      <p className="bc-muted">Вопросы по кабинету, проверке компании и условиям — на <a className="bc-link" href="mailto:hello@canrush.ru">hello@canrush.ru</a>.</p>
+      <p className="bc-muted">Вопросы по кабинету, проверке компании и условиям — в <Link className="bc-link" href={businessHref('support')}>чат поддержки</Link> или на <a className="bc-link" href="mailto:hello@canrush.ru">hello@canrush.ru</a>.</p>
       <p className="bc-muted">© CanRush, {new Date(business.createdAt).getFullYear()}. Названия и логотипы брендов принадлежат их владельцам.</p>
     </section>
   </>;
@@ -984,7 +986,7 @@ function CompanySummary({ business }: { business: Business }) {
     <dl className="bc-company-data">{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || <span className="bc-muted">не указано</span>}</dd></div>)}</dl>
     <p className="bc-muted">{business.status === 'pending'
       ? 'Заявка на проверке — обычно это пару дней. Мы напишем на почту, когда компанию подтвердят.'
-      : <>Данные подтверждены командой CanRush. Чтобы их изменить, напишите на <a className="bc-link" href="mailto:hello@canrush.ru">hello@canrush.ru</a>.</>}</p>
+      : <>Данные подтверждены командой CanRush. Чтобы их изменить, напишите в <Link className="bc-link" href={businessHref('support')}>чат поддержки</Link> или на <a className="bc-link" href="mailto:hello@canrush.ru">hello@canrush.ru</a>.</>}</p>
   </section>;
 }
 
@@ -1070,6 +1072,22 @@ async function PlanSection({ business, role, canAct }: { business: Business; rol
         </li>)}</ul></div>}
     </section>
   </>;
+}
+
+/**
+ * «Помощь и поддержка» inside the cabinet: the same chat with the CanRush team as /support (one thread per member,
+ * the team sees the company beside the name), with mail as the other way to reach us.
+ */
+async function Support({ userId }: { userId: string }) {
+  const thread = await getOwnSupportThread(userId);
+  const page = thread ? await supportMessages(thread.id) : { items: [], hasMore: false };
+  return <section className="bc-card bc-chat-card bc-support">
+    <SupportChat initial={{ thread, ...page }} header={<header className="market-chat-header support-screen-header">
+      <span className="market-seller-avatar support-chat-avatar" aria-hidden="true" />
+      <span className="market-chat-partner"><small>Команда CanRush</small><h2>Поддержка</h2></span>
+    </header>} empty={<div className="market-chat-empty"><strong>Чем помочь?</strong><p>Проверка компании, напитки, аналитика, тариф или ошибка в кабинете — опишите вопрос. Ответим здесь же и пришлём уведомление, обычно в течение дня.</p></div>} />
+    <p className="bc-muted bc-support-mail">Удобнее почтой — <a className="bc-link" href="mailto:hello@canrush.ru">hello@canrush.ru</a>.</p>
+  </section>;
 }
 
 /**
@@ -1175,7 +1193,7 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     : section === 'new-drink' ? <Link className="bc-button is-outline" href={businessHref('drinks')}>К напиткам</Link>
     : section === 'new-listing' ? <Link className="bc-button is-outline" href={businessHref('market')}>К объявлениям</Link>
     : section === 'orders' ? (params.order ? <Link className="bc-button is-outline" href={businessHref('orders')}>Все заказы</Link> : <Link className="bc-button" href={businessHref('new-listing')}>Новое объявление</Link>)
-    : section === 'settings' ? undefined
+    : section === 'settings' || section === 'support' ? undefined
     : section === 'plan' || section === 'wholesale' ? undefined
     : <>{approved && hasFeature(business, 'export') && <a className="bc-button is-outline" href={`/business/cabinet/export${section === 'search' || section === 'cards' || section === 'competitors' ? `?kind=${section}` : ''}`} download
         title={section === 'search' ? 'Частые запросы' : section === 'cards' ? 'Просмотры и переходы по напиткам' : section === 'competitors' ? 'Сравнение с конкурентами' : 'Все отзывы'}>Экспорт CSV</a>}
@@ -1185,6 +1203,7 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
   const locked = (title: string) => <Empty title={title} text="Команда подтвердит компанию и её напитки — и здесь появятся отзывы, оценки и метрики бренда." action={<Link className="bc-button" href={businessHref('drinks')}>Прикрепить напитки</Link>} />;
   const waiting = approved ? (await countReviewQueue(business.id)).unanswered : 0;
   return <BusinessShell business={business} active={section} title={TITLES[section]} actions={actions} unread={counts?.notifications ?? 0} unreadMessages={counts?.messages ?? 0}
+    supportUnread={section !== 'support' && await supportUnreadForUser(session.user.id)}
     badges={{ reviews: { count: waiting, label: `без ответа: ${waiting}` } }}>
     {business.status === 'pending' && <FormAlert tone="warning" title="Компания на проверке">Обычно это занимает пару дней. Пока можно прикрепить напитки и заполнить настройки — аналитика откроется после подтверждения.</FormAlert>}
     {business.status === 'rejected' && <FormAlert title="Компания не прошла проверку" actions={section !== 'settings' ? <Link className="bc-button is-outline" href={businessHref('settings')}>Исправить</Link> : undefined}>
@@ -1208,6 +1227,7 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     {section === 'new-listing' && <NewListing userId={session.user.id} business={business} asCompany={canAct} />}
     {section === 'orders' && <Orders userId={session.user.id} params={params} />}
     {section === 'market' && <Market userId={session.user.id} business={business} params={params} />}
+    {section === 'support' && <Support userId={session.user.id} />}
     {section === 'settings' && <Settings business={business} role={role} userId={session.user.id} params={params} />}
   </BusinessShell>;
 }

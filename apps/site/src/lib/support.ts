@@ -16,6 +16,8 @@ export interface SupportThread {
 /** A thread in the team's list: the member, the last line and whether the team has read it. */
 export interface SupportThreadRow extends SupportThread {
   name: string; username: string | null; email: string; avatarId: string | null; preview: string; unread: boolean; messages: number;
+  /** The company the member owns or works in: they may be writing from the business cabinet. */
+  business: string | null;
 }
 
 const THREAD = `t.id, t."userId", t.status, t."lastMessageAt", t."lastFromStaff", t."userReadAt", t."staffReadAt", t."createdAt"`;
@@ -98,6 +100,8 @@ export async function listSupportThreads(view: SupportView = 'open', query = '')
   const q = query.trim().toLowerCase();
   const { rows } = await getPool().query(`select ${THREAD}, u.name, u.username, u.email,
       (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
+      (select b.name from business b where b."ownerId" = u.id
+         or exists(select 1 from "businessMember" m where m."businessId" = b.id and m."userId" = u.id and m.status = 'active') limit 1) as business,
       (select left(text, 140) from "supportMessage" where "threadId" = t.id order by "createdAt" desc, id desc limit 1) as preview,
       (select count(*)::int from "supportMessage" where "threadId" = t.id) as messages,
       (not t."lastFromStaff" and (t."staffReadAt" is null or t."staffReadAt" < t."lastMessageAt")) as unread
@@ -107,7 +111,7 @@ export async function listSupportThreads(view: SupportView = 'open', query = '')
       and ($2 = '' or lower(u.name) like '%' || $2 || '%' or lower(coalesce(u.username, '')) like '%' || $2 || '%' or lower(u.email) like '%' || $2 || '%'
         or exists(select 1 from "supportMessage" m where m."threadId" = t.id and lower(m.text) like '%' || $2 || '%'))
     order by t."lastMessageAt" desc limit 200`, [view, q]);
-  return rows.map(row => ({ ...toThread(row), name: row.name, username: row.username, email: row.email, avatarId: row.avatarId, preview: row.preview ?? '', unread: row.unread, messages: row.messages }));
+  return rows.map(row => ({ ...toThread(row), name: row.name, username: row.username, email: row.email, avatarId: row.avatarId, preview: row.preview ?? '', unread: row.unread, messages: row.messages, business: row.business ?? null }));
 }
 
 /** How many open threads wait for the team — the sidebar's badge. */
@@ -118,11 +122,13 @@ export async function countSupportWaiting(): Promise<number> {
 export async function getSupportThread(id: string): Promise<SupportThreadRow | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const { rows } = await getPool().query(`select ${THREAD}, u.name, u.username, u.email,
-      (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId", '' as preview,
+      (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
+      (select b.name from business b where b."ownerId" = u.id
+         or exists(select 1 from "businessMember" m where m."businessId" = b.id and m."userId" = u.id and m.status = 'active') limit 1) as business, '' as preview,
       (select count(*)::int from "supportMessage" where "threadId" = t.id) as messages, false as unread
     from "supportThread" t join "user" u on u.id = t."userId" where t.id = $1`, [id]);
   const row = rows[0];
-  return row ? { ...toThread(row), name: row.name, username: row.username, email: row.email, avatarId: row.avatarId, preview: '', unread: false, messages: row.messages } : null;
+  return row ? { ...toThread(row), name: row.name, username: row.username, email: row.email, avatarId: row.avatarId, preview: '', unread: false, messages: row.messages, business: row.business ?? null } : null;
 }
 
 /** A team reply: the member is notified by the `support_message_notify` trigger; the thread stays open. */

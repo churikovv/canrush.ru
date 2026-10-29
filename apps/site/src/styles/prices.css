@@ -37,7 +37,7 @@
 .price-status { display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; padding: 6px 8px; font-size: .75rem; white-space: nowrap; }
 .price-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 @media (max-width: 640px) {
-  .price-analytics { padding: 28px 16px calc(var(--site-tab-bar-offset, 0px) + 32px); }
+  .price-analytics { padding: 28px 0 calc(var(--site-tab-bar-offset, 0px) + 32px); }
   .price-analytics-heading h1 { font-size: 1.75rem; }
   .price-chart-controls { grid-template-columns: 1fr; gap: 12px; margin-bottom: 28px; }
   .price-filter-step { padding: 16px; }

@@ -5,7 +5,7 @@ import Link from '@/components/navigation-progress';
 import { BUSINESS_KINDS, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
 import { planInfo, type BusinessPlan } from '@/lib/business-plans';
 
-export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'drink-stores' | 'drink-price' | 'wholesale' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings' | 'plan';
+export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'drink-stores' | 'drink-price' | 'wholesale' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings' | 'plan' | 'support';
 export const businessHref = (section: BusinessSection, params: Record<string, string> = {}) =>
   `/business/cabinet?${new URLSearchParams({ ...(section !== 'overview' ? { section } : {}), ...params })}`.replace(/\?$/, '');
 
@@ -56,16 +56,18 @@ const SPACES: Record<Space, { label: string; icon: BusinessIconName; items: { la
     { label: 'Оптовые цены', icon: 'truck', section: 'wholesale' },
   ] },
 };
-const spaceOf = (section: BusinessSection): Space => SPACES.manage.items.some(item => item.section === section || item.also?.includes(section)) || section === 'settings' || section === 'plan' ? 'manage' : 'analytics';
+const spaceOf = (section: BusinessSection): Space => SPACES.manage.items.some(item => item.section === section || item.also?.includes(section)) || section === 'settings' || section === 'plan' || section === 'support' ? 'manage' : 'analytics';
 
 /**
  * The cabinet on the shared dashboard frame (`DashboardShell`): ⌘K search over reviews, grouped sections, and the
  * company card with its kind and plan at the bottom, which opens settings, the plan, the site and help — its status is
  * in the page's banner. The top bar carries the chats and the bell before the section's actions.
  */
-export function BusinessShell({ business, active, title, actions, toolbar, unread, unreadMessages, badges = {}, children }: {
+export function BusinessShell({ business, active, title, actions, toolbar, unread, unreadMessages, supportUnread = false, badges = {}, children }: {
   business: { id?: string; name: string; kind: BusinessKind; status: BusinessStatus; logoId: string | null; plan?: BusinessPlan; planUntil?: Date | null };
   active: BusinessSection; title: string; actions?: ReactNode; toolbar?: ReactNode; unread: number; unreadMessages: number;
+  /** A support answer the member has not read: a dot beside «Помощь и поддержка» in the company menu. */
+  supportUnread?: boolean;
   /** Counters beside sections, like reviews waiting for an answer. */
   badges?: Partial<Record<BusinessSection, { count: number; label: string }>>; children: ReactNode;
 }) {
@@ -92,7 +94,7 @@ export function BusinessShell({ business, active, title, actions, toolbar, unrea
         {business.id && <Link href={`/company/${business.id}`}><BusinessIcon name="bag" size={18} />Профиль компании</Link>}
         <Link href={businessHref('plan')} aria-current={active === 'plan' ? 'page' : undefined}><BusinessIcon name="chart" size={18} />Тариф и продвижение</Link>
         <Link href="/"><BusinessIcon name="site" size={18} />Сайт CanRush</Link>
-        <a href="mailto:hello@canrush.ru"><BusinessIcon name="help" size={18} />Помощь и поддержка</a>
+        <Link href={businessHref('support')} aria-current={active === 'support' ? 'page' : undefined}><BusinessIcon name="help" size={18} />Помощь и поддержка{supportUnread && <span className="bc-dot" aria-label="новый ответ" />}</Link>
       </>,
     }}
     tools={<>

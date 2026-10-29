@@ -59,3 +59,15 @@ it('keeps one thread per member, notifies on a team reply and tracks who read wh
   expect((await support.getOwnSupportThread(member))).toMatchObject({ id: thread.id, status: 'open', lastFromStaff: false });
   expect((await support.listSupportThreads('all', 'заработало')).map(item => item.id)).toEqual([thread.id]);
 });
+
+it('tells the team which company a member writes from (the business cabinet uses the same chat)', async () => {
+  const thread = (await support.getOwnSupportThread(member))!;
+  expect((await support.getSupportThread(thread.id))!.business).toBeNull();
+  const business = (await pool.query<{ id: string }>(`insert into business("ownerId", name, kind) values ($1, 'Поддержка Ко', 'brand') returning id`, [member])).rows[0]!.id;
+  try {
+    expect((await support.getSupportThread(thread.id))!.business).toBe('Поддержка Ко');
+    expect((await support.listSupportThreads('all', 'заработало'))[0]!.business).toBe('Поддержка Ко');
+  } finally {
+    await pool.query('delete from business where id = $1', [business]);
+  }
+});
