@@ -21,6 +21,7 @@ import type { ReviewData, ReviewSummary } from '@/lib/reviews';
 import type { DrinkStore } from '@/lib/brand-drink-stores';
 import type { DrinkPrice } from '@/lib/brand-drink-prices';
 import { sameVolume } from '@/lib/brand-drink-price-fields';
+import { volumesWithoutOffers } from '@/lib/catalog-card-edit-fields';
 import { mapSearchUrl } from '@/lib/brand-drink-store-fields';
 
 const PRICE_FORMATTER = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -63,6 +64,8 @@ interface CatalogProductDetailProps {
 export function CatalogProductDetail({ group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [] }: CatalogProductDetailProps) {
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
   const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
+  // Cans the card is known in that no shop sells yet (a member's request for another volume merged into the card).
+  const unsold = volumesWithoutOffers(group);
 
   return (
     <article className="catalog-product-detail">
@@ -196,6 +199,10 @@ export function CatalogProductDetail({ group, priceHistory=[], ingredients, favo
                   <Link className="community-button community-button-secondary" href="/market/stores/new">Добавить магазин</Link>
                 </div> : <p className="catalog-product-note">Пока нет актуальных предложений.</p>
               )}
+              {unsold.length > 0 && <p className="review-hint-card catalog-unsold-volumes">
+                <span className="review-meter-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3h8l1 3v14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V6l1-3ZM7 6h10M7 18h10" /></svg></span>
+                <span>Выпускается и в {unsold.map(volume => volumeLabel(volume)).join(', ')} — в магазинах из нашего мониторинга пока не нашли.</span>
+              </p>}
             </section>
 
             {brandStores.length > 0 && <BrandStores stores={brandStores} />}

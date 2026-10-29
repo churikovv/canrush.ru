@@ -9,6 +9,7 @@ const brand = `Дубль ${randomUUID().slice(0, 6)}`;
 // The parser's files: one card of the test brand to be repeated.
 vi.mock('../src/lib/catalog-files', () => ({ readAllCatalogGroups: async () => [{ brand, flavor: 'tornado_lemoncake', variants: [{}], minPrice: 1 }] }));
 const check = await import('../src/lib/drink-duplicate-check');
+const { DUPLICATE_HINTS } = await import('../src/lib/drink-duplicate-fields');
 const drinks = await import('../src/lib/catalog-drinks');
 
 const [author, staff] = [randomUUID(), randomUUID()];
@@ -78,10 +79,11 @@ it('asks the halves when the filter refuses the whole list and does not trust a 
   const finding = { chat: async (messages: { content: string }[]) => messages[1]!.content.includes('f0') ? '…мнением' : messages[1]!.content.includes('f2') ? '{"verdict":"duplicate","match":1,"reason":"да"}' : '{"verdict":"new"}' };
   expect(await check.judgeDrink(finding, { brand, flavor: 'x' }, candidates)).toMatchObject({ verdict: 'duplicate', match: { flavor: 'f2' } });
   expect(await check.judgeDrink(finding, { brand: 'Другой', flavor: 'x' }, candidates)).toMatchObject({ verdict: 'new' });
-  // A flavour that is part of a barely-sold card's mix goes to the moderator even when the model says «new».
+  // A flavour that is part of a barely-sold card's mix goes to the moderator even when the model says «new» — while the
+  // hints are on; off (DUPLICATE_HINTS), the model's «new» stands.
   const fresh = { chat: async () => '{"verdict":"new","match":null}' };
   const mixCard = { brand, flavor: 'blend:melon+watermelon', kind: 'archive' as const };
   expect(await check.judgeDrink(fresh, { brand, flavor: 'watermelon', offers: 1 }, [mixCard, { brand, flavor: 'mango', kind: 'shop' as const, offers: 9 }]))
-    .toMatchObject({ verdict: 'unsure', match: { flavor: 'blend:melon+watermelon' }, confident: false });
+    .toMatchObject(DUPLICATE_HINTS ? { verdict: 'unsure', match: { flavor: 'blend:melon+watermelon' }, confident: false } : { verdict: 'new' });
   expect(await check.judgeDrink(fresh, { brand, flavor: 'watermelon', offers: 9 }, [{ ...mixCard, kind: 'shop' as const, offers: 9 }])).toMatchObject({ verdict: 'new' });
 });

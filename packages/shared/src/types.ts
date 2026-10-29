@@ -208,4 +208,6 @@ export interface CatalogGroup {
   coverImageUrl?: string;
   /** Полное название с банки, если его дал участник («Monster Ultra Paradise») — по нему ищет каталог */
   fullName?: string;
+  /** Объёмы банки, известные без предложений магазинов (правка карточки командой), мл */
+  volumes?: number[];
 }

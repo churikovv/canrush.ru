@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { combineDuplicateResults, duplicatePrompt, hammingDistance, isConfidentDuplicate, isFlavorInMix, mergeDuplicateVotes, offerTitles, parseDuplicateAnswer, shortlistCandidates, type DuplicateCandidate } from '../src/lib/drink-duplicate-fields';
+import { combineDuplicateResults, DUPLICATE_HINTS, DUPLICATE_SYSTEM, duplicatePrompt, hammingDistance, isConfidentDuplicate, isFlavorInMix, mergeDuplicateVotes, offerTitles, parseDuplicateAnswer, shortlistCandidates, type DuplicateCandidate } from '../src/lib/drink-duplicate-fields';
 
 const card = (flavor: string, fullName?: string, brand = 'Tornado'): DuplicateCandidate => ({ brand, flavor, ...(fullName ? { fullName } : {}), kind: 'shop' });
 
@@ -84,11 +84,16 @@ describe('drink duplicate check rules', () => {
     expect(hammingDistance('0123456789abcdef', '0123456789abcdef')).toBe(0);
   });
 
-  it('keeps hinted candidates on a short list and shows the hints and shop names to the model', () => {
+  it('keeps hinted candidates on a short list; the model sees hints and shop names only while they are on', () => {
     const many = Array.from({ length: 20 }, (_, index) => card(`flavor${index}`));
     const hinted = { ...card('flavor19'), hint: 'одинаковое фото банки', titles: ['Tornado Black 0.45'] };
     const list = shortlistCandidates({ brand: 'Tornado', flavor: 'x' }, [...many.slice(0, 19), hinted], 5);
     expect(list[0]).toBe(hinted);
-    expect(duplicatePrompt({ brand: 'Tornado', flavor: 'x', titles: ['Tornado Max Black'] }, list)).toMatch(/в магазинах: «Tornado Max Black»[\s\S]*подсказка: одинаковое фото банки/u);
+    const prompt = duplicatePrompt({ brand: 'Tornado', flavor: 'x', titles: ['Tornado Max Black'] }, list);
+    if (DUPLICATE_HINTS) expect(prompt).toMatch(/в магазинах: «Tornado Max Black»[\s\S]*подсказка: одинаковое фото банки/u);
+    else {
+      expect(prompt).not.toMatch(/в магазинах|подсказка/u);
+      expect(DUPLICATE_SYSTEM).not.toMatch(/в магазинах|Подсказка/u);
+    }
   });
 });

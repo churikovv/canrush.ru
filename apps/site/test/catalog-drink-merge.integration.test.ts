@@ -31,6 +31,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await pool.query('delete from "adminAuditLog" where "adminEmail" = $1', [adminEmail]);
   await pool.query('delete from "catalogDrinkRename" where "fromBrand" = $1', [brand]);
+  await pool.query('delete from "catalogCardEdit" where brand = $1', [brand]);
   await pool.query('delete from review where brand = $1', [brand]);
   await pool.query('delete from "siteAdmin" where email = $1', [adminEmail]);
   await pool.query('delete from "user" where id = any($1::text[])', [[author, admin, reviewer, stranger]]);
@@ -56,7 +57,7 @@ it('merges a duplicate into the catalog card, takes back its XP and tells the au
   expect(await xp()).toBe(0);
   expect(await renamedCatalogDrink(oldSlug)).toEqual({ brand, flavor: 'mango' });
   const { items } = await getNotifications(author);
-  expect(items[0]).toMatchObject({ kind: 'drink-merged', title: `Ваш напиток «${brand} · Огурец» объединён с карточкой каталога`, detail: `Это ${brand} · Манго · отзывы и отметки перенесены · −50 XP за дубль` });
+  expect(items[0]).toMatchObject({ kind: 'drink-merged', title: `Ваш напиток «${brand} · Огурец» объединён с карточкой каталога`, detail: `Это ${brand} · Манго · объём 450 мл — в карточке · отзывы и отметки перенесены · −50 XP за дубль` });
   expect((await pool.query(`select action from "adminAuditLog" where "targetId" = $1`, [drinkId])).rows).toEqual([{ action: 'catalog-drink-merge-revoke-xp' }]);
 });
 
@@ -66,5 +67,23 @@ it('keeps the XP when the box is cleared, and merges a request without moving an
   const v = (await pool.query<{ v: Date }>('select "updatedAt" as v from "catalogDrink" where id = $1', [id])).rows[0]!.v.toISOString();
   expect(await mergeCatalogDrink(admin, adminEmail, id, v, { brand, flavor: 'mango' }, false)).toEqual({ moved: false, revokedXp: 0 });
   expect((await pool.query('select 1 from "catalogDrink" where id = $1', [id])).rowCount).toBe(0);
-  expect((await getNotifications(author)).items[0]).toMatchObject({ kind: 'drink-merged', detail: `Это ${brand} · Манго` });
+  expect((await getNotifications(author)).items[0]).toMatchObject({ kind: 'drink-merged', detail: `Это ${brand} · Манго · объём 450 мл — в карточке` });
+});
+
+it('adds a request for the same drink in another can to the card instead of refusing it', async () => {
+  const request = async (volumes: string) => {
+    const id = (await pool.query<{ id: string }>(`insert into "catalogDrink"("ownerId", brand, flavor, volumes, photo, thumbnail)
+      values ($1, $2, 'mango', $3, 'x', 'x') returning id`, [author, brand, volumes])).rows[0]!.id;
+    return { id, v: (await pool.query<{ v: Date }>('select "updatedAt" as v from "catalogDrink" where id = $1', [id])).rows[0]!.v.toISOString() };
+  };
+  const card = async () => (await pool.query<{ volumes: number[] }>('select volumes from "catalogCardEdit" where brand = $1 and flavor = $2', [brand, 'mango'])).rows[0]?.volumes;
+  const first = await request('{330}');
+  expect(await mergeCatalogDrink(admin, adminEmail, first.id, first.v, { brand, flavor: 'mango' }, false)).toEqual({ moved: false, revokedXp: 0 });
+  expect((await pool.query('select 1 from "catalogDrink" where id = $1', [first.id])).rowCount).toBe(0);
+  // The earlier merges into this card left 450 ml; the request adds 330, sorted, without repeats.
+  expect(await card()).toEqual([330, 450]);
+  expect((await getNotifications(author)).items[0]).toMatchObject({ kind: 'drink-merged', title: `Ваш напиток «${brand} · Манго» уже есть в каталоге`, detail: 'объём 330 мл — в карточке' });
+  const second = await request('{330,1000}');
+  await mergeCatalogDrink(admin, adminEmail, second.id, second.v, { brand, flavor: 'mango' }, false);
+  expect(await card()).toEqual([330, 450, 1000]);
 });

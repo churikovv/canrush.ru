@@ -5,7 +5,7 @@ import { cardKey, cardPhotoUrl, mergeTarget } from '@/lib/catalog-card-edit-fiel
 import { readAllCatalogGroups } from '@/lib/catalog-files';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { catalogCandidates, judgeDrink } from '@/lib/drink-duplicate-check';
-import { cardInputs, CONFIDENT_VOTES, drinkLabel, DUPLICATE_CHECK_VERSION, offerTitles, type DuplicateCandidate } from '@/lib/drink-duplicate-fields';
+import { cardInputs, CONFIDENT_VOTES, drinkLabel, DUPLICATE_CHECK_VERSION, DUPLICATE_HINTS, offerTitles, type DuplicateCandidate } from '@/lib/drink-duplicate-fields';
 import type { ChatMessage } from '@/lib/gigachat';
 
 /**
@@ -57,7 +57,7 @@ export async function runCardChecks(client: Chat, limit = 20, pause = 1500): Pro
     if (!previous) return true;
     if (previous.verdict === 'failed') return previous.stale || previous.version < DUPLICATE_CHECK_VERSION;
     return previous.verdict === 'new' && !UNKNOWN.test(group.flavor)
-      && (previous.version < DUPLICATE_CHECK_VERSION || (previous.inputs !== null && previous.inputs !== cardInputs(toCheck(group))));
+      && (previous.version < DUPLICATE_CHECK_VERSION || (DUPLICATE_HINTS && previous.inputs !== null && previous.inputs !== cardInputs(toCheck(group))));
   }).sort((a, b) => Number(checked.has(cardKey(a.brand, a.flavor))) - Number(checked.has(cardKey(b.brand, b.flavor))));
   for (const group of due.filter(group => UNKNOWN.test(group.flavor) && group.variants.length)) {
     await save(group, 'unknown', null, 'Парсер не распознал вкус. Здесь может быть несколько разных товаров — проверьте названия из магазинов.', offerTitles(group.variants, 5).join(' · ') || null);

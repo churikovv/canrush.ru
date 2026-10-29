@@ -25,6 +25,15 @@ export interface DuplicateResult { verdict: DuplicateVerdict; match: DuplicateCa
  */
 export const DUPLICATE_CHECK_VERSION = 2;
 
+/**
+ * The hints the check gives the model — shop product names, «одинаковое фото банки», «вкус входит в микс» — and what
+ * follows from them: a «new» answer turned into «unsure» by a photo twin or a mix, the other card of a hinted pair asked
+ * again, a card asked again when its shop names or cover change. Off since 29.10.2026: with them the model merged a
+ * flavour into a mix that has it («Ягодный» into «Ягоды + Малина») and flooded the queue with look-alikes. The code stays
+ * for a better try; with the switch off the check works as before them (migration 0147 cleared their answers).
+ */
+export const DUPLICATE_HINTS = false;
+
 /** What the model sees of a parser card besides its name, as one string: a change means the card is worth another look. */
 export const cardInputs = (card: { titles?: string[]; cover?: string; offers?: number }) =>
   JSON.stringify([[...(card.titles ?? [])].sort(), card.cover ?? '', (card.offers ?? 0) > 0]);
@@ -87,7 +96,7 @@ export const drinkLabel = (drink: { brand: string; flavor: string; fullName?: st
   `${drink.brand} · ${flavorName(drink.flavor)}${drink.fullName ? ` («${drink.fullName}»)` : ''}`;
 
 const words = (drink: { flavor: string; fullName?: string; titles?: string[] }) => new Set(
-  `${flavorName(drink.flavor)} ${drink.flavor} ${drink.fullName ?? ''} ${(drink.titles ?? []).join(' ')}`.toLowerCase().replace(/ё/gu, 'е')
+  `${flavorName(drink.flavor)} ${drink.flavor} ${drink.fullName ?? ''} ${DUPLICATE_HINTS ? (drink.titles ?? []).join(' ') : ''}`.toLowerCase().replace(/ё/gu, 'е')
     .split(/[^\p{L}\p{N}]+/u).filter(word => word.length > 2 && !STOP_WORDS.has(word)),
 );
 
@@ -107,18 +116,21 @@ export function shortlistCandidates(drink: DrinkToCheck, candidates: DuplicateCa
   return [...hinted, ...ranked].slice(0, Math.max(limit, hinted.length));
 }
 
-export const DUPLICATE_SYSTEM = `Ты помогаешь модератору каталога энергетиков. Участник прислал напиток. Тебе дают список карточек того же бренда, которые уже есть в каталоге.
+/** What the model is told of the hints, only while they are on (`DUPLICATE_HINTS`). */
+const HINT_RULES = `У карточек бывают названия товаров из магазинов («в магазинах: …»). Они точнее нашего вкуса: если они описывают ту же банку (например «Watermelon с арбузом и дыней» и «Дыня + Арбуз», «цитрус микс» и «апельсин грейпфрут лимон»), это дубль, даже если вкусы в каталоге записаны по-разному.
+Подсказка у карточки («одинаковое фото банки», «вкус входит в микс») — повод присмотреться, но не доказательство: у разных вкусов бывает общее фото.
+`;
+
+export const DUPLICATE_SYSTEM = (hintRules => `Ты помогаешь модератору каталога энергетиков. Участник прислал напиток. Тебе дают список карточек того же бренда, которые уже есть в каталоге.
 Реши, это та же банка, что одна из карточек (дубль), или новый напиток.
 Дубль — тот же продукт под другим написанием: перевод названия вкуса (Storm = «Шторм»), маркетинговое имя линейки вместо вкуса, лишнее слово energy, другой порядок слов.
-У карточек бывают названия товаров из магазинов («в магазинах: …»). Они точнее нашего вкуса: если они описывают ту же банку (например «Watermelon с арбузом и дыней» и «Дыня + Арбуз», «цитрус микс» и «апельсин грейпфрут лимон»), это дубль, даже если вкусы в каталоге записаны по-разному.
-Подсказка у карточки («одинаковое фото банки», «вкус входит в микс») — повод присмотреться, но не доказательство: у разных вкусов бывает общее фото.
-НЕ дубль: другой вкус; версия без сахара (zero, sugar free) против обычной; версия с сахарозаменителем против обычной; версия с соком против обычной; другая линейка бренда (Ultra, Reserve, Rehab, Java у Monster — разные продукты).
+${hintRules}НЕ дубль: другой вкус; версия без сахара (zero, sugar free) против обычной; версия с сахарозаменителем против обычной; версия с соком против обычной; другая линейка бренда (Ultra, Reserve, Rehab, Java у Monster — разные продукты).
 Если не уверен — ответ unsure. Отвечай только JSON без пояснений вокруг:
-{"verdict":"duplicate"|"new"|"unsure","match":<номер карточки или null>,"reason":"<коротко, по-русски>"}`;
+{"verdict":"duplicate"|"new"|"unsure","match":<номер карточки или null>,"reason":"<коротко, по-русски>"}`)(DUPLICATE_HINTS ? HINT_RULES : '');
 
 export function duplicatePrompt(drink: DrinkToCheck, candidates: DuplicateCandidate[]): string {
-  const shops = (titles?: string[]) => titles?.length ? `; в магазинах: ${titles.map(title => `«${title}»`).join(', ')}` : '';
-  const list = candidates.map((candidate, index) => `${index + 1}. ${drinkLabel(candidate)} — ${KIND_LABEL[candidate.kind]}${shops(candidate.titles)}${candidate.hint ? `; подсказка: ${candidate.hint}` : ''}`).join('\n');
+  const shops = (titles?: string[]) => DUPLICATE_HINTS && titles?.length ? `; в магазинах: ${titles.map(title => `«${title}»`).join(', ')}` : '';
+  const list = candidates.map((candidate, index) => `${index + 1}. ${drinkLabel(candidate)} — ${KIND_LABEL[candidate.kind]}${shops(candidate.titles)}${DUPLICATE_HINTS && candidate.hint ? `; подсказка: ${candidate.hint}` : ''}`).join('\n');
   const label = drink.ingredients?.trim() ? `\nСостав с этикетки: ${drink.ingredients.trim().slice(0, 300)}` : '';
   return `Новый напиток: ${drinkLabel(drink)}${shops(drink.titles)}${label}\n\nКарточки бренда в каталоге:\n${list || '(нет)'}`;
 }

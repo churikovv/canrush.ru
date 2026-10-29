@@ -5,13 +5,13 @@ import '@/styles/catalog.css';
 import Image from 'next/image';
 import { AdminShell } from '@/components/admin-shell';
 import { getAdminQueues } from '@/lib/admin-queues';
-import { CatalogDrinkAdminMenu } from '@/components/catalog-drink-admin';
+import { AddToCatalogCard, CatalogDrinkAdminMenu } from '@/components/catalog-drink-admin';
 import { CatalogDrinkModeration } from '@/components/catalog-drink-moderation';
 import Link from '@/components/navigation-progress';
 import { requireSiteAdmin } from '@/lib/admin';
 import { volumeLabel } from '@/lib/catalog-drink-fields';
 import { loadAllCatalogGroups } from '@/lib/catalog';
-import { BASIC_FLAVORS, catalogGroupSlug } from '@/lib/catalog-query';
+import { BASIC_FLAVORS, catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { listCatalogDrinks, type CatalogDrinkStatus } from '@/lib/catalog-drinks';
 import { countSuspectedDuplicates, getDrinkChecks, type DrinkCheck } from '@/lib/drink-duplicate-check';
 import { dismissDrinkCheckAction } from '@/app/catalog/new/actions';
@@ -110,7 +110,19 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
         {drink.ingredients && <p className="admin-drink-card-ingredients">{drink.ingredients}</p>}
         {drink.business && <p className="admin-drink-card-note">Опубликован без проверки компанией «{drink.business}»</p>}
         {drink.status === 'rejected' && drink.moderationNote && <p className="admin-drink-card-note">Причина: {drink.moderationNote}</p>}
-        {drink.status === 'pending' && (() => { const card = catalogCard(drink.brand, drink.flavor); return card && <p className="admin-drink-card-match">Совпадает с карточкой каталога — <Link href={`/catalog/${catalogGroupSlug(card.brand, card.flavor)}`}>сравнить</Link>. Автор отправил свою версию: смените вкус в «Редактировать» или склейте; опубликовать как есть нельзя.</p>; })()}
+        {drink.status === 'pending' && (() => {
+          const card = catalogCard(drink.brand, drink.flavor);
+          if (!card) return null;
+          // The same drink in a can the card does not list yet is the usual case (a shop sells its own volume): offer to add it.
+          const known = [...card.variants.map(offer => offer.volumeMl ?? 0), ...(card.volumes ?? [])];
+          const fresh = drink.volumes.filter(volume => !known.some(other => Math.abs(other - volume) <= 10));
+          return <div className="admin-drink-card-match">
+            <p>Совпадает с карточкой каталога — <Link href={`/catalog/${catalogGroupSlug(card.brand, card.flavor)}`}>сравнить</Link>. {fresh.length
+              ? `В карточке нет ${fresh.map(volumeLabel).join(', ')}: добавьте объём в неё — отдельно опубликовать тот же напиток нельзя.`
+              : 'Объёмы те же: склейте заявку с карточкой или смените вкус в «Редактировать».'}</p>
+            <AddToCatalogCard id={drink.id} version={drink.updatedAt.toISOString()} card={{ brand: card.brand, flavor: card.flavor, label: `${card.brand} · ${flavorName(card.flavor)}` }} volumes={fresh.map(volumeLabel).join(', ')} />
+          </div>;
+        })()}
         {(() => { const check = checks.get(drink.id); return check && <DrinkCheckNote check={check} id={drink.id} canDismiss={drink.status === 'published'} />; })()}
         {drink.status === 'pending' && <CatalogDrinkModeration id={drink.id} version={drink.updatedAt.toISOString()} />}
       </li>)}</ul>

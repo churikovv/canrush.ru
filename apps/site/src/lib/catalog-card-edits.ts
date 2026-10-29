@@ -13,9 +13,9 @@ export class CatalogCardError extends Error {}
 const ADMIN = 'exists(select 1 from "user" u join "siteAdmin" a on lower(u.email) = a.email where u.id = $1)';
 
 /** All edits, one cheap query per request (no photo bytes). */
-export const cardEdits = cache(async (): Promise<CardEdit[]> => (await getPool().query<{ id: string; brand: string; flavor: string; mergedIntoBrand: string | null; mergedIntoFlavor: string | null; hidden: boolean; fullName: string | null; photoVersion: Date | null; updatedBy: string | null }>(
-  `select id, brand, flavor, "mergedIntoBrand", "mergedIntoFlavor", hidden, "fullName", case when photo is not null then "updatedAt" end as "photoVersion", "updatedBy" from "catalogCardEdit"`)).rows
-  .map(row => ({ id: row.id, brand: row.brand, flavor: row.flavor, hidden: row.hidden, fullName: row.fullName, updatedBy: row.updatedBy,
+export const cardEdits = cache(async (): Promise<CardEdit[]> => (await getPool().query<{ id: string; brand: string; flavor: string; mergedIntoBrand: string | null; mergedIntoFlavor: string | null; hidden: boolean; fullName: string | null; photoVersion: Date | null; updatedBy: string | null; volumes: number[] }>(
+  `select id, brand, flavor, "mergedIntoBrand", "mergedIntoFlavor", hidden, "fullName", case when photo is not null then "updatedAt" end as "photoVersion", "updatedBy", volumes from "catalogCardEdit"`)).rows
+  .map(row => ({ id: row.id, brand: row.brand, flavor: row.flavor, hidden: row.hidden, fullName: row.fullName, updatedBy: row.updatedBy, volumes: row.volumes,
     mergedInto: row.mergedIntoBrand && row.mergedIntoFlavor ? { brand: row.mergedIntoBrand, flavor: row.mergedIntoFlavor } : null,
     photoVersion: row.photoVersion ? row.photoVersion.getTime() : null })));
 
@@ -92,12 +92,27 @@ async function mergeCards(card: { brand: string; flavor: string }, target: { bra
       on conflict (brand, flavor) do update set "mergedIntoBrand" = excluded."mergedIntoBrand", "mergedIntoFlavor" = excluded."mergedIntoFlavor", "updatedAt" = clock_timestamp(), "updatedBy" = excluded."updatedBy"`,
     [card.brand, card.flavor, target.brand, target.flavor, actor]);
     await db.query('update "catalogCardEdit" set "mergedIntoBrand" = $3, "mergedIntoFlavor" = $4 where "mergedIntoBrand" = $1 and "mergedIntoFlavor" = $2', [card.brand, card.flavor, target.brand, target.flavor]);
+    await addCardVolumes(db, target, (await db.query<{ volumes: number[] }>('select volumes from "catalogCardEdit" where brand = $1 and flavor = $2', [card.brand, card.flavor])).rows[0]?.volumes ?? [], actor);
     await db.query('select move_drink_identity($1, $2, $3, $4)', [card.brand, card.flavor, target.brand, target.flavor]);
     await db.query('update "catalogDrinkRename" set "toBrand" = $3, "toFlavor" = $4 where "toBrand" = $1 and "toFlavor" = $2', [card.brand, card.flavor, target.brand, target.flavor]);
     await db.query('insert into "catalogDrinkRename"("fromBrand", "fromFlavor", "toBrand", "toFlavor") values ($1, $2, $3, $4)', [card.brand, card.flavor, target.brand, target.flavor]);
     await audit(db, actor, action, card.brand, card.flavor);
     await db.query('commit');
   } catch (error) { await db.query('rollback'); throw error; } finally { db.release(); }
+}
+
+/**
+ * Adds can volumes to a catalog card inside the caller's transaction: a published member drink keeps them in its own
+ * list, a parser card in its edit row (`catalogCardEdit.volumes`, laid over the files on every load).
+ */
+export async function addCardVolumes(db: { query: ReturnType<typeof getPool>['query'] }, card: { brand: string; flavor: string }, volumes: readonly number[], actor: string): Promise<void> {
+  if (!volumes.length) return;
+  const own = await db.query(`update "catalogDrink" set volumes = (select array(select distinct v from unnest(volumes || $3::int[]) v order by v))[1:12]
+    where status = 'published' and lower(brand) = lower($1) and lower(flavor) = lower($2)`, [card.brand, card.flavor, volumes]);
+  if (own.rowCount) return;
+  await db.query(`insert into "catalogCardEdit"(brand, flavor, volumes, "updatedBy") values ($1, $2, (select array(select distinct v from unnest($3::int[]) v order by v))[1:12], $4)
+    on conflict (brand, flavor) do update set volumes = (select array(select distinct v from unnest("catalogCardEdit".volumes || excluded.volumes) v order by v))[1:12], "updatedAt" = clock_timestamp(), "updatedBy" = excluded."updatedBy"`,
+  [card.brand, card.flavor, volumes, actor]);
 }
 
 /** The bytes of our own cover, `thumbnail` for the small one. */

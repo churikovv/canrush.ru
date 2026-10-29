@@ -6,7 +6,7 @@ import { catalogGroupSlug } from '@/lib/catalog-query';
 import { coverHashes } from '@/lib/cover-hash';
 import type { ChatMessage } from '@/lib/gigachat';
 import {
-  combineDuplicateResults, drinkLabel, DUPLICATE_CHECK_VERSION, hammingDistance, isConfidentDuplicate, isFlavorInMix, isThinCard, mergeDuplicateVotes, offerTitles, PHOTO_TWIN_DISTANCE,
+  combineDuplicateResults, drinkLabel, DUPLICATE_CHECK_VERSION, DUPLICATE_HINTS, hammingDistance, isConfidentDuplicate, isFlavorInMix, isThinCard, mergeDuplicateVotes, offerTitles, PHOTO_TWIN_DISTANCE,
   DUPLICATE_SYSTEM, duplicatePrompt, parseDuplicateAnswer, shortlistCandidates,
   type DrinkToCheck, type DuplicateCandidate, type DuplicateResult, type DuplicateVerdict,
 } from '@/lib/drink-duplicate-fields';
@@ -40,6 +40,7 @@ const memberCover = (id: string, updatedAt: Date) => `/api/catalog-drinks/${id}/
  * stock photo, not a twin — and «вкус входит в микс» (`isFlavorInMix`). Other brands' cards are left as they are.
  */
 export async function withDuplicateHints(drink: DrinkToCheck, all: DuplicateCandidate[]): Promise<DuplicateCandidate[]> {
+  if (!DUPLICATE_HINTS) return all;
   const brand = drink.brand.toLowerCase();
   const mates = all.filter(candidate => candidate.brand.toLowerCase() === brand && !(candidate.brand === drink.brand && candidate.flavor === drink.flavor));
   if (!mates.length) return all;

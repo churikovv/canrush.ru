@@ -92,8 +92,10 @@ function describeNotification(row: any): NotificationItem {
     } else if (row.kind==='drink-merged') {
       // A moderator merged the member's drink into a catalog card it duplicated (catalog-drink-merge.ts).
       const p = row.payload;
-      title = `Ваш напиток «${p.brand} · ${flavorName(p.flavor)}» объединён с карточкой каталога`;
-      detail = [`Это ${p.targetBrand} · ${flavorName(p.targetFlavor)}`, p.published ? 'отзывы и отметки перенесены' : '', p.xp ? `−${p.xp} XP за дубль` : ''].filter(Boolean).join(' · ');
+      const same = p.brand === p.targetBrand && p.flavor === p.targetFlavor;
+      const volumes = Array.isArray(p.volumes) && p.volumes.length ? `объём ${p.volumes.map((v: number) => `${v} мл`).join(', ')} — в карточке` : '';
+      title = same ? `Ваш напиток «${p.brand} · ${flavorName(p.flavor)}» уже есть в каталоге` : `Ваш напиток «${p.brand} · ${flavorName(p.flavor)}» объединён с карточкой каталога`;
+      detail = [same ? '' : `Это ${p.targetBrand} · ${flavorName(p.targetFlavor)}`, volumes, p.published ? 'отзывы и отметки перенесены' : '', p.xp ? `−${p.xp} XP за дубль` : ''].filter(Boolean).join(' · ');
       href = `/catalog/${catalogGroupSlug(p.targetBrand,p.targetFlavor)}`;
     } else if (row.kind==='business-review') {
       // A review of a drink the member's company has approved (migration 0121); off in the cabinet's notification settings.

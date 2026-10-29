@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogGroup } from '@canrush/shared';
-import { applyCardEdits, cardKey, mergeTarget, parseCardFullName, type CardEdit } from '../src/lib/catalog-card-edit-fields';
+import { applyCardEdits, cardKey, joinVolumes, mergeTarget, parseCardFullName, volumesWithoutOffers, type CardEdit } from '../src/lib/catalog-card-edit-fields';
 
 const offer = (price: number, url: string) => ({ source: 'edadeal' as const, retailer: 'Магнит', volumeMl: 450, price, url, fetchedAt: '2026-10-29T00:00:00.000Z' });
 const group = (flavor: string, variants: CatalogGroup['variants'] = [], cover?: string): CatalogGroup => ({ brand: 'Tornado', flavor, variants, minPrice: variants.length ? Math.min(...variants.map(item => item.price)) : 0, ...(cover ? { coverImageUrl: cover } : {}) });
@@ -19,6 +19,15 @@ describe('catalog card edits', () => {
     const edits = [edit('a', { mergedInto: { brand: 'Tornado', flavor: 'b' } }), edit('b', { mergedInto: { brand: 'Tornado', flavor: 'c' } })];
     expect(mergeTarget(new Map(edits.map(item => [cardKey(item.brand, item.flavor), item])), 'Tornado', 'a')).toEqual({ brand: 'Tornado', flavor: 'c' });
     expect(applyCardEdits([group('a', [offer(50, 'x')], '/a.jpg')], edits)).toEqual([{ ...group('a', [offer(50, 'x')], '/a.jpg'), flavor: 'c' }]);
+  });
+
+  it('adds the volumes a merged request brought, and tells which of them no shop sells', () => {
+    const [card] = applyCardEdits([group('mango', [offer(99, 'a')])], [edit('mango', { volumes: [330, 450, 1000] })]);
+    expect(card!.volumes).toEqual([330, 450, 1000]);
+    // 450 ml is sold (an offer within 10 ml counts), 330 ml and 1 l are not.
+    expect(volumesWithoutOffers(card!)).toEqual([330, 1000]);
+    expect(volumesWithoutOffers(group('mango', [offer(99, 'a')]))).toEqual([]);
+    expect(joinVolumes([450, 330], [330, 250])).toEqual([250, 330, 450]);
   });
 
   it('hides cards and lays the name and our own cover over the parser data', () => {

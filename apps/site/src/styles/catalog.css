@@ -763,3 +763,6 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 .catalog-price-ceiling { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-brand) 10%, var(--color-subtle)); color: var(--color-ink); font-size: .875rem; line-height: 1.4; }
 .catalog-price-ceiling svg { flex: none; color: var(--color-brand); }
 .catalog-store-offer.is-over-ceiling small em { color: var(--color-muted-strong); font-style: normal; }
+/* «Выпускается и в 330 мл»: a can volume the card knows (a merged request) that no shop sells — one step under the prices. */
+.catalog-unsold-volumes { margin: 16px 0 0; }
+@media (min-width: 960px) { .catalog-unsold-volumes { margin-top: 20px; } }

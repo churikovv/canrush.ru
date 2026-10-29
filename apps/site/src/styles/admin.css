@@ -297,3 +297,9 @@
 .admin-card-queue-actions { display: grid; grid-column: 1 / -1; gap: 8px; }
 .admin-card-queue-actions .community-button { width: 100%; min-height: 40px; }
 @media (min-width: 640px) { .admin-card-queue-actions { display: flex; flex-wrap: wrap; } .admin-card-queue-actions .community-button { width: auto; } }
+/* «Совпадает с карточкой каталога»: the note and, under it, «Добавить N мл в карточку». */
+div.admin-drink-card-match { display: grid; gap: 10px; }
+div.admin-drink-card-match > p { margin: 0; }
+.admin-drink-add-volume { display: grid; gap: 8px; }
+.admin-drink-add-volume .community-button { min-height: 44px; }
+@media (min-width: 640px) { .admin-drink-add-volume .community-button { width: fit-content; } }

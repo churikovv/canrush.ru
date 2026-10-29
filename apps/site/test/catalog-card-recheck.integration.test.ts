@@ -15,7 +15,7 @@ const files = { groups: [
 ] as { brand: string; flavor: string; variants: { source: string; price: number; url: string }[]; minPrice: number }[] };
 vi.mock('../src/lib/catalog-files', () => ({ readAllCatalogGroups: async () => files.groups }));
 const check = await import('../src/lib/catalog-card-check');
-const { DUPLICATE_CHECK_VERSION } = await import('../src/lib/drink-duplicate-fields');
+const { DUPLICATE_CHECK_VERSION, DUPLICATE_HINTS } = await import('../src/lib/drink-duplicate-fields');
 
 afterAll(async () => {
   await pool.query('delete from "catalogCardCheck" where brand = $1', [brand]);
@@ -30,11 +30,11 @@ it('checks again what an older algorithm or older data judged, and the old card 
   expect(await row('mango')).toEqual({ verdict: 'new', version: DUPLICATE_CHECK_VERSION });
   expect(await check.runCardChecks(client, 20, 0)).toMatchObject({ checked: 0 });
 
-  // A row from the older algorithm is asked again; so is a card whose shop names changed.
+  // A row from the older algorithm is asked again; so is a card whose shop names changed — while the hints are on.
   await pool.query('update "catalogCardCheck" set version = 1 where brand = $1 and flavor = $2', [brand, 'mango']);
   expect(await check.runCardChecks(client, 20, 0)).toMatchObject({ checked: 1 });
   files.groups[1]!.variants = [offer('https://edadeal.ru/moskva/search?text=Mango+Loco')];
-  expect(await check.runCardChecks(client, 20, 0)).toMatchObject({ checked: 1 });
+  expect(await check.runCardChecks(client, 20, 0)).toMatchObject({ checked: DUPLICATE_HINTS ? 1 : 0 });
 
   // A new card, «Арбуз», is in the mix of the old «Дыня + Арбуз»: its first check sends the old card back for another
   // look; that second look is not a first check, so nothing bounces back and the third pass asks nothing.
@@ -42,6 +42,13 @@ it('checks again what an older algorithm or older data judged, and the old card 
   asked.length = 0;
   expect(await check.runCardChecks(client, 20, 0)).toMatchObject({ checked: 1 });
   expect(asked[0]).toContain('Новый напиток');
+  if (!DUPLICATE_HINTS) {
+    // Without the hints the model's «new» stands and nothing is sent back.
+    expect(await row('watermelon')).toMatchObject({ verdict: 'new' });
+    expect(await row('blend:melon+watermelon')).toEqual({ verdict: 'new', version: DUPLICATE_CHECK_VERSION });
+    expect(await check.runCardChecks(client, 20, 0)).toMatchObject({ checked: 0 });
+    return;
+  }
   expect(await row('watermelon')).toMatchObject({ verdict: 'unsure' });
   expect(await row('blend:melon+watermelon')).toEqual({ verdict: 'new', version: 0 });
   expect(await check.runCardChecks(client, 20, 0)).toMatchObject({ checked: 1 });

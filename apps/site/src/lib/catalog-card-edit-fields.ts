@@ -12,6 +12,8 @@ export interface CardEdit {
   photoVersion: number | null;
   /** Who made the edit: a moderator's email or «нейросеть» for an automatic merge. */
   updatedBy?: string | null;
+  /** Can volumes the card comes in besides those shops sell (a merged request for another can), ml. */
+  volumes?: number[];
 }
 
 export const MAX_CARD_FULL_NAME = 80;
@@ -63,6 +65,7 @@ export function applyCardEdits(groups: CatalogGroup[], list: CardEdit[]): Catalo
       ...group,
       ...(edit.fullName ? { fullName: edit.fullName } : {}),
       ...(edit.photoVersion !== null ? { coverImageUrl: cardPhotoUrl(edit.id, edit.photoVersion) } : {}),
+      ...(edit.volumes?.length ? { volumes: joinVolumes(group.volumes ?? [], edit.volumes) } : {}),
     }];
   });
 }
@@ -72,4 +75,14 @@ export function parseCardFullName(value: unknown): string {
   const name = String(value ?? '').replace(/\s+/gu, ' ').trim();
   if (name && (name.length < 2 || name.length > MAX_CARD_FULL_NAME)) throw new Error(`Полное название — от 2 до ${MAX_CARD_FULL_NAME} символов.`);
   return name;
+}
+
+/** Two lists of can volumes as one, sorted, without repeats. */
+export function joinVolumes(a: readonly number[], b: readonly number[]): number[] {
+  return [...new Set([...a, ...b])].sort((x, y) => x - y);
+}
+
+/** The card's volumes that shops do not sell: those a merge added, minus any an offer has (±10 ml, as prices match). */
+export function volumesWithoutOffers(group: Pick<CatalogGroup, 'variants' | 'volumes'>): number[] {
+  return (group.volumes ?? []).filter(volume => !group.variants.some(offer => offer.volumeMl && Math.abs(offer.volumeMl - volume) <= 10));
 }

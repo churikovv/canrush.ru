@@ -182,3 +182,19 @@ function EditForm({ drink, brands, flavors, titleId, onDone }: { drink: AdminDri
     </fieldset>
   </form>;
 }
+
+/**
+ * A request for a drink the catalog already has — the same brand and flavour, often another can: one click deletes it
+ * and adds its volumes to that card (`mergeCatalogDrink` into the same identity), the author is told.
+ */
+export function AddToCatalogCard({ id, version, card, volumes }: { id: string; version: string; card: { brand: string; flavor: string; label: string }; volumes: string }) {
+  const [state, action, pending] = useActionState(mergeCatalogDrinkAction.bind(null, id, version), {});
+  return <form action={action} className="admin-drink-add-volume" onSubmit={event => {
+    if (!window.confirm(`Добавить ${volumes || 'объём заявки'} в карточку «${card.label}»? Заявка удалится, автор получит уведомление.`)) event.preventDefault();
+  }}>
+    <input type="hidden" name="targetBrand" value={card.brand} />
+    <input type="hidden" name="targetFlavor" value={card.flavor} />
+    <button className="community-button" type="submit" disabled={pending}>{pending ? 'Добавляем…' : volumes ? `Добавить ${volumes} в карточку` : 'Это та же карточка — склеить'}</button>
+    {state.error && <FormAlert>{state.error}</FormAlert>}
+  </form>;
+}
