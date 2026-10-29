@@ -89,7 +89,7 @@ export function ScreenshotPreview({ blob, url, renderStory, onClose, labels = TI
   </dialog>, document.body);
 }
 
-export function TierScreenshotButton({ boardId, title, titleInputId, telegramChannel, authorUsername, official = false }: { boardId: string; title?: string; titleInputId?: string; telegramChannel?: string | null; authorUsername?: string; official?: boolean }) {
+export function TierScreenshotButton({ boardId, title, titleInputId, telegramChannel, authorUsername, official = false, iconOnly = false }: { boardId: string; title?: string; titleInputId?: string; telegramChannel?: string | null; authorUsername?: string; official?: boolean; iconOnly?: boolean }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState<{ blob: Blob; url: string; renderStory: () => Promise<Blob> } | null>(null);
@@ -109,7 +109,7 @@ export function TierScreenshotButton({ boardId, title, titleInputId, telegramCha
     finally { setPending(false); }
   }
   return <div className="tier-screenshot-control">
-    <button type="button" className="tier-secondary-action" disabled={pending} onClick={capture}>{pending ? 'Создаём…' : 'Скриншот'}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M8 6 9.4 4.6A2 2 0 0 1 10.8 4h2.4a2 2 0 0 1 1.4.6L16 6h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" strokeLinejoin="round"/><circle cx="12" cy="12" r="4"/></svg></button>
+    <button type="button" className={`tier-secondary-action${iconOnly ? ' tier-screenshot-icon' : ''}`} disabled={pending} onClick={capture} aria-label={iconOnly ? (pending ? 'Создаём скриншот' : 'Скриншот') : undefined} title={iconOnly ? 'Скриншот' : undefined}>{iconOnly ? null : pending ? 'Создаём…' : 'Скриншот'}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M8 6 9.4 4.6A2 2 0 0 1 10.8 4h2.4a2 2 0 0 1 1.4.6L16 6h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" strokeLinejoin="round"/><circle cx="12" cy="12" r="4"/></svg></button>
     {error && <p className="field-error" role="alert">{error}</p>}
     {preview && <ScreenshotPreview {...preview} onClose={() => { URL.revokeObjectURL(preview.url); previewUrl.current = null; setPreview(null); }} />}
   </div>;

@@ -6,7 +6,8 @@ import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import { compareTierProducts, type TierProductSort } from '@/lib/tier-product-sort';
 import { CoverImage } from '@/components/cover-image';
 import Link from '@/components/navigation-progress';
-import { Fragment, useActionState, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type MouseEvent } from 'react';
+import Image from 'next/image';
+import { Fragment, useActionState, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type MouseEvent, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 import { LayoutGroup, motion } from 'motion/react';
 import { deleteTierListAction, saveTierListAction, type TierListFormState } from '@/app/tierlists/actions';
@@ -57,12 +58,13 @@ function normalizeSearch(value: string): string {
   return value.toLocaleLowerCase('ru-RU').replace(/ё/gu, 'е').trim();
 }
 
-function ActionButtons({ published, dirty, saved }: { published: boolean; dirty: boolean; saved: boolean }) {
+function ActionButtons({ published, dirty, saved, screenshot }: { published: boolean; dirty: boolean; saved: boolean; screenshot: ReactNode }) {
   const { pending } = useFormStatus();
   return (
     <div className="tier-editor-save-group">
       {(dirty || saved || pending) && <p className={`tier-editor-save-status${dirty ? ' is-dirty' : ''}`}>{pending ? 'Сохраняем изменения…' : dirty ? 'Есть несохранённые изменения' : 'Изменения сохранены'}</p>}
     <div className="tier-editor-actions">
+      <div className="tier-editor-save-row">
       <button className="tier-primary-action" type="submit" name="intent" value="save" disabled={pending}>
         {pending ? 'Сохраняем…' : published ? 'Сохранить изменения' : 'Сохранить'}
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -70,6 +72,8 @@ function ActionButtons({ published, dirty, saved }: { published: boolean; dirty:
           <path d="M8 3v5a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3M8 21v-6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6" strokeLinejoin="round" />
         </svg>
       </button>
+      {screenshot}
+      </div>
       {!published ? (
         <button className="tier-secondary-action" type="submit" name="intent" value="publish" disabled={pending}>
           Опубликовать на сайт
@@ -168,7 +172,6 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
   const [draggingId, setDraggingId] = useState<string>();
   const [query, setQuery] = useState('');
   const [brand, setBrand] = useState('');
-  const [flavor, setFlavor] = useState('');
   const [sort, setSort] = useState<TierProductSort>('popular');
   const [availability, setAvailability] = useState<'all' | '4'>('all');
   const [dirty, setDirty] = useState(false);
@@ -178,25 +181,19 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
     () => [...new Set(products.map((product) => product.brand))].sort((left, right) => left.localeCompare(right, 'ru-RU')),
     [products],
   );
-  const flavors = useMemo(
-    () =>
-      [...new Map(products.map((product) => [product.flavor, product.flavorLabel])).entries()]
-        .map(([value, label]) => ({ value, label }))
-        .sort((left, right) => left.label.localeCompare(right.label, 'ru-RU')),
-    [products],
-  );
 
   const selectedProduct = selectedId ? productById.get(selectedId) : undefined;
   const selectedLane = selectedId
     ? (Object.entries(columns).find(([, ids]) => ids.includes(selectedId))?.[0] as EditorLane | undefined)
     : undefined;
   const normalizedQuery = normalizeSearch(query);
+  const activeFilters = Number(Boolean(brand)) + Number(availability !== 'all') + Number(sort !== 'popular');
+  const screenshot = <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" telegramChannel={telegramChannel} authorUsername={authorUsername} iconOnly />;
   const filteredPool = columns.pool
     .map((id) => productById.get(id))
     .filter((product): product is TierListProduct => Boolean(product))
     .filter((product) => {
       if (brand && product.brand !== brand) return false;
-      if (flavor && product.flavor !== flavor) return false;
       if (availability === '4' && product.retailerCount < 4) return false;
       if (!normalizedQuery) return true;
       return normalizeSearch(`${product.brand} ${product.flavorLabel}`).includes(normalizedQuery);
@@ -395,7 +392,12 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
           </>
       </motion.div>}
 
-      <p className="tier-section-hint">Нажмите на букву секции, чтобы поменять её содержимое с соседней или удалить секцию.</p>
+      <p className="review-hint-card tier-section-hint">
+        <span className="review-meter-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L4.6 15.6a1.6 1.6 0 0 1 2.4-2.1L9 15.5" /></svg>
+        </span>
+        <span>Нажмите на букву секции <span className="tier-section-hint-chip" aria-hidden="true"><span className={`tier-letter tier-letter-${(tiers[0] ?? 'S').toLowerCase()}`}>{tiers[0] ?? 'S'}</span></span>, чтобы поменять её содержимое с соседней или удалить секцию</span>
+      </p>
       {state.fieldErrors?.tiers && <p className="field-error" role="alert">{state.fieldErrors.tiers}</p>}
       <p className="sr-only" role="status">{sectionNotice}</p>
 
@@ -429,15 +431,19 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
         <legend>Обсуждение тирлиста</legend>
         <input type="hidden" name="reactionsEnabled" value={String(reactionsEnabled)} />
         <input type="hidden" name="commentsEnabled" value={String(commentsEnabled)} />
-        <label><input type="checkbox" checked={reactionsEnabled} onChange={event => { setReactionsEnabled(event.target.checked); setDirty(true); }} />Разрешить лайки и дизлайки</label>
-        <label><input type="checkbox" checked={commentsEnabled} onChange={event => { setCommentsEnabled(event.target.checked); setDirty(true); }} />Разрешить комментарии</label>
-        <p>Можно изменить позже. При отключении прежние реакции и комментарии скрываются и сохраняются.</p>
+        <DiscussionOption icon="reactions" title="Лайки и дизлайки" hint="Читатели оценят тирлист одним нажатием" checked={reactionsEnabled}
+          onChange={value => { setReactionsEnabled(value); setDirty(true); }} />
+        <DiscussionOption icon="comments" title="Комментарии" hint="Обсуждение под тирлистом, с ответами и фото" checked={commentsEnabled}
+          onChange={value => { setCommentsEnabled(value); setDirty(true); }} />
+        <p className="tier-discussion-note"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>
+          Можно изменить позже. Если выключить, прежние реакции и комментарии скроются, но не удалятся.</p>
       </fieldset>
       {TIER_KEYS.some(tier => !tiers.includes(tier)) && <div className="tier-section-add">{TIER_KEYS.filter(tier => !tiers.includes(tier)).map(tier => <button key={tier} type="button" className="community-button community-button-secondary" onClick={() => { setTiers(current => TIER_KEYS.filter(key => key === tier || current.includes(key))); setActiveSection(tier); setSelectedId(undefined); setDirty(true); setSectionNotice(`Секция ${tier} добавлена.`); }}>+ Добавить {tier}</button>)}</div>}
 
+      <TierChannelBanner channel={telegramChannel} />
+
       <div className="tier-editor-primary-controls">
-        <ActionButtons published={initialList?.status === 'published'} dirty={dirty} saved={saved} />
-        <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" telegramChannel={telegramChannel} authorUsername={authorUsername} />
+        <ActionButtons published={initialList?.status === 'published'} dirty={dirty} saved={saved} screenshot={screenshot} />
         {initialList ? <DeleteTierListButton /> : null}
       </div>
 
@@ -447,12 +453,12 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
             <h2 id="tier-editor-pool-title">Энергетики</h2>
             <p>{filteredPool.length} из {columns.pool.length} не распределены</p>
           </div>
-          <Link href="/profile/settings?section=telegram">Telegram автора</Link>
         </div>
 
         <div className="tier-editor-filters">
-          <label className="tier-editor-search">
-            <span>Поиск</span>
+          <label className="catalog-search-field tier-editor-search">
+            <span className="sr-only">Поиск энергетиков</span>
+            <Image src="/brand/icons/catalog-search.svg" width={24} height={24} alt="" />
             <input
               type="search"
               value={query}
@@ -461,22 +467,26 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
               maxLength={80}
             />
           </label>
-          <div className="tier-editor-filter-field">
-            <label htmlFor="tier-brand">Бренд</label>
-            <PriceFilterInput id="tier-brand" value={brand} options={brands.map(value => ({ value, label: value }))} allLabel="Все бренды" onChange={setBrand} />
-          </div>
-          <div className="tier-editor-filter-field">
-            <label htmlFor="tier-flavor">Вкус</label>
-            <PriceFilterInput id="tier-flavor" value={flavor} options={flavors} allLabel="Все вкусы" onChange={setFlavor} />
-          </div>
-          <div className="tier-editor-filter-field">
-            <label htmlFor="tier-availability">Наличие</label>
-            <PriceFilterInput id="tier-availability" value={availability === 'all' ? '' : availability} options={[{ value: '4', label: 'В 4+ магазинах' }]} allLabel="Все товары" onChange={value => setAvailability(value === '4' ? '4' : 'all')} />
-          </div>
-          <div className="tier-editor-filter-field">
-            <label htmlFor="tier-sort">Сортировка</label>
-            <PriceFilterInput id="tier-sort" value={sort === 'popular' ? '' : sort} options={[{ value: 'rating', label: 'По рейтингу' }, { value: 'stores', label: 'По наличию в магазинах' }, { value: 'price', label: 'По цене' }]} allLabel="По популярности" onChange={value => setSort((value || 'popular') as TierProductSort)} />
-          </div>
+          <details className="catalog-filter-disclosure tier-editor-filter-disclosure">
+            <summary aria-label={activeFilters ? `Фильтры, выбрано ${activeFilters}` : 'Фильтры'}>
+              <Image src="/brand/icons/catalog-filter.svg" width={24} height={24} alt="" />
+              {activeFilters > 0 && <span className="catalog-filter-count" aria-hidden="true">{activeFilters}</span>}
+            </summary>
+            <div className="tier-editor-filter-panel">
+              <div className="tier-editor-filter-field">
+                <label htmlFor="tier-brand">Бренд</label>
+                <PriceFilterInput id="tier-brand" value={brand} options={brands.map(value => ({ value, label: value }))} allLabel="Все бренды" onChange={setBrand} />
+              </div>
+              <div className="tier-editor-filter-field">
+                <label htmlFor="tier-availability">Наличие</label>
+                <PriceFilterInput id="tier-availability" value={availability === 'all' ? '' : availability} options={[{ value: '4', label: 'Массовые товары' }]} allLabel="Все товары" onChange={value => setAvailability(value === '4' ? '4' : 'all')} />
+              </div>
+              <div className="tier-editor-filter-field">
+                <label htmlFor="tier-sort">Сортировка</label>
+                <PriceFilterInput id="tier-sort" value={sort === 'popular' ? '' : sort} options={[{ value: 'rating', label: 'По рейтингу' }, { value: 'stores', label: 'По наличию в магазинах' }, { value: 'price', label: 'По цене' }]} allLabel="По популярности" onChange={value => setSort((value || 'popular') as TierProductSort)} />
+              </div>
+            </div>
+          </details>
         </div>
 
         <div
@@ -493,7 +503,7 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
             <div className="tier-editor-empty">
               <strong>Ничего не найдено</strong>
               <span>Измените запрос или сбросьте фильтры.</span>
-              <button type="button" onClick={() => { setQuery(''); setBrand(''); setFlavor(''); setAvailability('all'); }}>
+              <button type="button" onClick={() => { setQuery(''); setBrand(''); setAvailability('all'); setSort('popular'); }}>
                 Сбросить фильтры
               </button>
             </div>
@@ -502,10 +512,42 @@ export function TierListEditor({ products, initialList, saved = false, telegramC
       </section>
 
       <div className="tier-editor-footer-actions">
-        <ActionButtons published={initialList?.status === 'published'} dirty={dirty} saved={saved} />
-        <TierScreenshotButton boardId="tier-capture-board" titleInputId="tier-list-title" telegramChannel={telegramChannel} authorUsername={authorUsername} />
+        <ActionButtons published={initialList?.status === 'published'} dirty={dirty} saved={saved} screenshot={screenshot} />
       </div>
       </LayoutGroup>
     </form>
   );
+}
+
+/**
+ * Whose channel the tier list carries: with a channel in the profile, the banner says it goes on the tier list's page
+ * and its screenshot; without one, it invites the author to add it. Both lead to the Telegram section of settings.
+ */
+function TierChannelBanner({ channel }: { channel?: string | null }) {
+  return <aside className="tier-channel-banner" data-empty={channel ? undefined : ''} aria-label="Telegram-канал в тирлисте">
+    <span className="tier-channel-banner-icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.6 18.7 19.7c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13.4l-4.8-1.5c-1-.3-1.1-1 .2-1.5L20.5 3.1c.9-.3 1.6.2 1.4 1.5Z" /></svg>
+    </span>
+    <div>
+      <strong>{channel ? <>Ваш канал <span className="tier-channel-banner-name">@{channel}</span> будет в тирлисте</> : 'Покажите свой Telegram-канал'}</strong>
+      <p>{channel
+        ? 'При публикации ссылка на канал появится на странице тирлиста и на скриншоте — так читатели найдут вас.'
+        : 'Укажите канал в профиле: ссылка на него появится на странице тирлиста и на скриншоте.'}</p>
+    </div>
+    <Link className="tier-channel-banner-action" href="/profile/settings?section=telegram">{channel ? 'Изменить' : 'Указать канал'}</Link>
+  </aside>;
+}
+
+const DISCUSSION_ICONS = {
+  reactions: <path d="M7 10v11M15 5.9 14 10h5.8a2 2 0 0 1 2 2.3l-1.4 7A2 2 0 0 1 18.4 21H7V10l4-8a3 3 0 0 1 4 3.9ZM3 10h4v11H3z" />,
+  comments: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />,
+} as const;
+
+/** One setting of the discussion: an icon, its name and what it gives, and a switch on the right (a checkbox with role=switch). */
+function DiscussionOption({ icon, title, hint, checked, onChange }: { icon: keyof typeof DISCUSSION_ICONS; title: string; hint: string; checked: boolean; onChange: (value: boolean) => void }) {
+  return <label className="tier-discussion-option">
+    <span className="tier-discussion-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{DISCUSSION_ICONS[icon]}</svg></span>
+    <span className="tier-discussion-text"><b>{title}</b><small>{hint}</small></span>
+    <input type="checkbox" role="switch" checked={checked} onChange={event => onChange(event.target.checked)} />
+  </label>;
 }

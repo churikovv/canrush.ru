@@ -176,11 +176,17 @@ async function getTierListSummaries(where: string, values: unknown[], limit: num
   });
 }
 
+const communityFilter = (q: string) => `where tl."status" = 'published'${q ? ' and (strpos(lower(tl."title"), lower($1)) > 0 or strpos(lower(u."username"), lower($1)) > 0 or strpos(lower(u."name"), lower($1)) > 0)' : ''}`;
+
 export function getCommunityTierLists(limit = 12, query = ''): Promise<TierListSummary[]> {
   const q = query.trim().slice(0, 200);
-  return getTierListSummaries(
-    `where tl."status" = 'published'${q ? ' and (strpos(lower(tl."title"), lower($1)) > 0 or strpos(lower(u."username"), lower($1)) > 0 or strpos(lower(u."name"), lower($1)) > 0)' : ''}`,
-    q ? [q] : [], Math.min(Math.max(limit, 1), 48));
+  return getTierListSummaries(communityFilter(q), q ? [q] : [], Math.min(Math.max(limit, 1), 48));
+}
+
+/** How many published community tier lists match the search — the count beside the heading, not the page shown. */
+export async function countCommunityTierLists(query = ''): Promise<number> {
+  const q = query.trim().slice(0, 200);
+  return (await getPool().query<{ n: number }>(`select count(*)::int as n from "tierList" tl join "user" u on u."id" = tl."userId" ${communityFilter(q)}`, q ? [q] : [])).rows[0]?.n ?? 0;
 }
 
 export async function getPublishedTierListSitemapEntries(): Promise<PublishedTierListSitemapEntry[]> {

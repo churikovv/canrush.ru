@@ -8,7 +8,7 @@ import { TierListCard } from '@/components/tier-list-card';
 import { TierScreenshotButton } from '@/components/tier-screenshot-button';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import { getTierCardViewer } from '@/lib/tier-discussions';
-import { buildOfficialTierList, getCommunityTierLists, tierListProductsForPlacements } from '@/lib/tier-lists';
+import { buildOfficialTierList, getCommunityTierLists, countCommunityTierLists, tierListProductsForPlacements } from '@/lib/tier-lists';
 
 const count = new Intl.NumberFormat('ru-RU');
 
@@ -29,7 +29,7 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
   const title = metric === 'overall' ? 'Тирлист энергетиков CanRush' : `Тирлист энергетиков CanRush — ${modes[metric].toLowerCase()}`;
 
   const groups = await loadAllCatalogGroups();
-  const [official, community, session] = await Promise.all([buildOfficialTierList(groups, metric), getCommunityTierLists(shownCount + 1, q), auth.api.getSession({ headers: await headers() })]);
+  const [official, community, total, session] = await Promise.all([buildOfficialTierList(groups, metric), getCommunityTierLists(shownCount + 1, q), countCommunityTierLists(q), auth.api.getSession({ headers: await headers() })]);
   // One extra list tells whether «Показать ещё» has anything to show.
   const hasMore = community.length > shownCount && shownCount < COMMUNITY_MAX;
   const shownLists = community.slice(0, shownCount);
@@ -87,7 +87,7 @@ export async function TierListsBrowser({ params, basePath = '/tierlists', keep =
         <div className="tierlists-section-heading">
           <div>
             <p className="tierlists-kicker">Сообщество</p>
-            <h2 id="community-title">Пользовательские тирлисты{shownLists.length > 0 && <span className="tierlists-count" aria-label={`показано ${shownLists.length}`}>{shownLists.length}</span>}</h2>
+            <h2 id="community-title">Пользовательские тирлисты{total > 0 && <span className="tierlists-count" aria-label={`всего ${total}`}>{total}</span>}</h2>
           </div>
         </div>
 

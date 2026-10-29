@@ -422,7 +422,11 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .tier-editor-command-buttons .tier-letter { font-size: 1.125rem; }
 .tier-editor-command-buttons button:hover:not(:disabled), .tier-editor-command-buttons button:active:not(:disabled) { background: var(--color-subtle); }
 .tier-editor-command-buttons button { border-radius: 12px; }
-.tier-section-hint { margin: 0; color: var(--color-muted-strong); font-size: .875rem; }
+/* The hint above the board: the same island as under the price chart, with the section letter itself in the text. */
+.tier-section-hint { margin: 0 0 12px; }
+/* The letter keeps its metallic fill on the board's own surface, so it reads as on the board. */
+.tier-section-hint-chip { display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em; margin: 0 2px; padding: 0 5px; border-radius: 6px; background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-control); vertical-align: -.4em; }
+.tier-section-hint-chip .tier-letter { font-size: 1.25em; font-weight: 900; line-height: 1; -webkit-text-stroke-width: 1px; }
 .tier-section-trigger { display: grid; place-items: center; width: 100%; height: 100%; min-height: 88px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .tier-section-trigger:focus-visible { outline: 2px solid var(--color-brand); outline-offset: -3px; }
 .tier-section-toolbar + .tier-editor-row { border-top: 1px solid var(--color-control); }
@@ -453,11 +457,24 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .tier-editor-primary-controls { align-items: stretch; }
 @media (min-width: 640px) { .tier-editor-primary-controls { align-items: flex-end; } }
 @media (max-width: 639px) { .tier-editor-heading { gap: 16px; margin-bottom: 8px; } }
-.tier-discussion-settings { display: grid; gap: 12px; border: 1px solid var(--color-control); border-radius: 12px; padding: 20px; margin: 24px 0; }
+/* «Обсуждение тирлиста»: the legend sits in the border; each option is a settings row — icon, name and hint, a switch. */
+.tier-discussion-settings { display: grid; gap: 0; border: 1px solid var(--color-control); border-radius: 18px; padding: 6px 16px 14px; margin: 24px 0; }
 .tier-discussion-settings legend { font-weight: 700; padding: 0 6px; }
-.tier-discussion-settings label { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
-.tier-discussion-settings input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--color-brand); }
-.tier-discussion-settings p { margin: 0; color: var(--color-muted-strong); font-size: .875rem; }
+.tier-discussion-option { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 64px; padding: 10px 0; cursor: pointer; }
+.tier-discussion-option + .tier-discussion-option { border-top: 1px solid var(--color-control); }
+.tier-discussion-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); transition: background-color 150ms ease-out, color 150ms ease-out; }
+.tier-discussion-option:has(input:not(:checked)) .tier-discussion-icon { background: var(--color-subtle); color: var(--color-muted-strong); }
+.tier-discussion-text { display: grid; gap: 2px; min-width: 0; }
+.tier-discussion-text b { color: var(--color-ink); font-size: .9375rem; font-weight: 700; }
+.tier-discussion-text small { color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.4; }
+.tier-discussion-option input { position: relative; flex: none; appearance: none; width: 48px; height: 28px; margin: 0; border-radius: 999px; background: var(--color-control); cursor: pointer; transition: background-color 150ms ease-out; }
+.tier-discussion-option input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .3); transition: transform 150ms ease-out; }
+.tier-discussion-option input:checked { background: var(--color-brand); }
+.tier-discussion-option input:checked::after { transform: translateX(20px); }
+.tier-discussion-option input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.tier-discussion-note { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.45; }
+.tier-discussion-note svg { flex: none; margin-top: 1px; }
+@media (prefers-reduced-motion: reduce) { .tier-discussion-option input, .tier-discussion-option input::after, .tier-discussion-icon { transition: none; } }
 /* Same pill tabs as MarketTabs/StoreTabs (.market-filters): semibold muted text, filled when current. */
 .tier-ranking-tabs a { flex-shrink: 0; display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); white-space: nowrap; font-weight: 600; text-decoration: none; transition: background-color 150ms ease-out, color 150ms ease-out; }
 .tier-ranking-tabs a:not([aria-current="page"]):hover { background: color-mix(in srgb, var(--color-subtle) 70%, var(--color-ink) 8%); color: var(--color-ink); }
@@ -511,4 +528,58 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
   .tierlists-main-actions > .tier-primary-action { order: -2; }
   .tierlists-main-actions > :is(.tier-secondary-action, :has(> .tier-secondary-action)) { flex: 1 1 calc(50% - 4px); }
   .tierlists-main-actions .tier-secondary-action { width: 100%; gap: 6px; padding-inline: 10px; font-size: .875rem; white-space: nowrap; }
+}
+
+/* The editor's banner about the author's Telegram channel on the tier list (TierChannelBanner): Telegram blue tint,
+   the channel name stands out; without a channel it invites to add one. */
+.tier-channel-banner { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px 14px; align-items: center; margin: 16px 0; padding: 14px 16px; border-radius: 18px;
+  background: color-mix(in srgb, #2aabee 12%, var(--color-surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, #2aabee 35%, transparent); }
+.tier-channel-banner-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #2aabee; color: #fff; }
+.tier-channel-banner strong { display: block; color: var(--color-ink); font-size: 1rem; line-height: 1.3; }
+.tier-channel-banner-name { color: #1d8fd0; overflow-wrap: anywhere; }
+.tier-channel-banner p { margin: 4px 0 0; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.45; }
+/* «Указать канал» is the call to action; «Изменить» a quiet secondary one. */
+.tier-channel-banner-action { grid-column: 1 / -1; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 999px;
+  background: transparent; color: var(--color-ink); box-shadow: inset 0 0 0 1px color-mix(in srgb, #2aabee 45%, transparent); font-weight: 700; text-decoration: none; }
+.tier-channel-banner[data-empty] .tier-channel-banner-action { background: #2aabee; color: #fff; box-shadow: none; }
+.tier-channel-banner-action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+@media (min-width: 640px) {
+  .tier-channel-banner { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .tier-channel-banner-action { grid-column: auto; }
+}
+
+/* Search like the catalog's: the field and a 56×48 filter button; brand, availability and sort open under it. */
+.tier-editor .tier-editor-filters { position: relative; z-index: 5; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: stretch; }
+.tier-editor .tier-editor-search { grid-column: auto; flex-direction: row; gap: 10px; }
+.tier-editor-filter-disclosure { position: static; }
+.tier-editor-filter-disclosure > summary { display: flex; gap: 6px; min-width: 56px; height: 48px; padding: 0 12px; align-items: center; justify-content: center; list-style: none; cursor: pointer; transition: background-color var(--motion-fast) ease-out; }
+.tier-editor-filter-disclosure > summary::-webkit-details-marker { display: none; }
+.tier-editor-filter-disclosure > summary:hover, .tier-editor-filter-disclosure[open] > summary { background: var(--color-control); }
+.tier-editor-filter-disclosure .catalog-filter-count { color: var(--color-brand-deep); font-weight: 700; }
+.tier-editor-filter-panel { position: absolute; top: calc(100% + 8px); right: 0; left: 0; z-index: 10; display: grid; gap: 16px; border: 1px solid var(--color-control); border-radius: 16px; background: var(--color-surface); padding: 16px; box-shadow: 0 8px 24px rgb(0 0 0 / 12%); }
+@media (min-width: 640px) { .tier-editor-filter-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* Save is the main blue action; the screenshot is a square icon right next to it. */
+.tier-editor-save-row { display: flex; gap: 8px; align-items: stretch; }
+.tier-editor .tier-editor-save-row > .tier-primary-action { flex: 1 1 auto; border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+.tier-editor .tier-editor-save-row > .tier-primary-action:hover:not(:disabled), .tier-editor .tier-editor-save-row > .tier-primary-action:active:not(:disabled) { border-color: color-mix(in srgb, var(--color-brand) 88%, #000); background: color-mix(in srgb, var(--color-brand) 88%, #000); }
+.tier-editor .tier-editor-save-row > .tier-screenshot-control { width: auto; flex: 0 0 auto; }
+.tier-editor .tier-editor-save-row .tier-screenshot-icon { width: 48px; min-width: 48px; height: 100%; min-height: 44px; padding: 0; justify-content: center; }
+.tier-editor .tier-editor-actions > .tier-editor-save-row { min-width: 0; }
+@media (min-width: 640px) { .tier-editor .tier-editor-save-row > .tier-primary-action { min-width: 190px; } }
+.tier-editor .tier-editor-search { height: 48px; padding-block: 8px; }
+.tier-editor .tier-editor-search input { min-height: 0; height: 100%; border: 0; border-radius: 0; outline: 0; background: transparent; box-shadow: none; padding: 0; color: var(--color-text); }
+/* On the phone the search and its filters stay at the top of the screen while the drinks scroll under them (to the end of the list).
+   The bar reaches the edges of the page surface (24px padding) so cards don't show at its sides. */
+@media (max-width: 959px) {
+  .tier-editor .tier-editor-filters { position: sticky; top: 0; z-index: 20; margin-inline: -24px; padding: max(8px, env(safe-area-inset-top)) 24px 8px; background: var(--color-surface); }
+  .tier-editor .tier-editor-filter-panel { left: 24px; right: 24px; max-height: calc(100dvh - 96px - var(--site-tab-bar-offset, 0px)); overflow-y: auto; }
+}
+/* One rhythm for the editor: the form's gap is the only space between its blocks (20px on the phone, 24px from 640px),
+   the drinks pool — a new section — gets one more step above. */
+.tier-editor { gap: 20px; }
+.tier-editor > :is(.tier-section-hint, .tier-discussion-settings, .tier-channel-banner, .tier-section-add) { margin: 0; }
+.tier-editor > .tier-editor-pool { margin-top: 12px; }
+@media (min-width: 640px) {
+  .tier-editor { gap: 24px; }
+  .tier-editor > .tier-editor-pool { margin-top: 16px; }
 }
