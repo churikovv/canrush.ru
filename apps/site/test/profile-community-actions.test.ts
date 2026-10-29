@@ -17,7 +17,7 @@ it('rejects anonymous mutations', async () => {
 it('uses only the authenticated actor for follows, comments and presence', async () => {
   await updateCommunityAction({}, form('follow')); expect(mocks.follow).toHaveBeenCalledWith('authenticated', 'target', true);
   await updateCommunityAction({}, form('comment')); expect(mocks.comment).toHaveBeenCalledWith('authenticated', 'target', 'hello', []);
-  await heartbeatAction(); expect(mocks.touch).toHaveBeenCalledWith('authenticated');
+  await heartbeatAction(); expect(mocks.touch).toHaveBeenCalledWith('authenticated', 'web');
 });
 it('blocks publishing for moderated users but permits unfollowing', async () => {
   mocks.blocked.mockResolvedValue(true);

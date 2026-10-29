@@ -1,11 +1,11 @@
-import { isAssortmentFlavor, isExcludedEnergyBrand, isResolvedFlavor } from '@canrush/shared';
+import { isAssortmentFlavor, isExcludedEnergyBrand, isResolvedFlavor, type CatalogGroup } from '@canrush/shared';
 import { getPool } from '@/db/pool';
 import { cardEdits, mergeCatalogCardAutomatically, NETWORK_ACTOR } from '@/lib/catalog-card-edits';
 import { cardKey, cardPhotoUrl, mergeTarget } from '@/lib/catalog-card-edit-fields';
 import { readAllCatalogGroups } from '@/lib/catalog-files';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { catalogCandidates, judgeDrink } from '@/lib/drink-duplicate-check';
-import { CONFIDENT_VOTES, drinkLabel, type DuplicateCandidate } from '@/lib/drink-duplicate-fields';
+import { cardInputs, CONFIDENT_VOTES, drinkLabel, DUPLICATE_CHECK_VERSION, offerTitles, type DuplicateCandidate } from '@/lib/drink-duplicate-fields';
 import type { ChatMessage } from '@/lib/gigachat';
 
 /**
@@ -24,35 +24,43 @@ export interface CardCheck {
 
 const UNKNOWN = /^(?:unknown|unresolved)(?::|$)/u;
 const isQuotaError = (error: unknown) => error instanceof Error && /gigachat_chat_(?:402|429)/u.test(error.message);
-/** The product name the shop gave, from the offer's search address (Едадил keeps it in `text`). */
-const offerTitle = (url: string | undefined) => { try { return url ? new URL(url).searchParams.get('text')?.trim().slice(0, 120) || null : null; } catch { return null; } };
-/** The parser folds every unread flavour of a brand into one card, so it may hold several products: up to five names. */
-const offerTitles = (urls: string[]) => [...new Set(urls.map(offerTitle).filter((title): title is string => !!title))].slice(0, 5).join(' · ') || null;
 
-async function save(card: { brand: string; flavor: string }, verdict: CardCheckVerdict, match: { brand: string; flavor: string } | null, reason: string, title: string | null = null) {
-  await getPool().query(`insert into "catalogCardCheck"(brand, flavor, verdict, "matchBrand", "matchFlavor", "matchLabel", reason, title) values ($1, $2, $3, $4, $5, $6, $7, $8)
+async function save(card: { brand: string; flavor: string }, verdict: CardCheckVerdict, match: { brand: string; flavor: string } | null, reason: string, title: string | null = null, inputs: string | null = null) {
+  await getPool().query(`insert into "catalogCardCheck"(brand, flavor, verdict, "matchBrand", "matchFlavor", "matchLabel", reason, title, version, inputs) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     on conflict (brand, flavor) do update set verdict = excluded.verdict, "matchBrand" = excluded."matchBrand", "matchFlavor" = excluded."matchFlavor",
-      "matchLabel" = excluded."matchLabel", reason = excluded.reason, title = excluded.title, "checkedAt" = now(), "dismissedAt" = null, "dismissedBy" = null`,
-  [card.brand, card.flavor, verdict, match?.brand ?? null, match?.flavor ?? null, match ? drinkLabel(match) : null, reason.slice(0, 300), title]);
+      "matchLabel" = excluded."matchLabel", reason = excluded.reason, title = excluded.title, version = excluded.version, inputs = excluded.inputs,
+      "checkedAt" = now(), "dismissedAt" = null, "dismissedBy" = null`,
+  [card.brand, card.flavor, verdict, match?.brand ?? null, match?.flavor ?? null, match ? drinkLabel(match) : null, reason.slice(0, 300), title, DUPLICATE_CHECK_VERSION, inputs]);
 }
 
+/** What the model sees of a parser card: its shop names, cover and offers. */
+const toCheck = (group: CatalogGroup) => ({ brand: group.brand, flavor: group.flavor, ...(group.fullName ? { fullName: group.fullName } : {}),
+  titles: offerTitles(group.variants), offers: group.variants.length, ...(group.coverImageUrl ? { cover: group.coverImageUrl } : {}) });
+
 /**
- * Cards not checked yet (and `failed` ones after a day), at most `limit` model checks per pass. Cards the team merged or
- * hid are skipped; a card with an unread flavour goes to the queue as `unknown` without the model.
+ * Cards not checked yet, at most `limit` model checks per pass, first-time ones first; then «failed» ones after a day,
+ * and «new» ones the model should look at again: written by an older `DUPLICATE_CHECK_VERSION`, or whose shop names,
+ * cover or presence in shops changed since (`cardInputs`). The first check of a card also asks again the cards of its
+ * brand it has a hint with (same photo, flavour in a mix) — the twin may be caught from that side; only a first check
+ * does it, so two cards never keep sending each other back. Cards the team merged or hid are skipped; a card with an
+ * unread flavour goes to the queue as `unknown` without the model.
  */
 export async function runCardChecks(client: Chat, limit = 20, pause = 1500): Promise<{ checked: number; merged: number; failed: number }> {
-  const [groups, edits, done] = await Promise.all([readAllCatalogGroups(), cardEdits(), getPool().query<{ brand: string; flavor: string; verdict: string; stale: boolean }>(
-    `select brand, flavor, verdict, "checkedAt" < now() - interval '1 day' as stale from "catalogCardCheck"`)]);
+  const [groups, edits, done] = await Promise.all([readAllCatalogGroups(), cardEdits(), getPool().query<{ brand: string; flavor: string; verdict: string; stale: boolean; version: number; inputs: string | null }>(
+    `select brand, flavor, verdict, "checkedAt" < now() - interval '1 day' as stale, version, inputs from "catalogCardCheck"`)]);
   const edited = new Map(edits.map(edit => [cardKey(edit.brand, edit.flavor), edit]));
   const checked = new Map(done.rows.map(row => [cardKey(row.brand, row.flavor), row]));
   const due = groups.filter(group => {
     const key = cardKey(group.brand, group.flavor);
     const edit = edited.get(key), previous = checked.get(key);
     if (edit?.mergedInto || edit?.hidden || isExcludedEnergyBrand(group.brand) || isAssortmentFlavor(group.flavor) || !group.brand.trim() || group.brand.toLowerCase() === 'unknown') return false;
-    return !previous || (previous.verdict === 'failed' && previous.stale);
-  });
+    if (!previous) return true;
+    if (previous.verdict === 'failed') return previous.stale || previous.version < DUPLICATE_CHECK_VERSION;
+    return previous.verdict === 'new' && !UNKNOWN.test(group.flavor)
+      && (previous.version < DUPLICATE_CHECK_VERSION || (previous.inputs !== null && previous.inputs !== cardInputs(toCheck(group))));
+  }).sort((a, b) => Number(checked.has(cardKey(a.brand, a.flavor))) - Number(checked.has(cardKey(b.brand, b.flavor))));
   for (const group of due.filter(group => UNKNOWN.test(group.flavor) && group.variants.length)) {
-    await save(group, 'unknown', null, 'Парсер не распознал вкус. Здесь может быть несколько разных товаров — проверьте названия из магазинов.', offerTitles(group.variants.map(offer => offer.url)));
+    await save(group, 'unknown', null, 'Парсер не распознал вкус. Здесь может быть несколько разных товаров — проверьте названия из магазинов.', offerTitles(group.variants, 5).join(' · ') || null);
   }
   const queue = due.filter(group => !UNKNOWN.test(group.flavor)).slice(0, limit);
   if (!queue.length) return { checked: 0, merged: 0, failed: 0 };
@@ -62,8 +70,15 @@ export async function runCardChecks(client: Chat, limit = 20, pause = 1500): Pro
   for (const group of queue) {
     if (gone.has(cardKey(group.brand, group.flavor))) continue;
     try {
-      const result = await judgeDrink(client, { brand: group.brand, flavor: group.flavor, ...(group.fullName ? { fullName: group.fullName } : {}) }, candidates, { votes: CONFIDENT_VOTES });
+      const item = toCheck(group);
+      const first = !checked.has(cardKey(group.brand, group.flavor));
+      const result = await judgeDrink(client, item, candidates, { votes: CONFIDENT_VOTES });
       count++;
+      // Another look from the other side of each hinted pair: their «new» is marked as written by no version, so they
+      // come up as due; the row stays, so their own re-check is not a first one and sends nothing back.
+      const mates = result.hinted.filter(mate => mate.kind !== 'member');
+      if (first && mates.length) await getPool().query(`update "catalogCardCheck" c set version = 0 from unnest($1::text[], $2::text[]) m(brand, flavor)
+        where c.brand = m.brand and c.flavor = m.flavor and c.verdict = 'new'`, [mates.map(mate => mate.brand), mates.map(mate => mate.flavor)]);
       if (result.confident && result.match && result.match.kind !== 'member') {
         // The card in shops stays: an archived twin joins it rather than the other way round.
         const [from, into] = group.variants.length && result.match.kind === 'archive' ? [result.match, group] : [group, result.match];
@@ -73,7 +88,7 @@ export async function runCardChecks(client: Chat, limit = 20, pause = 1500): Pro
         candidates = candidates.filter(candidate => !(candidate.brand === from.brand && candidate.flavor === from.flavor));
         merged++;
       } else {
-        await save(group, result.verdict, result.match, result.reason);
+        await save(group, result.verdict, result.match, result.reason, null, cardInputs(item));
         if (result.verdict === 'failed') failed++;
       }
     } catch (error) { failed++; if (isQuotaError(error)) break; }

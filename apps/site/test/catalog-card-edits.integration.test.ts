@@ -34,6 +34,9 @@ afterAll(async () => {
 
 it('merges a parser card into another: offers, reviews and the old address follow; only the team may', async () => {
   await pool.query(`insert into review(id, "userId", brand, flavor, design, taste, text, "createdAt", "updatedAt") values (gen_random_uuid(), $1, $2, 'Тропик', 8, 8, 'Отзыв', now(), now())`, [member, brand]);
+  // A price watch hangs on its favourite: the merge must move both (it once failed on the foreign key).
+  await pool.query(`insert into favorite("userId", brand, flavor) values ($1, $2, 'Тропик')`, [member, brand]);
+  await pool.query(`insert into "favoritePriceWatch"("userId", brand, flavor, city, volume, price, "snapshotAt") values ($1, $2, 'Тропик', 'moscow', 450, 99, now())`, [member, brand]);
   const card = { brand, flavor: 'Тропик' }, target = { brand, flavor: 'black' };
   await expect(edits.mergeCatalogCard(member, `${member}@example.com`, card, target)).rejects.toThrow('Нет доступа');
   await expect(edits.mergeCatalogCard(staff, staffEmail, card, card)).rejects.toThrow('та же карточка');
@@ -42,6 +45,8 @@ it('merges a parser card into another: offers, reviews and the old address follo
   const shown = await edits.withCardEdits(await files.readAllCatalogGroups());
   expect(shown.filter(group => group.brand === brand).map(group => [group.flavor, group.minPrice, group.variants.length])).toEqual([['black', 79, 2], ['juice', 0, 0]]);
   expect((await pool.query('select flavor from review where "userId" = $1', [member])).rows).toEqual([{ flavor: 'black' }]);
+  expect((await pool.query('select flavor from "favoritePriceWatch" where "userId" = $1', [member])).rows).toEqual([{ flavor: 'black' }]);
+  expect((await pool.query('select flavor from favorite where "userId" = $1', [member])).rows).toEqual([{ flavor: 'black' }]);
   expect((await pool.query('select "toFlavor" from "catalogDrinkRename" where "fromBrand" = $1', [brand])).rows).toEqual([{ toFlavor: 'black' }]);
   const listed = await checks.listCatalogCards(brand, 1, 10);
   expect(listed.items.find(item => item.flavor === 'Тропик')).toMatchObject({ mergedInto: { brand, flavor: 'black' } });

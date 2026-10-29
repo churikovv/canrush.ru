@@ -23,6 +23,7 @@ import { auth } from '@/lib/auth';
 import { getCatalogGroup, isFavorite, loadAllCatalogGroups } from '@/lib/catalog';
 import { catalogGroupSlug, catalogRetailerCount, decodeCatalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { getReviewSummary, getReviewsForProduct, getUserReview } from '@/lib/reviews';
+import { drinkJsonLd } from '@/lib/drink-json-ld';
 import { seoMetadata } from '@/lib/seo';
 import { isExcludedEnergyBrand } from '@canrush/shared';
 
@@ -102,8 +103,11 @@ export default async function CatalogProductPage({
     summary.count > 0 ? getDrinkRadar(group.brand, group.flavor).catch(() => null) : null,
   ]);
 
+  // Rating and prices for search results (Product); none for a drink with neither.
+  const jsonLd = drinkJsonLd({ ...group, fullName: brand?.fullName || added?.fullName || group.fullName }, summary, brand?.description || undefined);
   return (
     <BrandShell headerAction={<ProfileNavigation active="catalog" />} surfaceClassName="catalog-detail-surface">
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />}
       <CatalogProductDetail
         group={group}
         priceHistory={priceHistory}

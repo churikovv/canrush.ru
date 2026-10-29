@@ -1,4 +1,5 @@
 import type { AdminQueues } from '@/lib/admin-queues';
+import type { AdminAppMetrics, PlatformCounts } from '@/lib/admin-dashboard-data';
 import { CONTENT_REPORT_KINDS, REPORT_REASONS } from '@/lib/profile-report-fields';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
@@ -101,6 +102,7 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
           <div><dt>Топ лайков</dt><dd className="admin-summary-wrap">{metrics.topSwipe ? `${metrics.topSwipe.brand}, ${flavorName(metrics.topSwipe.flavor)} · ${number(metrics.topSwipe.likes)}` : 'Пока нет'}</dd></div>
         </dl></section>
       </div>
+      {data.apps && <AppMetrics apps={data.apps} />}
     </>}
     {tab === 'campaigns' && campaignPanel}
     {tab !== 'analytics' && tab !== 'campaigns' && <section className="admin-data-panel" aria-labelledby="admin-current-title">
@@ -147,4 +149,35 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
       {data.total > 0 && <nav className="admin-table-pagination" aria-label="Страницы записей"><span>{(data.page - 1) * ADMIN_PAGE_SIZE + 1}–{Math.min(data.page * ADMIN_PAGE_SIZE, data.total)} из {number(data.total)}</span><div>{data.page > 1 && <Link href={adminHref(tab, query, data.page - 1)}>← Назад</Link>}<span>{data.page} / {pages}</span>{data.page < pages && <Link href={adminHref(tab, query, data.page + 1)}>Далее →</Link>}</div></nav>}
     </section>}
   </AdminShell>;
+}
+
+const PLATFORMS: { key: keyof PlatformCounts; label: string }[] = [
+  { key: 'ios', label: 'iOS' }, { key: 'android', label: 'Android' }, { key: 'telegram', label: 'Telegram' }, { key: 'web', label: 'Сайт' },
+];
+const platformLine = (counts: PlatformCounts) => PLATFORMS.map(item => `${item.label} ${counts[item.key].toLocaleString('ru-RU')}`).join(' · ');
+
+/**
+ * «Приложения»: signed-in members by the platform they came from (the apps mark their User-Agent, the Mini App says
+ * so itself) — members in the apps by day, today, 7 and 30 days, and devices with push. Guests are not counted.
+ */
+function AppMetrics({ apps }: { apps: AdminAppMetrics }) {
+  const inApps = (day: PlatformCounts) => day.ios + day.android;
+  const max = Math.max(1, ...apps.byDay.map(inApps));
+  const share = apps.activeMonth ? Math.round(apps.appMonth / apps.activeMonth * 100) : 0;
+  const since = apps.since ? new Date(`${apps.since}T00:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : null;
+  return <div className="admin-analytics-grid">
+    <section className="admin-data-panel" aria-labelledby="admin-apps-title"><div className="admin-panel-heading"><h2 id="admin-apps-title">В приложениях</h2><span>14 дней · МСК</span></div>
+      <div className="admin-registration-chart" role="img" aria-label={`Участники в приложениях по дням: ${apps.byDay.map(day => `${day.day}: ${inApps(day)}`).join('; ')}`}>
+        {apps.byDay.map(day => <div className="admin-chart-column" key={day.day} title={`${day.day}: ${platformLine(day)}`}><strong>{inApps(day)}</strong><div className="admin-chart-track"><span style={{ height: `${inApps(day) / max * 100}%` }} /></div><small>{day.day.slice(8)}</small></div>)}
+      </div>
+      <p className="admin-chart-note">{since ? `Вошедшие участники в приложениях iOS и Android, считаем с ${since}. Наведите на столбик — разбивка по платформам.` : 'Данных пока нет: считаем с первого захода после обновления.'}</p>
+    </section>
+    <section className="admin-data-panel" aria-labelledby="admin-platforms-title"><div className="admin-panel-heading"><h2 id="admin-platforms-title">Приложения</h2></div><dl className="admin-summary-list">
+      <div><dt>Сегодня</dt><dd className="admin-summary-wrap">{platformLine(apps.today)}</dd></div>
+      <div><dt>За 7 дней</dt><dd className="admin-summary-wrap">{platformLine(apps.week)}</dd></div>
+      <div><dt>За 30 дней</dt><dd className="admin-summary-wrap">{platformLine(apps.month)}</dd></div>
+      <div><dt>В приложениях за 30 дней</dt><dd>{apps.appMonth.toLocaleString('ru-RU')} из {apps.activeMonth.toLocaleString('ru-RU')} · {share}%</dd></div>
+      <div><dt>Push включён</dt><dd className="admin-summary-wrap">Android {apps.push.fcm.toLocaleString('ru-RU')} · без Google (RuStore) {apps.push.rustore.toLocaleString('ru-RU')} · iPhone {apps.push.apns.toLocaleString('ru-RU')}</dd></div>
+    </dl></section>
+  </div>;
 }

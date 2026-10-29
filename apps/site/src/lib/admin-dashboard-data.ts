@@ -30,17 +30,33 @@ export interface AdminDashboardData {
   activity: { day: string; count: number }[];
   /** Last 14 Moscow days, oldest first: swipes by the day of the decision and the members who made them. */
   swipesByDay: { day: string; count: number; likes: number; members: number }[];
+  /** «Приложения»: members by the platform they came from (`platformDay`) and devices registered for push. */
+  apps: AdminAppMetrics | null;
+}
+
+export type PlatformCounts = { ios: number; android: number; telegram: number; web: number };
+export interface AdminAppMetrics {
+  /** Last 14 Moscow days, oldest first: members active that day on each platform. */
+  byDay: (PlatformCounts & { day: string })[];
+  today: PlatformCounts; week: PlatformCounts; month: PlatformCounts;
+  /** Members in either app over 30 days, counted once, and their share of all active members. */
+  appMonth: number; activeMonth: number;
+  /** Members with a device registered for push, by provider. */
+  push: { fcm: number; rustore: number; apns: number };
+  /** The first day with platform data: counting began with the deploy of migration 0143. */
+  since: string | null;
 }
 
 /** `showEmails` is off for moderators: their tables show `@nickname` instead of the email and search ignores emails. */
 export async function getAdminDashboardData(search: string, tab: AdminTab, requestedPage = 1, showEmails = true): Promise<AdminDashboardData> {
   const db = getPool();
-  const result: AdminDashboardData = { market: [], reports: [], users: [], admins: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [], activity: [], swipesByDay: [] };
+  const result: AdminDashboardData = { market: [], reports: [], users: [], admins: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [], activity: [], swipesByDay: [], apps: null };
   if (tab === 'campaigns') return result;
   if (tab === 'analytics') {
     await db.query(`delete from "presenceSample" where bucket < now() - interval '8 days'`);
     await db.query(`delete from "activityDay" where day < (now() at time zone 'Europe/Moscow')::date - 400`);
-    const [metrics, registrations, online, activity, swipes] = await Promise.all([
+    await db.query(`delete from "platformDay" where day < (now() at time zone 'Europe/Moscow')::date - 400`);
+    const [metrics, registrations, online, activity, swipes, apps] = await Promise.all([
       db.query<AdminMetrics>(`select
         (select count(*)::int from "user") as users,
         -- Same rule as the profile status (getPresence): a heartbeat within 2 minutes and a live session.
@@ -95,7 +111,9 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
           and not exists(select 1 from "userBlock" b where b."userId"=s."userId") group by 1)
       select to_char(days.day,'YYYY-MM-DD') as day, coalesce(counts.count,0) as count, coalesce(counts.likes,0) as likes, coalesce(counts.members,0) as members
       from days left join counts using(day) order by days.day`),
+      getAppMetrics(),
     ]);
+    result.apps = apps;
     result.swipesByDay = swipes.rows;
     result.activity = activity.rows;
     result.onlineByHour = online.rows;
@@ -135,4 +153,44 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
     ${from} order by u."createdAt" desc,u.id ${pagination}`,params)).rows.map(({ appearance, ...user }) => ({ ...user, frame: (parseProfileAppearance(appearance) ?? DEFAULT_PROFILE_APPEARANCE).frame }));
   if (tab === 'admins') result.admins = (await db.query<AdminEntry>(`select sa.email,sa."isOwner",sa.role,sa."createdAt",u.name as "addedByName" ${from} order by sa."isOwner" desc,sa."createdAt",sa.email ${pagination}`,params)).rows;
   return result;
+}
+
+const PLATFORM_COUNTS = (since: string) => `count(distinct p."userId") filter (where p.platform = 'ios' and p.day >= ${since})::int as ios,
+  count(distinct p."userId") filter (where p.platform = 'android' and p.day >= ${since})::int as android,
+  count(distinct p."userId") filter (where p.platform = 'telegram' and p.day >= ${since})::int as telegram,
+  count(distinct p."userId") filter (where p.platform = 'web' and p.day >= ${since})::int as web`;
+
+/**
+ * Members by platform (`platformDay`): today, 7 and 30 Moscow days, the last 14 days by day, plus push devices.
+ * Blocked members are left out, as in the other activity numbers. A member on two platforms counts on each.
+ */
+export async function getAppMetrics(): Promise<AdminAppMetrics> {
+  const db = getPool();
+  const today = `(now() at time zone 'Europe/Moscow')::date`;
+  const live = `not exists(select 1 from "userBlock" b where b."userId" = p."userId")`;
+  const [totals, byDay, push] = await Promise.all([
+    db.query<Record<string, number | string | null>>(`select
+        ${PLATFORM_COUNTS(today).replace(/ as (ios|android|telegram|web)/g, ' as "today_$1"')},
+        ${PLATFORM_COUNTS(`${today} - 6`).replace(/ as (ios|android|telegram|web)/g, ' as "week_$1"')},
+        ${PLATFORM_COUNTS(`${today} - 29`).replace(/ as (ios|android|telegram|web)/g, ' as "month_$1"')},
+        count(distinct p."userId") filter (where p.platform in ('ios', 'android'))::int as "appMonth",
+        count(distinct p."userId")::int as "activeMonth",
+        (select to_char(min(day), 'YYYY-MM-DD') from "platformDay") as since
+      from "platformDay" p where p.day >= ${today} - 29 and ${live}`),
+    db.query<PlatformCounts & { day: string }>(`with days as (select generate_series(${today} - 13, ${today}, interval '1 day')::date as day)
+      select to_char(days.day, 'YYYY-MM-DD') as day,
+        count(distinct p."userId") filter (where p.platform = 'ios')::int as ios, count(distinct p."userId") filter (where p.platform = 'android')::int as android,
+        count(distinct p."userId") filter (where p.platform = 'telegram')::int as telegram, count(distinct p."userId") filter (where p.platform = 'web')::int as web
+      from days left join "platformDay" p on p.day = days.day and ${live} group by days.day order by days.day`),
+    db.query<{ fcm: number; rustore: number; apns: number }>(`select
+        count(distinct "userId") filter (where provider = 'fcm')::int as fcm, count(distinct "userId") filter (where provider = 'rustore')::int as rustore,
+        count(distinct "userId") filter (where provider = 'apns')::int as apns from "pushDevice"`),
+  ]);
+  const row = totals.rows[0] ?? {};
+  const pick = (prefix: string): PlatformCounts => ({ ios: Number(row[`${prefix}_ios`] ?? 0), android: Number(row[`${prefix}_android`] ?? 0), telegram: Number(row[`${prefix}_telegram`] ?? 0), web: Number(row[`${prefix}_web`] ?? 0) });
+  return {
+    byDay: byDay.rows, today: pick('today'), week: pick('week'), month: pick('month'),
+    appMonth: Number(row.appMonth ?? 0), activeMonth: Number(row.activeMonth ?? 0),
+    push: push.rows[0] ?? { fcm: 0, rustore: 0, apns: 0 }, since: (row.since as string | null) ?? null,
+  };
 }

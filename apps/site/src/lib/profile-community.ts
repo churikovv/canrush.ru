@@ -1,4 +1,5 @@
 import type { PreparedWallMedia } from '@/lib/wall-media';
+import type { ClientPlatform } from '@/lib/client-platform';
 import { notBlockedBy } from '@/lib/member-blocks';
 import type { WallMediaKind } from '@/lib/wall-media-limits';
 import type { RankUpTier } from '@/lib/level-tier';
@@ -259,14 +260,16 @@ export async function deleteProfileComment(userId: string, commentId: string) {
   if (!result.rowCount) throw new CommunityError('Нет доступа к этому комментарию.');
 }
 
-export async function touchPresence(userId: string) {
+export async function touchPresence(userId: string, platform: ClientPlatform = 'web') {
   // The same heartbeat marks the member in the current 5-minute window of the admin online chart and,
-  // even with a hidden status, in today's row of the admin activity totals.
+  // even with a hidden status, in today's row of the admin activity totals and of the platform they came from.
   await getPool().query(`with active as (
       insert into "activityDay" (day, "userId") values ((now() at time zone 'Europe/Moscow')::date, $1) on conflict do nothing
+    ), platform as (
+      insert into "platformDay" (day, "userId", platform) values ((now() at time zone 'Europe/Moscow')::date, $1, $2) on conflict do nothing
     ), seen as (
       update "user" set "lastSeenAt" = now() where id = $1 and "showOnline" and ("lastSeenAt" is null or "lastSeenAt" < now() - interval '30 seconds') returning id
-    ) insert into "presenceSample" (bucket, "userId") select date_bin('5 minutes', now(), timestamptz '2000-01-01'), id from seen on conflict do nothing`, [userId]);
+    ) insert into "presenceSample" (bucket, "userId") select date_bin('5 minutes', now(), timestamptz '2000-01-01'), id from seen on conflict do nothing`, [userId, platform]);
 }
 export async function getPresence(userId: string): Promise<'online' | 'offline' | 'hidden'> {
   const result = await getPool().query<{ status: 'online' | 'offline' | 'hidden' }>(`select case when not "showOnline" then 'hidden'

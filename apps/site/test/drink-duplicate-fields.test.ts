@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { combineDuplicateResults, duplicatePrompt, isConfidentDuplicate, mergeDuplicateVotes, parseDuplicateAnswer, shortlistCandidates, type DuplicateCandidate } from '../src/lib/drink-duplicate-fields';
+import { combineDuplicateResults, duplicatePrompt, hammingDistance, isConfidentDuplicate, isFlavorInMix, mergeDuplicateVotes, offerTitles, parseDuplicateAnswer, shortlistCandidates, type DuplicateCandidate } from '../src/lib/drink-duplicate-fields';
 
 const card = (flavor: string, fullName?: string, brand = 'Tornado'): DuplicateCandidate => ({ brand, flavor, ...(fullName ? { fullName } : {}), kind: 'shop' });
 
@@ -34,6 +34,8 @@ describe('drink duplicate check rules', () => {
     // A zero-sugar card is a drink of its own: the model's «duplicate» becomes «unsure».
     expect(parseDuplicateAnswer('{"verdict":"duplicate","match":"2","reason":"манго"}', list, { brand: 'Tornado', flavor: 'mango' }))
       .toMatchObject({ verdict: 'unsure', match: list[1], reason: expect.stringContaining('сахара') });
+    // A plain «sugarfree» key is the zero can, not the original.
+    expect(parseDuplicateAnswer('{"verdict":"duplicate","match":1}', [card('original')], { brand: 'Gorilla', flavor: 'sugarfree' })).toMatchObject({ verdict: 'unsure' });
   });
 
   it('combines halves of a refused list: a duplicate wins, a refused half makes «new» untrustworthy', () => {
@@ -64,5 +66,29 @@ describe('drink duplicate check rules', () => {
     expect(isConfidentDuplicate([dup(apple), dup(mango), dup(apple)])).toBe(false);
     expect(isConfidentDuplicate([dup(apple), { verdict: 'unsure', match: apple, reason: '' }, dup(apple)])).toBe(false);
     expect(isConfidentDuplicate([dup(apple), null, dup(apple)])).toBe(false);
+  });
+
+  it('reads shop product names, the flavour-in-a-mix pairs and photo distances', () => {
+    expect(offerTitles([
+      { url: 'https://edadeal.ru/moskva/search?text=Gorilla+Watermelon+%D1%81+%D0%B0%D1%80%D0%B1%D1%83%D0%B7%D0%BE%D0%BC' },
+      { url: 'https://edadeal.ru/moskva/search?text=gorilla+watermelon+%D1%81+%D0%B0%D1%80%D0%B1%D1%83%D0%B7%D0%BE%D0%BC' },
+      { url: 'https://lavka.yandex.ru/supermarket/good/energeticheskij-napitok-gorilla' },
+      { url: 'https://www.ozon.ru/product/123' },
+    ])).toEqual(['Gorilla Watermelon с арбузом', 'energeticheskij napitok gorilla']);
+    expect(isFlavorInMix('watermelon', 'blend:melon+watermelon')).toBe(true);
+    expect(isFlavorInMix('blend:berry+cherry', 'cherry')).toBe(true);
+    expect(isFlavorInMix('watermelon:sugarfree', 'blend:melon+watermelon')).toBe(false);
+    expect(isFlavorInMix('original', 'blend:original+vanilla')).toBe(false);
+    expect(isFlavorInMix('mango', 'blend:melon+watermelon')).toBe(false);
+    expect(hammingDistance('ffffffffffffffff', 'fffffffffffffff0')).toBe(4);
+    expect(hammingDistance('0123456789abcdef', '0123456789abcdef')).toBe(0);
+  });
+
+  it('keeps hinted candidates on a short list and shows the hints and shop names to the model', () => {
+    const many = Array.from({ length: 20 }, (_, index) => card(`flavor${index}`));
+    const hinted = { ...card('flavor19'), hint: 'одинаковое фото банки', titles: ['Tornado Black 0.45'] };
+    const list = shortlistCandidates({ brand: 'Tornado', flavor: 'x' }, [...many.slice(0, 19), hinted], 5);
+    expect(list[0]).toBe(hinted);
+    expect(duplicatePrompt({ brand: 'Tornado', flavor: 'x', titles: ['Tornado Max Black'] }, list)).toMatch(/в магазинах: «Tornado Max Black»[\s\S]*подсказка: одинаковое фото банки/u);
   });
 });

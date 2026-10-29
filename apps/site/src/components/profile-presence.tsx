@@ -20,7 +20,7 @@ export function ActivityHeartbeat() {
       if (pending || document.visibilityState !== 'visible' || now - lastActivity > 90_000 || now - lastPing < 30_000) return;
       pending = true;
       lastPing = now;
-      void heartbeatAction().catch(() => {}).finally(() => { pending = false; });
+      void heartbeatAction(document.documentElement.hasAttribute('data-telegram-app')).catch(() => {}).finally(() => { pending = false; });
     };
     const active = () => { lastActivity = Date.now(); ping(); };
     const visible = () => { if (document.visibilityState === 'visible') active(); };

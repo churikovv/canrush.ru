@@ -4,6 +4,7 @@ import { ReviewPhotoError } from '@/lib/review-photos';
 import { isMemberBlockedError, MEMBER_BLOCKED_MESSAGE } from '@/lib/member-blocks';
 import { prepareWallMedia } from '@/lib/wall-media';
 import { headers } from 'next/headers';
+import { clientPlatform } from '@/lib/client-platform';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { ensureOwnProfile } from '@/lib/profile';
@@ -68,9 +69,11 @@ export async function editWallPostAction(commentId: string, text: string): Promi
   }
 }
 
-export async function heartbeatAction(): Promise<void> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (session) await touchPresence(session.user.id);
+/** `telegram` — the page runs as the Telegram Mini App (its User-Agent is the phone's browser). */
+export async function heartbeatAction(telegram = false): Promise<void> {
+  const requestHeaders = await headers();
+  const session = await auth.api.getSession({ headers: requestHeaders });
+  if (session) await touchPresence(session.user.id, clientPlatform(requestHeaders.get('user-agent'), telegram === true));
 }
 
 export async function readPresenceAction(userId: string): Promise<'online' | 'offline' | 'hidden'> {
