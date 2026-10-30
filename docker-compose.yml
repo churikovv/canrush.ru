@@ -42,6 +42,7 @@ x-site-env: &site-env
   APNS_TEAM_ID: ${APNS_TEAM_ID:-}
   APNS_SANDBOX: ${APNS_SANDBOX:-}
   PUSH_WORKER: ${PUSH_WORKER:-}
+  ERROR_LOG: ${ERROR_LOG:-}
 
 x-site-volumes: &site-volumes
   # Server-only key files (Firebase service account), not in git: FCM_SERVICE_ACCOUNT_FILE=/run/secrets/canrush/<file>.json

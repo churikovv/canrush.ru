@@ -5,25 +5,36 @@ import type { BotPromo } from './catalog';
 import {
   adminSummaryText,
   digestText,
+  errorAlertText,
   marketText,
   notificationText,
   openButton,
   promoAlertText,
   type AdminSummary,
+  type ErrorAlert,
   type MarketEvent,
 } from './format';
 
-export type OutboxKind = 'notification' | 'market' | 'promo' | 'digest' | 'admin-summary';
+export type OutboxKind = 'notification' | 'market' | 'promo' | 'digest' | 'admin-summary' | 'error-alert';
 
 export interface MarketPayload { event: MarketEvent; orderId: string; title: string; counterpart: string; message?: string }
 export interface PromoPayload { cityName: string; promos: BotPromo[] }
 export interface AdminSummaryPayload { day: string; summary: AdminSummary }
+export type ErrorAlertPayload = ErrorAlert;
 
 type Queryable = Pool | PoolClient;
 
 /** Queues a message for a member; a no-op without a started bot chat or with that kind switched off. */
 export async function enqueueTelegram(db: Queryable, userId: string, kind: OutboxKind, payload: object, dedupeKey: string): Promise<void> {
   await db.query('select telegram_enqueue($1, $2, $3::jsonb, $4)', [userId, kind, JSON.stringify(payload), dedupeKey]);
+}
+
+/** Administrators with a linked Telegram: the morning summary and alerts about site errors go to them. */
+export async function telegramAdminIds(db: Queryable): Promise<string[]> {
+  const { rows } = await db.query<{ id: string }>(`
+    select u.id from "user" u join "siteAdmin" a on a.email = lower(u.email) and a.role = 'admin'
+    where exists (select 1 from account t where t."userId" = u.id and t."providerId" = 'telegram')`);
+  return rows.map(row => row.id);
 }
 
 interface OutboxRow { id: string; chatId: string; kind: OutboxKind; payload: Record<string, unknown>; attempts: number }
@@ -53,6 +64,8 @@ export async function renderOutboxMessage(row: Pick<OutboxRow, 'kind' | 'payload
       const p = row.payload as unknown as AdminSummaryPayload;
       return { text: adminSummaryText(p.summary, p.day), keyboard: open('Админка', '/admin') };
     }
+    case 'error-alert':
+      return { text: errorAlertText(row.payload as unknown as ErrorAlertPayload), keyboard: open('Все ошибки', '/admin/errors') };
   }
 }
 
