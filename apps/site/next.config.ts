@@ -15,6 +15,7 @@ const nextConfig = {
   },
   outputFileTracingIncludes: {
     '/prices': ['./data/catalog.json'],
+    '/og/**/*': ['./fonts/*.otf'],
   },
   poweredByHeader: false,
   reactStrictMode: true,

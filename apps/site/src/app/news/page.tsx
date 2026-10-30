@@ -8,9 +8,10 @@ import Link from '@/components/navigation-progress';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { listOwnArticles, listPublishedArticles } from '@/lib/articles';
 import { auth } from '@/lib/auth';
+import { seoMetadata } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Новости', description: 'Статьи участников CanRush об энергетиках: обзоры, сравнения и новинки.' };
+export const metadata: Metadata = seoMetadata({ title: 'Новости', description: 'Статьи участников CanRush об энергетиках: обзоры, сравнения и новинки.', path: '/news' });
 const PAGE = 12;
 
 /** «Новости»: published articles of members, newest first; signed-in members also see their own drafts and requests. */

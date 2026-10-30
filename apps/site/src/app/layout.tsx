@@ -14,7 +14,7 @@ import { NativeAppShell } from '@/components/native-app-shell';
 import { YandexMetrika } from '@/components/yandex-metrika';
 import { GoogleAnalytics } from '@/components/google-analytics';
 import { googleAnalyticsId } from '@/lib/google-analytics';
-import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/seo';
+import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo';
 import './globals.css';
 import './site-theme.css';
 
@@ -62,9 +62,10 @@ export const metadata: Metadata = {
     url: SITE_URL,
     title: 'CanRush — цены и рейтинги энергетиков',
     description: DEFAULT_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'CanRush — цены и рейтинги энергетиков',
     description: DEFAULT_DESCRIPTION,
   },
