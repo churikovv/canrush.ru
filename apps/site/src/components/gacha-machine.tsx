@@ -7,7 +7,7 @@ import { AvatarFrame } from '@/components/avatar-frame';
 import { pullAction } from '@/app/gacha/actions';
 import { PULL_COST, TEN_PULL_COST, pityLeft, type GachaScene, type Rarity } from '@/lib/gacha-fields';
 import type { GachaState, PullResult, PulledCard } from '@/lib/gacha';
-import { CapIcon, ShardIcon } from '@/components/gacha-icons';
+import { CapIcon, ShardIcon, SpinIcon } from '@/components/gacha-icons';
 import { RarityChip, RarityShine } from '@/components/rarity-badge';
 
 export { CapIcon, ShardIcon } from '@/components/gacha-icons';
@@ -176,7 +176,7 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
 
   const busy = pending || spinning;
   const left = state ? pityLeft(state.pity) : null;
-  const canOne = Boolean(state && (state.free || state.caps >= PULL_COST));
+  const canOne = Boolean(state && (state.free || state.gifted > 0 || state.caps >= PULL_COST));
   const canTen = Boolean(state && state.caps >= TEN_PULL_COST);
   const top = cards ? best(cards) : null;
 
@@ -208,6 +208,7 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
           {state && <div className="gacha-hud-chips">
             <span className="game-chip" aria-label={`Крышек: ${state.caps}`}><CapIcon size={20} />{state.caps}</span>
             <span className="game-chip" aria-label={`Осколков: ${state.shards}`}><ShardIcon size={17} />{state.shards}</span>
+            {state.gifted > 0 && <span className="game-chip" aria-label={`Подарочных круток: ${state.gifted}`}><SpinIcon size={18} />{state.gifted}</span>}
           </div>}
           <div className="gacha-hud-icons">
             <button type="button" className="game-round" onClick={() => rulesDialog.current?.showModal()} aria-haspopup="dialog" aria-label="Условия: шансы, гарант и крышки"><span aria-hidden="true">?</span></button>
@@ -221,7 +222,7 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
             <span className="game-collection-count" aria-hidden="true">{state.cards}</span>
           </span>}
           <GameButton tone="orange" label={busy ? 'Крутим…' : 'Крутить'} disabled={busy || !canOne || state.blocked} onClick={() => pull(1)}
-            price={state.free ? 'Бесплатно' : <><CapIcon size={16} />{PULL_COST}</>} />
+            price={state.free ? 'Бесплатно' : state.gifted > 0 ? `Подарок · ${state.gifted}` : <><CapIcon size={16} />{PULL_COST}</>} />
           <GameButton tone="violet" label="×10" disabled={busy || !canTen || state.blocked} onClick={() => pull(10)}
             price={<><CapIcon size={16} />{TEN_PULL_COST}</>} />
         </div> : <div className="game-buttons"><Link className="game-btn" data-tone="orange" href="/sign-in"><span className="game-btn-face"><span className="game-btn-label">Войти и крутить</span></span></Link></div>}
@@ -274,12 +275,13 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
           <span className="gacha-balances">
             <span className="gacha-balance" aria-label={`Крышек: ${state.caps}`}><CapIcon size={22} />{state.caps}</span>
             <span className="gacha-balance is-shards" aria-label={`Осколков: ${state.shards}`}><ShardIcon size={18} />{state.shards}</span>
+            {state.gifted > 0 && <span className="gacha-balance" aria-label={`Подарочных круток: ${state.gifted}`}><SpinIcon size={20} />{state.gifted}</span>}
           </span>
           {left && <span className="gacha-pity">Гарант: эпик через {left.epic} · легенда через {left.legendary}</span>}
         </div>}
         {signedIn && state ? <div className="gacha-actions">
           <button className="community-button gacha-pull" type="button" disabled={busy || !canOne || state.blocked} onClick={() => pull(1)}>
-            {busy ? 'Крутим…' : state.free ? 'Крутить бесплатно' : <>Крутить · <CapIcon size={16} />{PULL_COST}</>}
+            {busy ? 'Крутим…' : state.free ? 'Крутить бесплатно' : state.gifted > 0 ? `Крутить · подарок ${state.gifted}` : <>Крутить · <CapIcon size={16} />{PULL_COST}</>}
           </button>
           <button className="community-button community-button-secondary gacha-pull-ten" type="button" disabled={busy || !canTen || state.blocked} onClick={() => pull(10)}>
             ×10 · <CapIcon size={16} />{TEN_PULL_COST}

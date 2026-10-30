@@ -354,3 +354,10 @@ div.admin-drink-card-match > p { margin: 0; }
   .admin-error-table th:nth-child(5) { width: 120px; }
   .admin-error-where { justify-content: flex-start; }
 }
+
+/* Раздачи круток: поля формы рядом, баннер-превью — тот же, что в ленте. */
+.admin-giveaway-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.admin-giveaway-row.is-dates { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.admin-giveaway-row label { display: grid; align-content: start; gap: 6px; min-width: 0; font-size: .875rem; font-weight: 600; }
+.admin-giveaway-row input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 10px; background: transparent; color: inherit; font: inherit; font-weight: 400; }
+@media (pointer: coarse) { .admin-giveaway-row input { font-size: 1rem; } }

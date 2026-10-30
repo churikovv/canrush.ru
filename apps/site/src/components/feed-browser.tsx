@@ -15,6 +15,9 @@ import { loadAllCatalogGroups } from '@/lib/catalog';
 import { getTierCardViewer } from '@/lib/tier-discussions';
 import { tierListProductsForPlacements } from '@/lib/tier-lists';
 import { SignInPrompt } from '@/components/sign-in-prompt';
+import { SpinGiveawayBanner } from '@/components/spin-giveaway-banner';
+import { GIVEAWAY_FEED_POSITION } from '@/lib/spin-giveaway-fields';
+import { getFeedGiveaway } from '@/lib/spin-giveaways';
 
 export type FeedSearchParams = { scope?: string; page?: string };
 
@@ -49,9 +52,10 @@ export async function renderFeedItems(items: FeedItem[], viewerId: string | null
 export async function FeedBrowser({ query, viewerId, basePath = '/feed', keep = {}, embedded = false }: { query: FeedSearchParams; viewerId: string | null; basePath?: string; keep?: Record<string, string>; embedded?: boolean }) {
   const scope: FeedScope = !embedded && viewerId && (query.scope === 'following' || query.scope === 'saved') ? query.scope : 'all';
   const page = embedded ? 1 : profilePageNumber(query.page);
-  const feed = await getFeed(viewerId, scope, page);
+  const [feed, giveaway] = await Promise.all([getFeed(viewerId, scope, page), scope === 'all' && page === 1 ? getFeedGiveaway(viewerId).catch(() => null) : null]);
   const items = feed.items;
   const nodes = await renderFeedItems(items, viewerId);
+  if (giveaway) nodes.splice(GIVEAWAY_FEED_POSITION, 0, <SpinGiveawayBanner key={`giveaway-${giveaway.id}`} giveaway={giveaway} signedIn={Boolean(viewerId)} />);
   const pageHref = (target: number) => {
     const params = new URLSearchParams({ ...keep, ...(scope !== 'all' ? { scope } : {}) });
     if (target > 1) params.set('page', String(target));

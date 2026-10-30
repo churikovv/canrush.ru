@@ -174,3 +174,61 @@ button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-w
   .feed-gacha-drink { padding-right: 6px; }
 }
 @media (prefers-reduced-motion: reduce) { .feed-gacha-try { transition: none; } }
+
+/* Раздача круток: игровой баннер посреди ленты. Цвета постоянные, как у баннера Банкомата: он одинаков в любой теме.
+   Анимации — только transform и opacity и только пока баннер на экране (`data-live`). */
+.spin-drop { position: relative; display: grid; gap: 12px; padding: 16px; border: 3px solid #05030f; border-radius: 24px; background: linear-gradient(160deg, #2a1680 0%, #15206f 55%, #06357f 100%); color: #fff; overflow: hidden; isolation: isolate; box-shadow: 0 0 0 2px rgb(122 77 255 / .55), 0 18px 40px -18px rgb(60 60 240 / .8); }
+.wall-comments > .spin-drop { margin: 16px 0; }
+.spin-drop-rays { position: absolute; z-index: -1; top: -150px; left: -130px; width: 420px; height: 420px; border-radius: 50%; background: repeating-conic-gradient(rgb(255 255 255 / .1) 0 12deg, transparent 12deg 30deg); -webkit-mask-image: radial-gradient(closest-side, #000 25%, transparent); mask-image: radial-gradient(closest-side, #000 25%, transparent); animation: spin-drop-rays 28s linear infinite paused; }
+.spin-drop[data-live] .spin-drop-rays { animation-play-state: running; }
+@keyframes spin-drop-rays { to { transform: rotate(360deg); } }
+.spin-drop-head { display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; gap: 12px; }
+.spin-drop-art { position: relative; display: block; width: 96px; height: 96px; }
+.spin-drop-art img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 8px 14px rgb(0 0 0 / .45)); transform: rotate(-5deg); }
+.spin-drop-ticket { position: absolute; display: grid; color: #ffb02e; --gacha-spin-core: #5a2500; filter: drop-shadow(0 2px 0 #05030f); animation: spin-drop-float 3.4s ease-in-out infinite paused; }
+.spin-drop[data-live] .spin-drop-ticket { animation-play-state: running; }
+.spin-drop-ticket.is-one { right: -8px; bottom: 2px; }
+.spin-drop-ticket.is-two { top: -2px; left: -6px; color: #7fd8ff; --gacha-spin-core: #063a66; animation-delay: -1.5s; }
+@keyframes spin-drop-float { 0%, 100% { transform: translateY(0) rotate(-10deg); } 50% { transform: translateY(-6px) rotate(8deg); } }
+.spin-drop-copy { display: grid; gap: 4px; min-width: 0; }
+.spin-drop-tag { justify-self: start; padding: 2px 9px; border-radius: 999px; background: rgb(255 255 255 / .14); color: #ffd98a; font-size: .6875rem; font-weight: 800; letter-spacing: .02em; }
+.spin-drop-title { font-size: 1.25rem; font-weight: 900; line-height: 1.08; text-transform: uppercase; overflow-wrap: anywhere; text-shadow: 0 2px 0 rgb(0 0 0 / .4); }
+.spin-drop-copy p { margin: 0; color: rgb(255 255 255 / .82); font-size: .875rem; line-height: 1.3; overflow-wrap: anywhere; }
+.spin-drop-prize { display: flex; align-items: baseline; justify-content: center; gap: 8px; padding: 6px 12px; border: 2px solid rgb(255 217 138 / .35); border-radius: 14px; background: rgb(5 3 15 / .38); }
+.spin-drop-prize b { color: #ffd34d; font-size: 2rem; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 #7a3a00; }
+.spin-drop-prize span { font-size: .875rem; font-weight: 800; }
+.spin-drop-key { width: 100%; text-align: center; }
+.spin-drop-key .game-btn-face { min-height: 70px; }
+.spin-drop .game-btn:disabled { filter: none; cursor: default; }
+.spin-drop-key[data-tone="charge"] { --face: #2b2a78; --face-top: #39389a; --base: #0d0a3a; cursor: default; }
+.spin-drop-key[data-tone="charge"] .game-btn-face::after { content: none; }
+.spin-drop-charge { position: absolute; inset: 0; background: linear-gradient(#ffc15a, #ff8a1e 55%); transform: scaleX(0); transform-origin: left; transition: transform 100ms linear; }
+.spin-drop-key[data-tone="charge"] .game-btn-label, .spin-drop-key[data-tone="charge"] .game-btn-price { position: relative; }
+.spin-drop-over, .spin-drop-error { margin: 0; font-size: .875rem; font-weight: 600; text-align: center; }
+.spin-drop-over { color: rgb(255 255 255 / .75); }
+.spin-drop-error { color: #ffd98a; }
+.spin-drop[data-phase="over"] .spin-drop-prize { opacity: .5; }
+.spin-drop-burst { position: absolute; z-index: 2; left: 50%; top: 58%; pointer-events: none; }
+.spin-drop-burst i { position: absolute; width: 10px; height: 16px; margin: -8px -5px; border-radius: 3px; background: #ffd34d; opacity: 0; transform: rotate(calc(var(--spark) * 25.7deg)) translateY(0); animation: spin-drop-spark 900ms cubic-bezier(.15, .7, .3, 1) forwards; }
+.spin-drop-burst i:nth-child(3n) { background: #7fd8ff; }
+.spin-drop-burst i:nth-child(3n + 1) { background: #ff8a1e; }
+@keyframes spin-drop-spark { 0% { opacity: 1; transform: rotate(calc(var(--spark) * 25.7deg)) translateY(0) scale(1); } 100% { opacity: 0; transform: rotate(calc(var(--spark) * 25.7deg)) translateY(-150px) scale(.5); } }
+.spin-drop[data-burst] .spin-drop-prize { animation: spin-drop-pop 480ms ease-out; }
+@keyframes spin-drop-pop { 40% { transform: scale(1.1); } }
+@media (min-width: 640px) {
+  .spin-drop { grid-template-columns: minmax(0, 1fr) 210px; align-items: center; gap: 12px 20px; padding: 20px; }
+  .spin-drop-head { grid-row: span 2; grid-template-columns: 120px minmax(0, 1fr); gap: 18px; }
+  .spin-drop-art { width: 120px; height: 120px; }
+  .spin-drop-title { font-size: 1.5rem; }
+  .spin-drop-error, .spin-drop-over { grid-column: 2; }
+}
+/* Превью в узкой колонке админки всегда телефонное. */
+.admin-push-preview .spin-drop { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+.admin-push-preview .spin-drop-head { grid-row: auto; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; }
+.admin-push-preview .spin-drop-art { width: 96px; height: 96px; }
+.admin-push-preview .spin-drop-title { font-size: 1.25rem; }
+@media (prefers-reduced-motion: reduce) {
+  .spin-drop-rays, .spin-drop-ticket, .spin-drop[data-burst] .spin-drop-prize { animation: none; }
+  .spin-drop-burst { display: none; }
+  .spin-drop-charge { transition: none; }
+}

@@ -86,8 +86,14 @@ async function shardsOf(db: Queryable, userId: string): Promise<number> {
   return (await db.query<{ shards: number }>('select coalesce(sum(amount), 0)::int as shards from "shardLedger" where "userId" = $1', [userId])).rows[0]?.shards ?? 0;
 }
 
+async function giftSpinsOf(db: Queryable, userId: string): Promise<number> {
+  return (await db.query<{ spins: number }>('select coalesce(sum(amount), 0)::int as spins from "spinLedger" where "userId" = $1', [userId])).rows[0]?.spins ?? 0;
+}
+
 export interface GachaState {
   caps: number; shards: number; free: boolean; pity: PityState; cards: number; blocked: boolean;
+  /** Подарочные крутки из раздач в ленте: тратятся после бесплатной крутки дня, раньше крышек */
+  gifted: number;
   /** Идущий сезонный баннер и эксклюзив: получен ли, сколько круток до его гаранта */
   banner: { key: string; title: string; subtitle: string; ends: string; cosmetic: { title: string; note: string; chance: number; owned: boolean; left: number } | null } | null;
 }
@@ -97,8 +103,8 @@ export async function getGachaState(userId: string, now = Date.now()): Promise<G
   const pool = getPool();
   const banner = activeBanner(now);
   await pool.query(`select award_caps($1, 'welcome', 'welcome', $2, null)`, [userId, WELCOME_CAPS]);
-  const [caps, shards, pity, row] = await Promise.all([
-    balanceOf(pool, userId), shardsOf(pool, userId), pityOf(pool, userId),
+  const [caps, shards, gifted, pity, row] = await Promise.all([
+    balanceOf(pool, userId), shardsOf(pool, userId), giftSpinsOf(pool, userId), pityOf(pool, userId),
     pool.query<{ free: boolean; cards: number; blocked: boolean; owned: boolean; pulled: number }>(`select ${freeTodaySql} as free,
       (select count(*) from "gachaCard" where "userId" = $1)::int as cards,
       exists(select 1 from "userBlock" where "userId" = $1) as blocked,
@@ -107,7 +113,7 @@ export async function getGachaState(userId: string, now = Date.now()): Promise<G
   ]);
   const data = row.rows[0];
   return {
-    caps, shards, pity, free: data?.free ?? false, cards: data?.cards ?? 0, blocked: data?.blocked ?? false,
+    caps, shards, gifted, pity, free: data?.free ?? false, cards: data?.cards ?? 0, blocked: data?.blocked ?? false,
     banner: banner ? {
       key: banner.key, title: banner.title, subtitle: banner.subtitle, ends: bannerEndsLabel(banner),
       cosmetic: banner.cosmetic ? { title: banner.cosmetic.title, note: banner.cosmetic.note, chance: banner.cosmetic.odds / 10, owned: data?.owned ?? false, left: Math.max(1, banner.cosmetic.pity - (data?.pulled ?? 0)) } : null,
@@ -119,7 +125,7 @@ export interface PulledCard extends GachaDrink { pity: boolean; isNew: boolean; 
 export interface PullResult { cards: PulledCard[]; cosmetic: { key: string; title: string } | null; state: GachaState }
 
 /**
- * Крутка ×1 (бесплатная, если сегодня ещё не было) или ×10. Одна транзакция под блокировкой участника: списать
+ * Крутка ×1 (бесплатная дня, потом подарочная, потом за крышки) или ×10. Одна транзакция под блокировкой участника: списать
  * крышки, выбрать редкость (с гарантом) и банку, записать крутки и карточки, за дубли — осколки. Пока идёт сезонный
  * баннер, крутка идёт на нём: звёзды сезона выпадают чаще, а с каждой крутки может упасть эксклюзив. Клиент ничего
  * не решает — только показывает.
@@ -137,7 +143,8 @@ export async function pullGacha(userId: string, times: 1 | 10, pool?: GachaDrink
     await client.query('select 1 from "user" where id = $1 for no key update', [userId]);
     if ((await client.query('select 1 from "userBlock" where "userId" = $1', [userId])).rowCount) throw new GachaError('Аккаунт заблокирован.');
     const free = times === 1 && Boolean((await client.query<{ free: boolean }>(`select ${freeTodaySql} as free`, [userId])).rows[0]?.free);
-    const cost = free ? 0 : times === 1 ? PULL_COST : TEN_PULL_COST;
+    const gift = times === 1 && !free && await giftSpinsOf(client, userId) > 0;
+    const cost = free || gift ? 0 : times === 1 ? PULL_COST : TEN_PULL_COST;
     if (cost && await balanceOf(client, userId) < cost) throw new GachaError(`Не хватает крышек: нужно ${cost}.`);
     const batch = randomUUID();
     let pity = await pityOf(client, userId);
@@ -166,6 +173,7 @@ export async function pullGacha(userId: string, times: 1 | 10, pool?: GachaDrink
       cards.push({ ...drink, pity: rolled.pity, isNew: card.count === 1, count: card.count, shards, star: isSeasonStar(banner, drink) });
     }
     if (cost) await client.query(`insert into "capLedger"("userId", reason, "sourceKey", amount) values ($1, 'pull', $2, $3)`, [userId, batch, -cost]);
+    if (gift) await client.query(`insert into "spinLedger"("userId", reason, "sourceKey", amount) values ($1, 'pull', $2, -1)`, [userId, batch]);
     await client.query('commit');
   } catch (error) {
     await client.query('rollback');
@@ -235,9 +243,9 @@ export async function topCards(userId: string, limit = 6, pool?: GachaDrink[]): 
   return rows.flatMap(row => { const drink = drinks.get(key(row.brand, row.flavor)); return drink ? [{ ...drink, rarity: row.rarity, count: row.count }] : []; }).slice(0, limit);
 }
 
-/** The home banner's line for a member: caps and whether today's free pull is there. Read-only (no welcome caps). */
+/** The home banner's line for a member: caps and whether a pull without caps is there. Read-only (no welcome caps). */
 export async function getGachaTeaser(userId: string): Promise<{ caps: number; free: boolean }> {
   const pool = getPool();
-  const [caps, row] = await Promise.all([balanceOf(pool, userId), pool.query<{ free: boolean }>(`select ${freeTodaySql} as free`, [userId])]);
-  return { caps, free: row.rows[0]?.free ?? true };
+  const [caps, gifted, row] = await Promise.all([balanceOf(pool, userId), giftSpinsOf(pool, userId), pool.query<{ free: boolean }>(`select ${freeTodaySql} as free`, [userId])]);
+  return { caps, free: gifted > 0 || (row.rows[0]?.free ?? true) };
 }

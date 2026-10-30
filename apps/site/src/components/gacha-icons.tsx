@@ -13,3 +13,11 @@ export function ShardIcon({ size = 16 }: { size?: number }) {
     <path fill="currentColor" d="M12 2 20 9 12 22 4 9Z" /><path fill="#fff" opacity=".45" d="M12 2 15 9H9Z" />
   </svg>;
 }
+
+/** Подарочная крутка из раздачи в ленте. */
+export function SpinIcon({ size = 18 }: { size?: number }) {
+  return <svg className="gacha-spin-icon" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+    <path fill="currentColor" d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5V10a2 2 0 0 0 0 4v3.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5V14a2 2 0 0 0 0-4Z" />
+    <path fill="var(--gacha-spin-core, #fff)" d="m12 7.6 1.3 2.8 3 .4-2.2 2.1.6 3-2.7-1.5-2.7 1.5.6-3-2.2-2.1 3-.4Z" />
+  </svg>;
+}
