@@ -18,7 +18,7 @@ import { ContentReportButton } from '@/components/content-report-button';
 import { TierBoard } from '@/components/tier-board';
 import { auth } from '@/lib/auth';
 import { loadAllCatalogGroups } from '@/lib/catalog';
-import { seoMetadata } from '@/lib/seo';
+import { ogImage, seoMetadata } from '@/lib/seo';
 import { getTierListBySlug, tierListProductsForPlacements } from '@/lib/tier-lists';
 
 export const dynamic = 'force-dynamic';
@@ -33,6 +33,7 @@ export async function generateMetadata({ params }: { params: TierListParams }): 
     title: list.title,
     description: `Тирлист энергетических напитков от @${list.author.username}.`,
     path: `/tierlists/${list.slug}`,
+    image: ogImage(`/og/tierlist/${list.slug}`, list.title),
   });
 }
 

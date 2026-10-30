@@ -18,7 +18,7 @@ import { ProfileNavigation } from '@/components/profile-navigation';
 import { isSiteStaffEmail } from '@/lib/admin';
 import { ARTICLE_STATUS_LABELS, articleSummary, readingMinutes } from '@/lib/article-fields';
 import { articleDrinks, getArticle, type Article } from '@/lib/articles';
-import { SITE_NAME, SITE_URL } from '@/lib/seo';
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo';
 import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -34,9 +34,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     openGraph: {
       type: 'article', locale: 'ru_RU', siteName: SITE_NAME, url: `/news/${article.id}`, title: article.title, description,
       publishedTime: article.publishedAt?.toISOString(), modifiedTime: article.updatedAt.toISOString(),
-      authors: article.author.username ? [`${SITE_URL}/profile/${article.author.username}`] : undefined, ...(image ? { images: [{ url: image }] } : {}),
+      authors: article.author.username ? [`${SITE_URL}/profile/${article.author.username}`] : undefined, images: [image ? { url: image } : DEFAULT_OG_IMAGE],
     },
-    twitter: { card: image ? 'summary_large_image' : 'summary', title: article.title, description },
+    twitter: { card: 'summary_large_image', title: article.title, description },
   };
 }
 

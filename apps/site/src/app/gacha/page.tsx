@@ -10,14 +10,20 @@ import { auth } from '@/lib/auth';
 import { gachaPool, getGachaState } from '@/lib/gacha';
 import { CAP_SOURCES, activeBanner, PITY_EPIC, PITY_LEGENDARY, PULL_COST, RARITIES, RARITY_HINTS, RARITY_LABELS, RARITY_ODDS, TEN_PULL_COST, WELCOME_CAPS } from '@/lib/gacha-fields';
 import { getProfileByUserId } from '@/lib/profile';
-import { seoMetadata } from '@/lib/seo';
+import { ogImage, seoMetadata } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
-export const metadata = seoMetadata({
-  title: 'Банкомат',
-  description: 'Крутите автомат CanRush и собирайте карточки настоящих энергетиков: от обычных до легендарных банок, снятых с производства.',
-  path: '/gacha',
-});
+
+/** A function, not a constant: a constant would keep the season the server started in. */
+export function generateMetadata() {
+  const banner = activeBanner();
+  return seoMetadata({
+    title: 'Банкомат',
+    description: 'Крутите автомат CanRush и собирайте карточки настоящих энергетиков: от обычных до легендарных банок, снятых с производства.',
+    path: '/gacha',
+    image: banner?.scene ? ogImage(`/og/gacha/${banner.key}`, banner.title) : undefined,
+  });
+}
 
 const percent = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 const cans = (count: number) => `${count} ${count % 10 === 1 && count % 100 !== 11 ? 'банка' : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? 'банки' : 'банок'}`;

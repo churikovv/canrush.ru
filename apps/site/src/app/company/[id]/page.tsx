@@ -23,7 +23,7 @@ import { getCompanyProfile, type CompanyPost } from '@/lib/business-profile';
 import { telHref } from '@/lib/business-profile-fields';
 import { pluralRu } from '@/lib/drink-calendar-fields';
 import { formatPrice } from '@/lib/market-fields';
-import { SITE_URL } from '@/lib/seo';
+import { DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +35,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const description = business.about?.slice(0, 160) || `${BUSINESS_KINDS.find(kind => kind.value === business.kind)?.label ?? 'Компания'} «${business.name}» на CanRush: напитки, объявления и презентации.`;
   return {
     title: business.name, description, alternates: { canonical: `/company/${business.id}` },
-    openGraph: { type: 'profile', title: business.name, description, url: `/company/${business.id}`, ...(business.logoId ? { images: [{ url: `${SITE_URL}/api/business-logos/${business.logoId}` }] } : {}) },
+    openGraph: { type: 'profile', title: business.name, description, url: `/company/${business.id}`, images: [business.logoId ? { url: `${SITE_URL}/api/business-logos/${business.logoId}` } : DEFAULT_OG_IMAGE] },
+    twitter: { card: business.logoId ? 'summary' : 'summary_large_image', title: business.name, description },
   };
 }
 

@@ -25,7 +25,7 @@ import { getCatalogGroup, isFavorite, loadAllCatalogGroups } from '@/lib/catalog
 import { catalogGroupSlug, catalogRetailerCount, decodeCatalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { getReviewSummary, getReviewsForProduct, getUserReview } from '@/lib/reviews';
 import { drinkJsonLd } from '@/lib/drink-json-ld';
-import { seoMetadata } from '@/lib/seo';
+import { ogImage, seoMetadata } from '@/lib/seo';
 import { isExcludedEnergyBrand } from '@canrush/shared';
 
 export const dynamic = 'force-dynamic';
@@ -48,10 +48,12 @@ export async function generateMetadata({ params }: { params: ProductParams }): P
   if (!group) return { title: 'Энергетик не найден', robots: { index: false, follow: false } };
   const flavor = flavorName(group.flavor);
   const retailerCount = catalogRetailerCount(group);
+  const slug = catalogGroupSlug(group.brand, group.flavor);
   return seoMetadata({
     title: `${group.brand}, ${flavor} — цены и отзывы`,
     description: `Сравните цены на энергетик ${group.brand}, вкус ${flavor}, в ${retailerCount} магазинах. Предложения, оценки и отзывы на CanRush.`,
-    path: `/catalog/${catalogGroupSlug(group.brand, group.flavor)}`,
+    path: `/catalog/${slug}`,
+    image: ogImage(`/og/drink/${slug}`, `${group.brand}, ${flavor}`),
   });
 }
 

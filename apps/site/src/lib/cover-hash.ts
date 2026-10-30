@@ -11,7 +11,7 @@ import { getPool } from '@/db/pool';
  */
 const ID = /^[0-9a-f-]{36}$/u;
 
-async function coverBytes(cover: string): Promise<Buffer | null> {
+export async function coverBytes(cover: string): Promise<Buffer | null> {
   if (/^\/(?:images|brand)\/[\w./-]+\.(?:jpe?g|png|webp)$/iu.test(cover) && !cover.includes('..')) {
     try { return await readFile(path.join(process.cwd(), 'public', cover)); } catch { return null; }
   }
