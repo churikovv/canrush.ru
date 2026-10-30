@@ -3189,7 +3189,7 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 .not-found-page h1 { margin: 24px 0 16px; font-size: 2rem; line-height: 1.2; }
 .not-found-page p { color: var(--color-muted-strong); line-height: 1.6; }
 .not-found-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-@media (max-width: 639px) { .not-found-page { margin: 24px auto; } .not-found-actions > a { width: 100%; justify-content: center; } }
+@media (max-width: 639px) { .not-found-page { margin: 24px auto; } .not-found-actions > :is(a, button) { width: 100%; justify-content: center; } }
 /* Slow client navigation covers the retained page only after the grace period. */
 .navigation-loading-overlay { position: fixed; inset: 0; z-index: 50; overflow: auto; background: var(--color-brand); }
 .city-header-button .city-header-chevron { width: 16px; height: 16px; flex: 0 0 16px; }

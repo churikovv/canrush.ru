@@ -5,16 +5,16 @@ vi.mock('next/navigation', () => ({ usePathname: () => '/admin', useRouter: () =
 const { AdminShell } = await import('../src/components/admin-shell');
 const render = (role: 'admin' | 'moderator') => renderToStaticMarkup(<AdminShell active="analytics" email="staff@example.com" role={role} title="Аналитика">{null}</AdminShell>);
 
-it('hides administrators, contests and campaigns from a moderator', () => {
+it('hides administrators, contests, campaigns and errors from a moderator', () => {
   const moderator = render('moderator');
-  for (const label of ['>Кампании<', '>Конкурс<', '>Администраторы<']) expect(moderator).not.toContain(label);
+  for (const label of ['>Кампании<', '>Конкурс<', '>Администраторы<', '>Ошибки<']) expect(moderator).not.toContain(label);
   for (const label of ['>Аналитика<', '>Магазины<', '>Напитки<', '>Жалобы<', '>Участники<', '>Объявления<']) expect(moderator).toContain(label);
   // Groups left without items disappear with them.
   for (const group of ['Модерация', 'Каталог']) expect(moderator).toContain(group);
-  for (const group of ['Продвижение', 'Команда']) expect(moderator).not.toContain(group);
+  for (const group of ['Продвижение', 'Команда', 'Система']) expect(moderator).not.toContain(group);
   expect(moderator).toContain('Модератор');
   const admin = render('admin');
-  for (const label of ['>Кампании<', '>Конкурс<', '>Администраторы<', 'Продвижение', 'Команда']) expect(admin).toContain(label);
+  for (const label of ['>Кампании<', '>Конкурс<', '>Администраторы<', '>Ошибки<', 'Продвижение', 'Команда', 'Система']) expect(admin).toContain(label);
 });
 
 it('has no sections for content deleted in place', () => {

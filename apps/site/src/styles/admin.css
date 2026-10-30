@@ -308,3 +308,22 @@ div.admin-drink-card-match > p { margin: 0; }
 .admin-drink-extras { display: flex; flex-wrap: wrap; gap: 6px; }
 .admin-drink-extras a { display: block; width: 56px; height: 56px; overflow: hidden; border-radius: 10px; background: var(--color-subtle); }
 .admin-drink-extras img { width: 100%; height: 100%; object-fit: cover; }
+
+/* «Ошибки»: messages and stacks are long unbroken strings, so the columns are fixed and the text wraps anywhere. */
+.admin-error-message { display: block; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.admin-error-stack { margin-top: 8px; color: var(--bc-muted); font-size: .8125rem; }
+.admin-error-stack summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
+.admin-error-stack pre { margin: 0; padding: 12px; overflow-x: auto; border-radius: 10px; background: var(--bc-soft); font-size: .75rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-error-where { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
+.admin-error-where code { min-width: 0; font-size: .8125rem; overflow-wrap: anywhere; }
+@media (max-width: 959px) { .admin-error-table td:first-child { padding-right: 0; } }
+.admin-error-action form, .admin-error-action .bc-button { width: 100%; }
+@media (min-width: 960px) {
+  .admin-error-table { table-layout: fixed; }
+  .admin-error-table td, .admin-error-table td:first-child { vertical-align: top; }
+  .admin-error-table th:nth-child(2) { width: 20%; }
+  .admin-error-table th:nth-child(3) { width: 110px; }
+  .admin-error-table th:nth-child(4) { width: 150px; }
+  .admin-error-table th:nth-child(5) { width: 120px; }
+  .admin-error-where { justify-content: flex-start; }
+}

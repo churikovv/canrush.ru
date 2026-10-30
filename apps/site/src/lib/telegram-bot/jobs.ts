@@ -1,8 +1,9 @@
 import { DEFAULT_CITY, findCity, type CityId } from '@canrush/shared';
 import type { Pool } from 'pg';
+import { pruneErrorGroups } from '@/lib/error-log';
 import { bestPromos, cityPromos, promoKey, type BotPromo } from './catalog';
 import type { AdminSummary } from './format';
-import { enqueueTelegram, pruneOutbox, type AdminSummaryPayload, type PromoPayload } from './outbox';
+import { enqueueTelegram, pruneOutbox, telegramAdminIds, type AdminSummaryPayload, type PromoPayload } from './outbox';
 
 export const PROMO_ALERT_LIMIT = 10;
 export const DIGEST_LIMIT = 8;
@@ -26,7 +27,7 @@ interface ScheduledJob {
 
 /** Times are Moscow time: the parser finishes around 06:00. */
 export const TELEGRAM_JOBS: readonly ScheduledJob[] = [
-  { name: 'prune', due: clock => (clock.hour >= 4 ? clock.date : null), run: pool => pruneOutbox(pool) },
+  { name: 'prune', due: clock => (clock.hour >= 4 ? clock.date : null), run: async pool => { await pruneOutbox(pool); await pruneErrorGroups(pool); } },
   { name: 'admin-summary', due: clock => (clock.hour >= 9 ? clock.date : null), run: queueAdminSummary },
   { name: 'promo-alerts', due: clock => (clock.hour >= 10 ? clock.date : null), run: queuePromoAlerts },
   { name: 'weekly-digest', due: clock => (clock.weekday === 1 && clock.hour >= 11 ? clock.date : null), run: queueWeeklyDigest },
@@ -137,10 +138,8 @@ export async function collectAdminSummary(pool: Pool, now = new Date()): Promise
 }
 
 export async function queueAdminSummary(pool: Pool, period: string): Promise<void> {
-  const admins = await pool.query<{ id: string }>(`
-    select u.id from "user" u join "siteAdmin" a on a.email = lower(u.email) and a.role = 'admin'
-    where exists (select 1 from account t where t."userId" = u.id and t."providerId" = 'telegram')`);
-  if (!admins.rows.length) return;
+  const admins = await telegramAdminIds(pool);
+  if (!admins.length) return;
   const payload: AdminSummaryPayload = { day: period, summary: await collectAdminSummary(pool) };
-  for (const admin of admins.rows) await enqueueTelegram(pool, admin.id, 'admin-summary', payload, `admin-summary:${period}:${admin.id}`);
+  for (const admin of admins) await enqueueTelegram(pool, admin, 'admin-summary', payload, `admin-summary:${period}:${admin}`);
 }

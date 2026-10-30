@@ -89,6 +89,18 @@ export function adminSummaryText(summary: AdminSummary, day: string): string {
   ].join('\n');
 }
 
+export interface ErrorAlert { source: 'server' | 'client'; path: string; message: string; count: number }
+
+/** In `code`: a report from a browser is anyone's text, and Telegram makes no links there. */
+export function errorAlertText(alert: ErrorAlert): string {
+  return [
+    alert.count > 1 ? `🚨 <b>Ошибка повторяется</b> · ${alert.count} раз` : '🚨 <b>Новая ошибка на сайте</b>',
+    `${alert.source === 'client' ? 'Браузер' : 'Сервер'} · <code>${escapeHtml(truncate(alert.path, 120))}</code>`,
+    '',
+    `<code>${escapeHtml(truncate(alert.message, 300))}</code>`,
+  ].join('\n');
+}
+
 export type MarketEvent = 'new' | 'confirmed' | 'completed' | 'cancelled' | 'message';
 
 export function marketText(event: MarketEvent, title: string, counterpart: string, message?: string): string {

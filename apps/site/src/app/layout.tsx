@@ -3,7 +3,6 @@ import { parseSiteTheme, SITE_THEME_COOKIE } from '@/lib/site-theme';
 import { CampaignTracker } from '@/components/campaign-tracker';
 import { NavigationProgressProvider } from '@/components/navigation-progress';
 import type { Metadata, Viewport } from 'next';
-import localFont from 'next/font/local';
 import { Suspense, type ReactNode } from 'react';
 import { NotificationStateProvider } from '@/components/notification-state';
 import { ActivityHeartbeat } from '@/components/profile-presence';
@@ -15,21 +14,9 @@ import { YandexMetrika } from '@/components/yandex-metrika';
 import { GoogleAnalytics } from '@/components/google-analytics';
 import { googleAnalyticsId } from '@/lib/google-analytics';
 import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/seo';
+import { objectSans } from './fonts';
 import './globals.css';
 import './site-theme.css';
-
-const objectSans = localFont({
-  src: [
-    { path: '../../fonts/PPObjectSans-Regular.woff2', weight: '400', style: 'normal' },
-    { path: '../../fonts/PPObjectSans-Slanted.woff2', weight: '400', style: 'italic' },
-    { path: '../../fonts/PPObjectSans-Heavy.woff2', weight: '700', style: 'normal' },
-    { path: '../../fonts/PPObjectSans-HeavySlanted.woff2', weight: '700', style: 'italic' },
-  ],
-  variable: '--font-object-sans',
-  display: 'swap',
-  preload: false,
-  fallback: ['Arial', 'sans-serif'],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

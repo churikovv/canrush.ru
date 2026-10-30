@@ -1,3 +1,5 @@
+import type { Instrumentation } from 'next';
+
 export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs' || process.env.NEXT_PHASE === 'phase-production-build') return;
   if (process.env.TELEGRAM_WORKER !== 'off') {
@@ -24,3 +26,14 @@ export async function register() {
     startBusinessReportWorker();
   }
 }
+
+/**
+ * Server errors go to `errorGroup` and from there to the administrators (`src/lib/error-log.ts`): pages, route handlers
+ * and server actions. Production only, unless a developer opts in with ERROR_LOG=on: locally the error is on screen.
+ */
+export const onRequestError: Instrumentation.onRequestError = async (error, request, context) => {
+  if (process.env.NEXT_RUNTIME !== 'nodejs' || process.env.NEXT_PHASE === 'phase-production-build') return;
+  if (process.env.ERROR_LOG !== 'on' && (process.env.NODE_ENV !== 'production' || process.env.ERROR_LOG === 'off')) return;
+  const { recordServerError } = await import('@/lib/error-log');
+  await recordServerError(error, request.path, context.routePath);
+};
