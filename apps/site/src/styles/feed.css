@@ -155,12 +155,22 @@ button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-w
 .wall-composer-pill:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 
 /* «Достал из Банкомата»: карточка банки в цвете редкости (эпическая — фиолетовая, легендарная — золото). */
-.feed-gacha { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 -14px -14px; padding: 14px; content-visibility: auto; contain-intrinsic-size: auto 124px; }
-.feed-gacha-card { display: flex; flex: 1 1 260px; align-items: center; gap: 14px; min-width: 0; padding: 10px 14px 10px 10px; border-radius: 18px; color: inherit; text-decoration: none; }
+.feed-gacha { margin: 0 -14px -14px; padding: 14px; content-visibility: auto; contain-intrinsic-size: auto 124px; }
+.feed-gacha-card { display: flex; align-items: center; gap: 16px; padding: 10px 16px 10px 10px; border-radius: 18px; }
+.feed-gacha-drink { display: flex; flex: 1; align-items: center; gap: 14px; min-width: 0; color: inherit; text-decoration: none; }
 .feed-gacha-cover { position: relative; z-index: 1; display: grid; place-items: center; width: 72px; height: 72px; flex: none; border-radius: 12px; background: #fff; overflow: hidden; font-weight: 800; }
 .feed-gacha-cover img { position: absolute; inset: 0; width: 88%; height: 88%; margin: auto; object-fit: contain; }
 .feed-gacha-copy { display: grid; flex: 1; gap: 3px; min-width: 0; }
 .feed-gacha-copy b { color: var(--color-ink); }
 .feed-gacha-flavor { color: var(--color-muted-strong); font-size: .875rem; }
-.feed-gacha-try { color: var(--color-brand); font-size: .875rem; font-weight: 700; text-decoration: none; }
-@media (max-width: 639px) { .feed-gacha-try { width: 100%; text-align: center; } }
+/* Кнопка — тот же металл, что у чипа редкости; над бликом, иначе он ходил бы поверх текста. */
+.feed-gacha-try { position: relative; z-index: 1; display: inline-flex; flex: none; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border-radius: 14px; background: linear-gradient(135deg, var(--rarity-chip-from), var(--rarity-chip-to)); box-shadow: inset 0 -2px 0 rgb(0 0 0 / .16); color: var(--rarity-ink); font-size: .9375rem; font-weight: 800; text-decoration: none; transition: filter 120ms ease, transform 120ms ease; }
+.feed-gacha-try:hover { filter: brightness(1.08); }
+.feed-gacha-try:active { transform: translateY(1px); }
+.feed-gacha-try:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+@media (max-width: 639px) {
+  .feed-gacha { contain-intrinsic-size: auto 186px; }
+  .feed-gacha-card { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; }
+  .feed-gacha-drink { padding-right: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { .feed-gacha-try { transition: none; } }

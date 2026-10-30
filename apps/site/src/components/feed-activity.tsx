@@ -54,18 +54,20 @@ export function FeedGachaEvent({ pull, covers }: { pull: FeedGachaRow; covers: M
   const action = `достал из Банкомата ${label} банку${pull.count > 1 ? ` · за день ${pull.count}` : ''}`;
   return <article className="feed-event" id={`feed-gacha-${pull.key}`}>
     <EventHead author={pull} action={action} at={pull.createdAt} />
-    <div className="feed-gacha" data-rarity={pull.rarity}>
-      <Link className="feed-gacha-card rarity-card" data-rarity={pull.rarity} href={`/catalog/${catalogGroupSlug(pull.brand, pull.flavor)}`}>
+    <div className="feed-gacha">
+      <div className="feed-gacha-card rarity-card" data-rarity={pull.rarity}>
         <RarityShine rarity={pull.rarity} />
-        <span className="feed-gacha-cover">{cover ? <Image src={cover} width={96} height={96} sizes="96px" unoptimized alt="" /> : pull.brand.slice(0, 2).toLocaleUpperCase('ru-RU')}</span>
-        <span className="feed-gacha-copy">
-          <RarityChip rarity={pull.rarity} />
-          <b>{pull.brand}</b>
-          <span className="feed-gacha-flavor">{flavorName(pull.flavor)}</span>
-        </span>
-        <RarityEmblem rarity={pull.rarity} />
-      </Link>
-      <Link className="feed-gacha-try" href="/gacha">Крутить Банкомат</Link>
+        <Link className="feed-gacha-drink" href={`/catalog/${catalogGroupSlug(pull.brand, pull.flavor)}`}>
+          <span className="feed-gacha-cover">{cover ? <Image src={cover} width={96} height={96} sizes="96px" unoptimized alt="" /> : pull.brand.slice(0, 2).toLocaleUpperCase('ru-RU')}</span>
+          <span className="feed-gacha-copy">
+            <RarityChip rarity={pull.rarity} />
+            <b>{pull.brand}</b>
+            <span className="feed-gacha-flavor">{flavorName(pull.flavor)}</span>
+          </span>
+          <RarityEmblem rarity={pull.rarity} />
+        </Link>
+        <Link className="feed-gacha-try" href="/gacha">Крутить Банкомат</Link>
+      </div>
     </div>
   </article>;
 }
