@@ -1,6 +1,7 @@
 import { getPool } from '@/db/pool';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { activeOffers, type CatalogFile } from '@/lib/catalog-files';
+import { days } from '@/lib/drink-calendar-fields';
 import { isResolvedFlavor, type CityId } from '@canrush/shared';
 
 export interface NotificationItem { id: string; title: string; detail: string; href: string; unread: boolean; createdAt: string; kind: string; city?: string }
@@ -126,6 +127,12 @@ function describeNotification(row: any): NotificationItem {
       title = 'Поддержка CanRush ответила';
       detail = row.payload.text ?? '';
       href = '/support';
+    } else if (row.kind==='reminder') {
+      // The day's return reminder (reminders.ts); off in the settings. The site is 18+: it asks to mark a can, never to drink one.
+      const streak = row.payload.type==='streak';
+      title = streak ? `Серия ${days(row.payload.length)}: не забудьте отметить` : 'Бесплатная крутка ждёт';
+      detail = streak ? 'Если сегодня была банка, отметьте её в трекере' : 'Сегодняшняя крутка в Банкомате ещё не взята';
+      href = streak ? '/calendar' : '/gacha';
     } else if (row.kind==='price') {
       const p = row.payload; city = p.city;
       title = `${p.price < p.before ? 'Цена снизилась' : 'Цена выросла'}: ${p.brand} · ${flavorName(p.flavor)}`;

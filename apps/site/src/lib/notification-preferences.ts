@@ -9,4 +9,5 @@ export const NOTIFICATION_OPTIONS = [
   { kind: 'wall-comment', label: 'Сообщения на стене' },
   { kind: 'price', label: 'Изменение цен в избранном' },
   { kind: 'overtaken', label: 'Вас обогнали в топе месяца' },
+  { kind: 'reminder', label: 'Напоминания о серии и бесплатной крутке' },
 ] as const;
