@@ -1,7 +1,7 @@
 import { getPool } from '@/db/pool';
 import { getCabinet, getOwnBusiness, logBusiness, type Business, type BusinessRole } from '@/lib/business';
 import { BusinessError } from '@/lib/business-fields';
-import { isPdf, MAX_PDF_BYTES, MAX_POST_PHOTOS, pdfFileName, type CompanyInfo, type ProfileSection } from '@/lib/business-profile-fields';
+import { isPdf, MAX_AWARDS, MAX_PDF_BYTES, MAX_POST_PHOTOS, pdfFileName, type AwardInput, type CompanyInfo, type ProfileSection } from '@/lib/business-profile-fields';
 import type { PreparedReviewPhoto } from '@/lib/review-photos';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
@@ -20,13 +20,15 @@ export const POSTS_PER_DAY = 10;
 export interface CompanyStore { id: string; name: string; city: string; address: string }
 export interface CompanyDrink { brand: string; flavor: string; name: string; cover: string | null; href: string }
 export interface CompanyPost { id: string; text: string; fileName: string | null; fileSize: number | null; createdAt: Date; author: string | null; username: string | null; /** Photo ids in order. */ photos: string[] }
+/** A diploma or certificate on the profile: a picture or a PDF. */
+export interface CompanyAward extends AwardInput { id: string; kind: 'image' | 'pdf'; fileName: string | null; fileSize: number }
 export interface CompanyProfile {
   business: Business & CompanyInfo & { storeId: string | null; profileHidden: ProfileSection[]; presentationId: string | null; bannerId: string | null };
   /** Members subscribed to the company, and whether the viewer is one of them. */
   followers: number; following: boolean;
   /** The viewer's place in the company: an owner or a manager edits the wall. */
   role: BusinessRole | null;
-  store: CompanyStore | null; drinks: CompanyDrink[]; listings: Listing[]; posts: CompanyPost[];
+  store: CompanyStore | null; drinks: CompanyDrink[]; listings: Listing[]; posts: CompanyPost[]; awards: CompanyAward[];
   /** The presentation laid open in its own block: the pinned PDF post, else the newest one; `pinned` — chosen by the team. */
   presentation: (CompanyPost & { pinned: boolean }) | null;
 }
@@ -47,18 +49,19 @@ export async function getCompanyProfile(id: string, viewerId: string | null): Pr
   const role = await viewerRole(id, viewerId);
   if (business.status !== 'approved' && !role) return null;
   const hidden = new Set(business.profileHidden);
-  const [store, drinks, listings, posts, follow] = await Promise.all([
+  const [store, drinks, listings, posts, awards, follow] = await Promise.all([
     business.storeId && !hidden.has('store') ? companyStore(business.storeId) : null,
     hidden.has('drinks') ? [] : companyDrinks(id),
     hidden.has('listings') ? [] : getCompanyListings(id),
     hidden.has('presentations') && !role ? [] : listCompanyPosts(id),
+    hidden.has('awards') ? [] : listCompanyAwards(id),
     getPool().query<{ followers: number; following: boolean }>(`select count(*)::int as followers, coalesce(bool_or("userId" = $2), false) as following from "businessFollow" where "businessId" = $1`, [id, viewerId]).then(result => result.rows[0]!),
   ]);
   // The pinned post may be older than the wall's first page.
   const pinned = posts.find(post => post.id === business.presentationId && post.fileName)
     ?? (business.presentationId && posts.length ? (await listCompanyPosts(id, 1, business.presentationId))[0] : undefined);
   const shown = pinned ?? posts.find(post => post.fileName);
-  return { business, role, store, drinks, listings, posts, presentation: shown ? { ...shown, pinned: Boolean(pinned) } : null, followers: follow.followers, following: follow.following };
+  return { business, role, store, drinks, listings, posts, awards, presentation: shown ? { ...shown, pinned: Boolean(pinned) } : null, followers: follow.followers, following: follow.following };
 }
 
 async function companyStore(storeId: string): Promise<CompanyStore | null> {
@@ -81,6 +84,12 @@ export async function listCompanyPosts(businessId: string, limit = 30, only: str
       case when trim(u.name) <> '' and u.name not like '%@%' then u.name else u.username end as author, u.username
     from "businessPost" p left join "user" u on u.id = p."authorId" where p."businessId" = $1 and ($3::uuid is null or p.id = $3)
     order by p."createdAt" desc limit $2`, [businessId, limit, only])).rows;
+}
+
+/** Awards with a year first, the newest on top; files stay out of the list. */
+export async function listCompanyAwards(businessId: string): Promise<CompanyAward[]> {
+  return (await getPool().query<CompanyAward>(`select id, title, issuer, year, kind, "fileName", "fileSize" from "businessAward"
+    where "businessId" = $1 order by year desc nulls last, "createdAt" desc`, [businessId])).rows;
 }
 
 /** The company of a member who may publish for it: the owner or a manager of an approved company. */
@@ -129,6 +138,54 @@ export async function deleteCompanyPost(userId: string, postId: string): Promise
   const business = await publisher(userId);
   const { rows } = await getPool().query<{ text: string; fileName: string | null }>(`delete from "businessPost" where id = $1 and "businessId" = $2 returning text, "fileName"`, [postId, business.id]);
   if (rows[0]) await logBusiness(business.id, userId, 'post-delete', rows[0].fileName ?? rows[0].text.slice(0, 200));
+}
+
+/** An award's file, ready to store: a PDF as it came, or a picture already re-encoded with its thumbnail. */
+export type AwardFile = { kind: 'pdf'; name: string; data: Buffer } | ({ kind: 'image' } & PreparedReviewPhoto);
+
+/** Adds an award to the profile: the owner and managers of an approved company, up to `MAX_AWARDS`. */
+export async function createCompanyAward(userId: string, input: AwardInput, file: AwardFile): Promise<string> {
+  const business = await publisher(userId);
+  if (await isUserBlocked(userId)) throw new BusinessError('Этому аккаунту публикации недоступны.');
+  const frozen = await frozenMessage(userId);
+  if (frozen) throw new BusinessError(frozen);
+  if (file.kind === 'pdf' && (file.data.length > MAX_PDF_BYTES || !isPdf(file.data))) throw new BusinessError('Нужен PDF до 20 МБ.');
+  const name = file.kind === 'pdf' ? pdfFileName(file.name) : null;
+  const thumbnail = file.kind === 'image' ? file.thumbnail : null;
+  try {
+    // The limit is checked by the insert itself, so two uploads at once cannot pass it together.
+    const { rows } = await getPool().query<{ id: string }>(`insert into "businessAward"("businessId", "authorId", title, issuer, year, kind, "fileName", "fileSize", data, thumbnail)
+      select $1, $2, $3, $4, $5, $6, $7, $8, $9, $10 where (select count(*) from "businessAward" where "businessId" = $1) < $11 returning id`,
+      [business.id, userId, input.title, input.issuer, input.year, file.kind, name, file.data.length, file.data, thumbnail, MAX_AWARDS]);
+    if (!rows[0]) throw new BusinessError(`Не больше ${MAX_AWARDS} наград в профиле.`);
+    await logBusiness(business.id, userId, 'award', input.title);
+    return rows[0].id;
+  } catch (error) {
+    if (isFrozenError(error)) throw new BusinessError(error.message);
+    throw error;
+  }
+}
+
+/** The owner and managers remove the company's awards. */
+export async function deleteCompanyAward(userId: string, awardId: string): Promise<void> {
+  if (!UUID.test(awardId)) return;
+  const business = await publisher(userId);
+  const { rows } = await getPool().query<{ title: string }>(`delete from "businessAward" where id = $1 and "businessId" = $2 returning title`, [awardId, business.id]);
+  if (rows[0]) await logBusiness(business.id, userId, 'award-delete', rows[0].title);
+}
+
+/**
+ * An award's file (`thumb` — the picture's small copy, a PDF has none) while the company is public and the section is
+ * on, or for the company's own team. `name` is set only for a PDF.
+ */
+export async function getCompanyAwardFile(awardId: string, viewerId: string | null, thumb: boolean): Promise<{ name: string | null; data: Buffer } | null> {
+  if (!UUID.test(awardId)) return null;
+  const row = (await getPool().query<{ name: string | null; data: Buffer | null; businessId: string; open: boolean }>(
+    `select a."fileName" as name, ${thumb ? 'a.thumbnail' : 'a.data'} as data, a."businessId", b.status = 'approved' and not 'awards' = any(b."profileHidden") as open
+     from "businessAward" a join business b on b.id = a."businessId" where a.id = $1`, [awardId])).rows[0];
+  if (!row?.data) return null;
+  if (!row.open && !(await viewerRole(row.businessId, viewerId))) return null;
+  return { name: row.name, data: row.data };
 }
 
 /**

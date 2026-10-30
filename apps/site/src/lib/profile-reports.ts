@@ -26,6 +26,7 @@ const CONTENT_SOURCES: Record<ContentReportKind, string> = {
   article: 'select "authorId" as author, case when title = \'\' then \'Статья без названия\' else title end as excerpt from article where id=$1 and status = \'published\'',
   // The author may have left; the company's owner answers for its wall then.
   'business-post': 'select coalesce(p."authorId", b."ownerId") as author, case when p.text = \'\' then p."fileName" else p.text end as excerpt from "businessPost" p join business b on b.id = p."businessId" where p.id=$1',
+  'business-award': 'select coalesce(a."authorId", b."ownerId") as author, a.title as excerpt from "businessAward" a join business b on b.id = a."businessId" where a.id=$1',
 };
 
 async function submit(

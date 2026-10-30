@@ -15,6 +15,7 @@ const STAFF_DELETE = {
   story: { table: '"story"', audit: 'story' },
   article: { table: 'article', audit: 'article' },
   'business-post': { table: '"businessPost"', audit: 'business-post' },
+  'business-award': { table: '"businessAward"', audit: 'business-award' },
   // A company's reply to a review is keyed by the review (one reply each): the id is the review's.
   'company-reply': { table: '"reviewCompanyReply"', audit: 'company-reply', key: '"reviewId"' },
 } as const;

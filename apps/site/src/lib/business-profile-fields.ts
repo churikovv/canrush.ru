@@ -4,12 +4,13 @@ import { BusinessError } from '@/lib/business-fields';
  * Rules of a company's public profile (/company/<id>), shared by the browser and the server: which sections it shows
  * and what a wall post with a PDF presentation may be.
  */
-export type ProfileSection = 'store' | 'presentations' | 'drinks' | 'listings';
+export type ProfileSection = 'store' | 'presentations' | 'drinks' | 'listings' | 'awards';
 export const PROFILE_SECTIONS: { key: ProfileSection; label: string; hint: string }[] = [
   { key: 'store', label: 'Магазин', hint: 'кнопка «Перейти в магазин» и адрес' },
   { key: 'presentations', label: 'Презентации', hint: 'стена с PDF и новостями компании' },
   { key: 'drinks', label: 'Напитки', hint: 'подтверждённые напитки компании из каталога' },
   { key: 'listings', label: 'Объявления', hint: 'открытые объявления маркета от компании' },
+  { key: 'awards', label: 'Награды', hint: 'дипломы и сертификаты: вкладка появится с первой наградой' },
 ];
 export const isProfileSection = (value: unknown): value is ProfileSection => PROFILE_SECTIONS.some(section => section.key === value);
 
@@ -45,6 +46,26 @@ export function isPdf(data: Uint8Array): boolean {
 /** «2,4 МБ» / «820 КБ» for the file card. */
 export function fileSizeLabel(bytes: number): string {
   return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} МБ` : `${Math.max(1, Math.round(bytes / 1024))} КБ`;
+}
+
+export const MAX_AWARDS = 30;
+export const MAX_AWARD_TITLE = 120;
+export const MAX_AWARD_ISSUER = 120;
+
+export interface AwardInput { title: string; issuer: string | null; year: number | null }
+
+/** An award's name, who gave it and the year: the name is required, the rest may stay empty. */
+export function parseAwardInput(form: FormData, now = new Date()): AwardInput {
+  const line = (name: string) => String(form.get(name) ?? '').replace(/\s+/gu, ' ').trim();
+  const title = line('title');
+  if (!title) throw new BusinessError('Напишите название награды.');
+  if (title.length > MAX_AWARD_TITLE) throw new BusinessError(`Название — до ${MAX_AWARD_TITLE} символов.`);
+  const issuer = line('issuer');
+  if (issuer.length > MAX_AWARD_ISSUER) throw new BusinessError(`«Кто вручил» — до ${MAX_AWARD_ISSUER} символов.`);
+  const rawYear = line('year');
+  const year = rawYear ? Number(rawYear) : null;
+  if (year !== null && (!Number.isInteger(year) || year < 1900 || year > now.getFullYear() + 1)) throw new BusinessError('Год указан неверно.');
+  return { title, issuer: issuer || null, year };
 }
 
 export const MAX_BIO = 160;

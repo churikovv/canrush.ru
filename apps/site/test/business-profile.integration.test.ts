@@ -132,3 +132,41 @@ it('gives a drink page its company card: the confirmed company, its drinks and t
   expect(await profile.drinkCompanyId(brand, 'mango')).toBeNull();
   await pool.query(`update business set status = 'approved' where id = $1`, [businessId]);
 });
+
+it('keeps awards as pictures and PDFs: the team adds them, the section can be switched off', async () => {
+  const input = { title: 'Лучший продукт', issuer: 'Продэкспо', year: 2026 };
+  await expect(profile.createCompanyAward(analyst, input, { kind: 'pdf', name: 'a.pdf', data: pdf })).rejects.toThrow('владелец и менеджеры');
+  await expect(profile.createCompanyAward(manager, input, { kind: 'pdf', name: 'a.pdf', data: Buffer.from('<html>') })).rejects.toThrow('Нужен PDF');
+  const diploma = await profile.createCompanyAward(manager, input, { kind: 'pdf', name: 'Диплом 2026.PDF', data: pdf });
+  const picture = await profile.createCompanyAward(owner, { title: 'Сертификат', issuer: null, year: null }, { kind: 'image', data: Buffer.from('webp'), thumbnail: Buffer.from('thumb') });
+
+  const { awards } = (await profile.getCompanyProfile(businessId, null))!;
+  expect(awards.map(award => award.id)).toEqual([diploma, picture]);
+  expect(awards[0]).toMatchObject({ kind: 'pdf', fileName: 'Диплом 2026.pdf', fileSize: pdf.length, issuer: 'Продэкспо', year: 2026 });
+  expect(awards[1]).toMatchObject({ kind: 'image', fileName: null, issuer: null, year: null });
+  expect(awards[0]).not.toHaveProperty('data');
+
+  expect(await profile.getCompanyAwardFile(diploma, null, false)).toEqual({ name: 'Диплом 2026.pdf', data: pdf });
+  expect(await profile.getCompanyAwardFile(diploma, null, true)).toBeNull();
+  expect((await profile.getCompanyAwardFile(picture, null, true))?.data.toString()).toBe('thumb');
+  expect(await profile.getCompanyAwardFile('not-a-uuid', null, false)).toBeNull();
+
+  // A switched-off section leaves the profile and its files, except for the team.
+  await pool.query(`update business set "profileHidden" = array['awards'] where id = $1`, [businessId]);
+  expect((await profile.getCompanyProfile(businessId, null))?.awards).toEqual([]);
+  expect(await profile.getCompanyAwardFile(picture, visitor, false)).toBeNull();
+  expect(await profile.getCompanyAwardFile(picture, analyst, false)).not.toBeNull();
+  await pool.query(`update business set "profileHidden" = '{}' where id = $1`, [businessId]);
+
+  await expect(profile.deleteCompanyAward(analyst, picture)).rejects.toThrow('владелец и менеджеры');
+  await profile.deleteCompanyAward(manager, picture);
+  expect((await profile.listCompanyAwards(businessId)).map(award => award.id)).toEqual([diploma]);
+});
+
+it('stops at the awards limit', async () => {
+  const { MAX_AWARDS } = await import('../src/lib/business-profile-fields');
+  await pool.query(`insert into "businessAward"("businessId", title, kind, "fileName", "fileSize", data)
+    select $1, 'Диплом', 'pdf', 'd.pdf', 1, '\\x25'::bytea from generate_series(1, $2::int)`, [businessId, MAX_AWARDS]);
+  await expect(profile.createCompanyAward(owner, { title: 'Лишняя', issuer: null, year: null }, { kind: 'pdf', name: 'a.pdf', data: pdf })).rejects.toThrow(`Не больше ${MAX_AWARDS}`);
+  await pool.query(`delete from "businessAward" where "businessId" = $1`, [businessId]);
+});

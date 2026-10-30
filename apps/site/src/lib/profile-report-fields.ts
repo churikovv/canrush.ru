@@ -25,6 +25,7 @@ export const CONTENT_REPORT_KINDS = {
   story: 'История',
   article: 'Статья',
   'business-post': 'Запись компании',
+  'business-award': 'Награда компании',
 } as const;
 export type ContentReportKind = keyof typeof CONTENT_REPORT_KINDS;
 export function contentReportKind(value: string): ContentReportKind | null {

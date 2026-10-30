@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
+import { CompanyAwardForm, CompanyAwards } from '@/components/company-awards';
 import { CompanyFollowButton } from '@/components/company-follow-button';
 import { CompanyDeckUpload, CompanyFile, CompanyPhotos, CompanyPostForm, CompanyPostMenu } from '@/components/company-wall';
 import { PdfPages } from '@/components/pdf-pages';
@@ -48,21 +49,22 @@ const SITE_ICON = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" st
 const PIN_ICON = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" /><circle cx="12" cy="9.5" r="2.5" /></svg>;
 const CHECK = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 12.5 4 4 8-9" /></svg>;
 const PDF_ICON = <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>;
-type Tab = 'feed' | 'drinks' | 'market' | 'about';
-const TABS: { key: Tab; label: string }[] = [{ key: 'feed', label: 'Лента' }, { key: 'drinks', label: 'Напитки' }, { key: 'market', label: 'Маркет' }, { key: 'about', label: 'О бренде' }];
+type Tab = 'feed' | 'drinks' | 'market' | 'awards' | 'about';
+const TABS: { key: Tab; label: string }[] = [{ key: 'feed', label: 'Лента' }, { key: 'drinks', label: 'Напитки' }, { key: 'market', label: 'Маркет' }, { key: 'awards', label: 'Награды' }, { key: 'about', label: 'О бренде' }];
 
 /**
  * A brand's page in the manner of a social profile: a wide banner, the round logo with the check over it, «Официальный
  * профиль», subscribe, the numbers and tabs — «Лента» (a «Презентация» block with one deck open whole and the others
  * listed, then the home feed's composer and the news: text and photos), «Напитки» (its drinks), «Маркет» (its open
- * listings — only while there are any) and «О бренде» (the brand's story, contacts, details and the store). Sections
+ * listings — only while there are any), «Награды» (diplomas and certificates: optional, for visitors once there is one)
+ * and «О бренде» (the brand's story, contacts, details and the store). Sections
  * the team switched off stay hidden from visitors; the team sees everything, before approval too.
  */
 export default async function CompanyPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ deck?: string; tab?: string }> }) {
   const [{ id }, query, session] = await Promise.all([params, searchParams, auth.api.getSession({ headers: await headers() })]);
   const profile = await getCompanyProfile(id, session?.user.id ?? null);
   if (!profile) notFound();
-  const { business, role, store, drinks, listings, posts, presentation, followers, following } = profile;
+  const { business, role, store, drinks, listings, posts, awards, presentation, followers, following } = profile;
   const hidden = new Set(business.profileHidden);
   const editor = role === 'owner' || role === 'manager';
   const staff = session ? await isSiteStaffEmail(session.user.email) : false;
@@ -71,8 +73,10 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
   const open = !hidden.has('presentations');
   const showDrinks = !hidden.has('drinks') && drinks.length > 0;
   const showListings = !hidden.has('listings') && listings.length > 0;
+  // «Награды» is the team's to fill: visitors get the tab with the first award, and a switched-off section has none.
+  const showAwards = !hidden.has('awards') && (awards.length > 0 || editor);
   // «Маркет» is there only while the company sells something.
-  const tabs = TABS.filter(item => item.key !== 'market' || showListings);
+  const tabs = TABS.filter(item => (item.key !== 'market' || showListings) && (item.key !== 'awards' || showAwards));
   const tab: Tab = tabs.some(item => item.key === query.tab) ? query.tab as Tab : 'feed';
   const href = (next: Tab) => `/company/${business.id}${next === 'feed' ? '' : `?tab=${next}`}`;
   // In «Лента» the decks stand apart from the news: the «Презентация» block opens one whole (the one picked by `?deck=`,
@@ -107,6 +111,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
             <span><b>{followers.toLocaleString('ru-RU')}</b> {pluralRu(followers, 'подписчик', 'подписчика', 'подписчиков')}</span>
             {showDrinks && <span><b>{drinks.length}</b> {pluralRu(drinks.length, 'напиток', 'напитка', 'напитков')}</span>}
             {open && posts.length > 0 && <span><b>{posts.length}</b> {pluralRu(posts.length, 'публикация', 'публикации', 'публикаций')}</span>}
+            {awards.length > 0 && <span><b>{awards.length}</b> {pluralRu(awards.length, 'награда', 'награды', 'наград')}</span>}
           </p>
         </div>
         <nav className="company-tabs" aria-label="Разделы профиля">{tabs.map(item => <Link key={item.key} href={href(item.key)} scroll={false} aria-current={item.key === tab ? 'page' : undefined}>{item.label}</Link>)}</nav>
@@ -161,6 +166,12 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
           </article>)}</div>
         </section>}
       </>}
+
+      {tab === 'awards' && <section className="company-section" aria-labelledby="company-awards-title">
+        <div className="company-section-head"><h2 id="company-awards-title">Награды</h2>{awards.length > 0 && <span className="company-muted">{awards.length}</span>}</div>
+        {awards.length > 0 && <CompanyAwards businessId={business.id} awards={awards} editor={editor} signedIn={Boolean(session)} staff={staff} />}
+        {editor && (approved ? <CompanyAwardForm businessId={business.id} hasAwards={awards.length > 0} /> : <p className="company-empty">Награды можно будет добавить, когда компанию подтвердят.</p>)}
+      </section>}
 
       {tab === 'about' && <>
         <section className="company-section" aria-labelledby="company-about-title">

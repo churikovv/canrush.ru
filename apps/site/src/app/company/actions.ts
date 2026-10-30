@@ -4,8 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { BusinessError } from '@/lib/business-fields';
 import sharp from 'sharp';
-import { createCompanyPost, deleteCompanyPost, pinCompanyPresentation, saveCompanyInfo, saveCompanyProfile, setCompanyBanner, setCompanyFollow } from '@/lib/business-profile';
-import { MAX_PDF_BYTES, parseCompanyInfo, parseHiddenSections, parsePostText } from '@/lib/business-profile-fields';
+import { createCompanyAward, createCompanyPost, deleteCompanyAward, deleteCompanyPost, pinCompanyPresentation, saveCompanyInfo, saveCompanyProfile, setCompanyBanner, setCompanyFollow } from '@/lib/business-profile';
+import { isPdf, MAX_PDF_BYTES, parseAwardInput, parseCompanyInfo, parseHiddenSections, parsePostText } from '@/lib/business-profile-fields';
 import { encodeStillPhoto, prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { MAX_REVIEW_PHOTO_BYTES, REVIEW_PHOTO_TYPES } from '@/lib/review-photo-limits';
 
@@ -50,6 +50,39 @@ export async function pinCompanyPresentationAction(businessId: string, postId: s
     revalidatePath(`/company/${businessId}`);
     return { saved: true, at: Date.now() };
   } catch (error) { return failure(error, 'Не удалось закрепить презентацию.'); }
+}
+
+/** A new award: PDF or picture, told by the file's content; a picture is re-encoded, so nothing else gets through. */
+export async function createCompanyAwardAction(businessId: string, _previous: CompanyActionState, form: FormData): Promise<CompanyActionState> {
+  const id = await userId();
+  if (!id) return { error: 'Войдите, чтобы добавить награду.', at: Date.now() };
+  try {
+    const upload = form.get('file');
+    if (!(upload instanceof File) || !upload.size) return { error: 'Выберите файл.', at: Date.now() };
+    if (upload.size > MAX_PDF_BYTES) return { error: 'Файл — до 20 МБ.', at: Date.now() };
+    const input = parseAwardInput(form);
+    const data = Buffer.from(await upload.arrayBuffer());
+    if (isPdf(data)) await createCompanyAward(id, input, { kind: 'pdf', name: upload.name, data });
+    else {
+      if (data.length > MAX_REVIEW_PHOTO_BYTES) return { error: 'Картинка — до 5 МБ.', at: Date.now() };
+      let photo;
+      try { photo = await encodeStillPhoto(data); }
+      catch { return { error: 'Нужен PDF или картинка JPG, PNG, WebP.', at: Date.now() }; }
+      await createCompanyAward(id, input, { kind: 'image', ...photo });
+    }
+    revalidatePath(`/company/${businessId}`);
+    return { saved: true, at: Date.now() };
+  } catch (error) { return failure(error, 'Не удалось добавить награду.'); }
+}
+
+export async function deleteCompanyAwardAction(businessId: string, awardId: string): Promise<CompanyActionState> {
+  const id = await userId();
+  if (!id) return { error: 'Войдите снова.', at: Date.now() };
+  try {
+    await deleteCompanyAward(id, awardId);
+    revalidatePath(`/company/${businessId}`);
+    return { saved: true, at: Date.now() };
+  } catch (error) { return failure(error, 'Не удалось удалить награду.'); }
 }
 
 /** «Подписаться» / «Вы подписаны» on a company profile: returns the subscriber count after the change. */
