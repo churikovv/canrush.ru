@@ -52,6 +52,17 @@ describe('Telegram schedule', () => {
     expect(due('2026-10-19T08:30:00Z')).toEqual(['prune', 'admin-summary', 'promo-alerts', 'weekly-digest']);
     expect(due('2026-10-20T08:30:00Z')).toEqual(['prune', 'admin-summary', 'promo-alerts']);
   });
+
+  it('opens the reminders in their Moscow windows and never later', () => {
+    const due = (iso: string) => TELEGRAM_JOBS.filter(job => job.due(moscowClock(new Date(iso)))).map(job => job.name).filter(name => name.endsWith('-reminder'));
+    expect(due('2026-10-20T09:59:00Z')).toEqual([]);
+    expect(due('2026-10-20T10:00:00Z')).toEqual(['gacha-reminder']);
+    expect(due('2026-10-20T12:59:00Z')).toEqual(['gacha-reminder']);
+    expect(due('2026-10-20T13:00:00Z')).toEqual([]);
+    expect(due('2026-10-20T15:00:00Z')).toEqual(['streak-reminder']);
+    expect(due('2026-10-20T16:59:00Z')).toEqual(['streak-reminder']);
+    expect(due('2026-10-20T17:00:00Z')).toEqual([]);
+  });
 });
 
 describe('Telegram API base URL', async () => {

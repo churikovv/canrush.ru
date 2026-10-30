@@ -1,5 +1,6 @@
 import { DEFAULT_CITY, findCity, type CityId } from '@canrush/shared';
 import type { Pool } from 'pg';
+import { queueGachaReminders, queueStreakReminders } from '@/lib/reminders';
 import { bestPromos, cityPromos, promoKey, type BotPromo } from './catalog';
 import type { AdminSummary } from './format';
 import { enqueueTelegram, pruneOutbox, type AdminSummaryPayload, type PromoPayload } from './outbox';
@@ -30,6 +31,9 @@ export const TELEGRAM_JOBS: readonly ScheduledJob[] = [
   { name: 'admin-summary', due: clock => (clock.hour >= 9 ? clock.date : null), run: queueAdminSummary },
   { name: 'promo-alerts', due: clock => (clock.hour >= 10 ? clock.date : null), run: queuePromoAlerts },
   { name: 'weekly-digest', due: clock => (clock.weekday === 1 && clock.hour >= 11 ? clock.date : null), run: queueWeeklyDigest },
+  // Reminders have a closing hour: a run missed by a restart is skipped rather than sent at night.
+  { name: 'gacha-reminder', due: clock => (clock.hour >= 13 && clock.hour < 16 ? clock.date : null), run: queueGachaReminders },
+  { name: 'streak-reminder', due: clock => (clock.hour >= 18 && clock.hour < 20 ? clock.date : null), run: queueStreakReminders },
 ];
 
 /** Claims each due period once across all instances; a failed run releases its claim to retry later. */

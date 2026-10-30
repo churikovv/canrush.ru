@@ -82,11 +82,12 @@ const ABOUT_ICONS = {
 const PERK_ICONS = {
   login: <svg {...ICON}><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" /><path d="M10 16l4-4-4-4M14 12H4" /></svg>,
 };
-/** Notification kinds by theme, so ten switches read as three short lists. */
+/** Notification kinds by theme, so the switches read as short lists. */
 const NOTIFICATION_GROUPS = [
   { title: 'Отзывы и комментарии', kinds: ['like', 'review-comment', 'comment-reply', 'business-reply'] },
   { title: 'Сообщество', kinds: ['follow', 'mention', 'wall-comment', 'overtaken'] },
   { title: 'Компании и цены', kinds: ['company-post', 'price'] },
+  { title: 'Трекер и Банкомат', kinds: ['reminder'] },
 ] as const;
 /** The options of a group; the last one also takes any kind no group names yet. */
 function notificationsOf(group: (typeof NOTIFICATION_GROUPS)[number]) {
@@ -105,6 +106,7 @@ const NOTIFICATION_ICONS: Record<(typeof NOTIFICATION_OPTIONS)[number]['kind'], 
   'wall-comment': <svg {...ICON}><path d="M4 5h16v11H8l-4 4V5Z" /><path d="M8 9h8M8 12h5" /></svg>,
   price: <svg {...ICON}><path d="M3 12V4h8l10 10-8 8L3 12Z" /><path d="M7.5 7.5h.01" /></svg>,
   overtaken: <svg {...ICON}><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z" /><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" /></svg>,
+  reminder: <svg {...ICON}><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 1.5M5 3 2 6M19 3l3 3" /></svg>,
 };
 const EXTERNAL = <svg {...ICON} width={16} height={16}><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" /></svg>;
 
