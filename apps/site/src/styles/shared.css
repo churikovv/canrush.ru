@@ -727,3 +727,37 @@ a.blocked-member:hover strong { color: var(--theme-link, var(--color-brand)); }
 .review-company-text { margin: 4px 0 0; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
 .review-company-reply:has(.review-company-actions) { grid-template-columns: 36px minmax(0, 1fr) auto; }
 .review-company-actions { align-self: start; margin: -8px -6px 0 0; }
+
+/* Редкость карточек Банкомата в духе рангов: металл, своя фигура, эффекты растут с редкостью. Токены — по `data-rarity`.
+   Анимируем только transform и opacity: слабым телефонам не под силу перерисовывать рамку каждый кадр. */
+[data-rarity=common] { --rarity-light: #f1f4f8; --rarity-mid: #a9b3c1; --rarity-dark: #66748a; --rarity-ink: #2b3542; --rarity-chip-from: var(--rarity-light); --rarity-chip-to: var(--rarity-mid); --rarity-glow: rgb(120 135 155 / .2); }
+[data-rarity=rare] { --rarity-light: #cfe3ff; --rarity-mid: #2f86ff; --rarity-dark: #0a48c2; --rarity-ink: #fff; --rarity-chip-from: var(--rarity-mid); --rarity-chip-to: var(--rarity-dark); --rarity-glow: rgb(0 110 255 / .35); }
+[data-rarity=epic] { --rarity-light: #ecdcff; --rarity-mid: #a05cff; --rarity-dark: #5a1fd0; --rarity-ink: #fff; --rarity-chip-from: var(--rarity-mid); --rarity-chip-to: var(--rarity-dark); --rarity-glow: rgb(150 70 255 / .45); }
+[data-rarity=legendary] { --rarity-light: #fff3b0; --rarity-mid: #f6bb24; --rarity-dark: #b0700c; --rarity-ink: #4d2d00; --rarity-chip-from: var(--rarity-light); --rarity-chip-to: var(--rarity-mid); --rarity-glow: rgb(246 170 20 / .55); }
+
+.rarity-chip { display: inline-flex; align-items: center; gap: 4px; width: fit-content; max-width: 100%; padding: 3px 9px 3px 6px; border-radius: 999px; background: linear-gradient(135deg, var(--rarity-chip-from), var(--rarity-chip-to)); color: var(--rarity-ink); font-size: .6875rem; font-weight: 800; line-height: 1.3; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
+.rarity-chip-glyph { width: 13px; height: 13px; flex: none; fill: currentColor; opacity: .8; }
+
+.rarity-emblem { display: block; width: 56px; height: 56px; flex: none; overflow: visible; filter: drop-shadow(0 2px 8px var(--rarity-glow)); }
+.rarity-stop-light { stop-color: var(--rarity-light); }
+.rarity-stop-mid { stop-color: var(--rarity-mid); }
+.rarity-stop-dark { stop-color: var(--rarity-dark); }
+.rarity-emblem-body { stroke: var(--rarity-light); stroke-width: 3; stroke-linejoin: round; }
+.rarity-emblem-bevel { stroke: var(--rarity-light); stroke-width: 1.5; stroke-linejoin: round; opacity: .6; }
+.rarity-emblem-bolt { fill: #fff; stroke: var(--rarity-dark); stroke-width: 3; stroke-linejoin: round; paint-order: stroke; }
+
+.rarity-card { --rarity-panel: var(--profile-panel, var(--color-surface, #fff)); position: relative; isolation: isolate; border: 2px solid transparent; background: linear-gradient(150deg, color-mix(in srgb, var(--rarity-mid) 20%, var(--rarity-panel)), color-mix(in srgb, var(--rarity-mid) 5%, var(--rarity-panel)) 70%) padding-box, linear-gradient(135deg, var(--rarity-light), var(--rarity-mid) 45%, var(--rarity-dark)) border-box; box-shadow: 0 8px 20px -14px var(--rarity-glow); }
+.rarity-card[data-rarity=epic] { box-shadow: 0 8px 26px -10px var(--rarity-glow); }
+.rarity-card[data-rarity=legendary]::after { content: ''; position: absolute; inset: -2px; z-index: -1; border-radius: inherit; box-shadow: 0 0 16px 1px var(--rarity-glow); pointer-events: none; animation: rarity-pulse 3.2s ease-in-out infinite; }
+.rarity-shine { position: absolute; inset: -2px; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.rarity-sheen { position: absolute; top: -20%; bottom: -20%; left: -40%; width: 30%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / .28), transparent); transform: rotate(14deg); animation: rarity-sheen 6.5s cubic-bezier(.4, 0, .2, 1) infinite; }
+.rarity-card[data-rarity=epic] .rarity-sheen { animation-duration: 5s; }
+.rarity-card[data-rarity=legendary] .rarity-sheen { animation-duration: 3.6s; background: linear-gradient(90deg, transparent, rgb(255 255 255 / .42), transparent); }
+.rarity-twinkle { position: absolute; aspect-ratio: 1; fill: var(--rarity-light); transform-origin: center; animation: level-twinkle 3.6s cubic-bezier(.16, 1, .3, 1) infinite both; }
+.rarity-twinkle path { stroke: var(--rarity-dark); stroke-width: .8; }
+@keyframes rarity-pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+@keyframes rarity-sheen { 0%, 50% { transform: translateX(0) rotate(14deg); } 100% { transform: translateX(520%) rotate(14deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .rarity-card[data-rarity=legendary]::after { animation: none; }
+  .rarity-sheen, .rarity-twinkle { display: none; }
+}

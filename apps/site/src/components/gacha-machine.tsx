@@ -5,9 +5,10 @@ import { useEffect, useRef, useState, useTransition, type ReactNode } from 'reac
 import Link from '@/components/navigation-progress';
 import { AvatarFrame } from '@/components/avatar-frame';
 import { pullAction } from '@/app/gacha/actions';
-import { PULL_COST, RARITY_LABELS, TEN_PULL_COST, pityLeft, type GachaScene, type Rarity } from '@/lib/gacha-fields';
+import { PULL_COST, TEN_PULL_COST, pityLeft, type GachaScene, type Rarity } from '@/lib/gacha-fields';
 import type { GachaState, PullResult, PulledCard } from '@/lib/gacha';
 import { CapIcon, ShardIcon } from '@/components/gacha-icons';
+import { RarityChip, RarityShine } from '@/components/rarity-badge';
 
 export { CapIcon, ShardIcon } from '@/components/gacha-icons';
 
@@ -15,11 +16,13 @@ const SPIN_MS = 1100;
 
 /** Одна выпавшая банка: цвет рамки — редкость, «Новая!» — первая такая в альбоме. */
 export function GachaCard({ card, index = 0 }: { card: PulledCard; index?: number }) {
-  return <Link className="gacha-card" href={card.href} data-rarity={card.rarity} style={{ '--card-index': index } as React.CSSProperties}>
+  return <Link className="gacha-card rarity-card" href={card.href} data-rarity={card.rarity} style={{ '--card-index': index } as React.CSSProperties}>
+    <RarityShine rarity={card.rarity} />
     <span className="gacha-card-cover"><Image src={card.cover} width={160} height={160} sizes="120px" unoptimized alt="" /></span>
-    <span className="gacha-card-rarity">{RARITY_LABELS[card.rarity]}{card.pity && <small> · гарант</small>}</span>
+    <RarityChip rarity={card.rarity} />
     <strong className="gacha-card-brand">{card.brand}</strong>
     <span className="gacha-card-name">{card.name}</span>
+    {card.pity && <small className="gacha-card-pity">гарант</small>}
     <span className={`gacha-card-badge${card.isNew ? ' is-new' : ''}`}>{card.isNew ? 'Новая!' : `×${card.count}`}</span>
     {card.shards > 0 && <span className="gacha-card-shards">+{card.shards} <ShardIcon size={12} /></span>}
     {card.star && <span className="gacha-card-star" title="Звезда сезона" aria-label="Звезда сезона">🎃</span>}

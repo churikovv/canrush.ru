@@ -1,6 +1,7 @@
 import '@/styles/shared.css';
 import '@/styles/profile.css';
 import '@/styles/gacha.css';
+import { RarityEmblem } from '@/components/rarity-badge';
 import { headers } from 'next/headers';
 import { BrandShell } from '@/components/brand-shell';
 import { CapIcon, GachaMachine } from '@/components/gacha-machine';
@@ -39,7 +40,7 @@ export default async function GachaPage() {
       <p className="community-muted">Сначала выбирается редкость, потом банка внутри неё. Редкость берётся из каталога: сколько сетей продают напиток прямо сейчас. В автомате {cans(pool.length)}.</p>
       <div className="settings-list gacha-odds">
         {[...RARITIES].reverse().map(rarity => <div className="settings-row" key={rarity} data-rarity={rarity}>
-          <span className="gacha-odds-dot" aria-hidden="true" />
+          <RarityEmblem rarity={rarity} />
           <span className="settings-row-text"><strong>{RARITY_LABELS[rarity]}</strong><small>{RARITY_HINTS[rarity]} · {cans(counts[rarity] ?? 0)}</small></span>
           <span className="gacha-odds-value">{percent.format(RARITY_ODDS[rarity] / 10)}%</span>
         </div>)}

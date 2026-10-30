@@ -3341,19 +3341,19 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
   --color-brand: var(--profile-accent); --color-brand-deep: var(--profile-accent);
   color: var(--profile-ink); background: var(--profile-bg);
 }
-/* A themed profile and its calendar and collection pages paint the whole page surface (not an inner card),
+/* A themed profile and its calendar, collection and card album pages paint the whole page surface (not an inner card),
    from the first frame: no fade from the site colour. */
-.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=dark]) { --profile-page: #000; }
-.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=lavender]) { --profile-page: #f3effa; }
-.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=mint]) { --profile-page: #eef7f3; }
-.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=gold]) { --profile-page: #faf5e8; }
-.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=ocean]) { --profile-page: #07121f; }
-.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=platinum]) { --profile-page: #eef1f5; }
-.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=cobalt]) { --profile-page: #0050c8; }
-.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=ember]) { --profile-page: #140806; }
-.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme=legend]) { --profile-page: #120a2e; }
-.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme]:not([data-profile-theme=default])) { background: var(--profile-page); }
-:is(.community-profile, .drink-calendar-page, .brand-collection-page)[data-profile-theme]:not([data-profile-theme=default]) { background: transparent; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme=dark]) { --profile-page: #000; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme=lavender]) { --profile-page: #f3effa; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme=mint]) { --profile-page: #eef7f3; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme=gold]) { --profile-page: #faf5e8; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme=ocean]) { --profile-page: #07121f; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme=platinum]) { --profile-page: #eef1f5; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme=cobalt]) { --profile-page: #0050c8; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme=ember]) { --profile-page: #140806; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme=legend]) { --profile-page: #120a2e; }
+.main-surface:has(> :is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme]:not([data-profile-theme=default])) { background: var(--profile-page); }
+:is(.community-profile, .drink-calendar-page, .brand-collection-page, .gacha-album-page)[data-profile-theme]:not([data-profile-theme=default]) { background: transparent; }
 [data-profile-theme] :is(.community-panel,.community-shortcut,.profile-social-counts,.profile-layout-block) { background: var(--profile-panel); border-color: var(--profile-line); color: var(--profile-ink); }
 [data-profile-theme] :is(.community-name p,.community-muted,.community-section-note,.community-empty,.community-shortcut-arrow,.community-section-heading h2 > span,.profile-listing-preview p,.profile-presence,.profile-friends-heading h2 > span,.profile-social-counts span,.field-help) { color: var(--profile-muted); }
 [data-profile-theme] :is(.community-section-heading > a,.community-empty a,.experience-heading a,.profile-friends-heading a,.community-button-text) { color: var(--profile-accent); }

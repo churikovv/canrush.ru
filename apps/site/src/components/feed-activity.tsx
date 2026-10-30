@@ -1,3 +1,4 @@
+import { RarityChip, RarityEmblem, RarityShine } from '@/components/rarity-badge';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { TierListCard, type TierCardViewer } from '@/components/tier-list-card';
@@ -54,13 +55,15 @@ export function FeedGachaEvent({ pull, covers }: { pull: FeedGachaRow; covers: M
   return <article className="feed-event" id={`feed-gacha-${pull.key}`}>
     <EventHead author={pull} action={action} at={pull.createdAt} />
     <div className="feed-gacha" data-rarity={pull.rarity}>
-      <Link className="feed-gacha-card" href={`/catalog/${catalogGroupSlug(pull.brand, pull.flavor)}`}>
+      <Link className="feed-gacha-card rarity-card" data-rarity={pull.rarity} href={`/catalog/${catalogGroupSlug(pull.brand, pull.flavor)}`}>
+        <RarityShine rarity={pull.rarity} />
         <span className="feed-gacha-cover">{cover ? <Image src={cover} width={96} height={96} sizes="96px" unoptimized alt="" /> : pull.brand.slice(0, 2).toLocaleUpperCase('ru-RU')}</span>
         <span className="feed-gacha-copy">
-          <span className="feed-gacha-rarity">{pull.rarity === 'legendary' ? 'Легендарная' : 'Эпическая'}</span>
+          <RarityChip rarity={pull.rarity} />
           <b>{pull.brand}</b>
-          <span>{flavorName(pull.flavor)}</span>
+          <span className="feed-gacha-flavor">{flavorName(pull.flavor)}</span>
         </span>
+        <RarityEmblem rarity={pull.rarity} />
       </Link>
       <Link className="feed-gacha-try" href="/gacha">Крутить Банкомат</Link>
     </div>

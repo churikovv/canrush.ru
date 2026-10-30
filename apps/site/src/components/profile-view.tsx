@@ -29,7 +29,7 @@ import { BrandCollectionBlock } from '@/components/brand-collection';
 import { getBrandCollections } from '@/lib/brand-collection';
 import { listPublishedDrinksByOwner } from '@/lib/catalog-drinks';
 import { topCards } from '@/lib/gacha';
-import { RARITY_LABELS } from '@/lib/gacha-fields';
+import { RarityChip, RarityShine } from '@/components/rarity-badge';
 import { ProfilePresence } from '@/components/profile-presence';
 import { SignInPrompt } from '@/components/sign-in-prompt';
 
@@ -130,8 +130,8 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           <Image src={drink.photo} width={120} height={120} alt="" /><strong>{drink.brand}</strong><span>{drink.name}</span></Link>)}</div>
           : <div className="community-empty"><p>{isOwn ? 'Не нашли энергетик в каталоге? Добавьте его — после проверки он появится здесь и у всех в каталоге.' : 'Пользователь пока не добавлял напитки в каталог.'}</p>{isOwn && <Link href="/catalog/new">Добавить напиток ↗</Link>}</div>}</section></ProfileBlock>
           <ProfileBlock block="cards"><section className="community-panel" aria-labelledby="profile-cards-title"><div className="community-section-heading"><h2 id="profile-cards-title">Карточки Банкомата</h2><Link href={`${base}/cards`}>Альбом ↗</Link></div>
-          {cards.length ? <div className="profile-favorites-block profile-gacha-cards">{cards.map(card => <Link key={`${card.brand}:${card.flavor}`} href={card.href} data-rarity={card.rarity}>
-          <Image src={card.cover} width={120} height={120} unoptimized alt="" /><strong>{card.brand}</strong><span>{card.name}</span><small>{RARITY_LABELS[card.rarity]}{card.count > 1 ? ` · ×${card.count}` : ''}</small></Link>)}</div>
+          {cards.length ? <div className="profile-favorites-block profile-gacha-cards">{cards.map(card => <Link key={`${card.brand}:${card.flavor}`} className="rarity-card" href={card.href} data-rarity={card.rarity}>
+          <RarityShine rarity={card.rarity} /><Image src={card.cover} width={120} height={120} unoptimized alt="" /><strong>{card.brand}</strong><span>{card.name}</span><RarityChip rarity={card.rarity} />{card.count > 1 && <small>×{card.count}</small>}</Link>)}</div>
           : <div className="community-empty"><p>{isOwn ? 'Здесь появятся лучшие карточки из Банкомата. Первая крутка в день — бесплатно.' : 'Пользователь пока не крутил Банкомат.'}</p>{isOwn && <Link href="/gacha">Открыть Банкомат ↗</Link>}</div>}</section></ProfileBlock></ProfileBlocks>
 
         </div>

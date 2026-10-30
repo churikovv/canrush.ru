@@ -1434,9 +1434,7 @@ a.settings-row:focus-visible { outline: 2px solid var(--color-focus); outline-of
 .drink-stats-summary { margin: 16px 16px 0; padding: 16px; border-radius: 20px; background: var(--theme-panel, #fff); }
 .drink-stats-summary h3 { margin: 0; color: var(--theme-text, #111); font-size: 1rem; }
 
-/* «Карточки Банкомата» в профиле: та же сетка, что у избранного, рамка — цвет редкости. */
-.profile-gacha-cards > a { --rarity: #8a919b; padding: 6px; border: 2px solid var(--rarity); border-radius: 14px; }
-.profile-gacha-cards > a[data-rarity="rare"] { --rarity: var(--color-brand, #006eff); }
-.profile-gacha-cards > a[data-rarity="epic"] { --rarity: #8b5cf6; }
-.profile-gacha-cards > a[data-rarity="legendary"] { --rarity: #f2a516; }
-.profile-gacha-cards small { color: var(--rarity); font-size: .6875rem; font-weight: 800; text-transform: uppercase; }
+/* «Карточки Банкомата» в профиле: та же сетка, что у избранного, рамка и чип — как у карточек (`.rarity-card` в shared.css). */
+.profile-gacha-cards > a { padding: 6px; border-radius: 14px; }
+.profile-gacha-cards .rarity-chip { padding-inline: 5px 7px; color: var(--rarity-ink); font-size: .5625rem; }
+.profile-gacha-cards small { color: var(--color-muted-strong); font-size: .6875rem; font-weight: 800; }

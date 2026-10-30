@@ -10,7 +10,7 @@ function star(points: number, outer: number, inner: number) {
 }
 
 /** Every rank has its own silhouette, growing more elaborate toward Legend's sixteen-point star. */
-const SHAPES: Record<LevelTier['key'], string> = {
+export const LEVEL_SHAPES: Record<LevelTier['key'], string> = {
   rookie: 'M50 5.5 89 28v44L50 94.5 11 72V28Z',
   bronze: 'M50 4 87 17v31c0 24-15 40-37 48C28 88 13 72 13 48V17Z',
   silver: star(8, 49, 41),
@@ -37,7 +37,7 @@ export function LevelEmblem({ level, wings = false }: { level: number; wings?: b
   const legend = tier.key === 'legend';
   const numeral = rank.label === tier.label ? null : romanNumeral(rank.degree);
   const ribbon = numeral ? 16 + numeral.length * 9 : 0;
-  const shape = SHAPES[tier.key];
+  const shape = LEVEL_SHAPES[tier.key];
   const aura = AURA[tier.key] ?? 0;
   const twinkles = TWINKLES.slice(0, TWINKLE_COUNT[tier.key] ?? 0);
   return <svg className={`level-emblem${wings ? ' has-wings' : ''}`} data-level-tier={tier.key} viewBox={wings ? '-38 0 176 100' : '0 0 100 100'} role="img" aria-label={`Уровень ${level}, ранг «${rank.label}»`}>
@@ -85,14 +85,14 @@ export function LevelChip({ level }: { level: number }) {
 }
 
 export function LevelTierGlyph({ tier }: { tier: LevelTier['key'] }) {
-  return <svg className="level-tier-glyph" viewBox="0 0 100 100" aria-hidden="true"><path d={SHAPES[tier]} /></svg>;
+  return <svg className="level-tier-glyph" viewBox="0 0 100 100" aria-hidden="true"><path d={LEVEL_SHAPES[tier]} /></svg>;
 }
 
 /** Compact chip for author rows; the tier shape doubles as a glyph. */
 export function LevelChipContent({ level }: { level: number }) {
   const { tier } = levelTier(level);
   return <>
-    <svg className="level-chip-glyph" viewBox="0 0 100 100" aria-hidden="true"><path d={SHAPES[tier.key]} /></svg>
+    <svg className="level-chip-glyph" viewBox="0 0 100 100" aria-hidden="true"><path d={LEVEL_SHAPES[tier.key]} /></svg>
     Ур. {level}
   </>;
 }
