@@ -32,7 +32,11 @@ export interface AdminDashboardData {
   swipesByDay: { day: string; count: number; likes: number; members: number }[];
   /** «Приложения»: members by the platform they came from (`platformDay`) and devices registered for push. */
   apps: AdminAppMetrics | null;
+  firstDay: AdminFirstDayMetrics | null;
 }
+
+/** Newcomers of the last 30 days whose first 24 hours are over, and what they did in those hours. */
+export interface AdminFirstDayMetrics { members: number; acted: number; pulled: number; swiped: number; drank: number; posted: number; fresh: number }
 
 export type PlatformCounts = { ios: number; android: number; telegram: number; web: number };
 export interface AdminAppMetrics {
@@ -50,13 +54,13 @@ export interface AdminAppMetrics {
 /** `showEmails` is off for moderators: their tables show `@nickname` instead of the email and search ignores emails. */
 export async function getAdminDashboardData(search: string, tab: AdminTab, requestedPage = 1, showEmails = true): Promise<AdminDashboardData> {
   const db = getPool();
-  const result: AdminDashboardData = { market: [], reports: [], users: [], admins: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [], activity: [], swipesByDay: [], apps: null };
+  const result: AdminDashboardData = { market: [], reports: [], users: [], admins: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [], activity: [], swipesByDay: [], apps: null, firstDay: null };
   if (tab === 'campaigns') return result;
   if (tab === 'analytics') {
     await db.query(`delete from "presenceSample" where bucket < now() - interval '8 days'`);
     await db.query(`delete from "activityDay" where day < (now() at time zone 'Europe/Moscow')::date - 400`);
     await db.query(`delete from "platformDay" where day < (now() at time zone 'Europe/Moscow')::date - 400`);
-    const [metrics, registrations, online, activity, swipes, apps] = await Promise.all([
+    const [metrics, registrations, online, activity, swipes, apps, firstDay] = await Promise.all([
       db.query<AdminMetrics>(`select
         (select count(*)::int from "user") as users,
         -- Same rule as the profile status (getPresence): a heartbeat within 2 minutes and a live session.
@@ -112,7 +116,9 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
       select to_char(days.day,'YYYY-MM-DD') as day, coalesce(counts.count,0) as count, coalesce(counts.likes,0) as likes, coalesce(counts.members,0) as members
       from days left join counts using(day) order by days.day`),
       getAppMetrics(),
+      getFirstDayMetrics(),
     ]);
+    result.firstDay = firstDay;
     result.apps = apps;
     result.swipesByDay = swipes.rows;
     result.activity = activity.rows;
@@ -164,6 +170,32 @@ const PLATFORM_COUNTS = (since: string) => `count(distinct p."userId") filter (w
  * Members by platform (`platformDay`): today, 7 and 30 Moscow days, the last 14 days by day, plus push devices.
  * Blocked members are left out, as in the other activity numbers. A member on two platforms counts on each.
  */
+/**
+ * «Первые сутки»: did a newcomer act within 24 hours of signing up. Members younger than a day are left out and only
+ * counted: their day is not over, and they would pull the share down. A repeat swipe moves `createdAt`, so a member who
+ * swiped on day one and only re-decided later misses the swipe column; that is rare and errs low.
+ */
+export async function getFirstDayMetrics(): Promise<AdminFirstDayMetrics> {
+  const { rows } = await getPool().query<AdminFirstDayMetrics>(`with newcomers as (
+      select u.id, u."createdAt" + interval '1 day' as until from "user" u
+      where u."createdAt" >= now() - interval '30 days' and u."createdAt" < now() - interval '1 day'
+        and not exists(select 1 from "userBlock" b where b."userId" = u.id)
+    ), actions as (select
+      exists(select 1 from "gachaPull" x where x."userId" = n.id and x."createdAt" < n.until) as pulled,
+      exists(select 1 from "drinkSwipe" x where x."userId" = n.id and x."createdAt" < n.until) as swiped,
+      exists(select 1 from "drinkLog" x where x."userId" = n.id and x."createdAt" < n.until)
+        or exists(select 1 from review x where x."userId" = n.id and x."createdAt" < n.until) as drank,
+      exists(select 1 from "profileComment" x where x."userId" = n.id and x."createdAt" < n.until) as posted
+      from newcomers n)
+    select count(*)::int as members,
+      (count(*) filter (where pulled or swiped or drank or posted))::int as acted,
+      (count(*) filter (where pulled))::int as pulled, (count(*) filter (where swiped))::int as swiped,
+      (count(*) filter (where drank))::int as drank, (count(*) filter (where posted))::int as posted,
+      (select count(*)::int from "user" u where u."createdAt" >= now() - interval '1 day' and not exists(select 1 from "userBlock" b where b."userId" = u.id)) as fresh
+    from actions`);
+  return rows[0] ?? { members: 0, acted: 0, pulled: 0, swiped: 0, drank: 0, posted: 0, fresh: 0 };
+}
+
 export async function getAppMetrics(): Promise<AdminAppMetrics> {
   const db = getPool();
   const today = `(now() at time zone 'Europe/Moscow')::date`;

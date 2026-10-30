@@ -21,6 +21,8 @@ import { getBetaEngine } from '@/lib/beta-engine';
 import { GachaHomeBanner } from '@/components/gacha-home-banner';
 import { activeBanner } from '@/lib/gacha-fields';
 import { getGachaTeaser } from '@/lib/gacha';
+import { FirstSteps } from '@/components/first-steps';
+import { getFirstSteps } from '@/lib/first-steps';
 export const dynamic = 'force-dynamic';
 export const metadata = seoMetadata({ title: 'Энергетики, отзывы и рейтинг пользователей', description: DEFAULT_DESCRIPTION, path: '/' });
 
@@ -33,13 +35,14 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const [session, counts, allGroups] = await Promise.all([auth.api.getSession({ headers: await headers() }), getHomeCounts(), loadAllCatalogGroups()]);
   const resolved = groups.filter(group => isResolvedFlavor(group.flavor));
   const gacha = activeBanner();
-  const [contestEntry, engine, teaser] = await Promise.all([contest && session ? getContestEntry(contest.contest, session.user.id) : null, getBetaEngine(session?.user.id ?? null),
-    gacha?.scene && session ? getGachaTeaser(session.user.id).catch(() => null) : null]);
+  const [contestEntry, engine, teaser, firstSteps] = await Promise.all([contest && session ? getContestEntry(contest.contest, session.user.id) : null, getBetaEngine(session?.user.id ?? null),
+    gacha?.scene && session ? getGachaTeaser(session.user.id).catch(() => null) : null, session ? getFirstSteps(session.user.id).catch(() => null) : null]);
   return <BrandShell headerAction={<ProfileNavigation active="home" />} surfaceClassName="catalog-surface home-surface">
     <div className="home-layout">
       <h1 className="sr-only">CanRush — социальная сеть для энергокомьюнити: лента, цены и рейтинги энергетиков</h1>
       <HomeStories viewerId={session?.user.id ?? null} groups={await withCatalogDrinks(resolved)} openStory={typeof story === 'string' ? story : undefined} />
       <HomeServices metrics={{ ...counts, ...catalogMetrics(resolved, allGroups) }} contest={contest} joined={Boolean(contestEntry?.cans)} engine={engine} gachaBanner={Boolean(gacha?.scene)} />
+      {firstSteps && <FirstSteps steps={firstSteps} />}
       {gacha?.scene && <GachaHomeBanner banner={{ ...gacha, scene: gacha.scene }} teaser={teaser} />}
       <section aria-labelledby="home-feed" className="home-section home-feed">
         {/* No visible heading: the feed simply continues the page; screen readers still get the section name. */}
