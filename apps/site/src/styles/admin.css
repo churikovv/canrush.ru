@@ -308,3 +308,30 @@ div.admin-drink-card-match > p { margin: 0; }
 .admin-drink-extras { display: flex; flex-wrap: wrap; gap: 6px; }
 .admin-drink-extras a { display: block; width: 56px; height: 56px; overflow: hidden; border-radius: 10px; background: var(--color-subtle); }
 .admin-drink-extras img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Push-рассылки: форма и превью уведомления; на телефоне превью под формой, кнопки друг под другом. */
+.admin-push { display: grid; gap: 24px; }
+.admin-push-form { display: grid; gap: 16px; min-width: 0; }
+.admin-push-form > label { display: grid; gap: 6px; font-size: .875rem; font-weight: 600; }
+.admin-push-form input:not([type=radio]), .admin-push-form textarea { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 10px; background: transparent; color: inherit; font: inherit; font-weight: 400; resize: vertical; }
+.admin-push-form small { color: var(--theme-muted, #59616b); font-weight: 400; }
+.admin-push-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.admin-push-form legend { margin-bottom: 6px; padding: 0; font-size: .875rem; font-weight: 600; }
+.admin-push-audiences { display: grid; gap: 8px; }
+.admin-push-audiences label { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 10px; font-size: .875rem; cursor: pointer; }
+.admin-push-audiences label[data-checked] { border-color: #006eff; box-shadow: inset 0 0 0 1px #006eff; }
+.admin-push-audiences input { width: 18px; height: 18px; accent-color: #006eff; }
+.admin-push-audiences b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.admin-push-actions { display: flex; flex-direction: column-reverse; gap: 10px; }
+.admin-push-actions .community-button { width: 100%; min-height: 48px; justify-content: center; text-align: center; }
+.admin-push-preview { display: grid; align-content: start; gap: 8px; min-width: 0; }
+.admin-push-preview-label { color: var(--theme-muted, #59616b); font-size: .8125rem; }
+.admin-push-card { display: flex; gap: 12px; padding: 14px; border-radius: 18px; background: var(--theme-subtle, #f0f2f5); }
+.admin-push-card-icon { flex: none; width: 40px; height: 40px; border-radius: 10px; background: #006eff url('/brand/logo-mark.svg') center / 62% no-repeat; }
+.admin-push-card > div { display: grid; gap: 2px; min-width: 0; }
+.admin-push-card-app { color: var(--theme-muted, #59616b); font-size: .75rem; }
+.admin-push-card strong, .admin-push-card p { overflow-wrap: anywhere; }
+.admin-push-card p { margin: 0; font-size: .875rem; line-height: 1.35; }
+@media (min-width: 640px) { .admin-push-audiences { grid-template-columns: repeat(3, minmax(0, 1fr)); } .admin-push-actions { flex-direction: row; justify-content: flex-end; } .admin-push-actions .community-button { width: auto; } }
+@media (min-width: 960px) { .admin-push { grid-template-columns: minmax(0, 1fr) 320px; } }
+@media (pointer: coarse) { .admin-push-form input:not([type=radio]), .admin-push-form textarea { font-size: 1rem; } }

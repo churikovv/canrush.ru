@@ -5,7 +5,7 @@ import { truncate, type MarketEvent } from '@/lib/telegram-bot/format';
 import type { MarketPayload } from '@/lib/telegram-bot/outbox';
 import { PushError, sendApns, sendFcm, sendRuStore, type ApnsPost, type PushMessage } from './providers';
 
-export type PushKind = 'notification' | 'market';
+export type PushKind = 'notification' | 'market' | 'broadcast';
 type Queryable = Pool | PoolClient;
 const MAX_ATTEMPTS = 5;
 
@@ -28,6 +28,10 @@ export async function renderPush(row: { kind: PushKind; payload: Record<string, 
   if (row.kind === 'notification') {
     const item = await getNotificationById(String(row.payload.notificationId));
     return item ? { title: truncate(item.title, 80), body: truncate(item.detail, 200), url: item.href, link: link(item.href) } : null;
+  }
+  if (row.kind === 'broadcast') {
+    const { title, body, path } = row.payload as { title: string; body: string; path: string };
+    return { title, body, url: path, link: link(path) };
   }
   const p = row.payload as unknown as MarketPayload;
   const body = p.message ? `«${truncate(p.title, 60)}»: ${truncate(p.message, 160)}` : `«${truncate(p.title, 120)}»`;
@@ -63,6 +67,7 @@ export async function deliverPush(pool: Pool, env: PushEnv, siteUrl: string, bat
         }
       }
       await pool.query('update "pushOutbox" set "sentAt" = now(), "lastError" = null where id = $1', [row.id]);
+      if (row.kind === 'broadcast') await pool.query('update "pushBroadcast" set delivered = delivered + 1 where id = $1', [row.payload.broadcastId]);
     } catch (error) {
       const description = error instanceof Error ? error.message.slice(0, 500) : 'unknown error';
       if (error instanceof PushError && error.permanent) {

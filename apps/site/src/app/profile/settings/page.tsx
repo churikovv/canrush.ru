@@ -157,12 +157,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const profile = await ensureOwnProfile(session.user);
   const telegram = getTelegramEnv();
   const telegramOnly = isTelegramPlaceholderEmail(session.user.email);
-  const [ratings, wall, listings, experience, friends, favorites, community, siteRole, preferenceRows, telegramLinked, blocked, ownedFrames] = await Promise.all([
+  const [ratings, wall, listings, experience, friends, favorites, community, siteRole, preferenceRows, telegramLinked, blocked, ownedFrames, announcements] = await Promise.all([
     getProfileRatings(profile.id), getProfileWall(profile.id), getListings(1, profile.id, false, profile.username), getExperience([profile.username]), getConnections(profile.id, 'friends'), getFavoriteGroups(profile.id), getProfileCommunity(profile.id, profile.id), siteRoleForEmail(session.user.email),
     getPool().query<{ kind: string; enabled: boolean }>('select kind,enabled from "notificationPreference" where "userId"=$1', [session.user.id]).then(result => result.rows),
     getPool().query('select 1 from "account" where "userId" = $1 and "providerId" = $2 limit 1', [session.user.id, TELEGRAM_PROVIDER_ID]).then(result => (result.rowCount ?? 0) > 0),
     getBlockedMembers(session.user.id),
     getPool().query<{ key: string }>('select key from "gachaCosmetic" where "userId" = $1', [session.user.id]).then(result => result.rows.map(row => row.key)),
+    getPool().query<{ pushAnnouncements: boolean }>('select "pushAnnouncements" from "user" where id = $1', [session.user.id]).then(result => result.rows[0]?.pushAnnouncements ?? true),
   ]);
   const preferences = new Map(preferenceRows.map(row => [row.kind, row.enabled]));
   // «Помощь»: the member's chat with the team is its own screen (/support); the row says when the team has answered.
@@ -199,6 +200,16 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               </label>)}
             </div>
           </section>)}
+          <section className="settings-group" aria-label="Новости CanRush">
+            <h3 className="settings-group-title">Новости CanRush</h3>
+            <div className="settings-list">
+              <label className="settings-row">
+                <span className="settings-row-icon" aria-hidden="true"><svg {...ICON}><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1Zm13-3a5 5 0 0 1 0 8" /></svg></span>
+                <span className="settings-row-text"><strong>Новости и события в приложении</strong><small>Push о новых сезонах и событиях CanRush</small></span>
+                <input className="settings-switch" type="checkbox" role="switch" name="announcements" defaultChecked={announcements} />
+              </label>
+            </div>
+          </section>
           <button className="community-button settings-save" type="submit">Сохранить настройки</button>
           {query.saved === '1' && <p className="settings-saved" role="status">{CHECK}Настройки сохранены.</p>}
         </form>

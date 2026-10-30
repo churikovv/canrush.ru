@@ -19,6 +19,7 @@ export async function saveNotificationSettings(form: FormData) {
     select $1, unnest($2::text[]), unnest($3::boolean[])
     on conflict ("userId",kind) do update set enabled=excluded.enabled`,
     [session.user.id, NOTIFICATION_OPTIONS.map(x => x.kind), NOTIFICATION_OPTIONS.map(x => form.get(x.kind) === 'on')]);
+  await getPool().query('update "user" set "pushAnnouncements" = $2 where id = $1', [session.user.id, form.get('announcements') === 'on']);
   redirect('/profile/settings?section=notifications&saved=1');
 }
 
