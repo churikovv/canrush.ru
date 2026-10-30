@@ -123,3 +123,39 @@ it('shows the best epic or legendary pull of the day in the feed, once per membe
   expect(events).toHaveLength(1);
   expect(events[0]).toMatchObject({ kind: 'gacha', pull: { userId: member, brand } });
 });
+
+it('pays the caps of a streak already running when the machine opened, once and only for live streaks', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const sql = await readFile(new URL('../migrations/0163_streak_caps_backfill.sql', import.meta.url), 'utf8');
+  const [long, week, short, broken, blocked, paid] = [randomUUID(), randomUUID(), randomUUID(), randomUUID(), randomUUID(), randomUUID()];
+  const everyone = [long, week, short, broken, blocked, paid];
+  // Restored days count as streak days and pay nothing themselves, so only the backfill touches the ledger.
+  const streak = (id: string, from: number, to: number) => pool.query(`insert into "drinkStreakRestore"("userId", day)
+    select $1, (now() at time zone 'Europe/Moscow')::date - offs from generate_series($3::int, $2::int) offs`, [id, from, to]);
+  const firstDay = async (back: number) => (await pool.query<{ day: string }>(`select ((now() at time zone 'Europe/Moscow')::date - $1::int)::text as day`, [back])).rows[0]!.day;
+  const rows = async (id: string) => (await pool.query<{ sourceKey: string; amount: number }>(
+    `select "sourceKey", amount from "capLedger" where "userId" = $1 and reason = 'streak' order by amount, "sourceKey"`, [id])).rows;
+  try {
+    for (const id of everyone) await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Streak test',$2,true,now(),now(),$3)`, [id, `${id}@example.com`, `gs_${id.slice(0, 12)}`]);
+    await pool.query('insert into "userBlock"("userId") values($1)', [blocked]);
+    await streak(long, 30, 0);
+    await streak(week, 8, 1);
+    await streak(short, 5, 0);
+    await streak(broken, 22, 3);
+    await streak(blocked, 8, 0);
+    await streak(paid, 14, 0);
+    const paidStart = await firstDay(14);
+    await pool.query(`insert into "capLedger"("userId", reason, "sourceKey", amount) values ($1, 'streak', $2, 20)`, [paid, `${paidStart}:7`]);
+
+    await pool.query(sql);
+    await pool.query(sql);
+
+    const longStart = await firstDay(30);
+    expect(await rows(long)).toEqual([{ sourceKey: `${longStart}:14`, amount: 20 }, { sourceKey: `${longStart}:7`, amount: 20 }, { sourceKey: `${longStart}:30`, amount: 60 }]);
+    expect(await rows(week)).toEqual([{ sourceKey: `${await firstDay(8)}:7`, amount: 20 }]);
+    expect(await rows(paid)).toEqual([{ sourceKey: `${paidStart}:14`, amount: 20 }, { sourceKey: `${paidStart}:7`, amount: 20 }]);
+    for (const id of [short, broken, blocked]) expect(await rows(id)).toEqual([]);
+  } finally {
+    await pool.query('delete from "user" where id = any($1::text[])', [everyone]);
+  }
+});
