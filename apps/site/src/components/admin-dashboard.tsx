@@ -1,5 +1,5 @@
 import type { AdminQueues } from '@/lib/admin-queues';
-import type { AdminAppMetrics, PlatformCounts } from '@/lib/admin-dashboard-data';
+import type { AdminAppMetrics, AdminFirstDayMetrics, PlatformCounts } from '@/lib/admin-dashboard-data';
 import { CONTENT_REPORT_KINDS, REPORT_REASONS } from '@/lib/profile-report-fields';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
@@ -102,6 +102,7 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
           <div><dt>Топ лайков</dt><dd className="admin-summary-wrap">{metrics.topSwipe ? `${metrics.topSwipe.brand}, ${flavorName(metrics.topSwipe.flavor)} · ${number(metrics.topSwipe.likes)}` : 'Пока нет'}</dd></div>
         </dl></section>
       </div>
+      {data.firstDay && <FirstDayMetrics firstDay={data.firstDay} />}
       {data.apps && <AppMetrics apps={data.apps} />}
     </>}
     {tab === 'campaigns' && campaignPanel}
@@ -160,6 +161,21 @@ const platformLine = (counts: PlatformCounts) => PLATFORMS.map(item => `${item.l
  * «Приложения»: signed-in members by the platform they came from (the apps mark their User-Agent, the Mini App says
  * so itself) — members in the apps by day, today, 7 and 30 days, and devices with push. Guests are not counted.
  */
+function FirstDayMetrics({ firstDay }: { firstDay: AdminFirstDayMetrics }) {
+  const share = firstDay.members ? Math.round(firstDay.acted / firstDay.members * 100) : 0;
+  return <section className="admin-data-panel" aria-labelledby="admin-first-day-title"><div className="admin-panel-heading"><h2 id="admin-first-day-title">Первые сутки новичков</h2><span>30 дней</span></div>
+    <dl className="admin-summary-list">
+      <div><dt>Новичков</dt><dd>{number(firstDay.members)}</dd></div>
+      <div><dt>Сделали действие в первые сутки</dt><dd>{number(firstDay.acted)}{firstDay.members > 0 && ` · ${share}%`}</dd></div>
+      <div><dt>Крутили Банкомат</dt><dd>{number(firstDay.pulled)}</dd></div>
+      <div><dt>Свайпали в дейтинге</dt><dd>{number(firstDay.swiped)}</dd></div>
+      <div><dt>Отметили банку или оценили напиток</dt><dd>{number(firstDay.drank)}</dd></div>
+      <div><dt>Написали запись</dt><dd>{number(firstDay.posted)}</dd></div>
+    </dl>
+    <p className="admin-chart-note">Зарегистрировались за 30 дней, без заблокированных и без тех, у кого первые сутки ещё идут{firstDay.fresh > 0 && ` (таких сейчас ${number(firstDay.fresh)})`}. Удалённые записи не считаются.</p>
+  </section>;
+}
+
 function AppMetrics({ apps }: { apps: AdminAppMetrics }) {
   const inApps = (day: PlatformCounts) => day.ios + day.android;
   const max = Math.max(1, ...apps.byDay.map(inApps));
