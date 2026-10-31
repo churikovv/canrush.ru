@@ -155,6 +155,21 @@ button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-w
 .wall-composer-pill:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 
 /* «Достал из Банкомата»: карточка банки в цвете редкости (эпическая — фиолетовая, легендарная — золото). */
+/* Статья из «Новостей»: своя плитка, а лайк — сердце с числом, как у записей ленты. */
+.feed-article { display: grid; overflow: hidden; border-radius: 18px; background: var(--color-subtle); color: inherit; text-decoration: none; }
+.feed-article-cover { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.feed-article-body { display: grid; gap: 6px; min-width: 0; padding: 12px 14px 14px; }
+.feed-article-body strong { color: var(--color-ink); font-size: 1.0625rem; line-height: 1.3; overflow-wrap: anywhere; }
+.feed-article:hover strong { color: var(--color-brand); }
+.feed-article-summary { display: -webkit-box; overflow: hidden; color: var(--color-muted-strong); font-size: .9375rem; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.feed-article-body small { color: var(--color-muted-strong); font-size: .8125rem; }
+.feed-article-foot { display: flex; align-items: center; }
+.feed-article-foot .article-like { display: inline-flex; align-items: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--color-muted-strong); font: inherit; font-size: .9375rem; font-weight: 700; font-variant-numeric: tabular-nums; cursor: pointer; }
+.feed-article-foot .article-like svg { color: #e5484d; }
+.feed-article-foot .article-like[aria-pressed="true"] { color: #e5484d; }
+.feed-article-foot .article-like.is-own { cursor: default; }
+.feed-article-foot .article-like:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; border-radius: 8px; }
+
 .feed-gacha { margin: 0 -14px -14px; padding: 14px; content-visibility: auto; contain-intrinsic-size: auto 124px; }
 .feed-gacha-card { display: flex; align-items: center; gap: 16px; padding: 10px 16px 10px 10px; border-radius: 18px; }
 .feed-gacha-drink { display: flex; flex: 1; align-items: center; gap: 14px; min-width: 0; color: inherit; text-decoration: none; }

@@ -1,5 +1,5 @@
 import Link from '@/components/navigation-progress';
-import { FeedGachaEvent, FeedReviewsEvent, FeedTierListEvent } from '@/components/feed-activity';
+import { FeedArticleEvent, FeedGachaEvent, FeedReviewsEvent, FeedTierListEvent } from '@/components/feed-activity';
 import { WallComposer } from '@/components/profile-community-controls';
 import { PagePagination } from '@/components/page-pagination';
 import { RankUpCard } from '@/components/rank-up-card';
@@ -41,6 +41,7 @@ export async function renderFeedItems(items: FeedItem[], viewerId: string | null
   return items.map(item => item.kind === 'rank-up' ? <RankUpCard key={item.rankUp.id} rankUp={item.rankUp} />
     : item.kind === 'tierlist' ? <FeedTierListEvent key={`tierlist-${item.tierList.id}`} list={item.tierList} products={tierProducts} viewer={tierViewer} />
     : item.kind === 'gacha' ? <FeedGachaEvent key={`gacha-${item.pull.key}`} pull={item.pull} covers={covers} />
+    : item.kind === 'article' ? <FeedArticleEvent key={`article-${item.article.id}`} article={item.article} viewerId={viewerId} />
     : item.kind === 'reviews' ? <FeedReviewsEvent key={`reviews-${item.group.key}`} group={item.group} covers={covers} votes={reviewVotes} viewerId={viewerId} />
     : <WallPost key={item.post.id} post={item.post} owner={{ username: item.post.ownerUsername, name: item.post.ownerName, avatarId: item.post.ownerAvatarId }} interaction={interactions.get(item.post.id)} canDelete={viewerId === item.post.userId || viewerId === item.post.profileId} canEdit={viewerId === item.post.userId} />);
 }

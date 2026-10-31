@@ -6,12 +6,14 @@ if (new URL(url).pathname !== '/canrush_site_test') throw new Error('Test DB onl
 const pool = new Pool({ connectionString: url, max: 4 });
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
 const { getFeed, setFollowing } = await import('../src/lib/profile-community');
+const { setArticleLike } = await import('../src/lib/articles');
 
 const [author, follower, blocker] = [randomUUID(), randomUUID(), randomUUID()];
 const brand = `Лента ${randomUUID().slice(0, 8)}`;
 type Items = Awaited<ReturnType<typeof getFeed>>['items'];
-// Only this test's events: tier lists and review days by its author.
+// Only this test's events: tier lists, articles and review days by its author.
 const events = (items: Items) => items.flatMap(item => item.kind === 'tierlist' && item.tierList.userId === author ? [`tierlist:${item.tierList.title}`]
+  : item.kind === 'article' && item.article.userId === author ? [`article:${item.article.title}`]
   : item.kind === 'reviews' && item.group.key.startsWith(`${author}|`) ? [`reviews:${item.group.reviews.map(review => review.flavor).join(',')}`] : []);
 
 beforeAll(async () => {
@@ -20,6 +22,9 @@ beforeAll(async () => {
   await pool.query(`insert into "tierList"("userId",slug,title,status,"publishedAt") values($1,$2,'Мой топ','published',now() - interval '1 minute'),($1,$3,'Черновик','draft',null)`,
     [author, `feed-${randomUUID()}`, `feed-${randomUUID()}`]);
   await pool.query(`insert into review("userId",brand,flavor,design,taste,text,"createdAt") values($1,$2,'apple',8,9,'Яблоко',now()),($1,$2,'mango',6,7,'Манго',now() - interval '10 seconds')`, [author, brand]);
+  await pool.query(`insert into article("authorId", title, blocks, status, "publishedAt") values
+    ($1, 'Обзор новинок', $2, 'published', now() - interval '2 minutes'), ($1, 'Черновик', $2, 'draft', null), ($1, 'На проверке', $2, 'pending', null)`,
+    [author, JSON.stringify([{ id: 'p1', type: 'paragraph', text: 'Попробовал всё, что вышло этой осенью.' }])]);
   await pool.query(`insert into "memberBlock"("blockerId","blockedId") values($1,$2)`, [blocker, author]);
 });
 afterAll(async () => {
@@ -29,13 +34,24 @@ afterAll(async () => {
 });
 
 it('shows published tier lists and a day of reviews as one event, newest first', async () => {
-  expect(events((await getFeed(null)).items)).toEqual(['reviews:apple,mango', 'tierlist:Мой топ']);
+  expect(events((await getFeed(null)).items)).toEqual(['reviews:apple,mango', 'tierlist:Мой топ', 'article:Обзор новинок']);
+});
+
+it('shows only published articles, with the lead, reading time and the like shared with the article page', async () => {
+  const find = async (viewer: string | null) => (await getFeed(viewer)).items.flatMap(item => item.kind === 'article' && item.article.userId === author ? [item.article] : [])[0]!;
+  const before = await find(follower);
+  expect(before).toMatchObject({ title: 'Обзор новинок', summary: 'Попробовал всё, что вышло этой осенью.', minutes: 1, likes: 0, liked: false });
+  await setArticleLike(follower, before.id, true);
+  expect(await find(follower)).toMatchObject({ likes: 1, liked: true });
+  expect(await find(null)).toMatchObject({ likes: 1, liked: false });
+  await setArticleLike(follower, before.id, false);
+  expect(await find(follower)).toMatchObject({ likes: 0, liked: false });
 });
 
 it('keeps events out of «Сохранённые», follows «Подписки» and hides blocked authors', async () => {
   expect(events((await getFeed(follower, 'saved')).items)).toEqual([]);
   expect(events((await getFeed(follower, 'following')).items)).toEqual([]);
   await setFollowing(follower, author, true);
-  expect(events((await getFeed(follower, 'following')).items)).toEqual(['reviews:apple,mango', 'tierlist:Мой топ']);
+  expect(events((await getFeed(follower, 'following')).items)).toEqual(['reviews:apple,mango', 'tierlist:Мой топ', 'article:Обзор новинок']);
   expect(events((await getFeed(blocker)).items)).toEqual([]);
 });

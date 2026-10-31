@@ -1,3 +1,4 @@
+import { ArticleLikeButton } from '@/components/article-actions';
 import { RarityChip, RarityEmblem, RarityShine } from '@/components/rarity-badge';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
@@ -8,7 +9,7 @@ import type { ReviewInteraction } from '@/lib/review-discussions';
 import { displayName } from '@/components/wall-post';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { profileTagKey, profileTagLabel } from '@/lib/profile-achievements';
-import type { FeedGachaRow, FeedReviewGroup } from '@/lib/profile-community';
+import type { FeedArticleRow, FeedGachaRow, FeedReviewGroup } from '@/lib/profile-community';
 import type { TierListProduct, TierListSummary } from '@/lib/tier-list-types';
 
 const eventTime = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' });
@@ -37,6 +38,23 @@ function EventHead({ author, action, at }: { author: EventAuthor; action: string
       <p className="feed-event-action">{action} · <time dateTime={at.toISOString()}>{eventTime.format(at)}</time></p>
     </div>
   </header>;
+}
+
+/** «Опубликовал статью»: обложка, заголовок и лид ведут на статью, лайк общий с её страницей. */
+export function FeedArticleEvent({ article, viewerId }: { article: FeedArticleRow; viewerId: string | null }) {
+  return <article className="feed-event" id={`feed-article-${article.id}`}>
+    <EventHead author={article} action="опубликовал статью" at={article.publishedAt} />
+    <Link className="feed-article" href={`/news/${article.id}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- served from the database */}
+      {article.coverId && <img className="feed-article-cover" src={`/api/article-images/${article.coverId}?thumb`} alt="" loading="lazy" />}
+      <span className="feed-article-body">
+        <strong>{article.title}</strong>
+        {article.summary && <span className="feed-article-summary">{article.summary}</span>}
+        <small>{article.minutes} мин чтения</small>
+      </span>
+    </Link>
+    <div className="feed-article-foot"><ArticleLikeButton id={article.id} likes={article.likes} liked={article.liked} own={viewerId === article.userId} signedIn={Boolean(viewerId)} /></div>
+  </article>;
 }
 
 /** «Опубликовал тирлист»: the same card as in the tier lists section, with its likes. */
