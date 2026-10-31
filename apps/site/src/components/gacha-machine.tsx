@@ -4,15 +4,21 @@ import Image from 'next/image';
 import { useEffect, useRef, useState, useTransition, type ReactNode } from 'react';
 import Link from '@/components/navigation-progress';
 import { AvatarFrame } from '@/components/avatar-frame';
-import { pullAction } from '@/app/gacha/actions';
+import { claimQuestAction, pullAction } from '@/app/gacha/actions';
+import { craftSpinAction } from '@/app/gacha/battle/actions';
+import { ActionToast } from '@/components/action-toast';
+import { GachaQuests } from '@/components/gacha-quests';
+import { PAID_WINS_PER_DAY, SPIN_RING_COST, WIN_RINGS, ringsLabel } from '@/lib/battle-fields';
+import { questsReady, type QuestClaim } from '@/lib/gacha-quests-fields';
 import { PULL_COST, TEN_PULL_COST, pityLeft, type GachaScene, type Rarity } from '@/lib/gacha-fields';
 import type { GachaState, PullResult, PulledCard } from '@/lib/gacha';
-import { CapIcon, ShardIcon, SpinIcon } from '@/components/gacha-icons';
+import { CapIcon, RingIcon, ShardIcon, SpinIcon } from '@/components/gacha-icons';
 import { RarityChip, RarityShine } from '@/components/rarity-badge';
 
 export { CapIcon, ShardIcon } from '@/components/gacha-icons';
 
-const SPIN_MS = 1100;
+/** The toast's trigger before the first answer. */
+const NO_NOTICE = {};
 
 /** Одна выпавшая банка: цвет рамки — редкость, «Новая!» — первая такая в альбоме. */
 export function GachaCard({ card, index = 0 }: { card: PulledCard; index?: number }) {
@@ -35,6 +41,18 @@ function AlbumIcon() {
   </svg>;
 }
 
+function BattleIcon() {
+  return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2" />
+  </svg>;
+}
+
+function QuestIcon() {
+  return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="4.5" y="4.5" width="15" height="17" rx="3" fill="currentColor" fillOpacity=".25" /><path d="M9 2.5h6v4H9z" fill="currentColor" /><path d="m8.5 14 2.5 2.5 4.5-5" />
+  </svg>;
+}
+
 /** A chunky game button: a raised face on a darker base that sinks when pressed; the price sits in its own chip. */
 function GameButton({ tone, label, price, disabled, onClick }: { tone: 'orange' | 'violet'; label: string; price: ReactNode; disabled: boolean; onClick: () => void }) {
   return <button type="button" className="game-btn" data-tone={tone} disabled={disabled} onClick={onClick}>
@@ -45,10 +63,10 @@ function GameButton({ tone, label, price, disabled, onClick }: { tone: 'orange' 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * The season's scene rendered in Blender: the machine idling on a loop, and on a pull the dispense clip (the can drops,
+ * The scene rendered in Blender: the machine idling on a loop, and on a pull the dispense clip (the can drops,
  * the burst) on top of it. `play` resolves when the clip ends (or after a safety timeout), so the cards open after it.
  */
-function useScene(scene: GachaScene | null) {
+function useScene(scene: GachaScene) {
   const idle = useRef<HTMLVideoElement>(null);
   const dispense = useRef<HTMLVideoElement>(null);
   const [dispensing, setDispensing] = useState(false);
@@ -56,7 +74,7 @@ function useScene(scene: GachaScene | null) {
   useEffect(() => { if (reducedMotion()) idle.current?.pause(); }, []);
   function play(): Promise<void> {
     const video = dispense.current;
-    if (!scene || !video || reducedMotion()) return Promise.resolve();
+    if (!video || reducedMotion()) return Promise.resolve();
     return new Promise(resolve => {
       let done = false;
       const finish = () => {
@@ -77,7 +95,7 @@ function useScene(scene: GachaScene | null) {
   return { idle, dispense, dispensing, play };
 }
 
-/** Where the can lands in the tray, as a share of the video frame (render_halloween.py's camera). */
+/** Where the can lands in the tray, as a share of the video frame (render_scene.py's camera). */
 const TRAY = { x: 0.5, y: 0.84 };
 
 /**
@@ -131,10 +149,10 @@ const best = (cards: PulledCard[]): Rarity => cards.reduce<Rarity>((top, card) =
  * Автомат: баланс крышек, гарант, «Крутить» (бесплатно раз в день, потом за крышки) и «×10». Крутка — server action,
  * автомат трясётся, пока ждёт ответ и ещё чуть-чуть, потом банки открываются по одной.
  */
-export function GachaMachine({ initial, signedIn, albumHref, scene = null, seasonTitle = null, rules = null }: {
-  initial: GachaState | null; signedIn: boolean; albumHref: string | null; scene?: GachaScene | null; seasonTitle?: string | null;
-  /** The odds and caps sections (server-rendered): shown in the «?» game window while a scene runs */
-  rules?: ReactNode;
+export function GachaMachine({ initial, signedIn, albumHref, scene, seasonTitle = null, rules }: {
+  initial: GachaState | null; signedIn: boolean; albumHref: string | null; scene: GachaScene; seasonTitle?: string | null;
+  /** The odds and caps sections (server-rendered): shown in the «?» game window */
+  rules: ReactNode;
 }) {
   const [state, setState] = useState(initial);
   const [cards, setCards] = useState<PulledCard[] | null>(null);
@@ -142,6 +160,12 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
   const [error, setError] = useState<string>();
   const [spinning, setSpinning] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [claiming, startClaim] = useTransition();
+  const [notice, setNotice] = useState<{ text: string; tone: 'success' | 'error'; host: HTMLDialogElement | null } | null>(null);
+  // Kept in state, not a ref: the toast is portalled into the open window, the only place above its backdrop.
+  const [questsWindow, setQuestsWindow] = useState<HTMLDialogElement | null>(null);
+  const [ringsWindow, setRingsWindow] = useState<HTMLDialogElement | null>(null);
+  const [crafting, startCraft] = useTransition();
   const result = useRef<HTMLDivElement>(null);
   const { idle: idleRef, dispense: dispenseRef, dispensing, play: playDispense } = useScene(scene);
   const sceneBox = useRef<HTMLDivElement>(null);
@@ -156,14 +180,11 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
     setError(undefined);
     setCards(null);
     setSpinning(true);
-    const started = Date.now();
-    // With a scene the dispense clip is the wait; without one the CSS machine shakes for a moment.
+    // The dispense clip is the wait.
     const clip = playDispense();
     startTransition(async () => {
       const [response] = await Promise.all([pullAction(times), clip]);
-      const wait = scene || reducedMotion() ? 0 : Math.max(0, SPIN_MS - (Date.now() - started));
-      await new Promise(resolve => setTimeout(resolve, wait));
-      if (!('error' in response) && scene && !reducedMotion() && sceneBox.current && sceneView.current && collection.current) {
+      if (!('error' in response) && !reducedMotion() && sceneBox.current && sceneView.current && collection.current) {
         await flyToCollection(sceneBox.current, sceneView.current, collection.current, response.cards);
       }
       setSpinning(false);
@@ -174,15 +195,34 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
     });
   }
 
+  function claim(quest: QuestClaim) {
+    startClaim(async () => {
+      const response = await claimQuestAction(quest);
+      if ('error' in response) { setNotice({ text: response.error, tone: 'error', host: questsWindow }); return; }
+      setState(response.state);
+      setNotice({ text: `+${response.reward} крышек`, tone: 'success', host: questsWindow });
+    });
+  }
+
+  function craftSpin() {
+    startCraft(async () => {
+      const response = await craftSpinAction();
+      if ('error' in response) { setNotice({ text: response.error, tone: 'error', host: ringsWindow }); return; }
+      setState(response.state);
+      setNotice({ text: 'Подарочная крутка собрана', tone: 'success', host: ringsWindow });
+    });
+  }
+
   const busy = pending || spinning;
   const left = state ? pityLeft(state.pity) : null;
   const canOne = Boolean(state && (state.free || state.gifted > 0 || state.caps >= PULL_COST));
   const canTen = Boolean(state && state.caps >= TEN_PULL_COST);
   const top = cards ? best(cards) : null;
+  const quests = state && !state.blocked ? state.quests : null;
+  const ready = quests ? questsReady(quests) : 0;
 
   const season = state?.banner ?? null;
   const rulesDialog = useRef<HTMLDialogElement>(null);
-  const albumLink = albumHref && state && <Link className="gacha-album-link" href={albumHref}>Мой альбом · {state.cards} {state.cards % 10 === 1 && state.cards % 100 !== 11 ? 'карточка' : [2, 3, 4].includes(state.cards % 10) && ![12, 13, 14].includes(state.cards % 100) ? 'карточки' : 'карточек'} →</Link>;
   const results = <div ref={result} aria-live="polite">
     {cosmetic && !spinning && <div className="gacha-cosmetic" role="status">
       <span className="gacha-cosmetic-avatar" aria-hidden="true"><span /><AvatarFrame frame="pumpkin" /></span>
@@ -195,7 +235,7 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
     </div>}
   </div>;
 
-  if (scene) return <section className="gacha gacha-game" aria-labelledby="gacha-title" data-season={season?.key}>
+  return <section className="gacha gacha-game" aria-labelledby="gacha-title" style={{ '--scene-ground': scene.ground } as React.CSSProperties}>
     <h1 id="gacha-title" className="sr-only">{seasonTitle ?? 'Банкомат'}</h1>
     <div ref={sceneBox} className="gacha-scene" data-dispensing={dispensing || undefined}>
       <div ref={sceneView} className="gacha-scene-view" style={{ aspectRatio: `${scene.width} / ${scene.height}` }}>
@@ -203,15 +243,28 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
         <video ref={dispenseRef} className="gacha-video gacha-video-dispense" src={scene.dispense} muted playsInline preload="auto" aria-hidden="true" />
       </div>
       <div className="gacha-hud gacha-hud-top">
-        <div className="gacha-hud-title"><span aria-hidden="true">🎃</span>{seasonTitle ?? 'Банкомат'}{season && <small>до {season.ends}</small>}</div>
+        <div className="gacha-hud-left">
+          <div className="gacha-hud-title">{seasonTitle && <span aria-hidden="true">🎃</span>}{seasonTitle ?? 'Банкомат'}{season && <small>до {season.ends}</small>}</div>
+          {!state?.blocked && <Link className="game-battle" href="/gacha/battle" data-active={state?.inBattle || undefined} aria-label={state?.inBattle ? 'Вернуться в бой' : 'Битва банок'}>
+            <span className="game-round is-battle"><BattleIcon /></span>
+            {state?.inBattle && <span className="game-battle-flag" aria-hidden="true">Вернуться</span>}
+          </Link>}
+        </div>
         <div className="gacha-hud-side">
           {state && <div className="gacha-hud-chips">
             <span className="game-chip" aria-label={`Крышек: ${state.caps}`}><CapIcon size={20} />{state.caps}</span>
             <span className="game-chip" aria-label={`Осколков: ${state.shards}`}><ShardIcon size={17} />{state.shards}</span>
+            {!state.blocked && <button type="button" className="game-chip is-rings" data-ready={state.rings >= SPIN_RING_COST || undefined} onClick={() => ringsWindow?.showModal()} aria-haspopup="dialog" aria-label={`Колечек: ${state.rings}. Собрать крутку`}><RingIcon size={18} />{state.rings}</button>}
             {state.gifted > 0 && <span className="game-chip" aria-label={`Подарочных круток: ${state.gifted}`}><SpinIcon size={18} />{state.gifted}</span>}
           </div>}
           <div className="gacha-hud-icons">
             <button type="button" className="game-round" onClick={() => rulesDialog.current?.showModal()} aria-haspopup="dialog" aria-label="Условия: шансы, гарант и крышки"><span aria-hidden="true">?</span></button>
+            {quests && <span className="game-quests">
+              <button type="button" className="game-round is-quests" onClick={() => questsWindow?.showModal()} aria-haspopup="dialog"
+                aria-label={`Задания дня: ${ready ? `можно забрать наград — ${ready}` : `сделано ${quests.claimed} из ${quests.rows.length}`}`}><QuestIcon /></button>
+              {ready > 0 ? <span className="game-quests-count" data-ready="" aria-hidden="true">{ready}</span>
+                : quests.claimed < quests.rows.length ? <span className="game-quests-count" aria-hidden="true">{quests.claimed}/{quests.rows.length}</span> : null}
+            </span>}
           </div>
         </div>
       </div>
@@ -229,7 +282,7 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
       </div>
     </div>
     {(error || (state && !state.free && !canOne)) && <div className="gacha-under">
-      {state && !state.free && !canOne && <p className="gacha-hint">Бесплатная крутка вернётся завтра. Откуда берутся крышки — в «?».</p>}
+      {state && !state.free && !canOne && <p className="gacha-hint">Бесплатная крутка вернётся завтра. Крышки дают задания дня, остальное — в «?».</p>}
       {error && <p className="field-error" role="alert">{error}</p>}
     </div>}
     <dialog ref={rulesDialog} className="game-dialog" aria-labelledby="gacha-rules-title" onClick={event => { if (event.target === event.currentTarget) event.currentTarget.close(); }}>
@@ -249,49 +302,41 @@ export function GachaMachine({ initial, signedIn, albumHref, scene = null, seaso
         </div>
       </div>
     </dialog>
-    {results}
-  </section>;
-
-  return <section className="gacha" aria-labelledby="gacha-title" data-season={season?.key}>
-    {season && <div className="gacha-banner">
-      <span className="gacha-banner-icon" aria-hidden="true">🎃</span>
-      <div><strong>{season.title}</strong><span>{season.subtitle} До {season.ends}.</span>
-        {season.cosmetic && <small>{season.cosmetic.owned ? `${season.cosmetic.title} — у вас уже есть.` : `${season.cosmetic.title}: шанс ${season.cosmetic.chance}% за крутку, гарант через ${season.cosmetic.left}.`}</small>}
+    {quests && state && <dialog ref={setQuestsWindow} className="game-dialog" aria-labelledby="gacha-quests-title" onClick={event => {
+      // A task's link leaves the page, and a window in the top layer would stay over the loading screen.
+      if (event.target === event.currentTarget || (event.target as Element).closest('a')) event.currentTarget.close();
+    }}>
+      <div className="game-dialog-panel">
+        <header className="game-dialog-head">
+          <h2 id="gacha-quests-title">Задания дня</h2>
+          <button type="button" className="game-round is-close" onClick={() => questsWindow?.close()} aria-label="Закрыть"><span aria-hidden="true">×</span></button>
+        </header>
+        <div className="game-dialog-body">
+          <div className="quests-sum"><span>Сделано {quests.claimed} из {quests.rows.length}</span><span className="game-chip" aria-label={`Крышек: ${state.caps}`}><CapIcon size={20} />{state.caps}</span></div>
+          <GachaQuests board={quests} busy={claiming} onClaim={claim} />
+        </div>
       </div>
-    </div>}
-    <div className="gacha-stage" data-spinning={spinning || undefined} data-burst={!spinning && top ? top : undefined}>
-      <div className="gacha-machine" aria-hidden="true">
-        <span className="gacha-machine-top">CanRush</span>
-        <span className="gacha-machine-glass">
-          {Array.from({ length: 6 }, (_, index) => <span key={index} className="gacha-machine-can" style={{ '--can': index } as React.CSSProperties} />)}
-        </span>
-        <span className="gacha-machine-panel"><span /><span /><span /></span>
-        <span className="gacha-machine-slot"><span className="gacha-machine-drop" /></span>
+    </dialog>}
+    <ActionToast message={notice?.text} tone={notice?.tone} trigger={notice ?? NO_NOTICE} container={notice?.host} />
+    {state && !state.blocked && <dialog ref={setRingsWindow} className="game-dialog" aria-labelledby="gacha-rings-title" onClick={event => {
+      if (event.target === event.currentTarget || (event.target as Element).closest('a')) event.currentTarget.close();
+    }}>
+      <div className="game-dialog-panel">
+        <header className="game-dialog-head">
+          <h2 id="gacha-rings-title">Колечки</h2>
+          <button type="button" className="game-round is-close" onClick={() => ringsWindow?.close()} aria-label="Закрыть"><span aria-hidden="true">×</span></button>
+        </header>
+        <div className="game-dialog-body">
+          <div className="rings-craft">
+            <span className="rings-craft-count"><RingIcon size={34} />{state.rings} из {SPIN_RING_COST}</span>
+            <span className="rings-craft-bar" aria-hidden="true"><span style={{ transform: `scaleX(${Math.min(1, state.rings / SPIN_RING_COST)})` }} /></span>
+            <p>{SPIN_RING_COST} колечек — одна подарочная крутка. Победа в Битве банок даёт {ringsLabel(WIN_RINGS)}, оплачиваются первые {PAID_WINS_PER_DAY} побед за день.</p>
+            <button type="button" className="quest-claim rings-craft-button" disabled={crafting || state.rings < SPIN_RING_COST} onClick={craftSpin}>{state.rings < SPIN_RING_COST ? `Ещё ${ringsLabel(SPIN_RING_COST - state.rings)}` : 'Собрать крутку'}</button>
+            <Link className="rings-craft-link" href="/gacha/battle">В бой</Link>
+          </div>
+        </div>
       </div>
-      <div className="gacha-copy">
-        <h1 id="gacha-title">{season ? season.title : 'Банкомат'}</h1>
-        <p>Крутите автомат — выпадают карточки настоящих банок из каталога. Чем реже банку найти в магазинах, тем она ценнее.</p>
-        {state && <div className="gacha-wallet">
-          <span className="gacha-balances">
-            <span className="gacha-balance" aria-label={`Крышек: ${state.caps}`}><CapIcon size={22} />{state.caps}</span>
-            <span className="gacha-balance is-shards" aria-label={`Осколков: ${state.shards}`}><ShardIcon size={18} />{state.shards}</span>
-            {state.gifted > 0 && <span className="gacha-balance" aria-label={`Подарочных круток: ${state.gifted}`}><SpinIcon size={20} />{state.gifted}</span>}
-          </span>
-          {left && <span className="gacha-pity">Гарант: эпик через {left.epic} · легенда через {left.legendary}</span>}
-        </div>}
-        {signedIn && state ? <div className="gacha-actions">
-          <button className="community-button gacha-pull" type="button" disabled={busy || !canOne || state.blocked} onClick={() => pull(1)}>
-            {busy ? 'Крутим…' : state.free ? 'Крутить бесплатно' : state.gifted > 0 ? `Крутить · подарок ${state.gifted}` : <>Крутить · <CapIcon size={16} />{PULL_COST}</>}
-          </button>
-          <button className="community-button community-button-secondary gacha-pull-ten" type="button" disabled={busy || !canTen || state.blocked} onClick={() => pull(10)}>
-            ×10 · <CapIcon size={16} />{TEN_PULL_COST}
-          </button>
-        </div> : <Link className="community-button gacha-pull" href="/sign-in">Войти и крутить</Link>}
-        {state && !state.free && !canOne && <p className="gacha-hint">Бесплатная крутка вернётся завтра. Крышки дают банка в трекере, отзывы и тирлисты — ниже, как именно.</p>}
-        {error && <p className="field-error" role="alert">{error}</p>}
-        {albumLink}
-      </div>
-    </div>
+    </dialog>}
     {results}
   </section>;
 }

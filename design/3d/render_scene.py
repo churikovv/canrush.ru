@@ -1,7 +1,8 @@
-"""The vending machine on the Halloween background: night lighting, a soft shadow, bloom, the background composited in.
+"""The vending machine on a painted night background: lighting, a soft shadow, bloom, the background composited in.
 
-Run: Blender -b vending-machine.blend --python render_halloween.py -- <out_dir> [--still-only]
-Writes halloween-still.png and, without --still-only, halloween-idle.mp4 and halloween-dispense.mp4.
+Run: Blender -b vending-machine.blend --python render_scene.py -- <out_dir> [--scene night|halloween] [--still-only]
+Reads <scene>-bg.png from <out_dir>, writes <scene>-still.png and, without --still-only, <scene>-idle.mp4 and
+<scene>-dispense.mp4. A background must be 1000×972: the machine stands where its path is in both.
 """
 import math
 import os
@@ -13,24 +14,37 @@ from mathutils import Quaternion, Vector
 
 OUT = sys.argv[sys.argv.index('--') + 1]
 STILL_ONLY = '--still-only' in sys.argv
-BG = os.path.join(OUT, 'halloween-bg.png')
+NAME = sys.argv[sys.argv.index('--scene') + 1] if '--scene' in sys.argv else 'night'
+BG = os.path.join(OUT, f'{NAME}-bg.png')
 scene = bpy.context.scene
 
+# Lights follow the background: name, location, energy, size, colour.
+LIGHTS = {
+    # A cold moon behind on the right (a rim on the machine), warm pumpkins low on the left, a violet fill.
+    'halloween': (
+        ('Moon', (3.2, 3.0, 4.2), 900, 1.2, (0.62, 0.78, 1.0)),
+        ('Front', (-1.6, -4.0, 2.6), 160, 2.5, (0.45, 0.4, 1.0)),
+        ('Pumpkins', (-2.6, -1.6, 0.4), 220, 0.8, (1.0, 0.45, 0.08)),
+        ('VioletLeft', (-2.6, 1.2, 1.8), 220, 1.5, (0.55, 0.25, 1.0)),
+    ),
+    # The big moon high on the right, the cabin's warm windows low on the right, the violet sky on the left.
+    'night': (
+        ('Moon', (3.2, 3.0, 4.2), 1100, 1.2, (0.55, 0.85, 1.0)),
+        ('Front', (-1.6, -4.0, 2.6), 160, 2.5, (0.42, 0.42, 1.0)),
+        ('Cabin', (2.6, -2.2, 0.5), 120, 0.8, (1.0, 0.55, 0.15)),
+        ('VioletLeft', (-2.6, 1.2, 1.8), 240, 1.5, (0.45, 0.25, 1.0)),
+    ),
+}[NAME]
+
 # ---------------------------------------------------------------- night lighting
-# The background's light: a cold moon behind on the right (a rim on the machine), warm pumpkins low on the left,
-# a dim violet world for the rest. The machine's own neon stays the brightest thing in the frame.
+# The background's light, and a dim violet world for the rest. The machine's own neon stays the brightest thing in the frame.
 world = bpy.data.worlds.new('Night')
 world.use_nodes = True
 background = world.node_tree.nodes['Background']
 background.inputs['Color'].default_value = (0.09, 0.05, 0.32, 1)
 background.inputs['Strength'].default_value = 0.6
 scene.world = world
-for name, loc, energy, size, color in (
-    ('Moon', (3.2, 3.0, 4.2), 900, 1.2, (0.62, 0.78, 1.0)),
-    ('Front', (-1.6, -4.0, 2.6), 160, 2.5, (0.45, 0.4, 1.0)),
-    ('Pumpkins', (-2.6, -1.6, 0.4), 220, 0.8, (1.0, 0.45, 0.08)),
-    ('VioletLeft', (-2.6, 1.2, 1.8), 220, 1.5, (0.55, 0.25, 1.0)),
-):
+for name, loc, energy, size, color in LIGHTS:
     light = bpy.data.lights.new(name, 'AREA')
     light.energy, light.size, light.color = energy, size, color
     obj = bpy.data.objects.new(name, light)
@@ -79,7 +93,7 @@ scene.render.engine = 'BLENDER_EEVEE'
 scene.render.resolution_x, scene.render.resolution_y = 1000, 972
 scene.render.film_transparent = True
 scene.view_settings.view_transform = 'Standard'
-tree = bpy.data.node_groups.new('HalloweenComp', 'CompositorNodeTree')
+tree = bpy.data.node_groups.new('SceneComp', 'CompositorNodeTree')
 tree.interface.new_socket('Image', in_out='OUTPUT', socket_type='NodeSocketColor')
 layers = tree.nodes.new('CompositorNodeRLayers')
 bg_node = tree.nodes.new('CompositorNodeImage')
@@ -111,7 +125,7 @@ def play(clip):
 
 play('Idle')
 scene.frame_set(0)
-scene.render.filepath = os.path.join(OUT, 'halloween-still.png')
+scene.render.filepath = os.path.join(OUT, f'{NAME}-still.png')
 bpy.ops.render.render(write_still=True)
 print('STILL', scene.render.filepath)
 
@@ -274,12 +288,12 @@ if not STILL_ONLY:
         if clip == 'Dispense':
             add_dispense_vfx()
         play(clip)
-        frames = os.path.join(OUT, 'frames-halloween', clip)
+        frames = os.path.join(OUT, f'frames-{NAME}', clip)
         os.makedirs(frames, exist_ok=True)
         scene.frame_start, scene.frame_end = 0, last - 1 if loops > 1 else last
         scene.render.filepath = os.path.join(frames, '')
         bpy.ops.render.render(animation=True)
-        video = os.path.join(OUT, f'halloween-{clip.lower()}.mp4')
+        video = os.path.join(OUT, f'{NAME}-{clip.lower()}.mp4')
         subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-stream_loop', str(loops - 1), '-framerate', str(scene.render.fps),
                         '-start_number', '0', '-i', os.path.join(frames, '%04d.png'), '-vf', 'scale=1000:-2',
                         '-pix_fmt', 'yuv420p', '-vcodec', 'libx264', '-crf', '19', video], check=True)

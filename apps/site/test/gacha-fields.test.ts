@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GACHA_BANNERS, PITY_EPIC, PITY_LEGENDARY, RARITY_ODDS, activeBanner, isSeasonStar, nextPity, pickFromPool, pityLeft, rarityOf, rollCosmetic, rollRarity, type PityState, type Rarity } from '../src/lib/gacha-fields';
+import { GACHA_BANNERS, MAIN_SCENE, PITY_EPIC, PITY_LEGENDARY, RARITY_ODDS, activeBanner, activeScene, isSeasonStar, nextPity, pickFromPool, pityLeft, rarityOf, rollCosmetic, rollRarity, type PityState, type Rarity } from '../src/lib/gacha-fields';
 
 const seeded = (seed: number) => (max: number) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % max; };
 
@@ -53,6 +53,9 @@ describe('gacha rules', () => {
     const halloween = GACHA_BANNERS[0]!;
     expect(activeBanner(Date.parse('2026-10-30T12:00:00+03:00'))?.key).toBe('halloween-2026');
     expect(activeBanner(Date.parse('2026-11-03T00:00:00+03:00'))).toBeNull();
+    // The season's scene runs to its last minute, then the machine goes on with its own: no season, no gap.
+    expect(activeScene(Date.parse('2026-11-02T23:59:00+03:00'))).toBe(halloween.scene);
+    expect(activeScene(Date.parse('2026-11-03T00:00:00+03:00'))).toBe(MAIN_SCENE);
     expect(isSeasonStar(halloween, { flavor: 'tornado_black', name: 'Black' })).toBe(true);
     expect(isSeasonStar(halloween, { flavor: 'mango', name: 'Манго' })).toBe(false);
     expect(rollCosmetic(() => 999, halloween, false, 0)).toBe(false);

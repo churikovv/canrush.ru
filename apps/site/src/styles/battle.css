@@ -1,0 +1,233 @@
+/* «Битва банок»: экран-игра на досках. На телефоне фон — вытянутая версия арта (board-tall): луна и фонари на своих местах,
+   доски между ними повторены. На широком экране арт целиком, а поля вокруг — цвет его тени. */
+.bt-screen { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; overflow: hidden; background: #0b0730; color: #f2ecff; font-size: 1rem; line-height: 1.3; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+.bt-stage { --unit-w: clamp(56px, 17.2vw, 66px); --card-w: clamp(66px, 21vw, 82px); position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; width: 100%; height: 100dvh; padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px calc(env(safe-area-inset-bottom, 0px) + 6px); box-sizing: border-box; overflow: hidden; background: #17107a url("/brand/battle/board-tall.webp") center / 100% 100% no-repeat; isolation: isolate; }
+@media (min-aspect-ratio: 3 / 4) {
+  .bt-stage { --unit-w: 82px; --card-w: 96px; width: min(100vw, calc(100dvh * 2000 / 1944)); height: min(100dvh, calc(100vw * 1944 / 2000)); padding: 10px 11% 8px; background-image: url("/brand/battle/board.webp"); box-shadow: 0 0 80px rgb(60 40 220 / .35); }
+}
+
+.bt-plain { display: block; width: 100%; height: 100%; background: linear-gradient(145deg, #2e7dff, #006eff 55%, #0a46c2); }
+.bt-plain::after { content: ""; display: block; width: 100%; height: 100%; background: #fff; -webkit-mask: url("/brand/logo-mark.svg") center / 56% no-repeat; mask: url("/brand/logo-mark.svg") center / 56% no-repeat; }
+
+/* Шапка: сова сидит на луне, по бокам меню и рука соперника. */
+.bt-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 8px; min-height: 84px; }
+.bt-exit { justify-self: start; width: 40px; height: 40px; margin: 6px 0 0 22px; font-size: 1.25rem; }
+.bt-rival-info { display: grid; justify-items: end; gap: 6px; margin: 6px 22px 0 0; }
+.bt-backs { display: flex; min-height: 22px; }
+.bt-backs i { display: block; width: 15px; height: 22px; margin-left: -6px; border: 1.5px solid #05030f; border-radius: 4px; background: linear-gradient(145deg, #7a4dff, #3b1c9e); box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / .25); }
+
+.bt-hero { position: relative; display: block; width: 72px; height: 72px; padding: 0; border: 3px solid #05030f; border-radius: 50%; background: #dfeaff; box-shadow: 0 0 0 3px rgb(160 215 255 / .55), 0 0 26px 6px rgb(120 200 255 / .5); cursor: default; color: inherit; font: inherit; -webkit-tap-highlight-color: transparent; }
+.bt-hero[data-side="me"] { width: 66px; height: 66px; box-shadow: 0 0 0 3px rgb(255 190 110 / .6), 0 0 22px 4px rgb(255 150 60 / .35); }
+.bt-hero-face { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; border-radius: 50%; }
+.bt-hero-face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bt-hero-health { position: absolute; right: -6px; bottom: -4px; display: grid; place-items: center; min-width: 30px; height: 30px; padding: 0 4px; box-sizing: border-box; border: 2.5px solid #05030f; border-radius: 50%; background: linear-gradient(#ff8c7a, #e5484d 60%); color: #fff; font-size: .9375rem; font-weight: 900; text-shadow: 0 1px 0 rgb(0 0 0 / .4); }
+.bt-hero[data-target] { cursor: pointer; animation: bt-target 900ms ease-in-out infinite; box-shadow: 0 0 0 4px #ff6b5a, 0 0 26px 8px rgb(255 90 70 / .65); }
+.bt-hero:focus-visible, .bt-unit:focus-visible, .bt-card:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+.bt-mana { display: inline-flex; align-items: baseline; gap: 1px; min-height: 28px; padding: 3px 10px; box-sizing: border-box; border: 2px solid #05030f; border-radius: 999px; background: linear-gradient(#5fd6ff, #1f7dff 70%); color: #eaf6ff; font-size: .8125rem; font-weight: 800; text-shadow: 0 1px 0 rgb(0 0 0 / .4); font-variant-numeric: tabular-nums; }
+.bt-mana b { color: #fff; font-size: 1.0625rem; font-weight: 900; }
+
+/* Стол: два ряда на досках и подпись хода между ними. */
+.bt-field { display: grid; grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; min-height: 0; }
+.bt-row { display: flex; justify-content: center; gap: 6px; min-height: calc(var(--unit-w) * 1.28); }
+.bt-turn { justify-self: center; margin: 0; padding: 3px 14px; border-radius: 999px; background: rgb(8 4 40 / .6); color: #c9bbff; font-size: .8125rem; font-weight: 800; animation: bt-flag 360ms ease-out; }
+.bt-turn[data-mine] { background: linear-gradient(#ffc15a, #ff8a1e 70%); color: #fff; text-shadow: 0 1px 0 rgb(0 0 0 / .3); }
+@keyframes bt-flag { from { opacity: 0; transform: scale(.7); } }
+
+.bt-unit { --edge: #6d7cff; position: relative; flex: none; display: block; width: var(--unit-w); height: calc(var(--unit-w) * 1.28); padding: 0; border: 2.5px solid #05030f; border-radius: 13px; background: var(--edge); box-shadow: 0 0 0 2px var(--edge), 0 6px 12px -4px rgb(0 0 0 / .7); color: inherit; font: inherit; cursor: pointer; animation: bt-summon 320ms cubic-bezier(.2, 1.5, .4, 1); -webkit-tap-highlight-color: transparent; }
+.bt-unit[data-rarity="common"] { --edge: #b7c4dc; }
+.bt-unit[data-rarity="rare"] { --edge: #3e8bff; }
+.bt-unit[data-rarity="epic"] { --edge: #a764ff; }
+.bt-unit[data-rarity="legendary"] { --edge: #ffb627; }
+.bt-unit.is-still { animation: none; cursor: default; }
+.bt-unit-cover { display: block; width: 100%; height: 100%; overflow: hidden; border-radius: 10px; background: #fff; }
+.bt-unit-cover img { display: block; width: 100%; height: 100%; object-fit: contain; padding: 2px 2px 12px; box-sizing: border-box; }
+.bt-unit[data-keyword="taunt"] { border-color: #2a1a6e; box-shadow: 0 0 0 3px #d8c6ff, 0 0 0 5px #05030f, 0 6px 12px -4px rgb(0 0 0 / .7); border-radius: 18px 18px 22px 22px; }
+.bt-unit[data-keyword="taunt"] .bt-unit-cover { border-radius: 15px 15px 19px 19px; }
+.bt-unit[data-shield]::after { content: ""; position: absolute; inset: -6px; border-radius: 18px; border: 2px solid rgb(255 214 110 / .95); background: rgb(255 214 110 / .14); box-shadow: 0 0 14px 3px rgb(255 200 90 / .7); pointer-events: none; }
+.bt-unit[data-sleeping] .bt-unit-cover { filter: saturate(.55) brightness(.82); }
+.bt-unit[data-ready] { box-shadow: 0 0 0 3px #52e08a, 0 0 16px 4px rgb(82 224 138 / .7); }
+.bt-unit[data-selected] { transform: translateY(-8px) scale(1.06); box-shadow: 0 0 0 3px #ffd34d, 0 0 20px 6px rgb(255 211 77 / .8); z-index: 3; }
+.bt-unit[data-target] { animation: bt-target 900ms ease-in-out infinite; box-shadow: 0 0 0 3px #ff6b5a, 0 0 18px 5px rgb(255 90 70 / .7); }
+@keyframes bt-summon { from { opacity: 0; transform: translateY(-14px) scale(.6); } }
+@keyframes bt-target { 50% { transform: scale(1.05); } }
+
+.bt-stat { position: absolute; bottom: -7px; display: grid; place-items: center; min-width: 24px; height: 24px; padding: 0 3px; box-sizing: border-box; border: 2px solid #05030f; border-radius: 50%; color: #fff; font-size: .875rem; font-weight: 900; line-height: 1; text-shadow: 0 1px 0 rgb(0 0 0 / .45); }
+.bt-stat.is-attack { left: -6px; background: linear-gradient(#ffc15a, #ff8a1e 65%); }
+.bt-stat.is-health { right: -6px; background: linear-gradient(#ff8c7a, #e5484d 60%); }
+.bt-stat.is-health[data-hurt], .bt-hero-health[data-hurt] { color: #ffe0a8; }
+.bt-keyword { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid #05030f; border-radius: 50%; background: #2a1a6e; color: #fff; }
+.bt-keyword[data-keyword="shield"] { background: #d9a21b; }
+.bt-keyword[data-keyword="match"] { background: #e8467c; }
+.bt-keyword[data-keyword="taunt"] { background: #7a4dff; }
+.bt-keyword[data-keyword="loyal"] { background: #22a861; }
+.bt-keyword[data-keyword="rush"] { background: #1f9bff; }
+
+/* Пульт героя: способность, аватар, мана и конец хода. */
+.bt-console { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 6px 4px 8px; }
+.bt-tools { display: flex; gap: 8px; }
+.bt-power, .bt-coin { position: relative; width: 48px; height: 48px; flex: none; }
+.bt-power small { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid #05030f; border-radius: 50%; background: #1f7dff; font-size: .75rem; font-weight: 900; }
+.bt-coin { background: linear-gradient(#ffe08a, #e8a91c 60%); box-shadow: inset 0 3px 0 rgb(255 255 255 / .5), 0 4px 0 #8a5a0a; font-size: .9375rem; }
+.bt-power:disabled, .bt-coin:disabled { cursor: default; filter: grayscale(.8) brightness(.72); }
+.bt-side { display: grid; justify-items: end; gap: 7px; }
+.bt-end { padding-bottom: 5px; border-radius: 14px; }
+.bt-end .game-btn-face { min-height: 44px; padding: 4px 10px; border-radius: 14px; }
+.bt-end .game-btn-face::after { top: 4px; height: 5px; }
+.bt-end .game-btn-label { font-size: .75rem; letter-spacing: 0; white-space: nowrap; }
+
+/* Рука веером; карты заходят друг на друга, чтобы все семь влезли в 375 px. */
+.bt-hand { display: flex; justify-content: center; min-height: calc(var(--card-w) * 1.32 + 6px); padding: 4px 16px 12px; container-type: inline-size; }
+/* Заход карт друг на друга считается по их числу, чтобы рука любой длины оставалась в ширине экрана. */
+.bt-card { --edge: #6d7cff; position: relative; flex: none; width: var(--card-w); margin-left: -18px; margin-left: calc(-1 * max(0px, (var(--n) * var(--card-w) - 100cqw) / max(1, var(--n) - 1))); height: calc(var(--card-w) * 1.32); padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; transform: rotate(var(--turn)) translateY(var(--drop)); transform-origin: 50% 120%; animation: bt-draw 300ms ease-out; -webkit-tap-highlight-color: transparent; }
+.bt-card:first-child { margin-left: 0; }
+.bt-card[data-rarity="common"] { --edge: #b7c4dc; }
+.bt-card[data-rarity="rare"] { --edge: #3e8bff; }
+.bt-card[data-rarity="epic"] { --edge: #a764ff; }
+.bt-card[data-rarity="legendary"] { --edge: #ffb627; }
+.bt-card-cover { position: absolute; inset: 0 auto 0 0; display: block; width: var(--card-w); height: 100%; box-sizing: border-box; overflow: hidden; border: 2.5px solid #05030f; border-radius: 12px; background: #fff; box-shadow: 0 0 0 2px var(--edge), 0 8px 14px -6px rgb(0 0 0 / .8); }
+.bt-card-cover img { display: block; width: 100%; height: 76%; object-fit: contain; padding: 14px 3px 0; box-sizing: border-box; }
+.bt-card:not([data-playable]) .bt-card-cover { filter: brightness(.68) saturate(.7); }
+.bt-card[data-playable] .bt-card-cover { box-shadow: 0 0 0 2.5px #52e08a, 0 0 14px 3px rgb(82 224 138 / .55); }
+.bt-card:active { z-index: 2; }
+.bt-card-name { position: absolute; left: 6px; bottom: 14px; width: calc(var(--card-w) - 12px); overflow: hidden; color: #121533; font-size: .625rem; font-weight: 800; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.bt-card:has(.bt-plain) .bt-card-name { color: #fff; }
+.bt-cost { position: absolute; top: -5px; left: -5px; z-index: 1; display: grid; place-items: center; width: 26px; height: 26px; border: 2px solid #05030f; border-radius: 50%; background: linear-gradient(#5fd6ff, #1f7dff 70%); color: #fff; font-size: .9375rem; font-weight: 900; text-shadow: 0 1px 0 rgb(0 0 0 / .4); }
+.bt-card .bt-stat { bottom: -4px; min-width: 22px; height: 22px; font-size: .8125rem; }
+.bt-card .bt-stat.is-attack { left: -3px; }
+.bt-card .bt-stat.is-health { right: auto; left: calc(var(--card-w) - 19px); }
+.bt-card .bt-keyword { top: -5px; right: auto; left: calc(var(--card-w) - 18px); }
+@keyframes bt-draw { from { opacity: 0; transform: translateY(40px); } }
+
+.bt-float { position: absolute; z-index: 6; color: #fff; font-size: 1.625rem; font-weight: 900; pointer-events: none; text-shadow: 0 0 6px #e5484d, 0 2px 0 #05030f; white-space: nowrap; }
+.bt-float[data-blocked="true"] { font-size: 1rem; text-shadow: 0 0 6px #d9a21b, 0 2px 0 #05030f; }
+
+/* Броски: карта идёт за пальцем, свой ряд ждёт её; банка тянет стрелку к цели. Двигается напрямую из обработчика указателя. */
+.bt-card, .bt-unit, .bt-hero { touch-action: none; }
+.bt-card img, .bt-unit img { pointer-events: none; -webkit-user-drag: none; }
+.bt-card[data-lifted] { visibility: hidden; }
+.bt-flying { position: absolute; top: 0; left: 0; z-index: 7; pointer-events: none; will-change: transform; filter: drop-shadow(0 14px 16px rgb(0 0 0 / .6)); }
+.bt-flying .bt-card { display: block; transform: none; animation: none; margin: 0; cursor: grabbing; }
+.bt-stage[data-throwing] .bt-row.is-mine { outline: 2px dashed rgb(255 211 77 / .75); outline-offset: 6px; border-radius: 16px; background: rgb(255 211 77 / .08); }
+.bt-aim { position: absolute; inset: 0; z-index: 6; width: 100%; height: 100%; pointer-events: none; }
+.bt-aim line { stroke: #ffd34d; stroke-width: 6; stroke-linecap: round; stroke-dasharray: 1 13; filter: drop-shadow(0 0 4px rgb(255 190 60 / .9)); }
+.bt-aim circle { fill: rgb(255 107 90 / .18); stroke: #ff6b5a; stroke-width: 4; }
+.bt-unit[data-hover], .bt-hero[data-hover] { box-shadow: 0 0 0 4px #ffd34d, 0 0 24px 8px rgb(255 211 77 / .85); }
+
+/* Окна поверх стола: карта крупно, пауза и итог. */
+.bt-overlay, .bt-played { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: 16px; background: rgb(6 2 24 / .62); backdrop-filter: blur(2px); overflow-y: auto; }
+.bt-played { z-index: 5; background: transparent; backdrop-filter: none; pointer-events: none; animation: bt-flag 200ms ease-out; }
+.bt-zoom { display: grid; justify-items: center; gap: 12px; width: min(300px, 100%); }
+.bt-zoom .game-btn { width: 100%; }
+.bt-zoom-card { --edge: #6d7cff; position: relative; display: grid; justify-items: center; gap: 2px; width: min(220px, 62vw); padding: 12px 12px 22px; box-sizing: border-box; border: 3px solid #05030f; border-radius: 20px; background: #fff; box-shadow: 0 0 0 3px var(--edge), 0 20px 40px -14px rgb(0 0 0 / .85); color: #121533; text-align: center; }
+.bt-zoom-card[data-rarity="common"] { --edge: #b7c4dc; }
+.bt-zoom-card[data-rarity="rare"] { --edge: #3e8bff; }
+.bt-zoom-card[data-rarity="epic"] { --edge: #a764ff; }
+.bt-zoom-card[data-rarity="legendary"] { --edge: #ffb627; }
+.bt-zoom-cover { display: block; width: 120px; height: 120px; overflow: hidden; border-radius: 12px; }
+.bt-zoom-cover img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.bt-zoom-card strong { font-size: 1rem; font-weight: 900; }
+.bt-zoom-card small { color: #59616b; font-size: .8125rem; }
+.bt-zoom-rule { margin: 6px 0 0; color: #2a1a6e; font-size: .8125rem; line-height: 1.3; }
+.bt-zoom-card .bt-cost { width: 36px; height: 36px; top: -9px; left: -9px; font-size: 1.25rem; }
+.bt-zoom-card .bt-stat { min-width: 34px; height: 34px; bottom: -11px; font-size: 1.125rem; }
+.bt-zoom-card .bt-stat.is-attack { left: -9px; }
+.bt-zoom-card .bt-stat.is-health { right: -9px; }
+
+.bt-panel { display: grid; justify-items: center; gap: 12px; width: min(340px, 100%); max-height: 100%; padding: 20px 18px; box-sizing: border-box; overflow-y: auto; border: 3px solid #05030f; border-radius: 26px; background: linear-gradient(#2a1a6e, #170d45); box-shadow: inset 0 0 0 3px #6d4cff, 0 30px 70px -20px rgb(0 0 0 / .8); text-align: center; -webkit-user-select: text; user-select: text; }
+.bt-panel h2 { margin: 0; color: #fff; font-size: 1.625rem; font-weight: 900; letter-spacing: .02em; text-transform: uppercase; text-shadow: 0 3px 0 rgb(0 0 0 / .4); }
+.bt-panel[data-won] h2 { color: #ffd34d; }
+.bt-panel p { margin: 0; color: #d6ccff; font-size: .9375rem; }
+.bt-panel .game-btn { width: 100%; }
+.bt-start-bird { display: grid; place-items: center; width: 96px; height: 96px; overflow: hidden; border: 3px solid #05030f; border-radius: 50%; background: #dfeaff; box-shadow: 0 0 0 3px rgb(160 215 255 / .55), 0 0 26px 6px rgb(120 200 255 / .5); }
+.bt-link { min-height: 44px; padding: 0 12px; border: 0; background: none; color: #c9bbff; font: inherit; font-size: .9375rem; font-weight: 800; line-height: 44px; text-decoration: none; cursor: pointer; }
+.bt-link.is-danger { color: #ff9a8c; }
+.bt-earned { display: inline-flex; align-items: center; gap: 6px; color: #fff; font-size: 1.25rem; font-weight: 900; }
+.bt-progress { display: grid; gap: 6px; width: 100%; }
+.bt-progress-label { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #e6defa; font-size: .875rem; font-weight: 800; }
+.bt-progress-bar { display: block; height: 10px; overflow: hidden; border: 2px solid #05030f; border-radius: 999px; background: rgb(8 4 30 / .7); }
+.bt-progress-bar span { display: block; height: 100%; background: linear-gradient(90deg, #7a4dff, #5fd6ff); transform-origin: left; transition: transform 300ms ease-out; }
+.bt-rules { width: 100%; text-align: left; color: #d6ccff; font-size: .875rem; }
+.bt-rules p { margin: 0 0 8px; font-size: .875rem; }
+.bt-rules ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.bt-rules li { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: start; gap: 8px; }
+.bt-rules li .bt-keyword { position: static; }
+.bt-rules b { color: #fff; }
+.bt-rules small { color: #b9aee0; }
+
+/* Стартовый экран без коробки: всё лежит прямо на досках. Сова на луне, колода веером, ниже награда и кнопка боя. */
+.bt-lobby { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); overflow-y: auto; }
+.bt-lobby-top { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; width: 100%; padding: 6px 18px 0; box-sizing: border-box; }
+.bt-lobby-side { display: flex; align-items: center; gap: 8px; }
+.bt-lobby-top .game-round { width: 44px; height: 44px; font-size: 1.375rem; line-height: 1; }
+.bt-lobby-rival { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 6px); left: 50%; display: grid; place-items: center; width: 84px; height: 84px; overflow: hidden; border: 3px solid #05030f; border-radius: 50%; background: #dfeaff; box-shadow: 0 0 0 3px rgb(160 215 255 / .55), 0 0 30px 8px rgb(120 200 255 / .55); transform: translateX(-50%); }
+.bt-lobby-title { display: grid; justify-items: center; gap: 2px; margin-top: 44px; text-align: center; }
+.bt-lobby-title h1 { margin: 0; color: #fff; font-size: clamp(2rem, 10.5vw, 2.75rem); font-weight: 900; letter-spacing: .01em; line-height: 1; text-transform: uppercase; text-shadow: 0 4px 0 #05030f, 0 0 26px rgb(120 90 255 / .9); -webkit-text-stroke: 1px rgb(0 0 0 / .3); }
+.bt-lobby-title p { margin: 0; color: #ffd9a8; font-size: .9375rem; font-weight: 800; text-shadow: 0 2px 0 rgb(0 0 0 / .5); }
+.bt-lobby-deck { --card-w: clamp(78px, 24vw, 104px); display: grid; justify-items: center; gap: 12px; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.bt-lobby-deck:focus-visible { outline: 3px solid #fff; outline-offset: 4px; border-radius: 16px; }
+.bt-hand.is-preview { width: 100%; box-sizing: border-box; padding: 0 26px; }
+.is-preview .bt-card { cursor: inherit; touch-action: auto; }
+.is-preview .bt-card-cover { box-shadow: 0 0 0 2px var(--edge), 0 10px 18px -6px rgb(0 0 0 / .85); filter: none !important; }
+.bt-lobby-note { display: grid; justify-items: center; gap: 1px; padding: 6px 16px; border-radius: 14px; background: rgb(8 4 40 / .62); }
+.bt-lobby-note strong { color: #fff; font-size: .9375rem; font-weight: 900; }
+.bt-lobby-note small { color: #c9bbff; font-size: .8125rem; }
+.bt-lobby-reward { display: grid; gap: 10px; width: min(340px, 100%); padding: 12px 14px; box-sizing: border-box; border: 2px solid rgb(140 200 255 / .45); border-radius: 18px; background: rgb(14 8 44 / .78); box-shadow: inset 0 1px 0 rgb(255 255 255 / .16), 0 0 18px rgb(60 160 255 / .3); }
+.bt-lobby-reward p { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; margin: 0; }
+.bt-lobby-reward b { color: #fff; font-size: .9375rem; font-weight: 900; }
+.bt-lobby-reward small { color: #c9bbff; font-size: .8125rem; white-space: nowrap; }
+.bt-lobby-reward .game-btn { width: 100%; }
+.bt-lobby .gacha-ring-icon { color: #d7e3ff; }
+.bt-lobby-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.bt-lobby-goal { display: inline-flex; align-items: center; gap: 4px; color: #fff; font-size: .875rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.bt-lobby-goal .gacha-spin-icon { color: #ffd34d; --gacha-spin-core: #4a2a00; }
+.bt-lobby-go { flex: none; width: min(340px, 100%); box-sizing: border-box; }
+.bt-lobby-go .game-btn-face { min-height: 72px; }
+.bt-lobby-go .game-btn-label { font-size: 1.75rem; }
+.bt-lobby-blocked { margin: 0; padding: 12px 16px; border-radius: 14px; background: rgb(8 4 40 / .7); color: #ffd9a8; font-weight: 800; }
+.bt-deck-grid { --unit-w: 50px; display: grid; grid-template-columns: repeat(5, var(--unit-w)); justify-content: space-between; gap: 16px 6px; padding: 8px 6px 8px; }
+.bt-deck-grid .bt-cost { top: -7px; left: -7px; width: 22px; height: 22px; font-size: .8125rem; }
+.bt-deck-grid .bt-stat { min-width: 20px; height: 20px; font-size: .75rem; }
+.bt-deck-grid .bt-keyword { width: 18px; height: 18px; }
+@media (max-height: 700px) {
+  .bt-lobby-title { margin-top: 36px; }
+  .bt-lobby-title p { display: none; }
+  .bt-lobby-deck { --card-w: 68px; gap: 6px; }
+  .bt-lobby-go .game-btn-face { min-height: 58px; }
+}
+@media (min-aspect-ratio: 3 / 4) {
+  .bt-lobby { padding-inline: 13%; }
+  .bt-lobby-top { padding-inline: 0; }
+}
+
+/* Окна паузы, правил и сдачи — игровая панель Банкомата. На компьютере она там во всю высоту, здесь по содержимому. */
+.bt-window.game-dialog-panel { width: min(360px, 100%); height: auto; max-height: min(86dvh, 720px); -webkit-user-select: text; user-select: text; }
+.bt-window .game-dialog-head h2 { margin-right: auto; font-size: 1.375rem; }
+.bt-window .game-dialog-body { gap: 14px; padding: 16px; }
+.bt-window .game-btn { width: 100%; }
+.game-round.is-back { flex: none; width: 40px; height: 40px; font-size: 1.625rem; line-height: 1; }
+.bt-score { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bt-window-text { margin: 0; color: #d6ccff; font-size: .9375rem; line-height: 1.4; text-align: center; }
+.game-btn[data-tone="red"] { --face: #e5484d; --face-top: #ff8c7a; --base: #8e1d22; }
+.bt-menu { display: grid; gap: 8px; }
+.bt-menu-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 12px; box-sizing: border-box; border: 2px solid rgb(140 200 255 / .3); border-radius: 16px; background: rgb(8 4 30 / .55); color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.bt-menu-row:hover { border-color: rgb(140 200 255 / .6); }
+.bt-menu-row:active { transform: translateY(1px); }
+.bt-menu-row:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.bt-menu-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: rgb(122 77 255 / .3); color: #d6ccff; font-size: 1.25rem; font-weight: 900; }
+.bt-menu-icon[data-danger] { background: rgb(229 72 77 / .22); color: #ff9a8c; }
+.bt-menu-text { display: grid; gap: 1px; min-width: 0; }
+.bt-menu-text strong { color: #fff; font-size: .9375rem; font-weight: 800; }
+.bt-menu-text small { color: #c9bbff; font-size: .8125rem; line-height: 1.25; }
+.bt-menu-arrow { color: #c9bbff; font-size: 1.5rem; line-height: 1; }
+
+@media (min-aspect-ratio: 3 / 4) {
+  .bt-top { min-height: 96px; }
+  .bt-exit { margin-left: 0; }
+  .bt-rival-info { margin-right: 0; }
+  .bt-row { gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bt-unit, .bt-card, .bt-turn, .bt-played, .bt-hero[data-target], .bt-unit[data-target] { animation: none; }
+  .bt-progress-bar span { transition: none; }
+}

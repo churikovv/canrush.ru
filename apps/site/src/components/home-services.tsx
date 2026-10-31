@@ -11,10 +11,9 @@ const count = new Intl.NumberFormat('ru-RU');
  * `public/brand/home`) standing over the plate (catalog, prices, stores, tier lists, each with its live number), then one row of small icons for the month's
  * the top, the giveaway, the beta «Двигатель» places, drink dating and the market. The row scrolls sideways on phones.
  */
-export function HomeServices({ metrics, contest, joined, engine, gachaBanner = false }: {
+export function HomeServices({ metrics, contest, joined, engine }: {
   metrics: HomeMetrics;
   /** The season's «Банкомат» banner is on the page: its small icon steps aside */
-  gachaBanner?: boolean;
   contest: { contest: Contest; phase: 'open' | 'results' } | null;
   joined: boolean;
   engine: BetaEngine;
@@ -31,7 +30,6 @@ export function HomeServices({ metrics, contest, joined, engine, gachaBanner = f
     { key: 'leaderboard', href: '/leaderboard', label: 'Лидеры', note: 'таблица', art: '/brand/home/leaderboard.png' },
     ...(contest ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: contest.phase === 'open' ? (joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`) : 'итоги', art: '/brand/home/contest.png' }] : []),
     ...(engine.taken < BETA_ENGINE_PLACES ? [{ key: 'engine', href: '/engine', label: 'Бета сайта', note: 'каждый важен', art: '/brand/achievements/engine.png' }] : []),
-    ...(gachaBanner ? [] : [{ key: 'gacha', href: '/gacha', label: 'Банкомат', note: 'карточки банок', art: '/brand/home/gacha.svg' }]),
     { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: '/brand/home/dating.png' },
     { key: 'market', href: '/search?type=market', label: 'Маркет', note: 'объявления', art: '/brand/home/market.png' },
     // The landing for brands, distributors and shops (CanRush для бизнеса).

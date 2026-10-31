@@ -8,7 +8,7 @@ import { CapIcon, GachaMachine } from '@/components/gacha-machine';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { auth } from '@/lib/auth';
 import { gachaPool, getGachaState } from '@/lib/gacha';
-import { CAP_SOURCES, activeBanner, PITY_EPIC, PITY_LEGENDARY, PULL_COST, RARITIES, RARITY_HINTS, RARITY_LABELS, RARITY_ODDS, TEN_PULL_COST, WELCOME_CAPS } from '@/lib/gacha-fields';
+import { CAP_SOURCES, MAIN_BANNER, activeBanner, activeScene, PITY_EPIC, PITY_LEGENDARY, PULL_COST, RARITIES, RARITY_HINTS, RARITY_LABELS, RARITY_ODDS, TEN_PULL_COST, WELCOME_CAPS } from '@/lib/gacha-fields';
 import { getProfileByUserId } from '@/lib/profile';
 import { ogImage, seoMetadata } from '@/lib/seo';
 
@@ -21,7 +21,7 @@ export function generateMetadata() {
     title: 'Банкомат',
     description: 'Крутите автомат CanRush и собирайте карточки настоящих энергетиков: от обычных до легендарных банок, снятых с производства.',
     path: '/gacha',
-    image: banner?.scene ? ogImage(`/og/gacha/${banner.key}`, banner.title) : undefined,
+    image: banner?.scene ? ogImage(`/og/gacha/${banner.key}`, banner.title) : ogImage(`/og/gacha/${MAIN_BANNER}`, 'Банкомат CanRush'),
   });
 }
 
@@ -36,10 +36,10 @@ export default async function GachaPage() {
     gachaPool(),
     session ? getProfileByUserId(session.user.id) : null,
   ]);
-  // The season's banner shows its Blender scene to guests too (the state, with the banner, is only for members).
+  // Guests get the scene too: the state, with the banner in it, is only for members.
   const banner = activeBanner();
   const counts = Object.fromEntries(RARITIES.map(rarity => [rarity, pool.filter(drink => drink.rarity === rarity).length]));
-  // The odds and where caps come from: on the page out of season, inside the game window («?») while a scene runs.
+  // The odds and where caps come from: they open in the game window («?»).
   const rules = <>
     <section className="gacha-info" aria-labelledby="gacha-odds-title">
       <h2 id="gacha-odds-title">Шансы</h2>
@@ -62,15 +62,13 @@ export default async function GachaPage() {
           <span className="settings-row-text"><strong>{source.title}</strong><small>{source.note}</small></span>
         </div>)}
       </div>
-      <p className="community-muted">У крышек и карточек нет денежной ценности, их нельзя продать или обменять.</p>
+      <p className="community-muted">У крышек, колечек и карточек нет денежной ценности, их нельзя продать или обменять.</p>
     </section>
   </>;
-  const scene = banner?.scene ?? null;
   return <BrandShell headerAction={<ProfileNavigation active="home" />}>
     <div className="gacha-page">
       <GachaMachine initial={state} signedIn={Boolean(session)} albumHref={profile?.username ? `/profile/${profile.username}/cards` : null}
-        scene={scene} seasonTitle={banner?.title ?? null} rules={scene ? rules : null} />
-      {!scene && rules}
+        scene={activeScene()} seasonTitle={banner?.title ?? null} rules={rules} />
     </div>
   </BrandShell>;
 }

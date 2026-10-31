@@ -14,6 +14,13 @@ export function ShardIcon({ size = 16 }: { size?: number }) {
   </svg>;
 }
 
+/** Колечко от банки — материал из побед в бою. */
+export function RingIcon({ size = 18 }: { size?: number }) {
+  return <svg className="gacha-ring-icon" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+    <path fill="currentColor" fillRule="evenodd" d="M12 1.5c3.6 0 6.5 2.6 6.5 6v9c0 3.3-2.9 6-6.5 6s-6.5-2.7-6.5-6v-9c0-3.4 2.9-6 6.5-6Zm0 3.2a2.3 2.3 0 1 0 0 4.6 2.3 2.3 0 0 0 0-4.6Zm0 7.7c-1.9 0-3.2 1.3-3.2 3.3s1.3 3.6 3.2 3.6 3.2-1.6 3.2-3.6-1.3-3.3-3.2-3.3Z" />
+  </svg>;
+}
+
 /** Подарочная крутка из раздачи в ленте. */
 export function SpinIcon({ size = 18 }: { size?: number }) {
   return <svg className="gacha-spin-icon" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">

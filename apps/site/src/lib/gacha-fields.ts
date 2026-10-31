@@ -25,7 +25,9 @@ export const PITY_LEGENDARY = 60;
 /** Откуда берутся крышки — то же, что начисляют триггеры миграции `0154`. */
 export const CAP_SOURCES = [
   { title: 'Бесплатная крутка', note: 'раз в день' },
+  { title: 'Задания дня', note: '+5–15 за задание · +10 за все задания дня' },
   { title: 'Раздачи в ленте', note: 'подарочные крутки за просмотр баннера' },
+  { title: 'Победы в Битве банок', note: 'колечки: из них собираются подарочные крутки' },
   { title: 'Банка в трекере', note: '+3 · раз в день' },
   { title: 'Отзыв на напиток', note: '+10 · до трёх в день' },
   { title: 'Опубликованный тирлист', note: '+15 · один в день' },
@@ -116,7 +118,8 @@ export interface GachaBanner {
   /** Сцена из Blender (`design/3d`): петля автомата, выпадение банки и постер — вместо CSS-автомата */
   scene?: GachaScene;
 }
-export interface GachaScene { idle: string; dispense: string; poster: string; width: number; height: number }
+/** `ground` — цвет низа кадра: им сцена продолжается под видео. */
+export interface GachaScene { idle: string; dispense: string; poster: string; width: number; height: number; ground: string }
 
 export const MAIN_BANNER = 'main';
 export const GACHA_BANNERS: readonly GachaBanner[] = [{
@@ -127,14 +130,18 @@ export const GACHA_BANNERS: readonly GachaBanner[] = [{
   stars: /pumpkin|тыкв|black|dark|тёмн|темн|чёрн|черн|night|ноч|mystery|таинств|blood|cherry|вишн|grape|виноград|blackcurrant|смородин/i,
   boost: 3,
   cosmetic: { key: 'pumpkin', title: 'Рамка «Тыквенная»', note: 'рамка аватарки с тыквой и летучими мышами — только с Тыквенного автомата', odds: 20, pity: 30 },
-  scene: { idle: '/brand/gacha/halloween-idle.mp4', dispense: '/brand/gacha/halloween-dispense.mp4', poster: '/brand/gacha/halloween-poster.jpg', width: 720, height: 700 },
+  scene: { idle: '/brand/gacha/halloween-idle.mp4', dispense: '/brand/gacha/halloween-dispense.mp4', poster: '/brand/gacha/halloween-poster.jpg', width: 720, height: 700, ground: '#060424' },
 }];
+
+/** Автомат вне сезонов: ночь у озера. Сезон со своей сценой подменяет её на своё время. */
+export const MAIN_SCENE: GachaScene = { idle: '/brand/gacha/night-idle.mp4', dispense: '/brand/gacha/night-dispense.mp4', poster: '/brand/gacha/night-poster.jpg', width: 720, height: 700, ground: '#070346' };
 
 /** Москва — UTC+3 без перехода на летнее время. */
 const moscow = (value: string) => Date.parse(`${value}:00+03:00`);
 export function activeBanner(now = Date.now()): GachaBanner | null {
   return GACHA_BANNERS.find(banner => moscow(banner.from) <= now && now < moscow(banner.to)) ?? null;
 }
+export const activeScene = (now = Date.now()): GachaScene => activeBanner(now)?.scene ?? MAIN_SCENE;
 export function bannerEndsLabel(banner: GachaBanner): string {
   const end = new Date(moscow(banner.to) - 1);
   return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' }).format(end);

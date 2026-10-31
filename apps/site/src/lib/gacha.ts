@@ -6,6 +6,9 @@ import { activeOffers, readCityCatalog } from '@/lib/catalog-files';
 import { withCardEdits } from '@/lib/catalog-card-edits';
 import { catalogDrinkGroups, catalogDrinkGroupsByOrigin } from '@/lib/catalog-drinks';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
+import { moscowDay } from '@/lib/drink-calendar-fields';
+import { loadQuestBoard } from '@/lib/gacha-quests';
+import { questReward, questSourceKey, type QuestBoard, type QuestClaim } from '@/lib/gacha-quests-fields';
 import { isCountedCatalogDrink } from '@/lib/home-metrics';
 import {
   CRAFT_COST, DUPE_SHARDS, LEGENDARY_DRINKS, MAIN_BANNER, PULL_COST, RARITIES, TEN_PULL_COST, WELCOME_CAPS,
@@ -14,7 +17,7 @@ import {
 
 export class GachaError extends Error {}
 
-export interface GachaDrink { brand: string; flavor: string; name: string; cover: string; href: string; rarity: Rarity }
+export interface GachaDrink { brand: string; flavor: string; name: string; cover: string; href: string; rarity: Rarity; /** Средняя цена банки в магазинах */ price?: number | null }
 
 const key = (brand: string, flavor: string) => JSON.stringify([brand, flavor]);
 const roll = (max: number) => randomInt(max);
@@ -35,11 +38,16 @@ export async function gachaPool(): Promise<GachaDrink[]> {
     catalogDrinkGroupsByOrigin().catch(() => ({ brands: [] as CatalogGroup[], members: [] as CatalogGroup[] })),
   ]);
   const retailers = new Map<string, Set<string>>();
+  const prices = new Map<string, number[]>();
   for (const group of await withCardEdits(cities.flatMap(file => activeOffers(file?.groups ?? [])))) {
-    const set = retailers.get(key(group.brand, group.flavor)) ?? new Set<string>();
-    for (const offer of group.variants) set.add(offer.retailer ?? offer.source);
-    retailers.set(key(group.brand, group.flavor), set);
+    const id = key(group.brand, group.flavor);
+    const set = retailers.get(id) ?? new Set<string>();
+    const paid = prices.get(id) ?? [];
+    for (const offer of group.variants) { set.add(offer.retailer ?? offer.source); if (offer.price) paid.push(offer.price); }
+    retailers.set(id, set);
+    prices.set(id, paid);
   }
+  const middle = (values: number[] = []) => (values.length ? [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)]! : null);
   const members = new Set(origin.members.map(group => key(group.brand, group.flavor)));
   const live = new Set(active.map(group => key(group.brand, group.flavor)));
   const memberDrink = (group: CatalogGroup) => group.coverImageUrl?.startsWith('/api/catalog-drinks/') ?? false;
@@ -51,7 +59,7 @@ export async function gachaPool(): Promise<GachaDrink[]> {
       const fromMember = memberDrink(group);
       return {
         brand: group.brand, flavor: group.flavor, name: flavorName(group.flavor), cover: group.coverImageUrl!,
-        href: `/catalog/${catalogGroupSlug(group.brand, group.flavor)}`,
+        href: `/catalog/${catalogGroupSlug(group.brand, group.flavor)}`, price: middle(prices.get(id)),
         rarity: rarityOf({
           retailers: retailers.get(id)?.size ?? 0,
           member: members.has(id),
@@ -90,10 +98,21 @@ async function giftSpinsOf(db: Queryable, userId: string): Promise<number> {
   return (await db.query<{ spins: number }>('select coalesce(sum(amount), 0)::int as spins from "spinLedger" where "userId" = $1', [userId])).rows[0]?.spins ?? 0;
 }
 
+/** Колечки из побед в «Битве банок»: собираются в подарочные крутки. */
+export async function ringsOf(db: Queryable, userId: string): Promise<number> {
+  return (await db.query<{ rings: number }>('select coalesce(sum(amount), 0)::int as rings from "ringLedger" where "userId" = $1', [userId])).rows[0]?.rings ?? 0;
+}
+
 export interface GachaState {
   caps: number; shards: number; free: boolean; pity: PityState; cards: number; blocked: boolean;
+  /** Колечки из побед в бою */
+  rings: number;
+  /** Идёт незаконченный бой: автомат зовёт в него вернуться */
+  inBattle: boolean;
   /** Подарочные крутки из раздач в ленте: тратятся после бесплатной крутки дня, раньше крышек */
   gifted: number;
+  /** Задания дня: что сделано и какие награды забраны */
+  quests: QuestBoard;
   /** Идущий сезонный баннер и эксклюзив: получен ли, сколько круток до его гаранта */
   banner: { key: string; title: string; subtitle: string; ends: string; cosmetic: { title: string; note: string; chance: number; owned: boolean; left: number } | null } | null;
 }
@@ -103,9 +122,10 @@ export async function getGachaState(userId: string, now = Date.now()): Promise<G
   const pool = getPool();
   const banner = activeBanner(now);
   await pool.query(`select award_caps($1, 'welcome', 'welcome', $2, null)`, [userId, WELCOME_CAPS]);
-  const [caps, shards, gifted, pity, row] = await Promise.all([
-    balanceOf(pool, userId), shardsOf(pool, userId), giftSpinsOf(pool, userId), pityOf(pool, userId),
-    pool.query<{ free: boolean; cards: number; blocked: boolean; owned: boolean; pulled: number }>(`select ${freeTodaySql} as free,
+  const [caps, shards, gifted, rings, pity, quests, row] = await Promise.all([
+    balanceOf(pool, userId), shardsOf(pool, userId), giftSpinsOf(pool, userId), ringsOf(pool, userId), pityOf(pool, userId), loadQuestBoard(pool, userId, moscowDay(new Date(now))),
+    pool.query<{ free: boolean; cards: number; blocked: boolean; owned: boolean; pulled: number; inBattle: boolean }>(`select ${freeTodaySql} as free,
+      exists(select 1 from "battle" where "userId" = $1 and status = 'active') as "inBattle",
       (select count(*) from "gachaCard" where "userId" = $1)::int as cards,
       exists(select 1 from "userBlock" where "userId" = $1) as blocked,
       exists(select 1 from "gachaCosmetic" where "userId" = $1 and key = $2) as owned,
@@ -113,7 +133,7 @@ export async function getGachaState(userId: string, now = Date.now()): Promise<G
   ]);
   const data = row.rows[0];
   return {
-    caps, shards, gifted, pity, free: data?.free ?? false, cards: data?.cards ?? 0, blocked: data?.blocked ?? false,
+    caps, shards, gifted, rings, quests, pity, free: data?.free ?? false, cards: data?.cards ?? 0, blocked: data?.blocked ?? false, inBattle: data?.inBattle ?? false,
     banner: banner ? {
       key: banner.key, title: banner.title, subtitle: banner.subtitle, ends: bannerEndsLabel(banner),
       cosmetic: banner.cosmetic ? { title: banner.cosmetic.title, note: banner.cosmetic.note, chance: banner.cosmetic.odds / 10, owned: data?.owned ?? false, left: Math.max(1, banner.cosmetic.pity - (data?.pulled ?? 0)) } : null,
@@ -184,6 +204,32 @@ export async function pullGacha(userId: string, times: 1 | 10, pool?: GachaDrink
   return { cards, cosmetic, state: await getGachaState(userId, now) };
 }
 
+/**
+ * Забрать награду задания дня или бонус за все задания. Выполнение сервер считает сам, под блокировкой участника, а ключ
+ * журнала `<день>:<задание>` не даёт получить награду дважды, даже из двух вкладок.
+ */
+export async function claimQuest(userId: string, claim: QuestClaim, now = Date.now()): Promise<{ reward: number; state: GachaState }> {
+  const day = moscowDay(new Date(now));
+  const client = await getPool().connect();
+  let reward = 0;
+  try {
+    await client.query('begin');
+    await client.query('select 1 from "user" where id = $1 for no key update', [userId]);
+    if ((await client.query('select 1 from "userBlock" where "userId" = $1', [userId])).rowCount) throw new GachaError('Аккаунт заблокирован.');
+    const decision = questReward(await loadQuestBoard(client, userId, day), claim);
+    if ('refuse' in decision) throw new GachaError(decision.refuse);
+    reward = decision.reward;
+    await client.query(`insert into "capLedger"("userId", reason, "sourceKey", amount) values ($1, 'quest', $2, $3)`, [userId, questSourceKey(day, claim), reward]);
+    await client.query('commit');
+  } catch (error) {
+    await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
+  return { reward, state: await getGachaState(userId, now) };
+}
+
 /** Собрать недостающую карточку из осколков: цена — по редкости банки в автомате сейчас. */
 export async function craftCard(userId: string, brand: string, flavor: string, pool?: GachaDrink[]): Promise<{ card: GachaDrink; shards: number }> {
   const drink = (pool ?? await gachaPool()).find(item => item.brand === brand && item.flavor === flavor);
@@ -243,9 +289,9 @@ export async function topCards(userId: string, limit = 6, pool?: GachaDrink[]): 
   return rows.flatMap(row => { const drink = drinks.get(key(row.brand, row.flavor)); return drink ? [{ ...drink, rarity: row.rarity, count: row.count }] : []; }).slice(0, limit);
 }
 
-/** The home banner's line for a member: caps and whether a pull without caps is there. Read-only (no welcome caps). */
-export async function getGachaTeaser(userId: string): Promise<{ caps: number; free: boolean }> {
+/** The home banner's line for a member: caps, the day's tasks and whether a pull without caps is there. Read-only (no welcome caps). */
+export async function getGachaTeaser(userId: string): Promise<{ caps: number; free: boolean; quests: { claimed: number; total: number } }> {
   const pool = getPool();
-  const [caps, gifted, row] = await Promise.all([balanceOf(pool, userId), giftSpinsOf(pool, userId), pool.query<{ free: boolean }>(`select ${freeTodaySql} as free`, [userId])]);
-  return { caps, free: gifted > 0 || (row.rows[0]?.free ?? true) };
+  const [caps, gifted, board, row] = await Promise.all([balanceOf(pool, userId), giftSpinsOf(pool, userId), loadQuestBoard(pool, userId, moscowDay()), pool.query<{ free: boolean }>(`select ${freeTodaySql} as free`, [userId])]);
+  return { caps, free: gifted > 0 || (row.rows[0]?.free ?? true), quests: { claimed: board.claimed, total: board.rows.length } };
 }

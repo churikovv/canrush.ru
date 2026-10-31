@@ -159,3 +159,53 @@ it('pays the caps of a streak already running when the machine opened, once and 
     await pool.query('delete from "user" where id = any($1::text[])', [everyone]);
   }
 });
+
+it('counts the day\'s tasks from real actions and pays each reward and the bonus once', async () => {
+  const { QUESTS, QUEST_BONUS, dailyQuests } = await import('../src/lib/gacha-quests-fields');
+  const { moscowDay } = await import('../src/lib/drink-calendar-fields');
+  const id = randomUUID(), other = randomUUID();
+  const quests = dailyQuests(moscowDay());
+  const earned = async () => (await pool.query<{ reason: string; amount: number }>(`select "sourceKey" as reason, amount from "capLedger" where "userId" = $1 and reason = 'quest' order by "createdAt"`, [id])).rows;
+  const finish: Record<string, () => Promise<unknown>> = {
+    spin: () => gacha.pullGacha(id, 1, drinks),
+    swipes: () => pool.query(`insert into "drinkSwipe"("userId", brand, flavor, liked) select $1, $2, 'q' || n, true from generate_series(1, 5) n`, [id, brand]),
+    favorite: () => pool.query('insert into favorite("userId", brand, flavor) values ($1, $2, $3)', [id, brand, 'quest']),
+    review: () => pool.query(`insert into review("userId", brand, flavor, design, taste, composition, text) values ($1, $2, 'quest', 4, 4, 4, 'Хороший вкус, беру снова')`, [id, brand]),
+    comment: async () => {
+      const post = (await pool.query<{ id: string }>(`insert into "profileComment"("profileId", "userId", text) values ($1, $1, 'Запись') returning id`, [other])).rows[0]!;
+      await pool.query(`insert into "wallReply"("wallPostId", "userId", text) values ($1, $2, 'Согласен')`, [post.id, id]);
+    },
+  };
+  try {
+    for (const user of [id, other]) await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Quest test',$2,true,now(),now(),$3)`, [user, `${user}@example.com`, `gq_${user.slice(0, 12)}`]);
+    expect((await gacha.getGachaState(id)).quests).toMatchObject({ claimed: 0, bonus: { ready: false, claimed: false } });
+    await expect(gacha.claimQuest(id, 'spin')).rejects.toThrow('ещё не выполнено');
+
+    // A pull from an earlier day is not today's.
+    await pool.query(`insert into "gachaPull"("userId", batch, brand, flavor, rarity, "createdAt") values ($1, gen_random_uuid(), $2, 'old', 'common', now() - interval '3 days')`, [id, brand]);
+    expect((await gacha.getGachaState(id)).quests.rows[0]).toMatchObject({ key: 'spin', done: false });
+
+    for (const key of quests) await finish[key]!();
+    const board = (await gacha.getGachaState(id)).quests;
+    expect(board.rows.map(row => [row.key, row.done])).toEqual(quests.map(key => [key, true]));
+    await expect(gacha.claimQuest(id, 'all')).rejects.toThrow('Сначала заберите');
+
+    // Two tabs at once: the member is locked, so the second sees the reward already taken.
+    const twice = await Promise.allSettled([gacha.claimQuest(id, 'spin'), gacha.claimQuest(id, 'spin')]);
+    expect(twice.filter(item => item.status === 'fulfilled')).toHaveLength(1);
+    for (const key of quests.slice(1)) expect((await gacha.claimQuest(id, key)).reward).toBe(QUESTS[key].reward);
+    const after = await gacha.claimQuest(id, 'all');
+    expect(after.reward).toBe(QUEST_BONUS);
+    expect(after.state.quests).toMatchObject({ claimed: 3, bonus: { ready: true, claimed: true } });
+    await expect(gacha.claimQuest(id, 'all')).rejects.toThrow('уже получен');
+
+    const total = quests.reduce((sum, key) => sum + QUESTS[key].reward, QUEST_BONUS);
+    expect((await earned()).reduce((sum, row) => sum + row.amount, 0)).toBe(total);
+    expect(await gacha.getGachaTeaser(id)).toMatchObject({ quests: { claimed: 3, total: 3 } });
+
+    await pool.query('insert into "userBlock"("userId") values($1)', [other]);
+    await expect(gacha.claimQuest(other, 'spin')).rejects.toThrow('заблокирован');
+  } finally {
+    await pool.query('delete from "user" where id = any($1::text[])', [[id, other]]);
+  }
+});

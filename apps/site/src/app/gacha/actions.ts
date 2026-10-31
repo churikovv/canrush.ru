@@ -3,7 +3,8 @@
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
-import { GachaError, craftCard, pullGacha, type PullResult } from '@/lib/gacha';
+import { GachaError, claimQuest, craftCard, pullGacha, type GachaState, type PullResult } from '@/lib/gacha';
+import { isQuestClaim } from '@/lib/gacha-quests-fields';
 
 export type PullActionState = { error: string; signIn?: boolean } | PullResult;
 
@@ -18,6 +19,22 @@ export async function pullAction(times: number): Promise<PullActionState> {
     if (error instanceof GachaError) return { error: error.message };
     console.error('gacha pull failed', error);
     return { error: 'Автомат заело. Попробуйте ещё раз.' };
+  }
+}
+
+export type QuestActionState = { error: string } | { reward: number; state: GachaState };
+
+/** «Забрать» у задания дня: выполнение проверяет сервер. */
+export async function claimQuestAction(claim: unknown): Promise<QuestActionState> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { error: 'Войдите, чтобы забрать награду.' };
+  if (!isQuestClaim(claim)) return { error: 'Такого задания нет.' };
+  try {
+    return await claimQuest(session.user.id, claim);
+  } catch (error) {
+    if (error instanceof GachaError) return { error: error.message };
+    console.error('gacha quest failed', error);
+    return { error: 'Не получилось забрать награду. Попробуйте ещё раз.' };
   }
 }
 
