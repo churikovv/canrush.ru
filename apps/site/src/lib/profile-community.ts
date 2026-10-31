@@ -4,6 +4,7 @@ import { notBlockedBy } from '@/lib/member-blocks';
 import type { WallMediaKind } from '@/lib/wall-media-limits';
 import type { RankUpTier } from '@/lib/level-tier';
 import { getPool } from '@/db/pool';
+import { COMMENT_PAUSE_MESSAGE, COMMENT_PAUSE_SECONDS } from '@/lib/comment-pause';
 import { getReviewsByAuthorDays, type ReviewData } from '@/lib/reviews';
 import { getPublishedTierListsByIds } from '@/lib/tier-lists';
 import type { TierListSummary } from '@/lib/tier-list-types';
@@ -246,8 +247,8 @@ export async function addProfileComment(userId: string, profileId: string, input
   const client = await getPool().connect();
   try {
     await client.query('begin');
-    const allowed = await client.query(`update "user" set "lastWallPostAt" = now() where id = $1 and ("lastWallPostAt" is null or "lastWallPostAt" < now() - interval '30 seconds') returning id`, [userId]);
-    if (!allowed.rowCount) throw new CommunityError('Следующий комментарий можно отправить через 30 секунд.');
+    const allowed = await client.query(`update "user" set "lastWallPostAt" = now() where id = $1 and ("lastWallPostAt" is null or "lastWallPostAt" < now() - interval '${COMMENT_PAUSE_SECONDS} seconds') returning id`, [userId]);
+    if (!allowed.rowCount) throw new CommunityError(COMMENT_PAUSE_MESSAGE);
     const result = await client.query<{ id: string }>('insert into "profileComment" ("profileId", "userId", text) values ($1, $2, $3) returning id', [profileId, userId, text]);
     for (const [position, photo] of photos.entries()) {
       await client.query('insert into "wallPhoto" ("commentId", position, kind, mime, data, thumbnail) values ($1, $2, $3, $4, $5, $6)', [result.rows[0]!.id, position, photo.kind, photo.mime, photo.data, photo.thumbnail]);

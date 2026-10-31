@@ -34,7 +34,7 @@ it('limits concurrent comments and protects author deletion',async()=>{
   await expect(api.addReviewComment(other,review,' '.repeat(5))).rejects.toThrow();
   await expect(api.addReviewComment(other,review,'a'.repeat(1001))).rejects.toThrow();
   await api.deleteReviewComment(reader,review,thread.items[0]!.id);
-  await expect(api.addReviewComment(reader,review,'Cannot bypass cooldown by deleting')).rejects.toThrow('30 секунд');
+  await expect(api.addReviewComment(reader,review,'Cannot bypass cooldown by deleting')).rejects.toThrow('15 секунд');
 });
 it('lets only the author edit a comment and marks it as edited',async()=>{
   const id=(await pool.query('insert into "reviewComment"("reviewId","userId",text)values($1,$2,$3)returning id',[review,reader,'Before'])).rows[0].id;

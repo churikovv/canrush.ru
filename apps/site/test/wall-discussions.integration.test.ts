@@ -34,7 +34,7 @@ it('limits concurrent comments and protects author deletion',async()=>{
   await expect(api.addWallComment(other,review,' '.repeat(5))).rejects.toThrow();
   await expect(api.addWallComment(other,review,'a'.repeat(1001))).rejects.toThrow();
   await api.deleteWallComment(reader,review,thread.items[0]!.id);
-  await expect(api.addWallComment(reader,review,'Cannot bypass cooldown by deleting')).rejects.toThrow('30 секунд');
+  await expect(api.addWallComment(reader,review,'Cannot bypass cooldown by deleting')).rejects.toThrow('15 секунд');
 });
 it('likes comments once per person, never one\'s own, and drops likes with the comment',async()=>{
   const reply=(await pool.query('insert into "wallReply"("wallPostId","userId",text)values($1,$2,$3)returning id',[review,reader,'Likeable'])).rows[0].id;

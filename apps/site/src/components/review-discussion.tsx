@@ -9,7 +9,9 @@ import Image from 'next/image';
 import { useId, useRef, useState, useTransition } from 'react';
 import { wallCommentLikeAction, wallDiscussionAction } from '@/app/profile/wall-discussion-actions';
 import { EditIcon, TrashIcon } from '@/components/action-icons';
+import { ActionToast } from '@/components/action-toast';
 import { ContentReportButton } from '@/components/content-report-button';
+import { FormAlert } from '@/components/form-alert';
 import { MoreActions } from '@/components/more-actions';
 import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
 import { tierDiscussionAction } from '@/app/tierlists/discussion-actions';
@@ -33,6 +35,8 @@ function Thumb({ down = false }: { down?: boolean }) {
 function authorLabel(comment: Pick<Comment, 'name' | 'username'>): string {
   return comment.username ? `@${comment.username}` : comment.name.includes('@') ? 'Участник' : comment.name;
 }
+/** The toast's trigger while nothing went wrong. */
+const NO_FAILURE = {};
 /** Wall records also carry the viewer's bookmark (savedPost). */
 type Interaction = ReviewInteraction & { saved?: boolean };
 export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 'review', reactionsEnabled = true, commentsEnabled = true }: { reviewId: string; initial?: Interaction; telegramChannel?: string | null; target?: 'review' | 'tierlist' | 'wall'; reactionsEnabled?: boolean; commentsEnabled?: boolean }) {
@@ -48,37 +52,37 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
   const [more,setMore] = useState(false);
   const [text,setText] = useState('');
   const media = useMediaAttachments('комментарию');
-  const [error,setError] = useState('');
-  const [signIn,setSignIn] = useState(false);
+  // A new object for each refusal, so the same text (the pause between comments) shows the toast again.
+  const [failure,setFailure] = useState<{ message: string; signIn: boolean } | null>(null);
   const [pending,startTransition] = useTransition();
   const regionId = useId();
   function run(action: 'read' | 'vote' | 'save' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }, append = false) {
-    setError(''); setSignIn(false);
+    setFailure(null);
     startTransition(async () => {
       try {
         // Only wall records can be bookmarked.
         const result = action === 'save' ? await wallDiscussionAction(reviewId, action, value)
           : await (target === 'wall' ? wallDiscussionAction : target === 'tierlist' ? tierDiscussionAction : reviewDiscussionAction)(reviewId, action, value);
-        if (result.error) { setError(result.error); setSignIn(Boolean(result.signIn)); return; }
+        if (result.error) { setFailure({ message: result.error, signIn: Boolean(result.signIn) }); return; }
         if (result.interaction) setStats(result.interaction);
         if (result.thread) { setComments(previous => append ? [...previous,...result.thread!.items.filter(item => !previous.some(old => old.id === item.id))] : result.thread!.items); setMore(result.thread.hasMore); setLoaded(true); }
         if (action === 'comment') { setText(''); setReplyTo(null); media.clear(); }
         const edited = result.edited;
         if (edited) { setComments(previous => previous.map(item => item.id === edited.id ? { ...item, text: edited.text, editedAt: edited.editedAt } : item)); setEditing(null); }
-      } catch { setError('Нет связи с сервером. Попробуйте ещё раз.'); }
+      } catch { setFailure({ message: 'Нет связи с сервером. Попробуйте ещё раз.', signIn: false }); }
     });
   }
   async function toggleLike(comment: Comment) {
     if (liking) return;
     const liked = !comment.liked;
     const patch = (values: Pick<Comment, 'likes' | 'liked'>) => setComments(previous => previous.map(item => item.id === comment.id ? { ...item, ...values } : item));
-    setError(''); setSignIn(false); setLiking(comment.id);
+    setFailure(null); setLiking(comment.id);
     patch({ liked, likes: (comment.likes ?? 0) + (liked ? 1 : -1) });
     try {
       const result = await wallCommentLikeAction(reviewId, comment.id, liked);
-      if (result.error) { patch({ liked: comment.liked, likes: comment.likes }); setError(result.error); setSignIn(Boolean(result.signIn)); }
+      if (result.error) { patch({ liked: comment.liked, likes: comment.likes }); setFailure({ message: result.error, signIn: Boolean(result.signIn) }); }
       else patch({ liked: result.liked, likes: result.likes });
-    } catch { patch({ liked: comment.liked, likes: comment.likes }); setError('Нет связи с сервером. Попробуйте ещё раз.'); }
+    } catch { patch({ liked: comment.liked, likes: comment.likes }); setFailure({ message: 'Нет связи с сервером. Попробуйте ещё раз.', signIn: false }); }
     finally { setLiking(null); }
   }
   /** Plain comments go as JSON; with attachments the comment is sent as a form so files reach the server action. */
@@ -107,7 +111,8 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
       </button>}
       {target === 'wall' && stats.authenticated && <button type="button" className="review-save" disabled={pending} aria-pressed={Boolean(stats.saved)} aria-label={stats.saved ? 'Убрать запись из сохранённых' : 'Сохранить запись'} title={stats.saved ? 'Убрать из сохранённых' : 'Сохранить'} onClick={() => run('save', stats.saved ? 0 : 1)}><Bookmark filled={Boolean(stats.saved)} /></button>}
     </div>
-    {error && <p className="field-error" role="alert">{error} {signIn && <Link href="/sign-in">Войти</Link>}</p>}
+    <ActionToast tone="error" message={failure?.signIn ? undefined : failure?.message} trigger={failure ?? NO_FAILURE} />
+    {failure?.signIn && <FormAlert tone="warning" actions={<Link href="/sign-in">Войти</Link>}>{failure.message}</FormAlert>}
     {commentsEnabled && open && <section id={regionId} className="review-thread" aria-label={target === 'wall' ? 'Комментарии к записи' : target === 'tierlist' ? 'Комментарии к тирлисту' : 'Комментарии к отзыву'} aria-busy={pending}>
       {stats.authenticated ? <form className="review-comment-composer" onSubmit={event => { event.preventDefault(); submitComment(); }}>
         <label htmlFor={`${regionId}-text`}>{replyTo ? 'Ваш ответ' : 'Ваш комментарий'}</label>
@@ -129,7 +134,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         <div className="review-comment-avatar" aria-hidden="true">{comment.avatarId ? <Image unoptimized src={`/api/profile-images/${comment.avatarId}`} alt="" width={32} height={32} /> : (comment.name || comment.username || '?').charAt(0)}</div>
         <div className="review-comment-body"><header>{comment.username ? <Link href={`/profile/${comment.username}`}>{comment.name.includes('@') ? `@${comment.username}` : comment.name}</Link> : <strong>{comment.name.includes('@') ? 'Участник' : comment.name}</strong>}{comment.tag && <span className="profile-tag" data-tag={profileTagKey(comment.tag)}>{comment.tag}</span>}<time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleDateString('ru-RU')}</time>{comment.editedAt && <span className="review-comment-edited" title={`Изменено ${new Date(comment.editedAt).toLocaleString('ru-RU')}`}>изменено</span>}
           {(comment.canDelete || stats.authenticated) && <span className="review-comment-actions"><MoreActions label="Действия с комментарием">
-            {comment.canDelete && editing !== comment.id && <button className="more-actions-item" type="button" role="menuitem" disabled={pending} onClick={() => { setEditing(comment.id); setDraft(comment.text); setError(''); }}><EditIcon /><span>Редактировать</span></button>}
+            {comment.canDelete && editing !== comment.id && <button className="more-actions-item" type="button" role="menuitem" disabled={pending} onClick={() => { setEditing(comment.id); setDraft(comment.text); setFailure(null); }}><EditIcon /><span>Редактировать</span></button>}
             {comment.canDelete && <button className="more-actions-item is-danger" type="button" role="menuitem" disabled={pending} onClick={() => { if(window.confirm('Удалить комментарий?')) run('delete',comment.id); }}><TrashIcon /><span>Удалить</span></button>}
             {!comment.canDelete && <ContentReportButton kind={target === 'wall' ? 'wall-reply' : target === 'tierlist' ? 'tier-comment' : 'review-comment'} id={comment.id} variant="menuitem" />}
             {!comment.canDelete && stats.staff && <StaffDeleteMenuItem kind={target === 'wall' ? 'wall-reply' : target === 'tierlist' ? 'tier-comment' : 'review-comment'} id={comment.id}

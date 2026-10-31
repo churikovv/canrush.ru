@@ -1,4 +1,5 @@
 import { getPool } from '@/db/pool';
+import { COMMENT_PAUSE_MESSAGE, COMMENT_PAUSE_SECONDS } from '@/lib/comment-pause';
 import { VIEWER_IS_STAFF } from '@/lib/staff-moderation';
 import { notBlockedBy } from '@/lib/member-blocks';
 import { commentMediaColumn, saveCommentMedia, type CommentMedia } from '@/lib/comment-media';
@@ -57,8 +58,8 @@ export async function addReviewComment(userId: string, id: string, input: string
   const client = await getPool().connect();
   try {
     await client.query('begin');
-    const allowed = await client.query(`update "user" set "lastReviewCommentAt"=now() where id=$1 and ("lastReviewCommentAt" is null or "lastReviewCommentAt"<now()-interval '30 seconds') returning id`, [userId]);
-    if (!allowed.rowCount) throw new ReviewDiscussionError('Следующий комментарий можно отправить через 30 секунд.');
+    const allowed = await client.query(`update "user" set "lastReviewCommentAt"=now() where id=$1 and ("lastReviewCommentAt" is null or "lastReviewCommentAt"<now()-interval '${COMMENT_PAUSE_SECONDS} seconds') returning id`, [userId]);
+    if (!allowed.rowCount) throw new ReviewDiscussionError(COMMENT_PAUSE_MESSAGE);
     // The addressee comes from the answered comment of the same thread, never from the client.
     let replyToUserId: string | null = null;
     if (replyToId) {

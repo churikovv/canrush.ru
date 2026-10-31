@@ -1,4 +1,5 @@
 import { getPool } from '@/db/pool';
+import { COMMENT_PAUSE_MESSAGE, COMMENT_PAUSE_SECONDS } from '@/lib/comment-pause';
 import { VIEWER_IS_STAFF } from '@/lib/staff-moderation';
 import { notBlockedBy } from '@/lib/member-blocks';
 import { commentMediaColumn, saveCommentMedia, type CommentMedia } from '@/lib/comment-media';
@@ -66,8 +67,8 @@ export async function addTierComment(userId: string, id: string, input: string, 
     await client.query('begin');
     const target = await client.query(`select id from "tierList" where id=$1 and status='published' and "commentsEnabled" for share`, [id]);
     if (!target.rowCount) throw new TierDiscussionError('Тирлист недоступен.');
-    const allowed = await client.query(`update "user" set "lastTierCommentAt"=now() where id=$1 and ("lastTierCommentAt" is null or "lastTierCommentAt"<now()-interval '30 seconds') returning id`, [userId]);
-    if (!allowed.rowCount) throw new TierDiscussionError('Следующий комментарий можно отправить через 30 секунд.');
+    const allowed = await client.query(`update "user" set "lastTierCommentAt"=now() where id=$1 and ("lastTierCommentAt" is null or "lastTierCommentAt"<now()-interval '${COMMENT_PAUSE_SECONDS} seconds') returning id`, [userId]);
+    if (!allowed.rowCount) throw new TierDiscussionError(COMMENT_PAUSE_MESSAGE);
     // The addressee comes from the answered comment of the same thread, never from the client.
     let replyToUserId: string | null = null;
     if (replyToId) {

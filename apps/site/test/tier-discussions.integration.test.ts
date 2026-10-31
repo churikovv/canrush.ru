@@ -45,7 +45,7 @@ it('limits concurrent comments and protects author deletion',async()=>{
   await expect(api.addTierComment(other,review,' '.repeat(5))).rejects.toThrow();
   await expect(api.addTierComment(other,review,'a'.repeat(1001))).rejects.toThrow();
   await api.deleteTierComment(reader,review,thread.items[0]!.id);
-  await expect(api.addTierComment(reader,review,'Cannot bypass cooldown by deleting')).rejects.toThrow('30 секунд');
+  await expect(api.addTierComment(reader,review,'Cannot bypass cooldown by deleting')).rejects.toThrow('15 секунд');
 });
 it('hides drafts and prevents commenting or voting on them', async () => {
   await pool.query(`update "tierList" set status='draft' where id=$1`, [review]);

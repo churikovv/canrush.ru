@@ -56,7 +56,7 @@ describe.sequential('community profile storage', () => {
     await community.deleteProfileComment(b, id);
     expect((await community.getProfileWall(b)).count).toBe(0);
     // Deleting a comment must not bypass the publishing cooldown.
-    await expect(community.addProfileComment(a, b, 'too soon')).rejects.toThrow('30 секунд');
+    await expect(community.addProfileComment(a, b, 'too soon')).rejects.toThrow('15 секунд');
     const own = await community.addProfileComment(c, b, 'author removes this');
     await community.deleteProfileComment(c, own);
     await expect(community.addProfileComment(b, a, '   ')).rejects.toThrow('прикрепите');
