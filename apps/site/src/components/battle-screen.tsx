@@ -10,7 +10,7 @@ import Link from '@/components/navigation-progress';
 import type { BattleFrame, BattleHome, BattleReward } from '@/lib/battle';
 import { canAttack, legalTargets, type BattleSideView, type BattleView, type HandCard, type Unit } from '@/lib/battle-engine';
 import { DRAG_SLOP, FLICK_WINDOW_MS, releasedOnTable } from '@/lib/battle-gesture';
-import { BATTLE_KEYWORDS, BOARD_SIZE, DECK_SIZE, HERO_POWER_COST, KEYWORD_INFO, PAID_WINS_PER_DAY, SPIN_RING_COST, STARTER_CARDS, WIN_RINGS, ringsLabel, type BattleCardDef, type BattleKeyword } from '@/lib/battle-fields';
+import { BATTLE_KEYWORDS, BOARD_SIZE, DECK_SIZE, HERO_POWER_COST, HERO_POWER_DAMAGE, KEYWORD_INFO, MAX_MANA, PAID_WINS_PER_DAY, SPIN_RING_COST, STARTER_CARDS, WIN_RINGS, ringsLabel, type BattleCardDef, type BattleKeyword } from '@/lib/battle-fields';
 
 const NO_NOTICE = {};
 const RIVAL = 'Сова';
@@ -87,7 +87,18 @@ function Hero({ side, label, data, target, face, onTap }: { side: 'me' | 'rival'
 }
 
 function Mana({ data }: { data: BattleSideView }) {
-  return <span className="bt-mana" aria-label={`Мана: ${data.mana} из ${data.maxMana}`}><b>{data.mana}</b>/{data.maxMana}</span>;
+  return <span className="bt-mana" role="img" aria-label={`Мана: ${data.mana} из ${data.maxMana}`}>
+    {Array.from({ length: MAX_MANA }, (_, index) => <i key={index} data-state={index < data.mana ? 'full' : index < data.maxMana ? 'spent' : undefined} />)}
+    <b>{data.mana}/{data.maxMana}</b>
+  </span>;
+}
+
+/** Действие героя с подписью: что делает и сколько стоит. Недоступное нажимается и объясняет почему. */
+function ToolButton({ tone, icon, title, hint, ready, label, onClick }: { tone: 'power' | 'coin'; icon: ReactNode; title: string; hint: string; ready: boolean; label: string; onClick: () => void }) {
+  return <button type="button" className="bt-tool" data-tone={tone} data-ready={ready || undefined} aria-disabled={!ready} aria-label={label} onClick={onClick}>
+    <span className="bt-tool-icon" aria-hidden="true">{icon}</span>
+    <span className="bt-tool-text"><strong>{title}</strong><small>{hint}</small></span>
+  </button>;
 }
 
 function GameAction({ label, tone = 'orange', disabled, onClick }: { label: string; tone?: 'orange' | 'violet' | 'red'; disabled?: boolean; onClick: () => void }) {
@@ -346,6 +357,7 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
   const targets = unit ? legalTargets(unit, view.rival.board) : [];
   const myTurn = view.active === 'me' && !view.winner && !busy;
   const playable = (card: HandCard) => myTurn && card.cost <= view.me.mana && view.me.board.length < BOARD_SIZE;
+  const powerReason = !myTurn ? `Сейчас ходит ${RIVAL}.` : view.me.powerUsed ? 'Удар уже был в этом ходу.' : view.me.mana < HERO_POWER_COST ? `Для удара нужно ${HERO_POWER_COST} маны, у вас ${view.me.mana}.` : null;
 
   /** Жест до порога — обычное нажатие; дальше указатель ведёт карту, а `click` после него не считается. */
   function follow(event: ReactPointerEvent<HTMLButtonElement>, on: { start: () => void; move: (x: number, y: number) => void; end: (x: number, y: number, speed: number) => void }) {
@@ -471,10 +483,12 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
       </section>
       <section className="bt-console" aria-label="Ваш герой">
         <div className="bt-tools">
-          <button type="button" className="game-round bt-power" disabled={!myTurn || view.me.powerUsed || view.me.mana < HERO_POWER_COST} onClick={() => void send({ kind: 'power' })} aria-label={`Способность героя: ${HERO_POWER_COST} маны, 1 урон герою соперника`}>
-            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d={KEYWORD_ICONS.rush} /></svg><small>{HERO_POWER_COST}</small>
-          </button>
-          {view.me.coin && <button type="button" className="game-round bt-coin" disabled={!myTurn} onClick={() => void send({ kind: 'coin' })} aria-label="Монетка: +1 мана на этот ход">+1</button>}
+          <ToolButton tone="power" title="Удар" hint={view.me.powerUsed ? 'уже в этом ходу' : `${HERO_POWER_COST} маны · ${HERO_POWER_DAMAGE} урон`} ready={powerReason === null}
+            icon={<svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d={KEYWORD_ICONS.rush} /></svg>}
+            label={`Удар героя: ${HERO_POWER_COST} маны, ${HERO_POWER_DAMAGE} урон герою соперника${powerReason ? `. ${powerReason}` : ''}`}
+            onClick={() => { if (powerReason) setNotice({ text: powerReason, tone: 'error' }); else void send({ kind: 'power' }); }} />
+          {view.me.coin && <ToolButton tone="coin" title="+1 мана" hint="один раз за бой" ready={myTurn} icon="+1" label="Монетка: +1 мана на этот ход, один раз за бой"
+            onClick={() => { if (myTurn) void send({ kind: 'coin' }); else setNotice({ text: `Сейчас ходит ${RIVAL}.`, tone: 'error' }); }} />}
         </div>
         <Hero side="me" label="Вы" data={view.me} target={false} face={<AvatarFace />} />
         <div className="bt-side">
