@@ -112,13 +112,13 @@ li[data-rank="1"] .week-race-prize { background: color-mix(in srgb, var(--lb-gol
 .race-viewer { margin: 0 -24px; padding: 14px 24px; border-top: 1px solid var(--theme-line, #edf0f3); background: color-mix(in srgb, var(--color-brand, #006eff) 8%, transparent); font-size: .9375rem; }
 @media (max-width: 719px) { .race-viewer { margin-inline: -16px; padding-inline: 16px; } }
 
-/* Таймер до итогов: плитки в стиле банок, цифры одной ширины, чтобы секунды не дёргали ряд. */
+/* Таймер до итогов: плитки на цветах темы, как кнопки выбора места ниже; цифры одной ширины, чтобы секунды не дёргали ряд. */
 .race-timer { display: grid; flex: none; gap: 6px; margin-left: auto; }
 .race-timer-title { color: var(--theme-muted, #6b7280); font-size: .8125rem; font-weight: 700; }
 .race-timer-cells { display: grid; grid-template-columns: repeat(4, 58px); gap: 6px; }
-.race-timer-cells .can-plate { --cut: 8px; display: grid; justify-items: center; align-content: center; min-height: 58px; color: #fff; }
+.race-timer-cells > span { display: grid; justify-items: center; align-content: center; min-height: 58px; border-radius: 14px; background: var(--theme-subtle, #f0f3f7); color: var(--theme-text, #1a1a1a); }
 .race-timer-cells b { font-size: 1.375rem; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.race-timer-cells small { color: #f2c25c; font-size: .6875rem; font-weight: 700; line-height: 1.2; }
+.race-timer-cells small { color: var(--theme-muted, #6b7280); font-size: .6875rem; font-weight: 700; line-height: 1.2; }
 
 /* Примерка наград недели: своя строка рейтинга с тегом выбранных мест, такая же, как в списке лидеров. */
 .race-try { margin: 0 -24px; padding: 16px 24px 20px; border-top: 1px solid var(--theme-line, #edf0f3); }

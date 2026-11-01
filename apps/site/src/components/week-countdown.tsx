@@ -27,7 +27,7 @@ export function WeekCountdown({ endsAt, now }: { endsAt: number; now: number }) 
   return <div className="race-timer" role="timer" aria-label={`До итогов: ${days} дн. ${hours} ч. ${minutes} мин.`}>
     <span className="race-timer-title">До итогов</span>
     <span className="race-timer-cells" aria-hidden="true">
-      {([[days, 'дн'], [pad(hours), 'ч'], [pad(minutes), 'мин'], [pad(seconds), 'сек']] as const).map(([value, label]) => <span key={label} className="can-plate"><b>{value}</b><small>{label}</small></span>)}
+      {([[days, 'дн'], [pad(hours), 'ч'], [pad(minutes), 'мин'], [pad(seconds), 'сек']] as const).map(([value, label]) => <span key={label}><b>{value}</b><small>{label}</small></span>)}
     </span>
   </div>;
 }
