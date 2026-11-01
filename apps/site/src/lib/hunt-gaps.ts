@@ -7,7 +7,7 @@ export interface HuntStoreView { id: string; name: string; status: string; earne
 export interface HuntView {
   event: HuntEvent; phase: HuntPhase;
   /** Сколько проверенных магазинов у участника в этом событии: от них растёт дорожка бонусов. */
-  network: number; reached: number; balance: number; budgetLeft: number;
+  network: number; reached: number; balance: number; limitLeft: number;
   /** Что можно забрать сейчас: награды за магазины и бонусы вместе. */
   ready: { count: number; amount: number };
   progress: ReturnType<typeof huntProgress>; levels: HuntLevelView[]; orders: HuntOrderView[]; stores: HuntStoreView[];

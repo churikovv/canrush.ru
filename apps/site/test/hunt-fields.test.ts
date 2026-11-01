@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HUNT_ITEMS, HUNT_LEVELS, HUNT_MIN_CASHOUT, HUNT_STAGES, HUNT_TASKS, HuntError, huntLastDay, huntLevelReached, huntMinCashout, huntPayoutLabel, huntPhase, huntProgress, huntStage, parseHuntOrder, parseHuntPayout, type HuntEvent } from '../src/lib/hunt-fields';
 import { storeGaps } from '../src/lib/hunt-gaps';
 
-const event: HuntEvent = { key: 'test', startsAt: '2026-11-01T21:00:00.000Z', endsAt: '2026-11-30T21:00:00.000Z', reviewUntil: '2026-12-03T21:00:00.000Z', burnsAt: '2026-12-07T21:00:00.000Z', budget: 500 };
+const event: HuntEvent = { key: 'test', startsAt: '2026-11-01T21:00:00.000Z', endsAt: '2026-11-30T21:00:00.000Z', reviewUntil: '2026-12-03T21:00:00.000Z', burnsAt: '2026-12-07T21:00:00.000Z', memberLimit: 1000 };
 const sbp = { method: 'sbp', phone: '8 (900) 123-45-67', bank: ' Т-Банк ' };
 
 describe('levels', () => {

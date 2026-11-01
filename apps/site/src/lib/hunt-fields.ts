@@ -51,7 +51,7 @@ export function huntProgress(stores: number) {
 }
 
 /** Даты строкой: так их можно передать в браузер. `endsAt`, `reviewUntil` и `burnsAt` — первая минута дня, который уже не входит. */
-export interface HuntEvent { key: string; startsAt: string; endsAt: string; reviewUntil: string; burnsAt: string; budget: number }
+export interface HuntEvent { key: string; startsAt: string; endsAt: string; reviewUntil: string; burnsAt: string; memberLimit: number }
 export type HuntPhase = 'upcoming' | 'open' | 'exchange' | 'over';
 
 export function huntPhase(event: HuntEvent, now: number): HuntPhase {

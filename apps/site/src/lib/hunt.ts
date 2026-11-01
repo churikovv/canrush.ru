@@ -9,20 +9,16 @@ interface Queryable { query: ReturnType<typeof getPool>['query'] }
 
 /** Событие на экране: идущее или ближайшее, а если впереди ничего нет — последнее прошедшее. Новое событие — строка `huntEvent`. */
 export async function getHuntEvent(db: Queryable = getPool(), now = Date.now()): Promise<HuntEvent> {
-  const row = (await db.query<{ key: string; startsAt: Date; endsAt: Date; reviewUntil: Date; burnsAt: Date; budget: number }>(`select key, "startsAt", "endsAt", "reviewUntil", "burnsAt", budget from "huntEvent"
+  const row = (await db.query<{ key: string; startsAt: Date; endsAt: Date; reviewUntil: Date; burnsAt: Date; memberLimit: number }>(`select key, "startsAt", "endsAt", "reviewUntil", "burnsAt", "memberLimit" from "huntEvent"
     order by "burnsAt" > to_timestamp($1::double precision / 1000) desc, case when "burnsAt" > to_timestamp($1::double precision / 1000) then "startsAt" end asc, "startsAt" desc limit 1`, [now])).rows[0];
   if (!row) throw new Error('Price tag hunt has no event');
-  return { key: row.key, budget: row.budget, startsAt: row.startsAt.toISOString(), endsAt: row.endsAt.toISOString(), reviewUntil: row.reviewUntil.toISOString(), burnsAt: row.burnsAt.toISOString() };
+  return { key: row.key, memberLimit: row.memberLimit, startsAt: row.startsAt.toISOString(), endsAt: row.endsAt.toISOString(), reviewUntil: row.reviewUntil.toISOString(), burnsAt: row.burnsAt.toISOString() };
 }
 
-const budgetLeft = async (db: Queryable, event: HuntEvent) =>
-  Math.max(0, event.budget - ((await db.query<{ spent: number }>('select coalesce(sum(amount), 0)::int as spent from "huntReward" where event = $1', [event.key])).rows[0]?.spent ?? 0));
-
-/** Баннер и подсказка в форме магазина — только пока приём открыт и в бюджете что-то есть. */
+/** Баннер и подсказка в форме магазина — только пока приём открыт. */
 export async function huntOpenEvent(now = Date.now()) {
-  const db = getPool();
-  const event = await getHuntEvent(db, now);
-  return huntPhase(event, now) === 'open' && await budgetLeft(db, event) > 0 ? event : null;
+  const event = await getHuntEvent(getPool(), now);
+  return huntPhase(event, now) === 'open' ? event : null;
 }
 
 async function rewardsOf(db: Queryable, userId: string, event: HuntEvent) {
@@ -55,13 +51,14 @@ export async function getHunt(userId: string | null, now = Date.now()): Promise<
   const db = getPool();
   const event = await getHuntEvent(db, now);
   const phase = huntPhase(event, now);
-  const [left, rewards, balance, orders, stores] = await Promise.all([budgetLeft(db, event), userId ? rewardsOf(db, userId, event) : [], userId ? balanceOf(db, userId, event, now) : 0, userId ? ownOrders(db, userId) : [], userId ? ownStores(db, userId) : []]);
+  const [rewards, balance, orders, stores] = await Promise.all([userId ? rewardsOf(db, userId, event) : [], userId ? balanceOf(db, userId, event, now) : 0, userId ? ownOrders(db, userId) : [], userId ? ownStores(db, userId) : []]);
   const network = rewards.filter(row => row.reason === 'full' || row.reason === 'upgrade').length;
   const reached = huntLevelReached(network);
+  const earned = rewards.reduce((sum, row) => sum + row.amount, 0);
   const waiting = phase === 'over' ? [] : rewards.filter(row => !row.claimedAt);
   const claimed = new Set(rewards.flatMap(row => (row.level && row.claimedAt ? [row.level] : [])));
   return {
-    event, phase, network, reached, balance, budgetLeft: left, progress: huntProgress(network),
+    event, phase, network, reached, balance, limitLeft: Math.max(0, event.memberLimit - earned), progress: huntProgress(network),
     ready: { count: waiting.length, amount: waiting.reduce((sum, row) => sum + row.amount, 0) },
     levels: HUNT_LEVELS.map((level, index) => ({ ...level, level: index + 1, reached: index < reached, claimed: claimed.has(index + 1) })), orders, stores,
   };
@@ -71,7 +68,7 @@ async function assertAllowed(db: Queryable, userId: string) {
   if ((await db.query('select 1 from "userBlock" where "userId" = $1', [userId])).rowCount) throw new HuntError('Аккаунт заблокирован.');
 }
 
-/** Забрать всё начисленное: бюджет занят ещё при проверке магазина, поэтому здесь только перенос на баланс. */
+/** Забрать всё начисленное: лимит занят ещё при проверке магазина, поэтому здесь только перенос на баланс. */
 export async function claimHunt(userId: string, now = Date.now()): Promise<{ amount: number }> {
   const client = await getPool().connect();
   try {
@@ -142,7 +139,8 @@ export async function listHuntOrders(): Promise<HuntAdminOrder[]> {
 export async function huntIssued() {
   const db = getPool();
   const event = await getHuntEvent(db);
-  return { event, issued: event.budget - await budgetLeft(db, event) };
+  const issued = (await db.query<{ issued: number }>('select coalesce(sum(amount), 0)::int as issued from "huntReward" where event = $1', [event.key])).rows[0]?.issued ?? 0;
+  return { event, issued };
 }
 
 /** Решение команды по заявке: «выполнена» или отмена с возвратом ценников. Реквизиты стираются, участник получает уведомление, всё пишется в журнал. */

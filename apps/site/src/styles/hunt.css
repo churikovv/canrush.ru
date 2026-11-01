@@ -4,6 +4,11 @@
 .hunt-points:focus-visible { outline: 0; --rim: #fff; }
 .hunt-tag-icon { flex: none; }
 
+/* На телефоне рядом стоит счётчик ценников, и подпись ушла бы на вторую строку ради одного слова. */
+@media (max-width: 439px) {
+  .hunt-each { display: none; }
+}
+
 .hunt-menu { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 .hunt-menu-btn { --cut: 10px; min-height: 44px; padding: 0 10px; border: 0; color: #fff; font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; touch-action: manipulation; }
 .hunt-menu-btn:hover { filter: brightness(1.15); }

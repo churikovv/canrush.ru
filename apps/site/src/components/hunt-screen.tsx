@@ -50,7 +50,7 @@ function TasksSheet({ hunt, signedIn, onClose }: { hunt: HuntView; signedIn: boo
     <ol className="hunt-tasks">
       {HUNT_TASKS.map(task => <li key={task.key} className="can-plate hunt-task"><span className="hunt-task-copy"><b>{task.title}</b><small>{task.hint}</small></span><strong><TagIcon size={18} />+{task.amount}</strong></li>)}
     </ol>
-    <p className="hunt-sheet-note">Ценники начисляются за каждый магазин, когда он проходит проверку команды. За 5, 10, 15 и 20 магазинов идёт бонус к сумме. Дубли, выдуманные точки и магазины своей компании не считаются.</p>
+    <p className="hunt-sheet-note">Ценники начисляются за каждый магазин, когда он проходит проверку команды. За 5, 10, 15 и 20 магазинов идёт бонус к сумме. За событие один участник получает до {number(hunt.event.memberLimit)} ценников. Дубли, выдуманные точки и магазины своей компании не считаются.</p>
     {hunt.phase === 'open' && <Link className="can-btn hunt-wide" href="/market/stores/new">Добавить магазин</Link>}
     {signedIn && hunt.stores.length > 0 && <section aria-labelledby="hunt-own"><h3 id="hunt-own">Ваши магазины</h3><ul className="hunt-stores">{hunt.stores.map(store => <StoreRow key={store.id} store={store} />)}</ul></section>}
   </Sheet>;
@@ -123,8 +123,8 @@ export function HuntScreen({ initial, signedIn }: { initial: HuntView; signedIn:
   const opened = level ? huntStageOpensAt(level.level) : undefined;
   const { progress, ready } = hunt;
   const { phase, event } = hunt;
-  const collecting = phase === 'open' && hunt.budgetLeft > 0;
-  const subtitle = phase === 'upcoming' ? `Старт ${huntFirstDay(event.startsAt)}` : phase === 'open' ? `До ${huntLastDay(event.endsAt)} · в бюджете ${number(hunt.budgetLeft)}` : phase === 'exchange' ? `Обмен до ${huntLastDay(event.burnsAt)}` : 'Событие завершено';
+  const collecting = phase === 'open' && hunt.limitLeft > 0;
+  const subtitle = phase === 'upcoming' ? `Старт ${huntFirstDay(event.startsAt)}` : phase === 'open' ? `До ${huntLastDay(event.endsAt)} · ${collecting ? `до ${number(event.memberLimit)} ₽` : 'лимит получен'}` : phase === 'exchange' ? `Обмен до ${huntLastDay(event.burnsAt)}` : 'Событие завершено';
 
   useEffect(() => {
     const box = rail.current;
@@ -170,7 +170,7 @@ export function HuntScreen({ initial, signedIn }: { initial: HuntView; signedIn:
       <button type="button" className="can-plate pass-icon-btn" onClick={leave} aria-label="Назад"><span aria-hidden="true">‹</span></button>
       <div className="pass-title">
         <h1>Охота за ценниками</h1>
-        <p>{subtitle}</p>
+        <p>{subtitle}{collecting && <span className="hunt-each"> каждому</span>}</p>
       </div>
       {signedIn && <button type="button" className="can-plate pass-points hunt-points" onClick={() => setSheet('shop')} title="Ваши ценники"><TagIcon size={18} />{number(hunt.balance)}<span className="sr-only"> ценников, открыть витрину</span></button>}
     </header>

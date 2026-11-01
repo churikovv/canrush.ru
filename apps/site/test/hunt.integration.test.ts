@@ -35,7 +35,7 @@ const grant = (id: string, amount: number) => pool.query(`insert into "huntLedge
 
 beforeAll(async () => {
   // Своё событие с давним началом: идёт всегда и раньше настоящих, поэтому тест не зависит от календаря.
-  await pool.query(`insert into "huntEvent" (key, "startsAt", "endsAt", "reviewUntil", "burnsAt", budget) values ($1, '2020-01-01', now() + interval '10 days', now() + interval '12 days', now() + interval '400 days', 500)`, [EVENT]);
+  await pool.query(`insert into "huntEvent" (key, "startsAt", "endsAt", "reviewUntil", "burnsAt", "memberLimit") values ($1, '2020-01-01', now() + interval '10 days', now() + interval '12 days', now() + interval '400 days', 1000)`, [EVENT]);
   for (const id of everyone) await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Охотник',$2,true,now(),now(),$3)`, [id, `${id}@example.com`, `hu_${id.replaceAll('-', '').slice(0, 12)}`]);
   await pool.query('insert into "userBlock" ("userId") values ($1)', [blocked]);
 });
@@ -45,7 +45,7 @@ afterEach(async () => {
   await pool.query('delete from "huntLedger" where "userId" = any($1)', [everyone]);
   await pool.query('delete from "huntOrder" where "userId" = any($1)', [everyone]);
   await pool.query('delete from "marketStore" where id = any($1)', [stores]);
-  await pool.query('update "huntEvent" set budget = 500 where key = $1', [EVENT]);
+  await pool.query('update "huntEvent" set "memberLimit" = 1000 where key = $1', [EVENT]);
 });
 
 afterAll(async () => {
@@ -109,15 +109,30 @@ it('credits every store on its own and adds the bonus for five stores, once', as
   await expect(claimHunt(member)).rejects.toThrow('Новых наград');
 });
 
-it('stops paying when the budget of the event is spent, and keeps what was accrued', async () => {
-  await pool.query('update "huntEvent" set budget = $2 where key = $1', [EVENT, task('full') + 5]);
+it('caps each member, not the event: the rest of the limit is paid, then nothing, and the others are not touched', async () => {
+  await pool.query('update "huntEvent" set "memberLimit" = $2 where key = $1', [EVENT, task('full') + 5]);
   await publish(await store(member, 6));
-  const late = await store(other, 6);
-  await publish(late);
-  expect(await rewards(late)).toEqual([]);
-  const view = await getHunt(member);
-  expect(view.budgetLeft).toBe(5);
-  expect((await claimHunt(member)).amount).toBe(task('full'));
+  expect((await getHunt(member)).limitLeft).toBe(5);
+  const partial = await store(member, 6);
+  await publish(partial);
+  expect(await rewards(partial)).toEqual([{ reason: 'full', amount: 5 }]);
+  expect((await getHunt(member)).limitLeft).toBe(0);
+  const over = await store(member, 6);
+  await publish(over);
+  expect(await rewards(over)).toEqual([]);
+  const neighbour = await store(other, 6);
+  await publish(neighbour);
+  expect(await rewards(neighbour)).toEqual([{ reason: 'full', amount: task('full') }]);
+  expect((await claimHunt(member)).amount).toBe(task('full') + 5);
+  expect((await getHunt(null)).limitLeft).toBe(task('full') + 5);
+});
+
+it('does not pass the limit when the same member gets several stores published at once', async () => {
+  await pool.query('update "huntEvent" set "memberLimit" = $2 where key = $1', [EVENT, task('full') * 2]);
+  const batch = await Promise.all(Array.from({ length: 6 }, () => store(member, 6)));
+  await Promise.all(batch.map(publish));
+  const total = (await pool.query<{ total: number }>('select coalesce(sum(amount), 0)::int as total from "huntReward" where event = $1 and "userId" = $2', [EVENT, member])).rows[0]!.total;
+  expect(total).toBe(task('full') * 2);
 });
 
 it('burns the balance and unclaimed rewards after the event, not before', async () => {

@@ -4,7 +4,7 @@ import Link from '@/components/navigation-progress';
 import { huntOpenEvent } from '@/lib/hunt';
 import { huntLastDay } from '@/lib/hunt-fields';
 
-/** Баннер в разделе магазинов: добавление оплачивается, пока идёт событие и есть бюджет. Цвет и магазин — третья стадия охоты. */
+/** Баннер в разделе магазинов: добавление оплачивается, пока идёт событие. Цвет и магазин — третья стадия охоты. */
 export async function HuntEntry() {
   const event = await huntOpenEvent();
   if (!event) return null;

@@ -20,7 +20,7 @@ export default async function AdminHuntPage({ searchParams }: { searchParams: Pr
   const admin = await requireFullAdmin();
   const { error } = await searchParams;
   const [queues, orders, { event, issued }] = await Promise.all([getAdminQueues(), listHuntOrders(), huntIssued()]);
-  return <AdminShell queues={queues} active="hunt" email={admin.email} title="Охота за ценниками" subtitle={`Начислено ${issued.toLocaleString('ru-RU')} из ${event.budget.toLocaleString('ru-RU')} · приём до ${huntLastDay(event.endsAt)}, сгорание после ${huntLastDay(event.burnsAt)}`}>
+  return <AdminShell queues={queues} active="hunt" email={admin.email} title="Охота за ценниками" subtitle={`Начислено ${issued.toLocaleString('ru-RU')} · лимит ${event.memberLimit.toLocaleString('ru-RU')} на участника · приём до ${huntLastDay(event.endsAt)}, сгорание после ${huntLastDay(event.burnsAt)}`}>
     {error && <FormAlert tone="error">{error}</FormAlert>}
     <section className="admin-data-panel">
       <div className="admin-panel-heading"><h2>Заявки · {orders.length}</h2></div>
