@@ -3,6 +3,7 @@ import { getPool } from '@/db/pool';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { activeOffers, type CatalogFile } from '@/lib/catalog-files';
 import { days, pluralRu } from '@/lib/drink-calendar-fields';
+import { huntItemName } from '@/lib/hunt-fields';
 import { isResolvedFlavor, type CityId } from '@canrush/shared';
 
 export interface NotificationItem { id: string; title: string; detail: string; href: string; unread: boolean; createdAt: string; kind: string; city?: string }
@@ -102,6 +103,12 @@ function describeNotification(row: any): NotificationItem {
       title = 'Доплатили опыт за ваши напитки';
       detail = `${p.drinks.toLocaleString('ru-RU')} ${pluralRu(p.drinks, 'напиток', 'напитка', 'напитков')} сверх старого лимита: +${p.bonus.toLocaleString('ru-RU')} XP`;
       href = '/profile';
+    } else if (row.kind==='hunt-order') {
+      // The team's answer to a price tag exchange: a cancelled order has already returned the tags (hunt.ts).
+      const p = row.payload;
+      title = p.status === 'done' ? 'Заявка на обмен выполнена' : 'Заявка на обмен отменена';
+      detail = p.status === 'done' ? `${huntItemName(p.item)} · ${p.amount.toLocaleString('ru-RU')} ценников` : `Ценники вернулись на баланс. ${p.note}`;
+      href = '/hunt';
     } else if (row.kind==='overtaken') {
       // Someone passed the member in the week's top five (migration 0168): the new place and how far behind they are.
       const p = row.payload;

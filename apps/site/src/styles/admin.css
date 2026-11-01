@@ -379,3 +379,8 @@ div.admin-drink-card-match > p { margin: 0; }
 @media (max-width: 639px) { .bot-dialog-form button { justify-self: stretch; } }
 @media (pointer: coarse) { .bot-dialog-form textarea { font-size: 1rem; } }
 
+/* Заявки охоты за ценниками: действия столбиком, поле причины рядом с отменой. */
+.hunt-admin-actions { display: grid; gap: 8px; white-space: normal; }
+.hunt-admin-actions form { display: flex; gap: 6px; }
+.hunt-admin-actions input[name="note"] { min-width: 0; width: 160px; min-height: 40px; padding: 0 10px; box-sizing: border-box; border: 1px solid var(--theme-line, #e6e8ec); border-radius: 8px; background: transparent; color: inherit; font: inherit; }
+@media (pointer: coarse) { .hunt-admin-actions input[name="note"] { font-size: 1rem; } }

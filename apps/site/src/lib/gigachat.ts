@@ -10,8 +10,9 @@ import { RUSSIAN_TRUSTED_ROOT_CA } from '@/lib/gigachat-ca';
 const OAUTH_URL = 'https://ngw.devices.sberbank.ru:9443/api/v2/oauth';
 const API_URL = 'https://gigachat.devices.sberbank.ru/api/v1';
 
-export interface ChatMessage { role: 'system' | 'user' | 'assistant'; content: string }
-type Post = (url: string, headers: Record<string, string>, body: string) => Promise<{ status: number; body: string }>;
+/** `attachments` — id файлов из `uploadImage`: одно изображение на сообщение. */
+export interface ChatMessage { role: 'system' | 'user' | 'assistant'; content: string; attachments?: string[] }
+type Post = (url: string, headers: Record<string, string>, body: string | Buffer) => Promise<{ status: number; body: string }>;
 
 const httpsPost: Post = (url, headers, body) => new Promise((resolve, reject) => {
   const req = request(url, { method: 'POST', headers: { ...headers, 'Content-Length': Buffer.byteLength(body) }, ca: RUSSIAN_TRUSTED_ROOT_CA, timeout: 60_000 }, res => {
@@ -40,6 +41,25 @@ export class GigaChatClient {
     if (typeof json.access_token !== 'string' || typeof json.expires_at !== 'number') throw new Error('gigachat_oauth_invalid');
     this.token = { value: json.access_token, expiresAt: json.expires_at };
     return json.access_token;
+  }
+
+  /** JPEG в хранилище нейросети для вопроса по фото. Файл виден только этому ключу, после ответа его удаляет `deleteFile`. */
+  async uploadImage(image: Buffer): Promise<string> {
+    const boundary = `----canrush${randomUUID()}`;
+    const body = Buffer.concat([
+      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="purpose"\r\n\r\ngeneral\r\n--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="photo.jpg"\r\nContent-Type: image/jpeg\r\n\r\n`),
+      image, Buffer.from(`\r\n--${boundary}--\r\n`),
+    ]);
+    const response = await this.post(`${API_URL}/files`, { 'Content-Type': `multipart/form-data; boundary=${boundary}`, Accept: 'application/json', Authorization: `Bearer ${await this.accessToken()}` }, body);
+    if (response.status !== 200) throw new Error(`gigachat_upload_${response.status}`);
+    const id = (JSON.parse(response.body) as { id?: unknown }).id;
+    if (typeof id !== 'string') throw new Error('gigachat_upload_invalid');
+    return id;
+  }
+
+  async deleteFile(id: string): Promise<void> {
+    const response = await this.post(`${API_URL}/files/${encodeURIComponent(id)}/delete`, { Accept: 'application/json', Authorization: `Bearer ${await this.accessToken()}` }, '');
+    if (response.status !== 200) throw new Error(`gigachat_delete_${response.status}`);
   }
 
   async chat(messages: ChatMessage[], options: { maxTokens?: number; temperature?: number } = {}): Promise<string> {

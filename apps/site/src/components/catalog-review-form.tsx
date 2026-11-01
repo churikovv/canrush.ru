@@ -19,6 +19,7 @@ import { RatingFace, ratingMood } from '@/components/rating-face';
 import { CountryInput } from '@/components/country-input';
 import { RatingDial } from '@/components/rating-dial';
 import { FormOptional } from '@/components/form-step';
+import { clearReviewDraft, readReviewDraft, writeReviewDraft } from '@/lib/review-draft';
 
 interface CatalogReviewFormProps {
   brand: string;
@@ -32,6 +33,8 @@ interface CatalogReviewFormProps {
   onSettled?: (hasReview: boolean) => void;
   /** The product page: writing goes step by step — taste, design, then country, text and photos. */
   stepped?: boolean;
+  /** A draft was found or dropped: the panel changes its button. */
+  onDraft?: (found: boolean) => void;
 }
 
 const CRITERIA: Array<{ name: 'design' | 'taste'; label: string }> = [
@@ -111,7 +114,7 @@ function SubmitButton({ editing, tooShort }: { editing: boolean; tooShort: boole
   );
 }
 
-export function CatalogReviewForm({ brand, flavor, existing, authenticated, initiallyEditing = false, onClose, onSettled, stepped = false }: CatalogReviewFormProps) {
+export function CatalogReviewForm({ brand, flavor, existing, authenticated, initiallyEditing = false, onClose, onSettled, stepped = false, onDraft }: CatalogReviewFormProps) {
   const [step, setStep] = useState(0);
   const [editing, setEditing] = useState(initiallyEditing || !existing);
   const [hasReview, setHasReview] = useState(Boolean(existing));
@@ -123,6 +126,8 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
   const [photoError, setPhotoError] = useState('');
   const previews = useRef(new Set<string>());
   const [text, setText] = useState(existing?.text ?? '');
+  const [draft, setDraft] = useState<{ savedAt: number; photos: number } | null>(null);
+  const draftChecked = useRef(false);
   const [state, formAction, pending] = useActionState<ReviewFormState, FormData>(async (previous, data) => {
     // React resets the form after each action; the controls show state, so a resend after an error takes it from there.
     data.set('design', String(ratings.design)); data.set('taste', String(ratings.taste)); data.set('country', country);
@@ -137,6 +142,9 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
         setRetained(result.photos ?? []);
         setPhotoError('');
         saved.current = { text: String(data.get('text') ?? ''), design: Number(data.get('design')), taste: Number(data.get('taste')), country: String(data.get('country') ?? ''), photos: result.photos ?? [] };
+        clearReviewDraft(brand, flavor);
+        setDraft(null);
+        onDraft?.(false);
         setHasReview(true);
         setEditing(false);
         setStep(0);
@@ -202,6 +210,9 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
     startDelete(async () => {
       try {
         await deleteReviewAction(data);
+        clearReviewDraft(brand, flavor);
+        setDraft(null);
+        onDraft?.(false);
         clearPreviews();
         saved.current = { text: '', design: 5, taste: 5, country: '', photos: [] };
         setText(''); setRatings({ design: 5, taste: 5 }); setCountry(''); setRetained([]);
@@ -222,6 +233,39 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
   useEffect(() => {
     if (state.status === 'error') errorSummaryRef.current?.focus();
   }, [state]);
+  // Черновик возвращается, когда форма открыта для письма: браузера нет на сервере, поэтому только после монтирования.
+  useEffect(() => {
+    if (!authenticated || !editing || draftChecked.current) return;
+    const timer = setTimeout(() => {
+      draftChecked.current = true;
+      const found = readReviewDraft(brand, flavor);
+      const base = saved.current;
+      if (!found || (found.text === base.text && found.design === base.design && found.taste === base.taste && found.country === base.country)) return;
+      setText(found.text); setRatings({ design: found.design, taste: found.taste }); setCountry(found.country);
+      setDraft({ savedAt: found.savedAt, photos: found.photos });
+      onDraft?.(true);
+      if (stepped && found.text) setStep(STEPS.length);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [authenticated, brand, editing, flavor, onDraft, stepped]);
+  // Пишем с паузой, пока участник печатает. Вернулись к сохранённому — черновик не нужен.
+  useEffect(() => {
+    if (!authenticated || !editing || !draftChecked.current) return;
+    const timer = setTimeout(() => {
+      const base = saved.current;
+      const changed = text !== base.text || ratings.design !== base.design || ratings.taste !== base.taste || country !== base.country;
+      if (changed) writeReviewDraft(brand, flavor, { text, design: ratings.design, taste: ratings.taste, country, photos: files.length });
+      else clearReviewDraft(brand, flavor);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [authenticated, brand, country, editing, files.length, flavor, ratings, text]);
+  function dropDraft() {
+    clearReviewDraft(brand, flavor);
+    setDraft(null);
+    onDraft?.(false);
+    setText(saved.current.text); setRatings({ design: saved.current.design, taste: saved.current.taste }); setCountry(saved.current.country);
+    setStep(0);
+  }
   // Moving between steps keeps the keyboard on the new step's control (not on the first render).
   const stepMoved = useRef(false);
   useEffect(() => {
@@ -266,6 +310,10 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
     <form className="review-form" id="review-form" ref={formRef} action={formAction}
       // A screenshot or copied photo pasted anywhere in the form joins the review photos.
       onPaste={event => { const files = pastedFiles(event, file => file.type.startsWith('image/')); if (files.length) choosePhotos(toFileList(files)); }}>
+      {draft && editing && <p className="review-draft-note" role="status">
+        <span>Вернули черновик от {new Date(draft.savedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}.{draft.photos > 0 ? ' Фото добавьте заново.' : ''}</span>
+        <button type="button" onClick={dropDraft}>Очистить</button>
+      </p>}
       <input type="hidden" name="ratingScale" value="10" />
       <input type="hidden" name="brand" value={brand} />
       <input type="hidden" name="flavor" value={flavor} />
@@ -387,6 +435,7 @@ export function CatalogReviewForm({ brand, flavor, existing, authenticated, init
       </div> : editing ? <div className="review-form-actions">
         <SubmitButton editing={hasReview} tooShort={normalizeReviewText(text).length < MIN_REVIEW_LENGTH} />
         {hasReview && <button className="community-button community-button-secondary" type="button" disabled={busy} onClick={() => {
+          clearReviewDraft(brand, flavor); setDraft(null); onDraft?.(false);
           setText(saved.current.text); setRatings({ design: saved.current.design, taste: saved.current.taste }); setCountry(saved.current.country); setRetained(saved.current.photos);
           clearPreviews(); setEditing(false); setStep(0); onClose?.(); onSettled?.(true);
         }}>Отмена</button>}

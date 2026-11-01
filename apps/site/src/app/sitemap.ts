@@ -32,6 +32,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}/business/terms`, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE_URL}/hunt`, changeFrequency: 'weekly', priority: 0.5 },
+    { url: `${SITE_URL}/hunt/rules`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}/account-deletion`, changeFrequency: 'yearly', priority: 0.2 },
   ];
   // Excluded brands are not energy drinks: kept in the full catalog only for their history, never offered to search.

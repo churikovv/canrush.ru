@@ -3,7 +3,7 @@ import { CARD_QUEUE } from '@/lib/catalog-card-check';
 
 /** What waits for the team in each admin section — the badges in the sidebar. */
 export interface AdminQueues {
-  support: number; reports: number; drinks: number; stores: number; articles: number; business: number; bot: number;
+  support: number; reports: number; drinks: number; stores: number; articles: number; business: number; bot: number; hunt: number;
 }
 
 /**
@@ -16,6 +16,7 @@ export async function getAdminQueues(): Promise<AdminQueues> {
   const { rows } = await getPool().query<AdminQueues>(`select
     (select count(*) from "supportThread" where status = 'open' and not "lastFromStaff")::int as support,
     (select count(distinct "userId") from "botMessage" where not "fromTeam" and "readAt" is null)::int as bot,
+    (select count(*) from "huntOrder" where status = 'new')::int as hunt,
     (select count(*) from "profileReport" where status = 'open')::int as reports,
     ((select count(*) from "catalogDrink" where status = 'pending') + (select count(*) from "catalogCardCheck" c where ${CARD_QUEUE}))::int as drinks,
     (select count(*) from "marketStore" where status = 'pending')::int as stores,

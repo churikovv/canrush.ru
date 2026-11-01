@@ -3833,3 +3833,7 @@ a.first-steps-row:active { transform: scale(.98); }
 .profile-tag[data-tag=week-hero]::before, .profile-tag[data-tag=week-best]::before, .profile-tag[data-tag=week-charge]::before { content: ''; flex: none; width: 1.1em; height: 1.1em; background: currentColor; -webkit-mask: var(--tag-icon) center / contain no-repeat; mask: var(--tag-icon) center / contain no-repeat; }
 .profile-tag[data-tag=week-hero]::after, .profile-tag[data-tag=week-best]::after, .profile-tag[data-tag=week-charge]::after { content: ''; position: absolute; inset: -2px; z-index: -1; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / .6) 50%, transparent 65%); transform: translateX(-130%); animation: top-tag-shine 3.6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .profile-tag[data-tag=week-hero]::after, .profile-tag[data-tag=week-best]::after, .profile-tag[data-tag=week-charge]::after { display: none; } }
+
+/* Черновик отзыва: форма бывает и на странице напитка, и в профиле, поэтому стиль здесь. */
+.review-draft-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: var(--color-subtle); font-size: .875rem; line-height: 1.4; }
+.review-draft-note button { flex: none; min-height: 44px; padding: 0 4px; border: 0; background: transparent; color: var(--color-brand); font: inherit; font-weight: 700; cursor: pointer; }

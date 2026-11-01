@@ -10,3 +10,5 @@ frames-*/
 *.blend1
 pass-*.png
 pass-*.mp4
+hunt-*.png
+frames-hunt-*/

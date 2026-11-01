@@ -10,6 +10,8 @@ import { getStore, saveStore, moderateStore } from '@/lib/stores';
 import { getPool } from '@/db/pool';
 import { linkStoreCatalog } from '@/lib/store-catalog';
 import { geocodeStoreAddress, type StoreGeocode } from '@/lib/store-geocoder';
+import { scanStorePhotos, type ScannedDrinks } from '@/lib/store-photo-drinks';
+import { STORE_SCAN_PHOTOS } from '@/lib/store-photo-fields';
 /** `staff` — saved by an admin or moderator editing someone else's store: it stays published, nothing goes to review. */
 export interface StoreState { error?: string; saved?: boolean; staff?: boolean }
 export async function saveStoreAction(id: string | undefined, _previous: StoreState, form: FormData): Promise<StoreState> {
@@ -29,6 +31,22 @@ export async function moderateStoreAction(id:string,version:string,_previous:Sto
   const admin=await requireSiteAdmin();
   try{await moderateStore(admin.userId,id,String(form.get('status')) as 'published'|'rejected',String(form.get('note')??''),version);revalidatePath('/market/stores','layout');revalidatePath('/admin/stores');return {saved:true};}
   catch(error){return {error:error instanceof StoreError?error.message:'Не удалось проверить заявку.'};}
+}
+const scanCalls=new Map<string,number[]>();
+const HOUR=3_600_000;
+/** Напитки с фото: только для вошедших и не чаще 6 раз в час на аккаунт, каждый проход платный. Сбой не мешает заполнить список вручную. */
+export async function scanStorePhotosAction(form:FormData):Promise<ScannedDrinks|{error:'auth'|'limit'|'off'|'failed'}>{
+  const session=await auth.api.getSession({headers:await headers()});
+  if(!session)return {error:'auth'};
+  const now=Date.now(),recent=(scanCalls.get(session.user.id)??[]).filter(at=>at>now-HOUR);
+  if(recent.length>=6)return {error:'limit'};
+  scanCalls.set(session.user.id,[...recent,now]);
+  if(scanCalls.size>5000)for(const [user,calls] of scanCalls)if(!calls.some(at=>at>now-HOUR))scanCalls.delete(user);
+  try{
+    const files=form.getAll('photos').filter((item):item is File=>item instanceof File).slice(0,STORE_SCAN_PHOTOS);
+    const result=await scanStorePhotos(await Promise.all(files.map(async file=>Buffer.from(await file.arrayBuffer()))));
+    return result??{error:'off'};
+  }catch{return {error:'failed'};}
 }
 const geocodeCalls=new Map<string,number[]>();
 /** Address lookup for the store form; signed-in only and at most 20 lookups a minute per account. */

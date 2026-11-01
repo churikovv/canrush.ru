@@ -1,0 +1,82 @@
+/* Охота за ценниками: экран сезонного пропуска (`pass.css`) со своим магазином, меню и листами поверх сцены. */
+.hunt-points { border: 0; cursor: pointer; }
+.hunt-points:hover { filter: brightness(1.15); }
+.hunt-points:focus-visible { outline: 0; --rim: #fff; }
+.hunt-tag-icon { flex: none; }
+
+.hunt-menu { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.hunt-menu-btn { --cut: 10px; min-height: 44px; padding: 0 10px; border: 0; color: #fff; font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; touch-action: manipulation; }
+.hunt-menu-btn:hover { filter: brightness(1.15); }
+.hunt-menu-btn:focus-visible { outline: 0; --rim: #fff; }
+
+.hunt-rail li { flex: 1 0 76px; }
+.hunt-tile-shop { display: block; width: auto; max-width: 56px; height: auto; max-height: 34px; filter: drop-shadow(0 2px 3px rgb(0 0 0 / .6)); }
+.hunt-screen .pass-note a { color: var(--pass-light); }
+
+/* Лист: снизу на телефоне, по центру на широком экране. `--pass-wall` не наследуется из-за верхнего слоя, поэтому цвета свои. */
+.hunt-sheet { width: 100%; max-width: 560px; max-height: min(88dvh, 780px); margin: auto auto 0; padding: 0; border: 0; background: transparent; color: #fff; overflow: visible; }
+.hunt-sheet::backdrop { background: rgb(4 6 12 / .66); }
+.hunt-sheet-panel { display: flex; flex-direction: column; max-height: min(88dvh, 780px); overflow: hidden; border-radius: 22px 22px 0 0; background: linear-gradient(#171b25, #0b0e15); box-shadow: 0 -12px 40px rgb(0 0 0 / .5); }
+.hunt-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; }
+.hunt-sheet-head h2 { margin: 0; font-size: 1.375rem; font-weight: 900; line-height: 1.15; }
+.hunt-sheet-body { display: grid; gap: 14px; padding: 4px 16px calc(env(safe-area-inset-bottom, 0px) + 18px); overflow-y: auto; overscroll-behavior: contain; }
+.hunt-sheet-body h3 { margin: 6px 0 8px; font-size: 1rem; font-weight: 900; }
+.hunt-sheet-note { margin: 0; color: rgb(255 255 255 / .62); font-size: .8125rem; line-height: 1.4; }
+.hunt-sheet a:not(.can-btn) { color: #8db4ff; }
+.hunt-wide { width: 100%; }
+
+.hunt-tasks, .hunt-stores, .hunt-orders, .hunt-items { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.hunt-task { --cut: 10px; --rim: rgb(255 255 255 / .16); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; }
+.hunt-task-copy, .hunt-store-copy, .hunt-item-copy { display: grid; gap: 2px; min-width: 0; }
+.hunt-task b, .hunt-store b, .hunt-item b, .hunt-orders b { font-size: .9375rem; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
+.hunt-task small, .hunt-store small, .hunt-item small, .hunt-orders small { color: rgb(255 255 255 / .62); font-size: .8125rem; line-height: 1.35; }
+.hunt-task strong { display: inline-flex; flex: none; align-items: center; gap: 5px; color: #ffd34d; font-size: 1.0625rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+.hunt-store, .hunt-orders li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgb(255 255 255 / .1); }
+.hunt-store:last-child, .hunt-orders li:last-child { border-bottom: 0; }
+.hunt-store-edit { display: inline-flex; flex: none; align-items: center; min-height: 44px; font-size: .875rem; font-weight: 800; }
+.hunt-order-status { flex: none; padding: 3px 9px; border-radius: 999px; background: rgb(255 255 255 / .12); font-size: .75rem; font-weight: 800; }
+.hunt-order-status[data-status="done"] { background: rgb(46 204 113 / .2); color: #7deaa8; }
+.hunt-order-status[data-status="cancelled"] { background: rgb(255 92 92 / .18); color: #ff9c9c; }
+
+.hunt-balance { --cut: 10px; --rim: #e9b84d; display: flex; align-items: center; gap: 8px; margin: 0; padding: 12px 14px; font-size: 1.25rem; }
+.hunt-balance b { font-weight: 900; font-variant-numeric: tabular-nums; }
+.hunt-balance small { margin-left: auto; color: rgb(255 255 255 / .66); font-size: .8125rem; }
+
+.hunt-item { --cut: 10px; --rim: rgb(255 255 255 / .16); display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 12px; padding: 12px 14px; }
+.hunt-item-art { display: grid; place-items: center; height: 56px; color: #ffd34d; }
+.hunt-item[data-soon] { opacity: .62; }
+.hunt-item .can-btn { grid-column: 1 / -1; }
+
+.hunt-cash { display: grid; gap: 12px; }
+.hunt-cash label:not(.hunt-check) { display: grid; gap: 6px; font-size: .875rem; font-weight: 700; }
+.hunt-cash input:not([type="checkbox"], [type="radio"]) { width: 100%; min-height: 48px; padding: 0 14px; box-sizing: border-box; border: 1px solid rgb(255 255 255 / .22); border-radius: 12px; background: #0a0d13; color: #fff; font: inherit; font-size: 1.125rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.hunt-cash input:disabled { opacity: .55; }
+.hunt-method { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin: 0; padding: 0; border: 0; }
+.hunt-method legend { grid-column: 1 / -1; margin-bottom: 6px; padding: 0; font-size: .875rem; font-weight: 700; }
+.hunt-method label { position: relative; display: block !important; }
+.hunt-method input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.hunt-method span { display: grid; place-items: center; min-height: 44px; border: 1px solid rgb(255 255 255 / .22); border-radius: 12px; font-weight: 800; }
+.hunt-method input:checked + span { border-color: #e9b84d; background: rgb(233 184 77 / .18); color: #ffd98a; }
+.hunt-method input:focus-visible + span { outline: 2px solid #fff; outline-offset: 2px; }
+.hunt-check { display: flex; align-items: flex-start; gap: 10px; color: rgb(255 255 255 / .82); font-size: .875rem; line-height: 1.4; }
+.hunt-check input { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: #e9b84d; }
+
+@media (min-width: 640px) {
+  .hunt-sheet { margin: auto; }
+  .hunt-sheet-panel { border-radius: 22px; }
+  .hunt-sheet-body { padding-bottom: 20px; }
+}
+
+/* Широкий экран: меню — под прогрессом справа, как и остальные панели пропуска. */
+@media (min-width: 960px) and (min-height: 620px) {
+  .hunt-rail li { flex: 1 0 72px; }
+}
+
+/* На экране охоты панелей на одну строку больше, чем у пропуска: магазин стоит посреди того, что осталось. */
+.hunt-screen .pass-slot { --free: calc(100dvh - 452px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+@media (max-height: 700px) { .hunt-screen .pass-slot { --free: calc(100dvh - 386px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); } }
+@media (max-height: 520px) and (orientation: landscape) { .hunt-screen .pass-slot { --free: calc(100dvh - 130px); } }
+@media (min-width: 960px) and (min-height: 620px) { .hunt-screen .pass-slot { --free: calc(100dvh - 210px); } }
+/* Прямые потомки экрана получают `position: relative`: у окна это отняло бы верхний слой. */
+.pass-screen > .hunt-sheet { position: fixed; inset: 0; }

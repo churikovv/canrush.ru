@@ -131,7 +131,7 @@ export function catalogOffersByVolume(group: CatalogGroup): { volumeMl: number |
     .map(([volumeMl, offers]) => ({ volumeMl, offers }));
 }
 
-function normalizeText(value: string): string {
+export function normalizeText(value: string): string {
   return value.toLocaleLowerCase('ru-RU').replace(/ё/gu, 'е').trim();
 }
 

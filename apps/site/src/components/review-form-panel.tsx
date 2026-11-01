@@ -12,6 +12,7 @@ import type { ReviewData } from '@/lib/reviews';
 export function ReviewFormPanel({ brand, flavor, existing, authenticated }: { brand: string; flavor: string; existing: ReviewData | null; authenticated: boolean }) {
   const [open, setOpen] = useState(false);
   const [hasReview, setHasReview] = useState(Boolean(existing));
+  const [draft, setDraft] = useState(false);
   useEffect(() => {
     const show = () => setOpen(true);
     window.addEventListener(REVIEW_EDIT_EVENT, show);
@@ -33,11 +34,11 @@ export function ReviewFormPanel({ brand, flavor, existing, authenticated }: { br
         <h2>{hasReview ? 'Ваш отзыв' : 'Оценить напиток'}</h2>
       </div>
       <button type="button" className={`community-button${open ? ' community-button-secondary' : ''} review-form-toggle`} aria-expanded={open} aria-controls="review-form-panel" onClick={toggle}>
-        {open ? 'Свернуть' : hasReview ? 'Изменить отзыв' : 'Написать отзыв'}
+        {open ? 'Свернуть' : draft ? 'Продолжить отзыв' : hasReview ? 'Изменить отзыв' : 'Написать отзыв'}
       </button>
     </div>
     <div id="review-form-panel" hidden={!open}>
-      <CatalogReviewForm brand={brand} flavor={flavor} existing={existing} authenticated stepped onSettled={has => { setHasReview(has); setOpen(false); }} />
+      <CatalogReviewForm brand={brand} flavor={flavor} existing={existing} authenticated stepped onDraft={setDraft} onSettled={has => { setHasReview(has); setOpen(false); }} />
     </div>
   </>;
 }

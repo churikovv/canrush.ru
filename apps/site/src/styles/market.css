@@ -312,3 +312,14 @@ html[data-cookie-notice="visible"] .support-surface .market-compose { padding-bo
 .support-chat .market-chat-partner strong { color: var(--theme-text, #111); font-size: 1rem; }
 .support-message-author { display: block; margin-bottom: 2px; color: inherit; font-size: .6875rem; font-weight: 700; opacity: .75; }
 .support-chat .market-message-bubble p { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Напитки с фото магазина: статус над списком и подсказки того, чего нет в каталоге. */
+.store-scan { display: grid; gap: 8px; margin: 0 0 12px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--color-brand) 10%, transparent); font-size: .875rem; line-height: 1.4; }
+p.store-scan { display: flex; align-items: center; gap: 10px; }
+.store-scan p { margin: 0; }
+.store-scan-spinner { flex: none; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: store-scan-spin 800ms linear infinite; }
+@keyframes store-scan-spin { to { transform: rotate(360deg); } }
+.store-scan-others { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.store-scan-others span { width: 100%; color: var(--theme-muted, #6b7280); font-size: .8125rem; }
+.store-scan-chip { min-height: 44px; padding: 0 12px; border: 1px solid var(--theme-line, #e6e8ec); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: .875rem; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .store-scan-spinner { animation-duration: 4s; } }

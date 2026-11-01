@@ -5,9 +5,9 @@ import { adminHref, type AdminTab } from '@/lib/admin-tabs';
 import { SITE_ROLE_LABELS, type SiteRole } from '@/lib/admin-roles';
 import type { AdminQueues } from '@/lib/admin-queues';
 
-export type AdminSection = AdminTab | 'stores' | 'drinks' | 'contest' | 'articles' | 'business' | 'support' | 'push' | 'giveaways' | 'bot' | 'errors';
+export type AdminSection = AdminTab | 'stores' | 'drinks' | 'contest' | 'articles' | 'business' | 'support' | 'push' | 'giveaways' | 'bot' | 'hunt' | 'errors';
 /** Sections a moderator does not see: administrators, contests, campaigns, push broadcasts, giveaways and site errors. */
-export const ADMIN_ONLY_SECTIONS: ReadonlySet<AdminSection> = new Set(['campaigns', 'push', 'giveaways', 'bot', 'contest', 'admins', 'errors']);
+export const ADMIN_ONLY_SECTIONS: ReadonlySet<AdminSection> = new Set(['campaigns', 'push', 'giveaways', 'bot', 'hunt', 'contest', 'admins', 'errors']);
 
 /** Sections plus the icons of the analytics cards that lead to public pages (reviews, tier lists, wall posts). */
 export type AdminIconName = AdminSection | 'reviews' | 'tierlists' | 'wall' | 'comments' | 'settings' | 'site';
@@ -17,6 +17,7 @@ const ICONS: Record<AdminIconName, ReactNode> = {
   campaigns: <path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1Zm13-3a5 5 0 0 1 0 8m3-11a9 9 0 0 1 0 14" />,
   push: <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8Zm-4.3 12a2 2 0 0 1-3.4 0" />,
   bot: <path d="M21 4 2.5 11.5l6.8 2.5L18 7l-6.5 8.5v5l3.4-3.6 4.1 3.1L21 4Z" />,
+  hunt: <><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4H15l6 8-6 8H5.5A2.5 2.5 0 0 1 3 17.5Z" /><circle cx="15.5" cy="12" r="1" /></>,
   giveaways: <path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Zm11-2v12" />,
   users: <path d="M16 20v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 9v-1a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" />,
   tierlists: <path d="m12 2 10 5-10 5L2 7l10-5Zm-10 10 10 5 10-5M2 17l10 5 10-5" />,
@@ -44,11 +45,11 @@ const OVERVIEW = { key: 'analytics', label: 'Аналитика' } as const;
 const GROUPS: { title: string; icon: AdminIconName; items: { key: AdminSection; label: string }[] }[] = [
   { title: 'Модерация', icon: 'reports', items: [{ key: 'support', label: 'Поддержка' }, { key: 'reports', label: 'Жалобы' }, { key: 'users', label: 'Участники' }, { key: 'market', label: 'Объявления' }] },
   { title: 'Каталог', icon: 'drinks', items: [{ key: 'drinks', label: 'Напитки' }, { key: 'stores', label: 'Магазины' }, { key: 'articles', label: 'Статьи' }, { key: 'business', label: 'Компании' }] },
-  { title: 'Продвижение', icon: 'campaigns', items: [{ key: 'campaigns', label: 'Кампании' }, { key: 'push', label: 'Push-рассылки' }, { key: 'bot', label: 'Сообщения бота' }, { key: 'giveaways', label: 'Раздачи круток' }, { key: 'contest', label: 'Конкурс' }] },
+  { title: 'Продвижение', icon: 'campaigns', items: [{ key: 'campaigns', label: 'Кампании' }, { key: 'push', label: 'Push-рассылки' }, { key: 'bot', label: 'Сообщения бота' }, { key: 'hunt', label: 'Охота за ценниками' }, { key: 'giveaways', label: 'Раздачи круток' }, { key: 'contest', label: 'Конкурс' }] },
   { title: 'Команда', icon: 'admins', items: [{ key: 'admins', label: 'Администраторы' }] },
   { title: 'Система', icon: 'errors', items: [{ key: 'errors', label: 'Ошибки' }] },
 ];
-const sectionHref = (key: AdminSection) => key === 'push' ? '/admin/push' : key === 'bot' ? '/admin/bot' : key === 'giveaways' ? '/admin/giveaways' : key === 'errors' ? '/admin/errors' : key === 'support' ? '/admin/support' : key === 'stores' ? '/admin/stores' : key === 'drinks' ? '/admin/drinks' : key === 'contest' ? '/admin/contest' : key === 'articles' ? '/admin/articles' : key === 'business' ? '/admin/business' : adminHref(key);
+const sectionHref = (key: AdminSection) => key === 'push' ? '/admin/push' : key === 'bot' ? '/admin/bot' : key === 'hunt' ? '/admin/hunt' : key === 'giveaways' ? '/admin/giveaways' : key === 'errors' ? '/admin/errors' : key === 'support' ? '/admin/support' : key === 'stores' ? '/admin/stores' : key === 'drinks' ? '/admin/drinks' : key === 'contest' ? '/admin/contest' : key === 'articles' ? '/admin/articles' : key === 'business' ? '/admin/business' : adminHref(key);
 
 export function AdminIcon({ section, size = 18 }: { section: AdminIconName; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[section]}</svg>;
@@ -61,7 +62,7 @@ export function AdminIcon({ section, size = 18 }: { section: AdminIconName; size
  */
 /** How each queue reads to a screen reader beside its badge. */
 const QUEUE_LABELS: Record<keyof AdminQueues, string> = {
-  bot: 'новых ответов', support: 'ждут ответа', reports: 'открытых жалоб', drinks: 'на проверке', stores: 'на проверке', articles: 'на проверке', business: 'ждут решения',
+  bot: 'новых ответов', hunt: 'заявок на обмен', support: 'ждут ответа', reports: 'открытых жалоб', drinks: 'на проверке', stores: 'на проверке', articles: 'на проверке', business: 'ждут решения',
 };
 
 export function AdminShell({ active, email, role = 'admin', title, subtitle, actions, queues, children }: {

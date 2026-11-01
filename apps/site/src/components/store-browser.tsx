@@ -1,6 +1,7 @@
 import { logSearch } from '@/lib/search-log';
 import type { ReactNode } from 'react';
 import Link from '@/components/navigation-progress';
+import { HuntEntry } from '@/components/hunt-entry';
 import { Pinned } from '@/components/search-pinned';
 import { StoreDirectory } from '@/components/store-directory';
 import { StoreFilters } from '@/components/store-filters';
@@ -37,6 +38,7 @@ export async function StoreBrowser({ params, ownerId, basePath = '/market/stores
   const href = (n: number) => `${basePath}?${new URLSearchParams({ ...scope, q, ...(brand ? { brand } : {}), ...(metro ? { metro } : {}), page: String(n) })}`;
   return <>
     <Pinned scopes={scopes}><StoreFilters key={JSON.stringify([q, brand, metro, scope])} brands={options.brands} stations={stationNames} initial={{ q, brand, metro }} scope={scope} basePath={basePath} addHref={basePath === '/market/stores' ? undefined : `/market/stores/new?city=${city.id}`} /></Pinned>
+    <HuntEntry />
     {items.length ? <StoreDirectory key={`${city.id}:${q}:${brand}:${metro}:${page}:${mine}`} stores={items} center={[city.lat, city.lng]} own={mine} apiKey={process.env.YANDEX_MAPS_API_KEY ?? ''} />
       : <section className="market-empty"><h2>{filtered ? 'Магазины не найдены' : 'Здесь пока нет магазинов'}</h2><p>{mine ? 'Ваши заявки в выбранном городе появятся здесь.' : 'Добавьте знакомый магазин — после проверки он появится на карте.'}</p><div className="market-empty-actions">{filtered && <Link className="community-button community-button-secondary" href={`${basePath}?${new URLSearchParams(scope)}`}>Сбросить фильтры</Link>}<Link className="community-button" href={`/market/stores/new?city=${city.id}`}>Добавить магазин</Link></div></section>}
     <nav className="market-pagination" aria-label="Страницы магазинов">{page > 1 && <Link href={href(page - 1)}>Назад</Link>}{hasMore && <Link href={href(page + 1)}>Следующая страница</Link>}</nav>

@@ -11,8 +11,9 @@ import { StoreDrinkPicker } from '@/components/store-drink-picker';
 import { METRO, STOCK_LABELS, STORE_XP, formatDistance, nearestStations, type LocationSource, type StockStatus } from '@/lib/store-fields';
 import type { Store } from '@/lib/stores';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
-import { geocodeStoreAction, saveStoreAction } from '@/app/market/stores/actions';
+import { geocodeStoreAction, saveStoreAction, scanStorePhotosAction } from '@/app/market/stores/actions';
 import { FormOptional, FormStep } from '@/components/form-step';
+import { STORE_SCAN_PHOTOS } from '@/lib/store-photo-fields';
 import { FormAlert } from '@/components/form-alert';
 
 type GeoStatus = {kind:'idle'}|{kind:'searching'}|{kind:'found';address:string;precise:boolean}|{kind:'missing'}|{kind:'error'};
@@ -24,7 +25,7 @@ const LAST_STEP=STEPS.length-1;
 type Field=HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement;
 const nearestId=(city:string,point:readonly [number,number]|null)=>point?nearestStations(city,point[0],point[1],1)[0]?.station.id??'':'';
 
-export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial?:Store;cityId:string;apiKey:string;drinks:StoreDrinkOption[];geocoder?:boolean}){
+export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false,hunt=false}:{initial?:Store;cityId:string;apiKey:string;drinks:StoreDrinkOption[];geocoder?:boolean;hunt?:boolean}){
   const [photos,setPhotos]=useState<File[]>([]);
   const [photosBusy,setPhotosBusy]=useState(false);
   const [retained,setRetained]=useState(initial?.photos??[]);
@@ -40,6 +41,9 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
   const [metroManual,setMetroManual]=useState(Boolean(initial?.metro)&&initial?.metro!==nearestId(initial?.city??'',initialPoint));
   const [items,setItems]=useState<Row[]>((initial?.catalog??[]).map((item,index)=>({...item,price:item.price===null?'':String(item.price/100),id:String(index)})));
   const [geoError,setGeoError]=useState('');
+  // Напитки с фото ищутся, пока участник идёт дальше: шаг не ждёт нейросеть, а список пополняется сам.
+  const [scan,setScan]=useState<{kind:'idle'|'scanning'|'failed'}|{kind:'done';found:number;others:string[];unread:string[]}>({kind:'idle'});
+  const scanned=useRef('');
   const [state,action,pending]=useActionState(saveStoreAction.bind(null,initial?.id),{});
   // One section at a time; all stay mounted so typed values survive. An edited store can jump to any step.
   const [step,setStep]=useState(0);const [reached,setReached]=useState(initial?LAST_STEP:0);
@@ -75,6 +79,24 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
     setStep(next);setReached(value=>Math.max(value,next));
     requestAnimationFrame(()=>{const section=sections()[next];formRef.current?.scrollIntoView({block:'start',behavior:'smooth'});section?.focus({preventScroll:true});});
   }
+  /** Новые фото — новый проход: то же фото второй раз не отправляем. Найденное дополняет список, а не заменяет его. */
+  async function scanPhotos(){
+    const files=photos.slice(0,STORE_SCAN_PHOTOS);
+    const signature=files.map(file=>`${file.name}:${file.size}`).join('|');
+    if(!files.length||signature===scanned.current)return;
+    scanned.current=signature;setScan({kind:'scanning'});
+    const form=new FormData();files.forEach(file=>form.append('photos',file));
+    try{
+      const result=await scanStorePhotosAction(form);
+      if('error' in result){setScan({kind:result.error==='off'?'idle':'failed'});return;}
+      setItems(current=>{
+        const known=new Set(current.map(item=>JSON.stringify([item.brand,item.flavor])));
+        const fresh=result.drinks.filter(drink=>!known.has(JSON.stringify([drink.brand,drink.flavor]))).slice(0,50-current.length);
+        return [...current,...fresh.map(drink=>({id:crypto.randomUUID(),price:'',availability:'available' as StockStatus,name:drink.label,brand:drink.brand,flavor:drink.flavor}))];
+      });
+      setScan({kind:'done',found:result.drinks.length,others:result.others,unread:result.unread});
+    }catch{setScan({kind:'failed'});}
+  }
   /** Leaving a step forward checks its fields; leaving the address step also looks up the point for the map step. */
   async function advance(target:number){
     if(busy)return;
@@ -82,6 +104,7 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
       const invalid=[...sections()[step]?.querySelectorAll<Field>('input,select,textarea')??[]].find(field=>!field.checkValidity());
       if(invalid){invalid.reportValidity();return;}
       if(step===0&&!point)await locate();
+      if(step===2)void scanPhotos();
     }
     show(target);
   }
@@ -133,13 +156,23 @@ export function StoreForm({initial,cityId,apiKey,drinks,geocoder=false}:{initial
       <input type="hidden" name="metro" value={metro}/>
     </section>
     <section className="form-card store-photo-section" aria-labelledby="store-step-photos" tabIndex={-1} hidden={step!==2}>
-      <FormStep n={3} id="store-step-photos" title="Фотографии" hint="Вход, витрина или холодильник с напитками — до 5 фото." optional/>
+      <FormStep n={3} id="store-step-photos" title="Фотографии" hint="Вход, витрина или холодильник с напитками — до 5 фото. Банки с фото нейросеть сама добавит в список на следующем шаге, поэтому не снимайте людей и документы." optional/>
       {retained.map(id=><input key={id} type="hidden" name="retainedPhoto" value={id}/>)}
       {retained.length>0&&<div className="store-photo-previews">{retained.map((id,index)=><div key={id}><Image src={`/api/store-photos/${id}?size=thumbnail`} alt={`Фото магазина ${index+1}`} width={160} height={160} unoptimized/><button type="button" className="photo-delete-button" aria-label={`Удалить сохранённое фото ${index+1}`} onClick={()=>setRetained(retained.filter(v=>v!==id))}><PhotoDeleteIcon/></button></div>)}</div>}
       <MarketPhotoPicker compact crop={false} maxPhotos={5-retained.length} onChange={setPhotos} onBusyChange={setPhotosBusy} disabled={pending}/>
     </section>
     <section className="form-card" aria-labelledby="store-step-stock" tabIndex={-1} hidden={step!==3}>
       <FormStep n={4} id="store-step-stock" title="Напитки и цены" hint="Выберите энергетики из каталога или впишите свой. Неизвестную цену можно оставить пустой." optional/>
+      {scan.kind==='scanning'&&<p className="store-scan" role="status"><span className="store-scan-spinner" aria-hidden="true"/>Ищем напитки на фото…</p>}
+      {scan.kind==='failed'&&<p className="store-scan" role="status">Не получилось разобрать фото. Добавьте напитки вручную.</p>}
+      {scan.kind==='done'&&<div className="store-scan" role="status">
+        <p><b>{scan.found?`Нашли на фото: ${scan.found}.`:'Знакомых банок на фото не нашли.'}</b>{scan.found>0&&' Нейросеть может ошибаться: проверьте список и впишите цены.'}{scan.unread.length>0&&` Вкус не разобрали: ${scan.unread.join(', ')}. Добавьте их вручную.`}</p>
+        {scan.others.length>0&&<div className="store-scan-others"><span>Нет в каталоге, можно добавить:</span>{scan.others.map(name=><button key={name} type="button" className="store-scan-chip" disabled={items.length>=50} onClick={()=>{
+          setItems([...items,{id:crypto.randomUUID(),price:'',availability:'available',name}]);
+          setScan({...scan,others:scan.others.filter(other=>other!==name)});
+        }}>+ {name}</button>)}</div>}
+      </div>}
+      {hunt&&<p className="hunt-form-hint"><Link href="/hunt">Охота за ценниками</Link>: фото, точка на карте и 5+ цен — полный магазин, это 20 ценников после проверки.</p>}
       <input type="hidden" name="catalog" value={JSON.stringify(items.map(({name,price,availability,brand,flavor})=>({name,price:price.trim()?Math.round(parse(price)*100):null,availability,...(brand!==undefined?{brand,flavor}:{})})))}/>
       {items.length>0&&<div className="store-stock-editor">{items.map((item,index)=><div key={item.id} className="store-stock-row">
         {item.brand!==undefined?<div className="store-stock-drink"><span className="form-label">Напиток</span><p>{item.name}<small>Из каталога</small></p></div>

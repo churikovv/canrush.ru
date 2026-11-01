@@ -4,8 +4,9 @@
 .pass-screen > :not(.pass-slot) { position: relative; z-index: 1; min-width: 0; }
 
 /* Сцена занимает весь экран, а банка стоит посреди свободного места: высота кадра задана от неё. */
-.pass-slot { --free: calc(100dvh - 396px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; }
-.pass-slot:active { cursor: grabbing; }
+.pass-slot { --free: calc(100dvh - 396px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); position: absolute; inset: 0; overflow: hidden; }
+.pass-slot[data-turnable] { touch-action: none; cursor: grab; }
+.pass-slot[data-turnable]:active { cursor: grabbing; }
 .pass-video { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 68px + var(--free) * .5 - var(--free) * 1.32 * .375); width: auto; height: calc(var(--free) * 1.32); aspect-ratio: 4 / 5; transform: translateX(-50%); background: var(--pass-wall); pointer-events: none; animation: pass-reveal 340ms ease-out; -webkit-mask: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent), linear-gradient(to bottom, transparent, #000 9%, #000 72%, transparent); -webkit-mask-composite: source-in; mask: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent), linear-gradient(to bottom, transparent, #000 9%, #000 72%, transparent); mask-composite: intersect; }
 @keyframes pass-reveal { from { opacity: 0; } }
 .pass-flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 36%, #fff, var(--pass-light) 22%, transparent 62%); opacity: 0; pointer-events: none; animation: pass-flash 900ms ease-out; }

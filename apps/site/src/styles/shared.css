@@ -764,9 +764,9 @@ a.blocked-member:hover strong { color: var(--theme-link, var(--color-brand)); }
 
 /* Цвета стадий банки: экран пропуска и вход в него из рейтинга. `--pass-wall` — край видео, фольга — цвет самой банки:
    алюминий, фирменный синий, неон, золото, голограмма. */
-.pass-screen, .pass-entry { --pass-wall: #0a0e16; --pass-light: #8db4ff; --foil: linear-gradient(180deg, #f6f8fb, #c5ccd6 48%, #838c9a); --foil-ink: #12161d; }
+.pass-screen, .pass-entry, .hunt-entry { --pass-wall: #0a0e16; --pass-light: #8db4ff; --foil: linear-gradient(180deg, #f6f8fb, #c5ccd6 48%, #838c9a); --foil-ink: #12161d; }
 .pass-screen[data-stage="2"], .pass-entry[data-stage="2"] { --pass-wall: #000b28; --pass-light: #5a9dff; --foil: linear-gradient(180deg, #8fc0ff, #2a86ff 48%, #0a4fd0); --foil-ink: #fff; }
-.pass-screen[data-stage="3"], .pass-entry[data-stage="3"] { --pass-wall: #060423; --pass-light: #4fe3ff; --foil: linear-gradient(180deg, #b6f6ff, #37dcf7 48%, #0e93b8); --foil-ink: #04122a; }
+.pass-screen[data-stage="3"], .pass-entry[data-stage="3"], .hunt-entry[data-stage="3"] { --pass-wall: #060423; --pass-light: #4fe3ff; --foil: linear-gradient(180deg, #b6f6ff, #37dcf7 48%, #0e93b8); --foil-ink: #04122a; }
 .pass-screen[data-stage="4"], .pass-entry[data-stage="4"] { --pass-wall: #110a04; --pass-light: #f2c25c; --foil: linear-gradient(180deg, #ffeab0, #e9b84d 48%, #a96f18); --foil-ink: #1c1206; }
 .pass-screen[data-stage="5"], .pass-entry[data-stage="5"] { --pass-wall: #170429; --pass-light: #e29bff; --foil: linear-gradient(100deg, #8a4dff, #ff5db8 38%, #ffc860 68%, #53e4ff); --foil-ink: #16052a; }
 
@@ -791,3 +791,23 @@ a.blocked-member:hover strong { color: var(--theme-link, var(--color-brand)); }
 .can-meter i { position: relative; display: block; width: calc(14px + (100% - 14px) * var(--share, 0)); height: 100%; clip-path: inherit; background: repeating-linear-gradient(115deg, transparent 0 9px, rgb(0 0 0 / .2) 9px 12px), var(--foil, linear-gradient(180deg, #ffeab0, #e9b84d 48%, #a96f18)); transition: width 400ms ease-out; }
 @media (prefers-reduced-motion: reduce) { .can-btn { transition: none; } .can-btn[data-ready]::after { animation: none; } .can-meter i { transition: none; } }
 
+/* Баннер охоты за ценниками в разделе магазинов: его рендерят /market/stores и /search, поэтому он здесь. */
+.hunt-entry { position: relative; display: grid; grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: "shop copy" "cta cta"; align-items: center; gap: 12px 14px; margin: 16px 0; padding: 14px 16px 16px; border-radius: 22px; background: radial-gradient(130% 170% at 12% 10%, color-mix(in srgb, var(--pass-light) 30%, var(--pass-wall)), var(--pass-wall) 68%); color: #fff; text-decoration: none; overflow: hidden; }
+.hunt-entry:hover .can-btn { filter: brightness(1.08); }
+.hunt-entry:active .can-btn { transform: translateY(2px) scale(.99); }
+.hunt-entry:focus-visible { outline: 3px solid var(--color-brand); outline-offset: 2px; }
+.hunt-entry-shop { grid-area: shop; display: block; }
+.hunt-entry-shop img { display: block; width: 112px; height: auto; filter: drop-shadow(0 8px 10px rgb(0 0 0 / .45)); }
+.hunt-entry-copy { grid-area: copy; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.hunt-entry-copy small { display: flex; align-items: center; gap: 5px; color: var(--pass-light); font-size: .75rem; font-weight: 800; line-height: 1.2; }
+.hunt-entry-copy b { font-size: 1.25rem; font-weight: 900; line-height: 1.15; }
+.hunt-entry-copy > span { color: rgb(255 255 255 / .82); font-size: .875rem; line-height: 1.3; }
+.hunt-entry-cta { grid-area: cta; }
+@media (min-width: 640px) {
+  .hunt-entry { grid-template-columns: 124px minmax(0, 1fr) auto; grid-template-areas: "shop copy cta"; gap: 20px; padding: 12px 22px; }
+  .hunt-entry-shop img { width: 124px; }
+  .hunt-entry-copy b { font-size: 1.5rem; }
+  .hunt-entry-cta { min-width: 168px; }
+}
+.hunt-form-hint { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, #e9b84d 14%, transparent); font-size: .875rem; line-height: 1.4; }
+.hunt-form-hint a { font-weight: 700; }
