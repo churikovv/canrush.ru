@@ -1,6 +1,6 @@
 /**
  * Гонка недели и пропуск сезона: правила без базы данных. Сезон — календарный месяц по Москве, октябрь 2026 — первый.
- * Награды недели повторяют `settle_weekly_top` (миграция `0169`), меняй вместе.
+ * Награды недели повторяют `settle_weekly_top` (миграция `0175`), меняй вместе.
  */
 import type { Rarity } from '@/lib/gacha-fields';
 
@@ -29,16 +29,11 @@ export type WeekTag = (typeof WEEK_TAGS)[number];
 
 /** Тег недели выдаётся на следующую неделю и снимается при следующих итогах. */
 export const WEEK_PRIZES: readonly { places: string; last: number; xp: number; tag: WeekTag }[] = [
-  { places: '1', last: 1, xp: 7000, tag: 'week-hero' },
-  { places: '2–5', last: 5, xp: 3500, tag: 'week-best' },
-  { places: '6–10', last: 10, xp: 1200, tag: 'week-charge' },
+  { places: '1', last: 1, xp: 2000, tag: 'week-hero' },
+  { places: '2–5', last: 5, xp: 1000, tag: 'week-best' },
+  { places: '6–10', last: 10, xp: 350, tag: 'week-charge' },
 ];
 export const weekPrize = (place: number) => WEEK_PRIZES.find(prize => place <= prize.last) ?? null;
-
-/** Первая неделя платит четверть: гонка появилась перед самым её концом, а большая часть десятки только что получила компенсацию за октябрь. Повторяет `settle_weekly_top` (миграция `0173`). */
-const FIRST_WEEK_ENDS = Date.parse('2026-11-01T21:00:00Z');
-export const isFirstWeek = (now: number) => now < FIRST_WEEK_ENDS;
-export const weekReward = (prize: { xp: number }, now: number) => (isFirstWeek(now) ? prize.xp / 4 : prize.xp);
 
 const MOSCOW_OFFSET = 3 * 3_600_000;
 /** Конец идущей недели: понедельник 00:00 по Москве, верхняя граница `weekly_top_bounds`. Перевода часов в Москве нет. */

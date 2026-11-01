@@ -1,6 +1,6 @@
 import { getPool } from '@/db/pool';
 import { DEFAULT_PROFILE_APPEARANCE, parseProfileAppearance, type ProfileAppearance } from '@/lib/profile-appearance';
-import { TOP_PLACES, weekEndsAt, weekPrize, weekReward } from '@/lib/season-fields';
+import { TOP_PLACES, weekEndsAt, weekPrize } from '@/lib/season-fields';
 
 export interface RaceEntry { place: number; username: string; avatarId: string | null; xp: number; reward: number; frame: ProfileAppearance['frame']; tag: string | null }
 /** Место зрителя в гонке; `gap` — сколько опыта не хватает до десятки (0, если он в ней). */
@@ -39,7 +39,7 @@ export async function getWeekRace(viewerId: string | null = null, now = Date.now
   const top = rows.rows.filter(row => row.place <= TOP_PLACES);
   const own = rows.rows.find(row => row.id === viewerId);
   return {
-    leaders: top.map(row => ({ place: row.place, username: row.username, avatarId: row.avatarId, xp: row.xp, reward: weekReward(weekPrize(row.place) ?? { xp: 0 }, now),
+    leaders: top.map(row => ({ place: row.place, username: row.username, avatarId: row.avatarId, xp: row.xp, reward: weekPrize(row.place)?.xp ?? 0,
       frame: (parseProfileAppearance(row.appearance) ?? DEFAULT_PROFILE_APPEARANCE).frame, tag: row.tag })),
     viewer: own ? { place: own.place, xp: own.xp, gap: own.place <= TOP_PLACES ? 0 : (top.at(-1)?.xp ?? 0) - own.xp + 1 } : null,
     winners: winners.rows.map(row => row.username),

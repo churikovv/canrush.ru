@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PASS_EXCLUDED_REASONS, PASS_LEVELS, PASS_STAGES, WEEK_PRIZES, countdownParts, isFirstWeek, passClaimable, passLevelReached, passProgress, passStage, passStageOpensAt, seasonDaysLeft, seasonNumber, seasonTitle, weekEndsAt, weekGoal, weekPrize, weekReward } from '../src/lib/season-fields';
+import { PASS_EXCLUDED_REASONS, PASS_LEVELS, PASS_STAGES, WEEK_PRIZES, countdownParts, passClaimable, passLevelReached, passProgress, passStage, passStageOpensAt, seasonDaysLeft, seasonNumber, seasonTitle, weekEndsAt, weekGoal, weekPrize } from '../src/lib/season-fields';
 
 describe('seasons', () => {
   it('counts a season per month from October 2026', () => {
@@ -18,9 +18,9 @@ describe('seasons', () => {
 
 describe('prizes', () => {
   it('pays the whole top ten and nobody below it', () => {
-    expect(weekPrize(1)).toMatchObject({ xp: 7000, tag: 'week-hero' });
-    expect(weekPrize(5)).toMatchObject({ xp: 3500, tag: 'week-best' });
-    expect(weekPrize(6)).toMatchObject({ xp: 1200, tag: 'week-charge' });
+    expect(weekPrize(1)).toMatchObject({ xp: 2000, tag: 'week-hero' });
+    expect(weekPrize(5)).toMatchObject({ xp: 1000, tag: 'week-best' });
+    expect(weekPrize(6)).toMatchObject({ xp: 350, tag: 'week-charge' });
     expect(weekPrize(10)).toMatchObject({ tag: 'week-charge' });
     expect(weekPrize(11)).toBeNull();
   });
@@ -28,16 +28,6 @@ describe('prizes', () => {
   it('never lets a lower place earn more', () => {
     const prizes = [1, 2, 5, 6, 10].map(place => weekPrize(place)?.xp ?? 0);
     expect([...prizes].sort((a, b) => b - a)).toEqual(prizes);
-  });
-});
-
-describe('first week', () => {
-  const [hero] = WEEK_PRIZES as [typeof WEEK_PRIZES[number]];
-
-  it('pays a quarter until Monday and then the full prize', () => {
-    expect(weekReward(hero, Date.parse('2026-11-01T20:59:59Z'))).toBe(1750);
-    expect(weekReward(hero, Date.parse('2026-11-01T21:00:00Z'))).toBe(7000);
-    expect(isFirstWeek(Date.parse('2026-11-01T21:00:00Z'))).toBe(false);
   });
 });
 

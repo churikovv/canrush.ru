@@ -45,19 +45,19 @@ it('pays the top ten of the week once, without prize XP in the race and without 
   await Promise.all([settle(day(7)), settle(day(7)), settle(day(8))]);
   const awards = (await pool.query<{ place: number; userId: string; reward: number; tag: string }>(`select place, "userId", reward, tag from "weeklyTopAward" where week = $1::date order by place`, [weekOne])).rows;
   expect(awards).toHaveLength(10);
-  expect(awards[0]).toMatchObject({ userId: first, reward: 7000, tag: 'week-hero' });
-  expect(awards[1]).toMatchObject({ userId: second, reward: 3500, tag: 'week-best' });
-  expect(awards[5]).toMatchObject({ userId: sixth, reward: 1200, tag: 'week-charge' });
+  expect(awards[0]).toMatchObject({ userId: first, reward: 2000, tag: 'week-hero' });
+  expect(awards[1]).toMatchObject({ userId: second, reward: 1000, tag: 'week-best' });
+  expect(awards[5]).toMatchObject({ userId: sixth, reward: 350, tag: 'week-charge' });
   expect(awards.some(award => award.userId === eleventh || award.userId === banned)).toBe(false);
   const paid = (await pool.query<{ points: number }>(`select points from "profileExperience" where "userId" = $1 and reason = 'weekly-top'`, [first])).rows;
-  expect(paid).toEqual([{ points: 7000 }]);
+  expect(paid).toEqual([{ points: 2000 }]);
 });
 
 it('puts the tag on the winner and tells them', async () => {
   expect(await tags(first)).toEqual(['week-hero']);
   expect(await tags(second)).toEqual(['week-best']);
   expect((await getProfileCommunity(first)).earned).toContain('week-hero');
-  expect((await getNotifications(first)).items.find(item => item.kind === 'weekly-top')).toMatchObject({ title: 'Вы заняли 1 место за неделю', detail: '+7000 XP и тег «Герой недели» на всю неделю', href: '/leaderboard' });
+  expect((await getNotifications(first)).items.find(item => item.kind === 'weekly-top')).toMatchObject({ title: 'Вы заняли 1 место за неделю', detail: '+2000 XP и тег «Герой недели» на всю неделю', href: '/leaderboard' });
 });
 
 it('takes the tag back at the next results and returns the chosen one', async () => {
@@ -79,7 +79,7 @@ it('shows the running race with the viewer out of the ten', async () => {
   const others = race.leaders.filter(entry => !entry.username.startsWith('se_'));
   expect(others).toHaveLength(0);
   expect(race.leaders).toHaveLength(10);
-  expect(race.leaders[0]).toMatchObject({ place: 1, reward: 7000 });
+  expect(race.leaders[0]).toMatchObject({ place: 1, reward: 2000 });
   expect(race.viewer).toMatchObject({ place: 11, gap: 1001 });
   await pool.query(`delete from "profileExperience" where "sourceKey" like 'now%' and "userId" = any($1::text[])`, [members]);
 });

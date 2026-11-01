@@ -7,7 +7,7 @@ import Link from '@/components/navigation-progress';
 import { Gift, Medal } from '@/components/week-race-icons';
 import { DEFAULT_PROFILE_APPEARANCE } from '@/lib/profile-appearance';
 import { profileTagLabel } from '@/lib/profile-achievements';
-import { WEEK_PRIZES, isFirstWeek, weekGoal, weekPrize, weekReward } from '@/lib/season-fields';
+import { WEEK_PRIZES, weekGoal, weekPrize } from '@/lib/season-fields';
 import type { WeekRace } from '@/lib/week-race';
 
 const number = (value: number) => value.toLocaleString('ru-RU');
@@ -51,13 +51,12 @@ export function WeekRaceTry({ race, signedIn }: { race: WeekRace; signedIn: bool
                 : <span>Не хватает {number(goal.xp)} XP</span>}
             </span>
           </span>
-          <strong className="week-race-prize" title="Награда за место"><Gift />+{number(weekReward(prize, race.now))}<small>XP</small></strong>
+          <strong className="week-race-prize" title="Награда за место"><Gift />+{number(prize.xp)}<small>XP</small></strong>
         </div>
       </li>
     </ul>
     <div className="race-try-picks" role="group" aria-label="Какое место примерить">
       {WEEK_PRIZES.map((item, index) => <button key={item.tag} type="button" aria-pressed={index === picked} onClick={() => setPicked(index)}>{placeLabel(item.places)}</button>)}
     </div>
-    {isFirstWeek(race.now) && <p className="race-try-note">Первая неделя: награды в четыре раза меньше. Со следующей недели — полные.</p>}
   </div>;
 }
