@@ -109,6 +109,14 @@ it('credits every store on its own and adds the bonus for five stores, once', as
   await expect(claimHunt(member)).rejects.toThrow('Новых наград');
 });
 
+it('pays nothing twice when a store comes back from drafts and is published again', async () => {
+  const id = await store(member, 6);
+  await publish(id);
+  await pool.query(`update "marketStore" set status = 'draft' where id = $1`, [id]);
+  await publish(id);
+  expect(await rewards(id)).toEqual([{ reason: 'full', amount: task('full') }]);
+});
+
 it('caps each member, not the event: the rest of the limit is paid, then nothing, and the others are not touched', async () => {
   await pool.query('update "huntEvent" set "memberLimit" = $2 where key = $1', [EVENT, task('full') + 5]);
   await publish(await store(member, 6));

@@ -55,7 +55,7 @@ export function storeAddressLine(store:Pick<StoreView,'city'|'address'>){
 function cheapestPrice(store:StoreView){
   return store.catalog.reduce<number|null>((min,item)=>item.price!==null&&item.availability!=='unavailable'&&(min===null||item.price<min)?item.price:min,null);
 }
-const STATUS_LABELS={pending:'На проверке',published:'Опубликован',rejected:'Нужны исправления'} as const;
+const STATUS_LABELS={draft:'Черновик',pending:'На проверке',published:'Опубликован',rejected:'Нужны исправления'} as const;
 /** Card of the store list: cover photo, address, metro and a short price summary; full price list is on the store page. */
 export function StoreListCard({store,index,own}:{store:StoreView;index:number;own:boolean}){
   const href=`/market/stores/${store.id}`;const cheapest=cheapestPrice(store);const cover=store.photos[0];

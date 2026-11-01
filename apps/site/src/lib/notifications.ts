@@ -109,6 +109,12 @@ function describeNotification(row: any): NotificationItem {
       title = p.status === 'done' ? 'Заявка на обмен выполнена' : 'Заявка на обмен отменена';
       detail = p.status === 'done' ? `${huntItemName(p.item)} · ${p.amount.toLocaleString('ru-RU')} ценников` : `Ценники вернулись на баланс. ${p.note}`;
       href = '/hunt';
+    } else if (row.kind==='store-moderation') {
+      // The team took the member's store off the site with a reason (stores.ts): back to drafts or deleted.
+      const p = row.payload;
+      title = p.action === 'returned' ? `Магазин «${p.name}» вернули в черновики` : `Магазин «${p.name}» удалён`;
+      detail = p.note;
+      href = p.action === 'returned' ? `/market/stores/${p.id}/edit` : '/market/stores?mine=1';
     } else if (row.kind==='overtaken') {
       // Someone passed the member in the week's top five (migration 0168): the new place and how far behind they are.
       const p = row.payload;

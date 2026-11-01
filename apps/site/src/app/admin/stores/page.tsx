@@ -4,6 +4,7 @@ import '@/styles/business-cabinet.css';
 import '@/styles/admin.css';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
+import { StoreAdminMenu } from '@/components/store-admin-menu';
 import { StoreCard } from '@/components/store-card';
 import { StoreModeration } from '@/components/store-moderation';
 import { StoreTransferBanner } from '@/components/store-transfer-banner';
@@ -18,6 +19,7 @@ export const metadata = { title: 'Модерация магазинов', robots
 const TABS: { key: StoreStatus; label: string; title: string; subtitle: string; empty: [string, string] }[] = [
   { key: 'pending', label: 'На проверке', title: 'Магазины на проверке', subtitle: 'Проверьте адрес и точку в картах, описание и прайс перед публикацией.', empty: ['Все заявки проверены', 'Новые магазины появятся здесь после отправки.'] },
   { key: 'published', label: 'Добавленные', title: 'Добавленные магазины', subtitle: 'Опубликованные магазины: правка из админки не отправляет их на повторную проверку.', empty: ['Магазинов пока нет', 'Они появятся после первой модерации.'] },
+  { key: 'draft', label: 'Черновики', title: 'Черновики', subtitle: 'Магазины, которые команда вернула авторам с причиной. Правка автора снова отправит магазин на проверку.', empty: ['Черновиков нет', 'Вернуть магазин можно в меню «⋯» на вкладке «Добавленные».'] },
   { key: 'rejected', label: 'Отклонённые', title: 'Отклонённые магазины', subtitle: 'Заявки, которые не прошли проверку, с причиной отказа.', empty: ['Отклонённых нет', 'Здесь появятся заявки с причиной отказа.'] },
 ];
 const submitted = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Moscow' });
@@ -58,9 +60,9 @@ export default async function AdminStoresPage({ searchParams }: { searchParams: 
         </form>
       </div>
       {items.length ? <div className="admin-store-queue">{items.map(store => <section key={store.id} className="admin-data-panel store-review">
-        <div className="admin-store-head"><Author author={store.author} at={store.updatedAt} /><Link className="community-button community-button-secondary admin-store-edit" href={`/market/stores/${store.id}/edit`}>Редактировать</Link></div>
+        <div className="admin-store-head"><Author author={store.author} at={store.updatedAt} /><div className="admin-store-actions"><Link className="community-button community-button-secondary admin-store-edit" href={`/market/stores/${store.id}/edit`}>Редактировать</Link><StoreAdminMenu id={store.id} name={store.name} version={store.updatedAt.toISOString()} published={store.status === 'published'} /></div></div>
         <StoreCard store={store} />
-        {store.status === 'rejected' && store.moderationNote && <p className="admin-drink-card-note">Причина: {store.moderationNote}</p>}
+        {(store.status === 'rejected' || store.status === 'draft') && store.moderationNote && <p className="admin-drink-card-note">Причина: {store.moderationNote}</p>}
         {store.status === 'pending' && <StoreModeration id={store.id} version={store.updatedAt.toISOString()} />}
       </section>)}</div>
         : <div className="admin-data-panel"><div className="admin-empty-result"><strong>{query ? 'Ничего не нашлось' : tab.empty[0]}</strong><span>{query ? 'Попробуйте другое название, адрес или ник.' : tab.empty[1]}</span></div></div>}

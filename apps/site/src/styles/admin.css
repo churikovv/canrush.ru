@@ -185,6 +185,7 @@
 .admin-drink-card .store-moderation textarea { min-height: 44px; }
 .admin-drink-card-error { grid-column: 1 / -1; margin: 0; }
 .admin-drink-dialog { width: min(560px, calc(100vw - 32px)); }
+.admin-drink-dialog form > .community-muted { margin: 0; font-size: .8125rem; }
 .admin-drink-edit-form { display: grid; gap: 12px; }
 .admin-drink-edit-form h2 { margin: 0; font-size: 1.25rem; }
 .admin-drink-edit-form > fieldset { display: grid; gap: 14px; min-width: 0; margin: 0; padding: 0; border: 0; }
@@ -239,8 +240,13 @@
 .admin-store-author a { color: var(--theme-link, #0058cc); font-weight: 700; text-decoration: none; }
 .admin-store-author-avatar { display: grid; place-items: center; width: 32px; height: 32px; flex: none; overflow: hidden; border-radius: 50%; background: var(--theme-subtle, #eef1f5); color: var(--color-brand, #006eff); font-weight: 800; }
 .admin-store-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.admin-store-actions { display: flex; align-items: center; gap: 8px; }
 .admin-store-edit { min-height: 40px; }
-@media (max-width: 639px) { .admin-store-edit { width: 100%; } }
+.admin-store-actions .more-actions-panel { min-width: 230px; text-align: left; }
+@media (max-width: 639px) {
+  .admin-store-actions { width: 100%; }
+  .admin-store-edit { flex: 1; }
+}
 
 /* «Поддержка» (admin/support): the threads and the open chat side by side from 960 px; on phones the list, or the
    thread with a way back. Unread threads carry a blue dot and bold text. */

@@ -3,7 +3,7 @@ import type { PreparedReviewPhoto } from './review-photos';
 import { getPool } from '@/db/pool';
 import { canonicalDrink } from './brand-collection-fields';
 import { MAX_PENDING_STORES, METRO, StoreError, type StockStatus, type StoreInput } from './store-fields';
-export interface Store extends StoreInput { id: string; photos: string[]; ownerId: string; status: 'pending'|'published'|'rejected'; moderationNote: string; updatedAt: Date; reviewedAt: Date | null }
+export interface Store extends StoreInput { id: string; photos: string[]; ownerId: string; status: 'draft'|'pending'|'published'|'rejected'; moderationNote: string; updatedAt: Date; reviewedAt: Date | null }
 /** `metro`: the stations of one name (one per line) — a store matches by its chosen station or by being within walking distance of one. */
 export interface StoreFilters { brand?: string; metro?: { ids: string[]; lat: number[]; lng: number[]; km: number } }
 export async function listStores(city: string, query: string, page: number, ownerId?: string, pending=false, filters: StoreFilters = {}) {
@@ -115,6 +115,27 @@ export async function moderateStore(adminId: string,id: string,status:'published
     and not exists(select 1 from "userBlock" b where b."userId"="marketStore"."ownerId") returning id`,[adminId,id,status,note.trim(),version]);
   if(!result.rowCount)throw new StoreError('Заявка изменилась, уже проверена или автор заблокирован. Обновите страницу.');
 }
+const TEAM_TAKEDOWN=`id=$2 and date_trunc('milliseconds',"updatedAt")=$3::timestamptz and exists(select 1 from "user" u join "siteAdmin" a on lower(u.email)=a.email where u.id=$1)`;
+/** The team takes a store off the site with a reason, which the owner gets in a notification. The role is checked here, by id; the version keeps it from hitting a store that has just changed. */
+async function takeDownStore(adminEmail:string,id:string,note:string,action:'returned'|'deleted',sql:string,values:(string|undefined)[]){
+  const reason=note.trim();
+  if(!reason||reason.length>500)throw new StoreError('Укажите причину: её увидит автор (до 500 символов).');
+  const db=await getPool().connect();
+  try{
+    await db.query('begin');
+    const store=(await db.query<{ownerId:string;name:string}>(sql,action==='returned'?[...values,reason]:values)).rows[0];
+    if(!store)throw new StoreError('Магазин изменился или уже снят. Обновите страницу.');
+    await db.query(`insert into notification ("userId",kind,"eventKey",payload) values ($1,'store-moderation',$2,$3)`,[store.ownerId,`store-moderation:${id}:${Date.now()}`,JSON.stringify({action,id,name:store.name,note:reason})]);
+    await db.query(`insert into "adminAuditLog" ("adminEmail",action,"targetType","targetId") values ($1,$2,'store',$3)`,[adminEmail,action==='returned'?'return-to-draft':'delete',id]);
+    await db.query('commit');
+  }catch(error){await db.query('rollback');throw error;}finally{db.release();}
+}
+/** A published store goes back to its owner as a draft; their edit sends it to moderation again. Hunt rewards and XP are keyed by store, so publishing it again pays nothing twice. */
+export const returnStoreToDraft=(adminId:string,adminEmail:string,id:string,note:string,version:string)=>takeDownStore(adminEmail,id,note,'returned',
+  `update "marketStore" set status='draft',"moderationNote"=$4,"reviewedBy"=$1,"reviewedAt"=now(),"updatedAt"=clock_timestamp() where status='published' and ${TEAM_TAKEDOWN} returning "ownerId",name`,[adminId,id,version]);
+/** Deletes a store with its photos. As for any removal, the XP and hunt rewards it earned stay. */
+export const deleteStoreAsTeam=(adminId:string,adminEmail:string,id:string,note:string,version:string)=>takeDownStore(adminEmail,id,note,'deleted',
+  `delete from "marketStore" where ${TEAM_TAKEDOWN} returning "ownerId",name`,[adminId,id,version]);
 
 export type StorePhotoSize = 'full' | 'card' | 'thumbnail';
 /** Visible store photo bytes. The `card` size (up to 960 px) is made from the original on first request and kept. */

@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { isSiteStaffEmail, requireSiteAdmin } from '@/lib/admin';
 import { parseStore, StoreError } from '@/lib/store-fields';
-import { getStore, saveStore, moderateStore } from '@/lib/stores';
+import { deleteStoreAsTeam, getStore, moderateStore, returnStoreToDraft, saveStore } from '@/lib/stores';
 import { getPool } from '@/db/pool';
 import { linkStoreCatalog } from '@/lib/store-catalog';
 import { geocodeStoreAddress, type StoreGeocode } from '@/lib/store-geocoder';
@@ -31,6 +31,17 @@ export async function moderateStoreAction(id:string,version:string,_previous:Sto
   const admin=await requireSiteAdmin();
   try{await moderateStore(admin.userId,id,String(form.get('status')) as 'published'|'rejected',String(form.get('note')??''),version);revalidatePath('/market/stores','layout');revalidatePath('/admin/stores');return {saved:true};}
   catch(error){return {error:error instanceof StoreError?error.message:'Не удалось проверить заявку.'};}
+}
+async function takeDown(run:(adminId:string,adminEmail:string,note:string)=>Promise<void>,form:FormData,failed:string):Promise<StoreState>{
+  const admin=await requireSiteAdmin();
+  try{await run(admin.userId,admin.email,String(form.get('note')??''));revalidatePath('/market/stores','layout');revalidatePath('/admin/stores');return {saved:true};}
+  catch(error){return {error:error instanceof StoreError?error.message:failed};}
+}
+export async function returnStoreAction(id:string,version:string,_previous:StoreState,form:FormData):Promise<StoreState>{
+  return takeDown((adminId,adminEmail,note)=>returnStoreToDraft(adminId,adminEmail,id,note,version),form,'Не удалось вернуть магазин.');
+}
+export async function deleteStoreAction(id:string,version:string,_previous:StoreState,form:FormData):Promise<StoreState>{
+  return takeDown((adminId,adminEmail,note)=>deleteStoreAsTeam(adminId,adminEmail,id,note,version),form,'Не удалось удалить магазин.');
 }
 const scanCalls=new Map<string,number[]>();
 const HOUR=3_600_000;

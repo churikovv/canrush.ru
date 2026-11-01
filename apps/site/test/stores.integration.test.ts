@@ -9,6 +9,8 @@ const api=await import('../src/lib/stores');
 import type { StoreInput } from '../src/lib/store-fields';
 const [owner,admin,stranger]=[randomUUID(),randomUUID(),randomUUID()] as [string,string,string];
 let id:string;
+const adminEmail=admin+'@example.com';
+const placed=async(name:string,status:string)=>(await pool.query<{id:string}>(`insert into "marketStore"("ownerId",name,city,address,status) values($1,$2,'moscow',$2,$3) returning id`,[owner,name,status])).rows[0]!.id;
 const input:StoreInput={name:'Test '+randomUUID(),city:'moscow',address:'Test 1',latitude:55.75,longitude:37.61,locationSource:'manual',metro:null,description:'',catalog:[]};
 beforeAll(async()=>{for(const uid of [owner,admin,stranger])await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt") values($1,'Store test',$2,true,now(),now())`,[uid,uid+'@example.com']);await pool.query('insert into "siteAdmin"(email) values($1)',[admin+'@example.com']);});
 afterAll(async()=>{await pool.query('delete from "siteAdmin" where email=$1',[admin+'@example.com']);await pool.query('delete from "user" where id=any($1::text[])',[[owner,admin,stranger]]);await pool.end();});
@@ -90,6 +92,36 @@ it('lets the team edit someone else’s store in place, keeping its status, and 
  expect(items.find(store=>store.id===id)?.author).toMatchObject({name:'Store test'});
 });
 
+it('takes a published store back to its owner as a draft, for the team only and with a reason',async()=>{
+ const name='Draft '+randomUUID();
+ const draft=await placed(name,'published');
+ const version=(await api.getStore(draft))!.updatedAt.toISOString();
+ await expect(api.returnStoreToDraft(stranger,'stranger@example.com',draft,'Нет фото',version)).rejects.toThrow('изменился');
+ await expect(api.returnStoreToDraft(admin,adminEmail,draft,'  ',version)).rejects.toThrow('причину');
+ await expect(api.returnStoreToDraft(admin,adminEmail,draft,'Нет фото',new Date(0).toISOString())).rejects.toThrow('изменился');
+ await api.returnStoreToDraft(admin,adminEmail,draft,'Нет фото',version);
+ const row=(await api.getStore(draft))!;
+ expect(row).toMatchObject({status:'draft',moderationNote:'Нет фото'});
+ expect((await api.listStores('moscow',name,1)).items).toHaveLength(0);
+ expect((await api.listStores('moscow',name,1,owner)).items).toHaveLength(1);
+ expect((await api.listStoresForAdmin('draft',1,name)).items.map(item=>item.id)).toEqual([draft]);
+ expect((await pool.query(`select payload from notification where "userId"=$1 and kind='store-moderation' and payload->>'id'=$2`,[owner,draft])).rows).toEqual([{payload:{action:'returned',id:draft,name,note:'Нет фото'}}]);
+ expect((await pool.query(`select action from "adminAuditLog" where "targetType"='store' and "targetId"=$1`,[draft])).rows).toEqual([{action:'return-to-draft'}]);
+ await expect(api.returnStoreToDraft(admin,adminEmail,draft,'Ещё раз',row.updatedAt.toISOString())).rejects.toThrow('изменился');
+ await api.saveStore(owner,{...input,name,address:'Draft 2'},draft);
+ expect(await api.getStore(draft)).toMatchObject({status:'pending',moderationNote:''});
+});
+it('deletes any store for the team only, with a reason, and tells the owner',async()=>{
+ const name='Delete '+randomUUID();
+ const doomed=await placed(name,'pending');
+ const version=(await api.getStore(doomed))!.updatedAt.toISOString();
+ await expect(api.deleteStoreAsTeam(stranger,'stranger@example.com',doomed,'Выдуман',version)).rejects.toThrow('изменился');
+ await expect(api.deleteStoreAsTeam(admin,adminEmail,doomed,'',version)).rejects.toThrow('причину');
+ await api.deleteStoreAsTeam(admin,adminEmail,doomed,'Выдуман',version);
+ expect(await api.getStore(doomed)).toBeFalsy();
+ expect((await pool.query(`select payload from notification where "userId"=$1 and kind='store-moderation' and payload->>'id'=$2`,[owner,doomed])).rows).toEqual([{payload:{action:'deleted',id:doomed,name,note:'Выдуман'}}]);
+ expect((await pool.query(`select action from "adminAuditLog" where "targetType"='store' and "targetId"=$1`,[doomed])).rows).toEqual([{action:'delete'}]);
+});
 it('shows a drink only in published stores that have it, after the catalog aliases, cheapest first',async()=>{
   const seller=randomUUID(),banned=randomUUID(),brand='Unknown',flavor='unresolved:223f2588885d0ae5b061e544';
   for(const uid of [seller,banned])await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt") values($1,'Store',$2,true,now(),now())`,[uid,`${uid}@example.com`]);
