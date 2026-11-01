@@ -361,3 +361,21 @@ div.admin-drink-card-match > p { margin: 0; }
 .admin-giveaway-row label { display: grid; align-content: start; gap: 6px; min-width: 0; font-size: .875rem; font-weight: 600; }
 .admin-giveaway-row input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 10px; background: transparent; color: inherit; font: inherit; font-weight: 400; }
 @media (pointer: coarse) { .admin-giveaway-row input { font-size: 1rem; } }
+
+/* «Сообщения бота»: диалог с участником. */
+/* column-reverse opens a long dialog on its last message without any script. */
+.bot-dialog-scroll { display: flex; flex-direction: column-reverse; max-height: clamp(280px, calc(100dvh - 380px), 640px); overflow-y: auto; }
+.bot-dialog { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 8px 0; list-style: none; }
+.bot-dialog li { align-self: flex-start; max-width: min(78%, 560px); padding: 10px 14px; border-radius: 16px; background: var(--color-subtle); }
+.bot-dialog li[data-team] { align-self: flex-end; background: var(--color-brand); color: #fff; }
+.bot-dialog p { margin: 0; font-size: .9375rem; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-wrap; }
+.bot-dialog time { display: block; margin-top: 4px; font-size: .75rem; opacity: .7; }
+.bot-dialog-nick { font-size: .875rem; overflow-wrap: anywhere; }
+.bot-dialog-nick a { font-weight: 600; }
+.bot-dialog-note { margin: 0; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.4; }
+.bot-dialog-form { display: grid; gap: 8px; }
+.bot-dialog-form textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--color-control); border-radius: 14px; background: transparent; color: inherit; font: inherit; resize: vertical; }
+.bot-dialog-form button { justify-self: end; }
+@media (max-width: 639px) { .bot-dialog-form button { justify-self: stretch; } }
+@media (pointer: coarse) { .bot-dialog-form textarea { font-size: 1rem; } }
+

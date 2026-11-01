@@ -10,12 +10,12 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
       [/(?:^| )газированный(?: |$)/u, 'bacchus_sparkling'],
     ],
     'Lit Energy': [[/клубничн.*жвач/u, 'blend:bubblegum+strawberry'], [/(?:granat|гранат)/u, 'pomegranate'], [/(?:turbo|турбо)/u, 'lit_turbo']],
-    'Doma By Guf': [[/ориджинал/u, 'original']],
+    'Doma By Guf': [[/ориджинал/u, 'original'], [/(?:(?:^| )энергия(?: |$)|вкус 02|№ ?02)/u, 'doma_energy']],
     // «Мандариновый пуэр» is a By Баста can («by БАСТА ГУФ» on it), even when the retailer files it under Guf.
     'By Баста': [[/(?:мандарин.*пуэр|пуэр.*мандарин)/u, 'basta_tangerine_puer'], [/(?:^| )(?:классический|ориджинал|original)(?: |$)/u, 'original']],
     'Sangaria': [[/(?:миракл|miracle)/u, 'sangaria_miracle']],
     // «Burn Energy» is a WOW Energy flavour (red-orange can), not the Burn brand.
-    'Wow': [[/burn energy/u, 'wow_burn']],
+    'Wow': [[/burn energy/u, 'wow_burn'], [/(?:bitter|битт?ер)/u, 'wow_bitter_tonic']],
     'Plan B': [[/витаминная энергия/u, 'plan_b_vitamin']],
     'Dydo': [[/вита энерджи желе/u, 'dydo_vita_jelly']],
     'Bizon': [[/(?:^| )black(?: |$)/u, 'bizon_black']],
@@ -94,6 +94,7 @@ export function namedProductFlavor(brand: string | undefined, name: string): str
     'Adrenaline Rush': [
       [/(?:vitamin\s*power|витаминная сила|game fuel).*(?:манго|mango)/u, 'mango'],
       [/(?:vitamin\s*power|витаминная сила).*(?:апельсин|orange)/u, 'orange'],
+      [/(?:citrus buff|цитрус баф)/u, 'game_fuel_citrus_buff'],
       [/(?:game fuel|г[еэ]йм фью[еэ]л|игровая энергия|игр энергия)/u, 'game_fuel'],
       [/(?:spicy|спайси|табаско)/u, 'spicy'],
       [/(?:breeze|бриз)/u, 'breeze'],

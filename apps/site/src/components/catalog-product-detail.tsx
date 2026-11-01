@@ -1,4 +1,4 @@
-import { isAssortmentFlavor } from '@canrush/shared';
+import { findCity, isAssortmentFlavor } from '@canrush/shared';
 import { CatalogVolumeTabs } from '@/components/catalog-volume-tabs';
 import { CatalogPriceHistory } from '@/components/catalog-price-history';
 import { CatalogOfferClicks } from '@/components/catalog-offer-clicks';
@@ -22,6 +22,7 @@ import { RetailerBadge } from '@/components/retailer-badge';
 import { catalogOffersByVolume, catalogRetailerName, flavorName } from '@/lib/catalog-query';
 import type { ReviewData, ReviewSummary } from '@/lib/reviews';
 import type { DrinkStore } from '@/lib/brand-drink-stores';
+import type { DrinkStoreOffer } from '@/lib/stores';
 import type { DrinkPrice } from '@/lib/brand-drink-prices';
 import { sameVolume } from '@/lib/brand-drink-price-fields';
 import { volumesWithoutOffers } from '@/lib/catalog-card-edit-fields';
@@ -30,6 +31,7 @@ import { mapSearchUrl } from '@/lib/brand-drink-store-fields';
 
 const PRICE_FORMATTER = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
 const LATEST_DATE = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });
+const STORE_DATE = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow' });
 
 function volumeLabel(volume: number | undefined): string | undefined {
   if (volume === undefined) return undefined;
@@ -63,6 +65,10 @@ interface CatalogProductDetailProps {
   brand?: { business: string | null; businessId?: string | null; description: string | null } | null;
   /** «Где купить» from the brand's cabinet: chains, stores of the CanRush map and the brand's own stores. */
   brandStores?: DrinkStore[];
+  /** Stores of the map that sell the drink, with prices members wrote. */
+  storeOffers?: DrinkStoreOffer[];
+  /** The visitor's city: its stores come first. */
+  city?: string;
   /** The brand's recommended ceiling «до N ₽» per can volume, from its cabinet. */
   ceilings?: DrinkPrice[];
   /** Extra photos of a member-added drink besides the cover (ids for `/api/catalog-drink-photos/<id>`). */
@@ -70,7 +76,7 @@ interface CatalogProductDetailProps {
 }
 
 
-export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ photos = [], storeOffers = [], city, group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
   const newest = reviews.find(review => review.text.trim());
   const latestReview = newest ? { author: newest.author.username, avatarId: newest.author.avatarId, score: (newest.design + newest.taste) / 2, date: LATEST_DATE.format(new Date(newest.createdAt)), text: newest.text } : null;
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
@@ -204,7 +210,7 @@ export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingr
                 addedBy?.discontinued ? <div className="catalog-added-empty">
                   <span className="catalog-added-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h18v4H3zM5 8v12h14V8M10 12h4" /></svg></span>
                   <div><strong>Больше не производится</strong><p>Напиток в архиве каталога: его сняли с производства, в магазинах его уже не ищем. Отзывы, коллекции и трекер работают как раньше.</p></div>
-                </div> : addedBy ? <div className="catalog-added-empty">
+                </div> : storeOffers.length > 0 ? null : addedBy ? <div className="catalog-added-empty">
                   <span className="catalog-added-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9 5 3h14l2 6M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Zm2 5v7h14v-7" /></svg></span>
                   <div><strong>Цен пока нет</strong><p>{addedBy.business
                     ? `Напиток добавил бренд «${addedBy.business}» — в магазинах из нашего мониторинга его ещё не нашли.${brandStores.length ? ' Где он продаётся, бренд указал ниже.' : ''}`
@@ -218,6 +224,7 @@ export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingr
               </p>}
             </section>
 
+            {storeOffers.length > 0 && <MemberStores stores={storeOffers} city={city} />}
             {brandStores.length > 0 && <BrandStores stores={brandStores} />}
 
             {/* A member's drink without offers has no history yet; the empty card above already says so. */}
@@ -231,6 +238,32 @@ export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingr
       </div>
     </article>
   );
+}
+
+function MemberStoreRow({ store, showCity }: { store: DrinkStoreOffer; showCity: boolean }) {
+  const where = [store.name, showCity ? findCity(store.city)?.name : null, store.station].filter(Boolean).join(' · ');
+  return <Link className="catalog-store-offer" href={`/market/stores/${store.id}`}>
+    <span className="catalog-brand-store-icon">{STORE_ICON}</span>
+    <span>
+      <strong>{store.price === null ? 'Цену не указали' : `${PRICE_FORMATTER.format(store.price / 100)} ₽`}</strong>
+      <small>{where}</small>
+    </span>
+    <time className="catalog-member-store-date" dateTime={new Date(store.updatedAt).toISOString()}>{STORE_DATE.format(new Date(store.updatedAt))}</time>
+  </Link>;
+}
+
+/** Prices from the stores members added to the map: the visitor's city first, the rest folded. Members' word, so the date shows how fresh it is. */
+function MemberStores({ stores, city }: { stores: DrinkStoreOffer[]; city?: string }) {
+  const near = stores.filter(store => store.city === city);
+  const far = stores.filter(store => store.city !== city);
+  return <section className="catalog-product-section catalog-brand-stores" aria-labelledby="member-stores-title">
+    <div className="catalog-brand-stores-head"><h2 id="member-stores-title">В магазинах участников</h2><span>цены указали участники</span></div>
+    {near.length > 0 && <div className="catalog-store-list">{near.map(store => <MemberStoreRow key={store.id} store={store} showCity={false} />)}</div>}
+    {far.length > 0 && <details className="catalog-member-stores-more" open={near.length === 0}>
+      <summary>Другие города · {far.length}</summary>
+      <div className="catalog-store-list">{far.map(store => <MemberStoreRow key={store.id} store={store} showCity />)}</div>
+    </details>}
+  </section>;
 }
 
 const STORE_ICON = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 9 5 3h14l2 6M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Zm2 5v7h14v-7" /></svg>;

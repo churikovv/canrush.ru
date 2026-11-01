@@ -115,6 +115,15 @@ export function marketText(event: MarketEvent, title: string, counterpart: strin
   return `${head[event]}\n«${escapeHtml(truncate(title, 120))}»${body}`;
 }
 
+/** The team writing to a member personally: their answer in the chat reaches the admin panel. */
+export function directText(text: string): string {
+  return `✉️ <b>Сообщение от команды CanRush</b>\n\n${escapeHtml(text)}\n\n<i>Ответьте прямо здесь, мы увидим.</i>`;
+}
+
+export function directReplyText(name: string, text: string): string {
+  return `✉️ <b>Ответ от ${escapeHtml(name)}</b>\n${escapeHtml(truncate(text, 400))}`;
+}
+
 export function notificationText(title: string, detail: string): string {
   return `🔔 <b>${escapeHtml(title)}</b>${detail ? `\n${escapeHtml(truncate(detail, 400))}` : ''}`;
 }

@@ -5,6 +5,8 @@ import type { BotPromo } from './catalog';
 import {
   adminSummaryText,
   digestText,
+  directReplyText,
+  directText,
   errorAlertText,
   marketText,
   notificationText,
@@ -15,7 +17,7 @@ import {
   type MarketEvent,
 } from './format';
 
-export type OutboxKind = 'notification' | 'market' | 'promo' | 'digest' | 'admin-summary' | 'error-alert';
+export type OutboxKind = 'notification' | 'market' | 'promo' | 'digest' | 'admin-summary' | 'error-alert' | 'direct' | 'direct-reply';
 
 export interface MarketPayload { event: MarketEvent; orderId: string; title: string; counterpart: string; message?: string }
 export interface PromoPayload { cityName: string; promos: BotPromo[] }
@@ -63,6 +65,12 @@ export async function renderOutboxMessage(row: Pick<OutboxRow, 'kind' | 'payload
     case 'admin-summary': {
       const p = row.payload as unknown as AdminSummaryPayload;
       return { text: adminSummaryText(p.summary, p.day), keyboard: open('Админка', '/admin') };
+    }
+    case 'direct':
+      return { text: directText(String(row.payload.text)) };
+    case 'direct-reply': {
+      const { userId, name, text } = row.payload as { userId: string; name: string; text: string };
+      return { text: directReplyText(name, text), keyboard: open('Ответить', `/admin/bot?user=${encodeURIComponent(userId)}`) };
     }
     case 'error-alert':
       return { text: errorAlertText(row.payload as unknown as ErrorAlertPayload), keyboard: open('Все ошибки', '/admin/errors') };

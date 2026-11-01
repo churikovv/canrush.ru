@@ -1,3 +1,4 @@
+import { recordBotReply } from '@/lib/bot-messages';
 import { createHash } from 'node:crypto';
 import { CITIES, DEFAULT_CITY, findCity, type CityId } from '@canrush/shared';
 import type { Pool } from 'pg';
@@ -136,6 +137,11 @@ async function handleMessage(ctx: BotContext, message: Message): Promise<void> {
   if (command) {
     const state = await chatState(ctx.pool, message.from.id);
     await send(ctx, chatId, welcomeText(ctx, state));
+    return;
+  }
+
+  if (await recordBotReply(ctx.pool, message.from, text)) {
+    await send(ctx, chatId, 'Передали команде CanRush. Ответим здесь же.');
     return;
   }
 

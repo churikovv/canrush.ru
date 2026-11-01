@@ -207,6 +207,14 @@ export const REVIEWED_PRODUCT_ALIASES: ReadonlyArray<readonly [string, string, s
   ["Adrenaline Game Fuel", "Mango storm", "Adrenaline Rush", "game_fuel_mango"],
   ["Adrenaline Game Fuel", "Game Fuel Mango Storm", "Adrenaline Rush", "game_fuel_mango"],
   ["Adrenaline Game Fuel", "Game Fuel Манго", "Adrenaline Rush", "game_fuel_mango"],
+  ["Вкус", "unresolved:4c0129e0133b481e3d00bfff", "Doma By Guf", "original"], // «Doma Ориджинал By Guf вкус 01»: «вкус» read as the brand; the can is №01
+  ["Энергия", "unresolved:309c234a43fc03169ba459d8", "Doma By Guf", "doma_energy"], // «Doma Энергия By Guf вкус 02»: the №02 can, not the original
+  ["Wow", "unresolved:b4d1921255be59378381528c", "Wow", "wow_bitter_tonic:sugarfree"], // «WOW Energy биттер тоник без сахара»
+  ["Unknown", "unresolved:223f2588885d0ae5b061e544", "Adrenaline Rush", "game_fuel_citrus_buff"], // Fix Price wrote only «Энергетический напиток, 0,449 л»; the can reads Game Fuel Citrus Buff
+  ["Adrenaline Rush", "Citrus Buff", "Adrenaline Rush", "game_fuel_citrus_buff"],
+  ["Adrenaline Rush", "Game Fuel Citrus Buff", "Adrenaline Rush", "game_fuel_citrus_buff"],
+  ["Adrenaline Game Fuel", "Citrus Buff", "Adrenaline Rush", "game_fuel_citrus_buff"],
+  ["Adrenaline Game Fuel", "Game Fuel Citrus Buff", "Adrenaline Rush", "game_fuel_citrus_buff"],
   ["Ninja", "peach", "Ninja Star", "peach"], // Пятёрочка "Ninja Star Energy Персик-Личи" under Edadeal's brand "Ninja"
   ["Ninja", "cherry", "Ninja Star", "cherry"], // Пятёрочка "Нинджа Стар Энерджи (Ninja Star Energy) Вишня" under Edadeal's brand "Ninja"
   ["Piranha's", "berry", "Piranha's", "original"], // member drink «slam classic energy»: the photo is the Slam Classic Energy can (0101)

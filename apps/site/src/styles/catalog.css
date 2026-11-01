@@ -786,6 +786,8 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 .catalog-brand-stores-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
 .catalog-brand-stores-head h2 { margin: 0; color: var(--color-ink); font-size: 1rem; font-weight: 800; }
 .catalog-brand-stores-head span { color: var(--color-muted-strong); font-size: .8125rem; }
+.catalog-member-store-date { flex: none; margin-left: auto; color: var(--color-muted-strong); font-size: .75rem; white-space: nowrap; }
+.catalog-member-stores-more summary { min-height: 44px; display: flex; align-items: center; color: var(--color-brand); font-size: .9375rem; font-weight: 700; cursor: pointer; }
 .catalog-brand-store-icon { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border-radius: 10px; background: color-mix(in srgb, var(--color-brand) 12%, var(--color-subtle)); color: var(--color-brand); }
 
 /* The brand's recommended price over a volume's offers; offers above it say so, quietly — a guide, not a verdict. */

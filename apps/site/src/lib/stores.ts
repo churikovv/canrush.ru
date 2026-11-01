@@ -1,7 +1,8 @@
 import sharp from 'sharp';
 import type { PreparedReviewPhoto } from './review-photos';
 import { getPool } from '@/db/pool';
-import { MAX_PENDING_STORES, StoreError, type StoreInput } from './store-fields';
+import { canonicalDrink } from './brand-collection-fields';
+import { MAX_PENDING_STORES, METRO, StoreError, type StockStatus, type StoreInput } from './store-fields';
 export interface Store extends StoreInput { id: string; photos: string[]; ownerId: string; status: 'pending'|'published'|'rejected'; moderationNote: string; updatedAt: Date; reviewedAt: Date | null }
 /** `metro`: the stations of one name (one per line) — a store matches by its chosen station or by being within walking distance of one. */
 export interface StoreFilters { brand?: string; metro?: { ids: string[]; lat: number[]; lng: number[]; km: number } }
@@ -14,6 +15,24 @@ export async function listStores(city: string, query: string, page: number, owne
       where 12742*asin(least(1,sqrt(sin(radians(st.lat-s.latitude)/2)^2+cos(radians(s.latitude))*cos(radians(st.lat))*sin(radians(st.lng-s.longitude)/2)^2)))<=$10)))
     order by s."updatedAt" desc,s.id limit 25 offset $5`,[city,query,ownerId??null,pending,(page-1)*24,filters.brand??'',filters.metro?.ids??null,filters.metro?.lat??[],filters.metro?.lng??[],filters.metro?.km??0]);
   return {items:result.rows.slice(0,24),hasMore:result.rows.length>24};
+}
+/** A store of the map that sells a catalog drink, with the price its member wrote (kopecks) and when the store was last edited. */
+export interface DrinkStoreOffer { id: string; name: string; city: string; address: string; station: string | null; price: number | null; availability: StockStatus; updatedAt: Date }
+/**
+ * Published stores with this drink, cheapest first, without those out of stock. Items are compared after the catalog's
+ * aliases, because a store keeps the identity it was saved with and a later rename does not touch it.
+ */
+export async function getDrinkStoreOffers(brand: string, flavor: string): Promise<DrinkStoreOffer[]> {
+  const drink = canonicalDrink(brand, flavor);
+  const { rows } = await getPool().query<Omit<DrinkStoreOffer, 'station'> & { metro: string | null; brand: string; flavor: string }>(
+    `select s.id, s.name, s.city, s.address, s.metro, s."updatedAt", i.item->>'brand' as brand, i.item->>'flavor' as flavor,
+       (i.item->>'price')::int as price, i.item->>'availability' as availability
+     from "marketStore" s cross join lateral jsonb_array_elements(s.catalog) i(item)
+     where s.status = 'published' and i.item ? 'brand' and i.item->>'availability' <> 'unavailable'
+       and not exists(select 1 from "userBlock" b where b."userId" = s."ownerId")`);
+  return rows.filter(row => { const item = canonicalDrink(row.brand, row.flavor); return item.brand === drink.brand && item.flavor === drink.flavor; })
+    .map(({ metro, brand: _brand, flavor: _flavor, ...row }) => ({ ...row, station: METRO[row.city]?.find(item => item.id === metro)?.name ?? null }))
+    .sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
 }
 export interface StoreAuthor { username: string | null; name: string; avatarId: string | null }
 export type StoreStatus = Store['status'];

@@ -19,8 +19,8 @@ const memberLabel = (entry: ContestParticipant | undefined) => entry ? (entry.us
 
 function Contact({ entry }: { entry: ContestParticipant | undefined }) {
   if (!entry) return <span className="admin-table-muted">аккаунт удалён</span>;
+  if (entry.telegramLinked) return <Link href={`/admin/bot?user=${encodeURIComponent(entry.id)}`}>Написать через бота</Link>;
   if (entry.telegramUsername) return <a href={`https://t.me/${entry.telegramUsername}`} target="_blank" rel="noopener noreferrer">Написать @{entry.telegramUsername} ↗</a>;
-  if (entry.telegramLinked) return <span>Telegram привязан — написать через бота</span>;
   return <span>{entry.email}</span>;
 }
 
@@ -67,7 +67,7 @@ export default async function AdminContestPage({ params }: { params: Promise<{ k
           {participants.map(entry => <tr key={entry.id}>
             <td><div className="admin-table-identity">{entry.username ? <Link href={`/profile/${entry.username}`}>{entry.name || entry.username}</Link> : <strong>{entry.name || entry.email}</strong>}<span>{entry.username ? `@${entry.username}` : entry.email}</span></div>{entry.drawStatus && <span className="admin-status">{DRAW_STATUS_LABELS[entry.drawStatus]}</span>}</td>
             <td>{entry.cans}</td><td>{entry.days}</td><td>{date(entry.firstDay)}{entry.lastDay !== entry.firstDay && ` – ${date(entry.lastDay)}`}</td>
-            <td>{entry.telegramUsername ? <a href={`https://t.me/${entry.telegramUsername}`} target="_blank" rel="noopener noreferrer">@{entry.telegramUsername}</a> : entry.telegramLinked ? 'привязан' : <span className="admin-table-muted">нет</span>}</td>
+            <td>{entry.telegramUsername ? <a href={`https://t.me/${entry.telegramUsername}`} target="_blank" rel="noopener noreferrer">@{entry.telegramUsername}</a> : entry.telegramLinked ? <Link href={`/admin/bot?user=${encodeURIComponent(entry.id)}`}>через бота</Link> : <span className="admin-table-muted">нет</span>}</td>
             <td>{entry.avatar ? 'да' : <span className="admin-table-muted">нет</span>}</td>
             <td>{date(entry.createdAt)}</td>
           </tr>)}

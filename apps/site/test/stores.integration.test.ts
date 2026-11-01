@@ -89,3 +89,22 @@ it('lets the team edit someone else’s store in place, keeping its status, and 
  const {items}=await api.listStoresForAdmin('published',1,input.name.slice(0,20));
  expect(items.find(store=>store.id===id)?.author).toMatchObject({name:'Store test'});
 });
+
+it('shows a drink only in published stores that have it, after the catalog aliases, cheapest first',async()=>{
+  const seller=randomUUID(),banned=randomUUID(),brand='Unknown',flavor='unresolved:223f2588885d0ae5b061e544';
+  for(const uid of [seller,banned])await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt") values($1,'Store',$2,true,now(),now())`,[uid,`${uid}@example.com`]);
+  await pool.query('insert into "userBlock"("userId") values($1)',[banned]);
+  const store=async(ownerId:string,status:string,name:string,catalog:object[])=>pool.query(`insert into "marketStore"("ownerId",name,city,address,catalog,status) values($1,$2,'moscow','Test',$3::jsonb,$4)`,[ownerId,`${name} ${seller}`,JSON.stringify(catalog),status]);
+  const item=(price:number|null,availability='available',b='Adrenaline Rush',f='game_fuel_citrus_buff')=>({name:'Citrus Buff',price,availability,brand:b,flavor:f});
+  await store(seller,'published','Дорогой',[item(30000)]);
+  await store(seller,'published','Дешёвый старым именем',[item(15000,'available',brand,flavor)]);
+  await store(seller,'published','Без цены',[item(null,'unknown')]);
+  await store(seller,'published','Закончился',[item(100,'unavailable')]);
+  await store(seller,'pending','На проверке',[item(100)]);
+  await store(banned,'published','Заблокирован',[item(100)]);
+  try{
+    const offers=(await api.getDrinkStoreOffers('Adrenaline Rush','game_fuel_citrus_buff')).filter(offer=>offer.name.endsWith(seller));
+    expect(offers.map(offer=>[offer.name.replace(` ${seller}`,''),offer.price])).toEqual([['Дешёвый старым именем',15000],['Дорогой',30000],['Без цены',null]]);
+  }finally{await pool.query('delete from "user" where id=any($1::text[])',[[seller,banned]])}
+});
+
