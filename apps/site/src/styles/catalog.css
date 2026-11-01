@@ -724,6 +724,19 @@
 .catalog-rating-card-score .catalog-rating-card-empty { font-size: 1.125rem; }
 .catalog-rating-card-count { grid-column: 1; color: var(--color-muted-strong); font-size: .875rem; }
 .catalog-rating-card-arrow { grid-column: 2; grid-row: 1 / span 2; color: var(--color-ink); }
+/* Превью последнего отзыва внутри карточки-входа: длинный текст обрывается многоточием, целиком он в окне отзывов. */
+.catalog-rating-latest { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--color-control); }
+.catalog-rating-latest-head { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: .875rem; }
+.catalog-rating-latest-avatar { display: grid; flex: none; place-items: center; width: 28px; height: 28px; overflow: hidden; border-radius: 50%; background: var(--color-subtle); color: var(--color-brand); font-size: .8125rem; font-weight: 800; }
+.catalog-rating-latest-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.catalog-rating-latest-head b { overflow: hidden; color: var(--color-ink); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.catalog-rating-latest-score { flex: none; padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 16%, transparent); color: var(--color-brand); font-size: .8125rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.catalog-rating-latest-head small { flex: none; margin-left: auto; color: var(--color-muted-strong); font-size: .8125rem; }
+.catalog-rating-latest p { display: -webkit-box; margin: 0; overflow: hidden; color: var(--color-ink); font-size: .9375rem; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; }
+@media (min-width: 640px) { .catalog-rating-latest p { -webkit-line-clamp: 2; line-clamp: 2; } }
+/* «Что говорят»: своя карточка под входом в отзывы, нажимать на неё незачем. */
+.catalog-highlights-card { display: grid; gap: 12px; padding: 14px 16px 16px 18px; border: 1px solid var(--color-control); border-radius: 20px; background: var(--color-surface, transparent); }
+.catalog-highlights-card h2 { margin: 0; color: var(--color-ink); font-size: 1.0625rem; font-weight: 800; line-height: 1.2; }
 
 /* The reviews sheet: full screen, the page under it does not scroll. */
 html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
@@ -756,7 +769,7 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
   .catalog-product-information .catalog-product-tab-panel { gap: 20px; }
 }
 @media (max-width: 639px) {
-  .catalog-product-information :is(.catalog-swipe-card, .catalog-rating-card, .catalog-volume-card, .catalog-price-history, .catalog-ingredients-card) { padding: 16px; }
+  .catalog-product-information :is(.catalog-swipe-card, .catalog-rating-card, .catalog-highlights-card, .catalog-volume-card, .catalog-price-history, .catalog-ingredients-card) { padding: 16px; }
   /* The volume block inside «История цены» is not a card of its own: no second inset for the chip, price and chart. */
   .catalog-product-information .catalog-price-history .catalog-volume-card { padding: 16px 0 0; }
 }

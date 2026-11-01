@@ -34,8 +34,8 @@ describe('prizes', () => {
 describe('first week', () => {
   const [hero] = WEEK_PRIZES as [typeof WEEK_PRIZES[number]];
 
-  it('pays half until Monday and then the full prize', () => {
-    expect(weekReward(hero, Date.parse('2026-11-01T20:59:59Z'))).toBe(3500);
+  it('pays a quarter until Monday and then the full prize', () => {
+    expect(weekReward(hero, Date.parse('2026-11-01T20:59:59Z'))).toBe(1750);
     expect(weekReward(hero, Date.parse('2026-11-01T21:00:00Z'))).toBe(7000);
     expect(isFirstWeek(Date.parse('2026-11-01T21:00:00Z'))).toBe(false);
   });

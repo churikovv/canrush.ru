@@ -58,6 +58,6 @@ export function WeekRaceTry({ race, signedIn }: { race: WeekRace; signedIn: bool
     <div className="race-try-picks" role="group" aria-label="Какое место примерить">
       {WEEK_PRIZES.map((item, index) => <button key={item.tag} type="button" aria-pressed={index === picked} onClick={() => setPicked(index)}>{placeLabel(item.places)}</button>)}
     </div>
-    {isFirstWeek(race.now) && <p className="race-try-note">Первая неделя: награды вдвое меньше. Со следующей недели — полные.</p>}
+    {isFirstWeek(race.now) && <p className="race-try-note">Первая неделя: награды в четыре раза меньше. Со следующей недели — полные.</p>}
   </div>;
 }

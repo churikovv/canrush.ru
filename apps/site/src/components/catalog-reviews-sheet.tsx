@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useCallback, useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
 import { RatingStars } from '@/components/rating-stars';
 
@@ -8,16 +9,8 @@ const VALUE = 'reviews';
 const MARK = 'canrushReviewsSheet';
 const marked = () => (window.history.state as Record<string, unknown> | null)?.[MARK] === true;
 
-/** What reviews praise and complain about (the drink's review summary), shown under the score without its source. */
-export interface ReviewHighlights { praise: string[]; complaints: string[] }
-
-const THUMB = 'M7 10.5v9.5H4v-9.5zM7 10.5l3.6-6.6c1.5 0 2.5 1.2 2.2 2.6l-.6 3.5h6.1a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 17.1 20H7';
-const HIGHLIGHTS = [
-  { key: 'praise', title: 'Хвалят', tone: 'good', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={THUMB} /></svg> },
-  { key: 'complaints', title: 'Жалуются', tone: 'bad', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(180deg)' }}><path d={THUMB} /></svg> },
-] as const;
-
-const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+/** The newest review as the card previews it; the date comes formatted, so the server and the browser agree. */
+export interface LatestReview { author: string; avatarId: string | null; score: number; date: string; text: string }
 
 function reviewsWord(count: number) {
   const ones = count % 10, tens = count % 100;
@@ -35,16 +28,16 @@ function addressWithout() {
 }
 
 /**
- * The drink page's rating card — score, stars, how many reviews, and under them what reviews praise and complain
- * about — that opens the reviews as a sheet over the page (the whole card is the target: the head link stretches
- * over it)
+ * The drink page's rating card — score, stars, how many reviews and a preview of the newest one, cut with an ellipsis
+ * when it does not fit — that opens the reviews as a sheet over the page (the whole card is the target: the head link
+ * stretches over it)
  * (a modal `dialog`, like a day of the drink calendar). Opening adds a history entry with the same address and a mark
  * in its state, so the system back gesture closes the sheet. Not a `?tab=reviews` push: a server action inside (a
  * saved review) made Next push its own entry over it, and back reopened the sheet. Arriving with `?tab=reviews`
  * (a notification, a feed link, `#review-<id>`) opens the sheet at once and scrolls to that review; closing it drops
  * the parameter. The reviews themselves are server-rendered children.
  */
-export function CatalogReviewsSheet({ overall, count, title, initiallyOpen, highlights, children }: { overall: number; count: number; title: string; initiallyOpen: boolean; highlights?: ReviewHighlights | null; children: ReactNode }) {
+export function CatalogReviewsSheet({ overall, count, title, initiallyOpen, latest, children }: { overall: number; count: number; title: string; initiallyOpen: boolean; latest?: LatestReview | null; children: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
   // Set while our `history.back()` is on its way: the arrow and the `close` event both ask to leave, and a second
   // back would leave the drink page itself.
@@ -122,11 +115,14 @@ export function CatalogReviewsSheet({ overall, count, title, initiallyOpen, high
       </>}
       <svg className="catalog-rating-card-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
     </a>
-    {highlights && (highlights.praise.length > 0 || highlights.complaints.length > 0) && <div className="catalog-rating-highlights">
-      {HIGHLIGHTS.map(({ key, title, tone, icon }) => highlights[key].length > 0 && <section key={key} data-tone={tone}>
-        <h3><span aria-hidden="true">{icon}</span>{title}</h3>
-        <ul>{highlights[key].map(item => <li key={item}>{capitalize(item)}</li>)}</ul>
-      </section>)}
+    {latest && <div className="catalog-rating-latest">
+      <span className="catalog-rating-latest-head">
+        <span className="catalog-rating-latest-avatar">{latest.avatarId ? <Image src={`/api/profile-images/${latest.avatarId}`} width={32} height={32} unoptimized alt="" /> : <span aria-hidden="true">{latest.author[0]?.toUpperCase()}</span>}</span>
+        <b>{latest.author}</b>
+        <span className="catalog-rating-latest-score">{latest.score.toFixed(1)}</span>
+        <small>{latest.date}</small>
+      </span>
+      <p>{latest.text}</p>
     </div>}
     </div>
 

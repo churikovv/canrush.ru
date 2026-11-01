@@ -35,10 +35,10 @@ export const WEEK_PRIZES: readonly { places: string; last: number; xp: number; t
 ];
 export const weekPrize = (place: number) => WEEK_PRIZES.find(prize => place <= prize.last) ?? null;
 
-/** Первая неделя платит половину: большая часть её десятки только что получила компенсацию за октябрь. Повторяет `settle_weekly_top` (миграция `0171`). */
+/** Первая неделя платит четверть: гонка появилась перед самым её концом, а большая часть десятки только что получила компенсацию за октябрь. Повторяет `settle_weekly_top` (миграция `0173`). */
 const FIRST_WEEK_ENDS = Date.parse('2026-11-01T21:00:00Z');
 export const isFirstWeek = (now: number) => now < FIRST_WEEK_ENDS;
-export const weekReward = (prize: { xp: number }, now: number) => (isFirstWeek(now) ? prize.xp / 2 : prize.xp);
+export const weekReward = (prize: { xp: number }, now: number) => (isFirstWeek(now) ? prize.xp / 4 : prize.xp);
 
 const MOSCOW_OFFSET = 3 * 3_600_000;
 /** Конец идущей недели: понедельник 00:00 по Москве, верхняя граница `weekly_top_bounds`. Перевода часов в Москве нет. */

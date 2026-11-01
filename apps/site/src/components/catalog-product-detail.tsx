@@ -16,6 +16,7 @@ import type { CatalogGroup, PublishedIngredients } from '@canrush/shared';
 import { CatalogProductIngredients } from '@/components/catalog-product-ingredients';
 import { CatalogFavoriteButton } from '@/components/catalog-favorite-button';
 import { CatalogProductReviews } from '@/components/catalog-product-reviews';
+import { CatalogReviewHighlights } from '@/components/catalog-review-highlights';
 import { CatalogReviewsSheet } from '@/components/catalog-reviews-sheet';
 import { RetailerBadge } from '@/components/retailer-badge';
 import { catalogOffersByVolume, catalogRetailerName, flavorName } from '@/lib/catalog-query';
@@ -28,6 +29,7 @@ import { DrinkPhotoGallery } from '@/components/drink-photo-gallery';
 import { mapSearchUrl } from '@/lib/brand-drink-store-fields';
 
 const PRICE_FORMATTER = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+const LATEST_DATE = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });
 
 function volumeLabel(volume: number | undefined): string | undefined {
   if (volume === undefined) return undefined;
@@ -69,6 +71,8 @@ interface CatalogProductDetailProps {
 
 
 export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
+  const newest = reviews.find(review => review.text.trim());
+  const latestReview = newest ? { author: newest.author.username, avatarId: newest.author.avatarId, score: (newest.design + newest.taste) / 2, date: LATEST_DATE.format(new Date(newest.createdAt)), text: newest.text } : null;
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
   const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
   // Cans the card is known in that no shop sells yet (a member's request for another volume merged into the card).
@@ -130,8 +134,7 @@ export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingr
         {isAssortmentFlavor(group.flavor) && <p className="catalog-product-note">В источнике указано несколько напитков в ассортименте. Конкретный вкус и фотография отдельной банки не предоставлены.</p>}
 
         <div className="catalog-product-tab-panel">
-            <CatalogReviewsSheet overall={summary.count > 0 ? summary.overall : 0} count={summary.count} title={`${group.brand} · ${flavorName(group.flavor)}`} initiallyOpen={reviewsOpen}
-              highlights={reviewDigest && summary.count > 0 ? { praise: reviewDigest.body.praise, complaints: reviewDigest.body.complaints } : null}>
+            <CatalogReviewsSheet overall={summary.count > 0 ? summary.overall : 0} count={summary.count} title={`${group.brand} · ${flavorName(group.flavor)}`} initiallyOpen={reviewsOpen} latest={latestReview}>
               <CatalogProductReviews
                 brand={group.brand}
                 flavor={group.flavor}
@@ -142,6 +145,7 @@ export function CatalogProductDetail({ photos = [], group, priceHistory=[], ingr
                 radar={radar}
               />
             </CatalogReviewsSheet>
+            {reviewDigest && summary.count > 0 && <CatalogReviewHighlights highlights={reviewDigest.body} />}
             <section className="catalog-product-section" aria-label="Цены в магазинах">
               {volumeGroups.length > 0 ? (
                 <CatalogOfferClicks brand={group.brand} flavor={group.flavor}>

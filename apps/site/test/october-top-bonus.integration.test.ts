@@ -50,7 +50,7 @@ it('tops the October ten up to the new prizes once and tells them', async () => 
   }
 });
 
-it('pays half for the first week and tells the real amount', async () => {
+it('pays a quarter for the first week and tells the real amount', async () => {
   client = await pool.connect();
   try {
     await client.query('begin');
@@ -66,8 +66,8 @@ it('pays half for the first week and tells the real amount', async () => {
     await client.query(`select settle_weekly_top('2026-11-02 10:00:00+03')`);
     const paid = await Promise.all(members.map(async id => (await client.query<{ points: number }>(
       `select points from "profileExperience" where "userId" = $1 and reason = 'weekly-top' and "sourceKey" = '2026-10-26'`, [id])).rows[0]?.points));
-    expect(paid).toEqual([3500, 1750, 1750, 1750, 1750, 600]);
-    expect((await getNotifications(members[0]!)).items.find(item => item.kind === 'weekly-top')?.detail).toContain('+3500 XP');
+    expect(paid).toEqual([1750, 875, 875, 875, 875, 300]);
+    expect((await getNotifications(members[0]!)).items.find(item => item.kind === 'weekly-top')?.detail).toContain('+1750 XP');
   } finally {
     await client.query('rollback');
     client.release();
