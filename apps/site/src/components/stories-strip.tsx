@@ -462,7 +462,7 @@ function StoryComposer({ onClose }: { onClose: () => void }) {
     if (result.error) { setError(result.error); return; }
     media.clear(); onClose(); router.refresh();
   }
-  return createPortal(<dialog ref={dialog} className="story-composer" aria-labelledby="story-composer-title" onCancel={event => { event.preventDefault(); if (!pending) onClose(); }}>
+  return createPortal(<dialog ref={dialog} className="story-composer" aria-labelledby="story-composer-title" onCancel={event => { if (event.target !== event.currentTarget) return; event.preventDefault(); if (!pending) onClose(); }}>
     <div className="story-composer-head"><h2 id="story-composer-title">Новая история</h2>
       <button type="button" className="story-close" aria-label="Закрыть" disabled={pending} onClick={onClose}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button></div>
     <label className={`story-composer-pick${file ? ' has-file' : ''}`}>

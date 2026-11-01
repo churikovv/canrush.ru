@@ -31,7 +31,7 @@ export function HomeServices({ metrics, contest, joined, engine }: {
   const small = [
     { key: 'leaderboard', href: '/leaderboard', label: 'Лидеры', note: 'гонка недели', art: '/brand/home/leaderboard.png' },
     { key: 'pass', href: '/pass', label: 'Пропуск', note: seasonTitle(moscowDay().slice(0, 7)), art: '/brand/home/pass.png' },
-    ...(contest ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: contest.phase === 'open' ? (joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`) : 'итоги', art: '/brand/home/contest.png' }] : []),
+    ...(contest?.phase === 'open' ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`, art: '/brand/home/contest.png' }] : []),
     ...(engine.taken < BETA_ENGINE_PLACES ? [{ key: 'engine', href: '/engine', label: 'Бета сайта', note: 'каждый важен', art: '/brand/achievements/engine.png' }] : []),
     { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: '/brand/home/dating.png' },
     { key: 'market', href: '/search?type=market', label: 'Маркет', note: 'объявления', art: '/brand/home/market.png' },

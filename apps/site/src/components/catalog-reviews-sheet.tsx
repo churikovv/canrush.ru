@@ -97,6 +97,7 @@ export function CatalogReviewsSheet({ overall, count, title, initiallyOpen, late
   }
   // Every way out goes through here — the arrow, the backdrop, Escape (`cancel`) and back (`popstate`); there is no
   // `close` handler: that event sometimes came late, after the sheet had been opened again, and closed the new one.
+  // `cancel` also bubbles from a file picker closed without a file and from dialogs inside: only the sheet's own counts.
   function dismiss() { leave(); dialog.current?.close(); }
 
   const hasReviews = count > 0;
@@ -126,7 +127,7 @@ export function CatalogReviewsSheet({ overall, count, title, initiallyOpen, late
     </div>}
     </div>
 
-    <dialog ref={dialog} className="catalog-reviews-sheet" aria-labelledby="catalog-reviews-title" onCancel={event => { event.preventDefault(); dismiss(); }}
+    <dialog ref={dialog} className="catalog-reviews-sheet" aria-labelledby="catalog-reviews-title" onCancel={event => { if (event.target !== event.currentTarget) return; event.preventDefault(); dismiss(); }}
       onClick={event => { if (event.target === event.currentTarget) dismiss(); }}>
       <header className="catalog-reviews-sheet-head">
         <button type="button" className="catalog-reviews-sheet-back" aria-label="Назад к напитку" onClick={dismiss}>

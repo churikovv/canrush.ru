@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { CatalogGroup, FlavorVariant } from '@canrush/shared';
 import { HomeServices } from '@/components/home-services';
+import { CONTESTS } from '@/lib/contest';
 import { catalogMetrics } from '@/lib/home-metrics';
 
 const variant = (retailer: string, price: number): FlavorVariant => ({ source: 'edadeal', retailer, price, volumeMl: 449, url: 'https://example.test', fetchedAt: '2026-10-01T00:00:00Z' });
@@ -29,5 +30,14 @@ describe('home metrics', () => {
     expect(html).toContain('Каталог<small> · 21</small>');
     expect(html).toContain('Лидеры');
     expect(html).toContain('Бета сайта');
+  });
+
+  it('shows the contest icon only while entries are open', () => {
+    const hrefs = (phase: 'open' | 'results') => [...renderToStaticMarkup(createElement(HomeServices, {
+      metrics: { reviews: 0, tierLists: 0, stores: 0, drinks: 0 }, contest: { contest: CONTESTS[0]!, phase }, joined: false,
+      engine: { taken: 10, number: null } as never,
+    })).matchAll(/href="([^"]*)"/g)].map(match => match[1]);
+    expect(hrefs('open')).toContain('/contest');
+    expect(hrefs('results')).not.toContain('/contest');
   });
 });
