@@ -9,7 +9,7 @@ import { HomeStories } from '@/components/home-stories';
 import { loadAllCatalogGroups, loadCatalogSnapshot } from '@/lib/catalog';
 import { withCatalogDrinks } from '@/lib/catalog-drinks';
 import { catalogMetrics, getHomeCounts } from '@/lib/home-metrics';
-import { settleMonthlyTop } from '@/lib/monthly-top';
+import { settleWeek } from '@/lib/week-race';
 import { DEFAULT_DESCRIPTION, seoMetadata } from '@/lib/seo';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
@@ -30,7 +30,7 @@ export const metadata = seoMetadata({ title: 'Энергетики, отзывы
 export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { story } = await searchParams;
   const { groups } = await loadCatalogSnapshot();
-  await settleMonthlyTop();
+  await settleWeek();
   const contest = currentContest(new Date());
   const [session, counts, allGroups] = await Promise.all([auth.api.getSession({ headers: await headers() }), getHomeCounts(), loadAllCatalogGroups()]);
   const resolved = groups.filter(group => isResolvedFlavor(group.flavor));

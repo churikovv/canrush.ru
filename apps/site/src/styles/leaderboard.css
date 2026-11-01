@@ -81,27 +81,98 @@ li[data-rank="1"] .lb-row:hover { background: linear-gradient(90deg, color-mix(i
 @media (prefers-reduced-motion: reduce) { .lb-row { transition: none; } }
 
 /* «Топ-3 за месяц»: the prize card on top, then the three leaders as ladder rows running edge to edge. */
-.monthly-top { position: relative; overflow: hidden; margin: 8px 0 28px; padding: 24px 24px 0; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 24px; background: var(--theme-panel, #fff); }
-.monthly-top-hero { display: flex; align-items: center; gap: 20px; padding-bottom: 20px; }
-.monthly-top-art { width: 112px; height: 112px; flex: none; object-fit: contain; filter: drop-shadow(0 10px 16px rgb(0 70 190 / .28)); transform-origin: 50% 90%; animation: monthly-top-bob 3.2s ease-in-out infinite; }
-.monthly-top-copy { min-width: 0; }
-.monthly-top-copy h3 { margin: 10px 0 6px; font-size: 1.375rem; line-height: 1.2; }
-.monthly-top-copy p { margin: 0; color: var(--color-muted-strong); font-size: .9375rem; line-height: 1.5; text-wrap: pretty; }
-.monthly-top-list { --lb-gold: #e8a623; --lb-silver: #a9b4c4; --lb-bronze: #c47a43; margin: 0 -24px; border-top: 1px solid var(--theme-line, #edf0f3); }
-.monthly-top-row { grid-template-columns: 64px 76px minmax(0, 1fr) auto; }
-.monthly-top-prize { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand, #006eff) 12%, transparent); color: var(--color-brand, #006eff); font-size: 1.0625rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand, #006eff) 28%, transparent); }
-.monthly-top-prize small { font-size: .75rem; font-weight: 800; opacity: .8; }
-li[data-rank="1"] .monthly-top-prize { background: color-mix(in srgb, var(--lb-gold) 16%, transparent); color: color-mix(in srgb, var(--lb-gold) 75%, var(--theme-text, #1a1a1a)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lb-gold) 40%, transparent); }
-.monthly-top-winners { margin: 0 -24px; padding: 14px 24px; border-top: 1px solid var(--theme-line, #edf0f3); color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.5; }
-.monthly-top .community-empty { margin: 0 0 20px; }
-@keyframes monthly-top-bob { 0%,100% { transform: rotate(-3deg) translateY(0); } 50% { transform: rotate(3deg) translateY(-4px); } }
+.week-race { position: relative; overflow: hidden; margin: 8px 0 28px; padding: 24px 24px 0; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 24px; background: var(--theme-panel, #fff); }
+.week-race-hero { display: flex; align-items: center; gap: 20px; padding-bottom: 20px; }
+.week-race-art { width: 112px; height: 112px; flex: none; object-fit: contain; filter: drop-shadow(0 10px 16px rgb(0 70 190 / .28)); transform-origin: 50% 90%; animation: week-race-bob 3.2s ease-in-out infinite; }
+.week-race-copy { min-width: 0; }
+.week-race-copy h3 { margin: 10px 0 6px; font-size: 1.375rem; line-height: 1.2; }
+.week-race-copy p { margin: 0; color: var(--color-muted-strong); font-size: .9375rem; line-height: 1.5; text-wrap: pretty; }
+.week-race-list { --lb-gold: #e8a623; --lb-silver: #a9b4c4; --lb-bronze: #c47a43; margin: 0 -24px; border-top: 1px solid var(--theme-line, #edf0f3); }
+.week-race-row { grid-template-columns: 64px 76px minmax(0, 1fr) auto; }
+.week-race-prize { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand, #006eff) 12%, transparent); color: var(--color-brand, #006eff); font-size: 1.0625rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand, #006eff) 28%, transparent); }
+.week-race-prize small { font-size: .75rem; font-weight: 800; opacity: .8; }
+li[data-rank="1"] .week-race-prize { background: color-mix(in srgb, var(--lb-gold) 16%, transparent); color: color-mix(in srgb, var(--lb-gold) 75%, var(--theme-text, #1a1a1a)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lb-gold) 40%, transparent); }
+.week-race-winners { margin: 0 -24px; padding: 14px 24px; border-top: 1px solid var(--theme-line, #edf0f3); color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.5; }
+.week-race .community-empty { margin: 0 0 20px; }
+@keyframes week-race-bob { 0%,100% { transform: rotate(-3deg) translateY(0); } 50% { transform: rotate(3deg) translateY(-4px); } }
 @media (max-width: 719px) {
-  .monthly-top { padding: 16px 16px 0; border-radius: 20px; }
-  .monthly-top-hero { gap: 14px; padding-bottom: 16px; }
-  .monthly-top-art { width: 84px; height: 84px; }
-  .monthly-top-copy h3 { font-size: 1.125rem; }
-  .monthly-top-list, .monthly-top-winners { margin-inline: -16px; }
-  .monthly-top-winners { padding-inline: 16px; }
-  .monthly-top-row { grid-template-columns: 34px 60px minmax(0, 1fr); grid-template-areas: "rank avatar main" "rank avatar meta"; }
-  .monthly-top-prize { grid-area: meta; justify-self: start; min-height: 32px; padding: 4px 12px; font-size: .9375rem; }
+  .week-race { padding: 16px 16px 0; border-radius: 20px; }
+  .week-race-hero { gap: 14px; padding-bottom: 16px; }
+  .week-race-art { width: 84px; height: 84px; }
+  .week-race-copy h3 { font-size: 1.125rem; }
+  .week-race-list, .week-race-winners { margin-inline: -16px; }
+  .week-race-winners { padding-inline: 16px; }
+  .week-race-row { grid-template-columns: 34px 60px minmax(0, 1fr); grid-template-areas: "rank avatar main" "rank avatar meta"; }
+  .week-race-prize { grid-area: meta; justify-self: start; min-height: 32px; padding: 4px 12px; font-size: .9375rem; }
+}
+
+/* Сезон: строка сезона, пропуск и награды за места. */
+.leaderboard-views { margin-bottom: 16px; }
+.week-race-copy h2 { margin: 0 0 6px; font-size: 1.375rem; line-height: 1.2; }
+.race-viewer { margin: 0 -24px; padding: 14px 24px; border-top: 1px solid var(--theme-line, #edf0f3); background: color-mix(in srgb, var(--color-brand, #006eff) 8%, transparent); font-size: .9375rem; }
+@media (max-width: 719px) { .race-viewer { margin-inline: -16px; padding-inline: 16px; } }
+
+/* Примерка наград недели: своя строка рейтинга с тегом выбранных мест, такая же, как в списке лидеров. */
+.race-try { margin: 0 -24px; padding: 16px 24px 20px; border-top: 1px solid var(--theme-line, #edf0f3); }
+.community-profile .race-try h3 { margin: 0 0 10px; color: var(--theme-muted, #6b7280); font-size: .875rem; font-weight: 700; }
+.race-try-preview { margin: 0 0 10px; overflow: hidden; border: 1px solid var(--theme-line, #edf0f3); border-radius: 18px; }
+.race-try-preview .lb-row { min-height: 84px; padding-block: 10px; }
+.race-try-preview .lb-row:hover { background: none; }
+.race-try-preview li[data-rank="1"] .lb-row:hover { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-gold) 13%, transparent), color-mix(in srgb, var(--lb-gold) 4%, transparent) 45%, transparent 75%); }
+.race-try-preview li[data-rank] .lb-rank b { font-size: 1.25rem; letter-spacing: -.02em; white-space: nowrap; }
+.race-try-preview .lb-stats a { color: var(--color-brand, #006eff); font-weight: 700; }
+.race-try-preview .lb-stats > span { display: inline; }
+.race-try-tag { display: inline-flex; animation: race-try-pop 280ms cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes race-try-pop { from { opacity: 0; transform: translateY(4px) scale(.8); } }
+.race-try-picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.race-try-picks button { min-height: 44px; padding: 0 6px; border: 0; border-radius: 999px; background: var(--theme-subtle, #f0f3f7); color: var(--theme-text, #1a1a1a); font: inherit; font-size: .875rem; font-weight: 800; white-space: nowrap; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.race-try-picks button[aria-pressed="true"] { background: var(--color-brand, #006eff); color: #fff; }
+.race-try-picks button:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+@media (max-width: 719px) {
+  .race-try { margin-inline: -16px; padding: 14px 16px 16px; }
+  .race-try-preview .week-race-row { grid-template-columns: 46px 60px minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .race-try-tag { animation: none; } .race-try-picks button { transition: none; } }
+
+/* Вход в сезонный пропуск: банка участника чуть выходит за верхний край, цвет — стадия банки. */
+.pass-entry { display: grid; grid-template-columns: 56px minmax(0, 1fr); grid-template-areas: "can copy" "cta cta"; align-items: center; gap: 14px; margin: 26px 0 16px; padding: 14px 16px 16px; border-radius: 22px; background: radial-gradient(130% 170% at 6% 40%, color-mix(in srgb, var(--pass-light) 30%, var(--pass-wall)), var(--pass-wall) 66%); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pass-light) 32%, transparent); color: #fff; text-decoration: none; }
+.pass-entry:hover .can-btn { filter: brightness(1.08); }
+.pass-entry:active .can-btn { transform: translateY(2px) scale(.99); }
+.pass-entry:focus-visible { outline: 3px solid var(--color-brand); outline-offset: 2px; }
+.pass-entry-can { grid-area: can; display: block; align-self: start; height: 92px; }
+.pass-entry-can img { display: block; width: auto; height: 136px; margin: -32px auto 0; filter: drop-shadow(0 10px 12px rgb(0 0 0 / .5)); transform: rotate(-6deg); }
+.pass-entry-copy { grid-area: copy; display: flex; flex-direction: column; min-width: 0; }
+.pass-entry-copy small { color: var(--pass-light); font-size: .75rem; font-weight: 800; letter-spacing: .06em; line-height: 1.2; text-transform: uppercase; }
+.pass-entry-copy b { margin-top: 4px; font-size: 1.3125rem; font-weight: 900; line-height: 1.15; }
+.pass-entry-line { margin-top: 4px; color: rgb(255 255 255 / .8); font-size: .875rem; line-height: 1.3; }
+.pass-entry-progress { display: block; margin-top: 12px; }
+.pass-entry-levels { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; color: rgb(255 255 255 / .84); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.pass-entry-levels span:last-child { color: rgb(255 255 255 / .62); font-weight: 600; white-space: nowrap; }
+.pass-entry .can-meter { margin-top: 6px; }
+.pass-entry-cta { grid-area: cta; }
+@media (min-width: 640px) {
+  .pass-entry { grid-template-columns: 62px minmax(0, 1fr) auto; grid-template-areas: "can copy cta"; gap: 20px; padding: 14px 22px; }
+  .pass-entry-can { height: 96px; }
+  .pass-entry-can img { height: 150px; margin-top: -40px; }
+  .pass-entry-copy { max-width: 460px; }
+  .pass-entry-copy b { font-size: 1.5rem; }
+  .pass-entry-levels { font-size: .8125rem; }
+  .pass-entry-cta { min-width: 168px; }
+}
+
+/* За что дают опыт: плитки ведут туда, где это делается. */
+.xp-guide { margin: 24px 0 0; padding: 20px 16px 16px; border-radius: 22px; background: radial-gradient(120% 140% at 12% 0%, #1d2740, #0a0d16 62%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .1); color: #fff; }
+.community-profile .xp-guide h2 { font-size: 1.3125rem; font-weight: 900; line-height: 1.2; }
+.xp-guide > p { margin: 4px 0 14px; color: rgb(255 255 255 / .72); font-size: .875rem; line-height: 1.4; }
+.xp-guide ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.xp-tile { --cut: 11px; --rim: rgb(255 255 255 / .18); --plate-face: linear-gradient(#171b26, #0b0e16); display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-areas: "art amount" "title title" "note note"; align-items: center; gap: 2px 6px; box-sizing: border-box; height: 100%; padding: 12px; color: #fff; text-decoration: none; }
+.xp-tile:hover, .xp-tile:focus-visible { --rim: var(--gold); outline: 0; }
+.xp-tile img { grid-area: art; width: 44px; height: 44px; object-fit: contain; }
+.xp-tile b { grid-area: title; margin-top: 6px; font-size: .9375rem; font-weight: 800; line-height: 1.2; }
+.xp-tile small { grid-area: note; color: rgb(255 255 255 / .62); font-size: .75rem; line-height: 1.3; }
+.xp-tile-amount { grid-area: amount; justify-self: end; display: inline-flex; align-items: center; min-height: 24px; padding: 0 12px; background: var(--gold); clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 7px 100%, 0 50%); color: #1c1206; font-size: .8125rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (min-width: 640px) {
+  .xp-guide { padding: 24px 24px 22px; }
+  .xp-guide ul { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .xp-tile { padding: 14px; }
 }

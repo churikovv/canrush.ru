@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     exclude: [
-      'test/battle.integration.test.ts', 'test/spin-giveaways.integration.test.ts', 'test/error-log.integration.test.ts', 'test/first-steps.integration.test.ts', 'test/reminders.integration.test.ts', 'test/gacha.integration.test.ts', 'test/business-profile.integration.test.ts', 'test/catalog-card-recheck.integration.test.ts', 'test/catalog-card-check.integration.test.ts', 'test/catalog-card-edits.integration.test.ts', 'test/drink-duplicate-check.integration.test.ts', 'test/support.integration.test.ts', 'test/articles.integration.test.ts', 'test/business.integration.test.ts', 'test/review-digest.integration.test.ts',
+      'test/seasons.integration.test.ts', 'test/battle.integration.test.ts', 'test/spin-giveaways.integration.test.ts', 'test/error-log.integration.test.ts', 'test/first-steps.integration.test.ts', 'test/reminders.integration.test.ts', 'test/gacha.integration.test.ts', 'test/business-profile.integration.test.ts', 'test/catalog-card-recheck.integration.test.ts', 'test/catalog-card-check.integration.test.ts', 'test/catalog-card-edits.integration.test.ts', 'test/drink-duplicate-check.integration.test.ts', 'test/support.integration.test.ts', 'test/articles.integration.test.ts', 'test/business.integration.test.ts', 'test/review-digest.integration.test.ts',
       'test/vulkan-fruit-alias-migration.integration.test.ts', 'test/pulse-alias-migration.integration.test.ts', 'test/gorilla-alias-migration.integration.test.ts', 'test/cosmos-alias-migration.integration.test.ts', 'test/flash-alias-migration.integration.test.ts', 'test/adrenaline-alias-migration.integration.test.ts', 'test/imported-alias-migration.integration.test.ts', 'test/reviewed-alias-migration.integration.test.ts', 'test/profile-compatibility-history.integration.test.ts', 'test/stores.integration.test.ts',
       'test/wall-discussions.integration.test.ts', 'test/tier-discussions.integration.test.ts',
       'test/favorite-removal.integration.test.ts',
@@ -24,7 +24,7 @@ export default defineConfig({
       'test/profile-community.integration.test.ts',
       'test/review-photos.integration.test.ts',
       'test/auth.integration.test.ts', 'test/review-login.integration.test.ts', 'test/push.integration.test.ts', 'test/push-broadcast.integration.test.ts', 'test/member-blocks.integration.test.ts', 'test/saved-posts.integration.test.ts',
-      'test/admin.integration.test.ts', 'test/monthly-overtaken.integration.test.ts', 'test/moderator-role.integration.test.ts', 'test/catalog-drink-merge.integration.test.ts', 'test/staff-moderation.integration.test.ts', 'test/admin-members.integration.test.ts',
+      'test/admin.integration.test.ts', 'test/week-overtaken.integration.test.ts', 'test/october-top-bonus.integration.test.ts', 'test/moderator-role.integration.test.ts', 'test/catalog-drink-merge.integration.test.ts', 'test/staff-moderation.integration.test.ts', 'test/admin-members.integration.test.ts',
       'node_modules/**',
       '.next/**',
     ],

@@ -8,7 +8,7 @@ vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
 const { getNotifications } = await import('../src/lib/notifications');
 const { renderOutboxMessage } = await import('../src/lib/telegram-bot/outbox');
 
-// The trigger follows the current Moscow month, so these members race now with totals far above any other test data:
+// The trigger follows the current Moscow week, so these members race now with totals far above any other test data:
 // they hold the whole top five between them.
 const BASE = 10_000_000;
 const ids = Array.from({ length: 7 }, () => randomUUID());
@@ -37,7 +37,7 @@ afterAll(async () => {
   await pool.end();
 });
 
-it('tells the members of the month top five that someone passed them, with the new place and the gap', async () => {
+it('tells the members of the week top five that someone passed them, with the new place and the gap', async () => {
   // Totals above BASE: first 600, second 500, third 400, fourth 300, fifth 200, sixth 100, chaser 0.
   // +250 passes fifth and sixth, not fourth.
   await gain(chaser, 250);
@@ -46,12 +46,12 @@ it('tells the members of the month top five that someone passed them, with the n
   expect(await overtaken(sixth)).toEqual([]);
   expect(await overtaken(fourth)).toEqual([]);
   const { items } = await getNotifications(fifth);
-  expect(items[0]).toMatchObject({ kind: 'overtaken', title: `@${username(chaser)} обогнал вас в топе месяца`, detail: 'Теперь вы на 6 месте · отставание 50 XP', href: '/leaderboard' });
+  expect(items[0]).toMatchObject({ kind: 'overtaken', title: `@${username(chaser)} обогнал вас в топе недели`, detail: 'Теперь вы на 6 месте · отставание 50 XP', href: '/leaderboard' });
   // The Telegram bot gets the same notification through notification_telegram, rendered with an «Открыть» button.
   const queued = (await pool.query<{ kind: 'notification'; payload: Record<string, unknown> }>(`select kind, payload from "telegramOutbox" where "chatId" = $1`, [telegramId])).rows;
   expect(queued).toHaveLength(1);
   const message = await renderOutboxMessage(queued[0]!, 'https://canrush.ru');
-  expect(message?.text).toBe(`🔔 <b>@${username(chaser)} обогнал вас в топе месяца</b>\nТеперь вы на 6 месте · отставание 50 XP`);
+  expect(message?.text).toBe(`🔔 <b>@${username(chaser)} обогнал вас в топе недели</b>\nТеперь вы на 6 месте · отставание 50 XP`);
   expect(JSON.stringify(message?.keyboard)).toContain('https://canrush.ru/leaderboard');
 });
 

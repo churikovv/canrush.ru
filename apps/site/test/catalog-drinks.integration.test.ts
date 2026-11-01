@@ -40,9 +40,7 @@ it('sends a drink for moderation, refuses duplicates and blocked accounts', asyn
   const extras = [{ data: Buffer.from('back'), thumbnail: Buffer.from('back-thumb') }, { data: Buffer.from('shelf'), thumbnail: Buffer.from('shelf-thumb') }];
   const id = (await drinks.submitCatalogDrink(author, input('mango', 'Тест Ultra Paradise'), photo, false, null, extras)).id;
   expect((await drinks.listOwnCatalogDrinks(author)).map(drink => [drink.id, drink.status, drink.name])).toEqual([[id, 'pending', 'Манго']]);
-  // The minute between requests, then the live request itself, stop a second one.
-  await expect(drinks.submitCatalogDrink(author, input('kiwi'), photo)).rejects.toThrow('минуту');
-  await pool.query(`update "catalogDrink" set "createdAt" = now() - interval '2 minutes' where id = $1`, [id]);
+  // No pause and no queue limit any more: only the same request waiting for review stops a second one.
   await expect(drinks.submitCatalogDrink(author, input('mango'), photo)).rejects.toThrow('ждёт проверки');
 });
 

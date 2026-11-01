@@ -2,7 +2,7 @@ export const ACHIEVEMENT_METRICS = [
   'listings', 'sales', 'reviews', 'detailedReviews', 'photoReviews', 'reviewLikes', 'brands', 'favorites', 'favoriteBrands',
   'tierLists', 'tierListLikes', 'friends', 'followers', 'whiteMonster', 'whiteMonsterFavorite', 'flash', 'flashDetailed',
   'burn', 'burnDetailed', 'burnFavorites', 'adrenaline', 'adrenalineDetailed', 'adrenalineFavorites',
-  'admin', 'moderator', 'telegram', 'monthlyTop', 'drinkLogs', 'drinkStreak', 'contestWin', 'betaEngine',
+  'admin', 'moderator', 'telegram', 'monthlyTop', 'drinkLogs', 'drinkStreak', 'contestWin', 'betaEngine', 'weekHero', 'weekBest', 'weekCharge',
   'monster', 'monsterDetailed', 'weeklyXp', 'publishedStores', 'swipes', 'swipeLikes', 'publishedDrinks',
 ] as const;
 export type AchievementMetric = typeof ACHIEVEMENT_METRICS[number];
@@ -27,14 +27,21 @@ export type AchievementRarity = keyof typeof ACHIEVEMENT_RARITIES;
 interface AchievementStep { metric: AchievementMetric; goal: number; label: string }
 export interface ProfileAchievement { key: string; label: string; rarity: AchievementRarity; description: string; steps: readonly AchievementStep[] }
 
-// Earned keys are stored in "profileAchievement" forever, so raising goals never revokes an old tag.
+// Earned keys are stored in "profileAchievement" forever, so raising goals never revokes an old tag. The week tags are the
+// exception: `settle_weekly_top` gives them for a week and takes them back at the next results.
 export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
   { key: 'engine', label: 'Двигатель', rarity: 'special', description: 'Двигатель беты: один из первых 500 участников Canrush', steps: [
     { metric: 'betaEngine', goal: 1, label: 'Зарегистрироваться среди первых 500 участников' }] },
   { key: 'energizer', label: 'Энерджайзер', rarity: 'special', description: 'Секретный тег победителя розыгрыша ящика энергетиков', steps: [
     { metric: 'contestWin', goal: 1, label: 'Выиграть розыгрыш ящика энергетиков' }] },
-  { key: 'top', label: 'ТОП', rarity: 'legendary', description: 'Победить в гонке месяца', steps: [
+  { key: 'top', label: 'ТОП', rarity: 'legendary', description: 'Победитель гонки месяца. Больше не выдаётся и остаётся у победителей', steps: [
     { metric: 'monthlyTop', goal: 1, label: 'Попасть в топ-3 рейтинга месяца' }] },
+  { key: 'week-hero', label: 'Герой недели', rarity: 'special', description: 'Первое место в гонке недели. Тег держится до следующих итогов', steps: [
+    { metric: 'weekHero', goal: 1, label: 'Занять первое место за неделю' }] },
+  { key: 'week-best', label: 'Лучшие недели', rarity: 'special', description: 'Места со 2 по 5 в гонке недели. Тег держится до следующих итогов', steps: [
+    { metric: 'weekBest', goal: 1, label: 'Попасть в топ-5 за неделю' }] },
+  { key: 'week-charge', label: 'Заряд недели', rarity: 'special', description: 'Места с 6 по 10 в гонке недели. Тег держится до следующих итогов', steps: [
+    { metric: 'weekCharge', goal: 1, label: 'Попасть в топ-10 за неделю' }] },
   { key: 'streak-30', label: 'Серия 30', rarity: 'legendary', description: 'Месяц без единого пропуска', steps: [
     { metric: 'drinkStreak', goal: 30, label: 'Отмечать энергетик в трекере 30 дней подряд' }] },
   { key: 'six-seven', label: 'Six Seven', rarity: 'legendary', description: 'Путь настоящего дегустатора', steps: [
@@ -128,7 +135,7 @@ export function eligibleAchievements(progress: AchievementProgress): string[] {
 }
 
 /** Tags hidden from everyone but admins and those who already have them. */
-const SECRET_ACHIEVEMENTS = new Set(['energizer']);
+const SECRET_ACHIEVEMENTS = new Set(['energizer', 'top', 'week-hero', 'week-best', 'week-charge']);
 /** The moderator tag is listed for administrators and for the moderator who holds it, like a secret one. */
 export function visibleProfileAchievements(viewerIsAdmin: boolean, earned: readonly string[] = []) {
   return PROFILE_ACHIEVEMENTS.filter(item => item.key === 'admin' ? viewerIsAdmin
@@ -158,6 +165,7 @@ export function profilePageNumber(value: unknown): number {
 
 const ACHIEVEMENT_ART = new Set(['engine', 'energizer', 'top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'moderator', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven', 'drink-start', 'streak-7', 'streak-14', 'streak-30', 'monster', 'fan', 'shopper', 'date', 'sensei']);
 export function achievementImage(key: string): string {
+  if (key.startsWith('week-')) return '/brand/achievements/top.png';
   return ACHIEVEMENT_ART.has(key) ? `/brand/achievements/${key}.png` : '/brand/icons/achievement.svg';
 }
 export function profileTagKey(value: string | null | undefined): string | undefined {

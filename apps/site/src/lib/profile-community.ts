@@ -49,7 +49,7 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(*)::int from r where b = 'monster' and detailed) as "monsterDetailed",
     -- Best 7-day run of XP: a window ending at each award sums everything earned in the 7 days before it.
     (select coalesce(max(w), 0)::int from (select sum(points) over (order by "createdAt" range between interval '7 days' preceding and current row) as w
-      from "profileExperience" where "userId" = u.id and reason not in ('monthly-top', 'achievement') and "createdAt" >= $4::timestamptz) x) as "weeklyXp",
+      from "profileExperience" where "userId" = u.id and reason not in ('monthly-top', 'weekly-top', 'achievement') and "createdAt" >= $4::timestamptz) x) as "weeklyXp",
     (select count(*)::int from "marketStore" where "ownerId" = u.id and status = 'published') as "publishedStores",
     (select count(*)::int from "drinkSwipe" where "userId" = u.id) as swipes,
     (select count(*)::int from "catalogDrink" where "ownerId" = u.id and status = 'published') as "publishedDrinks",
@@ -63,9 +63,13 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(distinct brand)::int from fav) as "favoriteBrands",
     (select count(*)::int from "tierList" where "userId" = u.id and status = 'published') as "tierLists",
     (select count(*)::int from "tierListReaction" x join "tierList" t on t.id = x."tierListId" where t."userId" = u.id and t.status = 'published' and x."userId" <> u.id and x.value = 1) as "tierListLikes",
-    (select count(*)::int from "monthlyTopAward" where "userId" = u.id) as "monthlyTop",
+    (select count(*)::int from "monthlyTopAward" where "userId" = u.id and place <= 3) as "monthlyTop",
     -- Given by an admin after the draw (contest-db.ts); the metric only reflects it, so a draw alone never grants it.
     (select count(*)::int from "profileAchievement" where "userId" = u.id and key = 'energizer') as "contestWin",
+    -- The week tags are given and taken back by settle_weekly_top; these only reflect them.
+    (select count(*)::int from "profileAchievement" where "userId" = u.id and key = 'week-hero') as "weekHero",
+    (select count(*)::int from "profileAchievement" where "userId" = u.id and key = 'week-best') as "weekBest",
+    (select count(*)::int from "profileAchievement" where "userId" = u.id and key = 'week-charge') as "weekCharge",
     -- Numbered on sign-up by the beta_engine_member trigger (0073), while the first 500 places last.
     (select count(*)::int from "betaEngine" where "userId" = u.id) as "betaEngine",
     (select count(*)::int from "drinkLog" where "userId" = u.id) as "drinkLogs",

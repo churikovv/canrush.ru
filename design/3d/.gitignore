@@ -1,4 +1,4 @@
-# Renders and previews: rebuilt by build_vending.py and render_scene.py
+# Renders and previews: rebuilt by build_vending.py, render_scene.py and the build_pass_* scripts
 preview-*.png
 anim-*.mp4
 *-idle.mp4
@@ -8,3 +8,5 @@ halloween-burst-frames.png
 frames/
 frames-*/
 *.blend1
+pass-*.png
+pass-*.mp4

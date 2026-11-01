@@ -1,3 +1,4 @@
+import { profileTagLabel } from '@/lib/profile-achievements';
 import { getPool } from '@/db/pool';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { activeOffers, type CatalogFile } from '@/lib/catalog-files';
@@ -84,10 +85,21 @@ function describeNotification(row: any): NotificationItem {
       const p = row.payload;
       title = `Вы заняли ${p.place} место в топе месяца`; detail = `+${p.reward} XP и тег «ТОП» для профиля`;
       href = row.ownerUsername ? `/profile/${encodeURIComponent(row.ownerUsername)}/achievements` : '/profile';
-    } else if (row.kind==='overtaken') {
-      // Someone passed the member in the month's top five (migration 0100): the new place and how far behind they are.
+    } else if (row.kind==='weekly-top') {
       const p = row.payload;
-      title = `${actor} обогнал вас в топе месяца`;
+      title = `Вы заняли ${p.place} место за неделю`; detail = `+${p.reward} XP и тег «${profileTagLabel(p.tag) ?? ''}» на всю неделю`;
+      href = '/leaderboard';
+    } else if (row.kind==='top-bonus') {
+      // October's top paid by the old rules: the difference up to the new prizes, once (migration 0170).
+      const p = row.payload;
+      const xp = (value: number) => value.toLocaleString('ru-RU');
+      title = 'Топ октября пересчитан по новым наградам';
+      detail = p.paid > 0 ? `${p.place} место: было +${xp(p.paid)} XP, стало +${xp(p.total)}. Начислили ещё +${xp(p.bonus)} XP` : `${p.place} место: начислили +${xp(p.bonus)} XP`;
+      href = '/leaderboard';
+    } else if (row.kind==='overtaken') {
+      // Someone passed the member in the week's top five (migration 0168): the new place and how far behind they are.
+      const p = row.payload;
+      title = `${actor} обогнал вас в топе недели`;
       detail = `Теперь вы на ${p.place} месте · отставание ${p.gap} XP`;
       href = '/leaderboard';
     } else if (row.kind==='drink-merged') {

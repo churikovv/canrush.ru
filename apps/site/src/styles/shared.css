@@ -761,3 +761,33 @@ a.blocked-member:hover strong { color: var(--theme-link, var(--color-brand)); }
   .rarity-card[data-rarity=legendary]::after { animation: none; }
   .rarity-sheen, .rarity-twinkle { display: none; }
 }
+
+/* Цвета стадий банки: экран пропуска и вход в него из рейтинга. `--pass-wall` — край видео, фольга — цвет самой банки:
+   алюминий, фирменный синий, неон, золото, голограмма. */
+.pass-screen, .pass-entry { --pass-wall: #0a0e16; --pass-light: #8db4ff; --foil: linear-gradient(180deg, #f6f8fb, #c5ccd6 48%, #838c9a); --foil-ink: #12161d; }
+.pass-screen[data-stage="2"], .pass-entry[data-stage="2"] { --pass-wall: #000b28; --pass-light: #5a9dff; --foil: linear-gradient(180deg, #8fc0ff, #2a86ff 48%, #0a4fd0); --foil-ink: #fff; }
+.pass-screen[data-stage="3"], .pass-entry[data-stage="3"] { --pass-wall: #060423; --pass-light: #4fe3ff; --foil: linear-gradient(180deg, #b6f6ff, #37dcf7 48%, #0e93b8); --foil-ink: #04122a; }
+.pass-screen[data-stage="4"], .pass-entry[data-stage="4"] { --pass-wall: #110a04; --pass-light: #f2c25c; --foil: linear-gradient(180deg, #ffeab0, #e9b84d 48%, #a96f18); --foil-ink: #1c1206; }
+.pass-screen[data-stage="5"], .pass-entry[data-stage="5"] { --pass-wall: #170429; --pass-light: #e29bff; --foil: linear-gradient(100deg, #8a4dff, #ff5db8 38%, #ffc860 68%, #53e4ff); --foil-ink: #16052a; }
+
+/* Стиль сезонного пропуска, он повторяет банки: углы срезаны, как у монет на витрине, поверху идут зубцы горлышка, а цвет
+   фольги задаёт стадия банки (`--foil`, `--foil-ink`; без стадии — золото). Обводка у клипа обрезается, поэтому фокус
+   показывает светлый кант, а не `outline`. */
+.can-btn, .can-plate { --cut: 12px; --shape: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut)); --gold: linear-gradient(180deg, #ffeab0, #e9b84d 48%, #a96f18); position: relative; isolation: isolate; border: 0; clip-path: var(--shape); }
+.can-plate { background: var(--rim, var(--foil, var(--gold))); }
+.can-plate::before { content: ""; position: absolute; inset: 2px; z-index: -1; clip-path: var(--shape); background: var(--plate-face, linear-gradient(#1c2029, #0b0d12)); }
+.can-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 6px 26px 0; box-sizing: border-box; background: var(--foil, var(--gold)); color: var(--foil-ink, #1c1206); font-size: .9375rem; font-weight: 900; letter-spacing: .05em; line-height: 1; text-decoration: none; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: transform 120ms ease-out, filter 120ms ease-out; }
+.can-btn::before { content: ""; position: absolute; inset: 2px; z-index: -2; clip-path: var(--shape); background: var(--foil-ink, #1c1206); }
+.can-btn::after { content: ""; position: absolute; inset: 3px; z-index: -1; clip-path: var(--shape); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='6'%3E%3Cpath d='M0 0h14L7 6z' fill='%23000' fill-opacity='.72'/%3E%3C/svg%3E") repeat-x 0 0, var(--foil, var(--gold)); }
+.can-btn:hover { filter: brightness(1.08); }
+.can-btn:active { transform: translateY(2px) scale(.99); }
+.can-btn:focus-visible { outline: 0; filter: brightness(1.15); }
+.can-btn:focus-visible::before { background: #fff; }
+.can-btn:disabled { cursor: default; filter: grayscale(.6) brightness(.72); }
+.can-btn[data-ready]::after { background: linear-gradient(105deg, transparent 38%, rgb(255 255 255 / .6) 50%, transparent 62%) no-repeat -120% 0 / 60% 100%, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='6'%3E%3Cpath d='M0 0h14L7 6z' fill='%23000' fill-opacity='.72'/%3E%3C/svg%3E") repeat-x 0 0, var(--foil, var(--gold)); animation: can-btn-sheen 2.8s linear infinite; }
+@keyframes can-btn-sheen { 0%, 35% { background-position: -120% 0, 0 0, 0 0; } 100% { background-position: 240% 0, 0 0, 0 0; } }
+.can-meter { --rim-size: 2px; position: relative; display: block; height: 14px; padding: 2px; box-sizing: border-box; background: rgb(255 255 255 / .22); clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+.can-meter::before { content: ""; position: absolute; inset: 2px; clip-path: inherit; background: #07080c; }
+.can-meter i { position: relative; display: block; width: calc(14px + (100% - 14px) * var(--share, 0)); height: 100%; clip-path: inherit; background: repeating-linear-gradient(115deg, transparent 0 9px, rgb(0 0 0 / .2) 9px 12px), var(--foil, linear-gradient(180deg, #ffeab0, #e9b84d 48%, #a96f18)); transition: width 400ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .can-btn { transition: none; } .can-btn[data-ready]::after { animation: none; } .can-meter i { transition: none; } }
+

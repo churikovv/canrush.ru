@@ -24,7 +24,7 @@ const COMMUNITY = [
   { section: 'news', href: '/news', label: 'Новости', hint: 'Статьи участников' },
   { section: 'dating', href: '/community?type=dating', label: 'Дейтинг', hint: 'Свайпай напитки' },
   { section: 'people', href: '/community?type=people', label: 'Люди', hint: 'Участники и их вкусы' },
-  { section: 'leaderboard', href: '/leaderboard', label: 'Рейтинг', hint: 'Топ месяца и лучшие участники' },
+  { section: 'leaderboard', href: '/leaderboard', label: 'Рейтинг', hint: 'Гонка недели и лучшие участники' },
 ] as const;
 const STORES = [
   { section: 'catalog', href: '/catalog', label: 'Каталог', hint: 'Все энергетики и отзывы' },

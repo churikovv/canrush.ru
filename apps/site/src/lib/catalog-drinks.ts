@@ -3,7 +3,7 @@ import { cache } from 'react';
 import { getPool } from '@/db/pool';
 import { readAllCatalogGroups } from '@/lib/catalog-files';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
-import { CatalogDrinkError, MAX_DRINK_EXTRA_PHOTOS, MAX_PENDING_DRINKS, type CatalogDrinkEdit, type CatalogDrinkInput } from '@/lib/catalog-drink-fields';
+import { CatalogDrinkError, MAX_DRINK_EXTRA_PHOTOS, type CatalogDrinkEdit, type CatalogDrinkInput } from '@/lib/catalog-drink-fields';
 import type { PreparedReviewPhoto } from '@/lib/review-photos';
 import { SUSPECT } from '@/lib/drink-duplicate-check';
 
@@ -164,11 +164,6 @@ export async function submitCatalogDrink(userId: string, input: CatalogDrinkInpu
     await db.query('begin');
     await db.query('select id from "user" where id = $1 for update', [userId]);
     if ((await db.query('select 1 from "userBlock" where "userId" = $1', [userId])).rowCount) throw new CatalogDrinkError('Добавление напитков для аккаунта ограничено.');
-    const counts = await db.query<{ pending: number; recent: boolean }>(`select count(*) filter (where status = 'pending')::int as pending,
-      coalesce(bool_or("createdAt" > now() - interval '60 seconds'), false) as recent from "catalogDrink" where "ownerId" = $1`, [userId]);
-    if (counts.rows[0]!.pending >= MAX_PENDING_DRINKS || counts.rows[0]!.recent) {
-      throw new CatalogDrinkError(`Подождите минуту между заявками. Одновременно на проверке может быть до ${MAX_PENDING_DRINKS} напитков.`);
-    }
     // Only a clean submission skips the queue: no parser card, no published or waiting drink under this identity.
     const company = businessId && !member && !waiting && !files.some(same) ? (await db.query<{ id: string }>(
       `select b.id from business b where b.id = $1 and b.status = 'approved'

@@ -3163,7 +3163,7 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 .home-section { min-width: 0; }
 .home-section-heading { margin-bottom: 12px; }
 /* Blocks reused from other pages bring their own margins; inside a home section the layout gap does the spacing. */
-.home-section > :is(.monthly-top, .community-empty) { margin: 0; }
+.home-section > :is(.week-race, .community-empty) { margin: 0; }
 .home-section > .community-empty { padding: 16px; border-radius: 16px; background: var(--color-subtle); }
 .home-section-heading h2 { margin: 0; font-size: 1.5rem; }
 .home-section-heading > a { color: var(--theme-link, #0058cc); min-height: 44px; display: inline-flex; align-items: center; }
@@ -3409,7 +3409,7 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 @keyframes engine-tag-rev { 0%,55%,100% { transform: none; } 60% { transform: translate(.5px, -.5px) rotate(-6deg); } 65% { transform: translate(-.5px, .5px) rotate(5deg); } 70% { transform: translate(.5px, 0) rotate(-4deg); } 75% { transform: rotate(2deg); } 80% { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .profile-tag[data-tag=engine]::before { animation: none; } .profile-tag[data-tag=engine]::after { display: none; } }
 .leaderboard-subheading { margin: 0 0 4px; font-size: 1rem; }
-@media (prefers-reduced-motion: reduce) { .profile-tag[data-tag=top]::before,.profile-tag[data-tag=top]::after,.monthly-top-art { animation: none; } .profile-tag[data-tag=top]::after { display: none; } }
+@media (prefers-reduced-motion: reduce) { .profile-tag[data-tag=top]::before,.profile-tag[data-tag=top]::after,.week-race-art { animation: none; } .profile-tag[data-tag=top]::after { display: none; } }
 /* Tag rarity drives motion intensity: common — short idle accent, rare — continuous base loop, epic/legendary — signature effect. */
 .profile-tag:is([data-tag=burner],[data-tag=adrenaline],[data-tag=deadinside],[data-tag=six-seven]) { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 4px; font-weight: 800; letter-spacing: .02em; }
 .profile-tag:is([data-tag=burner],[data-tag=adrenaline],[data-tag=deadinside])::before,
@@ -3823,3 +3823,13 @@ a.first-steps-row:active { transform: scale(.98); }
   .gacha-home-cta .game-btn-face { min-height: 66px; }
   .gacha-home-cta .game-btn-label { font-size: 1.5rem; }
 }
+
+/* Теги недели: держатся неделю, поэтому яркие. Иконка — маска, блик идёт по той же анимации, что у тега «ТОП». */
+.profile-tag[data-tag=week-hero], .profile-tag[data-tag=week-best], .profile-tag[data-tag=week-charge] { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 4px; padding-inline: 8px 10px; border-radius: 7px; background: var(--week-tag); box-shadow: inset 0 0 0 1px var(--week-edge), 0 0 10px var(--week-glow); color: var(--week-ink); font-weight: 800; }
+.profile-tag[data-tag=week-hero]:hover, .profile-tag[data-tag=week-best]:hover, .profile-tag[data-tag=week-charge]:hover { background: var(--week-tag); color: var(--week-ink); }
+.profile-tag[data-tag=week-hero] { --week-tag: linear-gradient(135deg, #e8a623, #ffd867 55%, #e8a623); --week-edge: rgb(255 240 190 / .9); --week-glow: rgb(240 170 40 / .5); --week-ink: #3a2300; --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 7l5 4 4-7 4 7 5-4-2 12H5L3 7Z'/%3E%3C/svg%3E"); }
+.profile-tag[data-tag=week-best] { --week-tag: linear-gradient(135deg, #0a46c2, #2e8bff 60%, #0a46c2); --week-edge: rgb(190 225 255 / .8); --week-glow: rgb(0 110 255 / .4); --week-ink: #fff; --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.500 9.7l5.9-.8Z'/%3E%3C/svg%3E"); }
+.profile-tag[data-tag=week-charge] { --week-tag: linear-gradient(135deg, #3b1c9e, #7a4dff 60%, #3b1c9e); --week-edge: rgb(210 195 255 / .75); --week-glow: rgb(122 77 255 / .4); --week-ink: #fff; --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13.5 2 5 13.5h6L9.5 22 19 9.5h-6.5Z'/%3E%3C/svg%3E"); }
+.profile-tag[data-tag=week-hero]::before, .profile-tag[data-tag=week-best]::before, .profile-tag[data-tag=week-charge]::before { content: ''; flex: none; width: 1.1em; height: 1.1em; background: currentColor; -webkit-mask: var(--tag-icon) center / contain no-repeat; mask: var(--tag-icon) center / contain no-repeat; }
+.profile-tag[data-tag=week-hero]::after, .profile-tag[data-tag=week-best]::after, .profile-tag[data-tag=week-charge]::after { content: ''; position: absolute; inset: -2px; z-index: -1; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / .6) 50%, transparent 65%); transform: translateX(-130%); animation: top-tag-shine 3.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .profile-tag[data-tag=week-hero]::after, .profile-tag[data-tag=week-best]::after, .profile-tag[data-tag=week-charge]::after { display: none; } }

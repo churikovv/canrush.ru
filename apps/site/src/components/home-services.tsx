@@ -1,3 +1,5 @@
+import { moscowDay } from '@/lib/drink-calendar-fields';
+import { seasonTitle } from '@/lib/season-fields';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { BETA_ENGINE_PLACES, type BetaEngine } from '@/lib/beta-engine';
@@ -27,7 +29,8 @@ export function HomeServices({ metrics, contest, joined, engine }: {
     { key: 'tierlists', href: '/community', label: 'Тирлисты', note: metrics.tierLists ? count.format(metrics.tierLists) : '', art: 'tierlists' },
   ];
   const small = [
-    { key: 'leaderboard', href: '/leaderboard', label: 'Лидеры', note: 'таблица', art: '/brand/home/leaderboard.png' },
+    { key: 'leaderboard', href: '/leaderboard', label: 'Лидеры', note: 'гонка недели', art: '/brand/home/leaderboard.png' },
+    { key: 'pass', href: '/pass', label: 'Пропуск', note: seasonTitle(moscowDay().slice(0, 7)), art: '/brand/home/pass.png' },
     ...(contest ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: contest.phase === 'open' ? (joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`) : 'итоги', art: '/brand/home/contest.png' }] : []),
     ...(engine.taken < BETA_ENGINE_PLACES ? [{ key: 'engine', href: '/engine', label: 'Бета сайта', note: 'каждый важен', art: '/brand/achievements/engine.png' }] : []),
     { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: '/brand/home/dating.png' },

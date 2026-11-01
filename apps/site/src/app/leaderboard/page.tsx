@@ -2,19 +2,24 @@ import '@/styles/shared.css';
 import '@/styles/profile.css';
 import '@/styles/leaderboard.css';
 import Image from 'next/image';
+import { headers } from 'next/headers';
 import Link from '@/components/navigation-progress';
 import { AvatarFrame } from '@/components/avatar-frame';
 import { BrandShell } from '@/components/brand-shell';
 import { LevelTierGlyph } from '@/components/level-badge';
-import { MonthlyTop } from '@/components/monthly-top';
+import { SeasonPassEntry } from '@/components/season-pass-entry';
 import { StreakFlame } from '@/components/streak-flame';
+import { WeekRaceBoard } from '@/components/week-race';
+import { XpGuide } from '@/components/xp-guide';
 import { flameTier } from '@/lib/drink-calendar-fields';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { experienceLevel } from '@/lib/experience-level';
 import { levelRank } from '@/lib/level-tier';
-import { getMonthlyTop, settleMonthlyTop } from '@/lib/monthly-top';
+import { auth } from '@/lib/auth';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import { getLeaderboard, type LeaderboardRow } from '@/lib/profile-experience';
+import { getSeasonPass } from '@/lib/season-pass';
+import { getWeekRace, settleWeek } from '@/lib/week-race';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Рейтинг участников' };
 
@@ -57,17 +62,36 @@ function Row({ user }: { user: LeaderboardRow }) {
   </Link></li>;
 }
 
-export default async function LeaderboardPage() {
-  await settleMonthlyTop();
-  const [users, monthly] = await Promise.all([getLeaderboard(), getMonthlyTop()]);
+const VIEWS = [
+  { key: 'week', label: 'Неделя', href: '/leaderboard' },
+  { key: 'all', label: 'Всё время', href: '/leaderboard?view=all' },
+] as const;
+
+export default async function LeaderboardPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const { view } = await searchParams;
+  const active = view === 'all' ? 'all' : 'week';
+  await settleWeek();
+  const session = await auth.api.getSession({ headers: await headers() });
+  const viewerId = session?.user.id ?? null;
+  const [users, race, pass] = await Promise.all([
+    active === 'all' ? getLeaderboard() : [],
+    active === 'all' ? null : getWeekRace(viewerId),
+    getSeasonPass(viewerId),
+  ]);
   return <BrandShell headerAction={<ProfileNavigation active="community" />} surfaceClassName="profile-surface"><div className="community-profile">
     <div className="community-section-heading"><h1>Рейтинг участников</h1><Link href="/profile">Мой профиль ↗</Link></div>
-    <MonthlyTop data={monthly} />
-    <h2 className="leaderboard-subheading">За всё время</h2>
-    <p className="community-section-note">Топ 100 по опыту за всё время. При равном XP участники делят место.</p>
-    {users.length ? <div className="lb-table">
-      <div className="lb-head" aria-hidden="true"><span>#</span><span>Участник</span><span>Уровень</span><span>Опыт</span></div>
-      <ol className="lb-list">{users.map(user => <Row key={user.username} user={user} />)}</ol>
-    </div> : <p className="community-empty">Первый отзыв — первый шаг в рейтинг.</p>}
+    <SeasonPassEntry pass={pass} signedIn={Boolean(session)} />
+    <nav className="market-filters leaderboard-views" aria-label="Рейтинг">
+      {VIEWS.map(item => <Link key={item.key} href={item.href} aria-current={item.key === active ? 'page' : undefined}>{item.label}</Link>)}
+    </nav>
+    {race && <WeekRaceBoard race={race} signedIn={Boolean(session)} />}
+    {active === 'all' && <>
+      <p className="community-section-note">Топ 100 по опыту за всё время. При равном XP участники делят место.</p>
+      {users.length ? <div className="lb-table">
+        <div className="lb-head" aria-hidden="true"><span>#</span><span>Участник</span><span>Уровень</span><span>Опыт</span></div>
+        <ol className="lb-list">{users.map(user => <Row key={user.username} user={user} />)}</ol>
+      </div> : <p className="community-empty">Первый отзыв — первый шаг в рейтинг.</p>}
+    </>}
+    <XpGuide />
   </div></BrandShell>;
 }
