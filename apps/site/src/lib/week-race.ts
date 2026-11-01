@@ -1,13 +1,13 @@
 import { getPool } from '@/db/pool';
 import { DEFAULT_PROFILE_APPEARANCE, parseProfileAppearance, type ProfileAppearance } from '@/lib/profile-appearance';
-import { TOP_PLACES, weekPrize } from '@/lib/season-fields';
+import { TOP_PLACES, weekEndsAt, weekPrize, weekReward } from '@/lib/season-fields';
 
 export interface RaceEntry { place: number; username: string; avatarId: string | null; xp: number; reward: number; frame: ProfileAppearance['frame']; tag: string | null }
 /** Место зрителя в гонке; `gap` — сколько опыта не хватает до десятки (0, если он в ней). */
 export interface RaceViewer { place: number; xp: number; gap: number }
 /** Как зритель выглядит в строке рейтинга: для примерки наград, даже если опыта за неделю у него ещё нет. */
 export interface RaceMe { username: string | null; avatarId: string | null; frame: ProfileAppearance['frame'] }
-export interface WeekRace { leaders: RaceEntry[]; viewer: RaceViewer | null; winners: string[]; me: RaceMe | null }
+export interface WeekRace { leaders: RaceEntry[]; viewer: RaceViewer | null; winners: string[]; me: RaceMe | null; now: number; endsAt: number }
 
 /** Подводит прошедшую неделю не больше одного раза: функция в базе идемпотентна и идёт по очереди. */
 export async function settleWeek() {
@@ -16,7 +16,7 @@ export async function settleWeek() {
 }
 
 /** Десятка недели и место зрителя. Считает так же, как `settle_weekly_top`: без наградного опыта, только с ником и без бана. */
-export async function getWeekRace(viewerId: string | null = null): Promise<WeekRace> {
+export async function getWeekRace(viewerId: string | null = null, now = Date.now()): Promise<WeekRace> {
   const db = getPool();
   const [rows, winners, me] = await Promise.all([
     db.query<{ id: string; place: number; username: string; avatarId: string | null; xp: number; appearance: unknown; tag: string | null }>(`
@@ -39,10 +39,11 @@ export async function getWeekRace(viewerId: string | null = null): Promise<WeekR
   const top = rows.rows.filter(row => row.place <= TOP_PLACES);
   const own = rows.rows.find(row => row.id === viewerId);
   return {
-    leaders: top.map(row => ({ place: row.place, username: row.username, avatarId: row.avatarId, xp: row.xp, reward: weekPrize(row.place)?.xp ?? 0,
+    leaders: top.map(row => ({ place: row.place, username: row.username, avatarId: row.avatarId, xp: row.xp, reward: weekReward(weekPrize(row.place) ?? { xp: 0 }, now),
       frame: (parseProfileAppearance(row.appearance) ?? DEFAULT_PROFILE_APPEARANCE).frame, tag: row.tag })),
     viewer: own ? { place: own.place, xp: own.xp, gap: own.place <= TOP_PLACES ? 0 : (top.at(-1)?.xp ?? 0) - own.xp + 1 } : null,
     winners: winners.rows.map(row => row.username),
+    now, endsAt: weekEndsAt(now),
     me: me?.rows[0] ? { username: me.rows[0].username, avatarId: me.rows[0].avatarId, frame: (parseProfileAppearance(me.rows[0].appearance) ?? DEFAULT_PROFILE_APPEARANCE).frame } : null,
   };
 }

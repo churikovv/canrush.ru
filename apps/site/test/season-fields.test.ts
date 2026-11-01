@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PASS_EXCLUDED_REASONS, PASS_LEVELS, PASS_STAGES, WEEK_PRIZES, passClaimable, passLevelReached, passProgress, passStage, passStageOpensAt, seasonDaysLeft, seasonNumber, seasonTitle, weekGoal, weekPrize } from '../src/lib/season-fields';
+import { PASS_EXCLUDED_REASONS, PASS_LEVELS, PASS_STAGES, WEEK_PRIZES, countdownParts, isFirstWeek, passClaimable, passLevelReached, passProgress, passStage, passStageOpensAt, seasonDaysLeft, seasonNumber, seasonTitle, weekEndsAt, weekGoal, weekPrize, weekReward } from '../src/lib/season-fields';
 
 describe('seasons', () => {
   it('counts a season per month from October 2026', () => {
@@ -28,6 +28,32 @@ describe('prizes', () => {
   it('never lets a lower place earn more', () => {
     const prizes = [1, 2, 5, 6, 10].map(place => weekPrize(place)?.xp ?? 0);
     expect([...prizes].sort((a, b) => b - a)).toEqual(prizes);
+  });
+});
+
+describe('first week', () => {
+  const [hero] = WEEK_PRIZES as [typeof WEEK_PRIZES[number]];
+
+  it('pays half until Monday and then the full prize', () => {
+    expect(weekReward(hero, Date.parse('2026-11-01T20:59:59Z'))).toBe(3500);
+    expect(weekReward(hero, Date.parse('2026-11-01T21:00:00Z'))).toBe(7000);
+    expect(isFirstWeek(Date.parse('2026-11-01T21:00:00Z'))).toBe(false);
+  });
+});
+
+describe('week countdown', () => {
+  const end = Date.parse('2026-11-08T21:00:00Z');
+
+  it('ends on Monday at midnight in Moscow', () => {
+    expect(weekEndsAt(Date.parse('2026-11-04T09:00:00Z'))).toBe(end);
+    expect(weekEndsAt(Date.parse('2026-11-01T20:59:59Z'))).toBe(Date.parse('2026-11-01T21:00:00Z'));
+    expect(weekEndsAt(Date.parse('2026-11-01T21:00:00Z'))).toBe(end);
+  });
+
+  it('splits what is left and stops at zero', () => {
+    expect(countdownParts(2 * 86_400_000 + 3 * 3_600_000 + 4 * 60_000 + 5000)).toEqual({ days: 2, hours: 3, minutes: 4, seconds: 5 });
+    expect(countdownParts(1)).toEqual({ days: 0, hours: 0, minutes: 0, seconds: 1 });
+    expect(countdownParts(-5000)).toEqual({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   });
 });
 

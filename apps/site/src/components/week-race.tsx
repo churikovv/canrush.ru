@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { AvatarFrame } from '@/components/avatar-frame';
+import { WeekCountdown } from '@/components/week-countdown';
 import { Gift, Medal } from '@/components/week-race-icons';
 import { WeekRaceTry } from '@/components/week-race-try';
 import { profileTagLabel } from '@/lib/profile-achievements';
@@ -19,6 +20,7 @@ export function WeekRaceBoard({ race, signedIn }: { race: WeekRace; signedIn: bo
         <h2 id="race-title">Гонка недели</h2>
         <p>Итоги в понедельник. Тег держится всю следующую неделю.</p>
       </div>
+      <WeekCountdown endsAt={race.endsAt} now={race.now} />
     </div>
     <WeekRaceTry race={race} signedIn={signedIn} />
     {race.leaders.length ? <ol className="lb-list week-race-list">{race.leaders.map(entry => <li key={entry.username} data-rank={entry.place <= 3 ? entry.place : undefined}>

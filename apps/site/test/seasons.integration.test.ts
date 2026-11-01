@@ -75,7 +75,7 @@ it('shows the running race with the viewer out of the ten', async () => {
   const runners = members.slice(0, 11);
   for (const [index, id] of runners.entries()) await pool.query(`insert into "profileExperience" ("userId",reason,"sourceKey",points,"createdAt") values ($1,'review',$2,$3,$4)`, [id, `now-${index}`, 100000 - index * 1000, stamp]);
   await pool.query(`insert into "profileExperience" ("userId",reason,"sourceKey",points,"createdAt") values ($1,'weekly-top','now',500000,$2)`, [eleventh, stamp]);
-  const race = await getWeekRace(eleventh);
+  const race = await getWeekRace(eleventh, Date.parse('2026-11-04T09:00:00Z'));
   const others = race.leaders.filter(entry => !entry.username.startsWith('se_'));
   expect(others).toHaveLength(0);
   expect(race.leaders).toHaveLength(10);
@@ -116,8 +116,13 @@ it('pays no XP cap for drinks any more', async () => {
   expect((await pool.query(`select count(*)::int as n from "profileExperience" where "userId" = $1 and reason = 'catalog-drink'`, [id])).rows[0]).toEqual({ n: 51 });
 });
 
+it('ends the countdown exactly where the database ends the week', async () => {
+  const { rows } = await pool.query<{ end: Date }>(`select upper(weekly_top_bounds(date_trunc('week', now() at time zone 'Europe/Moscow')::date)) as "end"`);
+  expect((await getWeekRace()).endsAt).toBe(rows[0]?.end.getTime());
+});
+
 it('shows the same amounts the database pays', async () => {
-  const [payer] = [passMember];
+  const payer = members[2]!;
   for (const source of XP_SOURCES.filter(item => item.reason !== 'collection')) {
     await pool.query('select award_profile_experience($1, $2, $3)', [payer, source.reason, `guide-${source.reason}`]);
     const paid = await pool.query<{ points: number }>('select points from "profileExperience" where "userId" = $1 and reason = $2 and "sourceKey" = $3', [payer, source.reason, `guide-${source.reason}`]);

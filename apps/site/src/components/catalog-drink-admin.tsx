@@ -108,7 +108,7 @@ function MergeForm({ drink, titleId, onDone }: { drink: AdminDrink; titleId: str
         </li>)}
         {query.trim() && !searching && !results.length && <li className="field-help">Ничего не нашлось.</li>}
       </ul>
-      {published && <label className="admin-merge-revoke"><input type="checkbox" name="revokeXp" defaultChecked />Забрать 50 XP у автора за дубль</label>}
+      {published && <label className="admin-merge-revoke"><input type="checkbox" name="revokeXp" defaultChecked />Забрать XP у автора за дубль</label>}
       {state.error && <FormAlert>{state.error}</FormAlert>}
       <div className="store-card-actions">
         <button className="community-button" type="submit" disabled={!target}>{pending ? 'Склеиваем…' : target ? `Склеить с «${target.label}»` : 'Выберите карточку'}</button>

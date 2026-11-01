@@ -2,7 +2,7 @@ import { profileTagLabel } from '@/lib/profile-achievements';
 import { getPool } from '@/db/pool';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { activeOffers, type CatalogFile } from '@/lib/catalog-files';
-import { days } from '@/lib/drink-calendar-fields';
+import { days, pluralRu } from '@/lib/drink-calendar-fields';
 import { isResolvedFlavor, type CityId } from '@canrush/shared';
 
 export interface NotificationItem { id: string; title: string; detail: string; href: string; unread: boolean; createdAt: string; kind: string; city?: string }
@@ -96,6 +96,12 @@ function describeNotification(row: any): NotificationItem {
       title = 'Топ октября пересчитан по новым наградам';
       detail = p.paid > 0 ? `${p.place} место: было +${xp(p.paid)} XP, стало +${xp(p.total)}. Начислили ещё +${xp(p.bonus)} XP` : `${p.place} место: начислили +${xp(p.bonus)} XP`;
       href = '/leaderboard';
+    } else if (row.kind==='drink-bonus') {
+      // Drinks past the old limit of 50 earned nothing: paid once at the reduced rate (migration 0172).
+      const p = row.payload;
+      title = 'Доплатили опыт за ваши напитки';
+      detail = `${p.drinks.toLocaleString('ru-RU')} ${pluralRu(p.drinks, 'напиток', 'напитка', 'напитков')} сверх старого лимита: +${p.bonus.toLocaleString('ru-RU')} XP`;
+      href = '/profile';
     } else if (row.kind==='overtaken') {
       // Someone passed the member in the week's top five (migration 0168): the new place and how far behind they are.
       const p = row.payload;

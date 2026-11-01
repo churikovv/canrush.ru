@@ -49,3 +49,57 @@ it('tops the October ten up to the new prizes once and tells them', async () => 
     client.release();
   }
 });
+
+it('pays half for the first week and tells the real amount', async () => {
+  client = await pool.connect();
+  try {
+    await client.query('begin');
+    await client.query(`delete from "weeklyTopAward" where week = '2026-10-26'`);
+    await client.query(`delete from "weeklyTopSettlement" where week = '2026-10-26'`);
+    const members = Array.from({ length: 6 }, () => randomUUID());
+    for (const [index, id] of members.entries()) {
+      await client.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Week',$2,true,now(),now(),$3)`,
+        [id, `${id}@example.com`, `fw_${id.replaceAll('-', '').slice(0, 12)}`]);
+      await client.query(`insert into "profileExperience"("userId",reason,"sourceKey",points,"createdAt") values($1,'review','first-week',$2,'2026-10-29 12:00:00+03')`,
+        [id, 50_000_000 - index * 1000]);
+    }
+    await client.query(`select settle_weekly_top('2026-11-02 10:00:00+03')`);
+    const paid = await Promise.all(members.map(async id => (await client.query<{ points: number }>(
+      `select points from "profileExperience" where "userId" = $1 and reason = 'weekly-top' and "sourceKey" = '2026-10-26'`, [id])).rows[0]?.points));
+    expect(paid).toEqual([3500, 1750, 1750, 1750, 1750, 600]);
+    expect((await getNotifications(members[0]!)).items.find(item => item.kind === 'weekly-top')?.detail).toContain('+3500 XP');
+  } finally {
+    await client.query('rollback');
+    client.release();
+  }
+});
+
+it('pays half past the fiftieth drink and tops up the old ones once', async () => {
+  client = await pool.connect();
+  try {
+    await client.query('begin');
+    const author = randomUUID();
+    await client.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'Drinks',$2,true,now(),now(),$3)`,
+      [author, `${author}@example.com`, `dt_${author.replaceAll('-', '').slice(0, 12)}`]);
+    const brand = `Tail ${author.slice(0, 8)}`;
+    for (let index = 0; index < 52; index += 1) {
+      await client.query(`insert into "catalogDrink"("ownerId", brand, flavor, volumes, photo, thumbnail, status) values ($1, $2, $3, '{450}', 'x', 'x', 'published')`, [author, brand, `flavor-${index}`]);
+    }
+    const rows = async () => (await client.query<{ points: number; count: number }>(
+      `select points, count(*)::int as count from "profileExperience" where "userId" = $1 and reason = 'catalog-drink' group by points order by points desc`, [author])).rows;
+    expect(await rows()).toEqual([{ points: 50, count: 50 }, { points: 25, count: 2 }]);
+
+    // The same two drinks as if they had gone unpaid under the old limit.
+    await client.query(`delete from "profileExperience" where "userId" = $1 and reason = 'catalog-drink' and points = 25`, [author]);
+    const sql = await readFile(new URL('../migrations/0172_catalog_drink_tail.sql', import.meta.url), 'utf8');
+    await client.query(sql);
+    await client.query(sql);
+    expect(await rows()).toEqual([{ points: 50, count: 50 }, { points: 25, count: 2 }]);
+    const dated = await client.query<{ at: string }>(`select to_char("createdAt" at time zone 'Europe/Moscow', 'YYYY-MM-DD') as at from "profileExperience" where "userId" = $1 and points = 25`, [author]);
+    expect(dated.rows.map(row => row.at)).toEqual(['2026-10-25', '2026-10-25']);
+    expect((await getNotifications(author)).items.filter(item => item.kind === 'drink-bonus')).toMatchObject([{ title: 'Доплатили опыт за ваши напитки', detail: '2 напитка сверх старого лимита: +50 XP', href: '/profile' }]);
+  } finally {
+    await client.query('rollback');
+    client.release();
+  }
+});

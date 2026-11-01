@@ -35,6 +35,25 @@ export const WEEK_PRIZES: readonly { places: string; last: number; xp: number; t
 ];
 export const weekPrize = (place: number) => WEEK_PRIZES.find(prize => place <= prize.last) ?? null;
 
+/** Первая неделя платит половину: большая часть её десятки только что получила компенсацию за октябрь. Повторяет `settle_weekly_top` (миграция `0171`). */
+const FIRST_WEEK_ENDS = Date.parse('2026-11-01T21:00:00Z');
+export const isFirstWeek = (now: number) => now < FIRST_WEEK_ENDS;
+export const weekReward = (prize: { xp: number }, now: number) => (isFirstWeek(now) ? prize.xp / 2 : prize.xp);
+
+const MOSCOW_OFFSET = 3 * 3_600_000;
+/** Конец идущей недели: понедельник 00:00 по Москве, верхняя граница `weekly_top_bounds`. Перевода часов в Москве нет. */
+export function weekEndsAt(now: number) {
+  const moscow = new Date(now + MOSCOW_OFFSET);
+  const daysLeft = 7 - (moscow.getUTCDay() + 6) % 7;
+  return Date.UTC(moscow.getUTCFullYear(), moscow.getUTCMonth(), moscow.getUTCDate() + daysLeft) - MOSCOW_OFFSET;
+}
+
+/** Остаток для таймера; время вышло — нули. */
+export function countdownParts(left: number) {
+  const total = Math.max(0, Math.ceil(left / 1000));
+  return { days: Math.floor(total / 86_400), hours: Math.floor(total / 3600) % 24, minutes: Math.floor(total / 60) % 60, seconds: total % 60 };
+}
+
 export type WeekGoal = { kind: 'here' } | { kind: 'above' } | { kind: 'open' } | { kind: 'gap'; xp: number };
 /** Где участник относительно группы мест. `leaders` — опыт десятки сверху вниз; равный опыт уступает тому, кто набрал раньше, поэтому нужно на единицу больше. */
 export function weekGoal(prize: (typeof WEEK_PRIZES)[number], leaders: readonly number[], viewer: { place: number; xp: number } | null): WeekGoal {
