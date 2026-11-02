@@ -28,6 +28,9 @@ const CONTENT_SOURCES: Record<ContentReportKind, string> = {
   'business-post': 'select coalesce(p."authorId", b."ownerId") as author, case when p.text = \'\' then p."fileName" else p.text end as excerpt from "businessPost" p join business b on b.id = p."businessId" where p.id=$1',
   'business-award': 'select coalesce(a."authorId", b."ownerId") as author, a.title as excerpt from "businessAward" a join business b on b.id = a."businessId" where a.id=$1',
   'store-preset': `select "userId" as author, name || E'\n' || (select string_agg(i->>'name', ', ') from jsonb_array_elements(items) i) as excerpt from "storePreset" where id=$1 and "publishedAt" is not null`,
+  'collection-photo': 'select "userId" as author, coalesce(caption, \'Фото коллекции без подписи\') as excerpt from "collectionPhoto" where id=$1',
+  'drink-question': 'select "userId" as author, brand || \' · \' || flavor || E\'\\n\' || text as excerpt from "drinkQuestion" where id=$1',
+  'drink-answer': 'select "userId" as author, text as excerpt from "drinkAnswer" where id=$1',
 };
 
 async function submit(

@@ -25,6 +25,7 @@ import { auth } from '@/lib/auth';
 import { getCatalogGroup, isFavorite, loadAllCatalogGroups } from '@/lib/catalog';
 import { catalogGroupSlug, catalogRetailerCount, decodeCatalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { getReviewSummary, getReviewsForProduct, getUserReview } from '@/lib/reviews';
+import { getDrinkQuestions } from '@/lib/drink-questions';
 import { drinkJsonLd } from '@/lib/drink-json-ld';
 import { ogImage, seoMetadata } from '@/lib/seo';
 import { isExcludedEnergyBrand } from '@canrush/shared';
@@ -33,6 +34,8 @@ export const dynamic = 'force-dynamic';
 
 type ProductParams = Promise<{ product: string }>;
 type ProductSearchParams = Promise<{ tab?: string }>;
+/** A redirect keeps the open sheet: reviews or questions. */
+const sheetQuery = (tab: string | undefined) => (tab === 'reviews' || tab === 'questions' ? `?tab=${tab}` : '');
 
 async function productFromParams(params: ProductParams) {
   const { product } = await params;
@@ -68,7 +71,7 @@ export default async function CatalogProductPage({
   const { tab } = await searchParams;
   const decoded = decodeCatalogGroupSlug((await params).product);
   if (decoded && catalogGroupSlug(decoded.brand, decoded.flavor) !== (await params).product) {
-    permanentRedirect(`/catalog/${catalogGroupSlug(decoded.brand, decoded.flavor)}${tab === 'reviews' ? '?tab=reviews' : ''}`);
+    permanentRedirect(`/catalog/${catalogGroupSlug(decoded.brand, decoded.flavor)}${sheetQuery(tab)}`);
   }
 
   const [group, session] = await Promise.all([
@@ -78,7 +81,7 @@ export default async function CatalogProductPage({
   if (!group) {
     // A member drink an admin renamed: its old address leads to the new card.
     const renamed = await renamedCatalogDrink((await params).product);
-    if (renamed) permanentRedirect(`/catalog/${catalogGroupSlug(renamed.brand, renamed.flavor)}${tab === 'reviews' ? '?tab=reviews' : ''}`);
+    if (renamed) permanentRedirect(`/catalog/${catalogGroupSlug(renamed.brand, renamed.flavor)}${sheetQuery(tab)}`);
     notFound();
   }
   // Not an energy drink (an excluded brand): gone from the catalog; its page stays only while reviews hang on it.
@@ -107,10 +110,11 @@ export default async function CatalogProductPage({
   const company = companyId ? await getCompanyCard(companyId, session?.user.id ?? null).catch(() => null) : null;
 
   // One page now: the description and prices, with the reviews in a sheet over it (radar only when there are reviews).
-  const [priceHistory, reviewDigest, radar] = await Promise.all([
+  const [priceHistory, reviewDigest, radar, questions] = await Promise.all([
     getPriceHistory((await selectedCity()).id, group.brand, group.flavor),
     getDrinkSummary(group.brand, group.flavor).catch(() => null),
     summary.count > 0 ? getDrinkRadar(group.brand, group.flavor).catch(() => null) : null,
+    getDrinkQuestions(group.brand, group.flavor, session?.user.id ?? null, companyId),
   ]);
 
   // Rating and prices for search results (Product); none for a drink with neither.
@@ -128,6 +132,9 @@ export default async function CatalogProductPage({
         summary={summary}
         userReview={userReview}
         reviewsOpen={tab === 'reviews'}
+        questions={questions}
+        questionsOpen={tab === 'questions'}
+        viewerId={session?.user.id ?? null}
         swipes={swipes}
         reviewDigest={reviewDigest}
         radar={radar}

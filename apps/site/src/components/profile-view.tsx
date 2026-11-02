@@ -29,6 +29,8 @@ import { BrandCollectionBlock } from '@/components/brand-collection';
 import { getBrandCollections } from '@/lib/brand-collection';
 import { listPublishedDrinksByOwner } from '@/lib/catalog-drinks';
 import { topCards } from '@/lib/gacha';
+import { listCollectionPhotos } from '@/lib/collection-photos';
+import { ProfileCollectionPhotos } from '@/components/profile-collection-photos';
 import { RarityChip, RarityShine } from '@/components/rarity-badge';
 import { ProfilePresence } from '@/components/profile-presence';
 import { SignInPrompt } from '@/components/sign-in-prompt';
@@ -50,8 +52,9 @@ function TelegramGlyph() {
 }
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
-  const [community, ratings, wall, presence, lastSeen, friends, listings, favorites, compatibility, collection, addedDrinks, cards] = await Promise.all([
+  const [community, ratings, wall, presence, lastSeen, friends, listings, favorites, compatibility, collection, addedDrinks, cards, shelf] = await Promise.all([
     getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getFavoriteGroups(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id), listPublishedDrinksByOwner(profile.id), profile.profileLayout?.hidden.includes('cards') === false ? topCards(profile.id).catch(() => []) : Promise.resolve([]),
+    profile.profileLayout?.hidden.includes('shelf') === false ? listCollectionPhotos(profile.id, viewerId ?? null) : Promise.resolve({ photos: [], staff: false }),
   ]);
   const blockedByViewer = !isOwn && viewerId ? await isBlockedByViewer(viewerId, profile.id) : false;
   const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
@@ -132,7 +135,10 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           <ProfileBlock block="cards"><section className="community-panel" aria-labelledby="profile-cards-title"><div className="community-section-heading"><h2 id="profile-cards-title">Карточки Банкомата</h2><Link href={`${base}/cards`}>Альбом ↗</Link></div>
           {cards.length ? <div className="profile-favorites-block profile-gacha-cards">{cards.map(card => <Link key={`${card.brand}:${card.flavor}`} className="rarity-card" href={card.href} data-rarity={card.rarity}>
           <RarityShine rarity={card.rarity} /><Image src={card.cover} width={120} height={120} unoptimized alt="" /><strong>{card.brand}</strong><span>{card.name}</span><RarityChip rarity={card.rarity} />{card.count > 1 && <small>×{card.count}</small>}</Link>)}</div>
-          : <div className="community-empty"><p>{isOwn ? 'Здесь появятся лучшие карточки из Банкомата. Первая крутка в день — бесплатно.' : 'Пользователь пока не крутил Банкомат.'}</p>{isOwn && <Link href="/gacha">Открыть Банкомат ↗</Link>}</div>}</section></ProfileBlock></ProfileBlocks>
+          : <div className="community-empty"><p>{isOwn ? 'Здесь появятся лучшие карточки из Банкомата. Первая крутка в день — бесплатно.' : 'Пользователь пока не крутил Банкомат.'}</p>{isOwn && <Link href="/gacha">Открыть Банкомат ↗</Link>}</div>}</section></ProfileBlock>
+          {/* Photos of the member's cans: visitors see the block only when there is something to show. */}
+          <ProfileBlock block="shelf">{(isOwn || shelf.photos.length > 0) && <section className="community-panel" aria-labelledby="profile-shelf-title"><div className="community-section-heading"><h2 id="profile-shelf-title">Фото коллекции {shelf.photos.length > 0 && <span>{shelf.photos.length}</span>}</h2></div>
+          <ProfileCollectionPhotos photos={shelf.photos} own={isOwn} signedIn={Boolean(viewerId)} staff={shelf.staff} /></section>}</ProfileBlock></ProfileBlocks>
 
         </div>
 

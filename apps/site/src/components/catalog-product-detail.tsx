@@ -18,6 +18,9 @@ import { CatalogFavoriteButton } from '@/components/catalog-favorite-button';
 import { CatalogProductReviews } from '@/components/catalog-product-reviews';
 import { CatalogReviewHighlights } from '@/components/catalog-review-highlights';
 import { CatalogReviewsSheet } from '@/components/catalog-reviews-sheet';
+import { CatalogQuestionsSheet } from '@/components/catalog-questions-sheet';
+import { CatalogProductQuestions } from '@/components/catalog-product-questions';
+import type { DrinkQuestion } from '@/lib/drink-questions';
 import { RetailerBadge } from '@/components/retailer-badge';
 import { catalogOffersByVolume, catalogRetailerName, flavorName } from '@/lib/catalog-query';
 import type { ReviewData, ReviewSummary } from '@/lib/reviews';
@@ -49,6 +52,10 @@ interface CatalogProductDetailProps {
   userReview: ReviewData | null;
   /** `?tab=reviews` (a notification, a feed link): the reviews sheet is open on arrival. */
   reviewsOpen: boolean;
+  /** Questions about the drink (the newest, with answers) and `?tab=questions`: the questions sheet is open on arrival. */
+  questions: { questions: DrinkQuestion[]; total: number; staff: boolean };
+  questionsOpen: boolean;
+  viewerId: string | null;
   /** Dating in the community: how many swiped the drink right («нравится») and left («пропустить»). */
   swipes?: SwipeCounts;
   /** A drink a member added (catalogDrink) that shops do not have yet: who added it, when, and the volumes they gave. */
@@ -76,8 +83,10 @@ interface CatalogProductDetailProps {
 }
 
 
-export function CatalogProductDetail({ photos = [], storeOffers = [], city, group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ photos = [], storeOffers = [], city, group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, questions, questionsOpen, viewerId, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
   const newest = reviews.find(review => review.text.trim());
+  const firstQuestion = questions.questions[0];
+  const latestQuestion = firstQuestion ? { author: firstQuestion.username, avatarId: firstQuestion.avatarId, date: LATEST_DATE.format(new Date(firstQuestion.createdAt)), text: firstQuestion.text, answers: firstQuestion.answers.length } : null;
   const latestReview = newest ? { author: newest.author.username, avatarId: newest.author.avatarId, score: (newest.design + newest.taste) / 2, date: LATEST_DATE.format(new Date(newest.createdAt)), text: newest.text } : null;
   const volumeGroups = catalogOffersByVolume(group).sort((a, b) => (b.volumeMl ?? -1) - (a.volumeMl ?? -1));
   const sortedHistory = [...priceHistory].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
@@ -152,6 +161,9 @@ export function CatalogProductDetail({ photos = [], storeOffers = [], city, grou
               />
             </CatalogReviewsSheet>
             {reviewDigest && summary.count > 0 && <CatalogReviewHighlights highlights={reviewDigest.body} />}
+            <CatalogQuestionsSheet count={questions.total} title={`${group.brand} · ${flavorName(group.flavor)}`} initiallyOpen={questionsOpen} latest={latestQuestion}>
+              <CatalogProductQuestions brand={group.brand} flavor={group.flavor} questions={questions.questions} total={questions.total} viewerId={viewerId} staff={questions.staff} />
+            </CatalogQuestionsSheet>
             <section className="catalog-product-section" aria-label="Цены в магазинах">
               {volumeGroups.length > 0 ? (
                 <CatalogOfferClicks brand={group.brand} flavor={group.flavor}>

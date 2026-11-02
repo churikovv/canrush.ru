@@ -148,14 +148,16 @@ export interface FeedReviewGroup { key: string; createdAt: Date; reviews: Review
  */
 export type FeedItem = { kind: 'post'; post: FeedPostRow } | { kind: 'rank-up'; rankUp: RankUpRow }
   | { kind: 'tierlist'; tierList: TierListSummary } | { kind: 'reviews'; group: FeedReviewGroup } | { kind: 'gacha'; pull: FeedGachaRow }
-  | { kind: 'article'; article: FeedArticleRow };
+  | { kind: 'article'; article: FeedArticleRow } | { kind: 'question'; question: FeedQuestionRow };
+/** Вопрос о напитке со страницы напитка: та же строка `drinkQuestion`, ответы — там же. */
+export interface FeedQuestionRow { id: string; userId: string; brand: string; flavor: string; text: string; createdAt: Date; answers: number; username: string; name: string; avatarId: string | null; xp: number; tag: string | null; verified: boolean }
 /** Опубликованная статья из «Новостей»: та же строка `article`, поэтому лайк общий со страницей статьи. */
 export interface FeedArticleRow { id: string; userId: string; title: string; summary: string; minutes: number; coverId: string | null; publishedAt: Date; likes: number; liked: boolean; username: string; name: string; avatarId: string | null; xp: number; tag: string | null; verified: boolean }
 /** Лучшая эпическая или легендарная банка, которую участник вытащил из Банкомата за московский день (`count` — сколько таких за день). */
 export interface FeedGachaRow { key: string; userId: string; brand: string; flavor: string; rarity: 'epic' | 'legendary'; count: number; createdAt: Date; username: string; name: string; avatarId: string | null; xp: number; tag: string | null; verified: boolean }
 
 // The author `u` as every timeline row shows them: avatar, XP and the selected tag.
-const AUTHOR_COLUMNS = `u.username, u.name,
+export const AUTHOR_COLUMNS = `u.username, u.name,
       (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
       coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
       case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
@@ -211,11 +213,14 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
         union all
         select a.id::text, 'article', a."publishedAt" from article a join "user" u on u.id = a."authorId"
         where not $5::boolean and a.status = 'published' and a."publishedAt" is not null and ${FEED_EVENT_AUTHOR('a."authorId"')}
+        union all
+        select q.id::text, 'question', q."createdAt" from "drinkQuestion" q join "user" u on u.id = q."userId"
+        where not $5::boolean and ${FEED_EVENT_AUTHOR('q."userId"')}
       ) entry order by "createdAt" desc, id desc limit $3 offset $4`,
   [following, viewerId, COMMUNITY_PAGE_SIZE, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE, saved]);
   const total = entries[0]?.total ?? 0;
   const idsOf = (kind: FeedItem['kind']) => entries.filter(entry => entry.kind === kind).map(entry => entry.id);
-  const [posts, rankUps, tierLists, reviewDays, gachaDays, articles] = await Promise.all([
+  const [posts, rankUps, tierLists, reviewDays, gachaDays, articles, questions] = await Promise.all([
     getPool().query<FeedPostRow>(`select ${WALL_POST_COLUMNS}, o.username as "ownerUsername", o.name as "ownerName",
       (select id::text from "profileImage" where "userId"=o.id and kind='avatar') as "ownerAvatarId"
       from "profileComment" c join "user" u on u.id = c."userId" join "user" o on o.id = c."profileId" where c.id = any($1::uuid[])`, [idsOf('post')]),
@@ -234,7 +239,11 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
         exists(select 1 from "articleLike" l where l."articleId" = a.id and l."userId" = $2) as liked, ${AUTHOR_COLUMNS}
       from article a join "user" u on u.id = a."authorId" where a.id = any($1::uuid[])`, [idsOf('article'), viewerId])
       .then(result => result.rows.map(({ blocks, ...row }) => ({ ...row, summary: articleSummary(blocks), minutes: readingMinutes(blocks) }))) : Promise.resolve([] as FeedArticleRow[]),
+    idsOf('question').length ? getPool().query<FeedQuestionRow>(`select q.id, q."userId", q.brand, q.flavor, q.text, q."createdAt",
+        (select count(*)::int from "drinkAnswer" a where a."questionId" = q.id) as answers, ${AUTHOR_COLUMNS}
+      from "drinkQuestion" q join "user" u on u.id = q."userId" where q.id = any($1::uuid[])`, [idsOf('question')]).then(result => result.rows) : Promise.resolve([] as FeedQuestionRow[]),
   ]);
+  const questionById = new Map(questions.map(question => [question.id, question]));
   const articleById = new Map(articles.map(article => [article.id, article]));
   const gachaByKey = new Map(gachaDays.map(row => [row.key, row]));
   const tierListById = new Map(tierLists.map(list => [list.id, list]));
@@ -251,6 +260,8 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
     if (pull) return [{ kind: 'gacha', pull }];
     const article = entry.kind === 'article' ? articleById.get(entry.id) : undefined;
     if (article) return [{ kind: 'article', article }];
+    const question = entry.kind === 'question' ? questionById.get(entry.id) : undefined;
+    if (question) return [{ kind: 'question', question }];
     const reviews = entry.kind === 'reviews' ? reviewDays.get(entry.id) : undefined;
     return reviews?.length ? [{ kind: 'reviews', group: { key: entry.id, createdAt: reviews[0]!.createdAt, reviews } }] : [];
   });

@@ -17,6 +17,9 @@ const STAFF_DELETE = {
   'business-post': { table: '"businessPost"', audit: 'business-post' },
   'business-award': { table: '"businessAward"', audit: 'business-award' },
   'store-preset': { table: '"storePreset"', audit: 'store-preset' },
+  'collection-photo': { table: '"collectionPhoto"', audit: 'collection-photo' },
+  'drink-question': { table: '"drinkQuestion"', audit: 'drink-question' },
+  'drink-answer': { table: '"drinkAnswer"', audit: 'drink-answer' },
   // A company's reply to a review is keyed by the review (one reply each): the id is the review's.
   'company-reply': { table: '"reviewCompanyReply"', audit: 'company-reply', key: '"reviewId"' },
 } as const;

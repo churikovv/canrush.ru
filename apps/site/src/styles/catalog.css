@@ -817,3 +817,46 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 .drink-gallery-arrow:disabled { opacity: 0; pointer-events: none; }
 @media (hover: hover) and (pointer: fine) { .drink-gallery-arrow { display: grid; } }
 @media (prefers-reduced-motion: reduce) { .drink-gallery-dots span { transition: none; } }
+
+/* «Вопросы и ответы»: та же карточка, что у оценки (`.catalog-rating-card`), и то же окно поверх страницы. */
+.catalog-questions-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.catalog-questions-title strong { font-size: 1.125rem; font-weight: 800; line-height: 1.2; }
+.catalog-questions-icon { display: grid; flex: none; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: color-mix(in srgb, var(--color-brand) 12%, transparent); color: var(--color-brand); }
+.catalog-questions-card .catalog-rating-card-count { padding-left: 46px; }
+.catalog-questions-answers { color: var(--color-muted-strong); font-size: .8125rem; }
+
+/* On a computer the questions keep a reading column in the middle of the sheet, and its head lines up with it. */
+.drink-qa { display: grid; gap: 16px; max-width: 760px; margin-inline: auto; }
+@media (min-width: 640px) { .catalog-questions-sheet .catalog-reviews-sheet-head { padding-inline: max(20px, calc((100vw - 760px) / 2)); } }
+.drink-qa-list, .drink-qa-answers { display: grid; margin: 0; padding: 0; list-style: none; }
+.drink-qa-list { gap: 0; }
+.drink-qa-question { display: grid; gap: 8px; padding: 16px 0; border-top: 1px solid var(--color-control); scroll-margin-top: 96px; }
+.drink-qa-question:first-child { border-top: 0; }
+.drink-qa-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.drink-qa-author { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.drink-qa-avatar { display: grid; flex: none; place-items: center; width: 32px; height: 32px; overflow: hidden; border-radius: 50%; background: var(--color-subtle); color: var(--color-brand); font-size: .8125rem; font-weight: 800; text-decoration: none; }
+.drink-qa-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.drink-qa-who { display: grid; gap: 2px; min-width: 0; }
+.drink-qa-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; font-size: .9375rem; font-weight: 700; }
+.drink-qa-name a { overflow: hidden; color: var(--color-ink); text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.drink-qa-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--color-muted-strong); font-size: .8125rem; }
+.drink-qa-company { padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 12%, transparent); color: var(--color-brand); font-weight: 700; }
+.drink-qa-text { margin: 0; color: var(--color-ink); line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.drink-qa-question > .drink-qa-text { font-size: 1rem; font-weight: 600; }
+.drink-qa-answers { gap: 12px; margin-left: 16px; padding-left: 14px; border-left: 2px solid var(--color-control); }
+.drink-qa-answers > li { display: grid; gap: 6px; scroll-margin-top: 96px; }
+/* The drink's company answers: a quiet tint, so a buyer finds the brand's word first. */
+.drink-qa-answers > li[data-company] { margin-left: -8px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--color-brand) 6%, transparent); }
+.drink-qa-reply { display: inline-flex; align-items: center; gap: 6px; justify-self: start; min-height: 44px; padding: 0 2px; border: 0; background: none; color: var(--color-brand); font: inherit; font-size: .875rem; font-weight: 700; cursor: pointer; }
+.drink-qa-composer > label { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 700; }
+.drink-qa-composer textarea { min-height: 64px; padding: 14px 16px 6px; border: 0; background: transparent; color: var(--color-ink); font: inherit; font-size: .9375rem; line-height: 1.5; resize: vertical; }
+.drink-qa-composer-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.drink-qa-composer-actions .review-composer-submit { align-self: auto; }
+.drink-qa-answer-box { display: grid; }
+.drink-qa-more { margin: 0; color: var(--color-muted-strong); font-size: .8125rem; }
+@media (pointer: coarse) { .drink-qa-composer textarea { font-size: 1rem; } }
+@media (max-width: 639px) {
+  .drink-qa-answers { margin-left: 8px; padding-left: 12px; }
+  .drink-qa-composer-actions { flex-direction: column-reverse; }
+  .drink-qa-composer-actions > * { width: 100%; }
+}

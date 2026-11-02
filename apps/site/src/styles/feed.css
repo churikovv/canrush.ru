@@ -247,3 +247,15 @@ button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-w
   .spin-drop-burst { display: none; }
   .spin-drop-charge { transition: none; }
 }
+
+/* «Спросил о напитке»: карточка на подложке, как у статьи — напиток, вопрос и сколько ответов; ведёт в окно вопросов. */
+.feed-question { display: grid; gap: 10px; padding: 14px; border-radius: 18px; background: var(--color-subtle); color: inherit; text-decoration: none; }
+.feed-question-drink { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.feed-question-drink > span:last-child { display: grid; min-width: 0; }
+.feed-question-drink b { overflow: hidden; color: var(--color-ink); font-size: .9375rem; text-overflow: ellipsis; white-space: nowrap; }
+.feed-question-drink small { overflow: hidden; color: var(--color-muted-strong); font-size: .8125rem; text-overflow: ellipsis; white-space: nowrap; }
+.feed-question-cover { display: grid; flex: none; place-items: center; width: 48px; height: 48px; overflow: hidden; border-radius: 12px; background: var(--color-surface); color: var(--color-brand); font-size: .8125rem; font-weight: 800; }
+.feed-question-cover img { width: 100%; height: 100%; object-fit: contain; }
+.feed-question-text { display: -webkit-box; overflow: hidden; color: var(--color-ink); font-size: 1rem; font-weight: 600; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; }
+.feed-question-foot { display: flex; justify-content: space-between; gap: 12px; color: var(--color-muted-strong); font-size: .8125rem; }
+.feed-question-foot span { color: var(--color-brand); font-weight: 700; }

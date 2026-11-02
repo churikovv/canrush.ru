@@ -1,5 +1,5 @@
 import Link from '@/components/navigation-progress';
-import { FeedArticleEvent, FeedGachaEvent, FeedReviewsEvent, FeedTierListEvent } from '@/components/feed-activity';
+import { FeedArticleEvent, FeedGachaEvent, FeedQuestionEvent, FeedReviewsEvent, FeedTierListEvent } from '@/components/feed-activity';
 import { WallComposer } from '@/components/profile-community-controls';
 import { PagePagination } from '@/components/page-pagination';
 import { RankUpCard } from '@/components/rank-up-card';
@@ -29,7 +29,7 @@ export async function renderFeedItems(items: FeedItem[], viewerId: string | null
   const posts = items.flatMap(item => item.kind === 'post' ? [item.post] : []);
   const tierLists = items.flatMap(item => item.kind === 'tierlist' ? [item.tierList] : []);
   const reviewIds = items.flatMap(item => item.kind === 'reviews' ? item.group.reviews.map(review => review.id) : []);
-  const hasEvents = tierLists.length > 0 || reviewIds.length > 0 || items.some(item => item.kind === 'gacha');
+  const hasEvents = tierLists.length > 0 || reviewIds.length > 0 || items.some(item => item.kind === 'gacha' || item.kind === 'question');
   const [interactions, groups, tierViewer, reviewVotes] = await Promise.all([
     getWallInteractions(posts.map(post => post.id), viewerId),
     hasEvents ? loadAllCatalogGroups() : Promise.resolve([]),
@@ -42,6 +42,7 @@ export async function renderFeedItems(items: FeedItem[], viewerId: string | null
     : item.kind === 'tierlist' ? <FeedTierListEvent key={`tierlist-${item.tierList.id}`} list={item.tierList} products={tierProducts} viewer={tierViewer} />
     : item.kind === 'gacha' ? <FeedGachaEvent key={`gacha-${item.pull.key}`} pull={item.pull} covers={covers} />
     : item.kind === 'article' ? <FeedArticleEvent key={`article-${item.article.id}`} article={item.article} viewerId={viewerId} />
+    : item.kind === 'question' ? <FeedQuestionEvent key={`question-${item.question.id}`} question={item.question} covers={covers} />
     : item.kind === 'reviews' ? <FeedReviewsEvent key={`reviews-${item.group.key}`} group={item.group} covers={covers} votes={reviewVotes} viewerId={viewerId} />
     : <WallPost key={item.post.id} post={item.post} owner={{ username: item.post.ownerUsername, name: item.post.ownerName, avatarId: item.post.ownerAvatarId }} interaction={interactions.get(item.post.id)} canDelete={viewerId === item.post.userId || viewerId === item.post.profileId} canEdit={viewerId === item.post.userId} />);
 }

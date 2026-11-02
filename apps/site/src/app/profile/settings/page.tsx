@@ -84,7 +84,7 @@ const PERK_ICONS = {
 };
 /** Notification kinds by theme, so the switches read as short lists. */
 const NOTIFICATION_GROUPS = [
-  { title: 'Отзывы и комментарии', kinds: ['like', 'review-comment', 'comment-reply', 'business-reply'] },
+  { title: 'Отзывы и комментарии', kinds: ['like', 'review-comment', 'comment-reply', 'business-reply', 'question-answer'] },
   { title: 'Сообщество', kinds: ['follow', 'mention', 'wall-comment', 'overtaken'] },
   { title: 'Компании и цены', kinds: ['company-post', 'price'] },
   { title: 'Трекер и Банкомат', kinds: ['reminder'] },
@@ -101,6 +101,7 @@ const NOTIFICATION_ICONS: Record<(typeof NOTIFICATION_OPTIONS)[number]['kind'], 
   'review-comment': <svg {...ICON}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" /></svg>,
   'comment-reply': <svg {...ICON}><path d="M9 14 4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 6 6v5" /></svg>,
   'business-reply': <svg {...ICON}><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" /></svg>,
+  'question-answer': <svg {...ICON}><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 0 1 4.8 1c0 1.7-2.3 2-2.3 3.5M12 17h.01" /></svg>,
   'company-post': <svg {...ICON}><path d="M4 11v2a1 1 0 0 0 1 1h2l5 4V6L7 10H5a1 1 0 0 0-1 1Z" /><path d="M16 9a4 4 0 0 1 0 6" /></svg>,
   mention: <svg {...ICON}><circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" /></svg>,
   'wall-comment': <svg {...ICON}><path d="M4 5h16v11H8l-4 4V5Z" /><path d="M8 9h8M8 12h5" /></svg>,

@@ -147,6 +147,12 @@ function describeNotification(row: any): NotificationItem {
       title = `${p.business} ответили на ваш отзыв`;
       detail = `${p.brand} · ${flavorName(p.flavor)} — ${p.text}`;
       href = `/catalog/${catalogGroupSlug(p.brand,p.flavor)}?tab=reviews#review-${row.reviewId}`;
+    } else if (row.kind==='question-answer') {
+      // Someone answered the member's question about a drink (migration 0185); off in the notification settings.
+      const p = row.payload;
+      title = `${actor} ответил на ваш вопрос`;
+      detail = `${p.brand} · ${flavorName(p.flavor)} — ${p.text}`;
+      href = `/catalog/${catalogGroupSlug(p.brand,p.flavor)}?tab=questions#question-${p.questionId}`;
     } else if (row.kind==='business-invite') {
       // The owner of a company invited the member to its cabinet; accepting happens in the cabinet.
       const p = row.payload;

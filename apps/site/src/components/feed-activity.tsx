@@ -10,7 +10,8 @@ import type { ReviewInteraction } from '@/lib/review-discussions';
 import { displayName } from '@/components/wall-post';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { profileTagKey, profileTagLabel } from '@/lib/profile-achievements';
-import type { FeedArticleRow, FeedGachaRow, FeedReviewGroup } from '@/lib/profile-community';
+import type { FeedArticleRow, FeedGachaRow, FeedQuestionRow, FeedReviewGroup } from '@/lib/profile-community';
+import { answersWord } from '@/lib/drink-question-fields';
 import type { TierListProduct, TierListSummary } from '@/lib/tier-list-types';
 
 const eventTime = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' });
@@ -55,6 +56,26 @@ export function FeedArticleEvent({ article, viewerId }: { article: FeedArticleRo
       </span>
     </Link>
     <div className="feed-article-foot"><ArticleLikeButton id={article.id} likes={article.likes} liked={article.liked} own={viewerId === article.userId} signedIn={Boolean(viewerId)} /></div>
+  </article>;
+}
+
+/**
+ * «Спросил о напитке»: обложка, бренд и вкус, сам вопрос и сколько ответов; всё ведёт в окно вопросов на странице напитка,
+ * к этому вопросу, где на него и отвечают.
+ */
+export function FeedQuestionEvent({ question, covers }: { question: FeedQuestionRow; covers: Map<string, string> }) {
+  const cover = covers.get(`${question.brand}\u0000${question.flavor}`);
+  const href = `/catalog/${catalogGroupSlug(question.brand, question.flavor)}?tab=questions#question-${question.id}`;
+  return <article className="feed-event" id={`feed-question-${question.id}`}>
+    <EventHead author={question} action="спросил о напитке" at={question.createdAt} />
+    <Link className="feed-question" href={href}>
+      <span className="feed-question-drink">
+        <span className="feed-question-cover">{cover ? <Image src={cover} width={48} height={48} sizes="48px" unoptimized alt="" /> : question.brand.slice(0, 2).toLocaleUpperCase('ru-RU')}</span>
+        <span><b>{question.brand}</b><small>{flavorName(question.flavor)}</small></span>
+      </span>
+      <span className="feed-question-text">{question.text}</span>
+      <span className="feed-question-foot">{question.answers > 0 ? `${question.answers} ${answersWord(question.answers)}` : 'Пока без ответа'}<span aria-hidden="true">Ответить →</span></span>
+    </Link>
   </article>;
 }
 
