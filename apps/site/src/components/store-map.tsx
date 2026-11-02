@@ -4,7 +4,7 @@ interface Event { get(name:string): number[] }
 interface Placemark { events:{add(name:string,callback:()=>void):void}; options:{set(name:string,value:unknown):void} }
 interface MapObject { geoObjects: {add(object:unknown):void}; events:{add(name:string,callback:(event:Event)=>void):void}; destroy():void; setBounds(bounds:number[][],options:object):void; panTo(center:number[],options?:object):Promise<void> }
 interface GeoObject { geometry:{getCoordinates():number[]}; getAddressLine?():string; properties:{get(name:string):unknown} }
-interface Ymaps { ready(callback:()=>void):void; Map:new(element:HTMLElement,options:object)=>MapObject; Placemark:new(coords:number[],properties:object,options?:object)=>Placemark; geocode(request:string,options?:object):Promise<{geoObjects:{get(index:number):GeoObject|undefined}}> }
+interface Ymaps { ready(callback:()=>void):void; Map:new(element:HTMLElement,options:object,settings?:object)=>MapObject; Placemark:new(coords:number[],properties:object,options?:object)=>Placemark; geocode(request:string,options?:object):Promise<{geoObjects:{get(index:number):GeoObject|undefined}}> }
 declare global { interface Window { ymaps?:Ymaps } }
 let loading: Promise<Ymaps>|null=null;
 function loadMaps(key:string){
@@ -45,7 +45,7 @@ export function StoreMap({apiKey,center,points,selected,onPick,onSelect,children
     const data=JSON.parse(serialized) as {center:[number,number];points:StoreMapPoint[]};
     loadMaps(apiKey).then(api=>{
       if(cancelled||!node.current)return;
-      map=new api.Map(node.current,{center:data.points.length===1?[data.points[0]!.latitude,data.points[0]!.longitude]:data.center,zoom:data.points.length===1?16:11,controls:['zoomControl','fullscreenControl']});
+      map=new api.Map(node.current,{center:data.points.length===1?[data.points[0]!.latitude,data.points[0]!.longitude]:data.center,zoom:data.points.length===1?16:11,controls:['zoomControl','fullscreenControl']},{autoFitToViewport:'always'});
       mapRef.current=map;placed.clear();
       data.points.forEach((point,index)=>{
         const mark=new api.Placemark([point.latitude,point.longitude],{iconContent:point.label??String(index+1)},{preset:'islands#blueCircleIcon'});

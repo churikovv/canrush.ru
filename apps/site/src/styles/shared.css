@@ -234,6 +234,12 @@ button.tier-list-card-likes[aria-pressed="true"] svg { animation: tier-like-pop 
 .store-search input:focus-visible, .store-search select:focus-visible, .store-form input:focus-visible, .store-form select:focus-visible, .store-form textarea:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
 .store-view-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 20px 0; }
 .store-view-toolbar > div { display: flex; gap: 4px; }
+/* Карта магазинов на телефоне: во всю ширину и до таб бара, с запасом 26 px: круглая кнопка поиска не должна закрывать подпись Яндекса. Страницу под ней листают за строку с переключателем. */
+@media (max-width: 639px) {
+  .store-view-toolbar:has(+ .store-directory-map) { margin-bottom: 8px; }
+  .store-directory-map .store-map-shell { margin-inline: -16px; }
+  .store-directory-map .store-map { height: calc(100dvh - var(--site-tab-bar-offset, 0px) - var(--store-map-offset, 76px) - 26px); min-height: 360px; border-radius: 0; }
+}
 .store-view-toolbar button { width: 44px; height: 44px; display: grid; place-items: center; background: var(--theme-panel,#fff); color: var(--color-ink); border: 1px solid var(--color-control); border-radius: 8px; cursor: pointer; }
 .store-view-toolbar button[aria-pressed=true] { background: var(--color-brand); color: #fff; border-color: var(--color-brand); }
 .store-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }

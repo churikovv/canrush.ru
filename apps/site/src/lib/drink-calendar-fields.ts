@@ -1,3 +1,4 @@
+import { isCountryCode } from '@/lib/countries';
 /** Pure helpers of the drink calendar: Moscow days, streaks, month grids and form parsing. */
 export class DrinkCalendarError extends Error {}
 
@@ -12,7 +13,7 @@ export const STREAK_REPEAT_DAYS = 30;
 export function streakReward(length: number): number { return length * 10; }
 
 export interface DrinkStreak { start: string; end: string; length: number }
-export interface DrinkInput { day: string; name: string; brand?: string; flavor?: string; price: number | null; store: string | null }
+export interface DrinkInput { day: string; name: string; brand?: string; flavor?: string; price: number | null; store: string | null; country?: string | null }
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH = /^\d{4}-\d{2}$/;
@@ -110,7 +111,9 @@ export function parseDrinkForm(form: FormData, today: string): DrinkInput {
   const brand = String(form.get('brand') ?? '').trim(), flavor = String(form.get('flavor') ?? '').trim();
   const store = String(form.get('store') ?? '').trim();
   if (store.length > 80) throw new DrinkCalendarError('Название магазина — до 80 символов.');
-  return { day, name, ...(brand && flavor && brand.length <= 100 && flavor.length <= 200 ? { brand, flavor } : {}), price: parseDrinkPrice(form.get('price')), store: store || null };
+  const country = String(form.get('country') ?? '').trim();
+  if (country && !isCountryCode(country)) throw new DrinkCalendarError('Выберите страну из списка.');
+  return { day, name, ...(brand && flavor && brand.length <= 100 && flavor.length <= 200 ? { brand, flavor } : {}), price: parseDrinkPrice(form.get('price')), store: store || null, country: country || null };
 }
 
 export function pluralRu(count: number, one: string, few: string, many: string): string {

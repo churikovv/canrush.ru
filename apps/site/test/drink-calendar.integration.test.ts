@@ -12,8 +12,8 @@ const { addDays } = await import('../src/lib/drink-calendar-fields');
 
 const owner = randomUUID();
 const start = '2031-03-01';
-const drink = (day: string, extra: Partial<{ brand: string; flavor: string; price: number; store: string }> = {}) =>
-  ({ day, name: 'Свой напиток', price: extra.price ?? null, store: extra.store ?? null, ...(extra.brand ? { brand: extra.brand, flavor: extra.flavor! } : {}) });
+const drink = (day: string, extra: Partial<{ brand: string; flavor: string; price: number; store: string; country: string }> = {}) =>
+  ({ day, name: 'Свой напиток', price: extra.price ?? null, store: extra.store ?? null, country: extra.country ?? null, ...(extra.brand ? { brand: extra.brand, flavor: extra.flavor! } : {}) });
 const xp = async (reason: string) => (await pool.query<{ key: string; points: number }>('select "sourceKey" as key, points from "profileExperience" where "userId" = $1 and reason = $2 order by "sourceKey"', [owner, reason])).rows;
 
 beforeAll(async () => {
@@ -24,13 +24,14 @@ afterAll(async () => { await pool.query('delete from "user" where id = $1', [own
 describe.sequential('drink calendar storage', () => {
   it('links catalog drinks on the server and keeps private notes from other viewers', async () => {
     // The first can pays the day XP and the "first sip" tag with its own XP, and reports both for the celebration card.
-    expect(await calendar.addDrink(owner, drink(start, { brand: 'Burn', flavor: 'original', price: 12990, store: 'Магнит' }), start)).toEqual({ streak: 1, xp: 30, tags: ['drink-start'] });
+    expect(await calendar.addDrink(owner, drink(start, { brand: 'Burn', flavor: 'original', price: 12990, store: 'Магнит', country: 'DE' }), start)).toEqual({ streak: 1, xp: 30, tags: ['drink-start'] });
     expect(await calendar.addDrink(owner, drink(start, { brand: 'Fake', flavor: 'nope' }), start)).toEqual({ streak: 1, xp: 0, tags: [] });
     const own = await calendar.getDrinkEntries(owner, start, start, true, true);
     expect(own.map(entry => [entry.name, entry.brand, entry.price, entry.store])).toEqual([['Burn · Оригинальный', 'Burn', 12990, 'Магнит'], ['Свой напиток', null, null, null]]);
     expect(own[0]!.href).toMatch(/^\/catalog\/burn/);
     const visitor = await calendar.getDrinkEntries(owner, start, start, false);
-    expect(visitor[0]).toMatchObject({ price: null, store: null });
+    expect(own[0]!.country).toBe('DE');
+    expect(visitor[0]).toMatchObject({ price: null, store: null, country: null });
     expect(await calendar.getRecentDrinkStores(owner)).toEqual(['Магнит']);
   });
   it('pays day XP once per day and milestone bonuses once per streak, then grants calendar tags', async () => {

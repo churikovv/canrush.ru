@@ -7,6 +7,7 @@ import { deleteDrinkAction } from '@/app/profile/calendar-actions';
 import type { DrinkEntry } from '@/lib/drink-calendar';
 import { canEditDay, cans, dayDiff, dayTitle, days, flameTier, streakOn, type DrinkStreak } from '@/lib/drink-calendar-fields';
 import { StreakFlame } from '@/components/streak-flame';
+import { countryFlag, countryName } from '@/lib/countries';
 import { formatPrice } from '@/lib/market-fields';
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -106,7 +107,7 @@ function DrinkDay({ day, list, streaks, restored, today, isOwn, onClose }: { day
     {list.length > 0 ? <ul className="drink-day-list">{list.map(entry => <li key={entry.id}>
       {entry.cover ? <Image src={entry.cover} width={48} height={48} alt="" unoptimized={local(entry.cover)} /> : <span className="drink-day-cover" aria-hidden="true">⚡</span>}
       <span className="drink-day-text">{entry.href ? <Link href={entry.href}>{entry.name}</Link> : <strong>{entry.name}</strong>}
-        <small>{[entry.brand ? 'Из каталога' : 'Свой напиток', isOwn && entry.price !== null ? formatPrice(entry.price) : null, isOwn ? entry.store : null].filter(Boolean).join(' · ')}</small></span>
+        <small>{[entry.brand ? 'Из каталога' : 'Свой напиток', isOwn && entry.price !== null ? formatPrice(entry.price) : null, isOwn ? entry.store : null, isOwn && entry.country ? `${countryFlag(entry.country)} ${countryName(entry.country)}` : null].filter(Boolean).join(' · ')}</small></span>
       {editable && <button type="button" className="drink-day-delete" disabled={pending} onClick={() => remove(entry.id)} aria-label={`Удалить ${entry.name}`}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
       </button>}

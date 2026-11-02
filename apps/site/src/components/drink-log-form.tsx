@@ -3,6 +3,7 @@ import { BottomSheet, BottomSheetHead } from '@/components/bottom-sheet';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { addDrinkAction, type DrinkActionState } from '@/app/profile/calendar-actions';
+import { CountryInput } from '@/components/country-input';
 import { DrinkBird } from '@/components/drink-bird';
 import { FormAlert } from '@/components/form-alert';
 import { StoreDrinkPicker } from '@/components/store-drink-picker';
@@ -17,7 +18,7 @@ const OPEN_HASH = '#add-drink';
 
 /**
  * «Отметить» on the drink calendar: a floating button over the tab bar that opens the form as a sheet, one step at a
- * time — the drink, the day (today or yesterday), then optional price and store. Every value goes to the action from
+ * time — the drink, the day (today or yesterday), then optional price, store and country. Every value goes to the action from
  * state through hidden inputs: React resets the form's DOM after an action.
  */
 export function DrinkLogForm({ options, stores, today, yesterday }: { options: StoreDrinkOption[]; stores: string[]; today: string; yesterday: string }) {
@@ -28,11 +29,12 @@ export function DrinkLogForm({ options, stores, today, yesterday }: { options: S
   const [day, setDay] = useState(today);
   const [price, setPrice] = useState('');
   const [store, setStore] = useState('');
+  const [country, setCountry] = useState('');
   const [handled, setHandled] = useState(state.at);
   const [done, setDone] = useState<DrinkActionState['success'] | null>(null);
   if (state.at !== handled) {
     setHandled(state.at);
-    if (state.success) { setDone(state.success); setDrink(null); setDay(today); setPrice(''); setStore(''); setStep(0); }
+    if (state.success) { setDone(state.success); setDrink(null); setDay(today); setPrice(''); setStore(''); setCountry(''); setStep(0); }
   }
 
   function open() { setDone(null); dialog.current?.showModal(); }
@@ -83,6 +85,7 @@ export function DrinkLogForm({ options, stores, today, yesterday }: { options: S
         <input type="hidden" name="day" value={day} />
         <input type="hidden" name="price" value={price} />
         <input type="hidden" name="store" value={store} />
+        <input type="hidden" name="country" value={country} />
 
         <section className="drink-add-step" hidden={step !== 0}>
           <p className="drink-add-hint">Найдите энергетик в каталоге или впишите свой.</p>
@@ -105,7 +108,7 @@ export function DrinkLogForm({ options, stores, today, yesterday }: { options: S
         </section>
 
         <section className="drink-add-step" hidden={step !== 2}>
-          <p className="drink-add-hint">Необязательно. Цену и магазин видите только вы — из них складываются траты за месяц.</p>
+          <p className="drink-add-hint">Необязательно. Цену, магазин и страну видите только вы, из цен складываются траты за месяц.</p>
           <div className="drink-log-row">
             <div className="drink-log-field">
               <label htmlFor="drink-log-price">Цена, ₽</label>
@@ -116,6 +119,10 @@ export function DrinkLogForm({ options, stores, today, yesterday }: { options: S
               <input id="drink-log-store" list="drink-log-stores" autoComplete="off" placeholder="Пятёрочка у дома" maxLength={80} value={store} onChange={event => setStore(event.target.value)} />
               <datalist id="drink-log-stores">{stores.map(item => <option key={item} value={item} />)}</datalist>
             </div>
+          </div>
+          <div className="drink-log-field">
+            <label htmlFor="drink-log-country">Страна производства</label>
+            <CountryInput inputId="drink-log-country" value={country} onChange={setCountry} disabled={pending} />
           </div>
         </section>
 

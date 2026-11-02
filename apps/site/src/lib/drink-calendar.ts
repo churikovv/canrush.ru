@@ -9,7 +9,7 @@ import {
   moscowDay, reachedMilestones, streakOn, streakReward, streakRestore, type DrinkInput, type DrinkStreak, type StreakRestore,
 } from '@/lib/drink-calendar-fields';
 
-export interface DrinkEntry { id: string; day: string; name: string; brand: string | null; flavor: string | null; price: number | null; store: string | null; href?: string; cover?: string }
+export interface DrinkEntry { id: string; day: string; name: string; brand: string | null; flavor: string | null; price: number | null; store: string | null; country: string | null; href?: string; cover?: string }
 export interface DrinkOverview {
   today: string; dayCounts: Record<string, number>; streaks: DrinkStreak[]; current: DrinkStreak | null; best: number; total: number;
   /** Days brought back with «Вернуть огонёк»: streak days without a can. */
@@ -83,7 +83,7 @@ export async function restoreStreak(userId: string, today = moscowDay()): Promis
 /** Cans in [from, to]. Price and store are the owner's private notes and stay out of other viewers' pages. */
 export async function getDrinkEntries(userId: string, from: string, to: string, includePrivate: boolean, withCatalog = false): Promise<DrinkEntry[]> {
   const { rows } = await getPool().query<DrinkEntry>(`select id::text, day::text as day, name, brand, flavor,
-      case when $4::boolean then price end as price, case when $4::boolean then store end as store
+      case when $4::boolean then price end as price, case when $4::boolean then store end as store, case when $4::boolean then country end as country
     from "drinkLog" where "userId" = $1 and day between $2::date and $3::date order by day, "createdAt", id`, [userId, from, to, includePrivate]);
   if (!withCatalog || !rows.some(row => row.brand)) return rows;
   const options = new Map((await storeDrinkOptions()).map(option => [catalogKey(option.brand, option.flavor), option]));
@@ -121,8 +121,8 @@ export async function addDrink(userId: string, input: DrinkInput, today = moscow
     await client.query('select 1 from "user" where id = $1 for no key update', [userId]);
     const count = await client.query<{ count: number }>('select count(*)::int as count from "drinkLog" where "userId" = $1 and day = $2::date', [userId, input.day]);
     if ((count.rows[0]?.count ?? 0) >= DRINKS_PER_DAY) throw new DrinkCalendarError(`За один день можно отметить не больше ${DRINKS_PER_DAY} банок.`);
-    await client.query('insert into "drinkLog" ("userId", day, name, brand, flavor, price, store) values ($1, $2::date, $3, $4, $5, $6, $7)',
-      [userId, input.day, name, brand ?? null, flavor ?? null, input.price, input.store]);
+    await client.query('insert into "drinkLog" ("userId", day, name, brand, flavor, price, store, country) values ($1, $2::date, $3, $4, $5, $6, $7, $8)',
+      [userId, input.day, name, brand ?? null, flavor ?? null, input.price, input.store, input.country ?? null]);
     streak = streakOn(drinkStreaks(await streakDays(client, userId)), input.day);
     const awards: [string, string, number][] = [['drink-day', input.day, DRINK_DAY_XP]];
     if (streak) for (const goal of reachedMilestones(streak)) awards.push(['drink-streak', `${streak.start}:${goal}`, streakReward(goal)]);

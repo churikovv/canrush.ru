@@ -832,6 +832,8 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 .drink-log-field > input { width: 100%; min-width: 0; min-height: 48px; padding: 12px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--theme-text, #252929); font: inherit; font-size: 1rem; }
 .drink-log-field > input:focus-visible { outline: 2px solid #006eff; outline-offset: 3px; }
 .drink-log-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 12px; }
+/* Поле страны стоит внизу листа: вниз список ушёл бы за край экрана и под клавиатуру. */
+.bottom-sheet.drink-add-sheet .country-input-options { top: auto; bottom: calc(100% + 6px); max-height: 240px; }
 .drink-log-chosen { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 8px 8px 10px; border: 1px solid #006eff; border-radius: 10px; background: var(--theme-subtle, #f3f8ff); }
 .drink-log-chosen img { flex: none; width: 40px; height: 40px; border-radius: 8px; object-fit: contain; background: #fff; }
 .drink-log-chosen > span:not(.store-drink-cover) { display: grid; flex: 1; min-width: 0; }

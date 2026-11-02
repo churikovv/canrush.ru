@@ -10,7 +10,7 @@ const ALL = [...FREQUENT_COUNTRIES, ...OTHER_COUNTRIES];
  * typing filters by name, a pick puts the flag in front. The field never keeps free text — leaving it with an unknown
  * name goes back to the last chosen country; × clears it.
  */
-export function CountryInput({ value, onChange, disabled, invalid, describedBy }: { value: string; onChange: (code: string) => void; disabled: boolean; invalid?: boolean; describedBy?: string }) {
+export function CountryInput({ inputId = 'review-country', value, onChange, disabled, invalid, describedBy }: { inputId?: string; value: string; onChange: (code: string) => void; disabled: boolean; invalid?: boolean; describedBy?: string }) {
   const id = useId();
   const selected = countryName(value) ?? '';
   const [query, setQuery] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export function CountryInput({ value, onChange, disabled, invalid, describedBy }
   return <div className="country-input" data-open={shown || undefined}>
     <div className="country-input-field">
       <span className="country-input-flag" aria-hidden="true">{value && query === null ? countryFlag(value) : '🌍'}</span>
-      <input id="review-country" type="text" role="combobox" autoComplete="off" disabled={disabled} placeholder="Не указана"
+      <input id={inputId} type="text" role="combobox" autoComplete="off" disabled={disabled} placeholder="Не указана"
         value={query ?? selected} aria-expanded={shown} aria-controls={`${id}-list`} aria-autocomplete="list" aria-invalid={invalid || undefined}
         aria-describedby={describedBy} aria-activedescendant={shown ? `${id}-option-${current}` : undefined}
         onChange={event => { setQuery(event.target.value); setOpen(true); setActive(0); }}

@@ -46,7 +46,11 @@ describe('drink calendar helpers', () => {
     form.set('day', '2026-10-15'); form.set('name', 'Burn');
     expect(() => parseDrinkForm(form, '2026-10-17')).toThrow('сегодня или вчера');
     form.set('day', '2026-10-17'); form.set('brand', 'Burn'); form.set('flavor', 'original'); form.set('store', '  ');
-    expect(parseDrinkForm(form, '2026-10-17')).toEqual({ day: '2026-10-17', name: 'Burn', brand: 'Burn', flavor: 'original', price: null, store: null });
+    expect(parseDrinkForm(form, '2026-10-17')).toEqual({ day: '2026-10-17', name: 'Burn', brand: 'Burn', flavor: 'original', price: null, store: null, country: null });
+    form.set('country', 'DE');
+    expect(parseDrinkForm(form, '2026-10-17').country).toBe('DE');
+    form.set('country', 'Германия');
+    expect(() => parseDrinkForm(form, '2026-10-17')).toThrow('страну');
   });
   it('sums a month and counts only priced cans towards spending', () => {
     expect(monthSummary([
