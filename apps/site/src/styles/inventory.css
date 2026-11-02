@@ -25,7 +25,7 @@
 /* The card's size comes from the stage's own height (a size container): guessed from the window, it overflowed the
    stage whenever the panels around took more room (a long name, a page restored by «back»). */
 .inv-stage { --slide: min(70vw, 340px, calc((100cqh - 28px) * 5 / 7)); position: relative; display: grid; align-items: center; min-height: 0; container-type: size; }
-.inv-track { display: flex; align-items: center; gap: 14px; height: 100%; padding-inline: calc(50% - var(--slide) / 2); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; outline: 0; }
+.inv-track { display: flex; align-items: center; gap: 14px; height: 100%; padding-inline: calc(50% - var(--slide) / 2); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; touch-action: pan-x; outline: 0; }
 .inv-track::-webkit-scrollbar { display: none; }
 /* Размер и сдвиг кнопок здесь — свойствами `scale` и `translate`, а не `transform`: отклик на нажатие (`SiteMotionProvider`)
    пишет кнопке инлайн `transform` и оставляет `transform: none`, который перебивал бы CSS — стрелка съезжала вниз, а
@@ -34,7 +34,11 @@
 .inv-slide[data-pos="near"] { opacity: .6; }
 .inv-slide[data-pos="active"] { opacity: 1; scale: none; filter: drop-shadow(0 22px 36px rgb(0 0 0 / .55)); }
 .inv-slide:focus-visible { outline: 2px solid #fff; outline-offset: 6px; border-radius: 24px; }
-.inv-slide-blank { display: block; aspect-ratio: 5 / 7; border-radius: 22px; background: rgb(255 255 255 / .04); }
+/* За окном живых карточек — лёгкая обложка того же размера: при быстром листании видно банки, а вёрстка не меняется. */
+.inv-slide-lite { position: relative; display: grid; place-items: center; aspect-ratio: 5 / 7; box-sizing: border-box; border: 2px solid color-mix(in srgb, var(--rarity-mid, #fff) 55%, transparent); border-radius: 22px; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--rarity-mid, #fff) 18%, transparent), rgb(255 255 255 / .03) 70%); }
+/* Фото из магазина как есть, плиткой: вырезать фон у каждой пролетающей банки — лишняя работа сервера. */
+.inv-slide-lite img { width: 78%; height: auto; aspect-ratio: 1; border-radius: 16px; background: #fff; object-fit: contain; box-shadow: 0 10px 24px -12px rgb(0 0 0 / .7); -webkit-user-drag: none; }
+.inv-slide-lite b { color: rgb(255 255 255 / .45); font-size: 2.5rem; font-weight: 900; }
 .inv-arrow { display: none; }
 
 .inv-info { display: grid; justify-items: center; gap: 8px; padding-inline: 16px; text-align: center; }

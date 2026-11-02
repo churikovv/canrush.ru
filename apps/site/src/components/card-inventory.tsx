@@ -17,8 +17,10 @@ type Filter = 'all' | Rarity | 'missing';
 /** Filter chips name groups of cards, so in the plural. */
 const RARITY_PLURAL: Record<Rarity, string> = { common: 'Обычные', rare: 'Редкие', epic: 'Эпические', legendary: 'Легендарные' };
 
-/** Slides kept as real cards around the one in focus; the rest are empty boxes of the same width, so scrolling stays put. */
+/** Slides kept as real cards around the one in focus; the rest are light covers of the same size, so scrolling stays put. */
 const WINDOW = 3;
+/** How long the strip must be still before the card in focus changes (`scrollend` comes sooner where it exists). */
+const SETTLE_MS = 120;
 const ARROW = (turn: number) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: `rotate(${turn}deg)` }}><path d="m15 5-7 7 7 7" /></svg>;
 const order = (a: InventoryCard, b: InventoryCard) => rarityRank(b.rarity) - rarityRank(a.rarity) || a.brand.localeCompare(b.brand, 'ru') || a.name.localeCompare(b.name, 'ru');
 
@@ -39,7 +41,9 @@ export function CardInventory({ cards, isOwn, shards, owner, backHref }: { cards
   const track = useRef<HTMLDivElement>(null);
   const rail = useRef<HTMLOListElement>(null);
   const brands = useRef<HTMLDialogElement>(null);
-  const frame = useRef(0);
+  const settle = useRef(0);
+  // The card an arrow or a key is taking the strip to: a second press before it arrives goes one further.
+  const aim = useRef<number | null>(null);
 
   const owned = useMemo(() => cards.filter(card => card.owned), [cards]);
   const counts = useMemo(() => Object.fromEntries(RARITIES.map(rarity => [rarity, owned.filter(card => card.rarity === rarity).length])) as Record<Rarity, number>, [owned]);
@@ -57,15 +61,28 @@ export function CardInventory({ cards, isOwn, shards, owner, backHref }: { cards
     const gap = track.current ? parseFloat(getComputedStyle(track.current).columnGap) || 0 : 0;
     return first ? first.offsetWidth + gap : 1;
   };
-  function go(target: number, smooth = true) {
+  function go(target: number) {
     const next = Math.max(0, Math.min(list.length - 1, target));
-    track.current?.scrollTo({ left: next * step(), behavior: smooth ? 'smooth' : 'auto' });
-    setActive(next);
+    aim.current = next;
+    track.current?.scrollTo({ left: next * step(), behavior: 'smooth' });
   }
+  const goBy = (shift: number) => go((aim.current ?? index) + shift);
+  /**
+   * The card in focus changes only when the strip comes to rest. Re-rendering the slides while a flick was still moving
+   * (a new card in focus, real cards mounted at the window's edge, their look starting to move) changed the layout inside
+   * the snap container, and the phone snapped back to the card it had left: a fast swipe «sometimes came back».
+   */
   function scrolled() {
-    cancelAnimationFrame(frame.current);
-    frame.current = requestAnimationFrame(() => { if (track.current) setActive(Math.round(track.current.scrollLeft / step())); });
+    window.clearTimeout(settle.current);
+    settle.current = window.setTimeout(rested, SETTLE_MS);
   }
+  function rested() {
+    window.clearTimeout(settle.current);
+    if (!track.current) return;
+    aim.current = null;
+    setActive(Math.round(track.current.scrollLeft / step()));
+  }
+  useEffect(() => () => window.clearTimeout(settle.current), []);
   function choose(next: Filter, nextBrand = brand) {
     setFilter(next);
     setBrand(nextBrand);
@@ -116,19 +133,22 @@ export function CardInventory({ cards, isOwn, shards, owner, backHref }: { cards
 
     {list.length ? <>
       <div className="inv-stage">
-        <button type="button" className="can-plate inv-icon-btn inv-arrow" onClick={() => go(index - 1)} disabled={index === 0} aria-label="Предыдущая карточка">{ARROW(0)}</button>
-        <div className="inv-track" ref={track} onScroll={scrolled} tabIndex={0} aria-label="Карточки"
-          onKeyDown={event => { if (event.key === 'ArrowRight') { event.preventDefault(); go(index + 1); } if (event.key === 'ArrowLeft') { event.preventDefault(); go(index - 1); } }}>
+        <button type="button" className="can-plate inv-icon-btn inv-arrow" onClick={() => goBy(-1)} disabled={index === 0} aria-label="Предыдущая карточка">{ARROW(0)}</button>
+        <div className="inv-track" ref={track} onScroll={scrolled} onScrollEnd={rested} tabIndex={0} aria-label="Карточки"
+          onKeyDown={event => { if (event.key === 'ArrowRight') { event.preventDefault(); goBy(1); } if (event.key === 'ArrowLeft') { event.preventDefault(); goBy(-1); } }}>
           {list.map((card, at) => {
             const near = Math.abs(at - index);
-            return <button key={`${card.brand}\u0000${card.flavor}`} type="button" className="inv-slide" data-pos={near === 0 ? 'active' : near === 1 ? 'near' : undefined} tabIndex={near === 0 ? 0 : -1}
+            // `motion-local`: no press animation — it wrote an inline transform on the slide from the first touch of a swipe.
+            return <button key={`${card.brand}\u0000${card.flavor}`} type="button" className="inv-slide motion-local" data-pos={near === 0 ? 'active' : near === 1 ? 'near' : undefined} tabIndex={near === 0 ? 0 : -1}
               aria-label={card.owned ? `${card.brand}, ${card.name}${near === 0 ? ' — открыть крупно' : ''}` : `${card.brand}, ещё нет в коллекции`}
               onClick={() => (near === 0 ? card.owned && setInspecting(card) : go(at))}>
-              {near > WINDOW ? <span className="inv-slide-blank" /> : card.owned ? <BigCard card={card} live={near === 0} /> : <MissingBigCard brand={card.brand} />}
+              {near > WINDOW
+                ? <span className="inv-slide-lite" data-rarity={card.owned ? card.rarity : undefined}>{card.owned ? <Image src={card.cover} width={160} height={160} sizes="160px" unoptimized alt="" loading="lazy" draggable={false} /> : <b aria-hidden="true">?</b>}</span>
+                : card.owned ? <BigCard card={card} live={near === 0} /> : <MissingBigCard brand={card.brand} />}
             </button>;
           })}
         </div>
-        <button type="button" className="can-plate inv-icon-btn inv-arrow" onClick={() => go(index + 1)} disabled={index >= list.length - 1} aria-label="Следующая карточка">{ARROW(180)}</button>
+        <button type="button" className="can-plate inv-icon-btn inv-arrow" onClick={() => goBy(1)} disabled={index >= list.length - 1} aria-label="Следующая карточка">{ARROW(180)}</button>
       </div>
 
       {current && <section className="inv-info" aria-live="polite">
@@ -147,7 +167,7 @@ export function CardInventory({ cards, isOwn, shards, owner, backHref }: { cards
 
       <ol className="inv-rail" ref={rail} aria-label="Все карточки подряд">
         {list.map((card, at) => <li key={`${card.brand}\u0000${card.flavor}`}>
-          <button type="button" className="inv-thumb" data-index={at} data-rarity={card.owned ? card.rarity : undefined} aria-current={at === index || undefined} aria-label={card.owned ? `${card.brand}, ${card.name}` : `${card.brand}, нет в коллекции`} onClick={() => go(at)}>
+          <button type="button" className="inv-thumb motion-local" data-index={at} data-rarity={card.owned ? card.rarity : undefined} aria-current={at === index || undefined} aria-label={card.owned ? `${card.brand}, ${card.name}` : `${card.brand}, нет в коллекции`} onClick={() => go(at)}>
             {card.owned ? <Image src={card.cover} width={64} height={64} sizes="56px" unoptimized alt="" loading="lazy" /> : <span className="inv-thumb-missing">?</span>}
           </button>
         </li>)}
