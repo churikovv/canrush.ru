@@ -80,7 +80,7 @@
 .article-drink-arrow { color: var(--color-brand); font-size: 1.25rem; }
 .article-moderation { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--color-control); border-radius: 20px; }
 .article-moderation label { display: grid; gap: 8px; font-size: .875rem; }
-.article-moderation textarea { width: 100%; min-height: 72px; padding: 12px; border: 1px solid var(--color-control); border-radius: 12px; background: var(--color-surface); color: var(--color-text); font: inherit; resize: vertical; }
+.article-moderation textarea { width: 100%; min-height: 72px; padding: 12px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-text); font: inherit; resize: vertical; }
 .article-moderation-actions, .article-owner-buttons, .article-confirm > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .article-moderation-actions .community-button, .article-owner-actions .community-button { min-height: 48px; padding-inline: 20px; }
 .article-owner-actions { display: grid; gap: 12px; padding-top: 16px; border-top: 1px solid var(--color-control); }
@@ -221,7 +221,7 @@
 .ae-channel { display: grid; gap: 8px; padding: 16px 0 8px; border-top: 1px solid var(--color-control); }
 .ae-channel > label { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 700; }
 .ae-channel-row { display: flex; align-items: center; gap: 8px; }
-.ae-channel-field { display: flex; flex: 1; align-items: center; min-width: 0; min-height: 48px; padding: 0 12px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); }
+.ae-channel-field { display: flex; flex: 1; align-items: center; min-width: 0; min-height: 48px; padding: 0 12px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); }
 .ae-channel-field:focus-within { border-color: var(--color-brand); }
 .ae-channel-field > span { color: var(--color-muted-strong); }
 .ae-channel-field input { flex: 1; min-width: 0; height: 46px; border: 0; background: none; color: var(--color-ink); font: inherit; outline: none; }

@@ -8,9 +8,6 @@
   color: var(--color-muted-strong);
   opacity: 1;
 }
-.profile-edit-field input:hover:not(:read-only) {
-  border-color: var(--color-muted);
-}
 .profile-edit-field input:focus-visible {
   border-color: var(--color-ink);
   background: var(--color-surface);
@@ -232,7 +229,7 @@ a.profile-about-row:hover .profile-about-arrow { color: var(--theme-link, #0058c
 .profile-editor-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 20px; border: 0; padding: 0; margin: 0; min-width: 0; }
 .profile-editor .profile-edit-field { min-width: 0; }
 .profile-editor .profile-edit-field label { font-size: .875rem; font-weight: normal; }
-.profile-editor .profile-edit-field input { min-height: 48px; border: 1px solid var(--theme-line, #c6ccd4); border-radius: 8px; background: var(--theme-panel, #ffffff); padding: 12px; font-size: 1rem; }
+.profile-editor .profile-edit-field input { min-height: 48px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); padding: 12px; font-size: 1rem; }
 .profile-editor .profile-edit-field input:read-only { background: var(--theme-panel, #f5f6f8); cursor: default; }
 .profile-editor .field-help { margin: 0; font-size: .75rem; line-height: 1.5; }
 .profile-image-fields { border: 0; margin: 20px 0 0; padding: 0; min-width: 0; }
@@ -467,8 +464,7 @@ a.profile-hub-row { text-decoration: none; }
 .profile-editor-fields .profile-edit-field-wide { grid-column: 1 / -1; }
 .profile-editor-count { padding: 2px 8px; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .8125rem; font-weight: 600; }
 .profile-editor-link { justify-self: start; font-size: .875rem; font-weight: 600; }
-.profile-input-prefix { display: flex; align-items: center; min-width: 0; min-height: 48px; border: 1px solid var(--theme-line, #c6ccd4); border-radius: 8px; background: var(--theme-panel, #ffffff); transition: border-color 150ms ease-out; }
-.profile-input-prefix:hover { border-color: var(--color-muted-strong); }
+.profile-input-prefix { display: flex; align-items: center; min-width: 0; min-height: 48px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); transition: border-color 150ms ease-out; }
 .profile-input-prefix:focus-within { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 .profile-input-prefix:has(input[aria-invalid="true"]) { border-color: var(--color-danger, #a61b14); }
 .profile-input-prefix > span { flex: 0 0 auto; padding-left: 12px; color: var(--color-muted-strong); font-size: 1rem; user-select: none; }
@@ -811,13 +807,7 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 /* Without the tab bar (≥960 px) the button stops floating and sits at the right of the bird banner, next to the streak it feeds. */
 @media (min-width: 960px) { .drink-add-fab { position: static; flex: none; align-self: center; margin-left: auto; box-shadow: 0 8px 20px -10px rgb(0 60 160 / .55); } .drink-calendar-page { padding-bottom: 0; } }
 .drink-calendar-page { padding-bottom: 72px; }
-.drink-add-sheet { width: min(520px, calc(100vw - 32px)); min-height: min(560px, calc(100dvh - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 20px; border: 0; border-radius: 24px; background: var(--theme-panel, #fff); color: var(--theme-text, #111); overflow: auto; }
-.drink-add-sheet::backdrop { background: rgb(10 14 22 / .55); }
-.drink-add-sheet[open] { animation: drink-sheet-in 220ms cubic-bezier(.2,.8,.2,1); }
-@keyframes drink-sheet-in { from { opacity: 0; transform: translateY(24px); } }
-.drink-add-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.drink-add-head h2 { margin: 0; font-size: 1.25rem; }
-.drink-add-close { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin: -8px -8px -8px 0; border: 0; border-radius: 999px; background: var(--theme-subtle, #f3f4f6); color: var(--theme-text, #111); cursor: pointer; }
+.bottom-sheet.drink-add-sheet { min-height: min(560px, calc(100dvh - 32px)); }
 .drink-add-progress { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
 .drink-add-progress li { display: grid; justify-items: start; gap: 6px; min-width: 0; padding-top: 8px; border-top: 4px solid var(--theme-subtle, #e5e8ec); color: var(--theme-muted, #59616b); font-size: .75rem; font-weight: 700; }
 .drink-add-progress li span { display: none; }
@@ -833,13 +823,13 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 .drink-add-actions .community-button { min-height: 48px; padding-inline: 24px; font-weight: 700; }
 .drink-log-celebrate .drink-add-actions { flex-basis: 100%; }
 @media (max-width: 639px) {
-  .drink-add-sheet { width: 100vw; max-width: none; min-height: min(600px, 88dvh); max-height: 92dvh; margin: auto 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; }
+  .bottom-sheet.drink-add-sheet { min-height: min(600px, 88dvh); }
   .drink-add-actions { flex-direction: column; }
   .drink-add-actions .community-button { width: 100%; }
 }
 .drink-log-field { display: grid; gap: 6px; min-width: 0; }
 .drink-log-field > label { color: var(--theme-text, #111); font-weight: 600; font-size: .875rem; }
-.drink-log-field > input { width: 100%; min-width: 0; min-height: 48px; padding: 12px; border: 1px solid var(--theme-line, #c6cccc); border-radius: 8px; background: var(--theme-panel, #fff); color: var(--theme-text, #252929); font: inherit; font-size: 1rem; }
+.drink-log-field > input { width: 100%; min-width: 0; min-height: 48px; padding: 12px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--theme-text, #252929); font: inherit; font-size: 1rem; }
 .drink-log-field > input:focus-visible { outline: 2px solid #006eff; outline-offset: 3px; }
 .drink-log-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 12px; }
 .drink-log-chosen { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 8px 8px 10px; border: 1px solid #006eff; border-radius: 10px; background: var(--theme-subtle, #f3f8ff); }
@@ -916,9 +906,7 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 .drink-month-legend .drink-month-count { margin-left: 8px; }
 
 /* A day opens as its own sheet: a tinted head with the cans and three figures, then the list of cans. */
-.drink-day-sheet { width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0 0 20px; border: 0; border-radius: 28px; background: var(--theme-subtle, #f3f4f6); color: var(--theme-text, #111); overflow: auto; }
-.drink-day-sheet::backdrop { background: rgb(10 14 22 / .55); }
-.drink-day-sheet[open] { animation: drink-sheet-in 220ms cubic-bezier(.2,.8,.2,1); }
+.bottom-sheet.drink-day-sheet { width: min(480px, calc(100vw - 32px)); padding: 0 0 20px; border-radius: 28px; background: var(--theme-subtle, #f3f4f6); }
 .drink-day-hero { position: relative; display: grid; justify-items: center; gap: 4px; padding: 20px 20px 0; border-radius: 0 0 28px 28px; background: linear-gradient(180deg, color-mix(in srgb, #006eff 22%, var(--theme-panel, #fff)), color-mix(in srgb, #006eff 10%, var(--theme-panel, #fff))); text-align: center; }
 .drink-day-back { position: absolute; left: 16px; top: 16px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--theme-panel, #fff) 70%, transparent); color: var(--theme-text, #111); cursor: pointer; box-shadow: 0 1px 4px rgb(0 0 0 / .08); }
 .drink-day-covers { display: flex; justify-content: center; align-items: flex-end; min-height: 112px; margin: 8px 0 4px; }
@@ -962,7 +950,7 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 .drink-day-add { display: flex; align-items: center; justify-content: center; min-height: 48px; margin: 16px 16px 0; border-radius: 999px; background: #006eff; color: #fff; font-weight: 700; text-decoration: none; }
 .drink-day-add:hover { background: #0058cc; }
 @media (max-width: 639px) {
-  .drink-day-sheet { width: 100vw; max-width: none; max-height: 92dvh; margin: auto 0 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); border-radius: 28px 28px 0 0; }
+  .bottom-sheet.drink-day-sheet { width: 100vw; padding-bottom: calc(20px + env(safe-area-inset-bottom)); border-radius: 28px 28px 0 0; }
 }
 
 /* Month summary, compact: the favourite drink as one row, the rest as pills, two actions side by side. */
@@ -1099,7 +1087,7 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
   .brand-collection-filters button { flex: none; }
 }
 /* Profile description: a textarea styled like the editor inputs, shown under the name in the header. */
-.profile-editor .profile-edit-field textarea { width: 100%; min-height: 72px; resize: vertical; border: 1px solid var(--theme-line, #c6ccd4); border-radius: 8px; background: var(--theme-panel, #ffffff); color: var(--color-text); padding: 12px; font: inherit; font-size: 1rem; line-height: 1.4; }
+.profile-editor .profile-edit-field textarea { width: 100%; min-height: 72px; resize: vertical; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-text); padding: 12px; font: inherit; font-size: 1rem; line-height: 1.4; }
 .profile-editor .profile-edit-field textarea:focus-visible { outline: none; border-color: var(--color-ink); }
 .profile-editor .profile-edit-field textarea[aria-invalid="true"] { border-color: var(--color-danger); background: var(--color-danger-soft); }
 .community-name .community-bio { margin: 6px 0 0; max-width: 60ch; color: var(--color-text); font-size: .9375rem; line-height: 1.4; }
@@ -1277,12 +1265,6 @@ a.settings-row:focus-visible { outline: 2px solid var(--color-focus); outline-of
 
 /* Settings switches (notifications, the bot): an iOS-style toggle on the checkbox itself, so the form posts it as
    before. Off — a muted track that reads on every site and profile theme; on — the brand blue. */
-.settings-switch { position: relative; flex: none; appearance: none; width: 48px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--theme-muted, #59616b) 32%, transparent); cursor: pointer; transition: background-color 160ms ease-out; }
-.settings-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .3); transition: transform 160ms ease-out; }
-.settings-switch:checked { background: var(--color-brand, #006eff); }
-.settings-switch:checked::after { transform: translateX(20px); }
-.settings-switch:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .settings-switch, .settings-switch::after { transition: none; } }
 
 /* The save button of a settings panel is the main action: brand blue, full width on phones. */
 :root .profile-settings .community-button.settings-save { border-color: var(--color-brand, #006eff); background: var(--color-brand, #006eff); color: #fff; }

@@ -23,7 +23,7 @@ export function MoreActions({ label, children }: { label: string; children: Reac
   }, [open]);
 
   function onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') { event.stopPropagation(); setOpen(false); trigger.current?.focus(); return; }
+    if (event.key === 'Escape') { if (!open) return; event.preventDefault(); event.stopPropagation(); setOpen(false); trigger.current?.focus(); return; }
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
     event.preventDefault();
     const list = items();

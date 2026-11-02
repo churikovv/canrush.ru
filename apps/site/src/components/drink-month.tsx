@@ -1,4 +1,5 @@
 'use client';
+import { BottomSheet } from '@/components/bottom-sheet';
 import { useRef, useState, useTransition } from 'react';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
@@ -56,10 +57,9 @@ export function DrinkMonth({ weeks, entries, streaks, restored = [], today, isOw
       <p className="drink-month-legend" aria-hidden="true"><span className="drink-month-streak">3</span> день серии подряд <small className="drink-month-count">2</small> банки за день</p>
     </div>
 
-    <dialog ref={dialog} className="drink-day-sheet" aria-labelledby="drink-day-title" onClose={() => setShown(null)}
-      onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
+    <BottomSheet ref={dialog} className="drink-day-sheet" labelledBy="drink-day-title" onClose={() => setShown(null)}>
       {shown && <DrinkDay key={shown} day={shown} list={entries[shown] ?? []} streaks={streaks} restored={back.has(shown)} today={today} isOwn={isOwn} onClose={() => dialog.current?.close()} />}
-    </dialog>
+    </BottomSheet>
   </div>;
 }
 

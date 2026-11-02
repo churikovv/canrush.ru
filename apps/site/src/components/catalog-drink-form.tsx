@@ -5,6 +5,7 @@ import Link from '@/components/navigation-progress';
 import { FormAlert } from '@/components/form-alert';
 import { FormOptional, FormStep } from '@/components/form-step';
 import { MarketPhotoPicker } from '@/components/market-photo-picker';
+import { surviveNetworkError } from '@/lib/network-safe-action';
 import { submitCatalogDrinkAction } from '@/app/catalog/new/actions';
 import { CatalogDrinkBrandInput, CatalogDrinkFlavorInput, type PickedFlavor } from '@/components/catalog-drink-flavor-input';
 import { DRINK_JUICE_NAME, DRINK_SUGAR_NAME, DRINK_VOLUME_PRESETS, MAX_DRINK_EXTRA_PHOTOS, MAX_DRINK_FLAVORS, MAX_DRINK_FULL_NAME, MAX_DRINK_INGREDIENTS, MAX_DRINK_VOLUMES, volumeLabel, type DrinkSugar } from '@/lib/catalog-drink-fields';
@@ -51,7 +52,7 @@ export function DrinkDiscontinuedOption({ checked, onChange }: { checked: boolea
  */
 /** `inCabinet` — the business cabinet's form: the done screen leads back to the company's drinks. */
 export function CatalogDrinkForm({ brands, flavors, inCabinet = false, verified = false }: { brands: string[]; flavors: { key: string; label: string }[]; inCabinet?: boolean; verified?: boolean }) {
-  const [state, action, pending] = useActionState(submitCatalogDrinkAction, {});
+  const [state, action, pending] = useActionState(surviveNetworkError(submitCatalogDrinkAction), {});
   const [step, setStep] = useState(0);
   const [reached, setReached] = useState(0);
   const [problem, setProblem] = useState('');

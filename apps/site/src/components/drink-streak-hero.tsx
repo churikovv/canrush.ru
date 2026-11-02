@@ -1,4 +1,5 @@
 'use client';
+import { BottomSheet } from '@/components/bottom-sheet';
 import { useRef, type ReactNode } from 'react';
 import { StreakFire } from '@/components/streak-fire';
 import { StreakFlame } from '@/components/streak-flame';
@@ -47,8 +48,7 @@ export function DrinkStatsButton({ streak, alive, best, total, stats, isOwn, chi
       Статистика
     </button>
 
-    <dialog ref={sheet} className="drink-day-sheet drink-stats-sheet" aria-labelledby="drink-stats-title"
-      onClick={event => { if (event.target === event.currentTarget) sheet.current?.close(); }}>
+    <BottomSheet ref={sheet} className="drink-day-sheet drink-stats-sheet" labelledBy="drink-stats-title">
       <div className="drink-day-hero drink-stats-hero" data-flame={flameTier(Math.max(streak, 1))}>
         <button type="button" className="drink-day-back" onClick={() => sheet.current?.close()} aria-label="Закрыть">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg>
@@ -70,6 +70,6 @@ export function DrinkStatsButton({ streak, alive, best, total, stats, isOwn, chi
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2h8l-1 4H9L8 2Zm1 4h6l1 3v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9l1-3Z" /></svg></span>
           <span className="drink-day-info-text"><strong>{total} {pluralRu(total, 'банка', 'банки', 'банок')}</strong><small>Всего в трекере</small></span></li>
       </ul>
-    </dialog>
+    </BottomSheet>
   </>;
 }

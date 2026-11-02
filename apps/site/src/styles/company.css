@@ -18,7 +18,7 @@
 
 /* The wall: a composer for the team, then posts as rows with a PDF card. */
 .company-composer { display: grid; gap: 10px; padding: 12px; border-radius: 16px; background: var(--color-subtle); }
-.company-composer textarea { width: 100%; min-height: 64px; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--color-control); border-radius: 12px; background: var(--color-surface); color: var(--color-text); font: inherit; resize: vertical; }
+.company-composer textarea { width: 100%; min-height: 64px; box-sizing: border-box; padding: 10px 12px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-text); font: inherit; resize: vertical; }
 .company-publish { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
 .company-publish:disabled { opacity: .5; cursor: not-allowed; }
 @media (pointer: coarse) { .company-composer textarea { font-size: 1rem; } }
@@ -252,7 +252,7 @@ a.company-file:hover { border-color: var(--color-brand); }
 .company-award-fields { display: grid; gap: 10px; }
 .company-award-fields label { display: grid; gap: 6px; min-width: 0; font-size: .875rem; font-weight: 600; }
 .company-award-fields small { color: var(--color-muted-strong); font-weight: 500; }
-.company-award-fields input { width: 100%; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--color-control); border-radius: 12px; background: var(--color-surface); color: var(--color-text); font: inherit; font-weight: 400; }
+.company-award-fields input { width: 100%; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-text); font: inherit; font-weight: 400; }
 @media (pointer: coarse) { .company-award-fields input { font-size: 1rem; } }
 @media (min-width: 640px) {
   .company-awards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 14px; }

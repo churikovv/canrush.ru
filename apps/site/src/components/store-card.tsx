@@ -4,6 +4,7 @@ import Link from '@/components/navigation-progress';
 import { findCity } from '@canrush/shared';
 import { METRO, STOCK_LABELS, formatDistance, nearestStations, storeMapUrl, type MetroStation } from '@/lib/store-fields';
 import type { StoreItemView, StoreView } from '@/lib/store-catalog';
+import { StoreCopyButton } from './store-copy-button';
 import { StoreGallery } from './store-gallery';
 
 interface StationGroup { name: string; lines: MetroStation[]; km: number | null }
@@ -90,7 +91,7 @@ export function sortStoreCatalog(items:StoreItemView[]){
   return [...items].sort((a,b)=>STOCK_ORDER[a.availability]-STOCK_ORDER[b.availability]||(a.price??Infinity)-(b.price??Infinity)||a.name.localeCompare(b.name,'ru'));
 }
 /** Body of the store page: photos and prices in the main column, map and metro in a sticky aside. */
-export function StoreDetail({store,own,apiKey,map}:{store:StoreView;own:boolean;apiKey:string;map:ReactNode}){
+export function StoreDetail({store,own,signedIn,apiKey,map}:{store:StoreView;own:boolean;signedIn:boolean;apiKey:string;map:ReactNode}){
   const cheapest=cheapestPrice(store);const items=sortStoreCatalog(store.catalog);
   const updated=new Date(store.updatedAt).toLocaleDateString('ru-RU',{timeZone:'Europe/Moscow',day:'numeric',month:'long',year:'numeric'});
   return <article className="store-detail-body">
@@ -121,6 +122,7 @@ export function StoreDetail({store,own,apiKey,map}:{store:StoreView;own:boolean;
             <DrinkName item={item}/><strong>{item.price===null?'—':rub(item.price)}</strong>
           </li>)}</ul>:<p className="store-note">Участники пока не добавили напитки этого магазина.</p>}
           <p className="store-note">Обновлено {updated}. Наличие и цену уточняйте в магазине.</p>
+          {signedIn&&store.catalog.length>0&&<StoreCopyButton store={{id:store.id,name:store.name}} items={store.catalog.map(({name,price,availability,brand,flavor})=>({name,price,availability,...(brand!==undefined?{brand,flavor}:{})}))} own={own}/>}
         </section>
       </div>
       <aside className="store-detail-aside">

@@ -60,7 +60,9 @@ it('keeps photos private until moderation and validates retained ownership atomi
  await api.saveStore(owner,input,id,{retained:[photoId],photos:[]});
  expect(await api.getStorePhoto(photoId,null)).toBeNull();
  expect((await api.getStore(id))?.photos).toEqual([photoId]);
- await api.saveStore(owner,input,id,{retained:[],photos:[]});
+ await expect(api.saveStore(owner,input,id,{retained:[],photos:[]})).rejects.toThrow('фото');
+ expect((await api.getStore(id))?.photos).toEqual([photoId]);
+ await api.saveStore(admin,input,id,{retained:[],photos:[]},true);
  expect(await api.getStorePhoto(photoId,owner)).toBeNull();
 });
 it('stores an address-only point, its source and catalog links; the page follows moderation visibility',async()=>{

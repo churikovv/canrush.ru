@@ -30,6 +30,7 @@ export async function geocodeAddress(apiKey:string,query:string,center:[number,n
   const item=result.geoObjects.get(0);if(!item)return null;
   const [latitude,longitude]=item.geometry.getCoordinates();if(latitude===undefined||longitude===undefined)return null;
   const meta=item.properties.get('metaDataProperty') as {GeocoderMetaData?:{precision?:string}}|undefined;
+  if(meta?.GeocoderMetaData?.precision==='other')return null;
   return {latitude,longitude,address:item.getAddressLine?.()??String(item.properties.get('text')??''),precise:['exact','number','near'].includes(meta?.GeocoderMetaData?.precision??'')};
 }
 export interface StoreMapPoint {id:string;latitude:number;longitude:number;label?:string}

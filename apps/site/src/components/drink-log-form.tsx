@@ -1,4 +1,5 @@
 'use client';
+import { BottomSheet, BottomSheetHead } from '@/components/bottom-sheet';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { addDrinkAction, type DrinkActionState } from '@/app/profile/calendar-actions';
@@ -50,14 +51,8 @@ export function DrinkLogForm({ options, stores, today, yesterday }: { options: S
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
       Отметить
     </button>
-    <dialog ref={dialog} className="drink-add-sheet" aria-labelledby="drink-add-title" onClose={onClose}
-      onClick={event => { if (event.target === event.currentTarget) close(); }}>
-      <div className="drink-add-head">
-        <h2 id="drink-add-title">{done ? 'Готово' : 'Отметить энергетик'}</h2>
-        <button type="button" className="drink-add-close" onClick={close} aria-label="Закрыть">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
-        </button>
-      </div>
+    <BottomSheet ref={dialog} className="drink-add-sheet" labelledBy="drink-add-title" onClose={onClose}>
+      <BottomSheetHead id="drink-add-title" title={done ? 'Готово' : 'Отметить энергетик'} onClose={close} />
 
       {done ? <div className="drink-log-celebrate" role="status">
         <DrinkBird mood="happy" size={84} />
@@ -134,6 +129,6 @@ export function DrinkLogForm({ options, stores, today, yesterday }: { options: S
           {step > 0 && <button type="button" className="community-button community-button-secondary" disabled={pending} onClick={() => setStep(step - 1)}>Назад</button>}
         </div>
       </form>}
-    </dialog>
+    </BottomSheet>
   </>;
 }

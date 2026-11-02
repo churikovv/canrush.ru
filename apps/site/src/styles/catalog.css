@@ -49,8 +49,8 @@
 .catalog-filter-panel select {
   width: 100%;
   min-height: 48px;
-  border: 1px solid var(--color-control);
-  border-radius: 12px;
+  border: 1px solid transparent;
+  border-radius: 16px;
   background: var(--color-subtle);
   color: var(--color-text);
   padding: 10px 12px;
@@ -474,7 +474,7 @@
 /* The flavour field: chosen flavours as chips inside one text field, suggestions drop down while typing. */
 .catalog-flavor-label { font-size: .875rem; font-weight: 600; }
 .catalog-flavor-input { position: relative; margin-top: 8px; }
-.catalog-flavor-field { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 52px; padding: 6px 8px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); cursor: text; }
+.catalog-flavor-field { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 52px; padding: 6px 8px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); cursor: text; }
 .catalog-flavor-field:focus-within { border-color: var(--color-brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 22%, transparent); }
 .store-form .catalog-flavor-field input:not([type=hidden]) { flex: 1; min-width: 140px; min-height: 36px; padding: 0 6px; border: 0; background: transparent; box-shadow: none; outline: none; }
 .catalog-flavor-plus { color: var(--color-muted-strong); font-weight: 800; }
@@ -529,7 +529,7 @@
 .catalog-drink-rules { display: grid; gap: 6px; margin: 0; padding-left: 20px; color: var(--color-muted-strong); font-size: .875rem; }
 .catalog-drink-requests { max-width: 720px; margin-top: 32px; }
 .catalog-pending-search { display: flex; gap: 8px; max-width: 720px; margin: 8px 0 4px; }
-.catalog-pending-search input { flex: 1; min-width: 0; min-height: 48px; padding: 10px 14px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); color: var(--color-ink); font: inherit; }
+.catalog-pending-search input { flex: 1; min-width: 0; min-height: 48px; padding: 10px 14px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-ink); font: inherit; }
 .catalog-pending-count { min-height: 1.2em; margin: 8px 0 12px; color: var(--color-muted-strong); font-size: .875rem; }
 .catalog-pending-list { display: grid; gap: 8px; max-width: 720px; margin: 0; padding: 0; list-style: none; }
 .catalog-pending-list li { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--color-control); border-radius: 16px; }
@@ -565,9 +565,6 @@
 .catalog-controls:has(.catalog-pending-button) { grid-template-columns: minmax(0, 1fr) auto auto auto; }
 .catalog-pending-button { position: relative; }
 .catalog-pending-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .6875rem; font-weight: 800; line-height: 20px; text-align: center; }
-.catalog-add-button { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--color-subtle); color: var(--color-ink); text-decoration: none; transition: background-color var(--motion-fast) ease-out; }
-.catalog-add-button:hover { background: var(--color-control); }
-.catalog-add-button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 /* A member's drink on its page: a badge and the volumes under the name, a calm empty price state, the author card. */
 .catalog-full-name { margin: -4px 0 12px; color: var(--color-muted-strong, #5b6472); font-size: 1rem; font-weight: 600; }
 .catalog-added-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 16px; padding: 0; list-style: none; }

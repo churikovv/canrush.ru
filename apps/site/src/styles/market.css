@@ -205,7 +205,7 @@
 .market-compose { position: sticky; bottom: calc(var(--site-tab-bar-offset, 0px) + 8px); display: grid; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--theme-line, #dfe3e8); border-radius: 0 0 22px 22px; background: var(--theme-panel, #fff); }
 .market-compose-row { display: flex; align-items: flex-end; gap: 8px; }
 .market-compose-field { flex: 1; min-width: 0; }
-.market-layout .market-compose-field textarea { display: block; width: 100%; min-height: 44px; max-height: 160px; padding: 11px 14px; border: 1px solid var(--color-control); border-radius: 22px; background: var(--color-subtle); color: var(--color-text); font: inherit; font-size: 1rem; line-height: 1.35; resize: none; field-sizing: content; }
+.market-layout .market-compose-field textarea { display: block; width: 100%; min-height: 44px; max-height: 160px; padding: 11px 14px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-text); font: inherit; font-size: 1rem; line-height: 1.35; resize: none; field-sizing: content; }
 .market-layout .market-compose-field textarea:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 0; background: var(--theme-panel, #fff); }
 .market-compose-icon, .market-compose-send { position: relative; display: grid; place-items: center; width: 44px; height: 44px; flex: none; padding: 0; border: 0; border-radius: 50%; cursor: pointer; }
 .market-compose-icon { background: transparent; color: var(--color-muted-strong); }
@@ -306,7 +306,7 @@
 .support-screen-back:hover { background: var(--color-subtle); }
 html[data-cookie-notice="visible"] .support-surface .market-compose { padding-bottom: 104px; }
 @media (min-width: 640px) { .main-surface.support-surface { padding-inline: 24px; } }
-.support-chat .market-compose-field textarea { display: block; width: 100%; min-height: 44px; max-height: 160px; padding: 11px 14px; border: 1px solid var(--color-control); border-radius: 22px; background: var(--color-subtle); color: var(--color-text); font: inherit; font-size: 1rem; line-height: 1.35; resize: none; field-sizing: content; }
+.support-chat .market-compose-field textarea { display: block; width: 100%; min-height: 44px; max-height: 160px; padding: 11px 14px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-text); font: inherit; font-size: 1rem; line-height: 1.35; resize: none; field-sizing: content; }
 .support-chat .market-compose-field textarea:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 0; background: var(--theme-panel, #fff); }
 .support-chat-avatar { background: var(--color-brand) url("/brand/logo-mark-white.svg") center / 20px no-repeat; }
 .support-chat .market-chat-partner strong { color: var(--theme-text, #111); font-size: 1rem; }
@@ -314,12 +314,78 @@ html[data-cookie-notice="visible"] .support-surface .market-compose { padding-bo
 .support-chat .market-message-bubble p { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* Напитки с фото магазина: статус над списком и подсказки того, чего нет в каталоге. */
-.store-scan { display: grid; gap: 8px; margin: 0 0 12px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--color-brand) 10%, transparent); font-size: .875rem; line-height: 1.4; }
-p.store-scan { display: flex; align-items: center; gap: 10px; }
-.store-scan p { margin: 0; }
-.store-scan-spinner { flex: none; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: store-scan-spin 800ms linear infinite; }
+.store-scan-spinner { flex: none; width: 18px; height: 18px; margin-top: 2px; border: 2px solid var(--alert, currentColor); border-right-color: transparent; border-radius: 50%; animation: store-scan-spin 800ms linear infinite; }
 @keyframes store-scan-spin { to { transform: rotate(360deg); } }
-.store-scan-others { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.store-scan-others span { width: 100%; color: var(--theme-muted, #6b7280); font-size: .8125rem; }
 .store-scan-chip { min-height: 44px; padding: 0 12px; border: 1px solid var(--theme-line, #e6e8ec); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: .875rem; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .store-scan-spinner { animation-duration: 4s; } }
+/* Заполнить список быстрее: поле копирования на весь ряд и значок шаблонов, как кнопки в каталоге. */
+.store-quick { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.store-quick-title { font-size: .875rem; font-weight: 600; }
+.store-form .store-quick p { grid-column: 1 / -1; margin: 0; color: var(--theme-muted, #6b7280); font-size: .8125rem; line-height: 1.4; }
+.store-copy-search { position: relative; min-width: 0; }
+.store-form .store-copy-search .catalog-search-field { display: flex; font-size: 1rem; font-weight: 400; }
+.store-form .store-copy-search input:not([type=hidden]) { min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; text-overflow: ellipsis; }
+.store-form .store-copy-search input:focus-visible { outline: 0; }
+.catalog-add-button.store-templates-button { width: 100%; padding: 0; border: 0; cursor: pointer; }
+.store-templates-button:disabled { opacity: .55; cursor: default; }
+/* Поле добавления — полоса над карточкой шага, как закреплённая шапка поиска. Обёртка блочная: у `fieldset` сетка, а sticky не выходит за свою ячейку. */
+.store-stock-pinned { position: sticky; top: 0; z-index: 20; margin: 0 -16px 16px; padding: max(8px, env(safe-area-inset-top)) 16px 12px; background: var(--color-surface); box-shadow: 0 1px 0 var(--theme-line, rgb(0 0 0 / 8%)); }
+@media (min-width: 640px) and (max-width: 959px) { .store-stock-pinned { margin-inline: -24px; padding-inline: 24px; } }
+@media (min-width: 960px) { .store-stock-pinned { margin-inline: 0; padding-inline: 0; box-shadow: none; } }
+.store-form .store-stock-pinned input:not([type=hidden]) { padding-right: 12px; }
+/* Список напитков — карточками, как в шаблонах: фото с крестиком, название и цена. */
+.store-stock-editor { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 8px; padding-top: 16px; border-top: 1px solid var(--theme-line, #e5e8ec); }
+@media (min-width: 640px) { .store-stock-editor { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 16px 12px; } }
+.store-stock-row { position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.store-stock-row .store-template-caption { margin-top: 0; -webkit-line-clamp: 3; }
+.store-form .store-stock-row input:not([type=hidden]) { min-height: 44px; padding: 8px 10px; border-radius: 12px; }
+.store-form .store-stock-row input[type=number] { margin-top: auto; appearance: textfield; }
+.store-stock-row input[type=number]::-webkit-inner-spin-button { display: none; }
+.main-surface:has(.store-stock-pinned) { overflow: clip; }
+.store-copy-option { display: grid; gap: 2px; min-width: 0; }
+.store-copy-option b { font-weight: 700; overflow-wrap: anywhere; }
+.store-copy-option small { color: var(--theme-muted, #6b7280); font-size: .75rem; font-weight: 400; line-height: 1.3; overflow-wrap: anywhere; }
+.store-template-lead { margin: 0 0 12px; color: var(--theme-muted, #6b7280); font-size: .875rem; line-height: 1.4; }
+.store-template-group { display: grid; gap: 8px; margin-bottom: 20px; }
+.store-template-group > h3 { margin: 0; color: var(--theme-muted, #6b7280); font-size: .8125rem; font-weight: 700; }
+.store-template-list { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.store-template { display: grid; gap: 4px; min-width: 0; }
+.store-template-head { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.store-template-head svg { flex: none; color: var(--theme-muted, #6b7280); }
+.store-template-title { display: grid; flex: 1; gap: 1px; min-width: 0; }
+.store-template-title b { font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; }
+.store-template-title small, .store-template-count { color: var(--theme-muted, #6b7280); font-size: .8125rem; line-height: 1.3; }
+/* Лента фото доходит до краёв листа: так видно, что она листается. */
+.store-template-strip { display: flex; gap: 6px; margin: 0 -20px; padding: 0 20px 4px; overflow-x: auto; list-style: none; cursor: pointer; scrollbar-width: none; overscroll-behavior-x: contain; }
+.store-template-strip::-webkit-scrollbar { display: none; }
+.store-template-strip li { position: relative; flex: 0 0 56px; min-width: 0; }
+.store-template-strip .store-template-cover { border-radius: 12px; }
+.store-template-cover { position: relative; display: block; aspect-ratio: 1; overflow: hidden; border-radius: 14px; background: var(--color-subtle); }
+.store-template-cover img { position: absolute; inset: 0; width: 86%; height: 86%; margin: auto; object-fit: contain; }
+.store-template-cover > span { position: absolute; inset: 0; display: grid; place-items: center; color: var(--theme-muted, #6b7280); font-weight: 700; }
+.store-template-caption { display: -webkit-box; margin-top: 4px; overflow: hidden; font-size: .75rem; font-weight: 500; line-height: 1.25; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.store-template-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; margin: 0; padding: 0; list-style: none; }
+.store-template-grid li[data-have] :is(.store-template-cover, .store-template-caption) { opacity: .5; }
+.store-template-grid small { color: var(--theme-muted, #6b7280); font-size: .6875rem; }
+@media (min-width: 640px) { .store-template-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 639px) { .store-template-strip { margin-inline: -16px; padding-inline: 16px; } }
+.store-template-actions { position: sticky; bottom: -20px; display: grid; gap: 8px; margin: 12px -4px -20px; padding: 12px 4px 20px; background: var(--theme-panel, #fff); }
+.store-template-actions .community-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+.store-template-create { margin-bottom: 20px; }
+.store-template-editor { display: grid; gap: 14px; }
+.store-template-editor .store-template-grid { gap: 12px 8px; }
+.store-template-editor .store-template-grid li { position: relative; min-width: 0; }
+.store-template-remove { position: absolute; top: -8px; right: -8px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: var(--theme-text, #111); cursor: pointer; }
+.store-template-remove span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--theme-panel, #fff); box-shadow: 0 1px 4px rgb(0 0 0 / .25); }
+.store-template-editor .store-template-actions { margin-top: 0; }
+.store-template-name { display: grid; gap: 6px; font-size: .875rem; font-weight: 600; }
+.store-template-name :is(.catalog-search-field, .store-drink-picker) { font-weight: 400; }
+.store-template-public { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: .9375rem; font-weight: 600; cursor: pointer; }
+.store-template-public span { display: grid; gap: 1px; min-width: 0; }
+.store-template-public small { color: var(--theme-muted, #6b7280); font-size: .8125rem; font-weight: 400; line-height: 1.3; }
+.store-copy { display: grid; gap: 8px; justify-items: start; margin-top: 12px; }
+.store-copy .store-note { margin: 0; }
+@media (max-width: 639px) {
+  .store-copy .community-button { justify-self: stretch; width: 100%; }
+  .store-copy { justify-items: stretch; }
+}

@@ -9,6 +9,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 it('reads "lng lat" and keeps only points near the selected city', () => {
   expect(parseGeocoderResponse(answer('37.6052 55.7658'), 'moscow')).toEqual({ latitude: 55.7658, longitude: 37.6052, address: 'Россия, Москва, Тверская улица, 18к1', precise: true });
   expect(parseGeocoderResponse(answer('37.6052 55.7658', 'street'), 'moscow')?.precise).toBe(false);
+  expect(parseGeocoderResponse(answer('37.6173 55.7558', 'other'), 'moscow')).toBeNull();
   expect(parseGeocoderResponse(answer('30.3 59.9'), 'moscow')).toBeNull();
   expect(parseGeocoderResponse({ response: { GeoObjectCollection: { featureMember: [] } } }, 'moscow')).toBeNull();
   expect(parseGeocoderResponse(null, 'moscow')).toBeNull();

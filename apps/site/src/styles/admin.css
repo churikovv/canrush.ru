@@ -227,8 +227,7 @@
 .admin-table-scroll:has(.admin-member-actions .more-actions-trigger[aria-expanded="true"]) { overflow: visible; }
 
 /* /admin/stores: «Передать магазин» as a banner opening a dialog; each store shows who sent it and «Редактировать». */
-.store-transfer-banner { width: 100%; margin-bottom: 16px; border: 0; font: inherit; text-align: left; cursor: pointer; }
-.store-transfer-banner:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.store-transfer-banner { margin-bottom: 16px; }
 .store-transfer-dialog { width: min(520px, calc(100vw - 24px)); }
 .store-transfer-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .store-transfer-dialog-head h2 { margin: 0; }

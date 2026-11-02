@@ -500,15 +500,6 @@ html[data-cookie-notice="visible"] .tier-editor :is(button, input, select, a) {
 .tier-emoji-clear:hover { color: var(--color-ink); }
 
 /* «Создай свой тирлист» above the community lists. */
-.tier-create-banner { display: flex; align-items: center; gap: 16px; padding: 16px 18px; border-radius: 20px; background: var(--color-subtle); color: var(--color-ink); text-decoration: none; transition: background-color 150ms ease-out; }
-.tier-create-banner:hover { background: color-mix(in srgb, var(--color-subtle) 82%, var(--color-brand) 10%); }
-.tier-create-banner-icon { display: grid; flex: none; width: 56px; height: 56px; place-items: center; border-radius: 16px; background: var(--color-brand); color: #fff; box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--color-brand) 70%, transparent); }
-.tier-create-banner-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
-.tier-create-banner-copy strong { font-size: 1.125rem; line-height: 1.25; }
-.tier-create-banner-copy span { color: var(--color-muted-strong); font-size: .875rem; line-height: 1.4; }
-.tier-create-banner-arrow { flex: none; color: var(--color-muted-strong); transition: transform 150ms ease-out; }
-.tier-create-banner:hover .tier-create-banner-arrow { transform: translateX(3px); }
-@media (prefers-reduced-motion: reduce) { .tier-create-banner, .tier-create-banner-arrow { transition: none; } }
 
 /* Actions under a board: round pills like the site's switchers, the main one in brand blue; report sits in «⋯». */
 .tierlists-main-actions { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; }

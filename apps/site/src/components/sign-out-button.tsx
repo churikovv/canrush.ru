@@ -6,6 +6,7 @@ import { unregisterPushDeviceAction } from '@/app/notifications/push-actions';
 import { authClient } from '@/lib/auth-client';
 import { storedPushToken, storePushToken } from '@/lib/native-app';
 import { clearAllReviewDrafts } from '@/lib/review-draft';
+import { clearAllStoreDrafts } from '@/lib/store-draft';
 
 /** Signs out: unregisters this device's push token first (it needs the session), then goes to the sign-in page. */
 export function useSignOut() {
@@ -15,6 +16,7 @@ export function useSignOut() {
 
   async function signOut() {
     clearAllReviewDrafts();
+    clearAllStoreDrafts();
     setPending(true);
     setError(undefined);
     // In the app: this device stops getting the member's pushes. Must run while the session still exists.

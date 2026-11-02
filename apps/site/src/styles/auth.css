@@ -49,9 +49,6 @@
   color: var(--color-muted-strong);
   opacity: 1;
 }
-.field-group input:hover:not(:disabled) {
-  border-color: var(--color-muted);
-}
 .field-group input:focus-visible {
   border-color: var(--color-ink);
   background: var(--color-surface);

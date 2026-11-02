@@ -8,7 +8,10 @@ export function hasStoreGeocoder() {
   return Boolean(process.env.YANDEX_GEOCODER_API_KEY?.trim());
 }
 
-/** First result of the answer, only if it lies within 100 km of the selected city (same rule as `parseStore`). */
+/**
+ * First result of the answer, only if it lies within 100 km of the selected city (same rule as `parseStore`). Precision
+ * `other` means no street was recognised: the geocoder falls back to the city, and that is not a store's point.
+ */
 export function parseGeocoderResponse(body: unknown, cityId: string): StoreGeocode | null {
   const city = findCity(cityId);
   const object = (body as { response?: { GeoObjectCollection?: { featureMember?: { GeoObject?: {
@@ -19,6 +22,7 @@ export function parseGeocoderResponse(body: unknown, cityId: string): StoreGeoco
   if (!city || latitude === undefined || longitude === undefined || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
   if (distanceKm(latitude, longitude, city) > 100) return null;
   const meta = object?.metaDataProperty?.GeocoderMetaData;
+  if (meta?.precision === 'other') return null;
   return { latitude, longitude, address: meta?.text ?? '', precise: ['exact', 'number', 'near'].includes(meta?.precision ?? '') };
 }
 

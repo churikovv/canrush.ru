@@ -98,6 +98,8 @@ export async function saveStore(userId: string, input: StoreInput, id?: string, 
     const storeId=result.rows[0].id as string;
     if(photoChanges){
       const {retained,photos}=photoChanges;
+      // Without a photo a store is hard to check and to find; the team may still fix someone else's old store as it is.
+      if(!staff&&!retained.length&&!photos.length)throw new StoreError('Добавьте хотя бы одно фото магазина.');
       if(retained.length+photos.length>5 || new Set(retained).size!==retained.length)throw new StoreError('Можно добавить не более 5 фотографий.');
       const existing=await db.query<{id:string}>('select id from "storePhoto" where "storeId"=$1',[storeId]);
       if(retained.some(photo=>!existing.rows.some(row=>row.id===photo)))throw new StoreError('Фотография не принадлежит магазину.');

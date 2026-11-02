@@ -5,6 +5,18 @@ import Image from 'next/image';
 import { motion, useReducedMotion } from 'motion/react';
 import { ProfileImageCrop, type Crop, type CropSource } from '@/components/profile-image-crop';
 
+/**
+ * Браузер отдаёт выбранный файл ссылкой: если к отправке он изменился или система его убрала, запрос обрывается ещё до сервера
+ * (`ERR_UPLOAD_FILE_CHANGED`, «Failed to fetch»). Так случалось на Android, поэтому фото сразу читаем в память.
+ */
+async function keepBytes(file: File) {
+  try {
+    return new File([await file.arrayBuffer()], file.name, { type: file.type, lastModified: file.lastModified });
+  } catch {
+    throw new Error('Не удалось прочитать фото. Выберите его ещё раз.');
+  }
+}
+
 interface Photo { id: string; file: File; original: File; src: string; preview: string; width: number; height: number; crop?: Crop }
 export function MarketPhotoPicker({ onChange, onBusyChange, disabled = false, crop = true, compact = false, maxPhotos = 5 }: { onChange: (files: File[]) => void; onBusyChange?: (busy: boolean) => void; disabled?: boolean; crop?: boolean; compact?: boolean; maxPhotos?: number }) {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -40,8 +52,9 @@ export function MarketPhotoPicker({ onChange, onBusyChange, disabled = false, cr
     const added: Photo[] = [];
     const allocated: string[] = [];
     try {
-      for (const file of files) {
-        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024 || !file.size) throw new Error('Используйте JPG, PNG или WebP до 5 МБ.');
+      for (const picked of files) {
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(picked.type) || picked.size > 5 * 1024 * 1024 || !picked.size) throw new Error('Используйте JPG, PNG или WebP до 5 МБ.');
+        const file = await keepBytes(picked);
         const src = URL.createObjectURL(file); urls.current.add(src); allocated.push(src);
         const image = new window.Image(); image.src = src; await image.decode();
         if (image.naturalWidth * image.naturalHeight > 40_000_000) throw new Error('Фотография должна быть не больше 40 мегапикселей.');

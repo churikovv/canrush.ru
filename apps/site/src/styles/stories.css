@@ -125,7 +125,7 @@
 .story-composer-pick small { font-weight: 400; font-size: .8125rem; }
 .story-composer-pick img, .story-composer-pick video { width: 100%; height: 100%; object-fit: cover; }
 .story-composer-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.story-composer-caption input { width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 14px; background: var(--color-subtle); color: var(--color-ink); font: inherit; }
+.story-composer-caption input { width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-ink); font: inherit; }
 .story-composer-submit { width: 100%; justify-content: center; min-height: 48px; }
 @media (prefers-reduced-motion: reduce) { .story-ring { transition: none; } }
 
