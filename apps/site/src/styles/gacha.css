@@ -17,7 +17,11 @@
 .gacha-card { position: relative; display: grid; justify-items: center; gap: 5px; padding: 12px 10px 14px; border-radius: 18px; color: inherit; text-align: center; text-decoration: none; animation: gacha-reveal 520ms cubic-bezier(.2, 1.3, .4, 1) backwards; animation-delay: calc(var(--card-index, 0) * 90ms); }
 @keyframes gacha-reveal { 0% { opacity: 0; transform: perspective(600px) rotateY(80deg) scale(.85); } 100% { opacity: 1; transform: none; } }
 .gacha-card-cover { position: relative; z-index: 1; display: block; width: 100%; aspect-ratio: 1; border-radius: 12px; background: #fff; overflow: hidden; }
+/* Эффект облика за банкой — по центру обложки (`.can-skin-aura`). */
+.gacha-card { --skin-art-y: 34%; --skin-aura: 96%; }
 .gacha-card-cover img { position: absolute; inset: 0; width: 88%; height: 88%; margin: auto; object-fit: contain; }
+.gacha-card-cover[data-cutout] { background: transparent; overflow: visible; }
+.gacha-card-cover[data-cutout] img { height: 96%; filter: drop-shadow(0 8px 8px rgb(0 0 0 / .35)); }
 .gacha-card-pity { color: var(--color-muted-strong, #59616b); font-size: .6875rem; font-weight: 700; }
 .gacha-card-brand { color: var(--color-ink, #111); font-size: .9375rem; line-height: 1.2; }
 .gacha-card-name { color: var(--color-muted-strong, #59616b); font-size: .8125rem; line-height: 1.3; }
@@ -32,34 +36,6 @@
 .gacha-info .settings-row-icon .gacha-cap-icon { color: #f2a516; }
 
 /* Album. Страница красится темой профиля: цвета только из `--color-*`, которые тема переопределяет, а `--color-brand` там — акцент темы, поэтому кнопка берёт фирменный синий напрямую. */
-.gacha-album-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; max-width: 960px; margin-inline: auto; }
-.gacha-album-page .community-panel { margin: 0; }
-.gacha-album-intro { display: grid; gap: 16px; }
-.gacha-album-total { display: flex; align-items: baseline; gap: 8px; }
-.gacha-album-total strong { font-size: 2.5rem; line-height: 1; }
-.gacha-album-total span { color: var(--color-muted-strong, #59616b); }
-.gacha-album-rarities { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
-.gacha-album-rarities li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 10px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--rarity-mid) 13%, transparent); }
-.gacha-album-rarities .rarity-emblem { grid-row: span 2; width: 40px; height: 40px; }
-.gacha-album-rarities span { color: var(--color-muted-strong, #59616b); font-size: .75rem; font-weight: 800; }
-.gacha-album-rarities strong { font-size: 1.25rem; line-height: 1.1; }
-:root .gacha-album-page .community-button.gacha-album-cta { justify-self: start; border-color: #006eff; background: #006eff; color: #fff; }
-/* В альбоме сотни карточек: браузер рисует и анимирует только бренды на экране. Поля — чтобы сдерживание не срезало свечение. */
-.gacha-album-brand { display: grid; gap: 12px; margin: -10px -14px -14px; padding: 14px; content-visibility: auto; contain-intrinsic-size: auto 220px; }
-.gacha-album-card[data-rarity=legendary]::after { animation: none; }
-.gacha-album-brand-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.gacha-album-brand-head h2 { margin: 0; font-size: 1.125rem; }
-.gacha-album-brand-head span { color: var(--color-muted-strong, #59616b); font-weight: 700; font-variant-numeric: tabular-nums; }
-.gacha-album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
-.gacha-album-card { position: relative; display: grid; gap: 6px; padding: 6px 6px 8px; border-radius: 14px; color: inherit; text-decoration: none; }
-.gacha-album-card.is-missing { border: 2px dashed var(--color-control, #dfe3e8); }
-.gacha-album-name { overflow: hidden; overflow-wrap: anywhere; hyphens: auto; color: var(--color-text, #111); font-size: .75rem; font-weight: 600; line-height: 1.25; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.is-missing .gacha-album-name { display: none; }
-.gacha-album-card.is-missing { align-self: start; padding: 4px; }
-.is-missing .gacha-card-cover { background: var(--color-subtle, #f3f5f7); }
-.gacha-album-silhouette { position: absolute; inset: 18% 32%; border-radius: 10px 10px 8px 8px; background: var(--color-control, #dfe3e8); }
-.gacha-album-count { position: absolute; top: 4px; right: 4px; padding: 2px 6px; border-radius: 999px; background: var(--rarity-chip-to); color: var(--rarity-ink); font-size: .6875rem; font-weight: 800; }
-.gacha-album-empty p { margin: 16px 0 0; }
 
 @media (max-width: 639px) {
   .gacha-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -69,10 +45,6 @@
   .gacha-card .rarity-chip { padding: 2px 6px 2px 4px; font-size: .5625rem; letter-spacing: 0; }
   .gacha-card .rarity-chip-glyph { width: 10px; height: 10px; }
   .gacha-card-badge { top: 4px; right: 4px; padding: 2px 6px; font-size: .625rem; }
-  :root .gacha-album-page .community-button.gacha-album-cta { justify-self: stretch; }
-  .gacha-album-rarities { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .gacha-album-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-  .gacha-album-name { font-size: .6875rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -92,17 +64,6 @@
 .gacha-cosmetic span { color: var(--color-muted-strong, #59616b); font-size: .875rem; line-height: 1.4; }
 .gacha-cosmetic a { color: #d9600a; font-weight: 800; text-decoration: none; }
 
-.gacha-album-total { flex-wrap: wrap; }
-.gacha-album-total .gacha-balance { margin-left: auto; font-size: 1rem; padding: 6px 12px; background: var(--color-subtle, #f3f5f7); color: var(--color-text, #111); }
-.gacha-album-help { margin: 0; }
-.gacha-craft { position: absolute; left: 50%; bottom: 6px; display: inline-flex; align-items: center; gap: 2px; min-height: 24px; padding: 2px 8px; border: 0; border-radius: 999px; background: #2fb5d6; color: #fff; font: inherit; font-size: .6875rem; font-weight: 800; transform: translateX(-50%); cursor: pointer; }
-.gacha-craft .gacha-shard-icon { color: #fff; }
-.gacha-craft:disabled { background: var(--color-control, #dfe3e8); color: var(--color-muted-strong, #59616b); cursor: default; }
-.gacha-craft:disabled .gacha-shard-icon { color: inherit; }
-.gacha-craft:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
-.gacha-album-rest { margin: 10px 0 0; }
-.gacha-album-rest .gacha-album-brand { margin-top: 0; }
-.gacha-album-rest > summary { color: var(--color-muted-strong, #59616b); font-weight: 700; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .gacha-cosmetic { animation: none; } }
 
 /* ------------------------------------------------------------ the game screen (a Blender scene + game UI)
@@ -195,7 +156,7 @@
 
 /* Обложка стоит над бликом `.rarity-shine`, значки — над обложкой; чипы в ряду карточек на одной высоте. */
 .gacha-card { align-content: start; }
-.gacha-card-badge, .gacha-card-shards, .gacha-card-star, .gacha-album-count { z-index: 2; }
+.gacha-card-badge, .gacha-card-shards, .gacha-card-star { z-index: 2; }
 
 /* Задания дня: круглая кнопка сбоку автомата и игровое окно. Строка — награда, текст, действие. */
 .game-quests { position: relative; display: block; }

@@ -32,6 +32,10 @@ import { topCards } from '@/lib/gacha';
 import { listCollectionPhotos } from '@/lib/collection-photos';
 import { ProfileCollectionPhotos } from '@/components/profile-collection-photos';
 import { RarityChip, RarityShine } from '@/components/rarity-badge';
+import { CanSkin } from '@/components/can-skin';
+import { InspectableCard } from '@/components/card-inspector';
+import { skinSummary } from '@/lib/can-skin';
+import { cutoutSrc } from '@/lib/can-cutout-src';
 import { ProfilePresence } from '@/components/profile-presence';
 import { SignInPrompt } from '@/components/sign-in-prompt';
 
@@ -132,9 +136,9 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
           {addedDrinks.items.length ? <div className="profile-favorites-block">{addedDrinks.items.map(drink => <Link key={drink.id} href={drink.href}>
           <Image src={drink.photo} width={120} height={120} alt="" /><strong>{drink.brand}</strong><span>{drink.name}</span></Link>)}</div>
           : <div className="community-empty"><p>{isOwn ? 'Не нашли энергетик в каталоге? Добавьте его — после проверки он появится здесь и у всех в каталоге.' : 'Пользователь пока не добавлял напитки в каталог.'}</p>{isOwn && <Link href="/catalog/new">Добавить напиток ↗</Link>}</div>}</section></ProfileBlock>
-          <ProfileBlock block="cards"><section className="community-panel" aria-labelledby="profile-cards-title"><div className="community-section-heading"><h2 id="profile-cards-title">Карточки Банкомата</h2><Link href={`${base}/cards`}>Альбом ↗</Link></div>
-          {cards.length ? <div className="profile-favorites-block profile-gacha-cards">{cards.map(card => <Link key={`${card.brand}:${card.flavor}`} className="rarity-card" href={card.href} data-rarity={card.rarity}>
-          <RarityShine rarity={card.rarity} /><Image src={card.cover} width={120} height={120} unoptimized alt="" /><strong>{card.brand}</strong><span>{card.name}</span><RarityChip rarity={card.rarity} />{card.count > 1 && <small>×{card.count}</small>}</Link>)}</div>
+          <ProfileBlock block="cards"><section className="community-panel" aria-labelledby="profile-cards-title"><div className="community-section-heading"><h2 id="profile-cards-title">Карточки Банкомата</h2><Link href={`${base}/cards`}>Коллекция ↗</Link></div>
+          {cards.length ? <div className="profile-favorites-block profile-gacha-cards">{cards.map(card => <InspectableCard key={`${card.brand}:${card.flavor}`} className="rarity-card" card={card} title={skinSummary(card.brand, card.flavor, card.rarity).line}>
+          <RarityShine rarity={card.rarity} /><CanSkin brand={card.brand} flavor={card.flavor} rarity={card.rarity} /><Image src={cutoutSrc(card.cover) ?? card.cover} width={120} height={120} unoptimized alt="" data-cutout={cutoutSrc(card.cover) ? '' : undefined} /><strong>{card.brand}</strong><span>{card.name}</span><RarityChip rarity={card.rarity} />{card.count > 1 && <small>×{card.count}</small>}</InspectableCard>)}</div>
           : <div className="community-empty"><p>{isOwn ? 'Здесь появятся лучшие карточки из Банкомата. Первая крутка в день — бесплатно.' : 'Пользователь пока не крутил Банкомат.'}</p>{isOwn && <Link href="/gacha">Открыть Банкомат ↗</Link>}</div>}</section></ProfileBlock>
           {/* Photos of the member's cans: visitors see the block only when there is something to show. */}
           <ProfileBlock block="shelf">{(isOwn || shelf.photos.length > 0) && <section className="community-panel" aria-labelledby="profile-shelf-title"><div className="community-section-heading"><h2 id="profile-shelf-title">Фото коллекции {shelf.photos.length > 0 && <span>{shelf.photos.length}</span>}</h2></div>

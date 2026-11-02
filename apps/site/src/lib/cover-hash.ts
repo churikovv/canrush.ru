@@ -11,14 +11,15 @@ import { getPool } from '@/db/pool';
  */
 const ID = /^[0-9a-f-]{36}$/u;
 
-export async function coverBytes(cover: string): Promise<Buffer | null> {
+/** A cover's bytes; for a photo kept in the database the thumbnail by default, `full` — the photo itself (cut-out cans want it sharp). */
+export async function coverBytes(cover: string, full = false): Promise<Buffer | null> {
   if (/^\/(?:images|brand)\/[\w./-]+\.(?:jpe?g|png|webp)$/iu.test(cover) && !cover.includes('..')) {
     try { return await readFile(path.join(process.cwd(), 'public', cover)); } catch { return null; }
   }
   const match = cover.match(/^\/api\/(catalog-drinks|catalog-card-photos|brand-drink-photos)\/([^/?]+)/u);
   if (!match || !ID.test(match[2]!)) return null;
   const table = match[1] === 'catalog-drinks' ? '"catalogDrink"' : match[1] === 'catalog-card-photos' ? '"catalogCardEdit"' : '"brandDrinkProfile"';
-  return (await getPool().query<{ thumbnail: Buffer | null }>(`select thumbnail from ${table} where id = $1`, [match[2]])).rows[0]?.thumbnail ?? null;
+  return (await getPool().query<{ data: Buffer | null }>(`select ${full ? 'coalesce(photo, thumbnail)' : 'thumbnail'} as data from ${table} where id = $1`, [match[2]])).rows[0]?.data ?? null;
 }
 
 /** The 64-bit difference hash of an image, as 16 hex digits. */

@@ -170,25 +170,54 @@ button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-w
 .feed-article-foot .article-like.is-own { cursor: default; }
 .feed-article-foot .article-like:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; border-radius: 8px; }
 
-.feed-gacha { margin: 0 -14px -14px; padding: 14px; content-visibility: auto; contain-intrinsic-size: auto 124px; }
-.feed-gacha-card { display: flex; align-items: center; gap: 16px; padding: 10px 16px 10px 10px; border-radius: 18px; }
-.feed-gacha-drink { display: flex; flex: 1; align-items: center; gap: 14px; min-width: 0; color: inherit; text-decoration: none; }
-.feed-gacha-cover { position: relative; z-index: 1; display: grid; place-items: center; width: 72px; height: 72px; flex: none; border-radius: 12px; background: #fff; overflow: hidden; font-weight: 800; }
-.feed-gacha-cover img { position: absolute; inset: 0; width: 88%; height: 88%; margin: auto; object-fit: contain; }
-.feed-gacha-copy { display: grid; flex: 1; gap: 3px; min-width: 0; }
-.feed-gacha-copy b { color: var(--color-ink); }
-.feed-gacha-flavor { color: var(--color-muted-strong); font-size: .875rem; }
-/* Кнопка — тот же металл, что у чипа редкости; над бликом, иначе он ходил бы поверх текста. */
-.feed-gacha-try { position: relative; z-index: 1; display: inline-flex; flex: none; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border-radius: 14px; background: linear-gradient(135deg, var(--rarity-chip-from), var(--rarity-chip-to)); box-shadow: inset 0 -2px 0 rgb(0 0 0 / .16); color: var(--rarity-ink); font-size: .9375rem; font-weight: 800; text-decoration: none; transition: filter 120ms ease, transform 120ms ease; }
-.feed-gacha-try:hover { filter: brightness(1.08); }
-.feed-gacha-try:active { transform: translateY(1px); }
-.feed-gacha-try:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
-@media (max-width: 639px) {
-  .feed-gacha { contain-intrinsic-size: auto 186px; }
-  .feed-gacha-card { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; }
-  .feed-gacha-drink { padding-right: 6px; }
+/* Выпадение из Банкомата (`FeedGachaEvent`, `FeedDrop`): сама карточка на тёмной сцене в цвете редкости. Лучи крутятся за
+   ней, при первом показе она падает со вспышкой, потом покачивается; мышь наклоняет её за курсором с бликом, нажатие
+   открывает крупный просмотр (`CardInspector`). Сцена тёмная в любой теме, как экран Банкомата. Карточка — кнопка,
+   поэтому её падение — свойствами `translate`/`scale`/`rotate`: отклик на нажатие пишет ей инлайн `transform`. */
+.feed-drop { --drop-w: min(56vw, 210px); position: relative; isolation: isolate; display: grid; justify-items: center; gap: 14px; margin-top: 4px; padding: 26px 16px 18px; overflow: hidden; border-radius: 22px; background: radial-gradient(120% 70% at 50% 30%, color-mix(in srgb, var(--rarity-mid) 34%, #0b0d14), #06070b 78%); color: #fff; content-visibility: auto; contain-intrinsic-size: auto 600px; }
+.feed-drop-stage { position: relative; isolation: isolate; display: grid; place-items: center; perspective: 900px; }
+.feed-drop-stage::before { content: ''; position: absolute; z-index: -1; width: calc(var(--drop-w) * 1.5); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, var(--rarity-glow), transparent 68%); animation: can-breathe 4s ease-in-out infinite; }
+.feed-drop-rays { position: absolute; z-index: -2; left: 50%; top: 50%; width: calc(var(--drop-w) * 3.4); aspect-ratio: 1; translate: -50% -50%; background: repeating-conic-gradient(color-mix(in srgb, var(--rarity-mid) 40%, transparent) 0 6deg, transparent 6deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 14%, transparent 60%); mask-image: radial-gradient(circle, #000 14%, transparent 60%); animation: can-spin 60s linear infinite; }
+.feed-drop[data-rarity=legendary] .feed-drop-rays { animation-duration: 36s; }
+.feed-drop-sway { position: relative; width: var(--drop-w); transform-style: preserve-3d; transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)); transition: transform 140ms ease-out; animation: feed-drop-sway 6s ease-in-out infinite; }
+.feed-drop-stage[data-tilting] .feed-drop-sway { animation-play-state: paused; }
+.feed-drop-card { position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; border-radius: 22px; filter: drop-shadow(0 18px 28px rgb(0 0 0 / .55)); }
+.feed-drop-card:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+/* Большая карточка в ленте меньше, чем в коллекции: знаки, углы рамки и подпись — под её ширину. */
+.feed-drop .big-card { --mark-scale: 1.15; --skin-rise: 240px; padding: 18px 10px 12px; gap: 8px; border-radius: 20px; }
+.feed-drop .big-card-foot strong { font-size: 1.0625rem; }
+.feed-drop .big-card-foot > span:last-child { font-size: .8125rem; }
+.feed-drop-zoom { position: absolute; z-index: 3; top: 10px; right: 10px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgb(6 7 11 / .55); color: #fff; box-shadow: 0 0 0 1px rgb(255 255 255 / .25); }
+.feed-drop-glare { position: absolute; inset: 0; z-index: 4; border-radius: 20px; pointer-events: none; background: radial-gradient(circle at var(--mx, 50%) var(--my, 25%), rgb(255 255 255 / .42), transparent 52%); mix-blend-mode: overlay; opacity: 0; transition: opacity 200ms ease-out; }
+.feed-drop-stage[data-tilting] .feed-drop-glare { opacity: 1; }
+/* Несколько круток за день — карточки веером за выпавшей. */
+.feed-drop-ghost { position: absolute; z-index: -1; width: var(--drop-w); aspect-ratio: 5 / 7; box-sizing: border-box; border: 2px solid color-mix(in srgb, var(--rarity-mid) 60%, transparent); border-radius: 20px; background: repeating-linear-gradient(135deg, rgb(255 255 255 / .04) 0 8px, transparent 8px 16px), linear-gradient(160deg, color-mix(in srgb, var(--rarity-mid) 40%, #1a1e29), #0c0f16); opacity: .75; rotate: -9deg; translate: -20% 3%; }
+.feed-drop-ghost + .feed-drop-ghost { rotate: 9deg; translate: 20% 3%; }
+.feed-drop-burst { position: absolute; z-index: 5; width: calc(var(--drop-w) * 1.1); aspect-ratio: 1; box-sizing: border-box; border: 3px solid var(--rarity-light); border-radius: 50%; opacity: 0; pointer-events: none; }
+.feed-drop-stage[data-reveal=play] .feed-drop-card { animation: feed-drop-fall 820ms cubic-bezier(.2, 1.25, .35, 1) backwards; }
+.feed-drop-stage[data-reveal=play] .feed-drop-burst { animation: feed-drop-burst 900ms ease-out 360ms backwards; }
+.feed-drop-stage[data-reveal=play] .feed-drop-ghost { animation: feed-drop-fan 640ms cubic-bezier(.2, 1.2, .4, 1) 420ms backwards; }
+.feed-drop-copy { display: grid; justify-items: center; gap: 8px; width: 100%; text-align: center; }
+.feed-drop-name { display: grid; gap: 2px; color: #fff; text-decoration: none; }
+.feed-drop-name b { font-size: 1.25rem; font-weight: 900; line-height: 1.15; overflow-wrap: anywhere; }
+.feed-drop-name span { color: rgb(255 255 255 / .72); font-size: .9375rem; }
+.feed-drop-name:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 6px; }
+.feed-drop-try { width: 100%; max-width: 360px; margin-top: 4px; }
+@keyframes feed-drop-sway { 0%, 100% { rotate: y -6deg; } 50% { rotate: y 6deg; } }
+@keyframes feed-drop-fall { 0% { opacity: 0; translate: 0 -90px; scale: .55; rotate: -10deg; } 45% { opacity: 1; } 100% { opacity: 1; translate: 0 0; scale: 1; rotate: 0deg; } }
+@keyframes feed-drop-burst { 0% { opacity: .95; scale: .3; } 100% { opacity: 0; scale: 2.2; } }
+@keyframes feed-drop-fan { 0% { opacity: 0; rotate: 0deg; translate: 0 0; } }
+@media (min-width: 640px) {
+  .feed-drop { --drop-w: 220px; grid-template-columns: auto minmax(0, 1fr); align-items: center; justify-items: start; gap: 28px; padding: 26px 30px; contain-intrinsic-size: auto 380px; }
+  .feed-drop-stage { padding: 0 18px; }
+  .feed-drop-copy { justify-items: start; text-align: left; }
+  .feed-drop-copy .card-traits { justify-content: flex-start; }
+  .feed-drop-try { width: auto; padding-inline: 30px; }
 }
-@media (prefers-reduced-motion: reduce) { .feed-gacha-try { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .feed-drop-rays, .feed-drop-stage::before, .feed-drop-sway, .feed-drop-card, .feed-drop-ghost, .feed-drop-burst { animation: none !important; }
+  .feed-drop-sway { transition: none; }
+}
 
 /* Раздача круток: игровой баннер посреди ленты. Цвета постоянные, как у баннера Банкомата: он одинаков в любой теме.
    Анимации — только transform и opacity и только пока баннер на экране (`data-live`). */

@@ -1,6 +1,10 @@
 import { VerifiedMark } from '@/components/verified-mark';
 import { ArticleLikeButton } from '@/components/article-actions';
-import { RarityChip, RarityEmblem, RarityShine } from '@/components/rarity-badge';
+import { BigCard, type ShownCard } from '@/components/big-card';
+import { InspectableCard } from '@/components/card-inspector';
+import { FeedDrop } from '@/components/feed-drop';
+import { skinSummary } from '@/lib/can-skin';
+import { RARITY_LABELS } from '@/lib/gacha-fields';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { TierListCard, type TierCardViewer } from '@/components/tier-list-card';
@@ -88,25 +92,41 @@ export function FeedTierListEvent({ list, products, viewer }: { list: TierListSu
 }
 
 /** «Вытащил легенду»: лучшая эпическая или легендарная банка дня из Банкомата — карточка в цвете редкости. */
+/**
+ * «Достал из Банкомата»: the card itself on a dark stage in its rarity's colour — rays turn behind it, it falls in with a
+ * flash the first time it is seen and sways (`FeedDrop`), a day of several pulls fans out the cards behind it. A tap opens
+ * the big view, where the card is turned and its look plays; under it, the rarity, the drink and its rarest traits.
+ */
+/** Traits of a dropped card in the order worth showing: the motion of rarer cards before the frame and the pattern. */
+const SHOWY = ['Фольга', 'Частицы', 'Эффект', 'Мир', 'Рамка', 'Свет', 'Орнамент'];
 export function FeedGachaEvent({ pull, covers }: { pull: FeedGachaRow; covers: Map<string, string> }) {
-  const cover = covers.get(`${pull.brand}\u0000${pull.flavor}`);
   const label = pull.rarity === 'legendary' ? 'легендарную' : 'эпическую';
   const action = `достал из Банкомата ${label} банку${pull.count > 1 ? ` · за день ${pull.count}` : ''}`;
+  const href = `/catalog/${catalogGroupSlug(pull.brand, pull.flavor)}`;
+  const card: ShownCard = { brand: pull.brand, flavor: pull.flavor, name: flavorName(pull.flavor), cover: covers.get(`${pull.brand}\u0000${pull.flavor}`) ?? '', href, rarity: pull.rarity };
+  const { traits } = skinSummary(pull.brand, pull.flavor, pull.rarity);
+  // Rare traits first, then what only rarer cards have: that is what makes this card worth a look.
+  const shown = [...traits].sort((a, b) => Number(b.rare) - Number(a.rare) || SHOWY.indexOf(a.kind) - SHOWY.indexOf(b.kind)).slice(0, 3);
   return <article className="feed-event" id={`feed-gacha-${pull.key}`}>
     <EventHead author={pull} action={action} at={pull.createdAt} />
-    <div className="feed-gacha">
-      <div className="feed-gacha-card rarity-card" data-rarity={pull.rarity}>
-        <RarityShine rarity={pull.rarity} />
-        <Link className="feed-gacha-drink" href={`/catalog/${catalogGroupSlug(pull.brand, pull.flavor)}`}>
-          <span className="feed-gacha-cover">{cover ? <Image src={cover} width={96} height={96} sizes="96px" unoptimized alt="" /> : pull.brand.slice(0, 2).toLocaleUpperCase('ru-RU')}</span>
-          <span className="feed-gacha-copy">
-            <RarityChip rarity={pull.rarity} />
-            <b>{pull.brand}</b>
-            <span className="feed-gacha-flavor">{flavorName(pull.flavor)}</span>
-          </span>
-          <RarityEmblem rarity={pull.rarity} />
-        </Link>
-        <Link className="feed-gacha-try" href="/gacha">Крутить Банкомат</Link>
+    <div className="feed-drop" data-rarity={pull.rarity}>
+      <FeedDrop>
+        <span className="feed-drop-rays" aria-hidden="true" />
+        {pull.count > 1 && <><span className="feed-drop-ghost" aria-hidden="true" /><span className="feed-drop-ghost" aria-hidden="true" /></>}
+        <span className="feed-drop-burst" aria-hidden="true" />
+        <div className="feed-drop-sway">
+          <InspectableCard className="feed-drop-card" card={card}>
+            <BigCard card={card} live />
+            <span className="feed-drop-zoom" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg></span>
+          </InspectableCard>
+          <span className="feed-drop-glare" aria-hidden="true" />
+        </div>
+      </FeedDrop>
+      <div className="feed-drop-copy">
+        <span className="feed-drop-kicker">{RARITY_LABELS[pull.rarity]}{pull.count > 1 ? ` · ${pull.count} за день` : ''}</span>
+        <Link className="feed-drop-name" href={href}><b>{pull.brand}</b><span>{card.name}</span></Link>
+        <ul className="card-traits" aria-label="Облик">{shown.map(item => <li key={item.kind} data-rare={item.rare || undefined}><small>{item.kind}</small>{item.name}{item.rare && <b aria-label="редкий"> ✦</b>}</li>)}</ul>
+        <Link className="can-btn feed-drop-try" href="/gacha">Крутить Банкомат</Link>
       </div>
     </div>
   </article>;

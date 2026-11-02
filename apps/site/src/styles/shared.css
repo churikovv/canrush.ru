@@ -750,6 +750,215 @@ a.blocked-member:hover strong { color: var(--theme-link, var(--color-brand)); }
 .rarity-card[data-rarity=legendary] .rarity-sheen { animation-duration: 3.6s; background: linear-gradient(90deg, transparent, rgb(255 255 255 / .42), transparent); }
 .rarity-twinkle { position: absolute; aspect-ratio: 1; fill: var(--rarity-light); transform-origin: center; animation: level-twinkle 3.6s cubic-bezier(.16, 1, .3, 1) infinite both; }
 .rarity-twinkle path { stroke: var(--rarity-dark); stroke-width: .8; }
+/* Облик банки (`CanSkin`) под содержимым карточки — набор признаков, как у коллекционных карт: рамка цвета бренда, орнамент
+   цвета вкуса, свет (поверхность), знаки вкуса, а у эпических и легендарных ещё частицы и фольга. Признаки бывают редкими —
+   их рисуем богаче. Внешний металл остаётся у редкости. Только статичные фоны; движение — transform и opacity; в длинных
+   сетках (`lite`) движения нет. */
+.can-skin { --skin-ink: color-mix(in srgb, var(--skin-a) 30%, transparent); --skin-ink-b: color-mix(in srgb, var(--skin-b) 30%, transparent);
+  position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(var(--skin-angle), color-mix(in srgb, var(--skin-a) 24%, transparent), color-mix(in srgb, var(--skin-b) 16%, transparent) 62%, transparent); }
+/* Орнамент: по краям, вокруг обложки. */
+.can-skin::before { content: ''; position: absolute; inset: 0; opacity: .7; -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 38%, transparent 35%, #000 80%); mask-image: radial-gradient(ellipse 70% 60% at 50% 38%, transparent 35%, #000 80%); }
+.can-skin[data-ornament=stripes]::before { background: repeating-linear-gradient(var(--skin-angle), var(--skin-ink) 0 3px, transparent 3px 11px); }
+.can-skin[data-ornament=dots]::before { background: radial-gradient(var(--skin-ink) 1.6px, transparent 2.2px) 0 0 / 10px 10px; }
+.can-skin[data-ornament=grid]::before { background: linear-gradient(var(--skin-ink) 1px, transparent 1px) 0 0 / 12px 12px, linear-gradient(90deg, var(--skin-ink) 1px, transparent 1px) 0 0 / 12px 12px; }
+.can-skin[data-ornament=waves]::before { background: radial-gradient(circle at 50% 100%, transparent 5px, var(--skin-ink) 5.5px 7px, transparent 7.5px) 0 0 / 14px 8px; }
+.can-skin[data-ornament=zigzag]::before { background: linear-gradient(135deg, var(--skin-ink) 25%, transparent 25%) -6px 0 / 12px 12px, linear-gradient(225deg, var(--skin-ink) 25%, transparent 25%) -6px 0 / 12px 12px; }
+.can-skin[data-ornament=rays]::before { background: repeating-conic-gradient(from var(--skin-angle) at 50% 115%, var(--skin-ink) 0 5deg, transparent 5deg 16deg); }
+.can-skin[data-ornament=bubbles]::before { background: radial-gradient(circle at 25% 30%, var(--skin-ink) 0 3px, transparent 3.5px) 0 0 / 22px 22px, radial-gradient(circle at 70% 75%, var(--skin-ink) 0 1.6px, transparent 2px) 0 0 / 14px 14px; }
+.can-skin[data-ornament=diamonds]::before { background: linear-gradient(45deg, var(--skin-ink) 25%, transparent 25% 75%, var(--skin-ink) 75%) 0 0 / 12px 12px, linear-gradient(-45deg, var(--skin-ink) 25%, transparent 25% 75%, var(--skin-ink) 75%) 0 0 / 12px 12px; opacity: .45; }
+.can-skin[data-ornament=checker]::before { background: conic-gradient(var(--skin-ink) 25%, transparent 0 50%, var(--skin-ink) 0 75%, transparent 0) 0 0 / 14px 14px; opacity: .5; }
+.can-skin[data-ornament=plaid]::before { background: repeating-linear-gradient(0deg, var(--skin-ink) 0 3px, transparent 3px 7px, var(--skin-ink-b) 7px 8px, transparent 8px 16px), repeating-linear-gradient(90deg, var(--skin-ink-b) 0 3px, transparent 3px 7px, var(--skin-ink) 7px 8px, transparent 8px 16px); }
+.can-skin[data-ornament=ripples]::before { background: repeating-radial-gradient(circle at 50% 115%, var(--skin-ink) 0 1.5px, transparent 1.5px 9px); }
+.can-skin[data-ornament=scales]::before { background: radial-gradient(circle at 50% 0, transparent 6px, var(--skin-ink) 6.5px 7.5px, transparent 8px) 0 0 / 16px 10px, radial-gradient(circle at 50% 0, transparent 6px, var(--skin-ink) 6.5px 7.5px, transparent 8px) 8px 5px / 16px 10px; }
+.can-skin[data-ornament=triangles]::before { background: conic-gradient(from 150deg at 50% 30%, var(--skin-ink) 0 60deg, transparent 0) 0 0 / 14px 12px; }
+.can-skin[data-ornament=lattice]::before { background: linear-gradient(45deg, transparent 45%, var(--skin-ink) 45% 55%, transparent 55%) 0 0 / 10px 10px, linear-gradient(-45deg, transparent 45%, var(--skin-ink) 45% 55%, transparent 55%) 0 0 / 10px 10px; }
+.can-skin[data-ornament=halftone]::before { background: radial-gradient(var(--skin-ink) 2.4px, transparent 2.8px) 0 0 / 12px 12px, radial-gradient(var(--skin-ink) 1.2px, transparent 1.6px) 6px 6px / 12px 12px; }
+.can-skin[data-ornament=bands]::before { background: repeating-linear-gradient(var(--skin-angle), var(--skin-ink) 0 6px, transparent 6px 10px, var(--skin-ink-b) 10px 13px, transparent 13px 22px); }
+.can-skin[data-ornament=pinstripe]::before { background: repeating-linear-gradient(var(--skin-angle), var(--skin-ink) 0 1px, transparent 1px 5px); }
+.can-skin[data-ornament=confetti]::before { opacity: .95; background: radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--skin-a) 70%, transparent) 0 1.8px, transparent 2.3px), radial-gradient(circle at 60% 45%, color-mix(in srgb, var(--skin-b) 70%, transparent) 0 2.2px, transparent 2.7px), radial-gradient(circle at 35% 80%, color-mix(in srgb, var(--skin-rim) 60%, transparent) 0 1.6px, transparent 2.1px), radial-gradient(circle at 85% 70%, color-mix(in srgb, var(--skin-a) 55%, transparent) 0 1.3px, transparent 1.8px); background-size: 30px 30px; }
+.can-skin[data-ornament=stars]::before { opacity: 1; background: radial-gradient(circle at 20% 30%, color-mix(in srgb, var(--skin-a) 55%, #fff) 0 1.1px, transparent 1.6px), radial-gradient(circle at 70% 60%, color-mix(in srgb, var(--skin-b) 60%, #fff) 0 1.7px, transparent 2.2px), radial-gradient(circle at 45% 88%, color-mix(in srgb, var(--skin-a) 40%, #fff) 0 .8px, transparent 1.3px), radial-gradient(circle at 88% 15%, color-mix(in srgb, var(--skin-rim) 50%, #fff) 0 1px, transparent 1.5px), linear-gradient(var(--skin-angle), color-mix(in srgb, var(--skin-rim) 22%, transparent), transparent); background-size: 26px 26px, 26px 26px, 26px 26px, 26px 26px, auto; }
+.can-skin[data-ornament=sunburst]::before { opacity: .85; background: repeating-conic-gradient(from var(--skin-angle) at 50% 42%, var(--skin-ink) 0 8deg, var(--skin-ink-b) 8deg 16deg); }
+.can-skin[data-ornament=mosaic]::before { opacity: .8; background: conic-gradient(var(--skin-ink) 25%, var(--skin-ink-b) 0 50%, color-mix(in srgb, var(--skin-rim) 22%, transparent) 0 75%, transparent 0) 0 0 / 16px 16px; }
+/* Рамки облика: лента внутри металла редкости (`::after`, в 2 px от края) и узоры по углам и сверху (`.can-skin-corner`,
+   `.can-skin-crest`, рисунки — `CORNER_ART` и `CREST_ART` в can-skin.tsx). Изящные — линии, завитки, жемчуг; монструозные —
+   толстая лента, шипы, когти, зубы. Цвет — металл бренда (`--frame-*`), у «Позолоты» и «Короны» — золото, у «Хрома» —
+   сталь. Подпись карточки лежит поверх, поэтому узоры держатся краёв, а у карточек внутренний отступ не меньше 8 px. */
+.can-skin { --frame-hi: color-mix(in srgb, var(--skin-rim) 35%, #fff); --frame-mid: var(--skin-rim); --frame-lo: color-mix(in srgb, var(--skin-rim) 50%, #000); --frame-line: color-mix(in srgb, var(--skin-rim) 70%, #fff); --band: calc(var(--mark-scale, 1) * 4px); --corner: calc(var(--mark-scale, 1) * 24px + 6px); }
+.can-skin:is([data-frame=gilded], [data-frame=royal]) { --frame-hi: #fff2bf; --frame-mid: #d4a017; --frame-lo: #6e4700; --frame-line: #e9c25a; }
+.can-skin[data-frame=chrome] { --frame-hi: #fff; --frame-mid: #b9c1cc; --frame-lo: #4a5260; --frame-line: #dfe4ea; }
+.can-skin:is([data-frame=claws], [data-frame=dragon], [data-frame=maw]) { --frame-mid: color-mix(in srgb, var(--skin-rim) 65%, #15161a); }
+/* Монструозные углы крупнее: когти, шипы и броня должны давить на карточку. */
+.can-skin:is([data-frame=claws], [data-frame=dragon], [data-frame=maw], [data-frame=spikes], [data-frame=armor]) { --corner: calc(var(--mark-scale, 1) * 32px + 6px); }
+.can-skin:is([data-frame=armor], [data-frame=chain], [data-frame=dragon]) { --band: calc(var(--mark-scale, 1) * 5.5px); }
+.can-skin::after { content: ''; position: absolute; inset: 2px; border-radius: var(--skin-radius, 11px); }
+/* Лента-кольцо: маска вырезает середину, остаётся полоса шириной `--band`. */
+.can-skin:is([data-frame=pearl], [data-frame=chain], [data-frame=gilded], [data-frame=royal], [data-frame=chrome], [data-frame=dragon])::after { padding: var(--band); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+.can-skin[data-frame=filigree]::after { border: 1px solid var(--frame-line); outline: 1px solid color-mix(in srgb, var(--frame-line) 60%, transparent); outline-offset: calc(var(--mark-scale, 1) * -5px); }
+.can-skin[data-frame=deco]::after { border: calc(var(--mark-scale, 1) * 3px) double var(--frame-line); }
+.can-skin[data-frame=vine]::after { border: 1.5px solid color-mix(in srgb, var(--frame-line) 80%, transparent); }
+.can-skin[data-frame=pearl]::after { background: radial-gradient(circle closest-side, #fff 0 16%, color-mix(in srgb, var(--skin-a) 14%, #efe9dc) 30% 66%, color-mix(in srgb, var(--frame-lo) 55%, transparent) 76%, transparent 90%) 0 0 / var(--band) var(--band) round; }
+.can-skin[data-frame=arch]::after { border: 2px solid var(--frame-line); border-radius: 50% 50% var(--skin-radius, 11px) var(--skin-radius, 11px) / 16% 16% var(--skin-radius, 11px) var(--skin-radius, 11px); outline: 1px solid color-mix(in srgb, var(--frame-line) 50%, transparent); outline-offset: calc(var(--mark-scale, 1) * -5px); }
+.can-skin[data-frame=columns]::after { border-inline: calc(var(--mark-scale, 1) * 5px) double var(--frame-line); border-block: 1px solid color-mix(in srgb, var(--frame-line) 60%, transparent); }
+.can-skin[data-frame=gems]::after { --gem: radial-gradient(circle closest-side, #fff 0 14%, color-mix(in srgb, var(--skin-a) 80%, #fff) 24% 58%, color-mix(in srgb, var(--skin-rim) 85%, #000) 64% 86%, transparent 94%); --gem-size: calc(var(--mark-scale, 1) * 12px); border: 1.5px solid var(--frame-line);
+  background: var(--gem) 50% 0 / var(--gem-size) var(--gem-size) no-repeat, var(--gem) 50% 100% / var(--gem-size) var(--gem-size) no-repeat, var(--gem) 0 50% / var(--gem-size) var(--gem-size) no-repeat, var(--gem) 100% 50% / var(--gem-size) var(--gem-size) no-repeat; }
+.can-skin[data-frame=armor]::after { border: var(--band) ridge var(--frame-mid); }
+.can-skin[data-frame=spikes]::after { border: calc(var(--mark-scale, 1) * 3px) ridge var(--frame-mid); }
+.can-skin[data-frame=claws]::after { border: calc(var(--mark-scale, 1) * 3px) solid var(--frame-lo); box-shadow: inset 0 0 0 1px var(--frame-mid); }
+.can-skin[data-frame=chain]::after { background: radial-gradient(ellipse 48% 34% at 50% 50%, transparent 52%, var(--frame-hi) 56%, var(--frame-mid) 66%, var(--frame-lo) 80%, transparent 86%) 0 0 / calc(var(--band) * 1.8) var(--band) round; }
+.can-skin[data-frame=maw]::after { border: calc(var(--mark-scale, 1) * 2.5px) solid var(--frame-lo); }
+.can-skin[data-frame=gilded]::after { background: repeating-linear-gradient(45deg, transparent 0 2px, rgb(110 71 0 / .3) 2px 3px), linear-gradient(135deg, #fff3c4, #d4a017 22%, #8a5a00 42%, #f7d774 58%, #b8860b 78%, #fff3c4); }
+.can-skin[data-frame=royal]::after { --band: calc(var(--mark-scale, 1) * 2.5px); background: linear-gradient(135deg, #fff3c4, #d4a017 30%, #8a5a00 50%, #f7d774 70%, #d4a017); }
+.can-skin[data-frame=chrome]::after { --band: calc(var(--mark-scale, 1) * 3.5px); background: linear-gradient(135deg, #fff, var(--skin-rim) 22%, #d6dbe3 40%, #5d6673 55%, #f4f6f9 70%, var(--skin-rim) 85%, #fff); }
+.can-skin[data-frame=dragon]::after { background: radial-gradient(circle at 50% 0, transparent 38%, var(--frame-lo) 42% 52%, var(--frame-mid) 56%) 0 0 / var(--band) var(--band) round, var(--frame-mid); }
+.can-skin[data-frame=neon]::after { border: 2px solid var(--skin-a); box-shadow: 0 0 8px color-mix(in srgb, var(--skin-a) 85%, transparent), inset 0 0 8px color-mix(in srgb, var(--skin-a) 70%, transparent); outline: 1.5px solid color-mix(in srgb, var(--skin-b) 90%, #fff); outline-offset: calc(var(--mark-scale, 1) * -6px); }
+/* «Грани» — восьмиугольник: диагонали нарисованы фоном, лишнее срезает clip-path. */
+.can-skin[data-frame=facets]::after { --facet: color-mix(in srgb, var(--skin-a) 55%, #fff); --facet-a: linear-gradient(135deg, transparent calc(50% - 1px), var(--facet) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)); --facet-b: linear-gradient(45deg, transparent calc(50% - 1px), var(--facet) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
+  border: 2px solid var(--facet); border-radius: 0; background: var(--facet-a) 0 0 / 20px 20px no-repeat, var(--facet-b) 100% 0 / 20px 20px no-repeat, var(--facet-b) 0 100% / 20px 20px no-repeat, var(--facet-a) 100% 100% / 20px 20px no-repeat; background-origin: border-box;
+  clip-path: polygon(18.5px 0, calc(100% - 18.5px) 0, 100% 18.5px, 100% calc(100% - 18.5px), calc(100% - 18.5px) 100%, 18.5px 100%, 0 calc(100% - 18.5px), 0 18.5px); }
+.can-skin-corner { position: absolute; top: 0; left: 0; width: var(--corner); height: var(--corner); overflow: visible; }
+.can-skin-corner[data-c=tr] { left: auto; right: 0; transform: scaleX(-1); }
+.can-skin-corner[data-c=bl] { top: auto; bottom: 0; transform: scaleY(-1); }
+.can-skin-corner[data-c=br] { top: auto; left: auto; right: 0; bottom: 0; transform: scale(-1); }
+.can-skin-crest { position: absolute; top: 0; left: 50%; width: calc(var(--mark-scale, 1) * 40px); height: auto; translate: -50% 0; overflow: visible; }
+.can-skin-crest[data-at=bottom] { top: auto; bottom: 0; transform: scaleY(-1); }
+/* SVG — заменяемый элемент: между left и right он не растягивается, поэтому ширина задана явно. */
+.can-skin-crest[data-wide] { left: calc(var(--corner) * .6); width: calc(100% - var(--corner) * 1.2); height: calc(var(--mark-scale, 1) * 11px); translate: none; }
+:is(.can-skin-corner, .can-skin-crest) path { vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+:is(.can-skin-corner, .can-skin-crest) [data-k=f] { fill: var(--frame-mid); stroke: var(--frame-lo); stroke-width: 1; }
+:is(.can-skin-corner, .can-skin-crest) [data-k=s] { fill: none; stroke: var(--frame-line); stroke-width: calc(var(--mark-scale, 1) * 1.3px); }
+:is(.can-skin-corner, .can-skin-crest) [data-k=h] { fill: none; stroke: var(--frame-hi); stroke-width: 1; opacity: .85; }
+:is(.can-skin-corner, .can-skin-crest) [data-k=g] { fill: color-mix(in srgb, var(--skin-a) 70%, #fff); stroke: var(--frame-lo); stroke-width: 1; }
+:is(.can-skin-corner, .can-skin-crest) [data-k=p] { fill: color-mix(in srgb, var(--skin-a) 12%, #f3eee3); stroke: color-mix(in srgb, var(--frame-lo) 60%, transparent); stroke-width: .8; }
+:is(.can-skin-corner, .can-skin-crest) [data-k=l] { fill: color-mix(in srgb, var(--skin-a) 30%, #6fcf5a); stroke: color-mix(in srgb, #2e6b2a 70%, transparent); stroke-width: .8; }
+:is(.can-skin-corner, .can-skin-crest) [data-k=r] { fill: var(--frame-lo); stroke: var(--frame-hi); stroke-width: 1; }
+:is(.can-skin-corner, .can-skin-crest) [data-k=t] { fill: #f1e8d2; stroke: var(--frame-lo); stroke-width: 1; }
+/* Свет: поверхность поверх орнамента. */
+.can-skin-light { position: absolute; inset: 0; }
+.can-skin-light[data-light=gloss] { background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / .3) 42%, transparent 54%); }
+.can-skin-light[data-light=brushed] { background: repeating-linear-gradient(0deg, rgb(255 255 255 / .08) 0 1px, transparent 1px 3px); }
+.can-skin-light[data-light=glitter] { opacity: .7; background: radial-gradient(circle at 20% 30%, rgb(255 255 255 / .95) 0 .6px, transparent 1px) 0 0 / 9px 9px, radial-gradient(circle at 70% 60%, color-mix(in srgb, var(--skin-a) 50%, #fff) 0 .7px, transparent 1.1px) 3px 5px / 13px 13px; }
+.can-skin-light[data-light=iris] { background: linear-gradient(135deg, rgb(255 0 128 / .1), rgb(255 200 0 / .1), rgb(0 220 255 / .1), rgb(160 80 255 / .1)); }
+.can-skin-light[data-light=holo] { background: repeating-linear-gradient(120deg, rgb(255 80 160 / .18) 0 12px, rgb(255 220 80 / .18) 12px 24px, rgb(80 230 255 / .18) 24px 36px, rgb(170 110 255 / .18) 36px 48px); }
+.can-skin-light[data-light=aurora] { background: radial-gradient(ellipse 80% 50% at 20% 0, color-mix(in srgb, var(--skin-a) 45%, transparent), transparent 70%), radial-gradient(ellipse 70% 45% at 90% 8%, color-mix(in srgb, var(--skin-b) 45%, transparent), transparent 70%); }
+.can-skin-mark { position: absolute; height: auto; fill: none; stroke: color-mix(in srgb, var(--skin-a) 70%, var(--color-ink, #111) 10%); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
+/* Частицы (эпические и легендарные): форма и путь — по признаку. */
+.can-skin-dot { position: absolute; aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--skin-a) 55%, #fff); opacity: 0; animation: can-rise 4s linear infinite; }
+[data-particles=fizz] .can-skin-dot { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--skin-a) 80%, transparent); }
+[data-particles=sparks] .can-skin-dot { border-radius: 2px; background: color-mix(in srgb, var(--skin-b) 40%, #fff); animation-name: can-spark; }
+[data-particles=snow] .can-skin-dot { background: #fff; box-shadow: 0 0 0 1px color-mix(in srgb, var(--skin-a) 40%, transparent); animation-name: can-fall; }
+[data-particles=embers] .can-skin-dot { background: color-mix(in srgb, #ff7a1a 70%, var(--skin-a)); box-shadow: 0 0 4px #ff9a3c; animation-name: can-ember; }
+[data-particles=stardust] .can-skin-dot { background: color-mix(in srgb, var(--skin-a) 35%, #fff); box-shadow: 0 0 5px color-mix(in srgb, var(--skin-a) 70%, #fff); animation-name: can-twinkle; }
+[data-particles=petals] .can-skin-dot { border-radius: 70% 0; background: color-mix(in srgb, var(--skin-a) 65%, #fff); animation-name: can-petal; }
+/* Фольга легендарных: вид движения — тоже признак. */
+.can-skin-foil { position: absolute; opacity: .35; }
+.can-skin-foil[data-foil=spin] { top: 50%; left: 50%; width: 220%; aspect-ratio: 1; margin: -110% 0 0 -110%; border-radius: 50%; background: conic-gradient(from var(--skin-angle), color-mix(in srgb, var(--skin-a) 45%, transparent), color-mix(in srgb, var(--rarity-light) 50%, transparent), color-mix(in srgb, var(--skin-b) 45%, transparent), color-mix(in srgb, var(--skin-rim) 35%, transparent), color-mix(in srgb, var(--skin-a) 45%, transparent)); animation: can-spin 14s linear infinite; }
+.can-skin-foil[data-foil=sweep] { top: -10%; bottom: -10%; left: -70%; width: 70%; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--skin-a) 55%, transparent), color-mix(in srgb, var(--rarity-light) 70%, transparent), color-mix(in srgb, var(--skin-b) 55%, transparent), transparent); transform: skewX(-14deg); animation: can-sweep 7s ease-in-out infinite; }
+.can-skin-foil[data-foil=pulse] { inset: -20%; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--rarity-light) 60%, transparent), color-mix(in srgb, var(--skin-a) 40%, transparent) 40%, transparent 70%); animation: can-pulse 4.5s ease-in-out infinite; }
+.can-skin-foil[data-still] { animation: none; }
+@keyframes can-rise { 0% { opacity: 0; transform: translateY(0) scale(.6); } 15% { opacity: .9; } 85% { opacity: .5; } 100% { opacity: 0; transform: translateY(calc(-1 * var(--skin-rise, 140px))) scale(1.1); } }
+@keyframes can-spark { 0% { opacity: 0; transform: translateY(0) rotate(45deg) scale(.4); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(calc(-.8 * var(--skin-rise, 140px))) rotate(225deg) scale(.9); } }
+@keyframes can-fall { 0% { opacity: 0; transform: translate(0, -20px); } 15% { opacity: .9; } 100% { opacity: 0; transform: translate(10px, var(--skin-rise, 140px)); } }
+@keyframes can-ember { 0% { opacity: 0; transform: translate(0, 0) scale(.8); } 20% { opacity: 1; } 60% { transform: translate(8px, -70px) scale(.7); } 100% { opacity: 0; transform: translate(-6px, calc(-.95 * var(--skin-rise, 140px))) scale(.4); } }
+@keyframes can-twinkle { 0%, 100% { opacity: 0; transform: scale(.3); } 50% { opacity: 1; transform: scale(1.2); } }
+@keyframes can-petal { 0% { opacity: 0; transform: translate(0, -20px) rotate(0); } 15% { opacity: .9; } 100% { opacity: 0; transform: translate(-18px, var(--skin-rise, 140px)) rotate(320deg); } }
+@keyframes can-spin { to { transform: rotate(1turn); } }
+@keyframes can-sweep { 0%, 30% { transform: translateX(0) skewX(-14deg); } 100% { transform: translateX(330%) skewX(-14deg); } }
+@keyframes can-pulse { 0%, 100% { opacity: .2; transform: scale(.9); } 50% { opacity: .45; transform: scale(1.1); } }
+/* Новые орнаменты. Облака — сплошным цветом при низкой прозрачности, иначе круги темнеют там, где перекрываются. */
+.can-skin[data-ornament=clouds]::before { opacity: .2; background: radial-gradient(circle at 30% 62%, var(--skin-a) 0 5px, transparent 5.5px), radial-gradient(circle at 50% 46%, var(--skin-a) 0 7px, transparent 7.5px), radial-gradient(circle at 70% 62%, var(--skin-a) 0 5px, transparent 5.5px); background-size: 44px 30px; }
+.can-skin[data-ornament=topo]::before { background: repeating-radial-gradient(circle at 18% 28%, var(--skin-ink) 0 1px, transparent 1px 9px), repeating-radial-gradient(circle at 84% 76%, var(--skin-ink-b) 0 1px, transparent 1px 11px); }
+.can-skin[data-ornament=rings]::before { background: radial-gradient(circle, transparent 3px, var(--skin-ink) 3.5px 4.6px, transparent 5.1px) 0 0 / 14px 14px, radial-gradient(circle, var(--skin-ink-b) 0 1.2px, transparent 1.6px) 7px 7px / 14px 14px; }
+.can-skin[data-ornament=sparkle]::before { opacity: .95; background: radial-gradient(1.4px 6px at 50% 50%, var(--skin-ink) 60%, transparent) 0 0 / 22px 22px, radial-gradient(6px 1.4px at 50% 50%, var(--skin-ink) 60%, transparent) 0 0 / 22px 22px, radial-gradient(1px 3.5px at 50% 50%, var(--skin-ink-b) 60%, transparent) 11px 11px / 22px 22px, radial-gradient(3.5px 1px at 50% 50%, var(--skin-ink-b) 60%, transparent) 11px 11px / 22px 22px; }
+.can-skin[data-ornament=fans]::before { background: radial-gradient(circle at 50% 100%, var(--skin-ink) 0 1px, transparent 1px 3.5px, var(--skin-ink) 3.5px 4.5px, transparent 4.5px 7px, var(--skin-ink) 7px 8px, transparent 8px 10.5px, var(--skin-ink) 10.5px 11px, transparent 11px) 0 0 / 22px 11px, radial-gradient(circle at 50% 100%, var(--skin-ink-b) 0 1px, transparent 1px 3.5px, var(--skin-ink-b) 3.5px 4.5px, transparent 4.5px 7px, var(--skin-ink-b) 7px 8px, transparent 8px 10.5px, var(--skin-ink-b) 10.5px 11px, transparent 11px) 11px 5.5px / 22px 11px; }
+.can-skin[data-ornament=circuit]::before { opacity: .9; background: radial-gradient(circle, color-mix(in srgb, var(--skin-a) 60%, transparent) 0 1.8px, transparent 2.3px) -12px -12px / 24px 24px, repeating-linear-gradient(45deg, transparent 0 16px, var(--skin-ink-b) 16px 17px, transparent 17px 34px), linear-gradient(var(--skin-ink) 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, var(--skin-ink) 1px, transparent 1px) 0 0 / 24px 24px; }
+.can-skin[data-ornament=kaleido]::before { opacity: .85; background: repeating-conic-gradient(from var(--skin-angle), var(--skin-ink) 0 30deg, var(--skin-ink-b) 30deg 60deg, color-mix(in srgb, var(--skin-rim) 24%, transparent) 60deg 90deg) 0 0 / 26px 26px; }
+/* Новый свет. */
+.can-skin-light[data-light=satin] { background: linear-gradient(90deg, transparent 6%, rgb(255 255 255 / .22) 28%, transparent 46%, rgb(255 255 255 / .14) 70%, transparent 90%); }
+.can-skin-light[data-light=velvet] { background: radial-gradient(ellipse 72% 62% at 50% 42%, transparent 40%, rgb(0 0 0 / .34)); }
+/* Иней — только по краям: мелкая крупа по всей карточке рябила сеткой. */
+.can-skin-light[data-light=frost] { background: radial-gradient(circle at 0 0, rgb(235 248 255 / .5), transparent 32%), radial-gradient(circle at 100% 100%, rgb(235 248 255 / .4), transparent 30%), radial-gradient(circle at 20% 30%, rgb(255 255 255 / .5) 0 .5px, transparent .9px) 0 0 / 7px 7px; -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, transparent 45%, #000 90%); mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, transparent 45%, #000 90%); }
+.can-skin-light[data-light=mirror] { background: linear-gradient(120deg, transparent 20%, rgb(255 255 255 / .26) 20% 25%, transparent 25% 29%, rgb(255 255 255 / .14) 29% 31%, transparent 31%); }
+.can-skin-light[data-light=prism] { background: linear-gradient(90deg, rgb(255 40 120 / .2), transparent 14% 86%, rgb(0 210 255 / .2)), linear-gradient(0deg, rgb(255 210 0 / .16), transparent 16% 84%, rgb(150 70 255 / .18)); }
+/* Мир — сцена за всей карточкой: время суток, погода или место, под орнаментом (z-index внутри облика). Силуэты внизу
+   прозрачные, как орнамент, чтобы подпись карточки читалась. */
+.can-skin-world { --skyline: polygon(0 100%, 0 52%, 7% 52%, 7% 30%, 15% 30%, 15% 58%, 21% 58%, 21% 12%, 29% 12%, 29% 44%, 36% 44%, 36% 26%, 41% 26%, 41% 0, 48% 0, 48% 36%, 56% 36%, 56% 18%, 63% 18%, 63% 48%, 70% 48%, 70% 8%, 78% 8%, 78% 40%, 85% 40%, 85% 22%, 93% 22%, 93% 54%, 100% 54%, 100% 100%); position: absolute; inset: 0; z-index: -1; }
+.can-skin-world::before, .can-skin-world::after { content: ''; position: absolute; }
+.can-skin-world[data-world=day] { background: radial-gradient(circle at 84% 9%, rgb(255 248 215 / .92) 0 5.5%, rgb(255 230 150 / .38) 6.5% 13%, rgb(255 230 150 / .12) 14% 28%, transparent 40%), linear-gradient(180deg, rgb(150 205 255 / .32), transparent 55%); }
+.can-skin-world[data-world=dusk] { background: radial-gradient(ellipse 110% 60% at 50% 100%, rgb(255 110 50 / .55), rgb(255 60 130 / .28) 45%, transparent 78%), linear-gradient(180deg, rgb(70 40 140 / .32), transparent 50%); }
+.can-skin-world[data-world=dawn] { background: radial-gradient(circle at 84% 76%, rgb(255 236 205 / .8) 0 4.5%, rgb(255 210 180 / .28) 5.5% 14%, transparent 26%), linear-gradient(0deg, rgb(255 170 190 / .48), rgb(190 165 255 / .24) 40%, transparent 72%); }
+.can-skin-world[data-world=night] { background: radial-gradient(circle at 70% 12%, #fff 0 .7px, transparent 1.2px), radial-gradient(circle at 40% 6%, #fff 0 .6px, transparent 1px), radial-gradient(circle at 88% 30%, #fff 0 .8px, transparent 1.3px), radial-gradient(circle at 56% 22%, #fff 0 .5px, transparent .9px), radial-gradient(circle at 26% 34%, #fff 0 .6px, transparent 1px), linear-gradient(180deg, rgb(8 14 44 / .55), rgb(8 14 44 / .16) 55%, transparent); }
+.can-skin-world[data-world=night]::before { top: 6%; left: 8%; width: 15%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fffbe6, #f1dfa0); -webkit-mask: radial-gradient(circle at 72% 30%, transparent 46%, #000 47%); mask: radial-gradient(circle at 72% 30%, transparent 46%, #000 47%); }
+.can-skin-world[data-world=fog] { background: linear-gradient(0deg, rgb(255 255 255 / .42), rgb(255 255 255 / .16) 34%, transparent 58%), repeating-linear-gradient(0deg, transparent 0 13px, rgb(255 255 255 / .1) 13px 19px); -webkit-mask-image: linear-gradient(0deg, #000 30%, transparent 75%); mask-image: linear-gradient(0deg, #000 30%, transparent 75%); }
+.can-skin-world[data-world=city] { background: linear-gradient(0deg, color-mix(in srgb, var(--skin-a) 22%, transparent), transparent 45%); }
+.can-skin-world[data-world=city]::before, .can-skin-world[data-world=city]::after { inset: auto 0 0; height: 30%; clip-path: var(--skyline); }
+.can-skin-world[data-world=city]::before { background: color-mix(in srgb, var(--skin-rim) 30%, transparent); }
+.can-skin-world[data-world=city]::after { opacity: .6; background: radial-gradient(circle, color-mix(in srgb, var(--skin-a) 70%, #fff) 0 .8px, transparent 1.2px) 0 0 / 7px 9px; }
+.can-skin-world[data-world=mountains]::before { inset: auto 0 0; height: 34%; background: color-mix(in srgb, var(--skin-a) 26%, transparent); clip-path: polygon(0 100%, 0 62%, 14% 30%, 24% 52%, 38% 8%, 52% 46%, 62% 28%, 78% 60%, 90% 34%, 100% 52%, 100% 100%); }
+.can-skin-world[data-world=mountains]::after { inset: auto 0 0; height: 22%; background: color-mix(in srgb, var(--skin-b) 30%, transparent); clip-path: polygon(0 100%, 0 50%, 18% 20%, 34% 58%, 50% 30%, 66% 64%, 82% 18%, 100% 48%, 100% 100%); }
+.can-skin-world[data-world=sea] { --water: color-mix(in srgb, #2a8cff 40%, transparent); background: linear-gradient(180deg, rgb(140 200 255 / .16), transparent 45%); }
+.can-skin-world[data-world=sea]::before, .can-skin-world[data-world=sea]::after { inset: auto 0 0; height: 30%; }
+/* Гребни волн — полукруги над водой, по их верху идёт пена. */
+.can-skin-world[data-world=sea]::before { background: radial-gradient(circle at 50% 100%, var(--water) 0 10px, transparent 10.5px) 0 0 / 22px 11px repeat-x, linear-gradient(var(--water), var(--water)) 0 11px / 100% 100% no-repeat; }
+.can-skin-world[data-world=sea]::after { background: radial-gradient(circle at 50% 100%, transparent 8.5px, rgb(255 255 255 / .42) 9px 10px, transparent 10.5px) 0 0 / 22px 11px repeat-x; }
+.can-skin-world[data-world=storm] { background: radial-gradient(ellipse 60% 30% at 20% 0, rgb(40 44 60 / .65), transparent 70%), radial-gradient(ellipse 60% 26% at 75% 4%, rgb(30 34 50 / .6), transparent 70%), repeating-linear-gradient(105deg, transparent 0 9px, rgb(200 215 255 / .14) 9px 10px), linear-gradient(180deg, rgb(30 34 52 / .4), transparent 65%); }
+.can-skin-world[data-world=storm]::before { top: 4%; left: 68%; width: 10%; height: 30%; background: linear-gradient(#fff, color-mix(in srgb, var(--skin-a) 50%, #fff)); clip-path: polygon(40% 0, 100% 0, 62% 38%, 90% 38%, 20% 100%, 42% 52%, 12% 52%); opacity: 0; animation: can-bolt 6s linear infinite; }
+.can-skin-world[data-world=storm]::after { inset: 0; background: rgb(255 255 255 / .5); opacity: 0; animation: can-flash 6s linear infinite; }
+.can-skin-world[data-world=space] { background: radial-gradient(ellipse 55% 35% at 25% 20%, color-mix(in srgb, var(--skin-a) 34%, transparent), transparent 70%), radial-gradient(ellipse 50% 40% at 80% 72%, color-mix(in srgb, #7c4dff 30%, transparent), transparent 70%), radial-gradient(circle, #fff 0 .6px, transparent 1px) 0 0 / 17px 19px, radial-gradient(circle, rgb(255 255 255 / .7) 0 .5px, transparent .9px) 8px 11px / 23px 29px, linear-gradient(rgb(6 4 30 / .35), rgb(6 4 30 / .15)); }
+/* Планета и кольцо с общим центром: вертикальный margin в процентах считается от ширины, как и размеры. */
+.can-skin-world[data-world=space]::before { top: 6%; right: 9%; width: 14%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--skin-b) 55%, #fff), var(--skin-b) 55%, color-mix(in srgb, var(--skin-b) 55%, #000)); }
+.can-skin-world[data-world=space]::after { top: 6%; right: 3%; width: 26%; aspect-ratio: 3.2; margin-top: 2.94%; box-sizing: border-box; border: 1.5px solid rgb(255 255 255 / .5); border-radius: 50%; transform: rotate(-16deg); }
+.can-skin-world[data-still]::before, .can-skin-world[data-still]::after { animation: none; }
+.can-skin-world[data-world=storm][data-still]::before { opacity: .8; }
+/* Эффект за банкой (с редких): по центру обложки (`--skin-art-x/y`), размер — `--skin-aura`. Двигаются только
+   псевдоэлементы, поэтому центровка (`translate`) не сбивается. */
+.can-skin-aura { position: absolute; left: var(--skin-art-x, 50%); top: var(--skin-art-y, 40%); width: var(--skin-aura, 84%); aspect-ratio: 1; translate: -50% -50%; }
+.can-skin-aura::before, .can-skin-aura::after { content: ''; position: absolute; inset: 0; border-radius: 50%; }
+.can-skin-aura[data-aura=halo]::before { background: radial-gradient(circle, color-mix(in srgb, var(--skin-a) 34%, transparent), transparent 62%); animation: can-breathe 4.5s ease-in-out infinite; }
+.can-skin-aura[data-aura=halo]::after { inset: 8%; border: 2px solid color-mix(in srgb, var(--skin-a) 55%, transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--skin-a) 45%, transparent), inset 0 0 12px color-mix(in srgb, var(--skin-a) 35%, transparent); animation: can-breathe 4.5s ease-in-out -2.2s infinite; }
+.can-skin-aura[data-aura=rays]::before { inset: -14%; background: repeating-conic-gradient(color-mix(in srgb, var(--skin-a) 40%, transparent) 0 5deg, transparent 5deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%); mask-image: radial-gradient(circle, #000 18%, transparent 68%); animation: can-spin 48s linear infinite; }
+.can-skin-aura[data-aura=rings]::before, .can-skin-aura[data-aura=rings]::after { border: 2px solid color-mix(in srgb, var(--skin-a) 60%, transparent); opacity: 0; animation: can-ring 4s cubic-bezier(.2, .6, .3, 1) infinite; }
+.can-skin-aura[data-aura=rings]::after { border-color: color-mix(in srgb, var(--skin-b) 60%, transparent); animation-delay: -2s; }
+.can-skin-aura[data-aura=flare] { left: calc(var(--skin-art-x, 50%) + 20%); top: calc(var(--skin-art-y, 40%) - 18%); width: calc(var(--skin-aura, 84%) * .8); }
+.can-skin-aura[data-aura=flare]::before { inset: 45.5% 0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--skin-a) 20%, #fff), transparent); animation: can-flare 5s ease-in-out infinite; }
+.can-skin-aura[data-aura=flare]::after { inset: 0 45.5%; background: linear-gradient(transparent, color-mix(in srgb, var(--skin-a) 20%, #fff), transparent); animation: can-flare 5s ease-in-out infinite; }
+.can-skin-aura[data-aura=orbit] { transform: rotate(-14deg) scaleY(.36); }
+.can-skin-aura[data-aura=orbit]::before { border: 1.5px solid color-mix(in srgb, var(--skin-a) 55%, transparent); }
+.can-skin-aura[data-aura=orbit]::after { background: radial-gradient(circle at 50% 3%, #fff 0 2.4%, color-mix(in srgb, var(--skin-a) 70%, transparent) 3.2%, transparent 6.5%); animation: can-spin 6s linear infinite; }
+.can-skin-aura[data-aura=portal]::before { background: repeating-conic-gradient(color-mix(in srgb, var(--skin-a) 55%, transparent) 0 12deg, color-mix(in srgb, var(--skin-b) 45%, transparent) 12deg 24deg, transparent 24deg 36deg); -webkit-mask-image: radial-gradient(circle, transparent 18%, #000 30% 55%, transparent 70%); mask-image: radial-gradient(circle, transparent 18%, #000 30% 55%, transparent 70%); animation: can-spin 9s linear infinite; }
+.can-skin-aura[data-aura=portal]::after { inset: 14%; background: radial-gradient(circle, color-mix(in srgb, var(--skin-a) 55%, #fff), color-mix(in srgb, var(--skin-a) 35%, transparent) 30%, transparent 62%); animation: can-breathe 3s ease-in-out infinite; }
+.can-skin-aura[data-aura=bolts]::before, .can-skin-aura[data-aura=bolts]::after { inset: 20% auto auto; width: 16%; height: 46%; border-radius: 0; background: linear-gradient(color-mix(in srgb, var(--skin-a) 40%, #fff), color-mix(in srgb, var(--skin-a) 80%, #fff)); clip-path: polygon(45% 0, 100% 0, 64% 40%, 92% 40%, 18% 100%, 40% 54%, 10% 54%); animation: can-zap 3.6s linear infinite; }
+.can-skin-aura[data-aura=bolts]::before { left: 2%; transform: rotate(-12deg); }
+.can-skin-aura[data-aura=bolts]::after { right: 2%; transform: scaleX(-1) rotate(-12deg); animation-delay: -1.8s; }
+.can-skin-aura[data-still]::before, .can-skin-aura[data-still]::after { animation: none; }
+.can-skin-aura[data-aura=rings][data-still]::before { opacity: .55; transform: scale(.7); }
+.can-skin-aura[data-aura=rings][data-still]::after { opacity: .35; transform: scale(1); }
+/* Новые частицы и фольга. */
+[data-particles=fireflies] .can-skin-dot { background: color-mix(in srgb, #fff27a 70%, var(--skin-a)); box-shadow: 0 0 6px 1px color-mix(in srgb, #fff27a 70%, transparent); animation-name: can-firefly; }
+[data-particles=leaves] .can-skin-dot { border-radius: 0 70%; background: color-mix(in srgb, #4caf50 60%, var(--skin-a)); animation-name: can-petal; }
+[data-particles=drops] .can-skin-dot { aspect-ratio: .7; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: color-mix(in srgb, #8fd3ff 60%, #fff); animation-name: can-drop; animation-timing-function: cubic-bezier(.5, 0, 1, 1); }
+[data-particles=diamond] .can-skin-dot { border-radius: 1px; background: #fff; box-shadow: 0 0 4px #fff, 0 0 8px color-mix(in srgb, var(--skin-a) 60%, transparent); animation-name: can-glint; }
+.can-skin-foil[data-foil=scan] { left: 0; right: 0; top: -30%; height: 30%; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--rarity-light) 55%, transparent), color-mix(in srgb, var(--skin-a) 45%, transparent) 60%, transparent); animation: can-scan 5.5s ease-in-out infinite; }
+.can-skin-foil[data-foil=shimmer] { inset: 0; background: radial-gradient(circle, color-mix(in srgb, var(--rarity-light) 80%, #fff) 0 1px, transparent 1.6px) 0 0 / 16px 16px, radial-gradient(circle, color-mix(in srgb, var(--skin-a) 60%, #fff) 0 .8px, transparent 1.3px) 8px 8px / 16px 16px; animation: can-shimmer 2.8s ease-in-out infinite; }
+@keyframes can-breathe { 0%, 100% { opacity: .65; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.04); } }
+@keyframes can-ring { 0% { opacity: 0; transform: scale(.35); } 15% { opacity: .9; } 100% { opacity: 0; transform: scale(1.1); } }
+@keyframes can-flare { 0%, 100% { opacity: .5; transform: scale(.65) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
+@keyframes can-zap { 0%, 24%, 100% { opacity: 0; } 6%, 14% { opacity: 1; } 10% { opacity: .2; } }
+@keyframes can-flash { 0%, 88%, 92%, 100% { opacity: 0; } 89% { opacity: .5; } 90.5% { opacity: .15; } 91% { opacity: .4; } }
+@keyframes can-bolt { 0%, 88%, 93%, 100% { opacity: 0; } 89%, 91.5% { opacity: 1; } }
+@keyframes can-firefly { 0%, 100% { opacity: 0; transform: translate(0, 0); } 25% { opacity: 1; transform: translate(10px, -14px); } 50% { opacity: .3; transform: translate(-6px, -28px); } 75% { opacity: .9; transform: translate(8px, -40px); } }
+@keyframes can-drop { 0% { opacity: 0; transform: translateY(-20px); } 10% { opacity: .9; } 100% { opacity: 0; transform: translateY(var(--skin-rise, 140px)); } }
+@keyframes can-glint { 0%, 100% { opacity: 0; transform: rotate(45deg) scale(.2); } 50% { opacity: 1; transform: rotate(45deg) scale(1); } }
+@keyframes can-scan { 0%, 20% { transform: translateY(0); } 100% { transform: translateY(460%); } }
+@keyframes can-shimmer { 0%, 100% { opacity: .15; } 50% { opacity: .6; } }
+@media (prefers-reduced-motion: reduce) {
+  .can-skin-dot { display: none; }
+  .can-skin-foil, .can-skin-aura::before, .can-skin-aura::after, .can-skin-world::before, .can-skin-world::after { animation: none; }
+  .can-skin-aura[data-aura=rings]::before { opacity: .55; transform: scale(.7); }
+  .can-skin-aura[data-aura=rings]::after { opacity: .35; transform: scale(1); }
+  .can-skin-world[data-world=storm]::before { opacity: .8; }
+}
+
 @keyframes rarity-pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
 @keyframes rarity-sheen { 0%, 50% { transform: translateX(0) rotate(14deg); } 100% { transform: translateX(520%) rotate(14deg); } }
 @media (prefers-reduced-motion: reduce) {
@@ -767,8 +976,9 @@ a.blocked-member:hover strong { color: var(--theme-link, var(--color-brand)); }
 
 /* Стиль сезонного пропуска, он повторяет банки: углы срезаны, как у монет на витрине, поверху идут зубцы горлышка, а цвет
    фольги задаёт стадия банки (`--foil`, `--foil-ink`; без стадии — золото). Обводка у клипа обрезается, поэтому фокус
-   показывает светлый кант, а не `outline`. */
-.can-btn, .can-plate { --cut: 12px; --shape: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut)); --gold: linear-gradient(180deg, #ffeab0, #e9b84d 48%, #a96f18); position: relative; isolation: isolate; border: 0; clip-path: var(--shape); }
+   показывает светлый кант, а не `outline`. Размер среза — `--cut` раздела, по умолчанию 12 px: здесь он не задаётся,
+   иначе после клиентского перехода этот файл мог встать позже файла раздела и перебить его. */
+.can-btn, .can-plate { --shape: polygon(var(--cut, 12px) 0, calc(100% - var(--cut, 12px)) 0, 100% var(--cut, 12px), 100% calc(100% - var(--cut, 12px)), calc(100% - var(--cut, 12px)) 100%, var(--cut, 12px) 100%, 0 calc(100% - var(--cut, 12px)), 0 var(--cut, 12px)); --gold: linear-gradient(180deg, #ffeab0, #e9b84d 48%, #a96f18); position: relative; isolation: isolate; border: 0; clip-path: var(--shape); }
 .can-plate { background: var(--rim, var(--foil, var(--gold))); }
 .can-plate::before { content: ""; position: absolute; inset: 2px; z-index: -1; clip-path: var(--shape); background: var(--plate-face, linear-gradient(#1c2029, #0b0d12)); }
 .can-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 6px 26px 0; box-sizing: border-box; background: var(--foil, var(--gold)); color: var(--foil-ink, #1c1206); font-size: .9375rem; font-weight: 900; letter-spacing: .05em; line-height: 1; text-decoration: none; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: transform 120ms ease-out, filter 120ms ease-out; }
@@ -866,3 +1076,63 @@ button.tier-create-banner { width: 100%; border: 0; font: inherit; text-align: l
 .catalog-add-button { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--color-subtle); color: var(--color-ink); text-decoration: none; transition: background-color var(--motion-fast) ease-out; }
 .catalog-add-button:hover { background: var(--color-control); }
 .catalog-add-button:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+
+/* Облик словами: строка под карточкой в ленте и отметка у выпавшей банки с редким признаком. */
+.can-skin-traits { color: var(--color-muted-strong, #59616b); font-size: .75rem; line-height: 1.35; }
+.can-skin-rare { position: relative; z-index: 1; padding: 1px 8px; border-radius: 999px; background: linear-gradient(120deg, rgb(255 80 160 / .22), rgb(255 220 80 / .22), rgb(80 230 255 / .22)); color: var(--color-ink, #111); font-size: .6875rem; font-weight: 800; }
+
+/* Большая карточка Банкомата (`BigCard`) — как настоящая коллекционная карта: тёмная подложка в любой теме сайта, банка на
+   светлой панели, металл редкости и облик банки, крупнее знаки и путь частиц. */
+.big-card { --rarity-panel: #121620; --skin-radius: 18px; --mark-scale: 1.7; --skin-rise: 380px; position: relative; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; width: 100%; aspect-ratio: 5 / 7; padding: 24px 14px 16px; box-sizing: border-box; border-radius: 22px; color: #fff; text-align: left; }
+.big-card-art { position: relative; z-index: 1; display: grid; place-items: center; min-height: 0; overflow: hidden; border-radius: 16px; background: #fff; box-shadow: 0 6px 18px -10px rgb(0 0 0 / .6); }
+/* Absolute: a percentage height inside the grid row does not resolve, and a tall cut-out can grew past the card. */
+.big-card-art img { position: absolute; inset: 0; width: 86%; height: 86%; margin: auto; object-fit: contain; -webkit-user-drag: none; user-select: none; }
+.big-card-art[data-backdrop="white"] { background: var(--cover-backdrop); }
+/* Вырезанная банка стоит прямо на облике карточки: без светлой панели, со светом её вкуса и тенью. */
+.big-card-art[data-cutout] { overflow: visible; background: radial-gradient(ellipse 55% 50% at 50% 55%, color-mix(in srgb, var(--skin-a) 45%, transparent), transparent 72%); box-shadow: none; }
+.big-card-art[data-cutout] img { width: 94%; height: 96%; filter: drop-shadow(0 18px 16px rgb(0 0 0 / .5)); }
+/* Круглая банка в крупном просмотре (`CanVolume`): холст того же размера поверх фото — тень остаётся у фото, холст без фильтра. */
+.can-volume { position: absolute; inset: 0; width: 94%; height: 96%; margin: auto; pointer-events: none; }
+/* Тень у подписи: узоры рамки по углам заходят под неё. */
+.big-card-foot { position: relative; z-index: 1; display: grid; justify-items: start; gap: 4px; min-width: 0; text-shadow: 0 1px 4px rgb(0 0 0 / .6); }
+.big-card-foot .rarity-chip { text-shadow: none; }
+.big-card-foot strong { max-width: 100%; overflow: hidden; font-size: clamp(1.0625rem, 4.6vw, 1.375rem); font-weight: 900; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+.big-card-foot > span:last-child { display: -webkit-box; overflow: hidden; color: rgb(255 255 255 / .75); font-size: .9375rem; line-height: 1.3; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.big-card-count { position: absolute; z-index: 2; top: 20px; right: 20px; padding: 3px 10px; border-radius: 999px; background: linear-gradient(135deg, var(--rarity-chip-from), var(--rarity-chip-to)); color: var(--rarity-ink); font-size: .8125rem; font-weight: 900; }
+.big-card.is-missing { border: 2px dashed rgb(255 255 255 / .25); background: rgb(255 255 255 / .04); }
+.big-card.is-missing .big-card-art { background: rgb(255 255 255 / .06); box-shadow: none; }
+.big-card-silhouette { position: absolute; inset: 16% 33%; border-radius: 18px 18px 14px 14px; background: rgb(255 255 255 / .1); }
+.big-card.is-missing .big-card-art b { position: relative; color: rgb(255 255 255 / .55); font-size: 3rem; font-weight: 900; }
+
+/* Маленькая карточка, которая открывается крупно (`InspectableCard`): кнопка с прежней разметкой внутри. */
+.inspectable-card { appearance: none; font: inherit; color: inherit; text-align: inherit; cursor: pointer; }
+
+/* Крупный просмотр (`CardInspector`): карточка на весь экран, наклон за пальцем, перелив и блик идут за точкой касания. */
+.card-inspector { position: fixed; inset: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 14px; width: 100%; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: calc(env(safe-area-inset-top, 0px) + 64px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px); box-sizing: border-box; overflow: hidden; border: 0; background: radial-gradient(circle at 50% 36%, color-mix(in srgb, var(--skin-a) 32%, #0b0d14), #05060a 72%); color: #fff; -webkit-user-select: none; user-select: none; }
+.card-inspector:not([open]) { display: none; }
+.card-inspector::backdrop { background: rgb(0 0 0 / .7); }
+.card-inspector-close { --cut: 10px; position: absolute; z-index: 3; top: calc(env(safe-area-inset-top, 0px) + 12px); right: 16px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; color: #fff; font-size: 1.75rem; line-height: 1; cursor: pointer; }
+.card-inspector-stage { display: grid; place-items: center; min-height: 0; perspective: 1100px; touch-action: none; }
+.card-inspector-sway { width: min(80vw, 380px, calc((100dvh - 360px) * 5 / 7)); transform-style: preserve-3d; }
+/* The sway pauses instead of stopping: removed and added back, it restarted from zero, and the card jumped. */
+.card-inspector-sway { animation: card-sway 6s ease-in-out infinite paused; }
+.card-inspector-sway[data-resting] { animation-play-state: running; }
+.card-inspector-tilt { position: relative; border-radius: 22px; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transform-style: preserve-3d; transition: transform 80ms linear; cursor: grab; filter: drop-shadow(0 24px 40px rgb(0 0 0 / .55)); }
+.card-inspector-tilt:active { cursor: grabbing; }
+.card-inspector-tilt[data-resting] { transition: transform 700ms cubic-bezier(.2, .9, .3, 1.15); }
+.card-inspector-holo, .card-inspector-glare { position: absolute; inset: 0; z-index: 3; border-radius: 22px; pointer-events: none; }
+.card-inspector-holo { background: linear-gradient(115deg, transparent 18%, rgb(255 0 140 / .55) 30%, rgb(255 210 0 / .55) 40%, rgb(0 230 255 / .55) 50%, rgb(150 80 255 / .55) 60%, transparent 74%); background-size: 260% 260%; background-position: var(--mx, 50%) var(--my, 50%); mix-blend-mode: color-dodge; opacity: var(--shimmer, .2); }
+.card-inspector-glare { background: radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgb(255 255 255 / .5), transparent 46%); mix-blend-mode: overlay; }
+.card-inspector-info { display: grid; justify-items: center; gap: 10px; width: 100%; max-width: 520px; margin: 0 auto; text-align: center; }
+.card-inspector-info h2 { margin: 0; font-size: 1.375rem; font-weight: 900; line-height: 1.2; overflow-wrap: anywhere; }
+.card-inspector-kicker, .inv-kicker, .feed-drop-kicker { display: inline-flex; align-items: center; min-height: 24px; padding: 0 14px; background: linear-gradient(135deg, var(--rarity-chip-from, #f1f4f8), var(--rarity-chip-to, #a9b3c1)); clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%); color: var(--rarity-ink, #2b3542); font-size: .75rem; font-weight: 900; letter-spacing: .03em; text-transform: uppercase; }
+.card-inspector-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; }
+.card-inspector-actions .can-btn { flex: 1 1 200px; max-width: 320px; }
+@keyframes card-sway { 0%, 100% { transform: rotateY(-7deg) rotateX(3deg); } 50% { transform: rotateY(7deg) rotateX(-3deg); } }
+
+/* Облик словами — плашки признаков, редкие переливаются. */
+.card-traits { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.card-traits li { display: inline-flex; align-items: baseline; gap: 5px; padding: 5px 10px; border: 1px solid rgb(255 255 255 / .16); border-radius: 999px; background: rgb(255 255 255 / .07); font-size: .8125rem; font-weight: 700; }
+.card-traits small { color: rgb(255 255 255 / .55); font-size: .6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+.card-traits li[data-rare] { border-color: transparent; background: linear-gradient(120deg, rgb(255 80 160 / .3), rgb(255 220 80 / .3), rgb(80 230 255 / .3)); }
+@media (prefers-reduced-motion: reduce) { .card-inspector-sway { animation: none; } .card-inspector-tilt, .card-inspector-tilt[data-resting] { transition: none; } }
