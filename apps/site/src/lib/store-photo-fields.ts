@@ -9,10 +9,14 @@ const MAX_OTHERS = 10;
 
 export interface SeenDrink { brand: string; flavor: string }
 
-export const SEEN_DRINKS_PROMPT = 'На фото витрина или холодильник магазина. Перечисли все энергетические напитки, которые видно на фото. Для каждой разной банки укажи бренд и вкус так, как написано на банке. Ответь только JSON-массивом вида [{"brand":"...","flavor":"..."}]. Если вкус не читается, поставь пустую строку. Если энергетиков нет, ответь []. Ничего не придумывай.';
+/** Бренд — только марка, остальное — вкус: иначе модель писала «Monster Nitro» в бренд и оставляла вкус пустым. Угадывать по рисунку не просим: так она придумывала вкусы. */
+export const SEEN_DRINKS_PROMPT = 'На фото витрина или холодильник магазина. Перечисли все разные энергетические напитки, которые видно на фото, каждый по одному разу. Для каждого укажи бренд — только марку, как на банке (Monster, Red Bull, Burn, Flash Up), — и вкус: всё остальное название с банки, линейку и вкус (Ultra Paradise, Juiced Mango Loco, Nitro, Zero Sugar, Тропический). Пиши только то, что читается на банке; если вкус не прочитать, поставь пустую строку. Газировку, соки, чай и пиво не перечисляй. Ответь только JSON-массивом вида [{"brand":"...","flavor":"..."}]. Если энергетиков нет, ответь [].';
 
-/** Второй вопрос уже без фото: на него модель отмечала половину списка. Каждой увиденной банке — один номер или ничего. */
-export const matchDrinksPrompt = (seen: readonly SeenDrink[], options: readonly StoreDrinkOption[]) => `Банки с фото магазина:\n${seen.map((drink, index) => `${index + 1}. ${drink.brand} ${drink.flavor}`.trim()).join('\n')}\n\nКаталог напитков:\n${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}\n\nДля каждой банки укажи номер этого же напитка в каталоге. Названия могут быть написаны по-разному: Tropical и Тропический, Energy и Оригинальный. Если вкус банки не написан или такого напитка в каталоге нет, поставь 0. Ответь только JSON-массивом вида [{"can":1,"item":12}].`;
+/**
+ * Второй вопрос уже без фото: на него модель отмечала половину списка. Каждой увиденной банке — один номер или ничего, а банке не из
+ * каталога — короткое название: одна и та же банка с двух фото иначе становилась тремя подсказками («Punch Pacific Punch»).
+ */
+export const matchDrinksPrompt = (seen: readonly SeenDrink[], options: readonly StoreDrinkOption[]) => `Банки с фото магазина:\n${seen.map((drink, index) => `${index + 1}. ${drink.brand} ${drink.flavor}`.trim()).join('\n')}\n\nКаталог напитков:\n${options.map((option, index) => `${index + 1}. ${option.label}`).join('\n')}\n\nДля каждой банки укажи номер этого же напитка в каталоге. Названия могут быть написаны по-разному: Tropical и Тропический, Energy и Оригинальный. Если такого напитка в каталоге нет, поставь 0 и напиши в name короткое название, как его назвал бы покупатель (Monster Pacific Punch); одному напитку — одно name. Если у банки написана только линейка без вкуса (Ultra, Juiced, Punch), поставь 0 и пустое name. Ответь только JSON-массивом вида [{"can":1,"item":12},{"can":2,"item":0,"name":"..."}].`;
 
 /** Ответ модели — данные, а не команда: берём только первый JSON-массив и только нужные поля. */
 function jsonArray(reply: string): unknown[] {
@@ -35,6 +39,19 @@ export function parseSeenDrinks(reply: string): SeenDrink[] {
   });
 }
 
+/** Регистр, пробелы и надстрочные знаки («Rosá») не делают банку другой. */
+export const seenKey = (value: string) => normalizeText(value).normalize('NFKD').replace(/\p{M}/gu, '').replace(/\s+/gu, ' ');
+
+/** Несколько чтений одного фото — один список: та же банка, написанная иначе, остаётся одной. */
+export function mergeSeenDrinks(reads: readonly (readonly SeenDrink[])[]): SeenDrink[] {
+  const merged = new Map<string, SeenDrink>();
+  for (const drink of reads.flat()) {
+    const key = `${seenKey(drink.brand)}|${seenKey(drink.flavor)}`;
+    if (!merged.has(key)) merged.set(key, drink);
+  }
+  return [...merged.values()];
+}
+
 /** Пары «банка — номер»: одна запись на банку, всё, чего нет в списках, выбрасываем. */
 export function parseMatches(reply: string, cans: number, items: number) {
   const matches = new Map<number, number>();
@@ -44,6 +61,28 @@ export function parseMatches(reply: string, cans: number, items: number) {
     if (Number.isInteger(can) && Number.isInteger(item) && (can as number) >= 1 && (can as number) <= cans && (item as number) >= 1 && (item as number) <= items && !matches.has(can as number)) matches.set(can as number, item as number);
   }
   return matches;
+}
+
+/** Названия банок не из каталога по номеру банки; пустое — только линейка без вкуса, такую подсказку не показываем. */
+export function parseOtherNames(reply: string, cans: number) {
+  const names = new Map<number, string>();
+  for (const entry of jsonArray(reply)) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const { can, item, name } = entry as { can?: unknown; item?: unknown; name?: unknown };
+    if (Number.isInteger(can) && (can as number) >= 1 && (can as number) <= cans && item === 0 && typeof name === 'string' && !names.has(can as number)) names.set(can as number, name.trim().slice(0, 60));
+  }
+  return names;
+}
+
+/** Линейки, которые сами по себе не напиток: «Monster Juiced» в подсказке ничего не говорит, участник выберет вкус сам. */
+const BARE_LINES = new Set(['ultra', 'juiced', 'punch', 'rehab', 'reserve', 'energy drink']);
+export const isBareLine = (flavor: string) => BARE_LINES.has(seenKey(flavor));
+
+/** Подсказки «+ название» без повторов, не больше десяти. */
+export function uniqueNames(names: Iterable<string>) {
+  const unique = new Map<string, string>();
+  for (const name of names) if (name && !unique.has(seenKey(name))) unique.set(seenKey(name), name);
+  return [...unique.values()].slice(0, MAX_OTHERS);
 }
 
 /** Подходит ли написанное на банке к бренду каталога: «Flash» — это Flash Up, «Adrenaline» — Adrenaline Rush. */

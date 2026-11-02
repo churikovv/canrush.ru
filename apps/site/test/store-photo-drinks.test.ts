@@ -1,19 +1,16 @@
 import sharp from 'sharp';
 import { describe, expect, it, vi } from 'vitest';
+import type { AskOptions } from '../src/lib/gpt-api';
 
 vi.mock('@/lib/store-catalog', () => ({ storeDrinkOptions: async () => [{ brand: 'Red Bull', flavor: 'original', label: 'Red Bull · Оригинальный' }, { brand: 'Burn', flavor: 'original', label: 'Burn · Оригинальный' }] }));
-vi.mock('@/lib/gigachat', () => ({ getGigaChatMax: () => null }));
+vi.mock('@/lib/gpt-api', () => ({ getGptApi: () => null }));
 const { scanStorePhotos } = await import('../src/lib/store-photo-drinks');
 
 const photo = await sharp({ create: { width: 40, height: 40, channels: 3, background: '#123' } }).jpeg().toBuffer();
 
-function model(replies: string[]) {
-  const calls = { uploaded: 0, deleted: [] as string[], asked: [] as { attachments?: string[] }[] };
-  return { calls, client: {
-    uploadImage: async () => { calls.uploaded += 1; return `file-${calls.uploaded}`; },
-    deleteFile: async (id: string) => { calls.deleted.push(id); },
-    chat: async (messages: { attachments?: string[] }[]) => { calls.asked.push(messages[0]!); return replies.shift() ?? '[]'; },
-  } as never };
+function model(answer: (prompt: string, options: AskOptions) => string | Promise<string>) {
+  const asked: { prompt: string; image: boolean }[] = [];
+  return { asked, client: { ask: async (prompt: string, options: AskOptions = {}) => { asked.push({ prompt, image: Boolean(options.image) }); return answer(prompt, options); } } };
 }
 
 describe('drinks on store photos', () => {
@@ -21,22 +18,38 @@ describe('drinks on store photos', () => {
     await expect(scanStorePhotos([photo], null)).resolves.toBeNull();
   });
 
-  it('names catalog drinks, keeps strangers as hints and sends the photo only with the first question', async () => {
-    const { client, calls } = model(['[{"brand":"Red Bull","flavor":"Energy"},{"brand":"Burn","flavor":""},{"brand":"Незнакомый","flavor":"Киви"}]', '[{"can":1,"item":1}]']);
+  it('reads the photo twice, merges the reads and asks the catalog numbers without the photo', async () => {
+    const reads = ['[{"brand":"Red Bull","flavor":"Energy"},{"brand":"Burn","flavor":""},{"brand":"Red Bull","flavor":"Ultra"}]', '[{"brand":"red bull","flavor":"energy"},{"brand":"Незнакомый","flavor":"Киви"},{"brand":"Red Bull","flavor":"Summer Edition Pink"},{"brand":"Red Bull","flavor":"Juiced"}]'];
+    const { client, asked } = model(prompt => (prompt.startsWith('На фото') ? reads.shift() ?? '[]' : '[{"can":1,"item":1},{"can":2,"item":0,"name":""},{"can":3,"item":0,"name":"Red Bull Pink Edition"},{"can":4,"item":0,"name":"Red Bull Juiced"}]'));
     const result = await scanStorePhotos([photo], client);
-    expect(result).toEqual({ drinks: [{ brand: 'Red Bull', flavor: 'original', label: 'Red Bull · Оригинальный' }], others: ['Незнакомый Киви'], unread: ['Burn'] });
-    expect(calls.asked[0]?.attachments).toEqual(['file-1']);
-    expect(calls.asked[1]?.attachments).toBeUndefined();
-    expect(calls.deleted).toEqual(['file-1']);
+    expect(result).toEqual({ drinks: [{ brand: 'Red Bull', flavor: 'original', label: 'Red Bull · Оригинальный' }], others: ['Незнакомый Киви', 'Red Bull Pink Edition'], unread: ['Burn'] });
+    expect(asked.map(question => question.image)).toEqual([true, true, false]);
+    expect(asked[2]?.prompt).toContain('1. Red Bull Energy\n2. Red Bull Ultra\n3. Red Bull Summer Edition Pink\n4. Red Bull Juiced\n\nКаталог');
   });
 
-  it('removes the file even when the model fails, and looks at three photos at most', async () => {
-    const failing = model([]);
-    (failing.client as unknown as { chat: () => Promise<string> }).chat = async () => { throw new Error('gigachat_chat_429'); };
-    await expect(scanStorePhotos([photo], failing.client)).rejects.toThrow('429');
-    expect(failing.calls.deleted).toEqual(['file-1']);
-    const many = model(['[]', '[]', '[]', '[]']);
-    await scanStorePhotos([photo, photo, photo, photo], many.client);
-    expect(many.calls.uploaded).toBe(3);
+  it('does not call a brand unread when its other cans were found', async () => {
+    const { client } = model(prompt => (prompt.startsWith('На фото') ? '[{"brand":"Red Bull","flavor":"Energy"},{"brand":"Red Bull","flavor":""}]' : '[{"can":1,"item":1}]'));
+    expect((await scanStorePhotos([photo], client))?.unread).toEqual([]);
+  });
+
+  it('keeps what the other reads found when one fails, and looks at three photos at most', async () => {
+    let photos = 0;
+    const { client, asked } = model(prompt => {
+      if (!prompt.startsWith('На фото')) return '[{"can":1,"item":1}]';
+      photos += 1;
+      if (photos === 1) throw new Error('gpt_api_429');
+      return '[{"brand":"Burn","flavor":"Classic"}]';
+    });
+    const result = await scanStorePhotos([photo, photo, photo, photo], client);
+    expect(result?.drinks).toEqual([{ brand: 'Burn', flavor: 'original', label: 'Burn · Оригинальный' }]);
+    expect(asked.filter(question => question.image)).toHaveLength(6);
+  });
+
+  it('fails when no photo could be read, or the failed one leaves only empty photos', async () => {
+    const { client } = model(() => { throw new Error('gpt_api_429'); });
+    await expect(scanStorePhotos([photo, photo], client)).rejects.toThrow('429');
+    let seen = 0;
+    const halfEmpty = model(() => { seen += 1; if (seen <= 2) return '[]'; throw new Error('gpt_api_502'); });
+    await expect(scanStorePhotos([photo, photo], halfEmpty.client)).rejects.toThrow('502');
   });
 });

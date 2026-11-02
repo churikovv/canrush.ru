@@ -26,6 +26,8 @@ x-site-env: &site-env
   TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
   # «Рецензии на отзывы» in the business cabinet; without it the feature is off.
   GIGACHAT_AUTH_KEY: ${GIGACHAT_AUTH_KEY:-}
+  # ChatGPT through gpt-api.ru: drinks on store photos; without it the step stays silent.
+  GPT_API_KEY: ${GPT_API_KEY:-}
   TELEGRAM_API_URL: ${TELEGRAM_API_URL:-}
   TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
   # Android app: store-reviewer sign-in, push (FCM key file from ./secrets, RuStore), extra App Links keys

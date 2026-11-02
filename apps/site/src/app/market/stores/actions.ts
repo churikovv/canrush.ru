@@ -1,7 +1,9 @@
 'use server';
 import { isFrozenError } from '@/lib/moderation';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
+import { randomUUID } from 'node:crypto';
 import { headers } from 'next/headers';
+import { after } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { isSiteStaffEmail, requireSiteAdmin } from '@/lib/admin';
@@ -10,7 +12,8 @@ import { deleteStoreAsTeam, getStore, moderateStore, returnStoreToDraft, saveSto
 import { getPool } from '@/db/pool';
 import { linkStoreCatalog } from '@/lib/store-catalog';
 import { geocodeStoreAddress, type StoreGeocode } from '@/lib/store-geocoder';
-import { scanStorePhotos, type ScannedDrinks } from '@/lib/store-photo-drinks';
+import { getGptApi } from '@/lib/gpt-api';
+import { SCAN_KEPT_MS, scanStorePhotos, type ScannedDrinks } from '@/lib/store-photo-drinks';
 import { STORE_SCAN_PHOTOS } from '@/lib/store-photo-fields';
 import { deleteStorePreset, listPublicStorePresets, listStorePresets, readyStorePresets, saveStorePreset, searchStoresToCopy, storeAssortment } from '@/lib/store-assortment';
 import type { StoreClipboard } from '@/lib/store-clipboard';
@@ -79,19 +82,37 @@ export async function deleteStorePresetAction(id:string):Promise<StoreTemplates|
 }
 const scanCalls=new Map<string,number[]>();
 const HOUR=3_600_000;
+type ScanOutcome=ScannedDrinks|{error:'off'|'failed'};
+/** Идущие разборы фото. Ответ модели дольше минуты, которую nginx ждёт ответа сайта, поэтому форма забирает его отдельным запросом. */
+const scans=new Map<string,{userId:string;startedAt:number;result?:ScanOutcome}>();
 /** Напитки с фото: только для вошедших и не чаще 6 раз в час на аккаунт, каждый проход платный. Сбой не мешает заполнить список вручную. */
-export async function scanStorePhotosAction(form:FormData):Promise<ScannedDrinks|{error:'auth'|'limit'|'off'|'failed'}>{
+export async function scanStorePhotosAction(form:FormData):Promise<{scan:string}|{error:'auth'|'limit'|'off'|'failed'}>{
   const session=await auth.api.getSession({headers:await headers()});
   if(!session)return {error:'auth'};
+  if(!getGptApi())return {error:'off'};
   const now=Date.now(),recent=(scanCalls.get(session.user.id)??[]).filter(at=>at>now-HOUR);
   if(recent.length>=6)return {error:'limit'};
   scanCalls.set(session.user.id,[...recent,now]);
   if(scanCalls.size>5000)for(const [user,calls] of scanCalls)if(!calls.some(at=>at>now-HOUR))scanCalls.delete(user);
+  for(const [id,entry] of scans)if(entry.startedAt<now-SCAN_KEPT_MS)scans.delete(id);
   try{
     const files=form.getAll('photos').filter((item):item is File=>item instanceof File).slice(0,STORE_SCAN_PHOTOS);
-    const result=await scanStorePhotos(await Promise.all(files.map(async file=>Buffer.from(await file.arrayBuffer()))));
-    return result??{error:'off'};
+    const photos=await Promise.all(files.map(async file=>Buffer.from(await file.arrayBuffer())));
+    const id=randomUUID(),entry:{userId:string;startedAt:number;result?:ScanOutcome}={userId:session.user.id,startedAt:now};
+    scans.set(id,entry);
+    after(async()=>{entry.result=await scanStorePhotos(photos).then(result=>result??{error:'off' as const},()=>({error:'failed' as const}));});
+    return {scan:id};
   }catch{return {error:'failed'};}
+}
+/** Результат разбора: `pending`, пока модель думает. Чужой или забытый номер — сбой, форма предложит добавить напитки вручную. */
+export async function storeScanResultAction(id:string):Promise<ScanOutcome|{pending:true}|{error:'auth'}>{
+  const session=await auth.api.getSession({headers:await headers()});
+  if(!session)return {error:'auth'};
+  const entry=scans.get(id);
+  if(!entry||entry.userId!==session.user.id)return {error:'failed'};
+  if(!entry.result)return {pending:true};
+  scans.delete(id);
+  return entry.result;
 }
 const geocodeCalls=new Map<string,number[]>();
 /** Address lookup for the store form; signed-in only and at most 20 lookups a minute per account. */

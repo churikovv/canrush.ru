@@ -19,7 +19,7 @@ import { REMOVE_ICON, StoreTemplates } from '@/components/store-templates';
 import { STORE_XP, nearestStations, type LocationSource, type StockStatus } from '@/lib/store-fields';
 import type { Store } from '@/lib/stores';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
-import { geocodeStoreAction, saveStoreAction, scanStorePhotosAction, storeAssortmentAction } from '@/app/market/stores/actions';
+import { geocodeStoreAction, saveStoreAction, scanStorePhotosAction, storeAssortmentAction, storeScanResultAction } from '@/app/market/stores/actions';
 import { FormOptional, FormStep } from '@/components/form-step';
 import { STORE_SCAN_PHOTOS } from '@/lib/store-photo-fields';
 import { FormAlert } from '@/components/form-alert';
@@ -35,6 +35,18 @@ const rowsOf=(store?:Store):Row[]=>(store?.catalog??[]).map((item,index)=>({...i
 /** Что сравнивать с исходной формой: id строк новые при каждой вставке, а черновик нужен только тогда, когда содержимое другое. */
 const draftContent=(name:string,description:string,address:string,items:Row[])=>JSON.stringify([name,description,address,items.map(({name,price,availability,brand,flavor})=>[name,price,availability,brand,flavor])]);
 const SPINNER=<span className="store-scan-spinner" aria-hidden="true"/>;
+/** Разбор фото идёт на сервере до 2,5 минут; форма спрашивает о нём раз в 3 секунды и ждёт чуть дольше срока сервера. */
+const SCAN_POLL_MS=3000,SCAN_WAIT_MS=170_000;
+/** Модель думает дольше, чем живёт один запрос, поэтому ответ забираем отдельно, пока форма открыта. */
+async function waitForScan(scan:string,open:()=>boolean){
+  let result:Awaited<ReturnType<typeof storeScanResultAction>>={pending:true};
+  for(const until=Date.now()+SCAN_WAIT_MS;'pending' in result&&Date.now()<until&&open();){
+    await new Promise(resolve=>setTimeout(resolve,SCAN_POLL_MS));
+    // Оборванный опрос (телефон сменил сеть) не обрывает разбор: спросим ещё раз.
+    if(open())result=await storeScanResultAction(scan).catch(()=>result);
+  }
+  return result;
+}
 const drinkCount=(count:number)=>`${count} ${pluralRu(count,'напиток','напитка','напитков')}`;
 const nearestId=(city:string,point:readonly [number,number]|null)=>point?nearestStations(city,point[0],point[1],1)[0]?.station.id??'':'';
 
@@ -58,6 +70,8 @@ export function StoreForm({title,xp,initial,cityId,apiKey,drinks,geocoder=false,
   // Напитки с фото ищутся, пока участник идёт дальше: шаг не ждёт нейросеть, а список пополняется сам.
   const [scan,setScan]=useState<{kind:'idle'|'scanning'|'failed'}|{kind:'done';found:number;others:string[];unread:string[]}>({kind:'idle'});
   const scanned=useRef('');
+  const mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
   // Читается только в браузере: на сервере копии нет, поэтому первая отрисовка совпадает с серверной.
   const clipboardRaw=useSyncExternalStore(subscribeStoreClipboard,loadStoreClipboard,()=>null);
   const clipboard=useMemo(()=>readStoreClipboard(clipboardRaw),[clipboardRaw]);
@@ -149,8 +163,11 @@ export function StoreForm({title,xp,initial,cityId,apiKey,drinks,geocoder=false,
     scanned.current=signature;setScan({kind:'scanning'});
     const form=new FormData();files.forEach(file=>form.append('photos',file));
     try{
-      const result=await scanStorePhotosAction(form);
-      if('error' in result){setScan({kind:result.error==='off'?'idle':'failed'});return;}
+      const started=await scanStorePhotosAction(form);
+      if('error' in started){setScan({kind:started.error==='off'?'idle':'failed'});return;}
+      const result=await waitForScan(started.scan,()=>mounted.current);
+      if(!mounted.current)return;
+      if('pending' in result||'error' in result){setScan({kind:'error' in result&&result.error==='off'?'idle':'failed'});return;}
       setItems(current=>{
         const known=new Set(current.map(item=>JSON.stringify([item.brand,item.flavor])));
         const fresh=result.drinks.filter(drink=>!known.has(JSON.stringify([drink.brand,drink.flavor]))).slice(0,50-current.length);
@@ -249,7 +266,7 @@ export function StoreForm({title,xp,initial,cityId,apiKey,drinks,geocoder=false,
       }}/></div>}
     <section className="form-card" aria-labelledby="store-step-stock" tabIndex={-1}>
       <FormStep n={3} id="store-step-stock" title="Напитки и цены" optional/>
-      {scan.kind==='scanning'&&<FormAlert tone="info" icon={SPINNER} title="Ищем напитки на фото">Обычно это занимает несколько секунд, список пополнится сам.</FormAlert>}
+      {scan.kind==='scanning'&&<FormAlert tone="info" icon={SPINNER} title="Ищем напитки на фото">Это займёт около минуты: список пополнится сам, а пока можно добавлять напитки.</FormAlert>}
       {scan.kind==='failed'&&<FormAlert tone="warning" title="Не получилось разобрать фото">Добавьте напитки через поиск вверху.</FormAlert>}
       {scan.kind==='done'&&<FormAlert tone={scan.found?'success':'info'} title={scan.found?`Нашли на фото: ${drinkCount(scan.found)}`:'Знакомых банок на фото не нашли'}
         actions={scan.others.length>0?scan.others.map(name=><button key={name} type="button" className="store-scan-chip" disabled={items.length>=50} onClick={()=>{

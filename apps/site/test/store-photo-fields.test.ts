@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchDrinksPrompt, parseMatches, parseSeenDrinks, splitSeenDrinks } from '../src/lib/store-photo-fields';
+import { matchDrinksPrompt, mergeSeenDrinks, parseMatches, parseOtherNames, parseSeenDrinks, splitSeenDrinks, uniqueNames } from '../src/lib/store-photo-fields';
 
 const options = [
   { brand: 'Red Bull', flavor: 'original', label: 'Red Bull · Оригинальный' },
@@ -8,6 +8,13 @@ const options = [
 ];
 
 describe('what the model saw', () => {
+  it('merges two reads of one photo into one list', () => {
+    expect(mergeSeenDrinks([
+      [{ brand: 'Monster', flavor: 'Ultra Rosa' }, { brand: 'Monster', flavor: '' }],
+      [{ brand: 'MONSTER', flavor: 'ultra  rosá' }, { brand: 'Monster', flavor: 'Nitro' }],
+    ])).toEqual([{ brand: 'Monster', flavor: 'Ultra Rosa' }, { brand: 'Monster', flavor: '' }, { brand: 'Monster', flavor: 'Nitro' }]);
+  });
+
   it('reads the array out of any wrapping and keeps only the expected fields', () => {
     expect(parseSeenDrinks('Вот список:\n```json\n[{"brand":"Red Bull","flavor":"Tropical","extra":1}]\n```')).toEqual([{ brand: 'Red Bull', flavor: 'Tropical' }]);
     expect(parseSeenDrinks('[{"brand":"X"},{"flavor":"y"},"z",{"brand":"Burn"}]')).toEqual([{ brand: 'Burn', flavor: '' }]);
@@ -32,6 +39,12 @@ describe('catalog numbers', () => {
   it('keeps one number per can and drops everything outside the lists', () => {
     const matches = parseMatches('[{"can":1,"item":2},{"can":1,"item":3},{"can":2,"item":0},{"can":3,"item":9},{"can":9,"item":1},{"can":"1","item":1}]', 3, 3);
     expect([...matches]).toEqual([[1, 2]]);
+  });
+
+  it('takes a short name for a can outside the catalog, an empty one for a bare line', () => {
+    const names = parseOtherNames('[{"can":1,"item":0,"name":" Monster Pacific Punch "},{"can":2,"item":0,"name":""},{"can":3,"item":5,"name":"x"},{"can":4,"item":0},{"can":9,"item":0,"name":"y"}]', 4);
+    expect([...names]).toEqual([[1, 'Monster Pacific Punch'], [2, '']]);
+    expect(uniqueNames(['Monster Pacific Punch', '', 'monster  pacific punch', 'Reign'])).toEqual(['Monster Pacific Punch', 'Reign']);
   });
 
   it('asks about the cans seen, not the photo again', () => {
