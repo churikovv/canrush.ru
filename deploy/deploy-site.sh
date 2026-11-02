@@ -6,7 +6,8 @@
 #   2. run migrations with it;
 #   3. start the new image as `site-standby` on 3003 and wait until it serves pages;
 #   4. recreate `site` on 3002 — while it starts, nginx serves from the standby;
-#   5. wait for `site`, then remove the standby.
+#   5. wait for `site`, then remove the standby;
+#   6. drop build cache unused for 3 days: it grows by gigabytes on busy days and once filled most of the disk.
 #
 # Usage on the VPS: cd /opt/canrush && git pull && deploy/deploy-site.sh
 set -euo pipefail
@@ -43,4 +44,9 @@ sleep 6
 
 echo "remove standby"
 docker compose --profile standby rm -sf site-standby
+
+# The site is already live here, so a failed cleanup must not fail the deploy.
+echo "prune build cache"
+docker builder prune -af --filter until=72h | tail -1 || true
+
 echo "done: $DEPLOYMENT_ID"
