@@ -8,7 +8,7 @@ import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { profileTagLabel } from '@/lib/profile-achievements';
 export class ReviewDiscussionError extends Error {}
 export interface ReviewInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean; /** The viewer is an admin or a moderator: «Удалить» on anyone's content. */ staff?: boolean }
-export interface ReviewCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; canDelete: boolean }
+export interface ReviewCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; verified: boolean; canDelete: boolean }
 export function reviewId(value: unknown): string {
   if (typeof value !== 'string' || !PHOTO_ID_PATTERN.test(value)) throw new ReviewDiscussionError('Отзыв или комментарий не найден.');
   return value;
@@ -42,7 +42,7 @@ export async function getReviewComments(id: string, viewer: string | null, befor
     c."userId"=$2 as "canDelete",
     (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
     case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
-      when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
+      when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified
     from "reviewComment" c join "user" u on u.id=c."userId" left join "user" ru on ru.id=c."replyToUserId"
     where ${notBlockedBy('$2', 'c."userId"')} and c."reviewId"=$1 and ($3::uuid is null or (c."createdAt",c.id)<(select "createdAt",id from "reviewComment" where id=$3 and "reviewId"=$1))
     order by c."createdAt" desc,c.id desc limit 21`, [id, viewer, before ?? null]);

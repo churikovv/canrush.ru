@@ -1,3 +1,4 @@
+import { VerifiedMark } from '@/components/verified-mark';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { ProfileExperience } from '@/components/profile-experience';
@@ -23,7 +24,7 @@ export function CatalogDrinkAuthor({ author, createdAt }: { author: CatalogDrink
       <h2 id="catalog-drink-author-title">Добавил в каталог</h2>
       {href ? <Link className="catalog-drink-author-avatar" href={href} tabIndex={-1} aria-hidden="true">{avatar}</Link> : <span className="catalog-drink-author-avatar">{avatar}</span>}
       <div className="catalog-drink-author-who">
-        {href ? <Link className="catalog-drink-author-name" href={href}><strong>{name}</strong><span>@{author.username}</span></Link> : <strong>{name}</strong>}
+        {href ? <Link className="catalog-drink-author-name" href={href}><strong>{name}{author.verified && <VerifiedMark />}</strong><span>@{author.username}</span></Link> : <strong>{name}</strong>}
         <div className="catalog-drink-author-badges">
           {tag && <span className="profile-tag" data-tag={author.tag}>{tag}</span>}
           {author.username && <ProfileExperience username={author.username} initial={{ xp: author.xp, rank: null }} />}

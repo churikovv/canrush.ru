@@ -12,7 +12,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ProfileReviews } from '../src/components/profile-reviews';
 import type { ReviewData } from '../src/lib/reviews';
 const review: ReviewData = {
-  id: 'review-1', author: { username: 'reader', name: 'Reader', telegramChannel: null, tag: 'Burner', avatarId: null },
+  id: 'review-1', author: { username: 'reader', name: 'Reader', telegramChannel: null, tag: 'Burner', avatarId: null, verified: false },
   brand: 'Burn', flavor: 'original', design: 4, taste: 5,
   text: 'Отличный вкус', country: null, photos: ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'],
   createdAt: new Date('2026-09-24'), updatedAt: new Date('2026-09-24'),

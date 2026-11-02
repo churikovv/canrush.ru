@@ -17,7 +17,7 @@ export interface CatalogDrink {
   /** The approved company that published it, for a link to its profile (/company/<id>). */
   businessId: string | null;
   /** Avatar, tag and XP as every author row shows them; `drinks` — how many of their drinks are published. */
-  author: { id: string; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; drinks: number };
+  author: { id: string; username: string | null; name: string; avatarId: string | null; tag: string | null; verified: boolean; xp: number; drinks: number };
   /** Ids of the extra photos in order (served by `/api/catalog-drink-photos/<id>`), besides the cover. */
   photos: string[];
 }
@@ -39,19 +39,19 @@ const COLUMNS = `d.id, d.brand, d.flavor, d."fullName", d.volumes, d.ingredients
   d."ownerId", u.username, u.name, (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
   coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
   case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
-    when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
+    when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified,
   (select count(*)::int from "catalogDrink" o where o."ownerId" = d."ownerId" and o.status = 'published') as drinks,
   (select name from business where id = d."businessId" and status = 'approved') as business,
   (select id from business where id = d."businessId" and status = 'approved') as "businessId",
   array(select p.id::text from "catalogDrinkPhoto" p where p."drinkId" = d.id order by p.position) as photos`;
-interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; discontinued: boolean; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; drinks: number; business: string | null; businessId: string | null; photos: string[] }
+interface Row { id: string; brand: string; flavor: string; fullName: string; volumes: number[]; ingredients: string; status: CatalogDrinkStatus; discontinued: boolean; moderationNote: string; createdAt: Date; updatedAt: Date; ownerId: string; username: string | null; name: string; avatarId: string | null; xp: number; tag: string | null; verified: boolean; drinks: number; business: string | null; businessId: string | null; photos: string[] }
 /** The photo's address carries `updatedAt` in the path: a new photo gets a new URL past the hour of public caching. */
 const drinkPhotoUrl = (id: string, updatedAt: Date) => `/api/catalog-drinks/${id}/${updatedAt.getTime()}`;
 const toDrink = (row: Row): CatalogDrink => ({
   id: row.id, brand: row.brand, flavor: row.flavor, name: flavorName(row.flavor), fullName: row.fullName, volumes: row.volumes, ingredients: row.ingredients,
   status: row.status, discontinued: row.discontinued, moderationNote: row.moderationNote, createdAt: row.createdAt, updatedAt: row.updatedAt,
   href: `/catalog/${catalogGroupSlug(row.brand, row.flavor)}`, photo: drinkPhotoUrl(row.id, row.updatedAt), business: row.business ?? null, businessId: row.businessId ?? null,
-  author: { id: row.ownerId, username: row.username, name: row.name, avatarId: row.avatarId, tag: row.tag, xp: Number(row.xp), drinks: row.drinks },
+  author: { id: row.ownerId, username: row.username, name: row.name, avatarId: row.avatarId, tag: row.tag, verified: row.verified, xp: Number(row.xp), drinks: row.drinks },
   photos: row.photos ?? [],
 });
 const VISIBLE_AUTHOR = 'not exists(select 1 from "userBlock" b where b."userId" = d."ownerId")';

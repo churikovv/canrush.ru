@@ -11,7 +11,7 @@ export interface ReviewAuthor {
   username: string;
   name: string;
   telegramChannel: string | null;
-  tag: string | null;
+  tag: string | null; verified: boolean;
   avatarId: string | null;
   xp?: number;
   /** The author's avatar frame from their profile appearance, drawn around the avatar like elsewhere on the site. */
@@ -69,7 +69,7 @@ interface ReviewRow extends QueryResultRow {
   username: string;
   name: string;
   telegramChannel: string | null;
-  tag: string | null;
+  tag: string | null; verified: boolean;
   avatarId: string | null;
   xp?: number;
   appearance: unknown;
@@ -87,7 +87,7 @@ const REVIEW_SELECT = `
          (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
          case when u."profileTags"[1] in ('admin', 'moderator') then
            case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
-         when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag
+         when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified
   from "review" r
   join "user" u on u."id" = r."userId"
 `;
@@ -101,6 +101,7 @@ function toReview(row: ReviewRow): ReviewData {
       name: row.name,
       telegramChannel: row.telegramChannel,
       tag: profileTagLabel(row.tag) ?? null,
+      verified: row.verified,
       avatarId: row.avatarId,
       xp: row.xp ?? 0,
       frame: (parseProfileAppearance(row.appearance) ?? DEFAULT_PROFILE_APPEARANCE).frame,

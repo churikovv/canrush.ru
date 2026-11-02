@@ -35,6 +35,7 @@ export interface TierListPlacement {
 export interface TierListAuthor {
   avatarId?: string | null;
   tag?: string | null;
+  verified?: boolean;
   xp?: number;
   username: string;
   name: string;

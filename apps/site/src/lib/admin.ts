@@ -37,7 +37,7 @@ export interface AdminUserEntry {
   /** As members see them elsewhere: avatar, frame, chosen tag (still earned), XP; and moderation state. */
   avatarId: string | null;
   frame: ProfileAppearance['frame'];
-  tag: string | null;
+  tag: string | null; verified: boolean;
   xp: number;
   role: SiteRole | null;
   frozenUntil: Date | null;

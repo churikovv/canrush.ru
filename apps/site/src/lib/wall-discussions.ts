@@ -9,7 +9,7 @@ import { profileTagLabel } from '@/lib/profile-achievements';
 export class WallDiscussionError extends Error {}
 /** `saved` — the viewer bookmarked the record (savedPost). */
 export interface WallInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean; saved: boolean; /** The viewer is an admin or a moderator: «Удалить» on anyone's content. */ staff?: boolean }
-export interface WallCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; canDelete: boolean; likes: number; liked: boolean }
+export interface WallCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; verified: boolean; canDelete: boolean; likes: number; liked: boolean }
 export function wallPostId(value: unknown): string {
   if (typeof value !== 'string' || !PHOTO_ID_PATTERN.test(value)) throw new WallDiscussionError('Запись или комментарий не найден.');
   return value;
@@ -52,7 +52,7 @@ export async function getWallComments(id: string, viewer: string | null, before?
     exists(select 1 from "wallReplyLike" where "replyId"=c.id and "userId"=$2) as liked,
     (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
     case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
-      when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
+      when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified
     from "wallReply" c join "user" u on u.id=c."userId" left join "user" ru on ru.id=c."replyToUserId"
     where ${notBlockedBy('$2', 'c."userId"')} and c."wallPostId"=$1 and exists(select 1 from "profileComment" where id=$1) and ($3::uuid is null or (c."createdAt",c.id)<(select "createdAt",id from "wallReply" where id=$3 and "wallPostId"=$1))
     order by c."createdAt" desc,c.id desc limit 21`, [id, viewer, before ?? null]);

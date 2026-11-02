@@ -134,12 +134,12 @@ export async function getProfileRatings(userId: string) {
 }
 export type ProfileRatings = Awaited<ReturnType<typeof getProfileRatings>>;
 
-export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; editedAt: Date | null; username: string | null; name: string; avatarId: string | null; tag: string | null; xp: number; photos: string[]; mediaKinds: WallMediaKind[] }
+export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; editedAt: Date | null; username: string | null; name: string; avatarId: string | null; tag: string | null; verified: boolean; xp: number; photos: string[]; mediaKinds: WallMediaKind[] }
 export interface FeedPostRow extends WallPostRow { ownerUsername: string | null; ownerName: string; ownerAvatarId: string | null }
 /** `saved` — records the viewer bookmarked (savedPost), without rank-up events. */
 export type FeedScope = 'all' | 'following' | 'saved';
 
-export interface RankUpRow { id: string; userId: string; tier: RankUpTier; degree: number; createdAt: Date; username: string; name: string; avatarId: string | null; tag: string | null; xp: number }
+export interface RankUpRow { id: string; userId: string; tier: RankUpTier; degree: number; createdAt: Date; username: string; name: string; avatarId: string | null; tag: string | null; verified: boolean; xp: number }
 /** A member's reviews of one Moscow day, shown as one «оценил напитки» event so a run of reviews does not flood the feed. */
 export interface FeedReviewGroup { key: string; createdAt: Date; reviews: ReviewData[] }
 /**
@@ -150,16 +150,16 @@ export type FeedItem = { kind: 'post'; post: FeedPostRow } | { kind: 'rank-up'; 
   | { kind: 'tierlist'; tierList: TierListSummary } | { kind: 'reviews'; group: FeedReviewGroup } | { kind: 'gacha'; pull: FeedGachaRow }
   | { kind: 'article'; article: FeedArticleRow };
 /** Опубликованная статья из «Новостей»: та же строка `article`, поэтому лайк общий со страницей статьи. */
-export interface FeedArticleRow { id: string; userId: string; title: string; summary: string; minutes: number; coverId: string | null; publishedAt: Date; likes: number; liked: boolean; username: string; name: string; avatarId: string | null; xp: number; tag: string | null }
+export interface FeedArticleRow { id: string; userId: string; title: string; summary: string; minutes: number; coverId: string | null; publishedAt: Date; likes: number; liked: boolean; username: string; name: string; avatarId: string | null; xp: number; tag: string | null; verified: boolean }
 /** Лучшая эпическая или легендарная банка, которую участник вытащил из Банкомата за московский день (`count` — сколько таких за день). */
-export interface FeedGachaRow { key: string; userId: string; brand: string; flavor: string; rarity: 'epic' | 'legendary'; count: number; createdAt: Date; username: string; name: string; avatarId: string | null; xp: number; tag: string | null }
+export interface FeedGachaRow { key: string; userId: string; brand: string; flavor: string; rarity: 'epic' | 'legendary'; count: number; createdAt: Date; username: string; name: string; avatarId: string | null; xp: number; tag: string | null; verified: boolean }
 
 // The author `u` as every timeline row shows them: avatar, XP and the selected tag.
 const AUTHOR_COLUMNS = `u.username, u.name,
       (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
       coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
       case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
-      when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag`;
+      when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified`;
 // One record serves both the wall it was written on and the feed, so both views select the same columns.
 const WALL_POST_COLUMNS = `c.id, c."profileId", c."userId", c.text, c."createdAt", c."editedAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, coalesce((select array_agg(p.kind order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as "mediaKinds", ${AUTHOR_COLUMNS}`;
 

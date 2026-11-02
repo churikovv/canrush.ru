@@ -1,3 +1,4 @@
+import { VerifiedMark } from '@/components/verified-mark';
 import '@/styles/shared.css';
 import '@/styles/profile.css';
 import '@/styles/leaderboard.css';
@@ -48,6 +49,7 @@ function Row({ user }: { user: LeaderboardRow }) {
     <span className="lb-main">
       <span className="lb-name">
         <strong>{user.username}</strong>
+        {user.verified && <VerifiedMark />}
         {user.streak > 0 && <span className="lb-chip lb-streak" data-flame={flameTier(user.streak)} title={`Серия ${user.streak} ${plural(user.streak, 'день', 'дня', 'дней')} подряд`}><StreakFlame length={user.streak} size={14} />{user.streak}<span className="sr-only"> {plural(user.streak, 'день', 'дня', 'дней')} подряд</span></span>}
         {user.tag && <span className="profile-tag" data-tag={user.tag}>{profileTagLabel(user.tag)}{user.tag === 'engine' && user.engineNumber && <small> №{String(user.engineNumber).padStart(3, '0')}</small>}</span>}
       </span>

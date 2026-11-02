@@ -1,4 +1,5 @@
 'use client';
+import { VerifiedMark } from '@/components/verified-mark';
 import { MediaAttachButton, MediaAttachmentPreviews, useMediaAttachments } from '@/components/media-attachments';
 import { MentionText } from '@/components/mention-text';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
@@ -132,7 +133,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         <span>{stats.authenticated ? 'Напишите первым — с этого начинаются лучшие обсуждения.' : 'Здесь появятся ответы участников.'}</span>
       </div> : <ul className="review-thread-list">{comments.map(comment => <li key={comment.id}>
         <div className="review-comment-avatar" aria-hidden="true">{comment.avatarId ? <Image unoptimized src={`/api/profile-images/${comment.avatarId}`} alt="" width={32} height={32} /> : (comment.name || comment.username || '?').charAt(0)}</div>
-        <div className="review-comment-body"><header>{comment.username ? <Link href={`/profile/${comment.username}`}>{comment.name.includes('@') ? `@${comment.username}` : comment.name}</Link> : <strong>{comment.name.includes('@') ? 'Участник' : comment.name}</strong>}{comment.tag && <span className="profile-tag" data-tag={profileTagKey(comment.tag)}>{comment.tag}</span>}<time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleDateString('ru-RU')}</time>{comment.editedAt && <span className="review-comment-edited" title={`Изменено ${new Date(comment.editedAt).toLocaleString('ru-RU')}`}>изменено</span>}
+        <div className="review-comment-body"><header>{comment.username ? <Link href={`/profile/${comment.username}`}>{comment.name.includes('@') ? `@${comment.username}` : comment.name}</Link> : <strong>{comment.name.includes('@') ? 'Участник' : comment.name}</strong>}{comment.verified && <VerifiedMark />}{comment.tag && <span className="profile-tag" data-tag={profileTagKey(comment.tag)}>{comment.tag}</span>}<time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleDateString('ru-RU')}</time>{comment.editedAt && <span className="review-comment-edited" title={`Изменено ${new Date(comment.editedAt).toLocaleString('ru-RU')}`}>изменено</span>}
           {(comment.canDelete || stats.authenticated) && <span className="review-comment-actions"><MoreActions label="Действия с комментарием">
             {comment.canDelete && editing !== comment.id && <button className="more-actions-item" type="button" role="menuitem" disabled={pending} onClick={() => { setEditing(comment.id); setDraft(comment.text); setFailure(null); }}><EditIcon /><span>Редактировать</span></button>}
             {comment.canDelete && <button className="more-actions-item is-danger" type="button" role="menuitem" disabled={pending} onClick={() => { if(window.confirm('Удалить комментарий?')) run('delete',comment.id); }}><TrashIcon /><span>Удалить</span></button>}

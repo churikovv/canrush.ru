@@ -27,6 +27,8 @@ const NOTICES: Record<string, string> = {
   'role-changed': 'Роль изменена.',
   'user-blocked': 'Пользователь заблокирован.',
   'user-unblocked': 'Пользователь разблокирован.',
+  'user-verified': 'Галочка выдана.',
+  'user-unverified': 'Галочка снята.',
   'user-frozen': 'Участник заморожен: писать он не сможет до конца срока.',
   'user-unfrozen': 'Заморозка снята.',
   'tierlists-purged': 'Все тирлисты участника удалены.',

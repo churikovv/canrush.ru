@@ -1,3 +1,4 @@
+import { VerifiedMark } from '@/components/verified-mark';
 import { AvatarFrame } from '@/components/avatar-frame';
 import { ProfileAvatarViewer } from '@/components/profile-avatar-viewer';
 import Image from 'next/image';
@@ -6,9 +7,11 @@ import { joinedLabel } from '@/lib/last-seen';
 
 const META_ICON = { width: 15, height: 15, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
 
-export function ProfileHeader({ name, username, bio, createdAt, avatarSrc, avatarId, bannerSrc, actions, status, tags, level, avatarControl, bannerControl, frame = 'none' }: {
+export function ProfileHeader({ verified, name, username, bio, createdAt, avatarSrc, avatarId, bannerSrc, actions, status, tags, level, avatarControl, bannerControl, frame = 'none' }: {
   frame?: import('@/lib/profile-appearance').ProfileAppearance['frame'];
   name: string;
+  /** Галочка участника, который ведёт сообщество. */
+  verified?: boolean;
   username: string;
   bio?: string | null;
   createdAt: Date | string;
@@ -40,7 +43,7 @@ export function ProfileHeader({ name, username, bio, createdAt, avatarSrc, avata
         {level && <span className="community-avatar-level">{level}</span>}
         {avatarControl}
       </span>
-      <div className="community-name"><div className="community-name-line"><h1>{name}</h1>{status}</div>
+      <div className="community-name"><div className="community-name-line"><h1>{name}{verified && <VerifiedMark />}</h1>{status}</div>
         <p className="community-meta">
           <span className="community-meta-item"><svg {...META_ICON}><circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" /></svg>@{username}</span>
           <span className="community-meta-item community-joined"><svg {...META_ICON}><rect x="3" y="5" width="18" height="16" rx="2.5" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>С нами с {date}</span>

@@ -10,7 +10,7 @@ export interface LeaderboardRow {
   username: string; name: string; xp: number; rank: number; avatarId: string | null;
   frame: ProfileAppearance['frame'];
   /** The chosen tag, only while still earned (role tags only while the role holds), as in people search. */
-  tag: string | null; engineNumber: number | null;
+  tag: string | null; verified: boolean; engineNumber: number | null;
   /** Current calendar streak in days (alive while the last can is today or yesterday, Moscow), 0 without one. */
   streak: number;
   reviews: number; cans: number; tierLists: number;
@@ -28,7 +28,7 @@ export async function getLeaderboard(): Promise<LeaderboardRow[]> {
       (select id::text from "profileImage" where "userId" = r.id and kind = 'avatar') as "avatarId",
       u."profileAppearance" as appearance,
       case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
-        when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
+        when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified,
       (select number from "betaEngine" where "userId" = u.id) as "engineNumber",
       (select count(*)::int from review where "userId" = u.id) as reviews,
       (select count(*)::int from "drinkLog" where "userId" = u.id) as cans,

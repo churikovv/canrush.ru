@@ -1,7 +1,7 @@
 'use client';
 import type { MouseEvent, ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
-import { blockUserAction, deleteUserAction, freezeUserAction, purgeUserCommentsAction, purgeUserTierListsAction, unblockUserAction, unfreezeUserAction } from '@/app/admin/actions';
+import { blockUserAction, deleteUserAction, freezeUserAction, purgeUserCommentsAction, purgeUserTierListsAction, unblockUserAction, unfreezeUserAction, unverifyUserAction, verifyUserAction } from '@/app/admin/actions';
 import { TrashIcon } from '@/components/action-icons';
 import { MoreActions } from '@/components/more-actions';
 
@@ -10,6 +10,7 @@ const Snow = () => <svg {...icon}><path d="M12 2v20M4.9 6.5l14.2 11M4.9 17.5l14.
 const Ban = () => <svg {...icon}><circle cx="12" cy="12" r="9" /><path d="m5.6 5.6 12.8 12.8" /></svg>;
 const Layers = () => <svg {...icon}><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 13 9 5 9-5" /></svg>;
 const Bubble = () => <svg {...icon}><path d="M20 16a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10Z" /></svg>;
+const Check = () => <svg {...icon}><circle cx="12" cy="12" r="9" /><path d="m8 12.5 3 3 5-6" /></svg>;
 const Person = () => <svg {...icon}><circle cx="12" cy="8" r="4" /><path d="M4 21c.8-4 4-6 8-6s7.2 2 8 6" /></svg>;
 
 function Item({ children, confirm, danger, disabled }: { children: ReactNode; confirm?: string; danger?: boolean; disabled?: boolean }) {
@@ -21,16 +22,20 @@ function Item({ children, confirm, danger, disabled }: { children: ReactNode; co
 /**
  * «⋯» of a member in «Участники»: clean up their tier lists or comments, freeze posting for a day, week or month, block,
  * and — administrators only — delete the account. Each item is a form for the admin actions (they redirect back with a
- * notice); the menu panel stays mounted while hidden, so the forms submit. Team members get no menu (protected).
+ * notice); the menu panel stays mounted while hidden, so the forms submit. Team members (`team`) are protected: an
+ * administrator sees only the profile link and the verified mark, which is a title, not a punishment.
  */
-export function AdminMemberMenu({ member, context, canDelete }: {
-  member: { id: string; label: string; username: string | null; blocked: boolean; frozen: boolean; tierLists: number; comments: number };
+export function AdminMemberMenu({ member, context, canDelete, team = false }: {
+  member: { id: string; label: string; username: string | null; blocked: boolean; frozen: boolean; verified: boolean; tierLists: number; comments: number };
   context: { query: string; tab: string; page: number };
   canDelete: boolean;
+  team?: boolean;
 }) {
   const hidden = <><input type="hidden" name="query" value={context.query} /><input type="hidden" name="tab" value={context.tab} /><input type="hidden" name="page" value={context.page} /><input type="hidden" name="userId" value={member.id} /></>;
   return <MoreActions label={`Действия с участником ${member.label}`}>
     {member.username && <a className="more-actions-item" role="menuitem" href={`/profile/${member.username}`} target="_blank" rel="noreferrer"><Person /><span>Открыть профиль</span></a>}
+    {canDelete && <form action={member.verified ? unverifyUserAction : verifyUserAction}>{hidden}<Item confirm={member.verified ? `Снять галочку у ${member.label}?` : undefined}><Check /><span>{member.verified ? 'Снять галочку' : 'Выдать галочку'}</span></Item></form>}
+    {!team && <>
     <form action={purgeUserTierListsAction}>{hidden}<Item danger disabled={!member.tierLists} confirm={`Удалить все тирлисты ${member.label} (${member.tierLists}), включая черновики? Это нельзя отменить.`}><Layers /><span>Удалить все тирлисты{member.tierLists ? ` · ${member.tierLists}` : ''}</span></Item></form>
     <form action={purgeUserCommentsAction}>{hidden}<Item danger disabled={!member.comments} confirm={`Удалить все комментарии и записи стены ${member.label} (${member.comments})? Это нельзя отменить.`}><Bubble /><span>Удалить все комментарии{member.comments ? ` · ${member.comments}` : ''}</span></Item></form>
     {member.frozen
@@ -39,5 +44,6 @@ export function AdminMemberMenu({ member, context, canDelete }: {
         <Item confirm={`Заморозить ${member.label} ${label}? Писать, комментировать и публиковать он не сможет, профиль останется виден.`}><Snow /><span>Заморозить {label}</span></Item></form>)}
     <form action={member.blocked ? unblockUserAction : blockUserAction}>{hidden}<Item danger={!member.blocked} confirm={member.blocked ? undefined : `Заблокировать ${member.label}? Его записи и отзывы скроются, писать он не сможет.`}><Ban /><span>{member.blocked ? 'Разблокировать' : 'Заблокировать'}</span></Item></form>
     {canDelete && <form action={deleteUserAction}>{hidden}<Item danger confirm={`Удалить аккаунт ${member.label} со всеми отзывами, записями и опытом? Это нельзя отменить.`}><TrashIcon /><span>Удалить аккаунт</span></Item></form>}
+    </>}
   </MoreActions>;
 }

@@ -5,7 +5,7 @@ export interface PersonResult {
   username: string; name: string; bio: string | null; xp: number; rank: number; avatarId: string | null;
   frame: ProfileAppearance['frame'];
   /** The member's chosen tag, only if still earned (as on the wall). */
-  tag: string | null;
+  tag: string | null; verified: boolean;
   /** Personal «Двигатель беты» number, shown on that tag. */
   engineNumber: number | null;
   followers: number; cans: number;
@@ -18,7 +18,7 @@ export async function searchPeople(query: string, limit = 50): Promise<PersonRes
       (select id::text from "profileImage" where "userId" = r.id and kind = 'avatar') as "avatarId",
       u."profileAppearance" as appearance,
       case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
-        when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag,
+        when exists(select 1 from "profileAchievement" where "userId" = u.id and key = u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified,
       (select number from "betaEngine" where "userId" = u.id) as "engineNumber",
       (select count(*)::int from "userFollow" where "targetId" = u.id) as followers,
       (select count(*)::int from "drinkLog" where "userId" = u.id) as cans

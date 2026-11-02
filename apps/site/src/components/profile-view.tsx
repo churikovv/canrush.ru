@@ -66,7 +66,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
 
   return (
     <div {...profileThemeAttributes(profile.profileAppearance?.theme)} className={`community-profile${isOwn ? ' ym-hide-content' : ''}`}>
-      <ProfileHeader frame={profile.profileAppearance?.frame} name={displayName(profile)} username={profile.username} createdAt={profile.createdAt}
+      <ProfileHeader frame={profile.profileAppearance?.frame} name={displayName(profile)} verified={profile.verified} username={profile.username} createdAt={profile.createdAt}
         avatarSrc={profile.avatarId ? `/api/profile-images/${profile.avatarId}` : null}
         avatarId={profile.avatarId}
         bannerSrc={profile.bannerId ? `/api/profile-images/${profile.bannerId}` : null}

@@ -1,3 +1,4 @@
+import { VerifiedMark } from '@/components/verified-mark';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { LevelEmblem, LevelTierGlyph } from '@/components/level-badge';
@@ -41,6 +42,7 @@ export function RankUpCard({ rankUp }: { rankUp: RankUpRow }) {
       <p className="rank-up-person">
         <Link className="rank-up-avatar" href={profileHref} tabIndex={-1} aria-hidden="true">{avatar}</Link>
         <Link className="rank-up-name" href={profileHref}>{name}</Link>
+        {rankUp.verified && <VerifiedMark />}
         {tag && <span className="profile-tag" data-tag={rankUp.tag}>{tag}</span>}
       </p>
       <p className="rank-up-note">{note(rank)}</p>

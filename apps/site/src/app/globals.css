@@ -3835,3 +3835,7 @@ a.first-steps-row:active { transform: scale(.98); }
 /* Черновик отзыва: форма бывает и на странице напитка, и в профиле, поэтому стиль здесь. */
 .review-draft-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: var(--color-subtle); font-size: .875rem; line-height: 1.4; }
 .review-draft-note button { flex: none; min-height: 44px; padding: 0 4px; border: 0; background: transparent; color: var(--color-brand); font: inherit; font-weight: 700; cursor: pointer; }
+
+/* Галочка участника, который ведёт сообщество (`VerifiedMark`). Размер идёт от шрифта имени: она стоит и в заголовке профиля, и в строке комментария. */
+.verified-mark { display: inline-grid; flex: none; place-items: center; width: 1.1em; min-width: 16px; height: 1.1em; min-height: 16px; margin-left: .3em; border-radius: 50%; background: #006eff; color: #fff; vertical-align: -.14em; }
+.verified-mark svg { width: 68%; height: 68%; }

@@ -20,6 +20,7 @@ interface ProfileRow extends QueryResultRow {
   bannerId: string | null;
   profileLayout?: ProfileLayout;
   profileAppearance?: ProfileAppearance;
+  verified?: boolean;
 }
 
 export interface ProfileData {
@@ -38,6 +39,7 @@ export interface ProfileData {
   bannerId: string | null;
   profileLayout?: ProfileLayout;
   profileAppearance?: ProfileAppearance;
+  verified?: boolean;
 }
 
 const PROFILE_SELECT = `
@@ -52,6 +54,7 @@ const PROFILE_SELECT = `
     u.bio,
     u."profileLayout",
     u."profileAppearance",
+    u."verifiedAt" is not null as verified,
     (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId",
     (select id::text from "profileImage" where "userId" = u.id and kind = 'banner') as "bannerId",
     coalesce((select count(*)::int from "favorite" f where f."userId" = u."id"), 0) as "favoriteCount",
@@ -65,6 +68,7 @@ function toProfile(row: ProfileRow): ProfileData | null {
   return {
     profileAppearance: parseProfileAppearance(row.profileAppearance) ?? DEFAULT_PROFILE_APPEARANCE,
     profileLayout: parseProfileLayout(row.profileLayout) ?? DEFAULT_PROFILE_LAYOUT,
+    verified: row.verified,
     id: row.id,
     username: row.username,
     name: row.name,

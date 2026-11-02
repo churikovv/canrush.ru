@@ -17,6 +17,8 @@ type AdminNotice =
   | 'admin-removed'
   | 'user-blocked'
   | 'user-unblocked'
+  | 'user-verified'
+  | 'user-unverified'
   | 'user-frozen'
   | 'user-unfrozen'
   | 'tierlists-purged'
@@ -211,18 +213,19 @@ export async function unblockUserAction(formData: FormData): Promise<void> {
 
 /**
  * One action on a member from the «⋯» menu of «Участники»: runs in a transaction with an audit row, never on a member
- * of the team (admins and moderators), never on oneself. `full` — only administrators (deleting an account).
+ * of the team (admins and moderators), never on oneself. `full` — only administrators (deleting an account); `anyone` lifts
+ * the protection for what is not a punishment (the verified mark: an administrator may run a community too).
  */
-async function memberAction(formData: FormData, options: { full?: boolean; action: string; notice: AdminNotice; run: (client: PoolClient, userId: string, admin: SiteAdminIdentity) => Promise<boolean> }): Promise<void> {
+async function memberAction(formData: FormData, options: { full?: boolean; anyone?: boolean; action: string; notice: AdminNotice; run: (client: PoolClient, userId: string, admin: SiteAdminIdentity) => Promise<boolean> }): Promise<void> {
   const admin = options.full ? await requireFullAdmin() : await requireSiteAdmin();
   const query = returnQuery(formData);
   const userId = String(formData.get('userId') ?? '');
-  if (!validTargetId(userId) || userId === admin.userId) redirect(adminLocation('error', 'invalid-target', query));
+  if (!validTargetId(userId) || (userId === admin.userId && !options.anyone)) redirect(adminLocation('error', 'invalid-target', query));
   let done: string | null;
   try {
     done = await auditedMutation(admin, options.action, 'user', userId, async client => {
       const staff = await client.query('select 1 from "user" t join "siteAdmin" sa on sa.email = lower(t.email) where t.id = $1', [userId]);
-      if (staff.rowCount) return null;
+      if (staff.rowCount && !options.anyone) return null;
       return await options.run(client, userId, admin) ? userId : null;
     });
   } catch {
@@ -231,6 +234,15 @@ async function memberAction(formData: FormData, options: { full?: boolean; actio
   if (!done) redirect(adminLocation('error', 'invalid-target', query));
   revalidatePath('/', 'layout');
   redirect(adminLocation('notice', options.notice, query));
+}
+
+/** Галочка участника, который ведёт сообщество: выдаёт и снимает только администратор, в журнале — `verify` и `unverify`. */
+export async function verifyUserAction(formData: FormData): Promise<void> {
+  await memberAction(formData, { full: true, anyone: true, action: 'verify', notice: 'user-verified', run: async (client, userId) => Boolean((await client.query('update "user" set "verifiedAt" = coalesce("verifiedAt", now()) where id = $1', [userId])).rowCount) });
+}
+
+export async function unverifyUserAction(formData: FormData): Promise<void> {
+  await memberAction(formData, { full: true, anyone: true, action: 'unverify', notice: 'user-unverified', run: async (client, userId) => Boolean((await client.query('update "user" set "verifiedAt" = null where id = $1', [userId])).rowCount) });
 }
 
 const FREEZE_DAYS = [1, 7, 30] as const;

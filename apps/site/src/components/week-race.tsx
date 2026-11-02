@@ -1,3 +1,4 @@
+import { VerifiedMark } from '@/components/verified-mark';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { AvatarFrame } from '@/components/avatar-frame';
@@ -31,7 +32,7 @@ export function WeekRaceBoard({ race, signedIn }: { race: WeekRace; signedIn: bo
           <AvatarFrame frame={entry.frame} />
         </span>
         <span className="lb-main">
-          <span className="lb-name"><strong>{entry.username}</strong>{entry.tag && <span className="profile-tag" data-tag={entry.tag}>{profileTagLabel(entry.tag)}</span>}</span>
+          <span className="lb-name"><strong>{entry.username}</strong>{entry.verified && <VerifiedMark />}{entry.tag && <span className="profile-tag" data-tag={entry.tag}>{profileTagLabel(entry.tag)}</span>}</span>
           <span className="lb-stats"><span>{number(entry.xp)} XP за неделю</span></span>
         </span>
         <strong className="week-race-prize" title="Награда за место"><Gift />+{number(entry.reward)}<small>XP</small></strong>

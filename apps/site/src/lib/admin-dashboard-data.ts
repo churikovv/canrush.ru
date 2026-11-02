@@ -153,7 +153,7 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
       +(select count(*) from "wallReply" where "userId"=u.id)+(select count(*) from "profileComment" where "userId"=u.id))::int as "commentCount",
     (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId", u."profileAppearance" as appearance,
     case when u."profileTags"[1] in ('admin','moderator') then case when sa.role = u."profileTags"[1] then u."profileTags"[1] end
-      when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag,
+      when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified,
     coalesce((select sum(points) from "profileExperience" where "userId"=u.id),0)::int as xp,
     (select until from "userFreeze" where "userId"=u.id and until>now()) as "frozenUntil"
     ${from} order by u."createdAt" desc,u.id ${pagination}`,params)).rows.map(({ appearance, ...user }) => ({ ...user, frame: (parseProfileAppearance(appearance) ?? DEFAULT_PROFILE_APPEARANCE).frame }));

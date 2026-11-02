@@ -1,3 +1,4 @@
+import { VerifiedMark } from '@/components/verified-mark';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { AvatarFrame } from '@/components/avatar-frame';
@@ -27,7 +28,7 @@ export async function PeopleBrowser({ q }: { q: string }) {
           <AvatarFrame frame={person.frame} />
         </span>
         <span className="people-main">
-          <span className="people-name"><strong>{person.username}</strong>
+          <span className="people-name"><strong>{person.username}</strong>{person.verified && <VerifiedMark />}
             {person.tag && <span className="profile-tag" data-tag={person.tag}>{profileTagLabel(person.tag)}{person.tag === 'engine' && person.engineNumber && <small className="people-engine-number"> №{String(person.engineNumber).padStart(3, '0')}</small>}</span>}
           </span>
           <span className="people-bio">{person.bio ?? person.name}</span>

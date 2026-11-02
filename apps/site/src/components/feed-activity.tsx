@@ -1,3 +1,4 @@
+import { VerifiedMark } from '@/components/verified-mark';
 import { ArticleLikeButton } from '@/components/article-actions';
 import { RarityChip, RarityEmblem, RarityShine } from '@/components/rarity-badge';
 import Image from 'next/image';
@@ -22,7 +23,7 @@ export const REVIEWS_SHOWN = 1;
 export const REVIEWS_IN_FEED = 5;
 
 /** `tag` — the selected tag as a key or a label (reviews carry the label). */
-interface EventAuthor { username: string; name: string; avatarId: string | null; tag: string | null }
+interface EventAuthor { username: string; name: string; avatarId: string | null; tag: string | null; verified?: boolean }
 
 /** The row head of a feed event: avatar, name, tag, what they did and when. */
 function EventHead({ author, action, at }: { author: EventAuthor; action: string; at: Date }) {
@@ -34,7 +35,7 @@ function EventHead({ author, action, at }: { author: EventAuthor; action: string
       {author.avatarId ? <Image src={`/api/profile-images/${author.avatarId}`} width={40} height={40} unoptimized alt="" /> : name.slice(0, 1).toLocaleUpperCase('ru-RU')}
     </Link>
     <div className="feed-event-who">
-      <p><Link className="wall-post-author" href={href}>{name}</Link>{tag && <span className="profile-tag" data-tag={tag}>{profileTagLabel(tag)}</span>}</p>
+      <p><Link className="wall-post-author" href={href}>{name}</Link>{author.verified && <VerifiedMark />}{tag && <span className="profile-tag" data-tag={tag}>{profileTagLabel(tag)}</span>}</p>
       <p className="feed-event-action">{action} · <time dateTime={at.toISOString()}>{eventTime.format(at)}</time></p>
     </div>
   </header>;
@@ -60,7 +61,7 @@ export function FeedArticleEvent({ article, viewerId }: { article: FeedArticleRo
 /** «Опубликовал тирлист»: the same card as in the tier lists section, with its likes. */
 export function FeedTierListEvent({ list, products, viewer }: { list: TierListSummary; products: TierListProduct[]; viewer: TierCardViewer }) {
   return <article className="feed-event" id={`feed-tierlist-${list.id}`}>
-    <EventHead author={{ username: list.author.username, name: list.author.name, avatarId: list.author.avatarId ?? null, tag: list.author.tag ?? null }} action="опубликовал тирлист" at={list.publishedAt ?? list.createdAt} />
+    <EventHead author={{ username: list.author.username, name: list.author.name, avatarId: list.author.avatarId ?? null, tag: list.author.tag ?? null, verified: list.author.verified }} action="опубликовал тирлист" at={list.publishedAt ?? list.createdAt} />
     <TierListCard list={list} products={products} viewer={viewer} />
   </article>;
 }

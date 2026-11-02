@@ -1,3 +1,4 @@
+import { VerifiedMark } from '@/components/verified-mark';
 import { profileTagKey } from '@/lib/profile-achievements';
 import { ReviewDiscussion } from '@/components/review-discussion';
 import { ProfileExperience } from '@/components/profile-experience';
@@ -62,6 +63,7 @@ export function CatalogReviewItem({ review, own = false }: { review: ReviewData;
         <Link className="wall-avatar review-item-avatar" href={profileHref} tabIndex={-1} aria-hidden="true" data-frame={frame}>{avatar}{frame !== 'none' && <AvatarFrame frame={frame} />}</Link>
         <div className="review-item-who">
           <Link className="wall-post-author" href={profileHref}>{authorDisplay(review)}</Link>
+          {review.author.verified && <VerifiedMark />}
           <span className="review-item-handle">@{review.author.username}</span>
         </div>
         <div className="review-item-badges">

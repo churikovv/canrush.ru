@@ -65,3 +65,17 @@ it('lets only an administrator delete the account', async () => {
   expect((await pool.query('select 1 from "user" where id = $1', [member])).rowCount).toBe(0);
   expect(await audit()).toEqual(expect.arrayContaining(['freeze-7d', 'freeze-1d', 'unfreeze', 'purge-tierlists', 'purge-comments', 'delete-account']));
 });
+
+it('gives the verified mark to anyone, team included, and only an administrator can', async () => {
+  staff.role = 'moderator';
+  expect(await run(actions.verifyUserAction)).toBe('redirect:/admin?error=forbidden');
+  staff.role = 'admin';
+  const verified = async (id: string) => (await pool.query<{ verified: boolean }>('select "verifiedAt" is not null as verified from "user" where id = $1', [id])).rows[0]?.verified;
+  expect(await run(actions.verifyUserAction, form({ userId: colleague }))).toMatch(/user-verified/u);
+  expect(await verified(colleague)).toBe(true);
+  expect((await pool.query('select 1 from "adminAuditLog" where action = \'verify\' and "targetId" = $1', [colleague])).rowCount).toBe(1);
+  expect(await run(actions.unverifyUserAction, form({ userId: colleague }))).toMatch(/user-unverified/u);
+  expect(await verified(colleague)).toBe(false);
+  await pool.query('delete from "adminAuditLog" where "targetId" = $1', [colleague]);
+});
+

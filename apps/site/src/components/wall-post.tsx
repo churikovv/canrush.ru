@@ -1,3 +1,4 @@
+import { VerifiedMark } from '@/components/verified-mark';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { ProfileExperience } from '@/components/profile-experience';
@@ -45,6 +46,7 @@ export function WallPost({ post, interaction, canDelete, canEdit, owner }: WallP
       <div className="wall-post-meta">
         <div className="wall-post-name">
           {profileHref ? <Link className="wall-post-author" href={profileHref}>{displayName(post)}</Link> : <strong className="wall-post-author">{displayName(post)}</strong>}
+          {post.verified && <VerifiedMark />}
           {profileTagLabel(post.tag) && <span className="profile-tag" data-tag={post.tag}>{profileTagLabel(post.tag)}</span>}
           {post.username && <ProfileExperience username={post.username} initial={{ xp: post.xp, rank: null }} />}
         </div>

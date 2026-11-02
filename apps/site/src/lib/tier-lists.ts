@@ -19,7 +19,7 @@ const MIN_OFFICIAL_REVIEW_COUNT = 3;
 
 interface TierListRow extends QueryResultRow {
   avatarId: string | null;
-  tag: string | null;
+  tag: string | null; verified: boolean;
   xp: number;
   id: string;
   userId: string;
@@ -64,7 +64,7 @@ const TIER_LIST_SELECT = `
          (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
          coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
          case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
-         when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag
+         when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified
   from "tierList" tl
   join "user" u on u."id" = tl."userId"
 `;
@@ -94,7 +94,7 @@ function toTierList(row: TierListRow, items: TierListPlacement[]): TierListData 
     reactionsEnabled: row.reactionsEnabled,
     commentsEnabled: row.commentsEnabled,
     author: {
-      avatarId: row.avatarId, tag: row.tag, xp: Number(row.xp ?? 0),
+      avatarId: row.avatarId, tag: row.tag, verified: row.verified, xp: Number(row.xp ?? 0),
       username: row.username,
       name: row.name,
       telegramChannel: row.telegramChannel,
@@ -145,7 +145,7 @@ async function getTierListSummaries(where: string, values: unknown[], limit: num
          (select id::text from "profileImage" where "userId"=u.id and kind='avatar') as "avatarId",
          coalesce((select sum(points) from "profileExperience" where "userId" = u.id), 0)::int as xp,
          case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
-         when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag,
+         when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified,
             count(tli."tierListId")::int as "itemCount",
             (select count(*)::int from "tierListReaction" where "tierListId"=tl.id and value=1) as likes,
             (select count(*)::int from "tierListComment" where "tierListId"=tl.id) as comments

@@ -224,7 +224,9 @@
 .admin-status-frozen { background: color-mix(in srgb, #3aa0ff 16%, transparent); color: #1b7fe0; }
 .admin-member-actions a.more-actions-item { color: var(--theme-text, #111); text-decoration: none; }
 /* An open member menu may run past the table's scroll box (the last rows), instead of being clipped inside it. */
-.admin-table-scroll:has(.admin-member-actions .more-actions-trigger[aria-expanded="true"]) { overflow: visible; }
+@media (min-width: 768px) { .admin-table-scroll:has(.admin-member-actions .more-actions-trigger[aria-expanded="true"]) { overflow: visible; } }
+/* На телефоне таблица шире экрана и «⋯» стоит за его краем, поэтому меню выезжает снизу экрана. */
+@media (max-width: 767px) { .admin-member-actions .more-actions-panel { position: fixed; z-index: 60; top: auto; right: 16px; bottom: 16px; left: 16px; min-width: 0; max-height: 70dvh; overflow-y: auto; } }
 
 /* /admin/stores: «Передать магазин» as a banner opening a dialog; each store shows who sent it and «Редактировать». */
 .store-transfer-banner { margin-bottom: 16px; }
