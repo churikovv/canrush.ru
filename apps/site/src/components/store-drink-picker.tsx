@@ -7,7 +7,7 @@ import type { StoreDrinkOption } from '@/lib/store-catalog';
 
 const LIMIT = 40;
 /** Combobox over catalog drinks; the last option adds the typed text as the author's own drink. */
-export function StoreDrinkPicker({id,options,taken,disabled,placeholder='Найдите энергетик или впишите свой',onAdd}:{id:string;options:StoreDrinkOption[];taken:Set<string>;disabled?:boolean;placeholder?:string;onAdd:(drink:{name:string;brand?:string;flavor?:string})=>void}){
+export function StoreDrinkPicker({id,options,taken,disabled,placeholder='Найдите энергетик или впишите свой',allowCustom=true,onAdd}:{id:string;options:StoreDrinkOption[];taken:Set<string>;disabled?:boolean;placeholder?:string;/** false — only catalog drinks, no «Добавить свой напиток». */allowCustom?:boolean;onAdd:(drink:{name:string;brand?:string;flavor?:string})=>void}){
   const [query,setQuery]=useState('');const [open,setOpen]=useState(false);const [active,setActive]=useState(-1);
   const input=useRef<HTMLInputElement>(null);
   const trimmed=query.trim();
@@ -17,7 +17,7 @@ export function StoreDrinkPicker({id,options,taken,disabled,placeholder='Най�
     const free=options.filter(option=>!taken.has(JSON.stringify([option.brand,option.flavor])));
     return (trimmed?free.filter(option=>searchMatches(searchText.get(option)??option.label,trimmed)):free).slice(0,LIMIT);
   },[options,taken,trimmed,searchText]);
-  const custom=trimmed.length>0&&trimmed.length<=150&&!matches.some(option=>option.label.toLocaleLowerCase('ru-RU')===trimmed.toLocaleLowerCase('ru-RU'));
+  const custom=allowCustom&&trimmed.length>0&&trimmed.length<=150&&!matches.some(option=>option.label.toLocaleLowerCase('ru-RU')===trimmed.toLocaleLowerCase('ru-RU'));
   const count=matches.length+(custom?1:0);
   function choose(index:number){
     const option=matches[index];

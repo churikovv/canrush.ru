@@ -6,10 +6,12 @@ import { commentMediaColumn, saveCommentMedia, type CommentMedia } from '@/lib/c
 import type { PreparedWallMedia } from '@/lib/wall-media';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { profileTagLabel } from '@/lib/profile-achievements';
+import { isCatalogDrink, withWallDrinks } from '@/lib/wall-drinks';
+import type { WallDrink } from '@/lib/wall-drink-fields';
 export class WallDiscussionError extends Error {}
 /** `saved` — the viewer bookmarked the record (savedPost). */
 export interface WallInteraction { likes: number; dislikes: number; comments: number; vote: number; authenticated: boolean; saved: boolean; /** The viewer is an admin or a moderator: «Удалить» on anyone's content. */ staff?: boolean }
-export interface WallCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; verified: boolean; canDelete: boolean; likes: number; liked: boolean }
+export interface WallCommentData { id: string; text: string; media: CommentMedia[]; createdAt: string; editedAt: string | null; replyTo: { username: string | null; name: string } | null; name: string; username: string | null; avatarId: string | null; tag: string | null; verified: boolean; canDelete: boolean; likes: number; liked: boolean; /** A catalog drink attached to the comment. */ drink?: WallDrink | null }
 export function wallPostId(value: unknown): string {
   if (typeof value !== 'string' || !PHOTO_ID_PATTERN.test(value)) throw new WallDiscussionError('Запись или комментарий не найден.');
   return value;
@@ -46,7 +48,7 @@ export async function setWallReaction(userId: string, id: string, value: number)
 }
 export async function getWallComments(id: string, viewer: string | null, before?: string) {
   wallPostId(id); if (before) wallPostId(before);
-  const { rows } = await getPool().query(`select c.id,c.text,c."createdAt",c."editedAt",${commentMediaColumn('wall')},u.name,u.username,ru.username as "replyToUsername",ru.name as "replyToName",
+  const { rows } = await getPool().query(`select c.id,c.text,c."createdAt",c."editedAt",c."drinkBrand",c."drinkFlavor",${commentMediaColumn('wall')},u.name,u.username,ru.username as "replyToUsername",ru.name as "replyToName",
     c."userId"=$2 as "canDelete",
     (select count(*)::int from "wallReplyLike" where "replyId"=c.id) as likes,
     exists(select 1 from "wallReplyLike" where "replyId"=c.id and "userId"=$2) as liked,
@@ -56,15 +58,16 @@ export async function getWallComments(id: string, viewer: string | null, before?
     from "wallReply" c join "user" u on u.id=c."userId" left join "user" ru on ru.id=c."replyToUserId"
     where ${notBlockedBy('$2', 'c."userId"')} and c."wallPostId"=$1 and exists(select 1 from "profileComment" where id=$1) and ($3::uuid is null or (c."createdAt",c.id)<(select "createdAt",id from "wallReply" where id=$3 and "wallPostId"=$1))
     order by c."createdAt" desc,c.id desc limit 21`, [id, viewer, before ?? null]);
-  return { items: rows.slice(0,20).map(({ replyToUsername, replyToName, ...row }) => ({ ...row, createdAt: row.createdAt.toISOString(), editedAt: row.editedAt?.toISOString() ?? null, tag: profileTagLabel(row.tag) ?? null, replyTo: replyToName ? { username: replyToUsername, name: replyToName } : null, canDelete: Boolean(row.canDelete), liked: Boolean(row.liked) }) as WallCommentData), hasMore: rows.length > 20 };
+  return { items: (await withWallDrinks(rows.slice(0,20))).map(({ replyToUsername, replyToName, ...row }) => ({ ...row, createdAt: row.createdAt.toISOString(), editedAt: row.editedAt?.toISOString() ?? null, tag: profileTagLabel(row.tag) ?? null, replyTo: replyToName ? { username: replyToUsername, name: replyToName } : null, canDelete: Boolean(row.canDelete), liked: Boolean(row.liked) }) as WallCommentData), hasMore: rows.length > 20 };
 }
-export async function addWallComment(userId: string, id: string, input: string, replyToId?: string, media: readonly PreparedWallMedia[] = []) {
+export async function addWallComment(userId: string, id: string, input: string, replyToId?: string, media: readonly PreparedWallMedia[] = [], drink: { brand: string; flavor: string } | null = null) {
   if (replyToId) wallPostId(replyToId);
   wallPostId(id);
   const text = input.trim();
   // A comment may be just an attachment; edits still need text (they cannot change attachments).
   if (text.length > 1000) throw new WallDiscussionError('Комментарий должен быть не длиннее 1000 символов.');
-  if (!text && !media.length) throw new WallDiscussionError('Напишите комментарий или прикрепите фото, GIF или видео.');
+  if (!text && !media.length && !drink) throw new WallDiscussionError('Напишите комментарий или прикрепите фото, GIF, видео или напиток.');
+  if (drink && !await isCatalogDrink(drink.brand, drink.flavor)) throw new WallDiscussionError('Этого напитка нет в каталоге.');
   const client = await getPool().connect();
   try {
     await client.query('begin');
@@ -79,7 +82,7 @@ export async function addWallComment(userId: string, id: string, input: string, 
       if (!target.rows[0]) throw new WallDiscussionError('Комментарий, на который вы отвечаете, удалён.');
       replyToUserId = target.rows[0].userId;
     }
-    const inserted = await client.query<{ id: string }>('insert into "wallReply" ("wallPostId","userId",text,"replyToId","replyToUserId") values ($1,$2,$3,$4,$5) returning id', [id,userId,text,replyToId ?? null,replyToUserId]);
+    const inserted = await client.query<{ id: string }>('insert into "wallReply" ("wallPostId","userId",text,"replyToId","replyToUserId","drinkBrand","drinkFlavor") values ($1,$2,$3,$4,$5,$6,$7) returning id', [id,userId,text,replyToId ?? null,replyToUserId,drink?.brand ?? null,drink?.flavor ?? null]);
     await saveCommentMedia(client, 'wall', inserted.rows[0]!.id, media);
     await client.query('commit');
   } catch(error) { await client.query('rollback'); throw error; }

@@ -6,6 +6,7 @@ import { auth } from '@/lib/auth';
 import { ReviewPhotoError } from '@/lib/review-photos';
 import { prepareWallMedia } from '@/lib/wall-media';
 import { frozenMessage, isUserBlocked } from '@/lib/moderation';
+import { drinkFromForm } from '@/lib/wall-drink-fields';
 import { addWallComment, deleteWallComment, editWallComment, getWallComments, getWallInteractions, WallDiscussionError, wallPostId, setWallCommentLike, setWallReaction, setWallSaved } from '@/lib/wall-discussions';
 
 export async function wallDiscussionAction(id: string, action: 'read' | 'vote' | 'save' | 'comment' | 'delete' | 'edit', value?: string | number | FormData | { commentId: string; text: string } | { text: string; replyToId: string }) {
@@ -31,11 +32,11 @@ export async function wallDiscussionAction(id: string, action: 'read' | 'vote' |
         return { interaction: (await getWallInteractions([id], viewer)).get(id) };
       } else if (action === 'comment') {
         if (typeof value === 'string') await addWallComment(viewer, id, value);
-        // With attachments the comment comes as a form: text, optional replyToId, `photos` and `videoPoster`.
+        // With attachments or a drink the comment comes as a form: text, optional replyToId, `photos`, `videoPoster`, `drinkBrand`, `drinkFlavor`.
         else if (value instanceof FormData) {
           const text = value.get('text'), replyToId = value.get('replyToId');
           if (typeof text !== 'string' || (replyToId !== null && typeof replyToId !== 'string')) throw new WallDiscussionError('Напишите комментарий.');
-          await addWallComment(viewer, id, text, replyToId || undefined, await prepareWallMedia(value));
+          await addWallComment(viewer, id, text, replyToId || undefined, await prepareWallMedia(value), drinkFromForm(value));
         }
         else if (value && typeof value === 'object' && 'replyToId' in value && typeof value.text === 'string' && typeof value.replyToId === 'string') await addWallComment(viewer, id, value.text, value.replyToId);
         else throw new WallDiscussionError('Напишите комментарий.');

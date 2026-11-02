@@ -1,5 +1,7 @@
 import { articleSummary, readingMinutes, type ArticleBlock } from '@/lib/article-fields';
 import type { PreparedWallMedia } from '@/lib/wall-media';
+import { isCatalogDrink, withWallDrinks } from '@/lib/wall-drinks';
+import type { WallDrink } from '@/lib/wall-drink-fields';
 import type { ClientPlatform } from '@/lib/client-platform';
 import { notBlockedBy } from '@/lib/member-blocks';
 import type { WallMediaKind } from '@/lib/wall-media-limits';
@@ -134,7 +136,9 @@ export async function getProfileRatings(userId: string) {
 }
 export type ProfileRatings = Awaited<ReturnType<typeof getProfileRatings>>;
 
-export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; editedAt: Date | null; username: string | null; name: string; avatarId: string | null; tag: string | null; verified: boolean; xp: number; photos: string[]; mediaKinds: WallMediaKind[] }
+export interface WallPostRow { id: string; profileId: string; userId: string; text: string; createdAt: Date; editedAt: Date | null; username: string | null; name: string; avatarId: string | null; tag: string | null; verified: boolean; xp: number; photos: string[]; mediaKinds: WallMediaKind[];
+  /** A catalog drink attached to the record (`withWallDrinks` adds `drink`, the name, cover and link). */
+  drinkBrand: string | null; drinkFlavor: string | null; drink?: WallDrink | null }
 export interface FeedPostRow extends WallPostRow { ownerUsername: string | null; ownerName: string; ownerAvatarId: string | null }
 /** `saved` — records the viewer bookmarked (savedPost), without rank-up events. */
 export type FeedScope = 'all' | 'following' | 'saved';
@@ -163,7 +167,7 @@ export const AUTHOR_COLUMNS = `u.username, u.name,
       case when u."profileTags"[1] in ('admin', 'moderator') then case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = u."profileTags"[1]) then u."profileTags"[1] end
       when exists(select 1 from "profileAchievement" where "userId"=u.id and key=u."profileTags"[1]) then u."profileTags"[1] end as tag, u."verifiedAt" is not null as verified`;
 // One record serves both the wall it was written on and the feed, so both views select the same columns.
-const WALL_POST_COLUMNS = `c.id, c."profileId", c."userId", c.text, c."createdAt", c."editedAt", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, coalesce((select array_agg(p.kind order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as "mediaKinds", ${AUTHOR_COLUMNS}`;
+const WALL_POST_COLUMNS = `c.id, c."profileId", c."userId", c.text, c."createdAt", c."editedAt", c."drinkBrand", c."drinkFlavor", coalesce((select array_agg(p.id::text order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as photos, coalesce((select array_agg(p.kind order by p.position) from "wallPhoto" p where p."commentId"=c.id), '{}'::text[]) as "mediaKinds", ${AUTHOR_COLUMNS}`;
 
 export async function getProfileWall(profileId: string, page = 1, viewerId: string | null = null) {
   const [count, comments] = await Promise.all([
@@ -172,7 +176,7 @@ export async function getProfileWall(profileId: string, page = 1, viewerId: stri
       from "profileComment" c join "user" u on u.id = c."userId" where c."profileId" = $1 and ${notBlockedBy('$4::text', 'c."userId"')} order by c."createdAt" desc, c.id desc limit $2 offset $3`,
     [profileId, COMMUNITY_PAGE_SIZE, (profilePageNumber(page) - 1) * COMMUNITY_PAGE_SIZE, viewerId]),
   ]);
-  return { count: count.rows[0]?.count ?? 0, comments: comments.rows };
+  return { count: count.rows[0]?.count ?? 0, comments: await withWallDrinks(comments.rows) };
 }
 
 /**
@@ -247,7 +251,7 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
   const articleById = new Map(articles.map(article => [article.id, article]));
   const gachaByKey = new Map(gachaDays.map(row => [row.key, row]));
   const tierListById = new Map(tierLists.map(list => [list.id, list]));
-  const postById = new Map(posts.rows.map(post => [post.id, post]));
+  const postById = new Map((await withWallDrinks(posts.rows)).map(post => [post.id, post]));
   const rankUpById = new Map(rankUps.rows.map(rankUp => [rankUp.id, rankUp]));
   const items = entries.flatMap((entry): FeedItem[] => {
     const post = entry.kind === 'post' ? postById.get(entry.id) : undefined;
@@ -269,17 +273,19 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
   return { items, posts: items.flatMap(item => item.kind === 'post' ? [item.post] : []), pages, hasMore: profilePageNumber(page) < pages };
 }
 
-export async function addProfileComment(userId: string, profileId: string, input: unknown, photos: PreparedWallMedia[] = []) {
+export async function addProfileComment(userId: string, profileId: string, input: unknown, photos: PreparedWallMedia[] = [], drink: { brand: string; flavor: string } | null = null) {
   if (photos.length > 5) throw new CommunityError('Можно добавить не более 5 вложений.');
-  // A record may be just attachments; then its text is empty.
-  const text = typeof input === 'string' && !input.trim() && photos.length ? '' : validateWallText(input);
-  if (text === null) throw new CommunityError(photos.length ? 'Запись должна быть не длиннее 1000 символов.' : 'Напишите запись или прикрепите фото, GIF или видео.');
+  // A record may be just attachments or a drink; then its text is empty.
+  const attached = photos.length > 0 || drink !== null;
+  const text = typeof input === 'string' && !input.trim() && attached ? '' : validateWallText(input);
+  if (text === null) throw new CommunityError(attached ? 'Запись должна быть не длиннее 1000 символов.' : 'Напишите запись или прикрепите фото, GIF, видео или напиток.');
+  if (drink && !await isCatalogDrink(drink.brand, drink.flavor)) throw new CommunityError('Этого напитка нет в каталоге.');
   const client = await getPool().connect();
   try {
     await client.query('begin');
     const allowed = await client.query(`update "user" set "lastWallPostAt" = now() where id = $1 and ("lastWallPostAt" is null or "lastWallPostAt" < now() - interval '${COMMENT_PAUSE_SECONDS} seconds') returning id`, [userId]);
     if (!allowed.rowCount) throw new CommunityError(COMMENT_PAUSE_MESSAGE);
-    const result = await client.query<{ id: string }>('insert into "profileComment" ("profileId", "userId", text) values ($1, $2, $3) returning id', [profileId, userId, text]);
+    const result = await client.query<{ id: string }>('insert into "profileComment" ("profileId", "userId", text, "drinkBrand", "drinkFlavor") values ($1, $2, $3, $4, $5) returning id', [profileId, userId, text, drink?.brand ?? null, drink?.flavor ?? null]);
     for (const [position, photo] of photos.entries()) {
       await client.query('insert into "wallPhoto" ("commentId", position, kind, mime, data, thumbnail) values ($1, $2, $3, $4, $5, $6)', [result.rows[0]!.id, position, photo.kind, photo.mime, photo.data, photo.thumbnail]);
     }

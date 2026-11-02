@@ -145,8 +145,10 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
     if (!file) return;
     const request = ++imageRequests.current[kind];
     setDecoding(current => ({ ...current, [kind]: false }));
-    if (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setImageError('Выберите JPG, PNG или WebP не больше 5 МБ.'); return;
+    // A GIF (and an animated WebP) may weigh more: the server keeps it as a light animated WebP.
+    const animatable = file.type === 'image/gif' || file.type === 'image/webp';
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type) || file.size > (animatable ? 10 : 5) * 1024 * 1024) {
+      setImageError('Выберите JPG, PNG или WebP до 5 МБ или GIF до 10 МБ.'); return;
     }
     setDecoding(current => ({ ...current, [kind]: true }));
     const preview = URL.createObjectURL(file);
@@ -161,7 +163,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
       setImageError('');
     } catch {
       URL.revokeObjectURL(preview); previews.current.delete(preview);
-      if (request === imageRequests.current[kind]) setImageError('Не удалось открыть изображение. Используйте JPG, PNG или WebP до 40 мегапикселей.');
+      if (request === imageRequests.current[kind]) setImageError('Не удалось открыть изображение. Используйте JPG, PNG, WebP или GIF до 40 мегапикселей.');
     } finally { if (request === imageRequests.current[kind]) setDecoding(current => ({ ...current, [kind]: false })); }
   }
   async function editCrop(kind: ImageKind) {
@@ -187,7 +189,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
       onDragOver={event => { if (!hasFiles(event)) return; event.preventDefault(); if (!pending) setDragging(kind); }} onDragLeave={() => setDragging(current => current === kind ? null : current)} onDrop={event => { event.preventDefault(); setDragging(null); setFileDrag(false); if (!pending) void selectImage(kind, event.dataTransfer.files[0]); }}>
       <span className="profile-drop-zone" aria-hidden="true"><UploadIcon />{kind === 'banner' && <span>{dragging === kind ? 'Отпустите, чтобы загрузить' : 'Перетащите фото сюда'}</span>}</span>
       <span className="profile-edit-badge" aria-hidden="true"><PencilIcon /></span>
-      <input type="file" disabled={pending} accept="image/jpeg,image/png,image/webp" aria-label={label} onChange={event => { void selectImage(kind, event.target.files?.[0]); event.target.value = ''; }} />
+      <input type="file" disabled={pending} accept="image/jpeg,image/png,image/webp,image/gif" aria-label={label} onChange={event => { void selectImage(kind, event.target.files?.[0]); event.target.value = ''; }} />
     </label>;
   }
   const visibleBlocks = (() => { const layout = profile.profileLayout ?? DEFAULT_PROFILE_LAYOUT; return layout.order.length - layout.hidden.length; })();
@@ -281,7 +283,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
       <div id="profile-panel-images" tabIndex={-1} aria-label="Аватар и баннер" hidden={tab !== 'images'} className="profile-editor-panel">
         <section className="community-panel profile-editor-images" aria-labelledby="profile-images-title">
           <div className="community-section-heading"><h2 id="profile-images-title">Изображения</h2></div>
-          <p className="community-section-note">JPG, PNG или WebP, до 5 МБ. Предпросмотр сверху.</p>
+          <p className="community-section-note">JPG, PNG или WebP до 5 МБ, GIF до 10 МБ — он станет лёгкой анимацией. Предпросмотр сверху.</p>
           <fieldset className="profile-image-fields" disabled={pending}>
             {(['avatar', 'banner'] as const).map(kind => <div className="profile-image-field" key={kind}>
               <h3>{kind === 'avatar' ? 'Аватар' : 'Баннер'}</h3>
@@ -291,7 +293,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
                 <img src={imageSource(kind) ?? undefined} alt={kind === 'avatar' ? 'Превью аватара' : 'Превью баннера'} />
                 <button className="photo-delete-overlay" title="Удалить фотографию" aria-label={kind === 'avatar' ? 'Удалить аватар' : 'Удалить баннер'} type="button" onClick={() => { imageRequests.current[kind]++; setDecoding(current => ({ ...current, [kind]: false })); setImages(current => ({ ...current, [kind]: { remove: true } })); setImageError(''); }}><PhotoDeleteIcon /></button>
               </div>}
-              <div className="profile-image-actions"><label className="community-button community-button-secondary profile-file-picker"><span>{imageSource(kind) ? 'Заменить' : 'Загрузить'}</span><input type="file" accept="image/jpeg,image/png,image/webp" aria-label={kind === 'avatar' ? 'Загрузить аватар' : 'Загрузить баннер'} onChange={event => { void selectImage(kind, event.target.files?.[0]); event.target.value = ''; }} /></label>
+              <div className="profile-image-actions"><label className="community-button community-button-secondary profile-file-picker"><span>{imageSource(kind) ? 'Заменить' : 'Загрузить'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" aria-label={kind === 'avatar' ? 'Загрузить аватар' : 'Загрузить баннер'} onChange={event => { void selectImage(kind, event.target.files?.[0]); event.target.value = ''; }} /></label>
                 {imageSource(kind) && <button className="community-button community-button-secondary" type="button" onClick={() => { void editCrop(kind); }}>Изменить кадр</button>}
                 {images[kind] && <button className="community-button community-button-text" type="button" onClick={() => { imageRequests.current[kind]++; setDecoding(current => ({ ...current, [kind]: false })); setImages(current => ({ ...current, [kind]: undefined })); setImageError(''); }}>Отменить изменение</button>}
               </div>

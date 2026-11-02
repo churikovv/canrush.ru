@@ -35,7 +35,7 @@ describe('profile image preparation', () => {
     const data = new FormData(); data.set('remove-avatar', 'true');
     expect(await prepareProfileImages(data)).toEqual({ avatar: null });
   });
-  it('rejects corrupt, unsupported, oversized, animated and conflicting images', async () => {
+  it('rejects corrupt, unsupported, oversized and conflicting images', async () => {
     await expect(prepareProfileImages(form(Buffer.from('not an image')))).rejects.toThrow('прочитать');
     await expect(prepareProfileImages(form(Buffer.from('<svg/>'), 'avatar', 'image/svg+xml'))).rejects.toThrow('JPG');
     await expect(prepareProfileImages(form(Buffer.alloc(5 * 1024 * 1024 + 1)))).rejects.toThrow('5 МБ');
@@ -43,8 +43,27 @@ describe('profile image preparation', () => {
     await expect(prepareProfileImages(data)).rejects.toThrow('замену или удаление');
     const duplicate = form(Buffer.from('invalid')); duplicate.append('avatar', new File(['x'], 'x.png', { type: 'image/png' }));
     await expect(prepareProfileImages(duplicate)).rejects.toThrow('одно изображение');
+    await expect(prepareProfileImages(form(Buffer.alloc(10 * 1024 * 1024 + 1), 'avatar', 'image/gif'))).rejects.toThrow('10 МБ');
+  });
+  it('keeps a GIF as a light animated WebP with every frame, cropped like a photo', async () => {
+    const frames = await Promise.all(Array.from({ length: 12 }, (_, index) => sharp({ create: { width: 480, height: 360, channels: 3, background: { r: index * 20, g: 90, b: 200 } } }).png().toBuffer()));
+    const gif = await sharp(frames, { join: { animated: true } }).gif({ delay: 80 }).toBuffer();
+    const data = form(gif, 'avatar', 'image/gif'); data.set('crop-avatar', JSON.stringify({ left: 60, top: 0, width: 360, height: 360 }));
+    data.append('banner', new File([gif], 'banner.gif', { type: 'image/gif' })); data.set('crop-banner', JSON.stringify({ left: 0, top: 120, width: 480, height: 120 }));
+    const saved = await prepareProfileImages(data);
+    const avatar = await sharp(saved.avatar!, { animated: true }).metadata();
+    const banner = await sharp(saved.banner!, { animated: true }).metadata();
+    expect(avatar).toMatchObject({ format: 'webp', width: 256, pageHeight: 256, pages: 12 });
+    expect(banner).toMatchObject({ format: 'webp', width: 480, pageHeight: 120, pages: 12 });
+    expect(saved.avatar!.length).toBeLessThan(gif.length);
+    // Crops are checked against one frame, not the strip of all frames.
+    data.set('crop-avatar', JSON.stringify({ left: 0, top: 360, width: 360, height: 360 }));
+    await expect(prepareProfileImages(data)).rejects.toThrow('прочитать');
+  });
+  it('accepts an animated WebP the same way, as «Изменить кадр» sends the saved one back', async () => {
     const animation = await sharp(Buffer.concat([Buffer.alloc(48, 0), Buffer.alloc(48, 255)]), { raw: { width: 4, height: 8, channels: 3, pageHeight: 4 } }).webp({ loop: 0, delay: [100, 100] }).toBuffer();
     expect((await sharp(animation).metadata()).pages).toBe(2);
-    await expect(prepareProfileImages(form(animation, 'avatar', 'image/webp'))).rejects.toThrow('прочитать');
+    const saved = await prepareProfileImages(form(animation, 'avatar', 'image/webp'));
+    expect(await sharp(saved.avatar!, { animated: true }).metadata()).toMatchObject({ format: 'webp', pages: 2 });
   });
 });

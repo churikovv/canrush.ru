@@ -1,6 +1,7 @@
 'use client';
 import { MentionTextarea } from '@/components/mention-textarea';
 import { MediaAttachButton, MediaAttachmentPreviews, useMediaAttachments } from '@/components/media-attachments';
+import { WallDrinkButton, WallDrinkChip, useWallDrink } from '@/components/wall-drink';
 import { TrashIcon } from '@/components/action-icons';
 import { ActionToast } from '@/components/action-toast';
 
@@ -41,11 +42,13 @@ export function WallComposer({ targetId, label = 'Комментарий на с
   const [text, setText] = useState('');
   const [open, setOpen] = useState(!collapsible);
   const media = useMediaAttachments();
+  const drink = useWallDrink();
   const [state, action, pending] = useActionState(async (previous: { error?: string; success?: string }, form: FormData) => {
     media.appendTo(form);
+    drink.appendTo(form);
     try {
       const next = await updateCommunityAction(previous, form);
-      if (!next.error) { setText(''); media.clear(); if (collapsible) setOpen(false); }
+      if (!next.error) { setText(''); media.clear(); drink.clear(); if (collapsible) setOpen(false); }
       return next;
     } catch { return { error: 'Не удалось отправить запись. Проверьте соединение и попробуйте снова.' }; }
   }, {});
@@ -58,21 +61,23 @@ export function WallComposer({ targetId, label = 'Комментарий на с
     <ActionToast message={state.error ?? state.success} tone={state.error ? 'error' : 'success'} trigger={state} />
   </>;
   return <form action={action} className="wall-composer" data-collapsible={collapsible || undefined}
-    onKeyDown={event => { if (collapsible && event.key === 'Escape' && !text.trim() && !media.files.length) setOpen(false); }}>
+    onKeyDown={event => { if (collapsible && event.key === 'Escape' && !text.trim() && !media.files.length && !drink.drink) setOpen(false); }}>
     <input type="hidden" name="operation" value="comment" /><input type="hidden" name="targetId" value={targetId} />
     <fieldset disabled={pending}>
       <label htmlFor="wall-text" className="sr-only">{label}</label>
       <div className="review-text-composer">
-        <MentionTextarea id="wall-text" name="text" value={text} onValueChange={setText} onPaste={media.onPaste} placeholder={placeholder} maxLength={1000} rows={3} required={!media.files.length} />
+        <MentionTextarea id="wall-text" name="text" value={text} onValueChange={setText} onPaste={media.onPaste} placeholder={placeholder} maxLength={1000} rows={3} required={!media.files.length && !drink.drink} />
         <div className="review-composer-toolbar">
           <MediaAttachButton media={media} label="Добавить фото, GIF или видео на стену" />
+          <WallDrinkButton state={drink} disabled={pending} />
           <span>{media.preparing ? 'Готовим видео…' : `${media.files.length} / ${MAX_WALL_MEDIA} · фото, GIF, видео`}</span>
           <span className="review-composer-count">{text.length} / 1000</span>
         </div>
       </div>
       {media.error && <p role="alert" className="field-error">{media.error}</p>}
       <MediaAttachmentPreviews media={media} />
-      <div className="community-form-footer wall-composer-footer"><Submit className="review-composer-submit" disabled={(!text.trim() && !media.files.length) || media.preparing}>Отправить</Submit></div>
+      <WallDrinkChip state={drink} />
+      <div className="community-form-footer wall-composer-footer"><Submit className="review-composer-submit" disabled={(!text.trim() && !media.files.length && !drink.drink) || media.preparing}>Отправить</Submit></div>
     </fieldset>
     <ActionToast message={state.error ?? state.success} tone={state.error ? 'error' : 'success'} trigger={state} />
   </form>;

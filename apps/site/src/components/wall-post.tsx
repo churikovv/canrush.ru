@@ -5,6 +5,7 @@ import { ProfileExperience } from '@/components/profile-experience';
 import { ReviewDiscussion } from '@/components/review-discussion';
 import { ReviewPhotoGallery } from '@/components/review-photo-gallery';
 import { WallPostBody } from '@/components/wall-post-body';
+import { WallDrinkCard } from '@/components/wall-drink-card';
 import { postedLabel } from '@/lib/last-seen';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import type { WallPostRow } from '@/lib/profile-community';
@@ -57,6 +58,7 @@ export function WallPost({ post, interaction, canDelete, canEdit, owner }: WallP
       </div>
     </>}>
       <ReviewPhotoGallery photos={post.photos} kinds={post.mediaKinds} source="wall-photos" />
+      {post.drink && <WallDrinkCard drink={post.drink} />}
       <ReviewDiscussion reviewId={post.id} target="wall" initial={interaction} />
     </WallPostBody>
   </article>;

@@ -9,6 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { ensureOwnProfile } from '@/lib/profile';
 import { frozenMessage, isUserBlocked } from '@/lib/moderation';
+import { drinkFromForm } from '@/lib/wall-drink-fields';
 import { CommunityError, addProfileComment, deleteProfileComment, editProfileComment, getPresence, setFollowing, setPresenceVisibility, setProfileTags, touchPresence } from '@/lib/profile-community';
 
 export interface CommunityActionState { error?: string; success?: string }
@@ -33,7 +34,7 @@ export async function updateCommunityAction(_state: CommunityActionState, form: 
         break;
       case 'comment': {
         await ensureOwnProfile(session.user);
-        await addProfileComment(userId, String(form.get('targetId') ?? ''), form.get('text'), await prepareWallMedia(form));
+        await addProfileComment(userId, String(form.get('targetId') ?? ''), form.get('text'), await prepareWallMedia(form), drinkFromForm(form));
         break;
       }
       case 'delete-comment':

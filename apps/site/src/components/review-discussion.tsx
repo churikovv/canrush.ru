@@ -20,9 +20,11 @@ import { reviewDiscussionAction } from '@/app/catalog/discussion-actions';
 import type { ReviewCommentData, ReviewInteraction } from '@/lib/review-discussions';
 import type { WallCommentData } from '@/lib/wall-discussions';
 import { SignInPrompt } from '@/components/sign-in-prompt';
+import { WallDrinkButton, WallDrinkChip, useWallDrink } from '@/components/wall-drink';
+import { WallDrinkCard } from '@/components/wall-drink-card';
 
-/** Wall comments also carry likes; review and tier list comments do not. */
-type Comment = ReviewCommentData & Partial<Pick<WallCommentData, 'likes' | 'liked'>>;
+/** Wall comments also carry likes and a drink; review and tier list comments do not. */
+type Comment = ReviewCommentData & Partial<Pick<WallCommentData, 'likes' | 'liked' | 'drink'>>;
 
 function Heart({ filled }: { filled: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M12 20.5 4.6 13.3A4.6 4.6 0 0 1 11.1 6.8l.9.9.9-.9a4.6 4.6 0 0 1 6.5 6.5L12 20.5Z" /></svg>;
@@ -53,6 +55,9 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
   const [more,setMore] = useState(false);
   const [text,setText] = useState('');
   const media = useMediaAttachments('комментарию');
+  // Only comments under wall and feed records take a drink from the catalog.
+  const drink = useWallDrink();
+  const withDrink = target === 'wall';
   // A new object for each refusal, so the same text (the pause between comments) shows the toast again.
   const [failure,setFailure] = useState<{ message: string; signIn: boolean } | null>(null);
   const [pending,startTransition] = useTransition();
@@ -67,7 +72,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         if (result.error) { setFailure({ message: result.error, signIn: Boolean(result.signIn) }); return; }
         if (result.interaction) setStats(result.interaction);
         if (result.thread) { setComments(previous => append ? [...previous,...result.thread!.items.filter(item => !previous.some(old => old.id === item.id))] : result.thread!.items); setMore(result.thread.hasMore); setLoaded(true); }
-        if (action === 'comment') { setText(''); setReplyTo(null); media.clear(); }
+        if (action === 'comment') { setText(''); setReplyTo(null); media.clear(); drink.clear(); }
         const edited = result.edited;
         if (edited) { setComments(previous => previous.map(item => item.id === edited.id ? { ...item, text: edited.text, editedAt: edited.editedAt } : item)); setEditing(null); }
       } catch { setFailure({ message: 'Нет связи с сервером. Попробуйте ещё раз.', signIn: false }); }
@@ -86,13 +91,14 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
     } catch { patch({ liked: comment.liked, likes: comment.likes }); setFailure({ message: 'Нет связи с сервером. Попробуйте ещё раз.', signIn: false }); }
     finally { setLiking(null); }
   }
-  /** Plain comments go as JSON; with attachments the comment is sent as a form so files reach the server action. */
+  /** Plain comments go as JSON; with attachments or a drink the comment is sent as a form, so files reach the server action. */
   function submitComment() {
-    if (!media.files.length) { run('comment', replyTo ? { text, replyToId: replyTo.id } : text); return; }
+    if (!media.files.length && !drink.drink) { run('comment', replyTo ? { text, replyToId: replyTo.id } : text); return; }
     const form = new FormData();
     form.set('text', text);
     if (replyTo) form.set('replyToId', replyTo.id);
     media.appendTo(form);
+    drink.appendTo(form);
     run('comment', form);
   }
   function answer(comment: Comment) {
@@ -120,12 +126,13 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         {replyTo && <div className="review-reply-target"><span>Ответ <b>{replyTo.label}</b></span><button type="button" aria-label="Отменить ответ" title="Отменить ответ" onClick={() => setReplyTo(null)}>×</button></div>}
         {/* Attach and the counter sit inside the field, so the composer takes one block plus the button. */}
         <div className="review-text-composer">
-          <MentionTextarea ref={composer} id={`${regionId}-text`} value={text} onValueChange={setText} onPaste={media.onPaste} maxLength={1000} required={!media.files.length} rows={2} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
-          <div className="review-composer-toolbar"><MediaAttachButton media={media} label="Добавить к комментарию фото, GIF или видео" /><span className="review-composer-count">{media.preparing ? 'Готовим видео…' : `${text.length} / 1000`}</span></div>
+          <MentionTextarea ref={composer} id={`${regionId}-text`} value={text} onValueChange={setText} onPaste={media.onPaste} maxLength={1000} required={!media.files.length && !drink.drink} rows={2} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
+          <div className="review-composer-toolbar"><MediaAttachButton media={media} label="Добавить к комментарию фото, GIF или видео" />{withDrink && <WallDrinkButton state={drink} disabled={pending} />}<span className="review-composer-count">{media.preparing ? 'Готовим видео…' : `${text.length} / 1000`}</span></div>
         </div>
         {media.error && <p role="alert" className="field-error">{media.error}</p>}
         <MediaAttachmentPreviews media={media} />
-        <button className="community-button review-composer-submit" type="submit" disabled={pending || (!text.trim() && !media.files.length) || media.preparing}>{pending ? 'Подождите…' : 'Отправить'}</button>
+        {withDrink && <WallDrinkChip state={drink} />}
+        <button className="community-button review-composer-submit" type="submit" disabled={pending || (!text.trim() && !media.files.length && !drink.drink) || media.preparing}>{pending ? 'Подождите…' : 'Отправить'}</button>
       </form> : <SignInPrompt compact title="Обсудите отзыв" text="Войдите, чтобы ответить автору." />}
       {!loaded ? <p role="status">{pending ? 'Загружаем комментарии…' : 'Комментарии не загружены.'} {!pending && <button type="button" onClick={() => run('read')}>Повторить</button>}</p> : !comments.length ? <div className="review-thread-empty" role="status">
         <span className="review-thread-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"><path d="M20 16a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10Z" /><path d="M8 9h8M8 13h5" strokeLinecap="round" /></svg></span>
@@ -147,6 +154,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
           <div><span>{draft.length} / 1000</span><button className="community-button community-button-secondary" type="button" disabled={pending} onClick={() => setEditing(null)}>Отмена</button><button className="community-button" type="submit" disabled={pending || !draft.trim() || draft.trim() === comment.text}>{pending ? 'Сохраняем…' : 'Сохранить'}</button></div>
         </form> : comment.text || comment.replyTo ? <p>{comment.replyTo && <>{comment.replyTo.username ? <Link className="review-reply-mention" href={`/profile/${comment.replyTo.username}`}>@{comment.replyTo.username}</Link> : <span className="review-reply-mention">{comment.replyTo.name.includes('@') ? 'Участник' : comment.replyTo.name}</span>}{' '}</>}<MentionText text={comment.text} /></p> : null}
         {editing !== comment.id && comment.media?.length ? <ReviewPhotoGallery photos={comment.media.map(item => item.id)} kinds={comment.media.map(item => item.kind)} source="comment-media" /> : null}
+        {editing !== comment.id && comment.drink ? <WallDrinkCard drink={comment.drink} compact /> : null}
         <div className="review-comment-footer">{typeof comment.likes === 'number' && <button className="review-comment-like" type="button" aria-pressed={Boolean(comment.liked)} aria-label={comment.canDelete ? `Лайков: ${comment.likes}` : comment.liked ? `Убрать лайк, лайков: ${comment.likes}` : `Нравится комментарий, лайков: ${comment.likes}`} disabled={comment.canDelete || liking === comment.id} onClick={() => void toggleLike(comment)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill={comment.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M12 20.5 4.6 13.3A4.6 4.6 0 0 1 11.1 6.8l.9.9.9-.9a4.6 4.6 0 0 1 6.5 6.5L12 20.5Z" /></svg><span>{comment.likes}</span>
         </button>}
