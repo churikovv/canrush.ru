@@ -2780,7 +2780,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 .city-header-button span:first-of-type { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .city-header-button svg { flex-shrink: 0; }
 .city-header-button:focus-visible { outline: 2px solid var(--theme-line, #ffffff); outline-offset: 2px; border-radius: 12px; }
-.city-dialog { width: min(520px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); border: 0; border-radius: 16px; padding: 24px; color: var(--color-text); background: var(--theme-panel, #ffffff); overflow: auto; }
+.city-dialog { width: min(520px, calc(100vw - 24px)); border: 0; border-radius: 16px; padding: 24px; color: var(--color-text); background: var(--theme-panel, #ffffff); overflow: auto; }
 .city-dialog::backdrop { background: #14182099; }
 /* Open: backdrop fades, sheet rises and scales in. Close (data-closing) plays it back, then React unmounts. */
 .city-dialog[open] { animation: city-dialog-in 260ms cubic-bezier(.2, .8, .2, 1); }
@@ -2976,7 +2976,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 }
 .notification-bell:focus-visible { outline: 2px solid var(--theme-line, #ffffff); outline-offset: 2px; }
 .notification-count { position: absolute; top: 0; right: -2px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 10px; background: var(--theme-panel, #ffffff); color: var(--color-brand-deep); font-size: 10px; font-weight: 700; display: grid; place-items: center; }
-.notification-panel { position: fixed; inset: 76px 24px auto auto; margin: 0; width: min(440px, calc(100vw - 24px)); max-height: calc(100dvh - 100px - var(--site-tab-bar-offset, 0px)); padding: 0; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 20px; color: var(--color-text); background: var(--theme-panel, #ffffff); box-shadow: 0 16px 48px #00000020; overflow: auto; }
+.notification-panel { position: fixed; inset: calc(64px + max(12px, env(safe-area-inset-top, 0px))) 24px auto auto; margin: 0; width: min(440px, calc(100vw - 24px)); max-height: calc(100dvh - 88px - max(12px, env(safe-area-inset-top, 0px)) - var(--site-tab-bar-offset, 0px)); padding: 0; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 20px; color: var(--color-text); background: var(--theme-panel, #ffffff); box-shadow: 0 16px 48px #00000020; overflow: auto; }
 .notification-panel::backdrop { background: #00000025; }
 .notification-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 20px 12px; }
 .notification-panel h2 { margin: 0 0 5px; font-size: 1.25rem; }
@@ -3001,7 +3001,7 @@ html[data-cookie-notice="visible"] .brand-footer {
 .notification-more { width: 100%; }
 .notification-panel > .field-error, .notification-panel > .field-help { margin: 12px 20px; }
 @media (max-width: 959px) {
-  .notification-panel { top: 72px; right: 12px; }
+  .notification-panel { top: calc(60px + max(12px, env(safe-area-inset-top, 0px))); right: 12px; }
   .brand-header:has(.notification-bell, .notification-slot) .city-header-button { max-width: min(220px, calc(100vw - 164px)); }
 }
 /* The active section stays brighter than hover, including while hovered. */
@@ -3681,6 +3681,14 @@ html[data-native-app] body {
 }
 /* The footer used to clear the tab bar; without it every page keeps the same room at the bottom. */
 html[data-native-app] .main-surface.main-surface { padding-bottom: calc(var(--site-tab-bar-offset, 0px) + 32px); }
+/* Windows over the page sit in the top layer, outside the page's insets: centred ones stand between the status and
+   navigation bars and keep 16 px from them. The insets are 0 in browsers. `:root` lifts the rule over the dialogs' own
+   files, which may load after this one. Full-screen windows (reviews, photos, stories, cards) pad their own heads. */
+:root :is(.city-dialog, .profile-crop-dialog, .content-report-dialog, .tier-screenshot-dialog, .story-composer) {
+  top: env(safe-area-inset-top, 0px);
+  bottom: env(safe-area-inset-bottom, 0px);
+  max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
 html[data-native-app] .pull-refresh {
   --pull: 0;
   position: fixed;

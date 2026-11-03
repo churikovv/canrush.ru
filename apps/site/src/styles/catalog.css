@@ -735,13 +735,15 @@
 .catalog-highlights-card { display: grid; gap: 12px; padding: 14px 16px 16px 18px; border: 1px solid var(--color-control); border-radius: 20px; background: var(--color-surface, transparent); }
 .catalog-highlights-card h2 { margin: 0; color: var(--color-ink); font-size: 1.0625rem; font-weight: 800; line-height: 1.2; }
 
-/* The reviews sheet: full screen, the page under it does not scroll. */
+/* The reviews sheet: full screen, the page under it does not scroll. In the apps the page draws under the status bar
+   (viewport-fit=cover) and the sheet sits in the top layer, outside the page's insets: its head keeps clear of the bar
+   and the sheet of the side cut-outs itself. The insets are 0 in browsers. */
 html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
-.catalog-reviews-sheet { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: var(--color-page, var(--color-surface, #fff)); color: var(--color-ink); overflow: auto; overscroll-behavior: contain; }
+.catalog-reviews-sheet { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); border: 0; border-radius: 0; background: var(--color-page, var(--color-surface, #fff)); color: var(--color-ink); overflow: auto; overscroll-behavior: contain; }
 .catalog-reviews-sheet::backdrop { background: rgb(10 14 22 / .55); }
 .catalog-reviews-sheet[open] { animation: catalog-sheet-in 260ms cubic-bezier(.2, .8, .2, 1); }
 @keyframes catalog-sheet-in { from { transform: translateY(32px); opacity: 0; } to { transform: none; opacity: 1; } }
-.catalog-reviews-sheet-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--color-control); background: inherit; }
+.catalog-reviews-sheet-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; border-bottom: 1px solid var(--color-control); background: inherit; }
 .catalog-reviews-sheet-back { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin-left: -6px; border: 0; border-radius: 50%; background: none; color: var(--color-ink); cursor: pointer; }
 .catalog-reviews-sheet-back:hover { background: var(--color-subtle); }
 .catalog-reviews-sheet-head > div { min-width: 0; }

@@ -170,7 +170,7 @@ button.tier-list-card-likes[aria-pressed="true"] svg { animation: tier-like-pop 
 @media (max-width: 700px) {
   .profile-editor-actions { width: 100%; }
 }
-.profile-crop-dialog { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; border: 0; border-radius: 16px; padding: 24px; color: var(--theme-text, #171717); background: var(--theme-panel, #ffffff); }
+.profile-crop-dialog { width: min(520px, calc(100vw - 32px)); overflow: auto; border: 0; border-radius: 16px; padding: 24px; color: var(--theme-text, #171717); background: var(--theme-panel, #ffffff); }
 .profile-crop-dialog::backdrop { background: #14182099; }
 .profile-crop-dialog h2 { margin: 0 0 8px; font-size: 22px; }
 .profile-crop-preview { display: block; max-height: 38dvh; width: 100%; object-fit: contain; margin: 20px auto; touch-action: none; cursor: grab; background: var(--theme-subtle, #f3f4f6); }
@@ -190,7 +190,7 @@ button.tier-list-card-likes[aria-pressed="true"] svg { animation: tier-like-pop 
   .tier-screenshot-control, .tier-screenshot-control > button { width: 100%; }
 }
 /* «Пожаловаться» on content: a modal with the same fields as the profile report. */
-.content-report-dialog { width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 24px; border: 0; border-radius: 16px; background: var(--theme-panel, #ffffff); color: var(--theme-text, var(--color-ink)); overflow: auto; }
+.content-report-dialog { width: min(440px, calc(100vw - 32px)); margin: auto; padding: 24px; border: 0; border-radius: 16px; background: var(--theme-panel, #ffffff); color: var(--theme-text, var(--color-ink)); overflow: auto; }
 .content-report-dialog::backdrop { background: #0009; }
 .content-report-dialog h2 { margin: 0 0 8px; font-size: 1.25rem; }
 .content-report-dialog > p { margin: 0 0 16px; line-height: 1.5; font-size: .875rem; }
@@ -573,7 +573,7 @@ a.wall-post-author:hover { color: var(--theme-link, #0058cc); }
 .share-toast-error { background: #8e2430; }
 .share-toast button:focus-visible { outline: 2px solid var(--theme-line, #ffffff); outline-offset: 2px; }
 .tier-screenshot-control { min-width: 0; }
-.tier-screenshot-dialog { width: min(900px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 24px; border: 0; border-radius: 16px; background: var(--theme-panel, #ffffff); color: var(--color-ink); overflow: auto; }
+.tier-screenshot-dialog { width: min(900px, calc(100vw - 32px)); margin: auto; padding: 24px; border: 0; border-radius: 16px; background: var(--theme-panel, #ffffff); color: var(--color-ink); overflow: auto; }
 .tier-screenshot-dialog::backdrop { background: #0009; }
 .tier-screenshot-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .tier-screenshot-heading h2 { font-size: 1.25rem; }
@@ -1055,8 +1055,10 @@ button.tier-create-banner { width: 100%; border: 0; font: inherit; text-align: l
 .settings-switch:checked::after { transform: translateX(20px); }
 .settings-switch:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .settings-switch, .settings-switch::after { transition: none; } }
-/* Лист снизу (`BottomSheet`): на телефоне выезжает от нижнего края, на компьютере стоит окном по центру. */
-.bottom-sheet { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 20px; border: 0; border-radius: 24px; background: var(--theme-panel, #fff); color: var(--theme-text, #111); overflow: auto; }
+/* Лист снизу (`BottomSheet`): на телефоне выезжает от нижнего края, на компьютере стоит окном по центру. В приложениях
+   страница рисуется под системными панелями, а окно лежит в верхнем слое, вне её отступов: по центру оно встаёт между
+   панелями (`top`/`bottom`), на телефоне его верх не заходит под статус-бар, а низ, как и раньше, уходит под панель навигации. */
+.bottom-sheet { top: env(safe-area-inset-top, 0px); bottom: env(safe-area-inset-bottom, 0px); width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); margin: auto; padding: 20px; border: 0; border-radius: 24px; background: var(--theme-panel, #fff); color: var(--theme-text, #111); overflow: auto; }
 .bottom-sheet::backdrop { background: rgb(10 14 22 / .55); }
 .bottom-sheet[open] { animation: bottom-sheet-in 220ms cubic-bezier(.2, .8, .2, 1); }
 @keyframes bottom-sheet-in { from { opacity: 0; transform: translateY(24px); } }
@@ -1067,7 +1069,7 @@ button.tier-create-banner { width: 100%; border: 0; font: inherit; text-align: l
 .bottom-sheet-head .more-actions { flex: none; margin-inline-end: -4px; }
 .bottom-sheet-head .more-actions-trigger { width: 44px; height: 44px; margin: -8px 0; border-radius: 999px; background: var(--theme-subtle, #f3f4f6); color: var(--theme-text, #111); }
 .bottom-sheet-head > .bottom-sheet-close:first-child { margin-left: -8px; }
-@media (max-width: 639px) { .bottom-sheet { width: 100vw; max-width: none; max-height: 92dvh; margin: auto 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; } }
+@media (max-width: 639px) { .bottom-sheet { bottom: 0; width: 100vw; max-width: none; max-height: min(92dvh, calc(100dvh - 12px - env(safe-area-inset-top, 0px))); margin: auto 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; } }
 @media (prefers-reduced-motion: reduce) { .bottom-sheet[open] { animation: none; } }
 .store-takedown-lead { margin: 0 0 12px; font-size: .875rem; line-height: 1.5; }
 .bottom-sheet .store-moderation { display: grid; gap: 12px; margin: 0; padding: 0; border: 0; background: none; }

@@ -28,6 +28,10 @@
   font-size: .9375rem;
 }
 .bc-root :is(h1, h2, h3, strong, b, button, input, select, textarea, summary) { font-family: var(--bc-font); }
+/* The apps draw under the status bar (viewport-fit=cover) and the dashboard has no site header to clear it, so the frame
+   steps down by the bar itself; the strip above takes the frame colour. The insets are 0 in browsers. The landing's
+   preview (`.biz-real`) is a picture inside the page and stays as it is. */
+.bc-root:not(.biz-real) { padding-top: env(safe-area-inset-top, 0px); }
 .bc-root h1, .bc-root h2 { margin: 0; color: var(--bc-text); letter-spacing: -0.01em; }
 .bc-root p { margin: 0; }
 .bc-muted { color: var(--bc-muted); font-size: .8125rem; }
@@ -254,6 +258,8 @@
   .bc-topbar-actions .bc-button { flex: 1; }
   .bc-topbar-divider { display: none; }
   .bc-pagination { justify-content: center; }
+  /* The drawer is fixed to the whole screen: its own content keeps clear of the status bar and a side cut-out. */
+  .bc-sidebar-wrap .bc-sidebar { padding-top: calc(20px + env(safe-area-inset-top, 0px)); padding-left: calc(16px + env(safe-area-inset-left, 0px)); }
 }
 @media (min-width: 640px) {
   .bc-kpis { grid-template-columns: repeat(4, 1fr); }
@@ -266,6 +272,9 @@
 @media (min-width: 960px) {
   .bc-root { display: grid; grid-template-columns: 280px minmax(0, 1fr); padding: 12px 12px 12px 0; }
   .bc-sidebar-wrap { position: sticky; top: 12px; height: calc(100dvh - 24px); }
+  .bc-root:not(.biz-real) { padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
+  .bc-root:not(.biz-real) .bc-sidebar-wrap { top: calc(12px + env(safe-area-inset-top, 0px)); height: calc(100dvh - 24px - env(safe-area-inset-top, 0px)); }
+  .bc-root:not(.biz-real) .bc-main { min-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px)); }
   .bc-scrim, .bc-burger { display: none; }
   .bc-main { min-height: calc(100dvh - 24px); border: 1px solid var(--bc-line); border-radius: 18px; box-shadow: 0 1px 3px rgb(0 0 0 / 5%); }
   .bc-topbar { padding: 16px 24px; }
