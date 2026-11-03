@@ -64,6 +64,7 @@
 .inv-empty { grid-row: 3 / -1; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 16px; text-align: center; }
 .inv-empty h2 { margin: 0; font-size: 1.375rem; font-weight: 900; }
 .inv-empty p { margin: 0; color: rgb(255 255 255 / .7); }
+.inv-empty-try { width: 100%; max-width: 320px; box-sizing: border-box; }
 
 /* Лист брендов: прогресс коллекции по каждому. */
 .inv-brand-list { display: grid; gap: 6px; margin: 0; padding: 0 0 8px; list-style: none; }

@@ -13,6 +13,7 @@ import { questsReady, type QuestClaim } from '@/lib/gacha-quests-fields';
 import { PULL_COST, TEN_PULL_COST, pityLeft, type GachaScene, type Rarity } from '@/lib/gacha-fields';
 import type { GachaState, PullResult, PulledCard } from '@/lib/gacha';
 import { CapIcon, RingIcon, ShardIcon, SpinIcon } from '@/components/gacha-icons';
+import { AtmKeyFace } from '@/components/atm-key';
 import { RarityChip, RarityShine } from '@/components/rarity-badge';
 import { CanSkin } from '@/components/can-skin';
 import { InspectableCard } from '@/components/card-inspector';
@@ -61,9 +62,9 @@ function QuestIcon() {
 }
 
 /** A chunky game button: a raised face on a darker base that sinks when pressed; the price sits in its own chip. */
-function GameButton({ tone, label, price, disabled, onClick }: { tone: 'orange' | 'violet'; label: string; price: ReactNode; disabled: boolean; onClick: () => void }) {
-  return <button type="button" className="game-btn" data-tone={tone} disabled={disabled} onClick={onClick}>
-    <span className="game-btn-face"><span className="game-btn-label">{label}</span><span className="game-btn-price">{price}</span></span>
+function GameButton({ tone, label, price, disabled, onClick }: { tone: 'gold' | 'violet'; label: string; price: ReactNode; disabled: boolean; onClick: () => void }) {
+  return <button type="button" className="atm-key" data-tone={tone} disabled={disabled} onClick={onClick}>
+    <AtmKeyFace label={label} price={price} coins={tone === 'violet' ? 3 : 1} />
   </button>;
 }
 
@@ -281,11 +282,11 @@ export function GachaMachine({ initial, signedIn, albumHref, scene, seasonTitle 
             <Link className="game-round is-collection" href={albumHref} aria-label={`Коллекция: ${state.cards} карточек`}><AlbumIcon /></Link>
             <span className="game-collection-count" aria-hidden="true">{state.cards}</span>
           </span>}
-          <GameButton tone="orange" label={busy ? 'Крутим…' : 'Крутить'} disabled={busy || !canOne || state.blocked} onClick={() => pull(1)}
+          <GameButton tone="gold" label={busy ? 'Крутим…' : 'Крутить'} disabled={busy || !canOne || state.blocked} onClick={() => pull(1)}
             price={state.free ? 'Бесплатно' : state.gifted > 0 ? `Подарок · ${state.gifted}` : <><CapIcon size={16} />{PULL_COST}</>} />
           <GameButton tone="violet" label="×10" disabled={busy || !canTen || state.blocked} onClick={() => pull(10)}
             price={<><CapIcon size={16} />{TEN_PULL_COST}</>} />
-        </div> : <div className="game-buttons"><Link className="game-btn" data-tone="orange" href="/sign-in"><span className="game-btn-face"><span className="game-btn-label">Войти и крутить</span></span></Link></div>}
+        </div> : <div className="game-buttons"><Link className="atm-key" data-tone="gold" href="/sign-in"><AtmKeyFace label="Войти и крутить" /></Link></div>}
       </div>
     </div>
     {(error || (state && !state.free && !canOne)) && <div className="gacha-under">

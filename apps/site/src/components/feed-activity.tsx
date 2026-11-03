@@ -1,5 +1,6 @@
 import { VerifiedMark } from '@/components/verified-mark';
 import { ArticleLikeButton } from '@/components/article-actions';
+import { AtmKeyFace } from '@/components/atm-key';
 import { BigCard, type ShownCard } from '@/components/big-card';
 import { InspectableCard } from '@/components/card-inspector';
 import { FeedDrop } from '@/components/feed-drop';
@@ -126,7 +127,7 @@ export function FeedGachaEvent({ pull, covers }: { pull: FeedGachaRow; covers: M
         <span className="feed-drop-kicker">{RARITY_LABELS[pull.rarity]}{pull.count > 1 ? ` · ${pull.count} за день` : ''}</span>
         <Link className="feed-drop-name" href={href}><b>{pull.brand}</b><span>{card.name}</span></Link>
         <ul className="card-traits" aria-label="Облик">{shown.map(item => <li key={item.kind} data-rare={item.rare || undefined}><small>{item.kind}</small>{item.name}{item.rare && <b aria-label="редкий"> ✦</b>}</li>)}</ul>
-        <Link className="can-btn feed-drop-try" href="/gacha">Крутить Банкомат</Link>
+        <Link className="atm-key feed-drop-try" data-tone="gold" href="/gacha"><AtmKeyFace label="Крутить Банкомат" /></Link>
       </div>
     </div>
   </article>;

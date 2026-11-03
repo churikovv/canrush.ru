@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from 'react';
 import { craftAction } from '@/app/gacha/actions';
+import { AtmKeyFace } from '@/components/atm-key';
 import { BigCard, MissingBigCard, type ShownCard } from '@/components/big-card';
 import { BottomSheet, BottomSheetHead } from '@/components/bottom-sheet';
 import { CardInspector } from '@/components/card-inspector';
@@ -175,7 +176,7 @@ export function CardInventory({ cards, isOwn, shards, owner, backHref }: { cards
     </> : <section className="inv-empty">
       <h2>{filter === 'missing' ? 'Собраны все банки' : brand ? `Нет карточек ${brand}` : 'Пока ни одной карточки'}</h2>
       <p>{filter === 'all' && !brand ? 'Первая крутка в день — бесплатно.' : 'Выберите другой фильтр.'}</p>
-      {isOwn && filter === 'all' && !brand && <Link className="can-btn" href="/gacha">Крутить Банкомат</Link>}
+      {isOwn && filter === 'all' && !brand && <Link className="atm-key inv-empty-try" data-tone="gold" href="/gacha"><AtmKeyFace label="Крутить Банкомат" /></Link>}
     </section>}
 
     <BottomSheet ref={brands} className="inv-brands" labelledBy="inv-brands-title">

@@ -3760,6 +3760,36 @@ html[data-native-app] .pull-refresh:not([data-state="pulling"]) { transition: tr
 .game-btn[data-tone="orange"]:not(:disabled) .game-btn-face { animation: game-btn-glow 2.2s ease-in-out infinite; }
 @keyframes game-btn-glow { 0%, 100% { box-shadow: inset 0 3px 0 rgb(255 255 255 / .55), inset 0 -4px 0 rgb(0 0 0 / .12), 0 0 0 rgb(255 140 30 / 0); } 50% { box-shadow: inset 0 3px 0 rgb(255 255 255 / .55), inset 0 -4px 0 rgb(0 0 0 / .12), 0 0 22px rgb(255 140 30 / .75); } }
 @media (prefers-reduced-motion: reduce) { .game-btn[data-tone="orange"] .game-btn-face { animation: none; } .game-btn-face { transition: none; } }
+/* «Банкомат»: своя клавиша — хромированная рамка, лицо цвета тона, слева щель, в которую раз в несколько секунд падает
+   крышка (у ×10 — стопка). Анимируются только transform и opacity; в prefers-reduced-motion всё стоит. */
+.atm-key { --key: #ffc12e; --key-top: #fff0a6; --key-deep: #c76a00; --key-ink: #2b1500; --key-glow: rgb(255 190 50 / .75); position: relative; display: block; padding: 4px; border: 2px solid #0a0816; border-radius: 18px; background: linear-gradient(180deg, #fff, #b3bccc 42%, #eef1f7 58%, #7a8397); color: var(--key-ink); font: inherit; text-align: center; text-decoration: none; cursor: pointer; box-shadow: 0 6px 0 #2a2d39, 0 14px 26px -10px rgb(0 0 0 / .85); transition: transform 90ms ease-out, box-shadow 90ms ease-out; -webkit-tap-highlight-color: transparent; }
+.atm-key[data-tone="violet"] { --key: #8b60ff; --key-top: #d6c8ff; --key-deep: #4520c0; --key-ink: #fff; --key-glow: rgb(150 110 255 / .8); }
+.atm-key-face { position: relative; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 14px 6px 6px; border-radius: 13px; background: linear-gradient(180deg, var(--key-top), var(--key) 52%, var(--key-deep)); box-shadow: inset 0 2px 0 rgb(255 255 255 / .7), inset 0 -3px 0 rgb(0 0 0 / .2), inset 0 0 0 1px rgb(0 0 0 / .35); overflow: hidden; isolation: isolate; }
+.atm-key-face::before { content: ""; position: absolute; inset: 3px 10px auto; z-index: -1; height: 42%; border-radius: 10px 10px 50% 50%; background: linear-gradient(rgb(255 255 255 / .6), rgb(255 255 255 / 0)); pointer-events: none; }
+.atm-key-face::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 45%; background: linear-gradient(105deg, transparent, rgb(255 255 255 / .55) 50%, transparent); transform: translateX(-120%) skewX(-12deg); animation: atm-key-sweep 4.2s ease-in-out infinite; pointer-events: none; }
+.atm-key-slot { position: relative; flex: none; align-self: stretch; width: 40px; min-height: 40px; border-radius: 9px; background: radial-gradient(120% 80% at 50% 0%, #2d2350, #0d0820 70%); box-shadow: inset 0 3px 6px rgb(0 0 0 / .85), 0 1px 0 rgb(255 255 255 / .55); overflow: hidden; }
+.atm-key-slot::after { content: ""; position: absolute; left: 50%; bottom: 8px; width: 24px; height: 4px; border-radius: 2px; background: #000; box-shadow: 0 1px 0 rgb(255 255 255 / .3), 0 0 0 1px rgb(255 255 255 / .12); transform: translateX(-50%); }
+.atm-key-slot::before { content: ""; position: absolute; left: 50%; bottom: 4px; width: 34px; height: 12px; border-radius: 50%; background: var(--key-glow); filter: blur(5px); opacity: 0; transform: translateX(-50%); animation: atm-key-flash 3.4s ease-in-out infinite; }
+.atm-key-coin { position: absolute; inset: 3px 0 12px; display: grid; place-items: center; overflow: hidden; }
+.atm-key-coin svg { grid-area: 1 / 1; color: #ffd34d; --gacha-cap-core: #fff6dc; filter: drop-shadow(0 1px 0 rgb(0 0 0 / .6)); animation: atm-key-insert 3.4s cubic-bezier(.5, 0, .6, 1) infinite; }
+.atm-key-coin[data-coins="3"] svg:nth-child(1) { translate: -5px -4px; animation-delay: -.2s; }
+.atm-key-coin[data-coins="3"] svg:nth-child(2) { translate: 5px -1px; animation-delay: -.1s; }
+.atm-key-coin[data-coins="3"] svg:nth-child(3) { translate: 0 3px; }
+.atm-key-text { display: grid; flex: 1; justify-items: center; gap: 3px; min-width: 0; }
+.atm-key-label { font-size: 1.125rem; font-weight: 900; letter-spacing: .02em; line-height: 1.05; text-transform: uppercase; text-shadow: 0 1px 0 rgb(255 255 255 / .5); }
+.atm-key[data-tone="violet"] .atm-key-label { text-shadow: 0 2px 0 rgb(0 0 0 / .35); }
+.atm-key-price { display: inline-flex; align-items: center; gap: 3px; padding: 1px 9px; border-radius: 999px; background: rgb(28 12 0 / .72); color: #fff; font-size: .8125rem; font-weight: 800; line-height: 1.4; white-space: nowrap; }
+.atm-key[data-tone="violet"] .atm-key-price { background: rgb(14 4 50 / .55); }
+.atm-key-price .gacha-cap-icon { color: #ffd34d; --gacha-cap-core: #fff8e6; }
+.atm-key:hover .atm-key-face { filter: brightness(1.06); }
+.atm-key:active:not(:disabled) { transform: translateY(5px); box-shadow: 0 1px 0 #2a2d39, 0 6px 12px -8px rgb(0 0 0 / .85); }
+.atm-key:focus-visible { outline: 3px solid #fff; outline-offset: 3px; box-shadow: 0 6px 0 #2a2d39, 0 0 0 9px #006eff; }
+.atm-key:disabled { cursor: default; filter: grayscale(.8) brightness(.72); }
+.atm-key:disabled .atm-key-face::after, .atm-key:disabled .atm-key-slot::before, .atm-key:disabled .atm-key-coin svg { animation: none; }
+@keyframes atm-key-insert { 0%, 52% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(150%); opacity: 1; } 71% { transform: translateY(-150%); opacity: 0; } 86%, 100% { transform: translateY(0); opacity: 1; } }
+@keyframes atm-key-flash { 0%, 60%, 100% { opacity: 0; } 70% { opacity: 1; } }
+@keyframes atm-key-sweep { 0%, 55% { transform: translateX(-120%) skewX(-12deg); } 85%, 100% { transform: translateX(260%) skewX(-12deg); } }
+@media (prefers-reduced-motion: reduce) { .atm-key { transition: none; } .atm-key-face::after, .atm-key-slot::before, .atm-key-coin svg { animation: none; } }
 
 /* «Банкомат» on the home page (GachaHomeBanner): the machine's loop on the left, a game panel with the name, the top
    prize and a chunky «Крутить» key on the right — nothing covers the machine. */
@@ -3806,10 +3836,11 @@ a.first-steps-row:active { transform: scale(.98); }
 .gacha-home-when { color: #ffbe7a; font-size: .75rem; font-weight: 800; }
 .gacha-home-prize { padding: 4px 9px; border: 2px solid rgb(255 179 107 / .55); border-radius: 10px; background: rgb(20 8 40 / .6); color: #ffd2a3; font-size: .6875rem; font-weight: 800; line-height: 1.25; }
 .gacha-home-cta { align-self: stretch; margin-top: auto; }
-.gacha-home-cta .game-btn-face { min-height: 54px; padding: 6px 8px; }
-.gacha-home-cta .game-btn-label { font-size: 1.125rem; }
-.gacha-home:hover .gacha-home-cta .game-btn-face { filter: brightness(1.08); }
-.gacha-home:active .gacha-home-cta .game-btn-face { transform: translateY(6px); }
+.gacha-home-cta .atm-key-face { min-height: 50px; gap: 7px; padding: 5px 8px 5px 5px; }
+.gacha-home-cta .atm-key-slot { width: 32px; }
+.gacha-home-cta .atm-key-label { font-size: 1rem; }
+.gacha-home:hover .gacha-home-cta .atm-key-face { filter: brightness(1.08); }
+.gacha-home:active .gacha-home-cta { transform: translateY(5px); box-shadow: 0 1px 0 #2a2d39, 0 6px 12px -8px rgb(0 0 0 / .85); }
 .gacha-home:focus-visible { outline: 3px solid var(--color-focus, #006eff); outline-offset: 3px; }
 @media (min-width: 640px) {
   .gacha-home { grid-template-columns: 1.25fr 1fr; }
@@ -3818,8 +3849,9 @@ a.first-steps-row:active { transform: scale(.98); }
   .gacha-home-title { font-size: 1.625rem; }
   .gacha-home-when { font-size: .875rem; }
   .gacha-home-prize { font-size: .8125rem; }
-  .gacha-home-cta .game-btn-face { min-height: 66px; }
-  .gacha-home-cta .game-btn-label { font-size: 1.5rem; }
+  .gacha-home-cta .atm-key-face { min-height: 60px; gap: 10px; padding: 6px 12px 6px 6px; }
+  .gacha-home-cta .atm-key-slot { width: 40px; }
+  .gacha-home-cta .atm-key-label { font-size: 1.375rem; }
 }
 
 /* Теги недели: держатся неделю, поэтому яркие. Иконка — маска, блик идёт по той же анимации, что у тега «ТОП». */

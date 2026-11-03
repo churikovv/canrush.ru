@@ -202,7 +202,7 @@ button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-w
 .feed-drop-name b { font-size: 1.25rem; font-weight: 900; line-height: 1.15; overflow-wrap: anywhere; }
 .feed-drop-name span { color: rgb(255 255 255 / .72); font-size: .9375rem; }
 .feed-drop-name:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 6px; }
-.feed-drop-try { width: 100%; max-width: 360px; margin-top: 4px; }
+.feed-drop-try { width: 100%; max-width: 360px; margin-top: 4px; box-sizing: border-box; }
 @keyframes feed-drop-sway { 0%, 100% { rotate: y -6deg; } 50% { rotate: y 6deg; } }
 @keyframes feed-drop-fall { 0% { opacity: 0; translate: 0 -90px; scale: .55; rotate: -10deg; } 45% { opacity: 1; } 100% { opacity: 1; translate: 0 0; scale: 1; rotate: 0deg; } }
 @keyframes feed-drop-burst { 0% { opacity: .95; scale: .3; } 100% { opacity: 0; scale: 2.2; } }
@@ -212,7 +212,7 @@ button.feed-more { width: 100%; border: 0; color: inherit; font: inherit; font-w
   .feed-drop-stage { padding: 0 18px; }
   .feed-drop-copy { justify-items: start; text-align: left; }
   .feed-drop-copy .card-traits { justify-content: flex-start; }
-  .feed-drop-try { width: auto; padding-inline: 30px; }
+  .feed-drop-try { width: 300px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .feed-drop-rays, .feed-drop-stage::before, .feed-drop-sway, .feed-drop-card, .feed-drop-ghost, .feed-drop-burst { animation: none !important; }
