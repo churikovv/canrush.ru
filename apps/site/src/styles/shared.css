@@ -1154,22 +1154,25 @@ button.tier-create-banner { width: 100%; border: 0; font: inherit; text-align: l
 .attach-menu .more-actions-item small { color: var(--color-muted-strong); font-size: .75rem; font-weight: 500; }
 .wall-drink-sheet-hint, .wall-drink-sheet-status { margin: 0 0 12px; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.4; }
 .bottom-sheet.wall-drink-sheet { min-height: min(70dvh, 520px); }
-.wall-drink-chip { display: flex; align-items: center; gap: 10px; width: fit-content; max-width: 100%; margin-top: 8px; padding: 6px 6px 6px 8px; box-sizing: border-box; border-radius: 14px; background: var(--color-subtle); }
+/* Цвета — токены `--theme-*`: их переопределяет и тема сайта, и тема профиля, а `--color-surface` остаётся от темы сайта,
+   и на светлой теме профиля тёмная карточка с тёмным текстом не читалась. Карточка во всю ширину записи или комментария. */
+.wall-drink-chip { display: flex; align-items: center; gap: 10px; width: fit-content; max-width: 100%; margin-top: 8px; padding: 6px 6px 6px 8px; box-sizing: border-box; border-radius: 14px; background: var(--theme-subtle, var(--color-subtle)); color: var(--theme-text, var(--color-ink)); }
 .wall-drink-chip img, .wall-drink img { flex: none; border-radius: 10px; background: #fff; object-fit: contain; }
 .wall-drink-chip span { display: grid; min-width: 0; font-size: .875rem; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
-.wall-drink-chip small, .wall-drink small { color: var(--color-muted-strong); font-size: .6875rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
-.wall-drink-chip button { display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--color-muted-strong); font-size: 1.375rem; line-height: 1; cursor: pointer; }
-.wall-drink-chip button:hover { background: var(--color-control, rgb(0 0 0 / .06)); color: var(--color-ink); }
+.wall-drink-chip small, .wall-drink small { color: var(--theme-muted, var(--color-muted-strong)); font-size: .6875rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+.wall-drink-chip button { display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--theme-muted, var(--color-muted-strong)); font-size: 1.375rem; line-height: 1; cursor: pointer; }
+.wall-drink-chip button:hover { background: var(--theme-panel, var(--color-surface)); color: var(--theme-text, var(--color-ink)); }
 .wall-drink-bolt { display: grid; flex: none; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--color-brand); color: #fff; }
-.wall-drink { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 420px; margin-top: 10px; padding: 8px 14px 8px 8px; box-sizing: border-box; border: 1px solid var(--theme-line, #dde2e8); border-radius: 16px; background: var(--color-surface, #fff); color: var(--color-ink); text-decoration: none; }
+.wall-drink { display: flex; align-items: center; gap: 14px; width: 100%; margin-top: 12px; padding: 10px 16px 10px 10px; box-sizing: border-box; border: 1px solid transparent; border-radius: 18px; background: var(--theme-subtle, var(--color-subtle)); color: var(--theme-text, var(--color-ink)); text-decoration: none; }
 .wall-drink > span:not(.wall-drink-bolt, .wall-drink-arrow) { display: grid; flex: 1; min-width: 0; gap: 2px; }
-.wall-drink b { overflow: hidden; color: var(--color-ink); font-size: .9375rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.wall-drink b { overflow: hidden; color: var(--theme-text, var(--color-ink)); font-size: 1rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
 .wall-drink .wall-drink-bolt { width: 56px; height: 56px; font-size: 1.375rem; }
-.wall-drink-arrow { flex: none; color: var(--color-brand); font-weight: 800; transition: translate 160ms ease-out; }
-a.wall-drink:hover { border-color: color-mix(in srgb, var(--color-brand) 45%, transparent); }
+.wall-drink-arrow { flex: none; color: var(--theme-link, var(--color-brand)); font-size: 1.125rem; font-weight: 800; transition: translate 160ms ease-out; }
+a.wall-drink:hover { border-color: color-mix(in srgb, var(--theme-link, var(--color-brand)) 45%, transparent); }
 a.wall-drink:hover .wall-drink-arrow { translate: 3px 0; }
-a.wall-drink:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
-.wall-drink[data-compact] { gap: 10px; max-width: 340px; margin-top: 6px; padding: 6px 12px 6px 6px; border-radius: 14px; }
+a.wall-drink:focus-visible { outline: 2px solid var(--theme-link, var(--color-brand)); outline-offset: 2px; }
+.wall-drink[data-compact] { gap: 10px; margin-top: 8px; padding: 6px 12px 6px 6px; border-radius: 14px; }
 .wall-drink[data-compact] img { width: 40px; height: 40px; }
+.wall-drink[data-compact] b { font-size: .9375rem; }
 .wall-drink[data-compact] .wall-drink-bolt { width: 40px; height: 40px; }
 @media (prefers-reduced-motion: reduce) { .wall-drink-arrow { transition: none; } }
