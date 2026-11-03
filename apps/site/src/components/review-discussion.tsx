@@ -20,7 +20,8 @@ import { reviewDiscussionAction } from '@/app/catalog/discussion-actions';
 import type { ReviewCommentData, ReviewInteraction } from '@/lib/review-discussions';
 import type { WallCommentData } from '@/lib/wall-discussions';
 import { SignInPrompt } from '@/components/sign-in-prompt';
-import { WallDrinkButton, WallDrinkChip, useWallDrink } from '@/components/wall-drink';
+import { WallDrinkChip, useWallDrink } from '@/components/wall-drink';
+import { AttachMenu } from '@/components/attach-menu';
 import { WallDrinkCard } from '@/components/wall-drink-card';
 
 /** Wall comments also carry likes and a drink; review and tier list comments do not. */
@@ -127,7 +128,7 @@ export function ReviewDiscussion({ reviewId, initial, telegramChannel, target = 
         {/* Attach and the counter sit inside the field, so the composer takes one block plus the button. */}
         <div className="review-text-composer">
           <MentionTextarea ref={composer} id={`${regionId}-text`} value={text} onValueChange={setText} onPaste={media.onPaste} maxLength={1000} required={!media.files.length && !drink.drink} rows={2} placeholder={target === 'wall' ? 'Обсудить запись…' : target === 'tierlist' ? 'Обсудить тирлист…' : 'Обсудить отзыв…'} disabled={pending} />
-          <div className="review-composer-toolbar"><MediaAttachButton media={media} label="Добавить к комментарию фото, GIF или видео" />{withDrink && <WallDrinkButton state={drink} disabled={pending} />}<span className="review-composer-count">{media.preparing ? 'Готовим видео…' : `${text.length} / 1000`}</span></div>
+          <div className="review-composer-toolbar">{withDrink ? <AttachMenu media={media} drink={drink} label="Прикрепить к комментарию" /> : <MediaAttachButton media={media} label="Добавить к комментарию фото, GIF или видео" />}<span className="review-composer-count">{media.preparing ? 'Готовим видео…' : `${text.length} / 1000`}</span></div>
         </div>
         {media.error && <p role="alert" className="field-error">{media.error}</p>}
         <MediaAttachmentPreviews media={media} />

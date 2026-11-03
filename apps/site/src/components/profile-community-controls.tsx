@@ -1,7 +1,8 @@
 'use client';
 import { MentionTextarea } from '@/components/mention-textarea';
-import { MediaAttachButton, MediaAttachmentPreviews, useMediaAttachments } from '@/components/media-attachments';
-import { WallDrinkButton, WallDrinkChip, useWallDrink } from '@/components/wall-drink';
+import { MediaAttachmentPreviews, useMediaAttachments } from '@/components/media-attachments';
+import { WallDrinkChip, useWallDrink } from '@/components/wall-drink';
+import { AttachMenu } from '@/components/attach-menu';
 import { TrashIcon } from '@/components/action-icons';
 import { ActionToast } from '@/components/action-toast';
 
@@ -68,8 +69,7 @@ export function WallComposer({ targetId, label = 'Комментарий на с
       <div className="review-text-composer">
         <MentionTextarea id="wall-text" name="text" value={text} onValueChange={setText} onPaste={media.onPaste} placeholder={placeholder} maxLength={1000} rows={3} required={!media.files.length && !drink.drink} />
         <div className="review-composer-toolbar">
-          <MediaAttachButton media={media} label="Добавить фото, GIF или видео на стену" />
-          <WallDrinkButton state={drink} disabled={pending} />
+          <AttachMenu media={media} drink={drink} label="Прикрепить к записи" />
           <span>{media.preparing ? 'Готовим видео…' : `${media.files.length} / ${MAX_WALL_MEDIA} · фото, GIF, видео`}</span>
           <span className="review-composer-count">{text.length} / 1000</span>
         </div>

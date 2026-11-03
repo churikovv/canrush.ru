@@ -1140,11 +1140,18 @@ button.tier-create-banner { width: 100%; border: 0; font: inherit; text-align: l
 /* Напиток из каталога у записи стены и ленты и у комментария к ней (`WallDrinkCard`, `WallDrinkButton`, `WallDrinkChip`):
    кнопка рядом со скрепкой в поле, выбор — лист снизу со строкой поиска по каталогу, выбранный напиток — плашка с крестиком,
    опубликованный — карточка со ссылкой на напиток. */
-.wall-drink-button { display: grid; flex: none; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--color-muted-strong); cursor: pointer; }
-.wall-drink-button:hover { background: var(--color-subtle); }
-.wall-drink-button[aria-pressed="true"] { color: var(--color-brand); }
-.wall-drink-button:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
-.wall-drink-button:disabled { opacity: .5; cursor: default; }
+/* Скрепка в поле записи и комментария (`AttachMenu`): меню «⋯» с иконкой, открывается от левого края кнопки. Поле обычно
+   обрезает содержимое по скруглению — с меню внутри ему нельзя, иначе панель срезалась бы. */
+.review-text-composer:has(.attach-menu) { overflow: visible; }
+.more-actions[data-align="start"] .more-actions-panel { right: auto; left: 0; }
+.attach-menu .more-actions-trigger { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--color-muted-strong); cursor: pointer; }
+.attach-menu .more-actions-trigger:hover, .attach-menu .more-actions-trigger[aria-expanded="true"] { background: var(--color-subtle); color: var(--color-ink); }
+.attach-menu .more-actions-trigger:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.attach-menu .more-actions-panel { min-width: 248px; }
+.attach-menu .more-actions-item { min-height: 52px; text-align: left; }
+.attach-menu .more-actions-item svg { width: 22px; height: 22px; color: var(--color-brand); }
+.attach-menu .more-actions-item span { display: grid; gap: 1px; font-weight: 700; }
+.attach-menu .more-actions-item small { color: var(--color-muted-strong); font-size: .75rem; font-weight: 500; }
 .wall-drink-sheet-hint, .wall-drink-sheet-status { margin: 0 0 12px; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.4; }
 .bottom-sheet.wall-drink-sheet { min-height: min(70dvh, 520px); }
 .wall-drink-chip { display: flex; align-items: center; gap: 10px; width: fit-content; max-width: 100%; margin-top: 8px; padding: 6px 6px 6px 8px; box-sizing: border-box; border-radius: 14px; background: var(--color-subtle); }

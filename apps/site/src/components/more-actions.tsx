@@ -5,9 +5,10 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode 
  * «⋯» menu for a post or comment: edit, delete, report. Items are passed as children — buttons with
  * the `more-actions-item` class (or components that render one); choosing any item closes the menu.
  * The panel stays mounted while hidden, so a form inside it (delete) still submits; dialogs opened
- * from it must render outside (ContentReportButton uses a portal).
+ * from it must render outside (ContentReportButton uses a portal). `icon` replaces the dots (the composer's paperclip),
+ * `align="start"` opens the panel from the trigger's left edge.
  */
-export function MoreActions({ label, children }: { label: string; children: ReactNode }) {
+export function MoreActions({ label, children, icon, align = 'end', className }: { label: string; children: ReactNode; icon?: ReactNode; align?: 'start' | 'end'; className?: string }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -31,10 +32,10 @@ export function MoreActions({ label, children }: { label: string; children: Reac
     list[(index + (event.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length]?.focus();
   }
 
-  return <div className="more-actions" ref={root} onKeyDown={onKeyDown}>
+  return <div className={className ? `more-actions ${className}` : 'more-actions'} data-align={align === 'start' ? 'start' : undefined} ref={root} onKeyDown={onKeyDown}>
     <button ref={trigger} className="wall-action-button more-actions-trigger" type="button" aria-label={label} title={label}
       aria-haspopup="menu" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen(value => !value)}>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
+      {icon ?? <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>}
     </button>
     <div id={panelId} className="more-actions-panel" role="menu" aria-label={label} hidden={!open}
       onClick={event => { if ((event.target as Element).closest('.more-actions-item')) setOpen(false); }}>
