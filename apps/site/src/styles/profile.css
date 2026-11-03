@@ -597,6 +597,8 @@ a.profile-hub-row { text-decoration: none; }
 .frame-tab { transform-origin: 50% 90%; animation-name: fx-tab; animation-duration: 5s; animation-timing-function: cubic-bezier(.22,1,.36,1); }
 .frame-drip { animation-name: fx-drip; animation-duration: 4.8s; animation-timing-function: cubic-bezier(.55,0,.8,.6); }
 .frame-splash { animation-name: fx-splash; animation-duration: 2.4s; animation-timing-function: cubic-bezier(.3,.7,.4,1); }
+/* In the heavy box (-30 -30 160 160) 50% is (80,80): the ride turns round the avatar's centre by user units. */
+.avatar-frame-heavy .frame-ride { transform-origin: 50px 50px; }
 .avatar-frame-legend .frame-ride { animation-duration: 7s; }
 .avatar-frame-legend .frame-spark, .avatar-frame-frost .frame-spark { animation-duration: 5.6s; }
 @keyframes fx-flicker {
@@ -621,6 +623,69 @@ a.profile-hub-row { text-decoration: none; }
 @keyframes fx-tab { 0%, 70%, 100% { transform: rotate(0deg); } 76% { transform: rotate(-9deg); } 84% { transform: rotate(5deg); } 91% { transform: rotate(-2deg); } }
 @keyframes fx-drip { 0%, 20% { opacity: 0; transform: translateY(-2px) scale(.6); } 30% { opacity: 1; transform: translateY(0) scale(1); } 85% { opacity: 1; transform: translateY(7px) scaleY(1.15); } 100% { opacity: 0; transform: translateY(10px); } }
 @keyframes fx-splash { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } 70% { transform: translateY(.5px); } }
+/* Brand frames (`avatar-frame-brands.tsx`): heavy frames themed on the brand's name. The art carries its colours, these lines the glow and motion. */
+.avatar-frame-monster { color: #b6ff5c; --fx-core: #fff; filter: drop-shadow(0 0 2.5px rgb(110 255 30 / .45)); }
+.avatar-frame-redbull { color: #ffe27a; --fx-core: #fff; filter: drop-shadow(0 1px 1.5px rgb(10 25 70 / .45)); }
+.avatar-frame-flashup { color: #fff36b; --fx-core: #fff; filter: drop-shadow(0 0 2.5px rgb(255 214 0 / .6)); }
+.avatar-frame-adrenaline { filter: drop-shadow(0 0 2.5px rgb(255 90 0 / .5)); }
+.avatar-frame-gorilla { filter: drop-shadow(0 1px 2px rgb(40 20 10 / .5)); }
+.avatar-frame-jaguar { filter: drop-shadow(0 1px 1.5px rgb(60 30 0 / .45)); }
+.avatar-frame-volt { color: #9ef8ff; --fx-core: #fff; filter: drop-shadow(0 0 2.5px rgb(60 220 255 / .55)); }
+.avatar-frame-tornado { color: #e8f3ff; --fx-core: #fff; filter: drop-shadow(0 1px 2px rgb(10 20 30 / .45)); }
+.avatar-frame-burn { color: #ffb03a; --fx-core: #fff1b8; filter: drop-shadow(0 0 2px rgb(255 100 20 / .6)); }
+.avatar-frame-burn.avatar-frame-back { filter: none; }
+.avatar-frame-lit { --fx-core: #fff; filter: drop-shadow(0 0 2.5px rgb(255 43 214 / .7)); }
+.avatar-frame-drive { filter: drop-shadow(0 1.5px 2px rgb(0 0 0 / .45)); }
+/* Groups placed with an SVG transform pivot on their own origin (a wing root, the stem of a leaf cluster). */
+.avatar-frame .frame-pivot, .frame-flap { transform-box: view-box; transform-origin: 0 0; }
+.frame-rip { animation-name: fx-rip; animation-duration: 3.2s; animation-timing-function: ease-in-out; }
+.frame-flap { animation-name: fx-flap; animation-duration: 2.2s; animation-timing-function: ease-in-out; animation-direction: alternate; }
+.frame-sweep { animation-name: fx-sweep; animation-duration: 5s; animation-timing-function: linear; }
+.frame-trace { animation-name: fx-sweep; animation-duration: 3s; animation-timing-function: linear; }
+.frame-strike { transform-origin: 50% 100%; animation-name: fx-strike; animation-duration: 4.4s; animation-timing-function: linear; }
+.frame-crackle { opacity: 0; animation-name: fx-crackle; animation-duration: 2.8s; animation-timing-function: linear; }
+.frame-rush { animation-name: fx-rush; animation-duration: 1.2s; animation-timing-function: cubic-bezier(.3,.6,.4,1); }
+.frame-streak { animation-name: fx-streak; animation-duration: 1.1s; animation-timing-function: cubic-bezier(.3,.6,.4,1); }
+.frame-shock { opacity: .35; animation-name: fx-shock; animation-duration: 2.6s; animation-timing-function: cubic-bezier(.2,.7,.4,1); }
+.frame-pound { animation-name: fx-pound; animation-duration: 1.3s; animation-timing-function: ease-out; }
+.frame-sway { animation-name: fx-sway; animation-duration: 4.2s; animation-timing-function: ease-in-out; }
+.frame-glow { opacity: .4; animation-name: fx-glow; animation-duration: 2.6s; animation-timing-function: ease-in-out; }
+.frame-blink { animation-name: fx-blink; animation-duration: 4.6s; animation-timing-function: ease-in-out; }
+.frame-pulse { animation-name: fx-pulse; animation-duration: 1.8s; animation-timing-function: ease-in-out; }
+.frame-arc { animation-name: fx-arc; animation-duration: 1.8s; animation-timing-function: linear; }
+.frame-whirl { animation-name: fx-spin; animation-timing-function: linear; }
+.frame-whirl-fast { animation-duration: 2.6s; }
+.frame-whirl-mid { animation-duration: 4.2s; }
+.frame-whirl-slow { animation-duration: 7s; }
+.frame-twist { transform-origin: 50% 0; animation-name: fx-twist; animation-duration: 2.2s; animation-timing-function: ease-in-out; }
+.frame-funnel { animation-name: fx-sweep; animation-duration: .9s; animation-timing-function: linear; }
+.frame-chase { animation-name: fx-chase; animation-duration: 1.2s; animation-timing-function: linear; }
+.frame-neon { animation-name: fx-neon; animation-duration: 5.4s; animation-timing-function: linear; }
+.frame-neon-sign { transform-origin: 50% 100%; animation-name: fx-neon-sign; animation-duration: 3.2s; animation-timing-function: ease-in-out; }
+.frame-roll { animation-name: fx-roll; animation-duration: .4s; animation-timing-function: linear; }
+.frame-beat { animation-name: fx-beat; animation-duration: 1.1s; animation-timing-function: ease-out; }
+.frame-flag { transform-origin: 0 50%; animation-name: fx-flag; animation-duration: 1.1s; animation-timing-function: ease-in-out; animation-direction: alternate; }
+@keyframes fx-rip { 0%, 100% { opacity: .82; transform: scale(1); } 10% { opacity: 1; transform: scale(1.05); } 28% { opacity: .92; transform: scale(1); } }
+@keyframes fx-flap { from { transform: rotate(7deg); } to { transform: rotate(-9deg); } }
+@keyframes fx-sweep { to { stroke-dashoffset: -100; } }
+@keyframes fx-strike { 0% { opacity: .2; transform: scale(.45); } 3% { opacity: 1; transform: scale(1.18); } 5% { opacity: .35; } 7% { opacity: 1; transform: scale(1); } 9% { opacity: .55; } 11%, 70% { opacity: 1; transform: scale(1); } 100% { opacity: .7; transform: scale(.94); } }
+@keyframes fx-crackle { 0% { opacity: 1; } 4% { opacity: .2; } 8% { opacity: 1; } 13%, 100% { opacity: 0; } }
+@keyframes fx-rush { 0% { opacity: 0; transform: translateX(-4px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateX(5px); } }
+@keyframes fx-streak { 0% { opacity: 0; transform: translateX(6px); } 25% { opacity: .9; } 100% { opacity: 0; transform: translateX(-10px); } }
+@keyframes fx-shock { 0% { opacity: .9; transform: scale(.94); } 100% { opacity: 0; transform: scale(1.3); } }
+@keyframes fx-pound { 0%, 100% { transform: translateY(0); } 9% { transform: translateY(-2.6px); } 18% { transform: translateY(1.2px); } 32% { transform: translateY(0); } }
+@keyframes fx-sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes fx-glow { 0%, 100% { opacity: .1; } 50% { opacity: .9; } }
+@keyframes fx-blink { 0%, 44%, 50%, 100% { transform: scaleY(1); } 47% { transform: scaleY(.08); } }
+@keyframes fx-pulse { 0%, 100% { opacity: .5; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.08); } }
+@keyframes fx-arc { 0% { opacity: 1; } 6% { opacity: .3; } 10% { opacity: 1; } 16% { opacity: .5; } 22% { opacity: 1; } 30%, 100% { opacity: 0; } }
+@keyframes fx-twist { 0%, 100% { transform: translateX(-1.6px) skewX(5deg); } 50% { transform: translateX(1.6px) skewX(-5deg); } }
+@keyframes fx-chase { 0%, 30% { opacity: 1; } 34%, 100% { opacity: .12; } }
+@keyframes fx-neon { 0%, 40%, 47%, 100% { opacity: 1; } 41% { opacity: .3; } 42% { opacity: 1; } 44% { opacity: .45; } 45% { opacity: 1; } }
+@keyframes fx-neon-sign { 0%, 100% { opacity: 1; transform: scale(1); } 50% { transform: scale(1.05); } 70% { opacity: 1; } 71% { opacity: .35; } 72% { opacity: 1; } }
+@keyframes fx-roll { to { stroke-dashoffset: -2; } }
+@keyframes fx-beat { 0%, 100% { transform: scale(1); } 12% { transform: scale(1.16); } 24% { transform: scale(.98); } 36% { transform: scale(1.1); } 56% { transform: scale(1); } }
+@keyframes fx-flag { from { transform: skewY(-7deg); } to { transform: skewY(5deg) scaleX(.93); } }
 .community-identity:has(.avatar-frame-heavy) { gap: 48px; }
 .people-card:has(.avatar-frame-heavy) { column-gap: 26px; }
 .appearance-frame-sample.community-avatar:has(.avatar-frame-heavy) { width: 40px; height: 40px; margin: 12px; }
@@ -1151,6 +1216,47 @@ html[data-cookie-notice="visible"] .drink-add-fab { bottom: calc(var(--site-tab-
 .appearance-swatch i:nth-child(3) { top: 28px; left: 6px; width: 34px; height: 5px; border-radius: 3px; background: var(--profile-ink); }
 .appearance-swatch i:nth-child(4) { top: 37px; left: 6px; width: 20px; height: 4px; border-radius: 2px; background: var(--profile-accent); }
 .appearance-frame-sample.community-avatar { width: 48px; height: 48px; flex: none; margin: 8px; font-weight: 700; color: #0058cc; }
+/* «Рамки брендов»: collectible cards on a dark stage tinted with the brand's colour, the same in every site theme. */
+.brand-frames { grid-column: 1 / -1; }
+.brand-frames-note { margin: -4px 0 14px; color: var(--theme-muted, #59616b); font-size: .8125rem; line-height: 1.5; }
+.brand-frames-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.brand-frame-card { --glow: #8fb0ff; display: grid; grid-template-rows: auto 1fr; overflow: hidden; border: 1px solid color-mix(in srgb, var(--glow) 30%, #222730); border-radius: 16px; background: #14171c; color: #f2f4f7; content-visibility: auto; contain-intrinsic-size: auto 320px; }
+.brand-frame-card[data-selected] { border-color: var(--glow); box-shadow: 0 0 0 1px var(--glow), 0 8px 24px color-mix(in srgb, var(--glow) 22%, transparent); }
+.brand-frame-stage { position: relative; display: grid; place-items: center; height: 176px; background: radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--glow) 30%, transparent), transparent 64%), linear-gradient(180deg, #1d2129, #0d0f13); }
+.brand-frame-avatar.community-avatar { width: 80px; height: 80px; flex: none; border: 0; background: #3a4150; color: #c9d2e0; font-size: 1.5rem; font-weight: 700; }
+.brand-frame-avatar > img { width: 100%; height: 100%; object-fit: cover; }
+.brand-frame-rarity { position: absolute; left: 10px; bottom: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 8px; border-radius: 999px; background: rgb(0 0 0 / .6); color: #ffd66b; font-size: .75rem; font-weight: 700; }
+.brand-frame-rarity::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; }
+.brand-frame-body { display: grid; align-content: start; gap: 4px; padding: 12px; }
+.brand-frame-body strong { font-size: 1rem; line-height: 1.3; }
+.brand-frame-motif { color: #a3acb9; font-size: .8125rem; line-height: 1.4; }
+.brand-frame-how { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 10px; margin-top: 8px; padding: 10px; border-radius: 12px; background: #1f242c; }
+.brand-frame-how-title { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 6px; color: #a3acb9; font-size: .6875rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.brand-frame-how a { grid-column: 1 / -1; color: #f2f4f7; font-size: .875rem; line-height: 1.4; text-decoration: none; }
+.brand-frame-how a:hover { text-decoration: underline; }
+.brand-frame-meter { display: block; height: 6px; overflow: hidden; border-radius: 3px; background: #353c48; }
+.brand-frame-meter i { display: block; height: 100%; border-radius: inherit; background: var(--glow); transform-origin: left; transform: scaleX(var(--value)); }
+.brand-frame-count { font-size: .8125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.brand-frame-wear { min-height: 44px; margin-top: 8px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--glow); color: #0b0d10; font: inherit; font-weight: 700; cursor: pointer; }
+.brand-frame-wear:disabled { cursor: default; background: #2a303a; color: #f2f4f7; }
+.brand-frame-wear:focus-visible, .brand-frame-how a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.brand-frame-card[data-frame=monster] { --glow: #7dff1a; }
+.brand-frame-card[data-frame=redbull] { --glow: #8fb0ff; }
+.brand-frame-card[data-frame=flashup] { --glow: #ffe100; }
+.brand-frame-card[data-frame=adrenaline] { --glow: #ff6a12; }
+.brand-frame-card[data-frame=gorilla] { --glow: #ff7a2a; }
+.brand-frame-card[data-frame=jaguar] { --glow: #f0a531; }
+.brand-frame-card[data-frame=volt] { --glow: #3cf2ff; }
+.brand-frame-card[data-frame=tornado] { --glow: #a8dcff; }
+.brand-frame-card[data-frame=burn] { --glow: #ff5a0a; }
+.brand-frame-card[data-frame=lit] { --glow: #ff2bd6; }
+.brand-frame-card[data-frame=drive] { --glow: #ff3341; }
+@media (max-width: 639px) {
+  .brand-frames-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .brand-frame-stage { height: 144px; }
+  .brand-frame-avatar.community-avatar { width: 64px; height: 64px; font-size: 1.25rem; }
+  .brand-frame-body { padding: 10px; }
+}
 @media (max-width: 719px) {
   .appearance-islands { grid-template-columns: minmax(0, 1fr); }
   .appearance-island { padding: 16px; }

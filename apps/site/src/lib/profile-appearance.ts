@@ -29,7 +29,26 @@ export const PROFILE_FRAMES = [
   { key: 'legend', level: 20, label: 'Корона Легенды' },
   // Эксклюзив Банкомата (`gachaCosmetic`): уровнем не открывается, только с «Тыквенного автомата».
   { key: 'pumpkin', level: 999, label: 'Тыквенная', special: 'Тыквенный автомат' },
+  // Рамки брендов: уровнем не открываются — отзывами на BRAND_FRAME_REVIEWS разных вкусов бренда (`brand-frame-fields.ts`).
+  { key: 'monster', level: 999, label: 'Monster', brand: 'Monster', description: 'Пасть с клыками, шипы и токсичная слизь' },
+  { key: 'redbull', level: 999, label: 'Red Bull', brand: 'Red Bull', description: 'Крылья, рога и рубин в серебре' },
+  { key: 'flashup', level: 999, label: 'Flash Up', brand: 'Flash Up', description: 'Молнии из кольца с полосами тревоги' },
+  { key: 'adrenaline', level: 999, label: 'Adrenaline Rush', brand: 'Adrenaline Rush', description: 'Карбон, пульс на мониторе и рывок вперёд' },
+  { key: 'gorilla', level: 999, label: 'Gorilla', brand: 'Gorilla', description: 'Каменное кольцо, джунгли и удары кулаков' },
+  { key: 'jaguar', level: 999, label: 'Jaguar', brand: 'Jaguar', description: 'Пятнистая шкура, уши, глаза и клыки' },
+  { key: 'volt', level: 999, label: 'Volt', brand: 'Volt Energy', description: 'Медная катушка и плазма между шарами' },
+  { key: 'tornado', level: 999, label: 'Tornado', brand: 'Tornado', description: 'Вихрь с обломками и воронка внизу' },
+  { key: 'burn', level: 999, label: 'Burn', brand: 'Burn', description: 'Обсидиан, лава и пламя над кольцом' },
+  { key: 'lit', level: 999, label: 'Lit', brand: 'Lit Energy', description: 'Неон, бегущие лампочки и огненная вывеска' },
+  { key: 'drive', level: 999, label: 'Drive Me', brand: 'Drive Me', description: 'Шина на хромированном диске и клетчатый флаг' },
 ] as const;
+/** Reviews of different flavours of a brand that open its frame. */
+export const BRAND_FRAME_REVIEWS = 5;
+type FrameItem = typeof PROFILE_FRAMES[number];
+export type BrandFrameItem = Extract<FrameItem, { brand: string }>;
+export const BRAND_FRAME_ITEMS = PROFILE_FRAMES.filter((item): item is BrandFrameItem => 'brand' in item);
+/** Frames and themes that a level opens; the gacha's and the brands' open elsewhere. */
+export const isLevelCosmetic = (item: { key: string }) => !('special' in item) && !('brand' in item);
 export type ProfileAppearance = { theme: typeof PROFILE_THEMES[number]['key']; frame: typeof PROFILE_FRAMES[number]['key'] };
 export const DEFAULT_PROFILE_APPEARANCE: ProfileAppearance = { theme: 'default', frame: 'none' };
 export function parseProfileAppearance(value: unknown): ProfileAppearance | null {
@@ -40,7 +59,7 @@ export function parseProfileAppearance(value: unknown): ProfileAppearance | null
 
 /** The nearest level that opens new cosmetics, with everything it opens; null when all are open. */
 export function nextAppearanceUnlock(level: number): { level: number; themes: string[]; frames: string[] } | null {
-  const next = Math.min(...[...PROFILE_THEMES, ...PROFILE_FRAMES].filter(item => !('special' in item)).map(item => item.level).filter(required => required > level));
+  const next = Math.min(...[...PROFILE_THEMES, ...PROFILE_FRAMES].filter(isLevelCosmetic).map(item => item.level).filter(required => required > level));
   if (!Number.isFinite(next)) return null;
   return {
     level: next,
@@ -49,7 +68,7 @@ export function nextAppearanceUnlock(level: number): { level: number; themes: st
   };
 }
 
-/** Existing equipped cosmetics remain usable; new choices require earned levels or, for the gacha's frames, owning them. */
+/** Existing equipped cosmetics remain usable; new choices require earned levels or, for the gacha's and brands' frames, owning them. */
 export function canUseProfileAppearance(value: ProfileAppearance, level: number, current = DEFAULT_PROFILE_APPEARANCE, owned: readonly string[] = []): boolean {
   return (value.theme === current.theme || PROFILE_THEMES.some(item => item.key === value.theme && item.level <= level))
     && (value.frame === current.frame || owned.includes(value.frame) || PROFILE_FRAMES.some(item => item.key === value.frame && item.level <= level));

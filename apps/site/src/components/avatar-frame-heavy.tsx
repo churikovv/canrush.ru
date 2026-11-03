@@ -1,23 +1,12 @@
-import { useId, type CSSProperties, type ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
+import { arc, fx, HEAVY_VIEW, noise, points, polar, round, star } from '@/components/frame-geometry';
 
-/**
- * Heavy frames are drawn in a box 30% larger than the avatar on every side. The view box
- * keeps the avatar at (0,0)–(100,100), so its edge is the circle r=50 around (50,50).
- */
+/** Heavy frames are drawn in a box 30% larger than the avatar on every side (see `frame-geometry`). */
 export const HEAVY_FRAMES = ['frost', 'blaze', 'liquid', 'can', 'legend'] as const;
 export type HeavyFrame = typeof HEAVY_FRAMES[number];
 export const isHeavyFrame = (frame: string): frame is HeavyFrame => (HEAVY_FRAMES as readonly string[]).includes(frame);
 
-const VIEW = '-30 -30 160 160';
 const STAR = 'M0-10Q1-1 10 0Q1 1 0 10Q-1 1-10 0Q-1-1 0-10Z';
-const round = (value: number) => Math.round(value * 100) / 100;
-/** Point on a circle around the avatar centre; 0° is the top, angles grow clockwise. */
-function polar(radius: number, degrees: number): [number, number] {
-  const radians = (degrees * Math.PI) / 180;
-  return [round(50 + radius * Math.sin(radians)), round(50 - radius * Math.cos(radians))];
-}
-const points = (list: [number, number][]) => list.map(point => point.join(' ')).join(' ');
-const fx = (delay: number, extra: Record<string, string> = {}) => ({ '--fx-delay': `${delay}s`, ...extra }) as CSSProperties;
 
 /** Hexagonal crystal pointing away from the avatar; the second polygon is its lit facet. */
 function crystal(base: number, angle: number, length: number, width: number) {
@@ -39,8 +28,6 @@ function Glint({ x, y, scale, delay }: { x: number; y: number; scale: number; de
 }
 
 // Frost: an icy rim with crystal clusters at the top right and bottom left.
-/** Deterministic 0–1 noise so frames render identically on the server and the client. */
-const noise = (seed: number) => (Math.imul(Math.round(seed * 7919) ^ 0x5bd1e995, 0x27d4eb2d) >>> 0) / 4294967296;
 const FROST_SHARDS: [number, number, number][] = [
   [8, 10, 3], [20, 17, 4], [33, 30, 5.6], [45, 21, 4.4], [57, 12, 3.2], [72, 8, 2.6], [100, 9, 2.8], [124, 7, 2.4], [150, 11, 3],
   [172, 15, 3.6], [190, 22, 4.4], [204, 34, 6], [218, 26, 5], [232, 17, 4], [248, 11, 3], [272, 8, 2.6], [300, 10, 2.8], [326, 13, 3.2], [346, 16, 3.6],
@@ -201,10 +188,6 @@ const DROPS = [[24, 54.5, 1], [70, 52.6, .8], [128, 55, .9], [160, 52.8, .7], [2
 const DRIPS = [{ angle: 48, delay: 0 }, { angle: 146, delay: -2.4 }, { angle: 316, delay: -1.2 }];
 const DROP = 'M0-2.4C1.4-.7 1.7.4 1.7 1A1.7 1.7 0 0 1-1.7 1C-1.7.4-1.4-.7 0-2.4Z';
 const FIZZ = [{ x: 20, y: 114, r: 1.4, dx: -2, delay: 0 }, { x: 36, y: 120, r: 1, dx: 1, delay: -1 }, { x: 64, y: 120, r: 1.2, dx: -1, delay: -2.1 }, { x: 80, y: 114, r: .9, dx: 2, delay: -.5 }, { x: 50, y: 124, r: 1.6, dx: 0, delay: -1.6 }];
-function arc(radius: number, from: number, to: number) {
-  const [x1, y1] = polar(radius, from), [x2, y2] = polar(radius, to);
-  return `M${x1} ${y1}A${radius} ${radius} 0 ${to - from > 180 ? 1 : 0} 1 ${x2} ${y2}`;
-}
 function Can({ id }: { id: string }) {
   return <>
     <defs>
@@ -230,12 +213,6 @@ function Can({ id }: { id: string }) {
 }
 
 // Legend: a faceted ring in the rank emblem colours, a crystal crown, wings and a 16-point star.
-function star(count: number, outer: number, inner: number) {
-  return Array.from({ length: count * 2 }, (_, index) => {
-    const radius = index % 2 ? inner : outer, angle = (Math.PI * index) / count - Math.PI / 2;
-    return `${index ? 'L' : 'M'}${round(radius * Math.cos(angle))} ${round(radius * Math.sin(angle))}`;
-  }).join('') + 'Z';
-}
 const LEGEND_STAR = star(16, 13, 10.4);
 const FACETS = Array.from({ length: 24 }, (_, index) => {
   const from = index * 15, to = from + 15, light = (Math.cos(((from + 7.5 - 315) * Math.PI) / 180) + 1) / 2;
@@ -280,7 +257,7 @@ export function HeavyAvatarFrame({ frame }: { frame: HeavyFrame }) {
   const id = `frame${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const back = BACK[frame];
   return <>
-    {back && <svg className={`avatar-frame avatar-frame-heavy avatar-frame-back avatar-frame-${frame}`} viewBox={VIEW} fill="none" aria-hidden="true" focusable="false">{back(id)}</svg>}
-    <svg className={`avatar-frame avatar-frame-heavy avatar-frame-${frame}`} viewBox={VIEW} fill="none" aria-hidden="true" focusable="false">{FRONT[frame](`${id}f`)}</svg>
+    {back && <svg className={`avatar-frame avatar-frame-heavy avatar-frame-back avatar-frame-${frame}`} viewBox={HEAVY_VIEW} fill="none" aria-hidden="true" focusable="false">{back(id)}</svg>}
+    <svg className={`avatar-frame avatar-frame-heavy avatar-frame-${frame}`} viewBox={HEAVY_VIEW} fill="none" aria-hidden="true" focusable="false">{FRONT[frame](`${id}f`)}</svg>
   </>;
 }

@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { BrandAvatarFrame, isBrandFrame } from '@/components/avatar-frame-brands';
 import { HeavyAvatarFrame, isHeavyFrame } from '@/components/avatar-frame-heavy';
 import type { ProfileAppearance } from '@/lib/profile-appearance';
 
@@ -68,6 +69,7 @@ function SparkGlint({ delay }: { delay?: number }) {
 export function AvatarFrame({ frame }: { frame: ProfileAppearance['frame'] }) {
   if (frame === 'none') return null;
   if (isHeavyFrame(frame)) return <HeavyAvatarFrame frame={frame} />;
+  if (isBrandFrame(frame)) return <BrandAvatarFrame frame={frame} />;
   const ring = frame === 'abyss' || frame === 'nova';
   if (frame === 'pumpkin') return <svg className="avatar-frame avatar-frame-pumpkin" viewBox="0 0 100 100" fill="none" aria-hidden="true" focusable="false"><PumpkinFrame /></svg>;
   return <>

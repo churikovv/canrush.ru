@@ -1,3 +1,5 @@
+import { lockedBrandFrameMessage, ownedBrandFrames } from '@/lib/brand-frame-fields';
+import { getBrandFrameProgress } from '@/lib/brand-frames';
 import { experienceLevel } from '@/lib/experience-level';
 import { canUseProfileAppearance, DEFAULT_PROFILE_APPEARANCE, parseProfileAppearance, type ProfileAppearance } from '@/lib/profile-appearance';
 import { type ProfileLayout } from '@/lib/profile-layout';
@@ -91,8 +93,9 @@ export async function saveProfileCustomization(userId: string, input: ProfileInp
       const ranking = await client.query('select xp from "profileRanking" where id = $1', [userId]);
       const level = experienceLevel(Number(ranking.rows[0]?.xp ?? 0)).level;
       const current = parseProfileAppearance(existing.rows[0]?.profileAppearance) ?? DEFAULT_PROFILE_APPEARANCE;
-      const owned = (await client.query<{ key: string }>('select key from "gachaCosmetic" where "userId" = $1', [userId])).rows.map(row => row.key);
-      if (!canUseProfileAppearance(appearance, level, current, owned)) throw new ProfileImageError('Это оформление пока закрыто. Повысьте уровень профиля.');
+      const gacha = (await client.query<{ key: string }>('select key from "gachaCosmetic" where "userId" = $1', [userId])).rows.map(row => row.key);
+      const owned = [...gacha, ...ownedBrandFrames(await getBrandFrameProgress(userId, client))];
+      if (!canUseProfileAppearance(appearance, level, current, owned)) throw new ProfileImageError(lockedBrandFrameMessage(appearance.frame) ?? 'Это оформление пока закрыто. Повысьте уровень профиля.');
     }
     if (appearance) await client.query('update "user" set "profileAppearance" = $2::jsonb where id = $1', [userId, JSON.stringify(appearance)]);
     if (layout) await client.query('update "user" set "profileLayout" = $2::jsonb where id = $1', [userId, JSON.stringify(layout)]);

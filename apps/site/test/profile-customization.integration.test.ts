@@ -105,6 +105,17 @@ describe.sequential('profile image storage and displayed tags', () => {
     await saveProfileCustomization(a, input, {});
     expect((await getProfileByUserId(a))?.profileAppearance?.theme).toBe('dark');
   });
+  it('opens a brand frame with reviews of five flavours, whatever the level, and keeps it once worn', async () => {
+    for (const flavor of ['test-a', 'test-b', 'test-c', 'test-d']) await pool.query(`insert into review ("userId", brand, flavor, design, taste, text) values ($1, 'Jaguar', $2, 7, 7, 'Тестовый отзыв')`, [b, flavor]);
+    const other = { ...input, username: username(b) };
+    await expect(saveProfileCustomization(b, other, {}, undefined, { theme: 'default', frame: 'jaguar' })).rejects.toThrow('Рамка «Jaguar» пока закрыта');
+    await pool.query(`insert into review ("userId", brand, flavor, design, taste, text) values ($1, 'Jaguar', 'test-e', 7, 7, 'Тестовый отзыв')`, [b]);
+    await saveProfileCustomization(b, other, {}, undefined, { theme: 'default', frame: 'jaguar' });
+    expect((await getProfileByUserId(b))?.profileAppearance).toEqual({ theme: 'default', frame: 'jaguar' });
+    await pool.query(`delete from review where "userId" = $1 and flavor = 'test-e'`, [b]);
+    await saveProfileCustomization(b, other, {}, undefined, { theme: 'default', frame: 'jaguar' });
+    await expect(saveProfileCustomization(b, other, {}, undefined, { theme: 'default', frame: 'tornado' })).rejects.toThrow('Рамка «Tornado» пока закрыта');
+  });
   it('removes images explicitly and cascades them on account deletion', async () => {
     await saveProfileCustomization(a, input, { avatar: null });
     expect((await getProfileByUserId(a))?.avatarId).toBeNull();
