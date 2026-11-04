@@ -5,7 +5,7 @@ const url = process.env.TEST_DATABASE_URL ?? 'postgresql://localhost:5432/canrus
 if (new URL(url).pathname !== '/canrush_site_test') throw new Error('Only test database allowed');
 const pool = new Pool({ connectionString: url, max: 3 });
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
-const { BETA_ENGINE_PLACES, getBetaEngine } = await import('../src/lib/beta-engine');
+const { BETA_ENGINE_PLACES, getBetaEngine, getEngineCrew } = await import('../src/lib/beta-engine');
 const id = randomUUID();
 let number: number | null = null;
 afterAll(async () => {
@@ -28,6 +28,13 @@ it('numbers a new member on sign-up and keeps the number after the account is go
   expect(after).toMatchObject({ taken: before.taken + 1, number: before.taken + 1 });
   expect(tagged).toBe(1);
   expect((await pool.query<{ n: number | null }>('select assign_beta_engine($1) as n', [id])).rows[0]?.n).toBeNull();
+  // The crew rail on /engine: only members with a username, not blocked by the site.
+  const inCrew = async () => (await getEngineCrew(BETA_ENGINE_PLACES)).some(member => member.number === number);
+  expect(await inCrew()).toBe(false);
+  await pool.query('update "user" set username = $2 where id = $1', [id, `engine${id.slice(0, 8)}`]);
+  expect(await inCrew()).toBe(true);
+  await pool.query(`insert into "userBlock" ("userId") values ($1)`, [id]);
+  expect(await inCrew()).toBe(false);
   await pool.query('delete from "user" where id = $1', [id]);
   expect((await getBetaEngine(null)).taken).toBe(before.taken + 1);
 });
