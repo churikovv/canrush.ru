@@ -7,6 +7,7 @@ import { notBlockedBy } from '@/lib/member-blocks';
 import type { WallMediaKind } from '@/lib/wall-media-limits';
 import type { RankUpTier } from '@/lib/level-tier';
 import { getPool } from '@/db/pool';
+import { BADGE_KEYS } from '@/lib/badges';
 import { COMMENT_PAUSE_MESSAGE, COMMENT_PAUSE_SECONDS } from '@/lib/comment-pause';
 import { getReviewsByAuthorDays, type ReviewData } from '@/lib/reviews';
 import { getPublishedTierListsByIds } from '@/lib/tier-lists';
@@ -16,6 +17,12 @@ import { ACHIEVEMENT_METRICS, DETAILED_REVIEW_CHARS, FAN_XP_SINCE, PROFILE_ACHIE
 export const COMMUNITY_PAGE_SIZE = 20;
 export type ConnectionKind = 'friends' | 'followers' | 'following';
 export class CommunityError extends Error {}
+
+/** When the member's tags were earned, newest first: the owner's achievements page shows the latest ones. */
+export async function getAchievementDates(userId: string, limit = 8) {
+  const { rows } = await getPool().query<{ key: string; earnedAt: Date }>('select key, "earnedAt" from "profileAchievement" where "userId" = $1 order by "earnedAt" desc, key limit $2', [userId, limit]);
+  return rows;
+}
 
 export async function getProfileCommunity(userId: string, viewerId?: string) {
   const db = getPool();
@@ -87,8 +94,10 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
   const earned = (await db.query<{ key: string }>('select "key" from "profileAchievement" where "userId" = $1', [userId])).rows.map(item => item.key).filter(key => !ROLE_TAGS.has(key) && PROFILE_ACHIEVEMENTS.some(item => item.key === key));
   if (row.admin) earned.push('admin');
   if (row.moderator) earned.push('moderator');
+  // Achievements that are not tags: only those already stored (the achievements screen earns new ones).
+  const badges = (await db.query<{ key: string }>('select key from "profileBadge" where "userId" = $1', [userId])).rows.map(item => item.key).filter(key => BADGE_KEYS.has(key));
   return { following: row.following, followers: row.followers, friends: row.friends, isFollowing: row.isFollowing, followsYou: row.followsYou,
-    tags: row.profileTags.filter(tag => earned.includes(tag)), showOnline: row.showOnline, progress, earned };
+    tags: row.profileTags.filter(tag => earned.includes(tag)), showOnline: row.showOnline, progress, earned, badges };
 }
 export type ProfileCommunity = Awaited<ReturnType<typeof getProfileCommunity>>;
 

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 let section: string | null = null;
 vi.mock('next/navigation', () => ({ usePathname: () => '/profile/settings', useSearchParams: () => new URLSearchParams(section ? { section } : {}), useRouter: () => ({ push() {}, refresh() {} }) }));
 vi.mock('@/app/profile/actions', () => ({ updateProfileAction: async () => ({}), deleteAccountAction: async () => {} }));
+vi.mock('@/app/profile/community-actions', () => ({ updateCommunityAction: async () => ({}) }));
 vi.mock('@/app/notifications/push-actions', () => ({ unregisterPushDeviceAction: async () => {} }));
 vi.mock('@/lib/auth-client', () => ({ authClient: { signOut: async () => ({}) } }));
 
@@ -27,7 +28,11 @@ describe('profile and settings hub', () => {
     expect(html).toMatch(/<button[^>]*id="profile-section-row-sign-out"/);
     expect(html.indexOf('Почта для входа')).toBeLessThan(html.indexOf('Выйти из аккаунта'));
     expect(html.indexOf('Выйти из аккаунта')).toBeLessThan(html.indexOf('Удаление аккаунта'));
-    expect(html.indexOf('Внешний вид')).toBeLessThan(html.indexOf('>Настройки<'));
+    // The look is picked on the preview: no «Внешний вид» island or tag row in the list.
+    expect(html).toContain('aria-label="Внешний вид профиля"');
+    expect(html).not.toContain('id="profile-section-row-appearance"');
+    expect(html).not.toContain('id="profile-section-row-tags"');
+    expect(html.indexOf('aria-label="Внешний вид профиля"')).toBeLessThan(html.indexOf('>Настройки<'));
   });
   it('opens a settings panel from ?section= and hides the profile preview and save bar', () => {
     section = 'notifications';
@@ -36,6 +41,20 @@ describe('profile and settings hub', () => {
     expect(html).not.toMatch(/id="profile-panel-notifications"[^>]*hidden/);
     expect(html).toMatch(/class="profile-editor-preview"[^>]*hidden|hidden=""[^>]*class="profile-editor-preview"/);
     expect(html).toContain('Все разделы');
+  });
+  it('keeps the pencil on a missing picture a plain upload and gives a set one its list', () => {
+    section = null;
+    const plain = render();
+    expect(plain).not.toContain('profile-edit-menu');
+    const withAvatar = renderToStaticMarkup(createElement(ProfileEditForm, { profile: { ...(profile as object), avatarId: '11111111-1111-4111-8111-111111111111' } as never }));
+    expect(withAvatar).toContain('profile-edit-menu-avatar');
+    expect(withAvatar).not.toContain('profile-edit-menu-banner');
+  });
+  it('opens the matching list on the preview for old links to the removed sections', () => {
+    section = 'appearance';
+    const html = render();
+    expect(html).not.toContain('id="profile-panel-appearance"');
+    expect(html).toContain('id="profile-section-row-details"');
   });
   it('renders a link row (the admin panel) as a link to its page, without a panel', () => {
     section = null;

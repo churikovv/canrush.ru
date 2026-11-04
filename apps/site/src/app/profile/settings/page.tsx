@@ -15,7 +15,6 @@ import { ProfileNavigation } from '@/components/profile-navigation';
 import { ProfileEditForm, type SettingsGroup, type SettingsRow } from '@/components/profile-edit-form';
 import { ProfileExperience } from '@/components/profile-experience';
 import { ProfileConnections } from '@/components/profile-connections';
-import { AchievementPicker } from '@/components/profile-community-controls';
 import { NOTIFICATION_OPTIONS } from '@/lib/notification-preferences';
 import { getTelegramEnv } from '@/lib/env';
 import { TELEGRAM_PROVIDER_ID } from '@/lib/telegram-auth';
@@ -30,7 +29,7 @@ import { getProfileRatings, getProfileWall, getConnections, getProfileCommunity 
 import { getListings } from '@/lib/market';
 import { getExperience } from '@/lib/profile-experience';
 import { ensureOwnProfile } from '@/lib/profile';
-import { profileTagLabel, visibleProfileAchievements } from '@/lib/profile-achievements';
+import { visibleProfileAchievements } from '@/lib/profile-achievements';
 import { CITIES, DEFAULT_CITY } from '@canrush/shared';
 import { TELEGRAM_BOT_OPTIONS } from '@/lib/telegram-bot/settings';
 import { LEGAL_DETAILS } from '@/lib/legal';
@@ -300,7 +299,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
     <ProfileEditForm level={experienceLevel(experience[profile.username]?.xp ?? 0).level} xp={experience[profile.username]?.xp ?? 0} ownedFrames={ownedFrames} brandFrames={brandFrames} profile={profile} layoutPreviews={layoutPreviews}
-      tags={{ earned: earned.length, total: achievements.length, selected: profileTagLabel(community.tags[0]), picker: <AchievementPicker key={community.tags.join(',')} earned={earned} selected={community.tags} progress={community.progress} isOwn viewerIsAdmin={viewerIsAdmin} /> }}
+      tags={{ earned, selected: community.tags[0] ?? '' }}
       settings={settings} accountRows={accountRows} />
   </BrandShell>;
 }

@@ -10,7 +10,6 @@ import { useActionState, useState, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 import { updateCommunityAction } from '@/app/profile/community-actions';
 import { MAX_WALL_MEDIA } from '@/lib/wall-media-limits';
-export { AchievementPicker } from '@/components/profile-tag-picker';
 
 function Submit({ children, className = '', disabled = false }: { children: ReactNode; className?: string; disabled?: boolean }) {
   const { pending } = useFormStatus();

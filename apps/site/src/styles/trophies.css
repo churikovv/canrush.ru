@@ -1,0 +1,160 @@
+/* Достижения — игровой экран, как сезонный пропуск и коллекция карточек (`TrophyRoom`): без шапки сайта, тёмный в любой
+   теме, фон подсвечен редкостью медали в фокусе. Сверху звание и счёт, посередине крупная медаль со свайпом, под ней что
+   это и что даёт, внизу лента маленьких медалей. Плашки и кнопки — общие `.can-plate`, `.can-btn`, `.can-meter`. */
+.trophy-screen { --title-tint: #8db4ff; position: fixed; inset: 0; z-index: 40; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr) auto auto; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 12px) 0 calc(env(safe-area-inset-bottom, 0px) + 10px); overflow: hidden; background: radial-gradient(120% 70% at 50% 44%, color-mix(in srgb, var(--rarity-mid, #3a4152) 30%, #0a0d14), #06070b 72%); color: #fff; line-height: 1.3; -webkit-user-select: none; user-select: none; transition: background-color 300ms ease-out; }
+.trophy-screen:not([data-earned]) { background: radial-gradient(120% 70% at 50% 44%, #1a1e29, #06070b 72%); }
+/* Особая редкость есть только у достижений: розовый металл, как у остальных токенов `--rarity-*` в shared.css. */
+.trophy-screen[data-rarity=special], .trophy-screen [data-rarity=special] { --rarity-light: #ffd6ec; --rarity-mid: #ff4fa3; --rarity-dark: #c0186b; --rarity-ink: #fff; --rarity-chip-from: var(--rarity-mid); --rarity-chip-to: var(--rarity-dark); --rarity-glow: rgb(255 70 160 / .45); }
+.trophy-screen[data-title-tier="1"] { --title-tint: #7ab8ff; }
+.trophy-screen[data-title-tier="2"] { --title-tint: #62d18e; }
+.trophy-screen[data-title-tier="3"] { --title-tint: #a98bff; }
+.trophy-screen[data-title-tier="4"] { --title-tint: #ffaa4d; }
+.trophy-screen[data-title-tier="5"] { --title-tint: #ffcc33; }
+
+.trophy-top { display: flex; align-items: center; gap: 10px; padding-inline: 16px; }
+.trophy-icon-btn { --cut: 10px; display: grid; flex: none; place-items: center; width: 44px; height: 44px; padding: 0; color: #fff; font-size: 1.625rem; line-height: 1; text-decoration: none; cursor: pointer; }
+.trophy-icon-btn:disabled { opacity: .35; cursor: default; }
+.trophy-icon-btn:focus-visible { outline: 0; --rim: #fff; }
+.trophy-heading { min-width: 0; margin-right: auto; }
+.trophy-heading h1 { margin: 0; font-size: 1.0625rem; font-weight: 900; line-height: 1.15; text-transform: uppercase; text-shadow: 0 2px 8px rgb(0 0 0 / .5); }
+.trophy-heading p { margin: 2px 0 0; overflow: hidden; color: rgb(255 255 255 / .7); font-size: .8125rem; text-overflow: ellipsis; white-space: nowrap; }
+.trophy-score { --cut: 9px; display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 40px; padding: 0 13px 0 10px; box-sizing: border-box; color: #fff; font-size: 1.0625rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.trophy-score svg { color: #ffd36b; }
+
+/* Звание: значок цвета звания, название, «N / 6» и полоса до следующего. */
+.trophy-rank { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; margin-inline: 16px; padding: 10px 14px 10px 10px; border: 1px solid rgb(255 255 255 / .1); border-radius: 18px; background: rgb(255 255 255 / .05); }
+.trophy-rank-badge { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff8, transparent 60%), var(--title-tint); box-shadow: inset 0 0 0 2px rgb(0 0 0 / .35); color: #10131b; }
+.trophy-rank-badge svg { width: 22px; height: 22px; }
+.trophy-rank-copy { display: grid; gap: 6px; min-width: 0; }
+.trophy-rank-copy p { display: flex; align-items: baseline; gap: 8px; margin: 0; }
+.trophy-rank-copy small { color: rgb(255 255 255 / .6); font-size: .6875rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.trophy-rank-copy b { overflow: hidden; color: var(--title-tint); font-size: 1rem; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.trophy-rank-copy p > span { margin-left: auto; color: rgb(255 255 255 / .55); font-size: .75rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.trophy-rank .can-meter { height: 12px; }
+.trophy-rank-copy .trophy-rank-next { color: rgb(255 255 255 / .65); font-size: .75rem; font-weight: 600; letter-spacing: 0; text-transform: none; }
+
+.trophy-filters { display: flex; gap: 8px; padding: 2px 16px; overflow-x: auto; scrollbar-width: none; }
+.trophy-filters::-webkit-scrollbar { display: none; }
+.trophy-chip { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px solid rgb(255 255 255 / .16); border-radius: 999px; background: rgb(255 255 255 / .06); color: #fff; font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; }
+.trophy-chip b { color: rgb(255 255 255 / .55); font-weight: 800; font-variant-numeric: tabular-nums; }
+.trophy-chip[aria-pressed="true"] { border-color: transparent; background: #fff; color: #0b0d14; }
+.trophy-chip[aria-pressed="true"] b { color: rgb(11 13 20 / .55); }
+.trophy-chip[data-rarity][aria-pressed="true"] { background: linear-gradient(135deg, var(--rarity-chip-from), var(--rarity-chip-to)); color: var(--rarity-ink); }
+.trophy-chip:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Лента медалей: размер — от высоты самой сцены (контейнер размеров), как у карточек коллекции, с запасом 28 px сверху и
+   снизу под покачивание и свечение: лента прячет всё, что выходит за неё по вертикали. Лучи лежат на сцене, а не в ленте,
+   поэтому их не обрезает ни лента, ни приближение. */
+.trophy-stage { --medal: min(72vw, 340px, calc(100cqh - 56px)); position: relative; display: grid; align-items: center; min-height: 0; container-type: size; }
+.trophy-stage .trophy-stage-rays { inset: auto; left: 50%; top: 50%; z-index: 0; width: calc(var(--medal) * 1.6); aspect-ratio: 1; translate: -50% -50%; transition: opacity 300ms ease-out; }
+.trophy-screen:not([data-earned]) .trophy-stage .trophy-stage-rays { opacity: 0; }
+/* The panels around stay above the rays, which reach past the stage. */
+.trophy-top, .trophy-rank, .trophy-filters, .trophy-info, .trophy-rail { position: relative; z-index: 1; }
+.trophy-track { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; height: 100%; padding-inline: calc(50% - var(--medal) / 2); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; touch-action: pan-x; outline: 0; }
+.trophy-track::-webkit-scrollbar { display: none; }
+/* Размер слайдов — свойством `scale`, а не `transform`: отклик на нажатие пишет кнопке инлайн `transform`. */
+.trophy-slide { flex: 0 0 var(--medal); padding: 0; border: 0; background: none; color: inherit; opacity: .35; scroll-snap-align: center; scale: .62; transition: scale 260ms ease-out, opacity 260ms ease-out; cursor: pointer; }
+.trophy-slide[data-pos="near"] { opacity: .55; }
+.trophy-slide[data-pos="active"] { opacity: 1; scale: none; }
+.trophy-slide:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
+
+.trophy-medal { position: relative; display: block; aspect-ratio: 1; isolation: isolate; }
+.trophy-art { position: relative; display: block; width: 100%; height: auto; -webkit-user-drag: none; }
+.trophy-medal:not([data-earned]) .trophy-art { filter: grayscale(1) brightness(.42) contrast(1.15); }
+.trophy-medal[data-earned][data-live] .trophy-art { animation: trophy-bob 3.4s ease-in-out infinite; filter: drop-shadow(0 18px 30px rgb(0 0 0 / .55)) drop-shadow(0 0 26px var(--rarity-glow, transparent)); }
+/* Блик пробегает по кругу медали; маска — круг, поэтому за лавры и обод он не выходит. */
+.trophy-medal[data-earned][data-live]::after { content: ""; position: absolute; inset: 9%; z-index: 1; border-radius: 50%; background: linear-gradient(105deg, transparent 38%, rgb(255 255 255 / .38) 50%, transparent 62%) no-repeat -160% 0 / 70% 100%; mix-blend-mode: screen; pointer-events: none; animation: trophy-shine 4.6s ease-in-out infinite 1s, trophy-bob 3.4s ease-in-out infinite; }
+.trophy-rays { position: absolute; inset: -16%; z-index: -1; border-radius: 50%; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rarity-mid, #fff) 42%, transparent) 0 9deg, transparent 9deg 24deg); -webkit-mask: radial-gradient(circle, #000 28%, transparent 68%); mask: radial-gradient(circle, #000 28%, transparent 68%); opacity: .7; animation: trophy-spin 26s linear infinite; pointer-events: none; }
+.trophy-ring { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; overflow: visible; pointer-events: none; }
+.trophy-ring circle { fill: none; stroke-width: 2.6; }
+.trophy-ring circle:first-child { stroke: rgb(255 255 255 / .12); }
+.trophy-ring circle:last-child { stroke: var(--rarity-mid, #fff); stroke-linecap: round; filter: drop-shadow(0 0 4px var(--rarity-glow, transparent)); }
+.trophy-lock { position: absolute; left: 50%; top: 50%; display: grid; place-items: center; width: 22%; aspect-ratio: 1; border: 2px solid rgb(255 255 255 / .22); border-radius: 50%; background: rgb(10 12 18 / .78); color: rgb(255 255 255 / .85); translate: -50% -50%; }
+.trophy-lock svg { width: 46%; height: 46%; }
+
+.trophy-info { display: grid; justify-items: center; gap: 8px; padding-inline: 16px; text-align: center; }
+.trophy-kicker { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; background: linear-gradient(135deg, var(--rarity-chip-from, #3a4152), var(--rarity-chip-to, #20242f)); color: var(--rarity-ink, #fff); font-size: .6875rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.trophy-info h2, .trophy-reveal h2 { max-width: 100%; margin: 0; font-size: 1.375rem; font-weight: 900; line-height: 1.15; overflow-wrap: anywhere; text-shadow: 0 2px 10px rgb(0 0 0 / .5); }
+.trophy-desc { max-width: 420px; margin: 0; color: rgb(255 255 255 / .72); font-size: .9375rem; line-height: 1.4; }
+.trophy-status { margin: 0; color: #9cf0b5; font-size: .875rem; font-weight: 800; }
+.trophy-steps { display: grid; gap: 8px; width: 100%; max-width: 420px; margin: 2px 0 0; padding: 0; list-style: none; text-align: left; }
+.trophy-steps li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; font-size: .8125rem; }
+.trophy-steps li > span { color: rgb(255 255 255 / .85); }
+.trophy-steps li > b { color: rgb(255 255 255 / .7); font-variant-numeric: tabular-nums; }
+.trophy-steps li[data-done] > b { color: #9cf0b5; }
+.trophy-steps i { grid-column: 1 / -1; display: block; height: 6px; overflow: hidden; border-radius: 3px; background: linear-gradient(90deg, var(--rarity-mid, #fff) calc(var(--share) * 100%), rgb(255 255 255 / .12) 0); }
+.trophy-rewards { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.trophy-reward { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 999px; background: rgb(255 255 255 / .1); color: #ffd36b; font-size: .8125rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.trophy-reward svg { width: 15px; height: 15px; }
+.trophy-reward.is-plain { color: rgb(255 255 255 / .6); font-weight: 700; }
+.trophy-actions { display: flex; width: 100%; max-width: 420px; }
+.trophy-actions .can-btn { flex: 1; }
+.trophy-note { margin: 0; color: rgb(255 255 255 / .75); font-size: .8125rem; }
+
+.trophy-rail { display: flex; gap: 8px; margin: 0; padding: 6px 16px 4px; overflow-x: auto; list-style: none; scrollbar-width: none; overscroll-behavior-x: contain; }
+.trophy-rail::-webkit-scrollbar { display: none; }
+.trophy-rail li { flex: 0 0 52px; }
+.trophy-thumb { display: block; width: 52px; height: 52px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; transition: translate 160ms ease-out; }
+.trophy-thumb img { display: block; width: 100%; height: 100%; }
+.trophy-thumb:not([data-earned]) img { filter: grayscale(1) brightness(.45); }
+.trophy-thumb[aria-current] { outline: 2px solid #fff; outline-offset: 2px; translate: 0 -2px; }
+.trophy-thumb:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.trophy-empty { grid-row: 4 / -1; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 16px; text-align: center; }
+.trophy-empty h2 { margin: 0; font-size: 1.375rem; font-weight: 900; }
+.trophy-empty p { margin: 0; color: rgb(255 255 255 / .7); }
+
+/* «Новое достижение»: окно на весь экран, медаль влетает со вспышкой и лучами. */
+.trophy-reveal { position: fixed; inset: 0; width: 100%; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: calc(env(safe-area-inset-top, 0px) + 24px) 20px calc(env(safe-area-inset-bottom, 0px) + 24px); box-sizing: border-box; border: 0; background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--rarity-mid, #3a4152) 45%, #0a0d14), #05060a 70%); color: #fff; text-align: center; }
+.trophy-reveal[open] { display: grid; place-content: center; justify-items: center; gap: 12px; }
+.trophy-reveal::backdrop { background: rgb(0 0 0 / .7); }
+.trophy-reveal-kicker { margin: 0; color: #ffd36b; font-size: .8125rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; animation: trophy-fade 400ms ease-out both; }
+.trophy-reveal-stage { position: relative; width: min(68vw, 300px, 42dvh); aspect-ratio: 1; isolation: isolate; }
+.trophy-reveal-stage .trophy-art { animation: trophy-pop 900ms cubic-bezier(.2, 1.4, .4, 1) both, trophy-bob 3.4s ease-in-out infinite 900ms; filter: drop-shadow(0 0 34px var(--rarity-glow, transparent)); }
+.trophy-reveal-stage .trophy-rays { inset: -30%; opacity: .9; animation: trophy-spin 18s linear infinite, trophy-fade 600ms ease-out both; }
+.trophy-reveal-stage::after { content: ""; position: absolute; inset: -12%; z-index: -1; border-radius: 50%; background: radial-gradient(circle, #fff 0, color-mix(in srgb, var(--rarity-light, #fff) 70%, transparent) 30%, transparent 62%); opacity: 0; animation: trophy-flash 900ms ease-out both; pointer-events: none; }
+.trophy-reveal .trophy-desc, .trophy-reveal h2, .trophy-reveal .trophy-kicker, .trophy-reveal .trophy-rewards { animation: trophy-fade 500ms ease-out both 500ms; }
+.trophy-reveal-cta { width: 100%; max-width: 360px; margin-top: 6px; }
+
+@keyframes trophy-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -7px; } }
+@keyframes trophy-shine { 0%, 55% { background-position: -160% 0; } 85%, 100% { background-position: 260% 0; } }
+@keyframes trophy-spin { to { rotate: 360deg; } }
+@keyframes trophy-pop { 0% { opacity: 0; scale: .2; rotate: -24deg; } 60% { opacity: 1; scale: 1.12; rotate: 6deg; } 100% { scale: 1; rotate: 0deg; } }
+@keyframes trophy-flash { 0% { opacity: 0; scale: .4; } 35% { opacity: 1; } 100% { opacity: 0; scale: 1.4; } }
+@keyframes trophy-fade { from { opacity: 0; translate: 0 8px; } }
+
+@media (max-height: 700px) {
+  .trophy-screen { gap: 6px; }
+  .trophy-desc { display: none; }
+  .trophy-rank { padding-block: 6px; }
+}
+
+/* A low window (a phone on its side, a page zoomed in): the panels would leave the medal no height, so the screen scrolls
+   and the stage gets a height of its own. */
+@media (max-height: 600px) {
+  .trophy-screen { grid-template-rows: repeat(6, max-content); overflow-y: auto; overscroll-behavior: contain; }
+  .trophy-stage { height: 320px; }
+  .trophy-track { touch-action: pan-x pan-y; }
+}
+
+@media (min-width: 960px) {
+  .trophy-screen { gap: 14px; padding: 20px 0 16px; }
+  .trophy-top, .trophy-filters, .trophy-info, .trophy-rail { padding-inline: 40px; }
+  .trophy-rank { width: min(560px, calc(100% - 80px)); margin-inline: auto; box-sizing: border-box; }
+  .trophy-filters { justify-content: center; }
+  .trophy-rail { justify-content: safe center; }
+  .trophy-stage { --medal: min(380px, calc(100cqh - 56px)); }
+  /* Сильнее `.can-plate { position: relative }` из shared.css, как у стрелок коллекции. */
+  .trophy-stage .trophy-arrow { position: absolute; z-index: 2; top: 50%; display: grid; translate: 0 -50%; }
+  .trophy-arrow:first-child { left: calc(50% - var(--medal) / 2 - 84px); }
+  .trophy-arrow:last-child { right: calc(50% - var(--medal) / 2 - 84px); }
+  .trophy-info h2 { font-size: 1.625rem; }
+}
+.trophy-arrow { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .trophy-screen, .trophy-slide, .trophy-thumb { transition: none; }
+  .trophy-medal[data-earned][data-live] .trophy-art, .trophy-medal[data-earned][data-live]::after, .trophy-rays,
+  .trophy-reveal-stage .trophy-art, .trophy-reveal-stage::after, .trophy-reveal-kicker,
+  .trophy-reveal .trophy-desc, .trophy-reveal h2, .trophy-reveal .trophy-kicker, .trophy-reveal .trophy-rewards { animation: none; }
+}

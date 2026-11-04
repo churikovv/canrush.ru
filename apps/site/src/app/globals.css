@@ -2747,7 +2747,6 @@ html[data-cookie-notice="visible"] .brand-footer {
 .community-cover-custom img { width: 100%; height: 100%; margin: 0; object-fit: cover; }
 .community-avatar-custom img { width: 100%; height: 100%; object-fit: cover; }
 .profile-editor .profile-form-error { margin: 0 0 20px; }
-.profile-image-field p { font-size: .75rem; color: var(--theme-muted, #59616b); line-height: 1.5; margin: 8px 0 12px; }
 .profile-editor-danger p { font-size: .8125rem; color: var(--theme-muted, #59616b); margin: 8px 0 0; max-width: 60ch; line-height: 1.5; }
 /* Profile experience, identity and image framing. */
 /* Level tiers: one palette drives the chip, the emblem and the progress fill. */
@@ -2814,9 +2813,6 @@ html[data-cookie-notice="visible"] .brand-footer {
 .profile-navigation-item svg { width: 20px; height: 20px; flex-shrink: 0; color: currentColor; }
 /* Keep the navigation hit area fixed while its contents animate. */
 .profile-navigation-item { height: 44px; line-height: 20px; }
-.tag-picker-trigger:hover { border-color: #59616b; }
-.tag-picker-trigger[aria-expanded="true"], .tag-picker-trigger:focus-visible { border-color: #006eff; outline: 2px solid #006eff; outline-offset: 2px; }
-.tag-picker-option.is-selected { background: var(--theme-subtle, #edf4ff); }
 .city-dialog-heading button { display: grid; place-items: center; flex: 0 0 44px; border-radius: 12px; background: var(--theme-subtle, #f3f5f5); color: var(--theme-muted, #59616b); padding: 0; }
 .city-dialog-heading button:hover { background: var(--theme-subtle, #e8ebee); color: var(--theme-text, #000); }
 .city-dialog-heading button:disabled { opacity: .5; cursor: wait; }
@@ -3373,8 +3369,6 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 [data-profile-theme] .review-reactions button[aria-pressed="true"]:not(.review-like) { color: var(--profile-accent); }
 [data-profile-theme] .review-reactions button[aria-pressed=true] { background: var(--profile-soft); color: var(--profile-accent); border-color: var(--profile-accent); }
 [data-profile-tone=dark] .review-comment-delete:hover:not(:disabled) { color: #ffb5b5; }
-[data-profile-theme] :is(.tag-picker-trigger,.tag-picker-popover) { background: var(--profile-panel); color: var(--profile-ink); border-color: var(--profile-line); }
-[data-profile-theme] :is(.tag-picker-trigger > svg,.tag-picker-search,.tag-picker-search input::placeholder,.achievement-copy > span,.achievement-progress,.tag-picker-empty) { color: var(--profile-muted); }
 @keyframes fx-spin { to { transform: rotate(360deg); } }
 /* Shared cover dimensions keep official and community lists aligned. */
 .price-history-plot { width: 100%; display: block; max-height: 300px; margin-top: 12px; touch-action: pan-y; overflow: visible; }

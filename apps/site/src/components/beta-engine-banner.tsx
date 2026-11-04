@@ -26,7 +26,7 @@ export function BetaEngineBanner({ data, signedIn }: { data: BetaEngine; signedI
         : !signedIn && <Link className="engine-button" href="/sign-in">Занять место</Link>}
       <p className="engine-forever"><span aria-hidden="true">∞</span> Номер и тег <strong>остаются с тобой навсегда</strong></p>
     </div>
-    <div className="engine-art"><Image src="/brand/achievements/engine.png" width={640} height={640} sizes="(max-width: 760px) 60vw, 340px" alt="Достижение «Двигатель беты»" /></div>
+    <div className="engine-art"><Image src="/brand/medals/engine.png" width={640} height={640} sizes="(max-width: 760px) 60vw, 340px" alt="Достижение «Двигатель беты»" /></div>
     <div className="engine-gauge">
       <div className="engine-gauge-head">
         <p><span>Занято мест</span><strong>{count(data.taken)}</strong> из {count(BETA_ENGINE_PLACES)}</p>

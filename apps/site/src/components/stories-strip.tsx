@@ -243,7 +243,7 @@ function PromoCard({ page, miniApp }: { page: 'channel' | 'bot'; miniApp?: strin
   return <div className="tg-promo" data-page={page}>
     <span className="tg-promo-handle" style={{ '--line': 0 } as CSSProperties}>
       {/* eslint-disable-next-line @next/next/no-img-element -- brand sticker */}
-      <img src="/brand/achievements/telegram.png" alt="" />{channel ? '@canrushoff' : '@canrush_bot'}
+      <img src="/brand/medals/telegram.png" alt="" />{channel ? '@canrushoff' : '@canrush_bot'}
     </span>
     <strong className="tg-promo-title" style={{ '--line': 1 } as CSSProperties}>{channel ? 'Канал CanRush' : 'Бот найдёт'}</strong>
     <ul className="tg-promo-pills">

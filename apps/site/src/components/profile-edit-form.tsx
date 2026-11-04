@@ -1,8 +1,9 @@
 'use client';
-import { PhotoDeleteIcon } from '@/components/photo-delete-icon';
-import { ProfileAppearanceEditor } from '@/components/profile-appearance-editor';
+import { ProfileImageMenu, ProfileLookStrip, type LookTileKey } from '@/components/profile-look-strip';
 import type { BrandFrameProgress } from '@/lib/brand-frame-fields';
-import { DEFAULT_PROFILE_APPEARANCE, PROFILE_FRAMES, PROFILE_THEMES, profileThemeAttributes } from '@/lib/profile-appearance';
+import { DEFAULT_PROFILE_APPEARANCE, profileThemeAttributes } from '@/lib/profile-appearance';
+import { profileTagLabel } from '@/lib/profile-achievements';
+import { updateCommunityAction } from '@/app/profile/community-actions';
 import { ProfileLayoutEditor } from '@/components/profile-layout-editor';
 
 import Image from 'next/image';
@@ -37,8 +38,10 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 function TelegramIcon() {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.7 3.3a1.6 1.6 0 0 0-1.7-.2L2.9 9.6c-1.2.5-1.1 2.2.1 2.6l3.9 1.2 1.5 4.8c.3.9 1.4 1.2 2.1.5l2.2-2.1 4.1 3c.9.7 2.2.2 2.4-.9l2.6-13.9c.1-.6-.1-1.2-.6-1.5ZM10 14.2l-.6 3.2-1.1-3.6 9.4-7.5-7.7 7.9Z"/></svg>;
 }
-type ProfileSection = 'details' | 'telegram' | 'tags' | 'appearance' | 'images' | 'blocks' | 'account';
-const SECTIONS: readonly ProfileSection[] = ['details', 'telegram', 'tags', 'appearance', 'images', 'blocks', 'account'];
+type ProfileSection = 'details' | 'telegram' | 'blocks' | 'account';
+const SECTIONS: readonly ProfileSection[] = ['details', 'telegram', 'blocks', 'account'];
+/** The look has no sections any more (it is picked on the preview): old links open the matching tile's list; `images` just shows the preview. */
+const LOOK_SECTIONS: Record<string, LookTileKey> = { appearance: 'frame', tags: 'tag' };
 /** Site settings shown in the same hub: each row opens its own panel with its own forms (outside the profile form). */
 /** A settings row opens its panel in place, or with `href` leads to another page (the admin panel). */
 export type SettingsRow = { key: string; title: string; value?: string; tone?: string; icon: ReactNode } & ({ panel: ReactNode; href?: never } | { href: string; panel?: never });
@@ -48,10 +51,7 @@ const ICON = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke
 const SECTION_ICONS: Record<ProfileSection, ReactNode> = {
   details: <svg {...ICON}><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>,
   telegram: <TelegramIcon />,
-  images: <svg {...ICON}><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="2" /><path d="m21 16-5-5-9 9" /></svg>,
   account: <svg {...ICON}><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>,
-  appearance: <svg {...ICON}><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.7-.9 1.4-1.9l-.3-.9c-.4-1.2.5-2.2 1.7-2.2H17a4 4 0 0 0 4-4c0-5-4-9-9-9Z" /><circle cx="7.5" cy="11" r="1.2" /><circle cx="10.5" cy="7" r="1.2" /><circle cx="15.5" cy="8" r="1.2" /></svg>,
-  tags: <svg {...ICON}><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9Z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>,
   blocks: <svg {...ICON}><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></svg>,
 };
 const SignOutIcon = () => <svg {...ICON}><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" /></svg>;
@@ -67,7 +67,8 @@ function PrefixedInput({ prefix, ...props }: InputHTMLAttributes<HTMLInputElemen
 /** Text fields accept a full t.me link or @name; the field shows only the name after the prefix. */
 const bareTelegram = (value: string) => value.trim().replace(/^https?:\/\//i, '').replace(/^(?:www\.)?(?:t\.me|telegram\.me)\//i, '').replace(/^@+/, '').replace(/\/$/, '');
 
-export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedFrames = [], brandFrames = [], tags, settings = [], accountRows = [] }: { level?: number; xp?: number; ownedFrames?: readonly string[]; brandFrames?: readonly BrandFrameProgress[]; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { picker: ReactNode; earned: number; total: number; selected?: string }; settings?: SettingsGroup[]; accountRows?: SettingsRow[] }) {
+/** `tags`: the member's earned tags and the one worn now; it is picked on the preview and saved with the profile. */
+export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedFrames = [], brandFrames = [], tags, settings = [], accountRows = [] }: { level?: number; xp?: number; ownedFrames?: readonly string[]; brandFrames?: readonly BrandFrameProgress[]; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { earned: readonly string[]; selected: string }; settings?: SettingsGroup[]; accountRows?: SettingsRow[] }) {
   const initialName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
   // The open section lives in ?section= (native history, synced with useSearchParams), so the phone's back gesture
   // returns to the list of sections instead of leaving the editor.
@@ -75,7 +76,8 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
   const { signOut, pending: signingOut, error: signOutError } = useSignOut();
   const requested = useSearchParams().get('section');
   const settingsRows = [...settings.flatMap(group => group.rows), ...accountRows].filter(row => !row.href);
-  const tab: Section | null = SECTIONS.find(key => key === requested && (key !== 'tags' || tags)) ?? settingsRows.find(row => row.key === requested)?.key ?? null;
+  const tab: Section | null = SECTIONS.find(key => key === requested) ?? settingsRows.find(row => row.key === requested)?.key ?? null;
+  const lookTile = requested ? LOOK_SECTIONS[requested] ?? null : null;
   const settingsOpen = settingsRows.some(row => row.key === tab);
   const pushed = useRef(false);
   const sectionsRef = useRef<HTMLDivElement>(null);
@@ -98,7 +100,9 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
     (tab ? document.getElementById(`profile-panel-${tab}`) : document.getElementById(`profile-section-row-${previous}`))?.focus({ preventScroll: tab !== null });
   }, [tab]);
   const setTab = (key: Section) => openSection(key, true);
-  const [appearance, setAppearance] = useState(profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE);
+  const savedAppearance = profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE;
+  const [appearance, setAppearance] = useState(savedAppearance);
+  const [tag, setTag] = useState(tags?.selected ?? '');
   const [name, setName] = useState(initialName);
   const [username, setUsername] = useState(profile.username);
   const [channel, setChannel] = useState(profile.telegramChannel ?? '');
@@ -122,6 +126,14 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
       if (selected?.remove) form.set(`remove-${kind}`, 'true');
     }
     form.set('profileAppearance', JSON.stringify(appearance));
+    // The tag has its own action; it goes first, because a saved profile leaves the page.
+    if (tags && tag !== tags.selected) {
+      const tagForm = new FormData();
+      tagForm.set('operation', 'tags');
+      if (tag) tagForm.set('tags', tag);
+      const saved = await updateCommunityAction({}, tagForm);
+      if (saved.error) return { message: saved.error };
+    }
     const result = await updateProfileAction(previous, form);
     if (result.fieldErrors) setTab(Object.keys(result.fieldErrors).every(key => key.startsWith('telegram')) ? 'telegram' : 'details');
     return result;
@@ -184,27 +196,38 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
     return images[kind]?.preview ?? (profile[`${kind}Id`] ? `/api/profile-images/${profile[`${kind}Id`]}` : null);
   }
 
+  // What the editor shows for each picture now, worked out once per render (the pencil and its list read it).
+  const pictures = Object.fromEntries((['avatar', 'banner'] as const).map(kind => [kind, { src: imageSource(kind), changed: Boolean(images[kind]), removed: Boolean(images[kind]?.remove) }])) as Record<ImageKind, { src: string | null; changed: boolean; removed: boolean }>;
+  // The whole avatar or banner takes a photo (tap or drop). Once there is a picture, the pencil is its own button with
+  // a list: another photo, recrop, remove, undo.
   function imageControl(kind: ImageKind) {
     const label = kind === 'avatar' ? 'Изменить аватар' : 'Изменить баннер';
-    return <label className={`profile-drop-target profile-drop-target-${kind}${fileDrag && !pending ? ' is-drop-ready' : ''}${dragging === kind ? ' is-dragging' : ''}`} title={`${label} — нажмите или перетащите фото`}
+    const image = pictures[kind];
+    const menu = Boolean(image.src || image.changed);
+    return <><label className={`profile-drop-target profile-drop-target-${kind}${fileDrag && !pending ? ' is-drop-ready' : ''}${dragging === kind ? ' is-dragging' : ''}`} title={`${label} — нажмите или перетащите фото`}
       onDragOver={event => { if (!hasFiles(event)) return; event.preventDefault(); if (!pending) setDragging(kind); }} onDragLeave={() => setDragging(current => current === kind ? null : current)} onDrop={event => { event.preventDefault(); setDragging(null); setFileDrag(false); if (!pending) void selectImage(kind, event.dataTransfer.files[0]); }}>
       <span className="profile-drop-zone" aria-hidden="true"><UploadIcon />{kind === 'banner' && <span>{dragging === kind ? 'Отпустите, чтобы загрузить' : 'Перетащите фото сюда'}</span>}</span>
-      <span className="profile-edit-badge" aria-hidden="true"><PencilIcon /></span>
-      <input type="file" disabled={pending} accept="image/jpeg,image/png,image/webp,image/gif" aria-label={label} onChange={event => { void selectImage(kind, event.target.files?.[0]); event.target.value = ''; }} />
-    </label>;
+      {!menu && <span className="profile-edit-badge" aria-hidden="true"><PencilIcon /></span>}
+      <input type="file" disabled={pending} accept="image/jpeg,image/png,image/webp,image/gif" aria-label={menu ? `${kind === 'avatar' ? 'Загрузить другой аватар' : 'Загрузить другой баннер'}` : label} onChange={event => { void selectImage(kind, event.target.files?.[0]); event.target.value = ''; }} />
+    </label>
+    {menu && <ProfileImageMenu kind={kind} image={image} disabled={pending} onPick={pickImage} onCrop={cropImage} onRemove={removeImage} onUndo={undoImage} />}
+    </>;
   }
+  function forgetImage(kind: ImageKind, next: ImageSelection | undefined) {
+    imageRequests.current[kind]++;
+    setDecoding(current => ({ ...current, [kind]: false }));
+    setImages(current => ({ ...current, [kind]: next }));
+    setImageError('');
+  }
+  const pickImage = (kind: ImageKind, file: File) => { void selectImage(kind, file); };
+  const cropImage = (kind: ImageKind) => { void editCrop(kind); };
+  const removeImage = (kind: ImageKind) => forgetImage(kind, { remove: true });
+  const undoImage = (kind: ImageKind) => forgetImage(kind, undefined);
   const visibleBlocks = (() => { const layout = profile.profileLayout ?? DEFAULT_PROFILE_LAYOUT; return layout.order.length - layout.hidden.length; })();
-  const imageState = (kind: ImageKind, label: string) => images[kind]?.remove ? `${label}: удалится` : images[kind] ? `${label}: новое` : imageSource(kind) ? `${label} есть` : `Без ${kind === 'avatar' ? 'аватара' : 'баннера'}`;
   const sectionGroups: { key: string; title: string; rows: { key: Section; title: string; value?: string; tone?: string; icon?: ReactNode; href?: string; onSelect?: () => void }[] }[] = [
     { key: 'profile', title: 'Профиль', rows: [
       { key: 'details', title: 'Имя, ник и описание', value: `${name.trim() || initialName} · @${username.replace(/^@+/, '') || profile.username}` },
       { key: 'telegram', title: 'Telegram', value: [telegram && `t.me/${telegram}`, channel && `канал t.me/${channel}`].filter(Boolean).join(' · ') || 'Не указан', tone: 'telegram' },
-      ...(tags ? [{ key: 'tags' as const, title: 'Тег в профиле', value: `${tags.selected ?? 'Не выбран'} · получено ${tags.earned} из ${tags.total}` }] : []),
-    ] },
-    { key: 'look', title: 'Внешний вид', rows: [
-      { key: 'appearance', title: 'Оформление', value: `${PROFILE_THEMES.find(item => item.key === appearance.theme)?.label ?? ''} · ${PROFILE_FRAMES.find(item => item.key === appearance.frame)?.label ?? ''}` },
-      { key: 'images', title: 'Аватар и баннер', value: `${imageState('avatar', 'Аватар')} · ${imageState('banner', 'баннер').replace(/^Без/, 'без')}` },
-      { key: 'blocks', title: 'Блоки профиля', value: `Показано ${visibleBlocks} из ${PROFILE_BLOCKS.length}` },
     ] },
     ...settings,
     { key: 'account', title: 'Аккаунт', rows: [...accountRows,
@@ -224,7 +247,13 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
       <div className="profile-editor-preview" hidden={settingsOpen} {...profileThemeAttributes(appearance.theme)}>
       <ProfileHeader frame={appearance.frame} name={name.trim() || initialName} username={username.replace(/^@+/, '') || profile.username} bio={bio.trim()} createdAt={profile.createdAt}
         avatarSrc={imageSource('avatar')} bannerSrc={imageSource('banner')} avatarControl={imageControl('avatar')} bannerControl={imageControl('banner')}
+        tags={tag ? <div className="profile-tags"><span className="profile-tag" data-tag={tag}>{profileTagLabel(tag)}</span></div> : undefined}
         actions={<div className="profile-editor-actions"><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>} />
+      <ProfileLookStrip appearance={appearance} saved={savedAppearance} onAppearance={setAppearance} level={level} xp={xp ?? 0} owned={ownedFrames} brandFrames={brandFrames}
+        avatarSrc={imageSource('avatar')} disabled={pending} autoOpen={lookTile}
+        tag={tags && { value: tag, saved: tags.selected, earned: tags.earned, onChange: setTag, href: `/profile/${profile.username}/achievements` }}
+        blocks={{ shown: visibleBlocks, total: PROFILE_BLOCKS.length, open: () => openSection('blocks') }} />
+      {imageError && <p className="field-error look-error" role="alert">{imageError}</p>}
       </div>
       {state.message && <div className="profile-form-error" ref={errorSummaryRef} role="alert" tabIndex={-1}><h2>Не удалось сохранить профиль</h2><p>{state.message}</p></div>}
       <div className="profile-sections" ref={sectionsRef}>{tab === null ? <nav className="profile-hub" aria-label="Профиль и настройки">
@@ -278,45 +307,11 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
           </fieldset>
         </section>
       </div>
-      <div id="profile-panel-appearance" tabIndex={-1} aria-label="Оформление" hidden={tab !== 'appearance'} className="profile-editor-panel">
-        <ProfileAppearanceEditor level={level} xp={xp} owned={ownedFrames} brandFrames={brandFrames} avatarSrc={imageSource('avatar')} current={profile.profileAppearance ?? DEFAULT_PROFILE_APPEARANCE} value={appearance} onChange={setAppearance} disabled={pending} />
-      </div>
-      <div id="profile-panel-images" tabIndex={-1} aria-label="Аватар и баннер" hidden={tab !== 'images'} className="profile-editor-panel">
-        <section className="community-panel profile-editor-images" aria-labelledby="profile-images-title">
-          <div className="community-section-heading"><h2 id="profile-images-title">Изображения</h2></div>
-          <p className="community-section-note">JPG, PNG или WebP до 5 МБ, GIF до 10 МБ — он станет лёгкой анимацией. Предпросмотр сверху.</p>
-          <fieldset className="profile-image-fields" disabled={pending}>
-            {(['avatar', 'banner'] as const).map(kind => <div className="profile-image-field" key={kind}>
-              <h3>{kind === 'avatar' ? 'Аватар' : 'Баннер'}</h3>
-              <p>{kind === 'avatar' ? 'Выберите квадратную миниатюру.' : 'Выберите область баннера 4:1.'}</p>
-              {imageSource(kind) && <div className={`profile-upload-preview profile-upload-preview-${kind}`}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- existing or local upload preview */}
-                <img src={imageSource(kind) ?? undefined} alt={kind === 'avatar' ? 'Превью аватара' : 'Превью баннера'} />
-                <button className="photo-delete-overlay" title="Удалить фотографию" aria-label={kind === 'avatar' ? 'Удалить аватар' : 'Удалить баннер'} type="button" onClick={() => { imageRequests.current[kind]++; setDecoding(current => ({ ...current, [kind]: false })); setImages(current => ({ ...current, [kind]: { remove: true } })); setImageError(''); }}><PhotoDeleteIcon /></button>
-              </div>}
-              <div className="profile-image-actions"><label className="community-button community-button-secondary profile-file-picker"><span>{imageSource(kind) ? 'Заменить' : 'Загрузить'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" aria-label={kind === 'avatar' ? 'Загрузить аватар' : 'Загрузить баннер'} onChange={event => { void selectImage(kind, event.target.files?.[0]); event.target.value = ''; }} /></label>
-                {imageSource(kind) && <button className="community-button community-button-secondary" type="button" onClick={() => { void editCrop(kind); }}>Изменить кадр</button>}
-                {images[kind] && <button className="community-button community-button-text" type="button" onClick={() => { imageRequests.current[kind]++; setDecoding(current => ({ ...current, [kind]: false })); setImages(current => ({ ...current, [kind]: undefined })); setImageError(''); }}>Отменить изменение</button>}
-              </div>
-              {images[kind]?.file && <p className="profile-selected-file">{images[kind]?.file?.name}</p>}
-              {images[kind]?.remove && <p className="community-muted">Будет удалён после сохранения.</p>}
-            </div>)}
-          </fieldset>
-          {imageError && <p className="field-error" role="alert">{imageError}</p>}
-        </section>
-      </div>
       <div id="profile-panel-blocks" tabIndex={-1} aria-label="Блоки профиля" hidden={tab !== 'blocks'} className="profile-editor-panel">
         <div {...profileThemeAttributes(appearance.theme)} className="profile-blocks-preview"><ProfileLayoutEditor initial={profile.profileLayout} disabled={pending} previews={layoutPreviews} /></div>
       </div>
-      <div className="profile-editor-savebar" hidden={tab === null || tab === 'tags' || tab === 'account' || settingsOpen}><p>{tab === 'blocks' ? 'Порядок и видимость блоков сохранятся вместе с профилем.' : 'Изменения применятся после сохранения.'}</p><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>
+      <div className="profile-editor-savebar" hidden={tab === null || tab === 'account' || settingsOpen}><p>{tab === 'blocks' ? 'Порядок и видимость блоков сохранятся вместе с профилем.' : 'Изменения применятся после сохранения.'}</p><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>
     </form>
-    {tags && <div id="profile-panel-tags" tabIndex={-1} aria-label="Тег в профиле" hidden={tab !== 'tags'} className="profile-editor-panel">
-      <section className="community-panel profile-editor-group" id="achievements" aria-labelledby="achievements-title">
-        <div className="profile-editor-group-heading"><h2 id="achievements-title">Тег в профиле <span className="profile-editor-count">{tags.earned} / {tags.total}</span></h2><p>Выберите один из полученных тегов. Он появится рядом с именем в профиле, отзывах и тирлистах. Тег сохраняется отдельно от остальных данных.</p></div>
-        {tags.picker}
-        <Link className="community-button-text profile-editor-link" href={`/profile/${profile.username}/achievements`}>Все достижения и условия ↗</Link>
-      </section>
-    </div>}
     {settingsRows.map(row => <div key={row.key} id={`profile-panel-${row.key}`} tabIndex={-1} aria-label={row.title} hidden={tab !== row.key} className="profile-editor-panel profile-settings-panel">{row.panel}</div>)}
     {cropSource && <ProfileImageCrop key={cropSource.src} source={cropSource} initial={images[cropSource.kind]?.source?.src === cropSource.src ? images[cropSource.kind]?.crop : undefined} onCancel={() => setCropSource(null)} onConfirm={(crop, preview) => { setImages(current => ({ ...current, [cropSource.kind]: { file: cropSource.file, crop, preview, source: cropSource } })); setCropSource(null); }} />}
     <section id="profile-panel-account" tabIndex={-1} hidden={tab !== 'account'} className="community-panel profile-editor-danger" aria-labelledby="danger-zone-title"><div><h2 id="danger-zone-title">Удаление аккаунта</h2><p>Профиль и его данные будут удалены без возможности восстановления.</p></div>

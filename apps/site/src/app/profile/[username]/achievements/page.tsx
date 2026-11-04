@@ -1,44 +1,61 @@
 import '@/styles/shared.css';
-import '@/styles/profile.css';
-import Image from 'next/image';
-import { achievementImage } from '@/lib/profile-achievements';
-import { ProfileBackButton } from '@/components/profile-back-button';
+import '@/styles/trophies.css';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { auth } from '@/lib/auth';
+import { TrophyRoom, type TrophyCard } from '@/components/trophy-room';
+import { ACHIEVEMENT_TITLES, ACHIEVEMENT_XP, achievementSummary, isScored, TROPHY_POINTS } from '@/lib/achievement-summary';
 import { isSiteAdminEmail } from '@/lib/admin';
+import { auth } from '@/lib/auth';
+import { getBadges } from '@/lib/badge-progress';
+import { BADGE_ACHIEVEMENTS } from '@/lib/badges';
 import { getProfileByUsername } from '@/lib/profile';
-import { getProfileCommunity } from '@/lib/profile-community';
-import { ACHIEVEMENT_RARITIES, achievementCompletion, visibleProfileAchievements } from '@/lib/profile-achievements';
-import { AchievementSteps } from '@/components/achievement-steps';
-import { BrandShell } from '@/components/brand-shell';
-import { ProfileNavigation } from '@/components/profile-navigation';
+import { achievementCompletion, achievementImage, visibleProfileAchievements, type ProfileAchievement } from '@/lib/profile-achievements';
+import { getAchievementDates, getProfileCommunity } from '@/lib/profile-community';
+
+export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Достижения', robots: { index: false, follow: false } };
+
+/** Role tags, the giveaway's tag and the beta number cannot be worked towards: they only appear once held. */
+const ONLY_WHEN_HELD = new Set(['admin', 'moderator', 'energizer', 'engine']);
+
+/**
+ * Achievements as a game screen (`TrophyRoom`), like the season pass and the card inventory. Tags and the achievements
+ * that are only achievements (`lib/badges.ts`) share it: one trophy score, one collector title, one strip of medals.
+ * Viewing the page earns what is due, as the profile does for tags.
+ */
 export default async function AchievementsPage({ params }: { params: Promise<{ username: string }> }) {
-  const profile = await getProfileByUsername((await params).username);
+  const [{ username }, session] = await Promise.all([params, auth.api.getSession({ headers: await headers() })]);
+  const profile = await getProfileByUsername(username);
   if (!profile) notFound();
-  const session = await auth.api.getSession({ headers: await headers() });
+  const own = session?.user.id === profile.id;
   const admin = session ? await isSiteAdminEmail(session.user.email) : false;
-  const community = await getProfileCommunity(profile.id, session?.user.id);
-  const visible = visibleProfileAchievements(admin, community.earned);
-  const earned = visible.filter(item => community.earned.includes(item.key));
-  // Role tags, the giveaway tag and the beta number cannot be worked towards, so they only appear once held.
-  const locked = visible.filter(item => !['admin', 'moderator', 'energizer', 'engine'].includes(item.key) && !community.earned.includes(item.key))
-    .map(item => ({ item, completion: achievementCompletion(item, community.progress) }))
-    .sort((a, b) => b.completion - a.completion);
-  return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
-    <section className="community-directory profile-achievements"><ProfileBackButton href={`/profile/${profile.username}`} /><h1>Достижения <span className="community-muted">{earned.length}</span></h1>
-      {earned.length ? <div className="achievement-cards">{earned.map(item => <article className="community-panel" data-rarity={item.rarity} key={item.key}><Image className="achievement-art" src={achievementImage(item.key)} width={144} height={144} alt="" /><h2>{item.label}</h2><span className="achievement-rarity" data-rarity={item.rarity}>{ACHIEVEMENT_RARITIES[item.rarity]}</span><p>{item.description}</p><span className="community-muted">Получено</span></article>)}</div> : <div className="wall-empty-card">Пока нет полученных достижений.</div>}
-      {locked.length > 0 && <>
-        <h2 className="achievement-locked-title">Ещё не получены <span className="community-muted">{locked.length}</span></h2>
-        <div className="achievement-cards">{locked.map(({ item, completion }) => <article className="community-panel is-locked" data-rarity={item.rarity} key={item.key}>
-          <div className="achievement-locked-head"><Image className="achievement-art" src={achievementImage(item.key)} width={72} height={72} alt="" />
-            <div><h3>{item.label}</h3><span className="achievement-rarity" data-rarity={item.rarity}>{ACHIEVEMENT_RARITIES[item.rarity]}</span></div>
-            <span className="achievement-percent" aria-label={`Выполнено ${Math.round(completion * 100)}%`}>{Math.round(completion * 100)}%</span></div>
-          <p>{item.description}</p>
-          <AchievementSteps item={item} progress={community.progress} unlocked={false} />
-        </article>)}</div>
-      </>}
-    </section>
-  </BrandShell>;
+  const [community, tagDates, badges] = await Promise.all([getProfileCommunity(profile.id, session?.user.id), getAchievementDates(profile.id, 200), getBadges(profile.id)]);
+  const dates = new Map([...tagDates, ...badges.earned].map(row => [row.key, row.earnedAt]));
+  const badgeKeys = new Set(badges.earned.map(row => row.key));
+
+  function card<M extends string>(item: ProfileAchievement<M>, progress: Record<M, number>, earned: boolean, tag: boolean): TrophyCard {
+    const scored = isScored(item.key);
+    return {
+      key: item.key, label: item.label, rarity: item.rarity, description: item.description, art: achievementImage(item.key),
+      earned, earnedAt: dates.get(item.key)?.toISOString() ?? null, tag,
+      points: scored ? TROPHY_POINTS[item.rarity] : 0, xp: tag && scored ? ACHIEVEMENT_XP : 0,
+      completion: earned ? 1 : achievementCompletion(item, progress),
+      steps: item.steps.map(step => ({ label: step.label, value: progress[step.metric] ?? 0, goal: step.goal })),
+    };
+  }
+  const tags = visibleProfileAchievements(admin, community.earned)
+    .filter(item => community.earned.includes(item.key) || (!ONLY_WHEN_HELD.has(item.key) && isScored(item.key)))
+    .map(item => card(item, community.progress, community.earned.includes(item.key), true));
+  const others = BADGE_ACHIEVEMENTS.map(item => card(item, badges.progress, badgeKeys.has(item.key), false));
+  // Earned first, newest on top; then what is closest to done, the bigger prize first among equals.
+  const cards = [...tags, ...others].sort((a, b) => Number(b.earned) - Number(a.earned)
+    || (a.earned ? (b.earnedAt ?? '').localeCompare(a.earnedAt ?? '') : b.completion - a.completion || b.points - a.points)
+    || a.label.localeCompare(b.label, 'ru'));
+
+  // The score counts what any member can see, so an admin's view of secret tags does not change it.
+  const summary = achievementSummary([...visibleProfileAchievements(false, community.earned), ...BADGE_ACHIEVEMENTS] as ProfileAchievement<string>[],
+    [...community.earned, ...badgeKeys], { ...community.progress, ...badges.progress } as Record<string, number>, [...tagDates, ...badges.earned]);
+
+  return <TrophyRoom cards={cards} score={summary.score} isOwn={own} owner={`@${profile.username}`} backHref={own ? '/profile' : `/profile/${profile.username}`} worn={community.tags[0] ?? null}
+    title={{ label: summary.title.label, index: summary.title.index, score: summary.title.score, next: summary.next, titles: ACHIEVEMENT_TITLES.length }} />;
 }

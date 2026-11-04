@@ -24,8 +24,9 @@ export const ACHIEVEMENT_RARITIES = {
 } as const;
 export type AchievementRarity = keyof typeof ACHIEVEMENT_RARITIES;
 
-interface AchievementStep { metric: AchievementMetric; goal: number; label: string }
-export interface ProfileAchievement { key: string; label: string; rarity: AchievementRarity; description: string; steps: readonly AchievementStep[] }
+interface AchievementStep<M extends string = AchievementMetric> { metric: M; goal: number; label: string }
+/** A tag (metrics of `getProfileCommunity`) or, with its own metrics, an achievement that is not a tag (`lib/badges.ts`). */
+export interface ProfileAchievement<M extends string = AchievementMetric> { key: string; label: string; rarity: AchievementRarity; description: string; steps: readonly AchievementStep<M>[] }
 
 // Earned keys are stored in "profileAchievement" forever, so raising goals never revokes an old tag. The week tags are the
 // exception: `settle_weekly_top` gives them for a week and takes them back at the next results.
@@ -120,12 +121,12 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
  */
 export const ROLE_TAGS: ReadonlySet<string> = new Set(['admin', 'moderator']);
 
-export function achievementStepsDone(item: ProfileAchievement, progress: AchievementProgress): number {
+export function achievementStepsDone<M extends string>(item: ProfileAchievement<M>, progress: Record<M, number>): number {
   return item.steps.filter(step => progress[step.metric] >= step.goal).length;
 }
 
 /** Share of the combined goal reached, capped per step so one grind cannot carry the rest. */
-export function achievementCompletion(item: ProfileAchievement, progress: AchievementProgress): number {
+export function achievementCompletion<M extends string>(item: ProfileAchievement<M>, progress: Record<M, number>): number {
   const total = item.steps.reduce((sum, step) => sum + step.goal, 0);
   return item.steps.reduce((sum, step) => sum + Math.min(progress[step.metric], step.goal), 0) / total;
 }
@@ -163,10 +164,18 @@ export function profilePageNumber(value: unknown): number {
   return typeof page === 'number' && Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
 }
 
-const ACHIEVEMENT_ART = new Set(['engine', 'energizer', 'top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'moderator', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven', 'drink-start', 'streak-7', 'streak-14', 'streak-30', 'monster', 'fan', 'shopper', 'date', 'sensei']);
+/**
+ * Medal art (`public/brand/medals`, round medals from Figma `823:4`, transparent, 640 px). A new folder, not the old
+ * `brand/achievements`: the image optimizer and browsers keep a file by its address for hours, so redrawn art goes to a
+ * new address. The old stickers stay there for the tags without a medal yet (`date`, `energizer`).
+ */
+const MEDAL_ART = new Set(['engine', 'top', 'seller', 'altushka', 'flash', 'collector', 'admin', 'moderator', 'kitty', 'critic', 'burner', 'telegram', 'friend', 'three', 'first-review', 'explorer', 'adrenaline', 'deadinside', 'six-seven', 'drink-start', 'streak-7', 'streak-14', 'streak-30', 'monster', 'fan', 'shopper', 'sensei',
+  // Achievements that are not tags (`lib/badges.ts`).
+  'full-shelf', 'brand-reply', 'cartographer', 'columnist', 'help-desk', 'shelf-photos', 'first-pull', 'crafter', 'battle', 'battle-win', 'quest-week']);
+const STICKER_ART = new Set(['energizer', 'date']);
 export function achievementImage(key: string): string {
-  if (key.startsWith('week-')) return '/brand/achievements/top.png';
-  return ACHIEVEMENT_ART.has(key) ? `/brand/achievements/${key}.png` : '/brand/icons/achievement.svg';
+  if (key.startsWith('week-')) return '/brand/medals/top.png';
+  return MEDAL_ART.has(key) ? `/brand/medals/${key}.png` : STICKER_ART.has(key) ? `/brand/achievements/${key}.png` : '/brand/icons/achievement.svg';
 }
 export function profileTagKey(value: string | null | undefined): string | undefined {
   return PROFILE_ACHIEVEMENTS.find(item => item.key === value || item.label === value)?.key;

@@ -21,6 +21,7 @@ import Link from '@/components/navigation-progress';
 import type { ProfileData } from '@/lib/profile';
 import { COMMUNITY_PAGE_SIZE, getConnections, getLastSeen, getPresence, getProfileCommunity, getProfileRatings, getProfileWall } from '@/lib/profile-community';
 import { PROFILE_ACHIEVEMENTS, visibleProfileAchievements } from '@/lib/profile-achievements';
+import { BADGE_ACHIEVEMENTS } from '@/lib/badges';
 import { WallPost, displayName } from '@/components/wall-post';
 import { FollowControl, PresenceSetting, WallComposer } from '@/components/profile-community-controls';
 import { ProfileHeader } from '@/components/profile-header';
@@ -104,7 +105,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
       <div className="community-columns">
         <div className="community-main profile-arranged-main"><ProfileBlocks layout={profile.profileLayout}>
           <ProfileBlock block="experience">
-          <ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} expanded achievements={{ earned: visibleEarned.length, total: visibleAchievements.length }} /></ProfileBlock>
+          <ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} expanded achievements={{ earned: visibleEarned.length + community.badges.length, total: visibleAchievements.length + BADGE_ACHIEVEMENTS.length }} /></ProfileBlock>
           <ProfileBlock block="calendar"><DrinkCalendarBlock userId={profile.id} username={profile.username} isOwn={isOwn} /></ProfileBlock>
           <ProfileBlock block="collection"><BrandCollectionBlock summary={collection} username={profile.username} isOwn={isOwn} /></ProfileBlock>
           <ProfileBlock block="ratings">

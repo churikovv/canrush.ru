@@ -16,7 +16,7 @@ const number = (value: number) => value.toLocaleString('ru-RU');
 export function WeekRaceBoard({ race, signedIn }: { race: WeekRace; signedIn: boolean }) {
   return <section className="week-race" aria-labelledby="race-title">
     <div className="week-race-hero">
-      <Image className="week-race-art" src="/brand/achievements/top.png" width={128} height={128} alt="" />
+      <Image className="week-race-art" src="/brand/medals/top.png" width={128} height={128} alt="" />
       <div className="week-race-copy">
         <h2 id="race-title">Гонка недели</h2>
         <p>Итоги в понедельник. Тег держится всю следующую неделю.</p>
