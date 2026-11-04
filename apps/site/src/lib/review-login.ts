@@ -10,6 +10,7 @@ const KEY_LENGTH = 32;
 /** Store reviewers retry by hand; anything faster is guessing. Counted per IP by Better Auth's limiter. */
 export const REVIEW_LOGIN_RATE_LIMIT = { window: 15 * 60, max: 5 };
 const REVIEW_ACCOUNT_NAME = 'Проверка приложения';
+const PAYMENT_REVIEW_NAME = 'Проверка оплаты';
 
 export type ReviewSignInResult = { status: 'signed-in' };
 
@@ -43,18 +44,24 @@ function originOf(value: string | null | undefined): string | undefined {
 }
 
 export interface ReviewLoginOptions {
+  /** The stores' reviewer (REVIEW_LOGIN_*). */
   account: ReviewLoginEnv | null;
+  /** The payment provider's reviewer (PAYMENT_REVIEW_*), with its own password. */
+  payment?: ReviewLoginEnv | null;
   trustedOrigin: string;
 }
 
 /**
- * `/review/sign-in`: email + password for the one account named in REVIEW_LOGIN_EMAIL.
- * Every other member keeps magic links and Telegram; email/password stays disabled in Better Auth.
+ * `/review/sign-in`: email + password for the review accounts only — the stores' (REVIEW_LOGIN_EMAIL) and the payment
+ * provider's (PAYMENT_REVIEW_EMAIL). Every other member keeps magic links and Telegram; email/password stays disabled in Better Auth.
  */
 export function reviewLogin(options: ReviewLoginOptions) {
   const signInReview = createAuthEndpoint('/review/sign-in', { method: 'POST', requireHeaders: true }, async (ctx) => {
-    const account = options.account;
-    if (!account) throw new APIError('NOT_FOUND', { message: 'Вход по паролю не настроен.' });
+    const accounts = [
+      options.account && { ...options.account, name: REVIEW_ACCOUNT_NAME },
+      options.payment && { ...options.payment, name: PAYMENT_REVIEW_NAME },
+    ].filter(item => item !== null && item !== undefined);
+    if (!accounts.length) throw new APIError('NOT_FOUND', { message: 'Вход по паролю не настроен.' });
 
     const origin = originOf(ctx.headers?.get('origin'));
     if (ctx.headers?.get('sec-fetch-site') === 'cross-site' || (origin && origin !== options.trustedOrigin)) {
@@ -66,16 +73,18 @@ export function reviewLogin(options: ReviewLoginOptions) {
     const password = typeof body?.password === 'string' ? body.password : '';
     if (!email || !password || password.length > 256) throw new APIError('BAD_REQUEST', { message: 'Введите почту и пароль.' });
 
-    // Always run scrypt so a wrong email and a wrong password take the same time.
-    const passwordOk = await verifyReviewPassword(password, account.passwordHash);
-    if (!sameEmail(email, account.email) || !passwordOk) {
+    // Compare with every account and always run scrypt, so a wrong email and a wrong password take the same time.
+    const matches = accounts.map(item => sameEmail(email, item.email));
+    const account = accounts[matches.indexOf(true)];
+    const passwordOk = await verifyReviewPassword(password, (account ?? accounts[0]!).passwordHash);
+    if (!account || !passwordOk) {
       throw new APIError('UNAUTHORIZED', { message: 'Неверная почта или пароль.' });
     }
 
     const adapter = ctx.context.internalAdapter;
     const existing = await adapter.findUserByEmail(account.email);
     const user = existing?.user
-      ?? await adapter.createUser({ email: account.email, emailVerified: true, name: REVIEW_ACCOUNT_NAME }, { method: 'review-password' });
+      ?? await adapter.createUser({ email: account.email, emailVerified: true, name: account.name }, { method: 'review-password' });
     const session = await adapter.createSession(user.id);
     await setSessionCookie(ctx, { session, user });
     return ctx.json<ReviewSignInResult>({ status: 'signed-in' });

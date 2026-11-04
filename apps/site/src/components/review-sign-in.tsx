@@ -9,17 +9,19 @@ import type { ReviewSignInResult } from '@/lib/review-login';
 const subscribeNever = () => () => {};
 
 /**
- * Password sign-in for the store reviewer (REVIEW_LOGIN_*): Google Play and RuStore reviewers
- * cannot open a magic link or Telegram. Shown only inside the Android app, folded under a link.
+ * Password sign-in for the review accounts: Google Play and RuStore reviewers (REVIEW_LOGIN_*) cannot open a magic link
+ * or Telegram, and neither can the payment provider's reviewer (PAYMENT_REVIEW_*). Inside the apps it is folded under a
+ * link; on the web it shows only on the direct link `/sign-in?review=1` (`web`), open at once, and leads to the plans.
  */
-export function ReviewSignIn() {
+export function ReviewSignIn({ web = false }: { web?: boolean }) {
   const router = useRouter();
   const emailId = useId();
   const passwordId = useId();
   const errorId = useId();
   // The server cannot tell the app from a browser: render nothing there and decide on the client.
-  const available = useSyncExternalStore(subscribeNever, isNativeApp, () => false);
-  const [open, setOpen] = useState(false);
+  const native = useSyncExternalStore(subscribeNever, isNativeApp, () => false);
+  const available = web || native;
+  const [open, setOpen] = useState(web);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);
@@ -41,7 +43,7 @@ export function ReviewSignIn() {
       body: { email, password },
     }).catch(() => ({ data: null, error: { status: 0, message: '' } }));
     if (data?.status === 'signed-in') {
-      router.push('/profile');
+      router.push(web ? '/business/cabinet?section=plan' : '/profile');
       router.refresh();
       return;
     }
@@ -53,7 +55,7 @@ export function ReviewSignIn() {
 
   return (
     <form className="auth-form review-sign-in" onSubmit={handleSubmit}>
-      <p className="field-help">Вход по паролю — для проверки приложения. Участники входят через Telegram или по почте.</p>
+      <p className="field-help">Вход по паролю — для проверки приложения и оплаты. Участники входят через Telegram или по почте.</p>
       <div className="field-group">
         <label htmlFor={emailId} className="sr-only">Email</label>
         <input id={emailId} name="email" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" spellCheck={false}

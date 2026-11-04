@@ -16,8 +16,12 @@ const runId = randomUUID().replaceAll('-', '').slice(0, 12);
 const EMAIL = `review-${runId}@example.test`;
 const PASSWORD = `review-password-${runId}`;
 const account = { email: EMAIL, passwordHash: await hashReviewPassword(PASSWORD) };
-const auth = createAuth({ database: pool, sendMagicLink: async () => {}, telegramBotToken: null, reviewLogin: account });
-const disabled = createAuth({ database: pool, sendMagicLink: async () => {}, telegramBotToken: null, reviewLogin: null });
+// The payment provider's reviewer: a second account with its own password.
+const PAY_EMAIL = `pay-review-${runId}@example.test`;
+const PAY_PASSWORD = `pay-password-${runId}`;
+const payment = { email: PAY_EMAIL, passwordHash: await hashReviewPassword(PAY_PASSWORD) };
+const auth = createAuth({ database: pool, sendMagicLink: async () => {}, telegramBotToken: null, reviewLogin: account, paymentReview: payment });
+const disabled = createAuth({ database: pool, sendMagicLink: async () => {}, telegramBotToken: null, reviewLogin: null, paymentReview: null });
 let ipCounter = 0;
 
 function signIn(body: Record<string, unknown>, options: { origin?: string; ip?: string; instance?: typeof auth } = {}): Promise<Response> {
@@ -43,7 +47,7 @@ async function sessionEmail(response: Response): Promise<string | undefined> {
 }
 
 afterAll(async () => {
-  await pool.query('delete from "user" where "email" = $1', [EMAIL]);
+  await pool.query('delete from "user" where "email" = any($1)', [[EMAIL, PAY_EMAIL]]);
   await pool.end();
 });
 
@@ -79,7 +83,19 @@ describe('review password sign-in', () => {
     expect(crossSite.status).toBe(403);
   });
 
-  it('is off without REVIEW_LOGIN_* settings', async () => {
+  it('signs the payment reviewer in with its own password only', async () => {
+    const response = await signIn({ email: PAY_EMAIL, password: PAY_PASSWORD });
+    expect(response.status).toBe(200);
+    expect(await sessionEmail(response)).toBe(PAY_EMAIL);
+    const { rows } = await pool.query('select name from "user" where "email" = $1', [PAY_EMAIL]);
+    expect(rows[0]?.name).toBe('Проверка оплаты');
+
+    // Passwords do not cross: each account opens only with its own.
+    expect((await signIn({ email: PAY_EMAIL, password: PASSWORD })).status).toBe(401);
+    expect((await signIn({ email: EMAIL, password: PAY_PASSWORD })).status).toBe(401);
+  });
+
+  it('is off without REVIEW_LOGIN_* and PAYMENT_REVIEW_* settings', async () => {
     const response = await signIn({ email: EMAIL, password: PASSWORD }, { instance: disabled });
     expect(response.status).toBe(404);
   });

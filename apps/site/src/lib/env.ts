@@ -105,12 +105,24 @@ export interface ReviewLoginEnv {
  * or Telegram). Optional: without both variables the endpoint answers 404 and the form is hidden.
  */
 export function getReviewLoginEnv(): ReviewLoginEnv | null {
-  const email = process.env.REVIEW_LOGIN_EMAIL?.trim().toLowerCase();
-  const passwordHash = process.env.REVIEW_LOGIN_PASSWORD_HASH?.trim();
+  return reviewAccount('REVIEW_LOGIN');
+}
+
+/**
+ * The second password account: the payment provider's reviewer, who checks the business cabinet and the plans in a
+ * browser (PAYMENT_REVIEW_EMAIL, PAYMENT_REVIEW_PASSWORD_HASH). Its own password, so it is revoked apart from the stores'.
+ */
+export function getPaymentReviewEnv(): ReviewLoginEnv | null {
+  return reviewAccount('PAYMENT_REVIEW');
+}
+
+function reviewAccount(prefix: 'REVIEW_LOGIN' | 'PAYMENT_REVIEW'): ReviewLoginEnv | null {
+  const email = process.env[`${prefix}_EMAIL`]?.trim().toLowerCase();
+  const passwordHash = process.env[`${prefix}_PASSWORD_HASH`]?.trim();
   if (!email || !passwordHash) return null;
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)) throw new Error('REVIEW_LOGIN_EMAIL must be an email address');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)) throw new Error(`${prefix}_EMAIL must be an email address`);
   if (!/^scrypt:[A-Za-z0-9_-]{22,}:[A-Za-z0-9_-]{43}$/u.test(passwordHash)) {
-    throw new Error('REVIEW_LOGIN_PASSWORD_HASH must come from npm -w apps/site run review:password');
+    throw new Error(`${prefix}_PASSWORD_HASH must come from npm -w apps/site run review:password`);
   }
   return { email, passwordHash };
 }
