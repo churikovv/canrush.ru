@@ -1226,7 +1226,7 @@ html[data-cookie-notice="visible"] .brand-footer {
   max-width: 58%;
   text-align: right;
 }
-.catalog-card h2 {
+.catalog-card :is(h2, h3) {
   min-height: 20px;
   margin: 0;
   color: var(--color-ink);

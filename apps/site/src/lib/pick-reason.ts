@@ -7,7 +7,7 @@ function plural(value: number, one: string, few: string, many: string) {
 }
 
 /** Flavour families from profile-compatibility, as they read in «вкусы с …». */
-const FLAVOR_TOKENS: Record<string, string> = {
+export const FLAVOR_TOKENS: Record<string, string> = {
   apple: 'яблоком', mango: 'манго', peach: 'персиком', pear: 'грушей', lychee: 'личи', cherry: 'вишней', berry: 'ягодами',
   blueberry: 'черникой', raspberry: 'малиной', strawberry: 'клубникой', watermelon: 'арбузом', grapefruit: 'грейпфрутом',
   lemon: 'лимоном', lime: 'лаймом', citrus: 'цитрусом', orange: 'апельсином', pineapple: 'ананасом', guava: 'гуавой',

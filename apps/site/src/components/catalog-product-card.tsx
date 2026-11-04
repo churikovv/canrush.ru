@@ -21,9 +21,13 @@ interface CatalogProductCardProps {
   group: CatalogGroup;
   eager: boolean;
   summary?: ReviewSummary;
+  /** `h3` where the cards sit under a section heading of their own (the drink page's «Похожее»). */
+  heading?: 'h2' | 'h3';
+  /** A short line under the name: why the drink is suggested. */
+  note?: string;
 }
 
-export function CatalogProductCard({ group, eager, summary }: CatalogProductCardProps) {
+export function CatalogProductCard({ group, eager, summary, heading: Heading = 'h2', note }: CatalogProductCardProps) {
   const cheapest = cheapestVariant(group);
   const cheapestVolume = volumeLabel(cheapest?.volumeMl);
   const retailerNames = retailers(group);
@@ -63,7 +67,8 @@ export function CatalogProductCard({ group, eager, summary }: CatalogProductCard
           <span>{group.brand}</span>
         </div>
 
-        <h2>{flavorName(group.flavor)}</h2>
+        <Heading>{flavorName(group.flavor)}</Heading>
+        {note && <p className="catalog-card-note">{note}</p>}
 
         {cheapest ? (
           <div className="catalog-card-price">

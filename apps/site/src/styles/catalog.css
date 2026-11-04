@@ -862,3 +862,32 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
   .drink-qa-composer-actions { flex-direction: column-reverse; }
   .drink-qa-composer-actions > * { width: 100%; }
 }
+
+/* «Похожее», the drink page's last block: catalog cards in one row that scrolls sideways on every screen.
+   On a phone the row reaches the screen edges (the info column's 16 px gutter) so the next card peeks in; wider
+   screens keep the column. Where there is a mouse, arrows beside the heading move the row (`CatalogSimilarRow`). */
+.catalog-similar { min-width: 0; margin-top: 12px; }
+.catalog-similar-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.catalog-similar-head h2 { margin: 0; color: var(--color-ink); font-size: 1.25rem; font-weight: 800; line-height: 1.25; }
+.catalog-similar-head p { margin: 4px 0 0; color: var(--color-muted-strong); font-size: .875rem; }
+.catalog-similar-arrows { display: none; flex: none; gap: 8px; }
+.catalog-similar-arrow { display: grid; width: 44px; height: 44px; place-items: center; padding: 0; border: 0; border-radius: 50%; background: var(--color-subtle); color: var(--color-ink); cursor: pointer; transition: background-color var(--motion-fast) ease-out, opacity var(--motion-fast) ease-out; }
+.catalog-similar-arrow:hover:not(:disabled) { background: var(--color-control); }
+.catalog-similar-arrow:disabled { opacity: .35; cursor: default; }
+.catalog-similar-arrow.is-back svg { rotate: 180deg; }
+@media (hover: hover) and (pointer: fine) { .catalog-similar-arrows { display: flex; } }
+.catalog-similar-row { display: grid; grid-auto-flow: column; grid-auto-columns: 156px; gap: 8px; margin: 12px -16px 0; padding: 0 16px 4px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; scrollbar-width: none; list-style: none; }
+.catalog-similar-row::-webkit-scrollbar { display: none; }
+.catalog-similar-row > li { min-width: 0; scroll-snap-align: start; }
+.catalog-similar-row .catalog-card { height: 100%; }
+.catalog-similar-row .catalog-card-link { background: var(--color-subtle); }
+.catalog-similar-row .catalog-card-link:hover { background: var(--color-control); }
+/* Brand blue mixed with the ink: deeper on light themes, lighter on dark ones, readable on both. */
+.catalog-card-note { margin: -4px 0 0; color: color-mix(in srgb, var(--color-brand) 62%, var(--color-ink)); font-size: .75rem; font-weight: 600; line-height: 1.35; text-wrap: pretty; }
+@media (min-width: 640px) {
+  .catalog-similar-row { grid-auto-columns: 184px; gap: 12px; margin-inline: 0; padding-inline: 0; scroll-padding-inline: 0; }
+}
+@media (min-width: 960px) {
+  .catalog-similar { margin-top: 20px; }
+  .catalog-similar-row { grid-auto-columns: 208px; }
+}

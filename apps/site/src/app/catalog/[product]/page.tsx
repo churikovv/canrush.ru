@@ -15,6 +15,8 @@ import { getBrandPrices } from '@/lib/brand-drink-prices';
 import { getDrinkStoreOffers } from '@/lib/stores';
 import { BrandShell } from '@/components/brand-shell';
 import { CatalogProductDetail } from '@/components/catalog-product-detail';
+import { CatalogSimilarDrinks } from '@/components/catalog-similar-drinks';
+import { Suspense } from 'react';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { getSwipeCounts } from '@/lib/drink-swipes';
 import { catalogDrinkIngredients, getCatalogDrink, renamedCatalogDrink } from '@/lib/catalog-drinks';
@@ -147,6 +149,7 @@ export default async function CatalogProductPage({
         city={city}
         ceilings={ceilings}
         company={company}
+        similar={<Suspense fallback={null}><CatalogSimilarDrinks brand={group.brand} flavor={group.flavor} viewerId={session?.user.id ?? null} /></Suspense>}
       />
     </BrandShell>
   );

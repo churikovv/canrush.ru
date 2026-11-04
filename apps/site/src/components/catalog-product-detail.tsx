@@ -13,6 +13,7 @@ import { CatalogDrinkAuthor } from '@/components/catalog-drink-author';
 import { CatalogDrinkCompany } from '@/components/catalog-drink-company';
 import type { CompanyCard } from '@/lib/business-profile';
 import type { CatalogGroup, PublishedIngredients } from '@canrush/shared';
+import type { ReactNode } from 'react';
 import { CatalogProductIngredients } from '@/components/catalog-product-ingredients';
 import { CatalogFavoriteButton } from '@/components/catalog-favorite-button';
 import { CatalogProductReviews } from '@/components/catalog-product-reviews';
@@ -80,10 +81,12 @@ interface CatalogProductDetailProps {
   ceilings?: DrinkPrice[];
   /** Extra photos of a member-added drink besides the cover (ids for `/api/catalog-drink-photos/<id>`). */
   photos?: string[];
+  /** «Похожее», the page's last block (`CatalogSimilarDrinks`, streamed in by the page). */
+  similar?: ReactNode;
 }
 
 
-export function CatalogProductDetail({ photos = [], storeOffers = [], city, group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, questions, questionsOpen, viewerId, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ similar, photos = [], storeOffers = [], city, group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, questions, questionsOpen, viewerId, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
   const newest = reviews.find(review => review.text.trim());
   const firstQuestion = questions.questions[0];
   const latestQuestion = firstQuestion ? { author: firstQuestion.username, avatarId: firstQuestion.avatarId, date: LATEST_DATE.format(new Date(firstQuestion.createdAt)), text: firstQuestion.text, answers: firstQuestion.answers.length } : null;
@@ -247,6 +250,7 @@ export function CatalogProductDetail({ photos = [], storeOffers = [], city, grou
         {company
           ? <CatalogDrinkCompany company={company} signedIn={authenticated} />
           : addedBy && !addedBy.business && <CatalogDrinkAuthor author={addedBy.author} createdAt={addedBy.createdAt} />}
+        {similar}
       </div>
     </article>
   );
