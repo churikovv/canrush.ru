@@ -2,6 +2,7 @@ import nodemailer, { type Transporter } from 'nodemailer';
 import { getAuthEnv, getSmtpEnv } from '@/lib/env';
 import { buildMagicLinkConfirmationUrl, type SignInAudience } from '@/lib/magic-link-url';
 import type { WeeklyReport } from '@/lib/business-report';
+import { MARKET_OPEN } from '@/lib/market-open';
 
 let transporter: Transporter | undefined;
 
@@ -124,7 +125,7 @@ export async function sendBusinessInviteEmail(to: string, business: string, invi
 /** The good news after the team approves a company: what opened in the cabinet, and a button to it. */
 export function renderBusinessApprovedEmail(business: string, link: string, pilotUntil: Date | null = null): MagicLinkEmailContent {
   const safe = { business: escapeHtml(business), link: escapeHtml(link) };
-  const opened = ['ответы на отзывы от имени компании и шаблоны', 'новые напитки в каталоге — сразу, без модерации', 'правки карточек и объявления от имени компании'];
+  const opened = ['ответы на отзывы от имени компании и шаблоны', 'новые напитки в каталоге — сразу, без модерации', MARKET_OPEN ? 'правки карточек и объявления от имени компании' : 'правки карточек'];
   if (pilotUntil) opened.unshift('тариф «Бренд» бесплатно до ' + new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' }).format(pilotUntil) + ': аналитика поиска, карточек и конкурентов, разбор нейросетью, отчёт на почту');
   return {
     subject: `Компания «${business}» подтверждена — CanRush для бизнеса`,

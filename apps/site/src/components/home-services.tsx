@@ -5,6 +5,7 @@ import Link from '@/components/navigation-progress';
 import { BETA_ENGINE_PLACES, type BetaEngine } from '@/lib/beta-engine';
 import type { Contest } from '@/lib/contest';
 import type { HomeMetrics } from '@/lib/home-metrics';
+import { MARKET_OPEN } from '@/lib/market-open';
 
 const count = new Intl.NumberFormat('ru-RU');
 
@@ -34,7 +35,7 @@ export function HomeServices({ metrics, contest, joined, engine }: {
     ...(contest?.phase === 'open' ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`, art: '/brand/home/contest.png' }] : []),
     ...(engine.taken < BETA_ENGINE_PLACES ? [{ key: 'engine', href: '/engine', label: 'Бета сайта', note: 'каждый важен', art: '/brand/medals/engine.png' }] : []),
     { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: '/brand/home/dating.png' },
-    { key: 'market', href: '/search?type=market', label: 'Маркет', note: 'объявления', art: '/brand/home/market.png' },
+    ...(MARKET_OPEN ? [{ key: 'market', href: '/search?type=market', label: 'Маркет', note: 'объявления', art: '/brand/home/market.png' }] : []),
     // The landing for brands, distributors and shops (CanRush для бизнеса).
     { key: 'business', href: '/business', label: 'Бизнес', note: 'для брендов', art: '/brand/home/business.png' },
   ];

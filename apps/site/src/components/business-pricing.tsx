@@ -1,11 +1,12 @@
 'use client';
 import { useState } from 'react';
 import Link from '@/components/navigation-progress';
+import { MARKET_OPEN } from '@/lib/market-open';
 import { FEATURE_LABELS, FOUNDER_MONTHLY, PLANS, PLAN_ORDER, rubles, type BusinessPlan } from '@/lib/business-plans';
 
 /** What each column lists: the previous plan's features «+» what this one adds. */
 const LISTS: Record<BusinessPlan, string[]> = {
-  start: ['Отзывы на ваши напитки', 'Ответы от имени компании и шаблоны', 'Новые напитки без модерации', 'Правки карточек', 'Объявления от компании', `Команда до ${PLANS.start.members} человек`],
+  start: ['Отзывы на ваши напитки', 'Ответы от имени компании и шаблоны', 'Новые напитки без модерации', 'Правки карточек', ...(MARKET_OPEN ? ['Объявления от компании'] : []), `Команда до ${PLANS.start.members} человек`],
   brand: [`Команда до ${PLANS.brand.members} человек`, `История ${PLANS.brand.historyDays} дней`, `Конкуренты: до ${PLANS.brand.competitors}`, ...PLANS.brand.features.filter(item => item !== 'competitors').map(item => FEATURE_LABELS[item])],
   network: ['Любое число брендов', `Команда до ${PLANS.network.members} человек`, 'История за год', `Конкуренты: до ${PLANS.network.competitors}`],
 };

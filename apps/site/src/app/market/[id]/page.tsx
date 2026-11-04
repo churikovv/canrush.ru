@@ -14,13 +14,14 @@ import { MarketGallery } from '@/components/market-gallery';
 import { MarketListingControls } from '@/components/market-listing-controls';
 import { auth } from '@/lib/auth';
 import { getListing, getActiveOrderId } from '@/lib/market';
+import { MARKET_OPEN } from '@/lib/market-open';
 import { DELIVERY, formatPrice } from '@/lib/market-fields';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Объявление в маркете' };
 export default async function ListingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!PHOTO_ID_PATTERN.test(id)) notFound();
+  if (!MARKET_OPEN || !PHOTO_ID_PATTERN.test(id)) notFound();
   const session = await auth.api.getSession({ headers: await headers() });
   // Staff (moderators too) open deleted and hidden listings they moderate.
   const viewerIsAdmin = session ? await isSiteStaffEmail(session.user.email) : false;

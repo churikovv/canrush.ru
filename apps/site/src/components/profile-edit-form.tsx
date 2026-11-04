@@ -17,6 +17,7 @@ import { ProfileHeader } from '@/components/profile-header';
 import { useSignOut } from '@/components/sign-out-button';
 import { PROFILE_BIO_MAX } from '@/lib/profile-fields';
 import { DEFAULT_PROFILE_LAYOUT, PROFILE_BLOCKS, type ProfileBlockKey } from '@/lib/profile-layout';
+import { MARKET_OPEN } from '@/lib/market-open';
 import type { ProfileData } from '@/lib/profile';
 
 type ImageKind = 'avatar' | 'banner';
@@ -223,7 +224,8 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
   const cropImage = (kind: ImageKind) => { void editCrop(kind); };
   const removeImage = (kind: ImageKind) => forgetImage(kind, { remove: true });
   const undoImage = (kind: ImageKind) => forgetImage(kind, undefined);
-  const visibleBlocks = (() => { const layout = profile.profileLayout ?? DEFAULT_PROFILE_LAYOUT; return layout.order.length - layout.hidden.length; })();
+  const marketOut = (key: string) => !MARKET_OPEN && key === 'listings';
+  const visibleBlocks = (() => { const layout = profile.profileLayout ?? DEFAULT_PROFILE_LAYOUT; return layout.order.filter(key => !layout.hidden.includes(key) && !marketOut(key)).length; })();
   const sectionGroups: { key: string; title: string; rows: { key: Section; title: string; value?: string; tone?: string; icon?: ReactNode; href?: string; onSelect?: () => void }[] }[] = [
     { key: 'profile', title: 'Профиль', rows: [
       { key: 'details', title: 'Имя, ник и описание', value: `${name.trim() || initialName} · @${username.replace(/^@+/, '') || profile.username}` },
@@ -252,7 +254,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
       <ProfileLookStrip appearance={appearance} saved={savedAppearance} onAppearance={setAppearance} level={level} xp={xp ?? 0} owned={ownedFrames} brandFrames={brandFrames}
         avatarSrc={imageSource('avatar')} disabled={pending} autoOpen={lookTile}
         tag={tags && { value: tag, saved: tags.selected, earned: tags.earned, onChange: setTag, href: `/profile/${profile.username}/achievements` }}
-        blocks={{ shown: visibleBlocks, total: PROFILE_BLOCKS.length, open: () => openSection('blocks') }} />
+        blocks={{ shown: visibleBlocks, total: PROFILE_BLOCKS.filter(block => !marketOut(block.key)).length, open: () => openSection('blocks') }} />
       {imageError && <p className="field-error look-error" role="alert">{imageError}</p>}
       </div>
       {state.message && <div className="profile-form-error" ref={errorSummaryRef} role="alert" tabIndex={-1}><h2>Не удалось сохранить профиль</h2><p>{state.message}</p></div>}

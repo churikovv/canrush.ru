@@ -7,11 +7,14 @@ import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { MarketTabs } from '@/components/section-tabs';
 import { MarketBrowser, type MarketSearchParams } from '@/components/market-browser';
+import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
+import { MARKET_OPEN } from '@/lib/market-open';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Маркет энергетиков', description: 'Энергетики от участников CanRush. Объявления, доставка и общение с продавцами.' };
 export default async function MarketPage({ searchParams }: { searchParams: Promise<MarketSearchParams> }) {
+  if (!MARKET_OPEN) redirect('/search');
   const query = await searchParams;
   const session = await auth.api.getSession({ headers: await headers() });
   const seller = typeof query.seller === 'string' ? query.seller.trim().slice(0, 64) : '';

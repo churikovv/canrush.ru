@@ -11,6 +11,7 @@ import { MarketError, parseListing, type OrderStatus } from '@/lib/market-fields
 import { createListing, closeListing, reopenListing, deleteArchivedListing, startOrder, changeOrderStatus, sendMarketMessage, getOrder, getMessages, markMessagesRead } from '@/lib/market';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { getCabinet } from '@/lib/business';
+import { MARKET_CLOSED_MESSAGE, MARKET_OPEN } from '@/lib/market-open';
 
 export interface MarketActionState { error?: string; id?: string; success?: boolean }
 async function currentUser() {
@@ -23,6 +24,7 @@ function failure(error: unknown): MarketActionState {
   return { error: isMemberBlockedError(error) ? MEMBER_BLOCKED_MESSAGE : error instanceof MarketError || error instanceof ReviewPhotoError || isFrozenError(error) ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
 }
 export async function createListingAction(form: FormData): Promise<MarketActionState> {
+  if (!MARKET_OPEN) return { error: MARKET_CLOSED_MESSAGE };
   try {
     const user = await currentUser();
     const input = parseListing(form);
@@ -36,6 +38,7 @@ export async function createListingAction(form: FormData): Promise<MarketActionS
   } catch (error) { return failure(error); }
 }
 export async function listingAction(id: string, operation: 'order' | 'close' | 'delete' | 'reopen', quantity = 1): Promise<MarketActionState> {
+  if (!MARKET_OPEN && (operation === 'order' || operation === 'reopen')) return { error: MARKET_CLOSED_MESSAGE };
   try {
     const user = await currentUser();
     if (operation === 'order') {
@@ -56,6 +59,7 @@ export async function orderStatusAction(id: string, status: OrderStatus): Promis
   } catch (error) { return failure(error); }
 }
 export async function sendMessageAction(id: string, form: FormData): Promise<MarketActionState> {
+  if (!MARKET_OPEN) return { error: MARKET_CLOSED_MESSAGE };
   try {
     const user = await currentUser();
     if (!await getOrder(user.id, id)) throw new MarketError('Переписка недоступна.');

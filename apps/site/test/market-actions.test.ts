@@ -1,6 +1,9 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ session: vi.fn(), blocked: vi.fn(), create: vi.fn(), close: vi.fn(), start: vi.fn(), status: vi.fn(), send: vi.fn(), order: vi.fn(), messages: vi.fn(), read: vi.fn(), photos: vi.fn(), cabinet: vi.fn() }));
 vi.mock('next/headers', () => ({ headers: async () => new Headers() }));
+// The market may be closed on the site (`MARKET_OPEN`); these tests cover it open, the last one closed.
+const market = vi.hoisted(() => ({ open: true }));
+vi.mock('../src/lib/market-open', () => ({ get MARKET_OPEN() { return market.open; }, MARKET_CLOSED_MESSAGE: 'Маркет временно закрыт.' }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('../src/lib/auth', () => ({ auth: { api: { getSession: mocks.session } } }));
 vi.mock('../src/lib/profile', () => ({ ensureOwnProfile: vi.fn() }));
@@ -11,7 +14,7 @@ vi.mock('../src/lib/review-photos', () => ({ prepareReviewPhotos: mocks.photos, 
 import { createListingAction, listingAction, orderStatusAction, sendMessageAction, loadMessagesAction, readMessagesAction } from '../src/app/market/actions';
 const form = () => { const data = new FormData(); for (const [key, value] of Object.entries({ brand: 'Monster', title: 'Test', description: 'Test', city: 'Москва', price: '100', quantity: '6', delivery: 'pickup', text: 'Hello', userId: 'spoofed' })) data.set(key, value); return data; };
 beforeEach(() => {
-  vi.clearAllMocks(); mocks.session.mockResolvedValue({ user: { id: 'authenticated' } }); mocks.blocked.mockResolvedValue(false);
+  vi.clearAllMocks(); market.open = true; mocks.session.mockResolvedValue({ user: { id: 'authenticated' } }); mocks.blocked.mockResolvedValue(false);
   mocks.photos.mockResolvedValue({ photos: [], retained: [] }); mocks.order.mockResolvedValue({ id: 'order' });
 });
 it('rejects anonymous actions before photo processing or writes', async () => {
@@ -43,4 +46,11 @@ it('checks blocks and conversation membership before decoding attachments', asyn
   mocks.blocked.mockResolvedValue(false); mocks.order.mockResolvedValue(null);
   expect((await sendMessageAction('id', form())).error).toContain('недоступна');
   expect(mocks.photos).not.toHaveBeenCalled(); expect(mocks.send).not.toHaveBeenCalled();
+});
+it('refuses new listings, orders and messages while the market is closed', async () => {
+  market.open = false;
+  for (const result of [await createListingAction(form()), await listingAction('id', 'order'), await listingAction('id', 'reopen'), await sendMessageAction('id', form())]) expect(result.error).toBe('Маркет временно закрыт.');
+  expect(mocks.create).not.toHaveBeenCalled(); expect(mocks.start).not.toHaveBeenCalled(); expect(mocks.send).not.toHaveBeenCalled(); expect(mocks.photos).not.toHaveBeenCalled();
+  // Closing a listing stays possible: it only takes something off the market.
+  expect(await listingAction('id', 'close')).toEqual({ success: true });
 });

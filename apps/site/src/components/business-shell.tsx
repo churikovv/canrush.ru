@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react';
 import { BusinessNotifications } from '@/components/business-shell-client';
 import { DashboardShell } from '@/components/dashboard-shell';
+import { MARKET_OPEN } from '@/lib/market-open';
 import Link from '@/components/navigation-progress';
 import { BUSINESS_KINDS, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
 import { planInfo, type BusinessPlan } from '@/lib/business-plans';
 
+/** Sections of the member market inside the cabinet: gone while `MARKET_OPEN` is false. */
+export const MARKET_SECTIONS: readonly string[] = ['market', 'new-listing', 'orders'];
 export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'drink-stores' | 'drink-price' | 'wholesale' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings' | 'plan' | 'support';
 export const businessHref = (section: BusinessSection, params: Record<string, string> = {}) =>
   `/business/cabinet?${new URLSearchParams({ ...(section !== 'overview' ? { section } : {}), ...params })}`.replace(/\?$/, '');
@@ -51,8 +54,10 @@ const SPACES: Record<Space, { label: string; icon: BusinessIconName; items: { la
   manage: { label: 'Управление', icon: 'settings', items: [
     { label: 'Отзывы и ответы', icon: 'star', section: 'reviews' },
     { label: 'Напитки', icon: 'can', section: 'drinks', also: ['new-drink', 'drink-edit', 'drink-stores', 'drink-price'] },
-    { label: 'Объявления', icon: 'bag', section: 'market', also: ['new-listing'] },
-    { label: 'Заказы и чаты', icon: 'chat', section: 'orders' },
+    ...(MARKET_OPEN ? [
+      { label: 'Объявления', icon: 'bag', section: 'market', also: ['new-listing'] },
+      { label: 'Заказы и чаты', icon: 'chat', section: 'orders' },
+    ] satisfies { label: string; icon: BusinessIconName; section: BusinessSection; also?: BusinessSection[] }[] : []),
     { label: 'Оптовые цены', icon: 'truck', section: 'wholesale' },
   ] },
 };
@@ -98,9 +103,9 @@ export function BusinessShell({ business, active, title, actions, toolbar, unrea
       </>,
     }}
     tools={<>
-      <Link className="bc-icon-button" href={businessHref('orders')} aria-label={unreadMessages ? `Заказы и чаты: ${unreadMessages} новых сообщений` : 'Заказы и чаты'} title="Заказы и чаты">
+      {MARKET_OPEN && <Link className="bc-icon-button" href={businessHref('orders')} aria-label={unreadMessages ? `Заказы и чаты: ${unreadMessages} новых сообщений` : 'Заказы и чаты'} title="Заказы и чаты">
         <BusinessIcon name="chat" />{unreadMessages > 0 && <span className="bc-dot" aria-hidden="true" />}
-      </Link>
+      </Link>}
       <BusinessNotifications unread={unread} />
     </>}>
     {children}

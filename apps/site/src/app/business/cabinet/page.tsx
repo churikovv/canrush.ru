@@ -17,7 +17,8 @@ import { getOwnSupportThread, supportMessages, supportUnreadForUser } from '@/li
 import { MarketInboxRefresh } from '@/components/market-inbox-refresh';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { ScoreRadar } from '@/components/score-radar';
-import { BusinessDropdown, BusinessIcon, BusinessPagination, BusinessSegments, BusinessShell, SortHeader, businessHref, type BusinessSection, type SortDir } from '@/components/business-shell';
+import { BusinessDropdown, BusinessIcon, BusinessPagination, BusinessSegments, BusinessShell, MARKET_SECTIONS, SortHeader, businessHref, type BusinessSection, type SortDir } from '@/components/business-shell';
+import { MARKET_OPEN } from '@/lib/market-open';
 import { FormAlert } from '@/components/form-alert';
 import { BusinessChecklist, BusinessRowMenu } from '@/components/business-shell-client';
 import { Kpi } from '@/components/business-kpi';
@@ -1179,7 +1180,8 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     </BrandShell>;
   }
   const { business, role } = cabinet;
-  const section = SECTIONS.includes(params.section as BusinessSection) ? params.section as BusinessSection : 'overview';
+  // While the market is closed its sections (listings, a new listing, orders) open the overview instead.
+  const section = SECTIONS.includes(params.section as BusinessSection) && (MARKET_OPEN || !MARKET_SECTIONS.includes(params.section as string)) ? params.section as BusinessSection : 'overview';
   const approved = business.status === 'approved';
   // An analyst looks: no replies, drink requests or publishing on the company's behalf.
   const canAct = role !== 'analyst';

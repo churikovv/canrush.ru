@@ -10,10 +10,12 @@ import { MarketInboxRefresh } from '@/components/market-inbox-refresh';
 import { MarketTabs } from '@/components/section-tabs';
 import { auth } from '@/lib/auth';
 import { getOrders } from '@/lib/market';
+import { MARKET_OPEN } from '@/lib/market-open';
 import { ORDER_STATUS, formatPrice } from '@/lib/market-fields';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Заказы', robots: { index: false, follow: false } };
 export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  if (!MARKET_OPEN) redirect('/search');
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect('/sign-in');
   const query = await searchParams;

@@ -2,6 +2,7 @@ import Link from '@/components/navigation-progress';
 import { NavigationIcon, type NavigationIconName, type NavigationSection } from '@/components/navigation-icon';
 import { SiteTabBarLabel } from '@/components/site-tab-bar-label';
 import { TapMotion } from '@/components/tap-motion';
+import { MARKET_OPEN } from '@/lib/market-open';
 
 interface Tab {
   section: NavigationSection;
@@ -16,7 +17,7 @@ function tabs(): readonly Tab[] {
   return [
     { section: 'home', href: '/', label: 'Главная' },
     { section: 'calendar', href: '/calendar', label: 'Трекер', accessibleLabel: 'Трекер выпитого' },
-    { section: 'search', href: '/search', label: 'Поиск', accessibleLabel: 'Поиск: каталог, магазины и маркет' },
+    { section: 'search', href: '/search', label: 'Поиск', accessibleLabel: MARKET_OPEN ? 'Поиск: каталог, магазины и маркет' : 'Поиск: каталог и магазины' },
     { section: 'community', href: '/community', label: 'Сообщество', accessibleLabel: 'Сообщество: тирлисты, лента и люди' },
     { section: 'news', href: '/news', label: 'Новости', accessibleLabel: 'Новости: статьи участников' },
   ];

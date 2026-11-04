@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { SiteTabBar } from '@/components/site-tab-bar';
 import { FeedTabs, MarketTabs, StoreTabs } from '@/components/section-tabs';
+import { MARKET_OPEN } from '../src/lib/market-open';
 vi.mock('../src/app/notifications/push-actions', () => ({ registerPushDeviceAction: vi.fn(), unregisterPushDeviceAction: vi.fn() }));
 
 function links(html: string) {
@@ -78,8 +79,10 @@ describe('header menus', () => {
     const html = renderToStaticMarkup(await ProfileNavigation({ signedIn: true }));
     const header = html.slice(0, html.indexOf('<nav class="site-tab-bar"'));
     // Each group label links to its first page, then the panel lists every page of the group.
-    expect(links(header).map(({ href }) => href)).toEqual(['/tierlists', '/tierlists', '/market', '/feed', '/news', '/community?type=dating', '/community?type=people', '/leaderboard', '/catalog', '/catalog', '/prices', '/market/stores', '/business', '/profile']);
-    for (const label of ['Сообщество', 'Магазины', 'Объявления', 'Тирлисты', 'Лента', 'Новости', 'Каталог', 'Цены', 'Найти', 'Для бизнеса']) expect(header).toContain(label);
+    expect(links(header).map(({ href }) => href)).toEqual(['/tierlists', '/tierlists', ...(MARKET_OPEN ? ['/market'] : []), '/feed', '/news', '/community?type=dating', '/community?type=people', '/leaderboard', '/catalog', '/catalog', '/prices', '/market/stores', '/business', '/profile']);
+    // The market's «Объявления» is gone while it is closed (`MARKET_OPEN`).
+    expect(header.includes('Объявления')).toBe(MARKET_OPEN);
+    for (const label of ['Сообщество', 'Магазины', 'Тирлисты', 'Лента', 'Новости', 'Каталог', 'Цены', 'Найти', 'Для бизнеса']) expect(header).toContain(label);
     expect(header.match(/aria-expanded="false"/g)).toHaveLength(2);
   });
 

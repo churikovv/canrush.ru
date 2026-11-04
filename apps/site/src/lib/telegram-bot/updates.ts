@@ -7,6 +7,7 @@ import { searchProducts } from './catalog';
 import { askLoginConfirmation, decideLogin } from './login';
 import { TELEGRAM_BOT_OPTIONS, type TelegramBotColumn } from './settings';
 import { escapeHtml, openButton, productCard, productName, productSummary, productUrl, truncate } from './format';
+import { MARKET_OPEN } from '@/lib/market-open';
 
 export interface BotContext {
   pool: Pool;
@@ -84,7 +85,7 @@ function welcomeText(ctx: BotContext, state: ChatState): string {
     '',
     '• Напишите название энергетика — покажу, где он дешевле в вашем городе, и его рейтинг.',
     `• В любом чате наберите <code>@${escapeHtml(ctx.botUsername)} burn</code> и отправьте карточку другу.`,
-    '• Пришлю уведомления сайта, сообщения маркета и акции на ваше избранное.',
+    `• Пришлю уведомления сайта${MARKET_OPEN ? ', сообщения маркета' : ''} и акции на ваше избранное.`,
     '',
     `Город: ${escapeHtml(cityName(state.settings?.city))} — /city. Что присылать — /settings.`,
   ];
