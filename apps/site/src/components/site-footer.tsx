@@ -104,6 +104,7 @@ export function SiteFooter() {
                 <Link href="/business">CanRush для бизнеса</Link>
                 <Link href="/terms">Пользовательское соглашение</Link>
                 <Link href="/privacy">Политика обработки данных</Link>
+                <Link href="/offer">Публичная оферта</Link>
                 <Link href="/account-deletion">Удаление аккаунта</Link>
               </nav>
             </div>

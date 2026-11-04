@@ -1051,7 +1051,7 @@ async function PlanSection({ business, role, canAct }: { business: Business; rol
 
     <section className="bc-pricing" aria-labelledby="plans-title">
       <header className="bc-pricing-head"><h2 id="plans-title">Тарифы</h2>
-        <p>Оплата за год — два месяца в подарок. Тариф включается или продлевается после оплаты, автосписаний нет.</p></header>
+        <p>Оплата за год — два месяца в подарок. Тариф включается или продлевается после оплаты, автосписаний нет. Оплачивая тариф, вы принимаете <Link className="bc-link" href="/offer">публичную оферту</Link>: в ней чеки, отказ от тарифа и возврат денег.</p></header>
       <BusinessPricing current={current} founder={business.founder} badges={{ [current]: 'Ваш тариф' }} actions={{
         start: current === 'start' ? { label: 'Ваш тариф', current: true } : { note: 'Включится сам, когда закончится срок платного тарифа' },
         brand: paid('brand'), network: paid('network'),

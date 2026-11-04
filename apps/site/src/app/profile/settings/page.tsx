@@ -131,6 +131,7 @@ function AboutLinks() {
       <div className="settings-list">
         <Link className="settings-row" href="/terms">{row(ABOUT_ICONS.terms, 'Пользовательское соглашение', 'Правила сервиса и права на него', ARROW)}</Link>
         <Link className="settings-row" href="/privacy">{row(ABOUT_ICONS.privacy, 'Политика обработки данных', 'Какие данные мы храним и зачем', ARROW)}</Link>
+        <Link className="settings-row" href="/offer">{row(ABOUT_ICONS.terms, 'Публичная оферта', 'Оплата тарифов для бизнеса и возврат', ARROW)}</Link>
         <Link className="settings-row" href="/account-deletion">{row(ABOUT_ICONS.deletion, 'Удаление аккаунта', 'Как удалить аккаунт и что с данными', ARROW)}</Link>
       </div>
     </section>
