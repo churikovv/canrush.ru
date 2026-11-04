@@ -4,9 +4,27 @@ import { PriceFilterInput } from '@/components/price-filter-input';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { useRouter } from 'next/navigation';
-import { type ChangeEvent, type FormEvent, useEffect, useRef, useState, useTransition } from 'react';
+import { type ChangeEvent, type FormEvent, type KeyboardEvent, useEffect, useRef, useState, useTransition } from 'react';
 
 const SEARCH_DELAY_MS = 300;
+/** Подсказки догоняют ввод быстрее, чем сама выдача: это короткий запрос к `/api/search-suggest`. */
+const SUGGEST_DELAY_MS = 120;
+
+/** Бренд из `/api/search-suggest`: `matched` — сколько его напитков подходит под вкус (0 — подошло имя), `query` — что искать. */
+type SuggestItem = { brand: string; drinks: number; matched: number; query: string; cover?: string };
+
+function drinksLabel(count: number) {
+  const tens = count % 100, ones = count % 10;
+  return `${count} ${tens >= 11 && tens <= 14 ? 'напитков' : ones === 1 ? 'напиток' : ones >= 2 && ones <= 4 ? 'напитка' : 'напитков'}`;
+}
+
+/** Набранное выделено в названии, если оно там есть как есть (транслитерация и опечатки просто не выделяются). */
+function Marked({ text, query }: { text: string; query: string }) {
+  const needle = query.trim().toLocaleLowerCase('ru-RU');
+  const at = needle ? text.toLocaleLowerCase('ru-RU').indexOf(needle) : -1;
+  if (at < 0) return <>{text}</>;
+  return <>{text.slice(0, at)}<mark>{text.slice(at, at + needle.length)}</mark>{text.slice(at + needle.length)}</>;
+}
 const CATALOG_PARAMS = ['q', 'brand', 'flavor', 'sort'] as const;
 
 interface CatalogControlsProps {
@@ -55,13 +73,45 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort, b
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [suggestions, setSuggestions] = useState<SuggestItem[]>([]);
+  const [typed, setTyped] = useState('');
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const suggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suggestRequest = useRef<AbortController | null>(null);
+  // The last row searches what was typed: the whole result list, as Enter does.
+  const rows = suggestions.length ? suggestions.length + 1 : 0;
 
   useEffect(
     () => () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (suggestTimer.current) clearTimeout(suggestTimer.current);
+      suggestRequest.current?.abort();
     },
     [],
   );
+
+  function closeSuggestions() { setOpen(false); setActiveIndex(-1); }
+
+  function requestSuggestions(value: string) {
+    if (suggestTimer.current) clearTimeout(suggestTimer.current);
+    suggestRequest.current?.abort();
+    if (value.trim().length < 2) { setSuggestions([]); closeSuggestions(); return; }
+    suggestTimer.current = setTimeout(async () => {
+      const request = new AbortController();
+      suggestRequest.current = request;
+      try {
+        const response = await fetch(`/api/search-suggest?q=${encodeURIComponent(value.trim())}`, { signal: request.signal });
+        const data: { items: SuggestItem[] } = await response.json();
+        setSuggestions(data.items);
+        setTyped(value.trim());
+        setActiveIndex(-1);
+        setOpen(document.activeElement === inputRef.current);
+      } catch {
+        // A newer keystroke aborted it, or the network dropped: the results below still update.
+      }
+    }, SUGGEST_DELAY_MS);
+  }
 
   useEffect(() => {
     const input = inputRef.current;
@@ -85,10 +135,37 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort, b
     const nextQuery = event.currentTarget.value;
     clearTimer();
     timerRef.current = setTimeout(() => navigate(form, nextQuery), SEARCH_DELAY_MS);
+    requestSuggestions(nextQuery);
+  }
+
+  /** Бренд — поиск по нему (или по нему и набранному вкусу), последняя строка — поиск набранного как есть. */
+  function choose(index: number) {
+    const input = inputRef.current;
+    const form = input?.form;
+    if (!input || !form) return;
+    const value = suggestions[index]?.query ?? input.value;
+    closeSuggestions();
+    input.blur();
+    input.value = value;
+    navigate(form, value);
+  }
+
+  function handleSearchKey(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Escape' && open) { event.preventDefault(); closeSuggestions(); return; }
+    if (!rows) return;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      setOpen(true);
+      setActiveIndex(current => (event.key === 'ArrowDown' ? (current + 1) % rows : (current <= 0 ? rows - 1 : current - 1)));
+    } else if (event.key === 'Enter' && open && activeIndex >= 0) {
+      event.preventDefault();
+      choose(activeIndex);
+    }
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
+    closeSuggestions();
     navigate(event.currentTarget, inputRef.current?.value);
   }
 
@@ -120,10 +197,34 @@ export function CatalogControls({ brands, flavors, query, brand, flavor, sort, b
           autoComplete="off"
           enterKeyHint="search"
           spellCheck={false}
-          aria-controls="catalog-results"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={open && rows > 0}
+          aria-controls={open && rows > 0 ? 'catalog-suggest' : 'catalog-results'}
+          aria-activedescendant={open && activeIndex >= 0 ? `catalog-suggest-${activeIndex}` : undefined}
           onChange={handleSearchChange}
+          onKeyDown={handleSearchKey}
+          onFocus={() => { if (rows) setOpen(true); }}
+          onBlur={closeSuggestions}
         />
       </label>
+
+      {open && rows > 0 && <ul className="catalog-suggest" id="catalog-suggest" role="listbox" aria-label="Подсказки"
+        // Pressing a row must not blur the field first: the blur would close the list before the click lands.
+        onMouseDown={event => event.preventDefault()}>
+        {suggestions.map((item, index) => <li key={item.brand} id={`catalog-suggest-${index}`} role="option"
+          aria-selected={index === activeIndex} className="catalog-suggest-row" onClick={() => choose(index)}>
+          <span className="catalog-suggest-cover">{item.cover ? <Image src={item.cover} width={40} height={40} alt="" unoptimized /> : null}</span>
+          <span className="catalog-suggest-text">
+            <strong><Marked text={item.brand} query={typed} /></strong>
+            <small>{item.matched ? `${drinksLabel(item.matched)} по запросу · всего ${item.drinks}` : `Бренд · ${drinksLabel(item.drinks)}`}</small>
+          </span>
+        </li>)}
+        <li id={`catalog-suggest-${suggestions.length}`} role="option" aria-selected={activeIndex === suggestions.length} className="catalog-suggest-row is-all" onClick={() => choose(suggestions.length)}>
+          <span className="catalog-suggest-cover" aria-hidden="true"><Image src="/brand/icons/catalog-search.svg" width={22} height={22} alt="" /></span>
+          <span className="catalog-suggest-text"><strong>Все результаты: «{typed}»</strong></span>
+        </li>
+      </ul>}
 
       <details className="catalog-filter-disclosure">
         <summary aria-label={active ? `Фильтры и сортировка, выбрано: ${active}` : 'Фильтры и сортировка'}>
