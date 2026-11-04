@@ -153,6 +153,15 @@
 .bt-panel p { margin: 0; color: #d6ccff; font-size: .9375rem; }
 .bt-panel .game-btn { width: 100%; }
 .bt-start-bird { display: grid; place-items: center; width: 96px; height: 96px; overflow: hidden; border: 3px solid #05030f; border-radius: 50%; background: #dfeaff; box-shadow: 0 0 0 3px rgb(160 215 255 / .55), 0 0 26px 6px rgb(120 200 255 / .5); }
+/* Плитки «куда дальше» в итоге боя: равные, с иконкой, как пункты меню паузы. */
+.bt-panel-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.bt-panel-link { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 8px 10px; box-sizing: border-box; border: 2px solid rgb(140 200 255 / .3); border-radius: 16px; background: rgb(8 4 30 / .55); color: #fff; font: inherit; font-size: .875rem; font-weight: 800; line-height: 1.15; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 160ms ease-out; }
+.bt-panel-link svg { flex: none; color: #b9a8ff; }
+.bt-panel-link:hover { border-color: rgb(140 200 255 / .6); }
+.bt-panel-link:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.bt-panel-link:disabled { opacity: .5; cursor: default; }
+.bt-craft-left { justify-self: center; color: #c9bbff; font-size: .8125rem; font-weight: 700; }
+.bt-craft-limit { margin: 0; padding: 8px 12px; border-radius: 12px; background: rgb(8 4 30 / .55); color: #ffd9a8; font-size: .8125rem; font-weight: 700; line-height: 1.35; text-align: center; }
 .bt-link { min-height: 44px; padding: 0 12px; border: 0; background: none; color: #c9bbff; font: inherit; font-size: .9375rem; font-weight: 800; line-height: 44px; text-decoration: none; cursor: pointer; }
 .bt-link.is-danger { color: #ff9a8c; }
 .bt-earned { display: inline-flex; align-items: center; gap: 6px; color: #fff; font-size: 1.25rem; font-weight: 900; }
@@ -234,6 +243,55 @@
 .bt-menu-text small { color: #c9bbff; font-size: .8125rem; line-height: 1.25; }
 .bt-menu-arrow { color: #c9bbff; font-size: 1.5rem; line-height: 1; }
 
+/* Битва с другом: кнопка на стартовом экране, комната вызова и страница для гостя (`battle-duel.tsx`). */
+.bt-lobby-friend { flex: none; width: min(340px, 100%); box-sizing: border-box; }
+.bt-lobby-friend-plate { display: grid; justify-items: center; gap: 1px; width: min(340px, 100%); box-sizing: border-box; padding: 10px 16px; border: 2px solid rgb(140 200 255 / .45); border-radius: 18px; background: rgb(14 8 44 / .78); color: inherit; text-decoration: none; }
+.bt-lobby-friend-plate strong { color: #fff; font-size: .9375rem; font-weight: 900; }
+.bt-lobby-friend-plate small { color: #ffd9a8; font-size: .8125rem; font-weight: 800; }
+.bt-duel { justify-content: flex-start; gap: 14px; }
+.bt-duel .bt-lobby-title p { display: block; }
+.bt-duel-host img, .bt-duel-face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bt-duel-initial { display: grid; place-items: center; width: 100%; height: 100%; background: linear-gradient(145deg, #2e7dff, #006eff 55%, #0a46c2); color: #fff; font-size: 1.5em; font-weight: 900; }
+.bt-hero-face .bt-duel-initial { font-size: 1.5rem; }
+.bt-duel-wait { display: inline-flex !important; align-items: center; gap: 8px; }
+.bt-duel-wait span { width: 10px; height: 10px; border-radius: 50%; background: #ffd34d; box-shadow: 0 0 10px #ffd34d; animation: bt-duel-wait 1.2s ease-in-out infinite; }
+@keyframes bt-duel-wait { 50% { opacity: .3; transform: scale(.7); } }
+.bt-duel-card { display: grid; gap: 10px; width: min(360px, 100%); padding: 14px; box-sizing: border-box; border: 2px solid rgb(140 200 255 / .45); border-radius: 18px; background: rgb(14 8 44 / .82); box-shadow: inset 0 1px 0 rgb(255 255 255 / .16); -webkit-user-select: text; user-select: text; }
+.bt-duel-card h2 { margin: 0; color: #fff; font-size: 1rem; font-weight: 900; }
+.bt-duel-lead { margin: 0; color: #e6dfff; font-size: .9375rem; line-height: 1.4; }
+.bt-duel-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: min(360px, 100%); margin: 0; padding: 0; list-style: none; }
+.bt-duel-facts li { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 10px; box-sizing: border-box; border-radius: 12px; background: rgb(8 4 30 / .6); color: #e6dfff; font-size: .8125rem; font-weight: 700; line-height: 1.2; }
+.bt-duel-facts svg { flex: none; color: #b9a8ff; }
+.bt-duel-card .bt-duel-facts { width: 100%; }
+.bt-duel-cancel { min-height: 44px; padding: 0 18px; border: 2px solid rgb(255 154 140 / .35); border-radius: 999px; background: rgb(8 4 30 / .5); color: #ff9a8c; font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; transition: border-color 160ms ease-out; }
+.bt-duel-cancel:hover { border-color: rgb(255 154 140 / .7); }
+.bt-duel-cancel:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.bt-duel-link { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.bt-duel-link input { min-width: 0; min-height: 44px; padding: 0 12px; box-sizing: border-box; border: 2px solid rgb(140 200 255 / .3); border-radius: 12px; background: rgb(8 4 30 / .7); color: #fff; font: inherit; font-size: 1rem; text-overflow: ellipsis; }
+/* «Копировать» — в цвет поля ссылки: рядом с оранжевой «Поделиться» второй яркой кнопки не нужно. */
+.bt-duel-copy { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 2px solid rgb(140 200 255 / .3); border-radius: 12px; background: rgb(8 4 30 / .7); color: #e6dfff; font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; transition: border-color 160ms ease-out, color 160ms ease-out; }
+.bt-duel-copy svg { flex: none; color: #b9a8ff; }
+.bt-duel-copy:hover { border-color: rgb(140 200 255 / .6); color: #fff; }
+.bt-duel-invite { min-height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: #6d4cff; color: #fff; font: inherit; font-size: .875rem; font-weight: 900; cursor: pointer; }
+.bt-duel-copy:focus-visible, .bt-duel-invite:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.bt-duel-invite:disabled { background: rgb(109 76 255 / .3); color: #c9bbff; cursor: default; }
+.bt-duel-share { width: 100%; }
+.bt-duel-friends { display: grid; gap: 8px; max-height: 240px; margin: 0; padding: 0; overflow-y: auto; list-style: none; overscroll-behavior: contain; }
+.bt-duel-friends li { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.bt-duel-avatar { display: grid; width: 40px; height: 40px; overflow: hidden; border-radius: 50%; font-size: 12px; }
+.bt-duel-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bt-duel-name { overflow: hidden; color: #fff; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.bt-duel-empty { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 12px; }
+.bt-duel-empty-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: rgb(122 77 255 / .3); color: #d6ccff; }
+.bt-duel-empty strong { display: block; color: #fff; font-size: .9375rem; font-weight: 800; }
+.bt-duel-empty small { display: block; margin-top: 2px; color: #c9bbff; font-size: .8125rem; line-height: 1.3; }
+.bt-duel-guest { display: grid; justify-items: center; gap: 8px; width: min(340px, 100%); }
+.bt-duel-guest .bt-lobby-go { width: 100%; }
+.bt-duel-guest small { color: #c9bbff; font-size: .8125rem; }
+.bt-duel-face { background: #2a1a6e; }
+.bt-turn-clock { font-variant-numeric: tabular-nums; }
+.bt-turn[data-urgent] { background: linear-gradient(#ff8c7a, #e5484d 70%); color: #fff; }
+
 @media (min-aspect-ratio: 3 / 4) {
   .bt-top { min-height: 96px; }
   .bt-exit { margin-left: 0; }
@@ -244,4 +302,5 @@
   .bt-mana i { transition: none; }
   .bt-unit, .bt-card, .bt-turn, .bt-played, .bt-hero[data-target], .bt-unit[data-target] { animation: none; }
   .bt-progress-bar span { transition: none; }
+  .bt-duel-wait span { animation: none; }
 }

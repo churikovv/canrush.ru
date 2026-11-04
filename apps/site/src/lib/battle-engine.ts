@@ -257,6 +257,29 @@ export function battleView(state: BattleState): BattleView {
   return { turn: state.turn, active: state.active, first: state.first, winner: state.winner, hand: state.me.hand, me: sideView(state.me), rival: sideView(state.rival) };
 }
 
+const flipSide = (value: Side | null) => (value ? otherSide(value) : null);
+const flipTarget = (target: string) => (target === 'hero:me' ? 'hero:rival' : target === 'hero:rival' ? 'hero:me' : target);
+
+/**
+ * Что видит игрок со стороны `side`. В дуэли хозяин играет `me`, а гость — `rival`, поэтому гостю стол разворачивается:
+ * его рука, его герой снизу, «Ваш ход» в его ход.
+ */
+export function battleViewFor(state: BattleState, side: Side): BattleView {
+  if (side === 'me') return battleView(state);
+  return { turn: state.turn, active: otherSide(state.active), first: otherSide(state.first), winner: flipSide(state.winner), hand: state.rival.hand, me: sideView(state.rival), rival: sideView(state.me) };
+}
+
+/** Событие боя глазами игрока `side`: стороны и цели-герои меняются местами, банки остаются теми же. */
+export function battleEventFor(event: BattleEvent, side: Side): BattleEvent {
+  if (side === 'me') return event;
+  const hits = (items: readonly BattleHit[]) => items.map(hit => ({ ...hit, target: flipTarget(hit.target) }));
+  switch (event.kind) {
+    case 'attack': return { ...event, side: otherSide(event.side), target: flipTarget(event.target), hits: hits(event.hits) };
+    case 'power': return { ...event, side: otherSide(event.side), hits: hits(event.hits) };
+    default: return { ...event, side: otherSide(event.side) };
+  }
+}
+
 export function parseBattleAction(value: unknown): BattleAction | null {
   if (typeof value !== 'object' || value === null) return null;
   const action = value as Record<string, unknown>;

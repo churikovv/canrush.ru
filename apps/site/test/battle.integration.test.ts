@@ -7,7 +7,7 @@ const pool = new Pool({ connectionString: url, max: 4 });
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
 const battle = await import('../src/lib/battle');
 const gacha = await import('../src/lib/gacha');
-const { PAID_WINS_PER_DAY, SPIN_RING_COST, WIN_RINGS } = await import('../src/lib/battle-fields');
+const { CRAFTS_PER_DAY, PAID_WINS_PER_DAY, SPIN_RING_COST, WIN_RINGS } = await import('../src/lib/battle-fields');
 
 const member = randomUUID(), other = randomUUID(), banned = randomUUID();
 const brand = `Бой ${randomUUID().slice(0, 8)}`;
@@ -102,6 +102,15 @@ it('pays rings for a win up to the daily limit, and crafts them into a spin the 
   const pulled = await gacha.pullGacha(member, 1, drinks);
   expect(pulled.state.gifted).toBe(before.gifted);
   expect(pulled.state.caps).toBe(before.caps);
+});
+
+it(`crafts at most ${CRAFTS_PER_DAY} spins a day, whatever the rings`, async () => {
+  await pool.query(`insert into "ringLedger"("userId", reason, "sourceKey", amount) values ($1, 'battle', 'craft-limit', 100)`, [other]);
+  for (let index = 0; index < CRAFTS_PER_DAY; index++) await battle.craftSpin(other);
+  await expect(battle.craftSpin(other)).rejects.toThrow('подождут до завтра');
+  expect((await gacha.getGachaState(other)).craftsLeft).toBe(0);
+  expect((await battle.getBattleHome(other, drinks, NOW)).craftsLeft).toBe(0);
+  expect((await gacha.getGachaState(member)).craftsLeft).toBe(CRAFTS_PER_DAY - 1);
 });
 
 it('refuses to craft for a blocked member', async () => {

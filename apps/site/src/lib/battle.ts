@@ -4,7 +4,7 @@ import {
   applyAction, battleView, botAction, createBattle, type BattleAction, type BattleEvent, type BattleState, type BattleView, type Side,
 } from '@/lib/battle-engine';
 import {
-  DECK_SIZE, PAID_WINS_PER_DAY, PLAIN_STATS, SPIN_RING_COST, STARTER_CARDS, WIN_RINGS, battleStats, buildDeck, cardValue,
+  CRAFTS_PER_DAY, DECK_SIZE, PAID_WINS_PER_DAY, PLAIN_STATS, SPIN_RING_COST, STARTER_CARDS, WIN_RINGS, battleStats, buildDeck, cardValue,
   type BattleCardDef, type BattleKeyword, type BattleStats, type DrinkFacts,
 } from '@/lib/battle-fields';
 import { moscowDay } from '@/lib/drink-calendar-fields';
@@ -15,7 +15,7 @@ export class BattleError extends Error {}
 const key = (brand: string, flavor: string) => JSON.stringify([brand, flavor]);
 const dayStart = `(((now() at time zone 'Europe/Moscow')::date)::timestamp at time zone 'Europe/Moscow')`;
 
-interface Queryable { query: ReturnType<typeof getPool>['query'] }
+export interface Queryable { query: ReturnType<typeof getPool>['query'] }
 
 /** Что сайт знает о напитках пула. Отзывы заблокированных не считаются; трекер сюда не входит намеренно. */
 async function drinkFacts(drinks: readonly GachaDrink[]): Promise<DrinkFacts[]> {
@@ -81,7 +81,7 @@ export async function battleCatalog(drinks?: GachaDrink[], now = Date.now()): Pr
 /** Для тестов: следующий вызов соберёт карты заново. */
 export function resetBattleCatalog() { catalogCache = null; }
 
-async function ownedDeck(db: Queryable, userId: string, cards: readonly BattleCardDef[]): Promise<BattleCardDef[]> {
+export async function ownedDeck(db: Queryable, userId: string, cards: readonly BattleCardDef[]): Promise<BattleCardDef[]> {
   const counts = new Map((await db.query<{ brand: string; flavor: string; count: number }>('select brand, flavor, count from "gachaCard" where "userId" = $1', [userId])).rows.map(row => [key(row.brand, row.flavor), row.count]));
   return buildDeck(cards.flatMap(card => { const count = counts.get(key(card.brand, card.flavor)); return count ? [{ ...card, count }] : []; }));
 }
@@ -102,6 +102,11 @@ export interface BattleMove { frames: BattleFrame[]; reward: BattleReward | null
 export interface BattleOpen { id: string; view: BattleView }
 export interface BattleHome {
   battle: BattleOpen | null; deck: BattleCardDef[]; /** Своих карт в колоде */ own: number; rings: number; paidLeft: number; blocked: boolean;
+  /** Сколько круток из колечек ещё можно собрать сегодня */ craftsLeft: number;
+}
+
+async function craftedToday(db: Queryable, userId: string) {
+  return (await db.query<{ n: number }>(`select count(*)::int n from "ringLedger" where "userId" = $1 and reason = 'craft' and "createdAt" >= ${dayStart}`, [userId])).rows[0]?.n ?? 0;
 }
 
 async function paidToday(db: Queryable, userId: string) {
@@ -112,8 +117,8 @@ async function paidToday(db: Queryable, userId: string) {
 export async function getBattleHome(userId: string, drinks?: GachaDrink[], now = Date.now()): Promise<BattleHome> {
   const pool = getPool();
   const cards = await battleCatalog(drinks, now);
-  const [deck, rings, paid, row, blocked] = await Promise.all([
-    ownedDeck(pool, userId, cards), ringsOf(pool, userId), paidToday(pool, userId),
+  const [deck, rings, paid, crafted, row, blocked] = await Promise.all([
+    ownedDeck(pool, userId, cards), ringsOf(pool, userId), paidToday(pool, userId), craftedToday(pool, userId),
     pool.query<{ id: string; state: BattleState }>(`select id, state from "battle" where "userId" = $1 and status = 'active'`, [userId]),
     pool.query('select 1 from "userBlock" where "userId" = $1', [userId]),
   ]);
@@ -121,7 +126,7 @@ export async function getBattleHome(userId: string, drinks?: GachaDrink[], now =
   return {
     battle: active ? { id: active.id, view: battleView(active.state) } : null,
     deck: [...deck].sort((a, b) => cardValue(b) - cardValue(a)), own: deck.filter(card => card.cover).length,
-    rings, paidLeft: Math.max(0, PAID_WINS_PER_DAY - paid), blocked: Boolean(blocked.rowCount),
+    rings, paidLeft: Math.max(0, PAID_WINS_PER_DAY - paid), blocked: Boolean(blocked.rowCount), craftsLeft: Math.max(0, CRAFTS_PER_DAY - crafted),
   };
 }
 
@@ -190,13 +195,17 @@ export async function moveBattle(userId: string, battleId: string, action: Battl
   }
 }
 
-/** Собрать подарочную крутку из колечек: списание и начисление в одной транзакции под блокировкой участника. */
+/**
+ * Собрать подарочную крутку из колечек: списание и начисление в одной транзакции под блокировкой участника, не больше
+ * `CRAFTS_PER_DAY` за московские сутки.
+ */
 export async function craftSpin(userId: string, now = Date.now()): Promise<GachaState> {
   const client = await getPool().connect();
   try {
     await client.query('begin');
     await client.query('select 1 from "user" where id = $1 for no key update', [userId]);
     if ((await client.query('select 1 from "userBlock" where "userId" = $1', [userId])).rowCount) throw new BattleError('Аккаунт заблокирован.');
+    if (await craftedToday(client, userId) >= CRAFTS_PER_DAY) throw new BattleError(`Сегодня собрано ${CRAFTS_PER_DAY} круток — колечки подождут до завтра.`);
     if (await ringsOf(client, userId) < SPIN_RING_COST) throw new BattleError(`Нужно ${SPIN_RING_COST} колечек.`);
     const source = randomUUID();
     await client.query(`insert into "ringLedger"("userId", reason, "sourceKey", amount) values ($1, 'craft', $2, $3)`, [userId, source, -SPIN_RING_COST]);

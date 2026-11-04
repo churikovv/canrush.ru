@@ -45,20 +45,24 @@
 /* Лента медалей: размер — от высоты самой сцены (контейнер размеров), как у карточек коллекции, с запасом 28 px сверху и
    снизу под покачивание и свечение: лента прячет всё, что выходит за неё по вертикали. Лучи лежат на сцене, а не в ленте,
    поэтому их не обрезает ни лента, ни приближение. */
-.trophy-stage { --medal: min(72vw, 340px, calc(100cqh - 56px)); position: relative; display: grid; align-items: center; min-height: 0; container-type: size; }
+/* The strip steps by `--slot`, which follows only the screen width; the medal inside shrinks to the stage height. Tying
+   the step to the height moved every slide whenever the text below changed (locked medals list their steps), and the
+   strip snapped back mid-swipe. */
+.trophy-stage { --slot: min(72vw, 340px); --medal: min(var(--slot), calc(100cqh - 56px)); position: relative; display: grid; align-items: center; min-height: 0; container-type: size; }
 .trophy-stage .trophy-stage-rays { inset: auto; left: 50%; top: 50%; z-index: 0; width: calc(var(--medal) * 1.6); aspect-ratio: 1; translate: -50% -50%; transition: opacity 300ms ease-out; }
 .trophy-screen:not([data-earned]) .trophy-stage .trophy-stage-rays { opacity: 0; }
 /* The panels around stay above the rays, which reach past the stage. */
 .trophy-top, .trophy-rank, .trophy-filters, .trophy-info, .trophy-rail { position: relative; z-index: 1; }
-.trophy-track { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; height: 100%; padding-inline: calc(50% - var(--medal) / 2); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; touch-action: pan-x; outline: 0; }
+.trophy-track { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; height: 100%; padding-inline: calc(50% - var(--slot) / 2); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; touch-action: pan-x; outline: 0; }
 .trophy-track::-webkit-scrollbar { display: none; }
 /* Размер слайдов — свойством `scale`, а не `transform`: отклик на нажатие пишет кнопке инлайн `transform`. */
-.trophy-slide { flex: 0 0 var(--medal); padding: 0; border: 0; background: none; color: inherit; opacity: .35; scroll-snap-align: center; scale: .62; transition: scale 260ms ease-out, opacity 260ms ease-out; cursor: pointer; }
+.trophy-slide { display: grid; flex: 0 0 var(--slot); place-items: center; padding: 0; border: 0; background: none; color: inherit; opacity: .35; scroll-snap-align: center; scale: .62; transition: scale 260ms ease-out, opacity 260ms ease-out; cursor: pointer; }
 .trophy-slide[data-pos="near"] { opacity: .55; }
 .trophy-slide[data-pos="active"] { opacity: 1; scale: none; }
 .trophy-slide:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
 
 .trophy-medal { position: relative; display: block; aspect-ratio: 1; isolation: isolate; }
+.trophy-slide > .trophy-medal { width: var(--medal); }
 .trophy-art { position: relative; display: block; width: 100%; height: auto; -webkit-user-drag: none; }
 .trophy-medal:not([data-earned]) .trophy-art { filter: grayscale(1) brightness(.42) contrast(1.15); }
 .trophy-medal[data-earned][data-live] .trophy-art { animation: trophy-bob 3.4s ease-in-out infinite; filter: drop-shadow(0 18px 30px rgb(0 0 0 / .55)) drop-shadow(0 0 26px var(--rarity-glow, transparent)); }
@@ -143,7 +147,7 @@
   .trophy-rank { width: min(560px, calc(100% - 80px)); margin-inline: auto; box-sizing: border-box; }
   .trophy-filters { justify-content: center; }
   .trophy-rail { justify-content: safe center; }
-  .trophy-stage { --medal: min(380px, calc(100cqh - 56px)); }
+  .trophy-stage { --slot: 380px; }
   /* Сильнее `.can-plate { position: relative }` из shared.css, как у стрелок коллекции. */
   .trophy-stage .trophy-arrow { position: absolute; z-index: 2; top: 50%; display: grid; translate: 0 -50%; }
   .trophy-arrow:first-child { left: calc(50% - var(--medal) / 2 - 84px); }

@@ -153,6 +153,11 @@ function describeNotification(row: any): NotificationItem {
       title = `${actor} ответил на ваш вопрос`;
       detail = `${p.brand} · ${flavorName(p.flavor)} — ${p.text}`;
       href = `/catalog/${catalogGroupSlug(p.brand,p.flavor)}?tab=questions#question-${p.questionId}`;
+    } else if (row.kind==='duel-invite') {
+      // A friend called the member to «Битва банок» (migration 0189): only friends or a past rival can, one per challenge.
+      title = `${actor} вызывает вас на битву банок`;
+      detail = 'Примите вызов — бой начнётся сразу';
+      href = `/gacha/battle/duel/${encodeURIComponent(String(row.payload.code))}`;
     } else if (row.kind==='business-invite') {
       // The owner of a company invited the member to its cabinet; accepting happens in the cabinet.
       const p = row.payload;

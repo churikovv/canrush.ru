@@ -1,19 +1,24 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useEffectEvent, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { battleMoveAction, battleResumeAction, craftSpinAction, startBattleAction } from '@/app/gacha/battle/actions';
+import { createDuelAction, duelMoveAction, duelPollAction, rematchAction, type DuelSyncState } from '@/app/gacha/battle/duel-actions';
+import { DuelFace } from '@/components/battle-duel';
 import { ActionToast } from '@/components/action-toast';
 import { DrinkBird } from '@/components/drink-bird';
 import { RingIcon, SpinIcon } from '@/components/gacha-icons';
 import Link from '@/components/navigation-progress';
 import type { BattleFrame, BattleHome, BattleReward } from '@/lib/battle';
+import type { DuelSync } from '@/lib/battle-duel';
+import { duelEndText, type DuelEvent } from '@/lib/battle-duel-fields';
 import { canAttack, legalTargets, type BattleSideView, type BattleView, type HandCard, type Unit } from '@/lib/battle-engine';
 import { DRAG_SLOP, FLICK_WINDOW_MS, releasedOnTable } from '@/lib/battle-gesture';
-import { BATTLE_KEYWORDS, BOARD_SIZE, DECK_SIZE, HERO_POWER_COST, HERO_POWER_DAMAGE, KEYWORD_INFO, MAX_MANA, PAID_WINS_PER_DAY, SPIN_RING_COST, STARTER_CARDS, WIN_RINGS, ringsLabel, type BattleCardDef, type BattleKeyword } from '@/lib/battle-fields';
+import { BATTLE_KEYWORDS, BOARD_SIZE, CRAFTS_PER_DAY, DECK_SIZE, HERO_POWER_COST, HERO_POWER_DAMAGE, KEYWORD_INFO, MAX_MANA, PAID_WINS_PER_DAY, SPIN_RING_COST, STARTER_CARDS, WIN_RINGS, ringsLabel, type BattleCardDef, type BattleKeyword } from '@/lib/battle-fields';
 
 const NO_NOTICE = {};
-const RIVAL = 'Сова';
+const OWL = 'Сова';
 
 const reduced = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const wait = (ms: number) => new Promise(resolve => { setTimeout(resolve, reduced() ? Math.min(ms, 150) : ms); });
@@ -105,6 +110,15 @@ function GameAction({ label, tone = 'orange', disabled, onClick }: { label: stri
   return <button type="button" className="game-btn" data-tone={tone} disabled={disabled} onClick={onClick}><span className="game-btn-face"><span className="game-btn-label">{label}</span></span></button>;
 }
 
+/** «Собрать крутку» из колечек, пока не кончился дневной лимит; после — почему нельзя. */
+function CraftButton({ left, busy, onCraft }: { left: number; busy: boolean; onCraft: () => void }) {
+  if (!left) return <p className="bt-craft-limit">Сегодня уже собрано {CRAFTS_PER_DAY} круток — колечки подождут до завтра.</p>;
+  return <>
+    <GameAction label="Собрать крутку" tone="violet" disabled={busy} onClick={onCraft} />
+    <small className="bt-craft-left">Сегодня можно ещё {left} из {CRAFTS_PER_DAY}</small>
+  </>;
+}
+
 function Progress({ rings }: { rings: number }) {
   return <div className="bt-progress">
     <span className="bt-progress-label"><RingIcon size={18} />{Math.min(rings, SPIN_RING_COST)} из {SPIN_RING_COST} до крутки</span>
@@ -145,14 +159,36 @@ function MenuRow({ icon, title, hint, danger }: { icon: ReactNode; title: string
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 const MACHINE_ICON = <svg width="22" height="22" viewBox="0 0 24 24" {...stroke}><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M8.5 7h7v6h-7zM9 17h4" /></svg>;
 const FLAG_ICON = <svg width="22" height="22" viewBox="0 0 24 24" {...stroke}><path d="M6 21V4h11l-2.5 4 2.5 4H6" /></svg>;
+const SWORDS_ICON = <svg width="20" height="20" viewBox="0 0 24 24" {...stroke}><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M9.5 6.5 13 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2" /></svg>;
+const FRIENDS_ICON = <svg width="20" height="20" viewBox="0 0 24 24" {...stroke}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" /></svg>;
+
+/** Куда ещё из итога боя: две равные плитки под главной кнопкой, как пункты меню паузы. */
+function PanelLinks({ children }: { children: ReactNode }) {
+  return <nav className="bt-panel-links" aria-label="Куда дальше">{children}</nav>;
+}
 
 type Zoom = { card: BattleCardDef; attack: number; health: number; play: string | null; playable: boolean };
+
+/** Срок хода на часах этого устройства: сервер присылает своё «сейчас» и срок, их разница — поправка к своим часам. */
+function duelDeadline(sync?: Pick<DuelSync, 'turnEndsAt' | 'now'>): number | null {
+  return sync?.turnEndsAt ? Date.parse(sync.turnEndsAt) - Date.parse(sync.now) + Date.now() : null;
+}
+const clockText = (ms: number) => { const seconds = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`; };
 type BattleWindow = 'pause' | 'rules' | 'surrender' | 'deck';
 
-/** «Битва банок» на досках: стартовый экран, бой с Совой и итог. Ходы решает сервер, здесь только показ кадров. */
-export function BattleScreen({ home, signedIn }: { home: BattleHome | null; signedIn: boolean }) {
-  const [battleId, setBattleId] = useState(home?.battle?.id ?? null);
-  const [view, setView] = useState<BattleView | null>(home?.battle?.view ?? null);
+/** Бой с другом: соперник, стол с сервера и ссылка вызова (для реванша). */
+export interface DuelProps { code: string; sync: DuelSync; rival: { name: string; avatarId: string | null } }
+/** Идущий бой с другом или свой открытый вызов — плашка на стартовом экране. */
+export interface DuelSummary { code: string; status: 'open' | 'active'; rival: string | null }
+
+/**
+ * «Битва банок» на досках: стартовый экран, бой с Совой и итог. Ходы решает сервер, здесь только показ кадров. С `duel`
+ * тот же стол играет с другом: после своего хода экран опрашивает сервер и показывает ходы соперника.
+ */
+export function BattleScreen({ home, signedIn, duel, friendDuel = null }: { home: BattleHome | null; signedIn: boolean; duel?: DuelProps; friendDuel?: DuelSummary | null }) {
+  const router = useRouter();
+  const [battleId, setBattleId] = useState(duel?.sync.id ?? home?.battle?.id ?? null);
+  const [view, setView] = useState<BattleView | null>(duel?.sync.view ?? home?.battle?.view ?? null);
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [zoom, setZoom] = useState<Zoom | null>(null);
@@ -161,6 +197,7 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
   const [reward, setReward] = useState<BattleReward | null>(null);
   const [rings, setRings] = useState(home?.rings ?? 0);
   const [paidLeft, setPaidLeft] = useState(home?.paidLeft ?? PAID_WINS_PER_DAY);
+  const [craftsLeft, setCraftsLeft] = useState(home?.craftsLeft ?? CRAFTS_PER_DAY);
   const [notice, setNotice] = useState<{ text: string; tone: 'success' | 'error' } | null>(null);
   const [flying, setFlying] = useState<{ card: HandCard; x: number; y: number } | null>(null);
   const [aiming, setAiming] = useState<{ x: number; y: number } | null>(null);
@@ -174,18 +211,27 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
   const acted = useRef(false);
   const backEntry = useRef(false);
   const windowOpen = menu !== null;
+  const RIVAL = duel?.rival.name ?? OWL;
+  // Duel: the last event shown, the turn's deadline on this device's clock and how the fight ended.
+  const seq = useRef(duel?.sync.seq ?? 0);
+  const busyRef = useRef(false);
+  const [deadline, setDeadline] = useState(() => duelDeadline(duel?.sync));
+  const [result, setResult] = useState(duel?.sync.result ?? null);
+  // No clock until mounted: the server and the first client render must print the same text.
+  const [clock, setClock] = useState<number | null>(null);
 
   // Кэш переходов мог отдать старую страницу: стол и колечки сверяются с сервером при каждом открытии экрана.
   useEffect(() => {
-    if (!signedIn) return;
+    if (!signedIn || duel) return;
     void battleResumeAction().then(fresh => {
       if (!fresh || acted.current) return;
       setBattleId(fresh.battle?.id ?? null);
       setView(fresh.battle?.view ?? null);
       setRings(fresh.rings);
       setPaidLeft(fresh.paidLeft);
+      setCraftsLeft(fresh.craftsLeft);
     }).catch(() => undefined);
-  }, [signedIn]);
+  }, [signedIn, duel]);
 
   // Системное «назад» закрывает окно, а не уводит из боя: своя запись истории на время окна.
   useEffect(() => {
@@ -254,13 +300,111 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
     }
   }
 
+  /** Ходы дуэли: у событий нет промежуточного стола, поэтому анимация идёт по текущему столу, а стол меняется в конце. */
+  async function playDuelFrames(frames: readonly { seq: number; event: DuelEvent }[]) {
+    for (const { event } of frames) {
+      const rival = 'side' in event && event.side === 'rival';
+      if (event.kind === 'attack') {
+        await lunge(event.attacker, event.target);
+        floats(event.hits);
+        for (const hit of event.hits.filter(item => item.dead)) find(hit.target)?.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(.6) rotate(-8deg)' }], { duration: 240, fill: 'forwards' });
+        await wait(240);
+      } else if (event.kind === 'power') {
+        floats(event.hits);
+        await wait(320);
+      } else if (event.kind === 'play' && rival) {
+        setPlayed(event.card);
+        await wait(900);
+        setPlayed(null);
+      }
+    }
+  }
+
+  /** Ответ сервера в дуэли: новые события, стол, срок хода и итог. Старый ответ (опрос, обогнанный ходом) не применяется. */
+  async function applySync(sync: DuelSync) {
+    if (sync.seq < seq.current) return;
+    const fresh = sync.frames.filter(frame => frame.seq > seq.current);
+    seq.current = sync.seq;
+    await playDuelFrames(fresh);
+    setView(sync.view);
+    setDeadline(duelDeadline(sync));
+    if (sync.result) { setResult(sync.result); setMenu(null); }
+    if (sync.error) setNotice({ text: sync.error, tone: 'error' });
+  }
+
+  const onPoll = useEffectEvent(async (sync: DuelSync) => {
+    busyRef.current = true;
+    try { await applySync(sync); } finally { busyRef.current = false; }
+  });
+  const rivalTurn = useRef(false);
+  useEffect(() => { rivalTurn.current = view?.active === 'rival'; }, [view?.active]);
+  const duelId = duel ? battleId : null;
+  const live = Boolean(duelId && !result);
+  // While the fight is on, the table asks the server for the rival's moves: often on their turn, now and then on one's own
+  // (the rival may surrender, and the clock may run out).
+  useEffect(() => {
+    if (!duelId || !live) return;
+    let timer = 0, stopped = false;
+    const tick = async () => {
+      if (!busyRef.current) {
+        const response: DuelSyncState | null = await duelPollAction(duelId, seq.current).catch(() => null);
+        if (stopped) return;
+        if (response && 'view' in response) await onPoll(response);
+      }
+      if (!stopped) timer = window.setTimeout(tick, rivalTurn.current ? 1500 : 3000);
+    };
+    timer = window.setTimeout(tick, 1200);
+    return () => { stopped = true; clearTimeout(timer); };
+  }, [duelId, live]);
+  // The turn clock ticks once a second, only while a deadline is shown.
+  useEffect(() => {
+    if (!live || deadline === null) return;
+    const update = () => setClock(Date.now());
+    const first = window.setTimeout(update, 0);
+    const timer = window.setInterval(update, 1000);
+    return () => { clearTimeout(first); clearInterval(timer); };
+  }, [live, deadline]);
+
+  async function rematch() {
+    if (!battleId) return;
+    setBusy(true);
+    try {
+      const response = await rematchAction(battleId);
+      if ('error' in response) { setNotice({ text: response.error, tone: 'error' }); return; }
+      router.push(`/gacha/battle/duel/${response.code}`);
+    } catch {
+      setNotice({ text: 'Связь пропала. Попробуйте ещё раз.', tone: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function challenge() {
+    setBusy(true);
+    try {
+      const response = await createDuelAction();
+      if ('error' in response) { setNotice({ text: response.error, tone: 'error' }); setBusy(false); return; }
+      router.push(`/gacha/battle/duel/${response.code}`);
+    } catch {
+      setNotice({ text: 'Связь пропала. Попробуйте ещё раз.', tone: 'error' });
+      setBusy(false);
+    }
+  }
+
   async function send(action: unknown) {
     if (busy || !battleId) return;
     acted.current = true;
     setBusy(true);
+    busyRef.current = true;
     setSelected(null);
     setZoom(null);
     try {
+      if (duel) {
+        const answer = await duelMoveAction(battleId, action, seq.current);
+        if ('view' in answer) await applySync(answer);
+        else setNotice({ text: answer.error, tone: 'error' });
+        return;
+      }
       const response = await battleMoveAction(battleId, action);
       if ('error' in response) { setNotice({ text: response.error, tone: 'error' }); return; }
       await playFrames(response.frames);
@@ -269,6 +413,7 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
       setNotice({ text: 'Связь пропала. Попробуйте ещё раз.', tone: 'error' });
     } finally {
       setBusy(false);
+      busyRef.current = false;
     }
   }
 
@@ -294,6 +439,7 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
       const response = await craftSpinAction();
       if ('error' in response) { setNotice({ text: response.error, tone: 'error' }); return; }
       setRings(response.state.rings);
+      setCraftsLeft(response.state.craftsLeft);
       setNotice({ text: 'Подарочная крутка собрана', tone: 'success' });
     } catch {
       setNotice({ text: 'Связь пропала. Попробуйте ещё раз.', tone: 'error' });
@@ -333,11 +479,16 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
             <span className="bt-progress-bar"><span style={{ transform: `scaleX(${Math.min(1, rings / SPIN_RING_COST)})` }} /></span>
             <span className="bt-lobby-goal">{Math.min(rings, SPIN_RING_COST)}/{SPIN_RING_COST}<SpinIcon size={18} /></span>
           </span>
-          {rings >= SPIN_RING_COST && <GameAction label="Собрать крутку" tone="violet" disabled={busy} onClick={() => void craft()} />}
+          {rings >= SPIN_RING_COST && <CraftButton left={craftsLeft} busy={busy} onCraft={() => void craft()} />}
         </section>}
         {!signedIn ? <Link className="game-btn bt-lobby-go" data-tone="orange" href="/sign-in"><span className="game-btn-face"><span className="game-btn-label">Войти и играть</span></span></Link>
           : home?.blocked ? <p className="bt-lobby-blocked">Аккаунт заблокирован.</p>
           : <button type="button" className="game-btn bt-lobby-go" data-tone="orange" disabled={busy} onClick={() => void start()}><span className="game-btn-face"><span className="game-btn-label">{busy ? 'Ищем бой…' : 'В бой'}</span></span></button>}
+        {signedIn && !home?.blocked && (friendDuel
+          ? <Link className="bt-lobby-friend-plate" href={`/gacha/battle/duel/${friendDuel.code}`}>
+            <strong>{friendDuel.status === 'active' ? `Идёт бой с ${friendDuel.rival ?? 'другом'}` : 'Ваш вызов другу ждёт'}</strong><small>{friendDuel.status === 'active' ? 'вернуться за стол' : 'открыть ссылку'} ›</small>
+          </Link>
+          : <button type="button" className="game-btn bt-lobby-friend" data-tone="violet" disabled={busy} onClick={() => void challenge()}><span className="game-btn-face"><span className="game-btn-label">Битва с другом</span></span></button>)}
         {rules}
         {menu === 'deck' && <GameWindow title="Колода" onClose={() => setMenu(null)}>
           <p className="bt-window-text">Собирается сама: лучшие ваши карты по кривой маны, остальное добирают стартовые банки. Новые карточки из Банкомата усиливают её.</p>
@@ -354,6 +505,7 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
   }
 
   const unit = view.me.board.find(item => item.uid === selected) ?? null;
+  const left = duel && !view.winner && deadline !== null && clock !== null ? deadline - clock : null;
   const targets = unit ? legalTargets(unit, view.rival.board) : [];
   const myTurn = view.active === 'me' && !view.winner && !busy;
   const playable = (card: HandCard) => myTurn && card.cost <= view.me.mana && view.me.board.length < BOARD_SIZE;
@@ -469,7 +621,7 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
       <h1 className="sr-only">Битва банок</h1>
       <header className="bt-top">
         <button type="button" className="game-round bt-exit" onClick={() => setMenu('pause')} aria-label="Меню боя"><span aria-hidden="true">≡</span></button>
-        <Hero side="rival" label={RIVAL} data={view.rival} target={targets.includes('hero')} face={<DrinkBird mood={view.me.health < view.rival.health ? 'happy' : 'waiting'} size={58} />}
+        <Hero side="rival" label={RIVAL} data={view.rival} target={targets.includes('hero')} face={duel ? <DuelFace name={RIVAL} avatarId={duel.rival.avatarId} size={58} /> : <DrinkBird mood={view.me.health < view.rival.health ? 'happy' : 'waiting'} size={58} />}
           onTap={unit && targets.includes('hero') ? () => void send({ kind: 'attack', attacker: unit.uid, target: 'hero' }) : undefined} />
         <div className="bt-rival-info">
           <span className="bt-backs" role="img" aria-label={`Карт в руке соперника: ${view.rival.handLeft}`}>{Array.from({ length: view.rival.handLeft }, (_, index) => <i key={index} />)}</span>
@@ -478,7 +630,7 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
       </header>
       <section className="bt-field" aria-label="Стол">
         <div className="bt-row" aria-label="Банки соперника">{view.rival.board.map(item => <UnitTile key={item.uid} unit={item} ready={false} selected={false} targeted={targets.includes(item.uid)} onTap={() => tapRival(item)} />)}</div>
-        <p className="bt-turn" key={view.turn} data-mine={view.active === 'me' || undefined} role="status">{view.active === 'me' ? 'Ваш ход' : `Ходит ${RIVAL}`}</p>
+        <p className="bt-turn" key={view.turn} data-mine={view.active === 'me' || undefined} data-urgent={left !== null && left < 15000 || undefined} role="status">{view.active === 'me' ? 'Ваш ход' : `Ходит ${RIVAL}`}{left !== null && <span className="bt-turn-clock"> · {clockText(left)}</span>}</p>
         <div className="bt-row is-mine" ref={table} aria-label="Ваши банки">{view.me.board.map(item => <UnitTile key={item.uid} unit={item} ready={myTurn && canAttack(item)} selected={selected === item.uid} targeted={false} onTap={() => tapMine(item)} onGrab={event => grabUnit(event, item)} />)}</div>
       </section>
       <section className="bt-console" aria-label="Ваш герой">
@@ -519,26 +671,41 @@ export function BattleScreen({ home, signedIn }: { home: BattleHome | null; sign
         <GameAction label="Продолжить" onClick={() => setMenu(null)} />
         <nav className="bt-menu" aria-label="Меню боя">
           {/* Запись окна заменяется Банкоматом: «назад» оттуда вернёт в бой, а не на пустую запись. */}
-          <Link className="bt-menu-row" href="/gacha" replace onClick={() => { backEntry.current = false; }}><MenuRow icon={MACHINE_ICON} title="В Банкомат" hint="Бой сохранится, вернётесь на этот же ход" /></Link>
+          <Link className="bt-menu-row" href="/gacha" replace onClick={() => { backEntry.current = false; }}><MenuRow icon={MACHINE_ICON} title="В Банкомат" hint={duel ? 'Часы хода идут и без вас' : 'Бой сохранится, вернётесь на этот же ход'} /></Link>
           <button type="button" className="bt-menu-row" onClick={() => setMenu('rules')}><MenuRow icon="?" title="Как играть" hint="Правила и свойства карт" /></button>
           <button type="button" className="bt-menu-row" onClick={() => setMenu('surrender')}><MenuRow icon={FLAG_ICON} title="Сдаться" hint="Засчитаем поражение" danger /></button>
         </nav>
       </GameWindow>}
       {rules}
       {menu === 'surrender' && <GameWindow title="Сдаться?" onClose={() => setMenu(null)} onBack={() => setMenu('pause')}>
-        <p className="bt-window-text">Бой закончится поражением, колечек за него не будет.</p>
+        <p className="bt-window-text">{duel ? `Бой закончится поражением, победа достанется ${RIVAL}.` : 'Бой закончится поражением, колечек за него не будет.'}</p>
         <GameAction label="Играть дальше" onClick={() => setMenu(null)} />
         <GameAction label={busy ? 'Сдаёмся…' : 'Сдаться'} tone="red" disabled={busy} onClick={() => void send('surrender')} />
       </GameWindow>}
+      {duel && result && <div className="bt-overlay">
+        <div className="bt-panel" data-won={result.won || undefined}>
+          <span className="bt-start-bird bt-duel-face"><DuelFace name={RIVAL} avatarId={duel.rival.avatarId} size={84} /></span>
+          <h2>{result.won ? 'Победа!' : 'Поражение'}</h2>
+          <p>{duelEndText(result.won, result.reason, RIVAL)}</p>
+          <GameAction label={busy ? 'Зовём…' : 'Реванш'} disabled={busy} onClick={() => void rematch()} />
+          <PanelLinks>
+            <Link className="bt-panel-link" href="/gacha/battle">{SWORDS_ICON}<span>Бой с Совой</span></Link>
+            <Link className="bt-panel-link" href="/gacha">{MACHINE_ICON}<span>Банкомат</span></Link>
+          </PanelLinks>
+        </div>
+      </div>}
       {reward && <div className="bt-overlay">
         <div className="bt-panel" data-won={reward.won || undefined}>
           <span className="bt-start-bird"><DrinkBird mood={reward.won ? 'sleepy' : 'happy'} size={84} /></span>
           <h2>{reward.won ? 'Победа!' : 'Поражение'}</h2>
           <p>{reward.earned ? <span className="bt-earned"><RingIcon size={20} />+{ringsLabel(reward.earned)}</span> : reward.won ? 'Колечки на сегодня закончились, но победа засчитана.' : 'Колечки дают только за победу.'}</p>
           <Progress rings={rings} />
-          {rings >= SPIN_RING_COST && <GameAction label="Собрать крутку" tone="violet" disabled={busy} onClick={() => void craft()} />}
+          {rings >= SPIN_RING_COST && <CraftButton left={craftsLeft} busy={busy} onCraft={() => void craft()} />}
           <GameAction label={busy ? 'Ищем бой…' : 'Ещё бой'} disabled={busy} onClick={() => void start()} />
-          <Link className="bt-link" href="/gacha">В Банкомат</Link>
+          <PanelLinks>
+            <button type="button" className="bt-panel-link" disabled={busy} onClick={() => void challenge()}>{FRIENDS_ICON}<span>С другом</span></button>
+            <Link className="bt-panel-link" href="/gacha">{MACHINE_ICON}<span>Банкомат</span></Link>
+          </PanelLinks>
         </div>
       </div>}
     </div>

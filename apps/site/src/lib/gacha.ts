@@ -6,6 +6,7 @@ import { activeOffers, readCityCatalog } from '@/lib/catalog-files';
 import { withCardEdits } from '@/lib/catalog-card-edits';
 import { catalogDrinkGroups, catalogDrinkGroupsByOrigin } from '@/lib/catalog-drinks';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
+import { CRAFTS_PER_DAY } from '@/lib/battle-fields';
 import { moscowDay } from '@/lib/drink-calendar-fields';
 import { loadQuestBoard } from '@/lib/gacha-quests';
 import { questReward, questSourceKey, type QuestBoard, type QuestClaim } from '@/lib/gacha-quests-fields';
@@ -88,6 +89,8 @@ async function pityOf(db: Queryable, userId: string): Promise<PityState> {
   return { sinceEpic: row?.epic ?? 0, sinceLegendary: row?.legendary ?? 0 };
 }
 
+/** Начало московских суток: от него считается лимит сборки круток из колечек. */
+const craftDayStart = `(((now() at time zone 'Europe/Moscow')::date)::timestamp at time zone 'Europe/Moscow')`;
 const freeTodaySql = `not exists(select 1 from "gachaPull" where "userId" = $1 and "freeDay" = (now() at time zone 'Europe/Moscow')::date)`;
 
 async function shardsOf(db: Queryable, userId: string): Promise<number> {
@@ -107,6 +110,8 @@ export interface GachaState {
   caps: number; shards: number; free: boolean; pity: PityState; cards: number; blocked: boolean;
   /** Колечки из побед в бою */
   rings: number;
+  /** Сколько круток из колечек ещё можно собрать сегодня (`CRAFTS_PER_DAY`) */
+  craftsLeft: number;
   /** Идёт незаконченный бой: автомат зовёт в него вернуться */
   inBattle: boolean;
   /** Подарочные крутки из раздач в ленте: тратятся после бесплатной крутки дня, раньше крышек */
@@ -124,8 +129,9 @@ export async function getGachaState(userId: string, now = Date.now()): Promise<G
   await pool.query(`select award_caps($1, 'welcome', 'welcome', $2, null)`, [userId, WELCOME_CAPS]);
   const [caps, shards, gifted, rings, pity, quests, row] = await Promise.all([
     balanceOf(pool, userId), shardsOf(pool, userId), giftSpinsOf(pool, userId), ringsOf(pool, userId), pityOf(pool, userId), loadQuestBoard(pool, userId, moscowDay(new Date(now))),
-    pool.query<{ free: boolean; cards: number; blocked: boolean; owned: boolean; pulled: number; inBattle: boolean }>(`select ${freeTodaySql} as free,
+    pool.query<{ free: boolean; cards: number; blocked: boolean; owned: boolean; pulled: number; inBattle: boolean; crafted: number }>(`select ${freeTodaySql} as free,
       exists(select 1 from "battle" where "userId" = $1 and status = 'active') as "inBattle",
+      (select count(*) from "ringLedger" where "userId" = $1 and reason = 'craft' and "createdAt" >= ${craftDayStart})::int as crafted,
       (select count(*) from "gachaCard" where "userId" = $1)::int as cards,
       exists(select 1 from "userBlock" where "userId" = $1) as blocked,
       exists(select 1 from "gachaCosmetic" where "userId" = $1 and key = $2) as owned,
@@ -133,7 +139,7 @@ export async function getGachaState(userId: string, now = Date.now()): Promise<G
   ]);
   const data = row.rows[0];
   return {
-    caps, shards, gifted, rings, quests, pity, free: data?.free ?? false, cards: data?.cards ?? 0, blocked: data?.blocked ?? false, inBattle: data?.inBattle ?? false,
+    caps, shards, gifted, rings, craftsLeft: Math.max(0, CRAFTS_PER_DAY - (data?.crafted ?? 0)), quests, pity, free: data?.free ?? false, cards: data?.cards ?? 0, blocked: data?.blocked ?? false, inBattle: data?.inBattle ?? false,
     banner: banner ? {
       key: banner.key, title: banner.title, subtitle: banner.subtitle, ends: bannerEndsLabel(banner),
       cosmetic: banner.cosmetic ? { title: banner.cosmetic.title, note: banner.cosmetic.note, chance: banner.cosmetic.odds / 10, owned: data?.owned ?? false, left: Math.max(1, banner.cosmetic.pity - (data?.pulled ?? 0)) } : null,

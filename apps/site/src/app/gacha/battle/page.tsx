@@ -6,6 +6,7 @@ import { headers } from 'next/headers';
 import { BattleScreen } from '@/components/battle-screen';
 import { auth } from '@/lib/auth';
 import { getBattleHome } from '@/lib/battle';
+import { duelSummary } from '@/lib/battle-duel';
 import { seoMetadata } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
@@ -19,5 +20,6 @@ export const metadata = seoMetadata({
 /** Весь экран — игра: без шапки и таб бара сайта, выход — кнопкой на самом экране. */
 export default async function BattlePage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  return <BattleScreen home={session ? await getBattleHome(session.user.id) : null} signedIn={Boolean(session)} />;
+  const [home, friendDuel] = session ? await Promise.all([getBattleHome(session.user.id), duelSummary(session.user.id)]) : [null, null];
+  return <BattleScreen home={home} signedIn={Boolean(session)} friendDuel={friendDuel} />;
 }

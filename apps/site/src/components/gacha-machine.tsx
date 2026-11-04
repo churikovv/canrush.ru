@@ -8,7 +8,7 @@ import { claimQuestAction, pullAction } from '@/app/gacha/actions';
 import { craftSpinAction } from '@/app/gacha/battle/actions';
 import { ActionToast } from '@/components/action-toast';
 import { GachaQuests } from '@/components/gacha-quests';
-import { PAID_WINS_PER_DAY, SPIN_RING_COST, WIN_RINGS, ringsLabel } from '@/lib/battle-fields';
+import { CRAFTS_PER_DAY, PAID_WINS_PER_DAY, SPIN_RING_COST, WIN_RINGS, ringsLabel } from '@/lib/battle-fields';
 import { questsReady, type QuestClaim } from '@/lib/gacha-quests-fields';
 import { PULL_COST, TEN_PULL_COST, pityLeft, type GachaScene, type Rarity } from '@/lib/gacha-fields';
 import type { GachaState, PullResult, PulledCard } from '@/lib/gacha';
@@ -262,7 +262,7 @@ export function GachaMachine({ initial, signedIn, albumHref, scene, seasonTitle 
           {state && <div className="gacha-hud-chips">
             <span className="game-chip" aria-label={`Крышек: ${state.caps}`}><CapIcon size={20} />{state.caps}</span>
             <span className="game-chip" aria-label={`Осколков: ${state.shards}`}><ShardIcon size={17} />{state.shards}</span>
-            {!state.blocked && <button type="button" className="game-chip is-rings" data-ready={state.rings >= SPIN_RING_COST || undefined} onClick={() => ringsWindow?.showModal()} aria-haspopup="dialog" aria-label={`Колечек: ${state.rings}. Собрать крутку`}><RingIcon size={18} />{state.rings}</button>}
+            {!state.blocked && <button type="button" className="game-chip is-rings" data-ready={(state.rings >= SPIN_RING_COST && state.craftsLeft > 0) || undefined} onClick={() => ringsWindow?.showModal()} aria-haspopup="dialog" aria-label={`Колечек: ${state.rings}. Собрать крутку`}><RingIcon size={18} />{state.rings}</button>}
             {state.gifted > 0 && <span className="game-chip" aria-label={`Подарочных круток: ${state.gifted}`}><SpinIcon size={18} />{state.gifted}</span>}
           </div>}
           <div className="gacha-hud-icons">
@@ -338,8 +338,9 @@ export function GachaMachine({ initial, signedIn, albumHref, scene, seasonTitle 
           <div className="rings-craft">
             <span className="rings-craft-count"><RingIcon size={34} />{state.rings} из {SPIN_RING_COST}</span>
             <span className="rings-craft-bar" aria-hidden="true"><span style={{ transform: `scaleX(${Math.min(1, state.rings / SPIN_RING_COST)})` }} /></span>
-            <p>{SPIN_RING_COST} колечек — одна подарочная крутка. Победа в Битве банок даёт {ringsLabel(WIN_RINGS)}, оплачиваются первые {PAID_WINS_PER_DAY} побед за день.</p>
-            <button type="button" className="quest-claim rings-craft-button" disabled={crafting || state.rings < SPIN_RING_COST} onClick={craftSpin}>{state.rings < SPIN_RING_COST ? `Ещё ${ringsLabel(SPIN_RING_COST - state.rings)}` : 'Собрать крутку'}</button>
+            <p>{SPIN_RING_COST} колечек — одна подарочная крутка, не больше {CRAFTS_PER_DAY} в день. Победа в Битве банок даёт {ringsLabel(WIN_RINGS)}, оплачиваются первые {PAID_WINS_PER_DAY} побед за день.</p>
+            <button type="button" className="quest-claim rings-craft-button" disabled={crafting || state.rings < SPIN_RING_COST || !state.craftsLeft} onClick={craftSpin}>{!state.craftsLeft ? 'Завтра — снова' : state.rings < SPIN_RING_COST ? `Ещё ${ringsLabel(SPIN_RING_COST - state.rings)}` : 'Собрать крутку'}</button>
+            <small className="rings-craft-left">{state.craftsLeft ? `Сегодня можно собрать ещё ${state.craftsLeft} из ${CRAFTS_PER_DAY}` : `Сегодня собрано ${CRAFTS_PER_DAY} из ${CRAFTS_PER_DAY}`}</small>
             <Link className="rings-craft-link" href="/gacha/battle">В бой</Link>
           </div>
         </div>

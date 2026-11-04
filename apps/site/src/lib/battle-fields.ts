@@ -22,6 +22,8 @@ export const WIN_RINGS = 2;
 /** Сколько побед в день платит колечками: бота можно обыгрывать бесконечно. */
 export const PAID_WINS_PER_DAY = 5;
 export const SPIN_RING_COST = 6;
+/** Сколько подарочных круток можно собрать из колечек за московский день: остальные колечки ждут завтра. */
+export const CRAFTS_PER_DAY = 5;
 
 export const ringsLabel = (count: number) => `${count} ${count % 10 === 1 && count % 100 !== 11 ? 'колечко' : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? 'колечка' : 'колечек'}`;
 
