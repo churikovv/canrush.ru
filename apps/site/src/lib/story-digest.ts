@@ -93,7 +93,7 @@ export async function tasteNeighbourhood(userId: string): Promise<{ viewer: Tast
     where x."userId" <> $1 and not exists(select 1 from "userBlock" b where b."userId" = x."userId")
     group by x."userId" having count(*) >= 2 order by count(*) desc limit ${CANDIDATES}`, [userId]);
   const loaded = await profiles([userId, ...candidates.rows.map(row => row.userId)]);
-  return { viewer: loaded.get(userId)!, members: candidates.rows.map(row => loaded.get(row.userId)!) };
+  return { viewer: loaded.get(userId)!, members: candidates.rows.map(row => ({ ...loaded.get(row.userId)!, userId: row.userId })) };
 }
 
 /**

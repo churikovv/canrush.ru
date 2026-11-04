@@ -17,7 +17,7 @@ import { tasteTokens, type Preference, type RatedPreference } from '@/lib/profil
  * 5. Blend, a small bonus for drinks in stock, and at most two drinks of one brand.
  */
 
-export interface TasteProfile { favorites: Preference[]; reviews: RatedPreference[]; drinks: (Preference & { count: number })[]; swipes?: (Preference & { liked: boolean })[] }
+export interface TasteProfile { favorites: Preference[]; reviews: RatedPreference[]; drinks: (Preference & { count: number })[]; swipes?: (Preference & { liked: boolean })[]; /** Whose taste it is (the neighbourhood's members). */ userId?: string }
 export interface CatalogDrink extends Preference { inStock: boolean }
 export type RecommendationReason =
   | { kind: 'similar'; fans: number; match: number }

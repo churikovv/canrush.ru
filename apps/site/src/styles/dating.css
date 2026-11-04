@@ -72,3 +72,56 @@
 .dating-reward.is-tag .dating-reward-bar > span { background: #e5487f; }
 .swipe-notice .profile-tag { vertical-align: middle; }
 @media (prefers-reduced-motion: reduce) { .swipe-card.is-resting, .swipe-card.is-leaving, .swipe-button { transition: none; } .swipe-notice.is-match, .swipe-xp { animation: none; } .dating-reward-bar > span { transition: none; } }
+
+/* «Твой вкус» в конце колоды (`TasteEnd`, `taste-card.tsx`): синяя карточка с архетипом, «Поделиться» и один человек
+   с похожим вкусом. Вместо стопки карточек и кнопок свайпа, поэтому своей высоты, без рамки колоды. */
+.taste-end { display: grid; gap: 14px; }
+/* Бенто: тёмные плитки разного размера с синим свечением и тонкой рамкой, в любой теме сайта — как экран игры. */
+.taste-bento { --bento-line: rgb(110 150 255 / .2); --bento-ink: #04060d; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 8px; border-radius: 30px; background: var(--bento-ink); color: #fff; box-shadow: 0 24px 50px -24px rgb(0 40 120 / .7); }
+.bento-tile { position: relative; display: grid; align-content: start; gap: 8px; min-width: 0; padding: 16px; overflow: hidden; border: 1px solid var(--bento-line); border-radius: 22px; background: radial-gradient(120% 90% at 100% 0%, rgb(0 110 255 / .24), transparent 60%), #070b17; isolation: isolate; }
+.bento-tile[data-span="2"] { grid-column: 1 / -1; }
+.bento-kicker { display: flex; align-items: center; gap: 8px; color: #8fb2ff; font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.bento-mark { width: 22px; height: 18px; background: #fff; -webkit-mask: url("/brand/logo-mark.svg") center / contain no-repeat; mask: url("/brand/logo-mark.svg") center / contain no-repeat; }
+.bento-hero { grid-column: 1 / -1; min-height: 210px; align-content: space-between; background: radial-gradient(85% 75% at 50% 125%, #2e86ff, rgb(0 90 230 / .45) 45%, transparent 75%), #05070f; }
+.bento-hero h2 { margin: 0; color: #fff; font-size: clamp(2.5rem, 13vw, 3.5rem); font-weight: 900; line-height: .95; overflow-wrap: anywhere; }
+.bento-hero p { margin: 4px 0 0; color: #d5e1ff; font-size: 1rem; line-height: 1.4; }
+.taste-bento.is-loading { grid-template-columns: 1fr; }
+.taste-bento.is-loading strong { font-size: 1.75rem; opacity: .7; }
+.bento-loves { grid-column: 1 / -1; min-height: 132px; background: radial-gradient(90% 130% at 0% 100%, rgb(0 110 255 / .45), transparent 62%), #060a16; }
+.bento-loves ul, .bento-avoids ul { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 8px; margin: 6px 0 0; padding: 0; list-style: none; }
+.bento-loves li { padding: 8px 16px; border: 2px solid #3d8bff; border-radius: 999px; font-size: 1.25rem; font-weight: 800; line-height: 1.2; rotate: 2deg; }
+.bento-loves li[data-pos="0"] { border-color: #fff; background: #fff; color: #06102a; rotate: -4deg; }
+.bento-loves li[data-pos="2"] { rotate: -2deg; }
+.bento-avoids li { padding: 6px 12px; border: 1px solid rgb(255 255 255 / .22); border-radius: 999px; color: #b8c6ea; font-size: .9375rem; font-weight: 700; text-decoration: line-through; text-decoration-color: rgb(255 255 255 / .45); }
+.bento-cans { grid-row: span 2; min-height: 236px; grid-template-rows: auto minmax(0, 1fr); background: radial-gradient(65% 50% at 50% 66%, rgb(0 110 255 / .7), transparent 72%), #05070f; }
+.bento-cans ul { position: relative; margin: 0; padding: 0; list-style: none; }
+.bento-cans li { position: absolute; bottom: 4px; left: 50%; width: 48%; height: 88%; translate: -50% 0; }
+.bento-cans li[data-pos="1"] { z-index: -1; translate: -100% 0; rotate: -12deg; scale: .78; }
+.bento-cans li[data-pos="2"] { z-index: -1; translate: 0 0; rotate: 12deg; scale: .78; }
+.bento-cans img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 10px 14px rgb(0 0 0 / .55)); }
+.bento-cans img[data-plain] { height: auto; max-height: 100%; padding: 6px; box-sizing: border-box; border-radius: 14px; background: #fff; }
+.bento-stat { align-content: space-between; min-height: 112px; }
+.bento-stat strong { color: #fff; font-size: 1.5rem; font-weight: 900; line-height: 1.1; overflow-wrap: anywhere; }
+.bento-count { background: radial-gradient(100% 100% at 100% 100%, rgb(0 110 255 / .35), transparent 65%), #070b17; }
+.bento-count strong { font-size: 2.75rem; line-height: 1; }
+.bento-count span { color: #a9bcef; font-size: .8125rem; font-weight: 600; }
+.taste-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.taste-actions .community-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; margin: 0; }
+.taste-empty { height: auto; min-height: 260px; }
+.taste-empty .taste-more { width: auto; }
+.taste-match { display: grid; gap: 10px; padding: 14px; border-radius: 22px; background: var(--theme-panel, #fff); box-shadow: 0 0 0 1px var(--theme-line, #dfe3e8); }
+.taste-match h3 { margin: 0; color: var(--color-muted-strong); font-size: .8125rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.taste-match-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.taste-match-person { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 12px; min-width: 0; color: inherit; text-decoration: none; }
+.taste-match-avatar { display: grid; place-items: center; width: 48px; height: 48px; overflow: hidden; border-radius: 50%; background: var(--color-brand); color: #fff; font-size: 1.25rem; font-weight: 900; }
+.taste-match-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.taste-match-text { display: grid; min-width: 0; }
+.taste-match-text strong { overflow: hidden; color: var(--color-ink); font-size: 1rem; text-overflow: ellipsis; white-space: nowrap; }
+.taste-match-text small { color: var(--color-muted-strong); font-size: .8125rem; }
+.taste-match-follow { min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--color-brand); color: #fff; font: inherit; font-size: .9375rem; font-weight: 800; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
+.taste-match-follow.is-done { background: var(--color-subtle); color: var(--color-ink); }
+.taste-match-follow:disabled { opacity: .6; cursor: default; }
+.taste-match-drinks { display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.taste-match-drinks li { width: 56px; height: 56px; overflow: hidden; border-radius: 12px; background: var(--color-subtle); }
+.taste-match-drinks img { width: 100%; height: 100%; object-fit: contain; }
+.taste-match-drinks span { display: block; padding: 4px; font-size: .625rem; line-height: 1.2; }

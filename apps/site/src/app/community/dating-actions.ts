@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { loadAllCatalogGroups } from '@/lib/catalog';
 import { SwipeError, recordSwipe, undoSwipe } from '@/lib/drink-swipes';
+import { getTasteCard, getTasteMatch, type TasteCardView, type TasteMatch } from '@/lib/taste-card';
 
 export interface SwipeActionState { error?: string; signIn?: boolean; xp?: number; tag?: { key: string; label: string } | null }
 
@@ -22,4 +23,19 @@ export async function undoSwipeAction(brand: string, flavor: string): Promise<Sw
   if (!session || typeof brand !== 'string' || typeof flavor !== 'string') return { error: 'Войдите в аккаунт и повторите действие.' };
   await undoSwipe(session.user.id, brand, flavor);
   return {};
+}
+
+export type TasteCardState = { card: TasteCardView | null; match: TasteMatch | null } | { error: string };
+
+/** «Твой вкус» в конце колоды: карточка по решениям участника и один человек с похожим вкусом. */
+export async function tasteCardAction(): Promise<TasteCardState> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { error: 'Войдите, чтобы увидеть свой вкус.' };
+  try {
+    const card = await getTasteCard(session.user.id);
+    return { card, match: card ? await getTasteMatch(session.user.id).catch(() => null) : null };
+  } catch (error) {
+    console.error('taste card failed', error);
+    return { error: 'Не удалось собрать вкус. Попробуйте ещё раз.' };
+  }
 }

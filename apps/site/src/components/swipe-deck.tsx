@@ -6,6 +6,7 @@ import { swipeAction, undoSwipeAction } from '@/app/community/dating-actions';
 import Link from '@/components/navigation-progress';
 import type { DatingProgress, DatingRewards, SwipeCard } from '@/lib/drink-swipes';
 import { pickReason } from '@/lib/pick-reason';
+import { TasteEnd } from '@/components/taste-card';
 
 /** Past this many pixels a drag decides; below it the card springs back. */
 const THRESHOLD = 110;
@@ -70,6 +71,14 @@ export function SwipeDeck({ cards, signedIn, rewards, progress: initialProgress 
     else setDrag(0);
   }
 
+  function more() { setIndex(0); setHistory([]); router.refresh(); }
+
+  // The end of the deck, signed in: «Твой вкус» and someone with a similar taste instead of the empty stack.
+  if (!card && signedIn) return <section className="swipe" aria-label="Твой вкус">
+    <DatingRewardsIsland rewards={rewards} progress={progress} />
+    <TasteEnd key={history.length} onMore={more} />
+  </section>;
+
   const offset = leaving === 'like' ? 640 : leaving === 'skip' ? -640 : drag;
   const style = { '--dx': `${offset}px`, '--rot': `${offset / 18}deg`, '--like': Math.max(0, Math.min(1, offset / THRESHOLD)), '--skip': Math.max(0, Math.min(1, -offset / THRESHOLD)) } as CSSProperties;
   return <section className="swipe" aria-label="Карточки напитков" tabIndex={0}
@@ -100,7 +109,7 @@ export function SwipeDeck({ cards, signedIn, rewards, progress: initialProgress 
       }) : <div className="swipe-empty">
         <strong>На сегодня всё</strong>
         <p>Ты посмотрел все карточки. Завтра колода перемешается, а новые напитки из каталога появятся здесь.</p>
-        <button type="button" className="community-button" onClick={() => { setIndex(0); setHistory([]); router.refresh(); }}>Обновить колоду</button>
+        <button type="button" className="community-button" onClick={more}>Обновить колоду</button>
       </div>}
       {notice && <p className={`swipe-notice${notice.match ? ' is-match' : ''}`} role="status">
         {notice.text}{notice.tag && <> <span className="profile-tag" data-tag={notice.tag.key}>{notice.tag.label}</span> · +20 XP</>}{notice.signIn && <> · <Link href="/sign-in">Войти</Link></>}

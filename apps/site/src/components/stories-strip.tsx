@@ -10,7 +10,8 @@ import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
 import Link from '@/components/navigation-progress';
 import { useMediaAttachments } from '@/components/media-attachments';
 import type { StoryRecommendation, WeeklyDigest } from '@/lib/story-digest';
-import { nativeImage, nativeShare } from '@/lib/native-app';
+import { nativeShare } from '@/lib/native-app';
+import { shareImage } from '@/lib/share-image';
 import { pickReason } from '@/lib/pick-reason';
 import { MAX_STORY_CAPTION } from '@/lib/story-limits';
 import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
@@ -46,21 +47,6 @@ function rememberSeen(key: string) {
   } catch { /* storage unavailable: the ring just stays lit */ }
 }
 
-/** A picture: the app's share sheet, the system sheet with a file on phones, a PNG download elsewhere. */
-async function shareImage(blob: Blob, fileName: string, title: string): Promise<'shared' | 'saved' | 'cancelled'> {
-  const image = nativeImage();
-  if (image) { await image.share(blob, fileName, title); return 'shared'; }
-  const file = new File([blob], fileName, { type: 'image/png' });
-  if (navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file], title }); return 'shared'; }
-    catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return 'cancelled'; }
-  }
-  const url = URL.createObjectURL(blob);
-  const link = Object.assign(document.createElement('a'), { href: url, download: fileName });
-  link.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
-  return 'saved';
-}
 /** A link: the app's share sheet, the system sheet on touch screens, the clipboard on desktop. */
 async function shareLink(url: string, title: string): Promise<'shared' | 'copied' | 'cancelled'> {
   const native = await nativeShare({ title, url, dialogTitle: title });
