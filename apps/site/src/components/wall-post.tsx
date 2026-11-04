@@ -10,6 +10,7 @@ import { postedLabel } from '@/lib/last-seen';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import type { WallPostRow } from '@/lib/profile-community';
 import type { WallInteraction } from '@/lib/wall-discussions';
+import { ProfileTag } from '@/components/profile-tag';
 
 export function displayName(profile: { name: string; username: string | null }): string {
   const name = profile.name.trim();
@@ -48,7 +49,7 @@ export function WallPost({ post, interaction, canDelete, canEdit, owner }: WallP
         <div className="wall-post-name">
           {profileHref ? <Link className="wall-post-author" href={profileHref}>{displayName(post)}</Link> : <strong className="wall-post-author">{displayName(post)}</strong>}
           {post.verified && <VerifiedMark />}
-          {profileTagLabel(post.tag) && <span className="profile-tag" data-tag={post.tag}>{profileTagLabel(post.tag)}</span>}
+          {profileTagLabel(post.tag) && <ProfileTag tag={post.tag}>{profileTagLabel(post.tag)}</ProfileTag>}
           {post.username && <ProfileExperience username={post.username} initial={{ xp: post.xp, rank: null }} />}
         </div>
         <div className="wall-post-sub">

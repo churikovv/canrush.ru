@@ -41,14 +41,20 @@ export const PROFILE_FRAMES = [
   { key: 'burn', level: 999, label: 'Burn', brand: 'Burn', description: 'Обсидиан, лава и пламя над кольцом' },
   { key: 'lit', level: 999, label: 'Lit', brand: 'Lit Energy', description: 'Неон, бегущие лампочки и огненная вывеска' },
   { key: 'drive', level: 999, label: 'Drive Me', brand: 'Drive Me', description: 'Шина на хромированном диске и клетчатый флаг' },
+  // Рамки магазина образов (`shop-items.ts`, `avatar-frame-shop.tsx`): покупаются за очки достижений, уровнем не открываются.
+  { key: 'bubbles', level: 999, label: 'Пузырьки', shop: true, description: 'Газировка: пузырьки поднимаются вокруг аватарки' },
+  { key: 'aurora', level: 999, label: 'Северное сияние', shop: true, description: 'Ленты сияния медленно плывут по кругу' },
+  { key: 'hologram', level: 999, label: 'Голограмма', shop: true, description: 'Переливчатое кольцо, сетка и луч сканера' },
 ] as const;
 /** Reviews of different flavours of a brand that open its frame. */
 export const BRAND_FRAME_REVIEWS = 5;
 type FrameItem = typeof PROFILE_FRAMES[number];
 export type BrandFrameItem = Extract<FrameItem, { brand: string }>;
 export const BRAND_FRAME_ITEMS = PROFILE_FRAMES.filter((item): item is BrandFrameItem => 'brand' in item);
-/** Frames and themes that a level opens; the gacha's and the brands' open elsewhere. */
-export const isLevelCosmetic = (item: { key: string }) => !('special' in item) && !('brand' in item);
+export type ShopFrameItem = Extract<FrameItem, { shop: true }>;
+export const SHOP_FRAME_ITEMS = PROFILE_FRAMES.filter((item): item is ShopFrameItem => 'shop' in item);
+/** Frames and themes that a level opens; the gacha's, the brands' and the shop's open elsewhere. */
+export const isLevelCosmetic = (item: { key: string }) => !('special' in item) && !('brand' in item) && !('shop' in item);
 export type ProfileAppearance = { theme: typeof PROFILE_THEMES[number]['key']; frame: typeof PROFILE_FRAMES[number]['key'] };
 export const DEFAULT_PROFILE_APPEARANCE: ProfileAppearance = { theme: 'default', frame: 'none' };
 export function parseProfileAppearance(value: unknown): ProfileAppearance | null {
@@ -68,7 +74,7 @@ export function nextAppearanceUnlock(level: number): { level: number; themes: st
   };
 }
 
-/** Existing equipped cosmetics remain usable; new choices require earned levels or, for the gacha's and brands' frames, owning them. */
+/** Existing equipped cosmetics remain usable; new choices require earned levels or, for the gacha's, brands' and shop's frames, owning them. */
 export function canUseProfileAppearance(value: ProfileAppearance, level: number, current = DEFAULT_PROFILE_APPEARANCE, owned: readonly string[] = []): boolean {
   return (value.theme === current.theme || PROFILE_THEMES.some(item => item.key === value.theme && item.level <= level))
     && (value.frame === current.frame || owned.includes(value.frame) || PROFILE_FRAMES.some(item => item.key === value.frame && item.level <= level));

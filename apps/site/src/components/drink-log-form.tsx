@@ -9,6 +9,7 @@ import { FormAlert } from '@/components/form-alert';
 import { StoreDrinkPicker } from '@/components/store-drink-picker';
 import { days } from '@/lib/drink-calendar-fields';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
+import { ProfileTag } from '@/components/profile-tag';
 
 type Drink = { name: string; brand?: string; flavor?: string; cover?: string };
 const NOTHING_TAKEN = new Set<string>();
@@ -64,7 +65,7 @@ export function DrinkLogForm({ options, stores, today, yesterday }: { options: S
           <div className="drink-log-rewards">
             {done.xp > 0 && <span className="drink-log-xp">+{done.xp} XP</span>}
             {done.streak > 1 && <span className="drink-log-streak">🔥 {days(done.streak)}</span>}
-            {done.tags.map(tag => <span key={tag.key} className="profile-tag" data-tag={tag.key}>{tag.label}</span>)}
+            {done.tags.map(tag => <ProfileTag key={tag.key} tag={tag.key}>{tag.label}</ProfileTag>)}
           </div>
           {done.tags.length > 0 && <small>{done.tags.length > 1 ? 'Новые теги' : 'Новый тег'} — выберите {done.tags.length > 1 ? 'их' : 'его'} в профиле.</small>}
         </div>

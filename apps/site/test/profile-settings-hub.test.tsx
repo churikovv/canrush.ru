@@ -6,6 +6,7 @@ let section: string | null = null;
 vi.mock('next/navigation', () => ({ usePathname: () => '/profile/settings', useSearchParams: () => new URLSearchParams(section ? { section } : {}), useRouter: () => ({ push() {}, refresh() {} }) }));
 vi.mock('@/app/profile/actions', () => ({ updateProfileAction: async () => ({}), deleteAccountAction: async () => {} }));
 vi.mock('@/app/profile/community-actions', () => ({ updateCommunityAction: async () => ({}) }));
+vi.mock('@/app/profile/shop-actions', () => ({ buyShopItemAction: async () => ({ ok: false, error: '' }) }));
 vi.mock('@/app/notifications/push-actions', () => ({ unregisterPushDeviceAction: async () => {} }));
 vi.mock('@/lib/auth-client', () => ({ authClient: { signOut: async () => ({}) } }));
 

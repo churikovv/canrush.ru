@@ -23,8 +23,8 @@ afterAll(async () => { await pool.query('delete from "user" where id = $1', [own
 
 describe.sequential('drink calendar storage', () => {
   it('links catalog drinks on the server and keeps private notes from other viewers', async () => {
-    // The first can pays the day XP and the "first sip" tag with its own XP, and reports both for the celebration card.
-    expect(await calendar.addDrink(owner, drink(start, { brand: 'Burn', flavor: 'original', price: 12990, store: 'Магнит', country: 'DE' }), start)).toEqual({ streak: 1, xp: 30, tags: ['drink-start'] });
+    // The first can pays only the day XP: the «first sip» tag is gone (migration 0190).
+    expect(await calendar.addDrink(owner, drink(start, { brand: 'Burn', flavor: 'original', price: 12990, store: 'Магнит', country: 'DE' }), start)).toEqual({ streak: 1, xp: 10, tags: [] });
     expect(await calendar.addDrink(owner, drink(start, { brand: 'Fake', flavor: 'nope' }), start)).toEqual({ streak: 1, xp: 0, tags: [] });
     const own = await calendar.getDrinkEntries(owner, start, start, true, true);
     expect(own.map(entry => [entry.name, entry.brand, entry.price, entry.store])).toEqual([['Burn · Оригинальный', 'Burn', 12990, 'Магнит'], ['Свой напиток', null, null, null]]);
@@ -41,7 +41,8 @@ describe.sequential('drink calendar storage', () => {
     expect(await xp('drink-day')).toHaveLength(7);
     expect(await xp('drink-streak')).toEqual([{ key: `${start}:3`, points: 30 }, { key: `${start}:7`, points: 70 }]);
     const earned = (await pool.query<{ key: string }>('select key from "profileAchievement" where "userId" = $1 order by key', [owner])).rows.map(row => row.key);
-    expect(earned).toEqual(expect.arrayContaining(['drink-start', 'streak-7']));
+    expect(earned).toEqual(expect.arrayContaining(['streak-7']));
+    expect(earned).not.toContain('drink-start');
     expect((await pool.query('select 1 from "profileExperience" where "userId" = $1 and reason = $2 and "sourceKey" = $3', [owner, 'achievement', 'streak-7'])).rowCount).toBe(1);
   });
   it('limits cans per day and edits to today or yesterday without paying twice', async () => {

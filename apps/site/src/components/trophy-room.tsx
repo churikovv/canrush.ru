@@ -1,17 +1,19 @@
 'use client';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from 'react';
 import { updateCommunityAction } from '@/app/profile/community-actions';
 import Link from '@/components/navigation-progress';
+import { AchievementEmblem } from '@/components/achievement-emblem';
 import { pluralRu } from '@/lib/drink-calendar-fields';
 import { RARITY_ORDER } from '@/lib/achievement-summary';
-import { ACHIEVEMENT_RARITIES, type AchievementRarity } from '@/lib/profile-achievements';
+import { ACHIEVEMENT_RARITIES, TIER_NUMERALS, type AchievementRarity } from '@/lib/profile-achievements';
 
 /** One medal of the screen, built on the server: a tag (can be worn) or an achievement that is only an achievement. */
 export interface TrophyCard {
-  key: string; label: string; rarity: AchievementRarity; description: string; art: string;
+  key: string; label: string; rarity: AchievementRarity; description: string;
   earned: boolean; earnedAt: string | null; tag: boolean; points: number; xp: number; completion: number;
+  /** Tier reached (0 while not earned) of `tiers`; `steps` are what is left: tier I, then the next tier, none at the top. */
+  tier: number; tiers: number;
   steps: { label: string; value: number; goal: number }[];
 }
 export interface TrophyTitle { label: string; index: number; score: number; next: { label: string; score: number; left: number; share: number } | null; titles: number }
@@ -34,11 +36,15 @@ function writeSeen(keys: Iterable<string>) {
   try { window.localStorage.setItem(SEEN_KEY, JSON.stringify([...keys])); } catch { /* private mode: the reveal just shows again */ }
 }
 
-/** The medal: the art, lit and floating when earned; dark with its progress ring while locked. Its rays live on the stage. */
-function Medal({ card, live, size }: { card: TrophyCard; live?: boolean; size: number }) {
+/** «key:tier»: what the reveal remembers, so a new tier opens with its own reveal too. */
+const seenKey = (card: TrophyCard) => `${card.key}:${card.tier}`;
+const Emblem = ({ card }: { card: TrophyCard }) => <AchievementEmblem className="trophy-art" achievementKey={card.key} rarity={card.rarity} tier={card.tier} tiers={card.tiers} earned={card.earned} />;
+
+/** The emblem, lit and floating when earned; dark with its progress ring while locked. Its rays live on the stage. */
+function Medal({ card, live }: { card: TrophyCard; live?: boolean }) {
   const ring = 2 * Math.PI * 47;
   return <span className="trophy-medal" data-rarity={card.rarity} data-earned={card.earned || undefined} data-live={live || undefined}>
-    <Image className="trophy-art" src={card.art} width={size} height={size} sizes={`${size}px`} alt="" draggable={false} />
+    <Emblem card={card} />
     {!card.earned && <>
       <svg className="trophy-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" /><circle cx="50" cy="50" r="47" style={{ strokeDasharray: `${ring * card.completion} ${ring}` }} /></svg>
       <span className="trophy-lock" aria-hidden="true">{LOCK}</span>
@@ -77,11 +83,13 @@ export function TrophyRoom({ cards, title, score, isOwn, owner, backHref, worn }
   useEffect(() => {
     if (!isOwn) return;
     const seen = readSeen();
-    const fresh = earned.filter(card => (seen ? !seen.has(card.key) : Boolean(card.earnedAt) && Date.now() - Date.parse(card.earnedAt!) < FRESH_MS));
-    if (!fresh.length) { writeSeen(earned.map(card => card.key)); return; }
+    // Seen before tiers were kept as a bare key: that is tier I.
+    const known = (card: TrophyCard) => seen!.has(seenKey(card)) || (card.tier <= 1 && seen!.has(card.key));
+    const fresh = earned.filter(card => (seen ? !known(card) : Boolean(card.earnedAt) && Date.now() - Date.parse(card.earnedAt!) < FRESH_MS));
+    if (!fresh.length) { writeSeen(earned.map(seenKey)); return; }
     // Marked as seen only when the reveal starts: React runs effects twice in development, and marking them here would
     // have spent the reveal on the first, discarded run.
-    const frame = window.setTimeout(() => { writeSeen(earned.map(card => card.key)); setReveal(fresh); }, 350);
+    const frame = window.setTimeout(() => { writeSeen(earned.map(seenKey)); setReveal(fresh); }, 350);
     return () => window.clearTimeout(frame);
   }, [isOwn, earned]);
 
@@ -177,7 +185,7 @@ export function TrophyRoom({ cards, title, score, isOwn, owner, backHref, worn }
             const near = Math.abs(at - index);
             return <button key={card.key} type="button" className="trophy-slide motion-local" data-pos={near === 0 ? 'active' : near === 1 ? 'near' : undefined} tabIndex={near === 0 ? 0 : -1}
               aria-label={`${card.label}${card.earned ? ', получено' : `, выполнено ${Math.round(card.completion * 100)}%`}`} onClick={() => go(at)}>
-              <Medal card={card} live={near === 0} size={360} />
+              <Medal card={card} live={near === 0} />
             </button>;
           })}
         </div>
@@ -188,15 +196,18 @@ export function TrophyRoom({ cards, title, score, isOwn, owner, backHref, worn }
         <span className="trophy-kicker" data-rarity={current.rarity}>{ACHIEVEMENT_RARITIES[current.rarity]}{current.tag ? ' · тег' : ''}</span>
         <h2>{current.label}</h2>
         <p className="trophy-desc">{current.description}</p>
-        {current.earned
-          ? <p className="trophy-status">Получено{current.earnedAt ? ` ${day.format(new Date(current.earnedAt))}` : ''}</p>
-          : <ul className="trophy-steps">{current.steps.map(item => <li key={item.label} data-done={item.value >= item.goal || undefined}>
-              <span>{item.label}</span><b>{Math.min(item.value, item.goal)} / {item.goal}</b>
-              <i style={{ '--share': Math.min(1, item.value / item.goal) } as CSSProperties} />
-            </li>)}</ul>}
+        {current.tiers > 1 && <TierTrack card={current} />}
+        {current.earned && <p className="trophy-status">Получено{current.earnedAt ? ` ${day.format(new Date(current.earnedAt))}` : ''}{current.tiers > 1 ? ` · ступень ${TIER_NUMERALS[current.tier - 1]}` : ''}</p>}
+        {current.steps.length > 0 && (current.earned
+          // The next tier folds into one line: the open list took the room of the emblem, which sizes by what is left.
+          ? <details className="trophy-next-tier" key={current.key}>
+              <summary>Ступень {TIER_NUMERALS[current.tier]}: выполнено {current.steps.filter(item => item.value >= item.goal).length} из {current.steps.length}</summary>
+              <Steps steps={current.steps} />
+            </details>
+          : <Steps steps={current.steps} />)}
         <div className="trophy-rewards" aria-label="Награда">
-          <span className="trophy-reward">{CUP}+{points(current.points)}</span>
-          {current.xp > 0 && <span className="trophy-reward">+{current.xp} XP</span>}
+          <span className="trophy-reward">{CUP}+{points(current.points)}{current.tiers > 1 ? ' за ступень' : ''}</span>
+          {current.xp > 0 && <span className="trophy-reward">+{current.xp} XP{current.tiers > 1 ? ' за первую' : ''}</span>}
           {!current.tag && <span className="trophy-reward is-plain">Без тега</span>}
         </div>
         {isOwn && current.earned && current.tag && <div className="trophy-actions">
@@ -210,7 +221,7 @@ export function TrophyRoom({ cards, title, score, isOwn, owner, backHref, worn }
       <ol className="trophy-rail" ref={rail} aria-label="Все достижения подряд">
         {list.map((card, at) => <li key={card.key}>
           <button type="button" className="trophy-thumb motion-local" data-index={at} data-rarity={card.rarity} data-earned={card.earned || undefined} aria-current={at === index || undefined} aria-label={`${card.label}${card.earned ? '' : ', ещё не получено'}`} onClick={() => go(at)}>
-            <Image src={card.art} width={64} height={64} sizes="56px" alt="" loading="lazy" />
+            <Emblem card={card} />
           </button>
         </li>)}
       </ol>
@@ -223,7 +234,21 @@ export function TrophyRoom({ cards, title, score, isOwn, owner, backHref, worn }
   </main>;
 }
 
-/** «Новое достижение»: each medal earned since the last visit pops in with rays, one after another. */
+function Steps({ steps }: { steps: TrophyCard['steps'] }) {
+  return <ul className="trophy-steps">{steps.map(item => <li key={item.label} data-done={item.value >= item.goal || undefined}>
+    <span>{item.label}</span><b>{Math.min(item.value, item.goal)} / {item.goal}</b>
+    <i style={{ '--share': Math.min(1, item.value / item.goal) } as CSSProperties} />
+  </li>)}</ul>;
+}
+
+/** I — II — III: the tiers of an achievement like divisions, the reached ones lit. */
+function TierTrack({ card }: { card: TrophyCard }) {
+  return <ol className="trophy-tiers" aria-label={`Ступень ${card.tier ? TIER_NUMERALS[card.tier - 1] : 'не получена'} из ${TIER_NUMERALS[card.tiers - 1]}`}>
+    {TIER_NUMERALS.slice(0, card.tiers).map((numeral, at) => <li key={numeral} data-done={at < card.tier || undefined} data-next={at === card.tier || undefined}>{numeral}</li>)}
+  </ol>;
+}
+
+/** «Новое достижение» or a new tier: each one since the last visit pops in with rays, one after another. */
 function TrophyReveal({ cards, onDone }: { cards: TrophyCard[]; onDone: (key: string) => void }) {
   const [at, setAt] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -232,15 +257,15 @@ function TrophyReveal({ cards, onDone }: { cards: TrophyCard[]; onDone: (key: st
   const last = at === cards.length - 1;
   const advance = () => (last ? onDone(card.key) : setAt(value => value + 1));
   return <dialog ref={dialog} className="trophy-reveal" data-rarity={card.rarity} aria-labelledby="trophy-reveal-title" onCancel={event => { event.preventDefault(); onDone(card.key); }}>
-    <p className="trophy-reveal-kicker">{cards.length > 1 ? `Новое достижение · ${at + 1} из ${cards.length}` : 'Новое достижение'}</p>
-    <div className="trophy-reveal-stage" key={card.key}>
+    <p className="trophy-reveal-kicker">{card.tier > 1 ? `Новая ступень ${TIER_NUMERALS[card.tier - 1]}` : 'Новое достижение'}{cards.length > 1 ? ` · ${at + 1} из ${cards.length}` : ''}</p>
+    <div className="trophy-reveal-stage" key={seenKey(card)}>
       <span className="trophy-rays" aria-hidden="true" />
-      <Image className="trophy-art" src={card.art} width={360} height={360} sizes="300px" alt="" />
+      <Emblem card={card} />
     </div>
     <span className="trophy-kicker" data-rarity={card.rarity}>{ACHIEVEMENT_RARITIES[card.rarity]}</span>
     <h2 id="trophy-reveal-title">{card.label}</h2>
     <p className="trophy-desc">{card.description}</p>
-    <div className="trophy-rewards"><span className="trophy-reward">{CUP}+{points(card.points)}</span>{card.xp > 0 && <span className="trophy-reward">+{card.xp} XP</span>}</div>
+    <div className="trophy-rewards"><span className="trophy-reward">{CUP}+{points(card.points)}</span>{card.xp > 0 && card.tier <= 1 && <span className="trophy-reward">+{card.xp} XP</span>}</div>
     <button type="button" className="can-btn trophy-reveal-cta" data-ready="" onClick={advance} autoFocus>{last ? 'Круто!' : 'Дальше'}</button>
   </dialog>;
 }

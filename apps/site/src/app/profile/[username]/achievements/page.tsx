@@ -10,7 +10,7 @@ import { getBadges } from '@/lib/badge-progress';
 import { MARKET_OPEN } from '@/lib/market-open';
 import { BADGE_ACHIEVEMENTS } from '@/lib/badges';
 import { getProfileByUsername } from '@/lib/profile';
-import { achievementCompletion, achievementImage, visibleProfileAchievements, type ProfileAchievement } from '@/lib/profile-achievements';
+import { achievementCompletion, tierCount, tierSteps, visibleProfileAchievements, type ProfileAchievement } from '@/lib/profile-achievements';
 import { getAchievementDates, getProfileCommunity } from '@/lib/profile-community';
 
 export const dynamic = 'force-dynamic';
@@ -39,12 +39,16 @@ export default async function AchievementsPage({ params }: { params: Promise<{ u
 
   function card<M extends string>(item: ProfileAchievement<M>, progress: Record<M, number>, earned: boolean, tag: boolean): TrophyCard {
     const scored = isScored(item.key);
+    const tiers = tierCount(item);
+    const tier = earned ? Math.min(tiers, (tag ? community.tiers[item.key] : undefined) ?? 1) : 0;
+    // What is left: tier I while locked, then the next tier, nothing once the top one is reached.
+    const steps = tier >= tiers ? [] : tierSteps(item, tier + 1);
     return {
-      key: item.key, label: item.label, rarity: item.rarity, description: item.description, art: achievementImage(item.key),
-      earned, earnedAt: dates.get(item.key)?.toISOString() ?? null, tag,
+      key: item.key, label: item.label, rarity: item.rarity, description: item.description,
+      earned, earnedAt: dates.get(item.key)?.toISOString() ?? null, tag, tier, tiers,
       points: scored ? TROPHY_POINTS[item.rarity] : 0, xp: tag && scored ? ACHIEVEMENT_XP : 0,
       completion: earned ? 1 : achievementCompletion(item, progress),
-      steps: item.steps.map(step => ({ label: step.label, value: progress[step.metric] ?? 0, goal: step.goal })),
+      steps: steps.map(step => ({ label: step.label, value: progress[step.metric] ?? 0, goal: step.goal })),
     };
   }
   const tags = visibleProfileAchievements(admin, community.earned)
@@ -58,7 +62,7 @@ export default async function AchievementsPage({ params }: { params: Promise<{ u
 
   // The score counts what any member can see, so an admin's view of secret tags does not change it.
   const summary = achievementSummary([...visibleProfileAchievements(false, community.earned), ...BADGE_ACHIEVEMENTS] as ProfileAchievement<string>[],
-    [...community.earned, ...badgeKeys], { ...community.progress, ...badges.progress } as Record<string, number>, [...tagDates, ...badges.earned]);
+    [...community.earned, ...badgeKeys], { ...community.progress, ...badges.progress } as Record<string, number>, [...tagDates, ...badges.earned], community.tiers);
 
   return <TrophyRoom cards={cards} score={summary.score} isOwn={own} owner={`@${profile.username}`} backHref={own ? '/profile' : `/profile/${profile.username}`} worn={community.tags[0] ?? null}
     title={{ label: summary.title.label, index: summary.title.index, score: summary.title.score, next: summary.next, titles: ACHIEVEMENT_TITLES.length }} />;

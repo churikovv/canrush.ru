@@ -7,6 +7,7 @@ import { experienceLevel, shortXp } from '@/lib/experience-level';
 import { levelTier } from '@/lib/level-tier';
 import { searchPeople } from '@/lib/people-search';
 import { profileTagLabel } from '@/lib/profile-achievements';
+import { ProfileTag } from '@/components/profile-tag';
 
 const compact = new Intl.NumberFormat('ru-RU', { notation: 'compact', maximumFractionDigits: 1 });
 const CANS = (count: number) => {
@@ -29,7 +30,7 @@ export async function PeopleBrowser({ q }: { q: string }) {
         </span>
         <span className="people-main">
           <span className="people-name"><strong>{person.username}</strong>{person.verified && <VerifiedMark />}
-            {person.tag && <span className="profile-tag" data-tag={person.tag}>{profileTagLabel(person.tag)}{person.tag === 'engine' && person.engineNumber && <small className="people-engine-number"> №{String(person.engineNumber).padStart(3, '0')}</small>}</span>}
+            {person.tag && <ProfileTag tag={person.tag}>{profileTagLabel(person.tag)}{person.tag === 'engine' && person.engineNumber && <small className="people-engine-number"> №{String(person.engineNumber).padStart(3, '0')}</small>}</ProfileTag>}
           </span>
           <span className="people-bio">{person.bio ?? person.name}</span>
           <span className="people-stats">

@@ -4,7 +4,9 @@ import { expect, it } from 'vitest';
 import { AvatarFrame } from '@/components/avatar-frame';
 import { BRAND_FRAMES } from '@/components/avatar-frame-brands';
 import { HEAVY_FRAMES } from '@/components/avatar-frame-heavy';
-import { PROFILE_FRAMES, parseProfileAppearance } from '@/lib/profile-appearance';
+import { SHOP_FRAMES } from '@/components/avatar-frame-shop';
+import { nextAppearanceUnlock, PROFILE_FRAMES, parseProfileAppearance } from '@/lib/profile-appearance';
+import { SHOP_ITEMS } from '@/lib/shop-items';
 
 it('draws every heavy frame with finite, rounded coordinates so hydration cannot drift', () => {
   for (const frame of [...HEAVY_FRAMES, ...BRAND_FRAMES]) {
@@ -31,6 +33,16 @@ it('offers every brand frame as a saved appearance outside the level rewards', (
     expect(parseProfileAppearance({ theme: 'default', frame })).toEqual({ theme: 'default', frame });
     expect(PROFILE_FRAMES.find(item => item.key === frame)).toMatchObject({ level: 999, brand: expect.any(String) });
   }
+});
+
+it('sells every shop frame outside the level rewards and draws it', () => {
+  for (const item of SHOP_ITEMS.filter(entry => entry.kind === 'frame')) {
+    expect(parseProfileAppearance({ theme: 'default', frame: item.key })).toEqual({ theme: 'default', frame: item.key });
+    expect(PROFILE_FRAMES.find(entry => entry.key === item.key)).toMatchObject({ level: 999, shop: true });
+    expect(nextAppearanceUnlock(1)?.frames).not.toContain(item.label);
+    expect(renderToStaticMarkup(createElement(AvatarFrame, { frame: item.key as never }))).toContain(`avatar-frame-shop avatar-frame-${item.key}`);
+  }
+  expect(SHOP_FRAMES).toEqual(SHOP_ITEMS.filter(entry => entry.kind === 'frame').map(entry => entry.key));
 });
 
 it('offers a heavy frame on each step up to Legend and accepts them as saved appearance', () => {

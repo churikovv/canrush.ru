@@ -5,8 +5,9 @@ import { NavigationIcon } from '@/components/navigation-icon';
 import { CapIcon } from '@/components/gacha-icons';
 import type { FirstStep } from '@/lib/first-steps';
 
+const TELEGRAM = <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.7 3.3a1.6 1.6 0 0 0-1.7-.2L2.9 9.6c-1.2.5-1.1 2.2.1 2.6l3.9 1.2 1.5 4.8c.3.9 1.4 1.2 2.1.5l2.2-2.1 4.1 3c.9.7 2.2.2 2.4-.9l2.6-13.9c.1-.6-.1-1.2-.6-1.5ZM10 14.2l-.6 3.2-1.1-3.6 9.4-7.5-7.7 7.9Z" /></svg>;
 const ICONS: Record<FirstStep['key'], ReactNode> = {
-  gacha: <CapIcon size={20} />, dating: <NavigationIcon section="dating" />, drink: <NavigationIcon section="can" />, profile: <NavigationIcon section="profile" />,
+  gacha: <CapIcon size={20} />, dating: <NavigationIcon section="dating" />, drink: <NavigationIcon section="can" />, profile: <NavigationIcon section="profile" />, telegram: TELEGRAM,
 };
 
 function Check() {

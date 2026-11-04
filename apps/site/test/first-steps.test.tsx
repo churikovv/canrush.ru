@@ -18,6 +18,16 @@ it('links undone steps to their place and keeps done ones plain, with progress a
   expect(html).toContain(' — готово');
 });
 
+it('adds the Telegram bot step only when the site has a bot', () => {
+  expect(firstSteps(state).map(step => step.key)).toEqual(['gacha', 'dating', 'drink', 'profile']);
+  const steps = firstSteps({ ...state, telegram: false });
+  expect(steps.at(-1)).toMatchObject({ key: 'telegram', done: false, href: '/profile/settings?section=telegram-bot', reward: null });
+  const html = renderToStaticMarkup(<FirstSteps steps={steps} />);
+  expect(html).toContain('1 из 5 готово');
+  expect(html).toContain('Подключить Telegram-бота');
+  expect(firstSteps({ ...state, telegram: true }).at(-1)?.done).toBe(true);
+});
+
 it('shows only rewards the system pays', () => {
   const steps = firstSteps({ ...state, pulled: false, welcomed: false });
   expect(Object.fromEntries(steps.map(step => [step.key, step.reward]))).toEqual({ gacha: '+30 крышек', dating: '+2 XP за свайп', drink: '+3 крышки и 10 XP', profile: null });

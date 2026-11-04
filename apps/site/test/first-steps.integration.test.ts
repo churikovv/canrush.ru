@@ -49,6 +49,24 @@ it('counts a review as the drink step and needs a nickname for the profile step'
   expect(await done(id)).toEqual(['drink']);
 });
 
+it('ticks the Telegram step only when the bot can write: linked, started and not stopped', async () => {
+  const id = await member();
+  const chat = 900_000_000_000 + Math.floor(Math.random() * 1_000_000_000);
+  const step = async () => (await getFirstSteps(id, { telegram: true }))?.find(item => item.key === 'telegram');
+  expect(await step()).toMatchObject({ done: false, href: '/profile/settings?section=telegram-bot' });
+  expect((await getFirstSteps(id, { telegram: false }))?.some(item => item.key === 'telegram')).toBe(false);
+  await pool.query(`insert into account(id,"accountId","providerId",issuer,"userId","createdAt","updatedAt") values($1,$2,'telegram','local:telegram',$3,now(),now())`, [randomUUID(), String(chat), id]);
+  expect((await step())?.done).toBe(false);
+  await pool.query(`insert into "telegramChat"("telegramId","chatId") values($1,$1)`, [chat]);
+  try {
+    expect((await step())?.done).toBe(true);
+    await pool.query(`update "telegramChat" set "blockedAt" = now() where "telegramId" = $1`, [chat]);
+    expect((await step())?.done).toBe(false);
+  } finally {
+    await pool.query(`delete from "telegramChat" where "telegramId" = $1`, [chat]);
+  }
+});
+
 it('names the welcome caps only until they are paid', async () => {
   const id = await member();
   await getGachaState(id);

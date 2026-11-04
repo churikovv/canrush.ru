@@ -1,9 +1,11 @@
 'use client';
-import { ProfileImageMenu, ProfileLookStrip, type LookTileKey } from '@/components/profile-look-strip';
+import { ProfileImageMenu, ProfileLookStrip, type LockedTag, type LookTileKey } from '@/components/profile-look-strip';
+import type { ShopView } from '@/components/profile-shop';
 import type { BrandFrameProgress } from '@/lib/brand-frame-fields';
 import { DEFAULT_PROFILE_APPEARANCE, profileThemeAttributes } from '@/lib/profile-appearance';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import { updateCommunityAction } from '@/app/profile/community-actions';
+import { buyShopItemAction } from '@/app/profile/shop-actions';
 import { ProfileLayoutEditor } from '@/components/profile-layout-editor';
 
 import Image from 'next/image';
@@ -19,6 +21,7 @@ import { PROFILE_BIO_MAX } from '@/lib/profile-fields';
 import { DEFAULT_PROFILE_LAYOUT, PROFILE_BLOCKS, type ProfileBlockKey } from '@/lib/profile-layout';
 import { MARKET_OPEN } from '@/lib/market-open';
 import type { ProfileData } from '@/lib/profile';
+import { ProfileTag } from '@/components/profile-tag';
 
 type ImageKind = 'avatar' | 'banner';
 type ProfileCropSource = CropSource & { kind: ImageKind };
@@ -69,7 +72,7 @@ function PrefixedInput({ prefix, ...props }: InputHTMLAttributes<HTMLInputElemen
 const bareTelegram = (value: string) => value.trim().replace(/^https?:\/\//i, '').replace(/^(?:www\.)?(?:t\.me|telegram\.me)\//i, '').replace(/^@+/, '').replace(/\/$/, '');
 
 /** `tags`: the member's earned tags and the one worn now; it is picked on the preview and saved with the profile. */
-export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedFrames = [], brandFrames = [], tags, settings = [], accountRows = [] }: { level?: number; xp?: number; ownedFrames?: readonly string[]; brandFrames?: readonly BrandFrameProgress[]; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { earned: readonly string[]; selected: string }; settings?: SettingsGroup[]; accountRows?: SettingsRow[] }) {
+export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedFrames = [], brandFrames = [], tags, shop, settings = [], accountRows = [] }: { level?: number; xp?: number; ownedFrames?: readonly string[]; brandFrames?: readonly BrandFrameProgress[]; profile: ProfileData; layoutPreviews?: Partial<Record<ProfileBlockKey, ReactNode>>; tags?: { earned: readonly string[]; selected: string; shopTags?: readonly string[]; locked?: readonly LockedTag[] }; shop?: ShopView & { name?: string }; settings?: SettingsGroup[]; accountRows?: SettingsRow[] }) {
   const initialName = profile.name.trim() && !profile.name.includes('@') ? profile.name : profile.username;
   // The open section lives in ?section= (native history, synced with useSearchParams), so the phone's back gesture
   // returns to the list of sections instead of leaving the editor.
@@ -249,11 +252,11 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
       <div className="profile-editor-preview" hidden={settingsOpen} {...profileThemeAttributes(appearance.theme)}>
       <ProfileHeader frame={appearance.frame} name={name.trim() || initialName} username={username.replace(/^@+/, '') || profile.username} bio={bio.trim()} createdAt={profile.createdAt}
         avatarSrc={imageSource('avatar')} bannerSrc={imageSource('banner')} avatarControl={imageControl('avatar')} bannerControl={imageControl('banner')}
-        tags={tag ? <div className="profile-tags"><span className="profile-tag" data-tag={tag}>{profileTagLabel(tag)}</span></div> : undefined}
+        tags={tag ? <div className="profile-tags"><ProfileTag tag={tag}>{profileTagLabel(tag)}</ProfileTag></div> : undefined}
         actions={<div className="profile-editor-actions"><Link className="community-button community-button-secondary" href="/profile">Отмена</Link><ApplyButton disabled={decoding.avatar || decoding.banner || Boolean(cropSource)} /></div>} />
       <ProfileLookStrip appearance={appearance} saved={savedAppearance} onAppearance={setAppearance} level={level} xp={xp ?? 0} owned={ownedFrames} brandFrames={brandFrames}
         avatarSrc={imageSource('avatar')} disabled={pending} autoOpen={lookTile}
-        tag={tags && { value: tag, saved: tags.selected, earned: tags.earned, onChange: setTag, href: `/profile/${profile.username}/achievements` }}
+        tag={tags && { value: tag, saved: tags.selected, earned: tags.earned, shopTags: tags.shopTags, locked: tags.locked, onChange: setTag, href: `/profile/${profile.username}/achievements` }} shop={shop && { ...shop, buy: buyShopItemAction }}
         blocks={{ shown: visibleBlocks, total: PROFILE_BLOCKS.filter(block => !marketOut(block.key)).length, open: () => openSection('blocks') }} />
       {imageError && <p className="field-error look-error" role="alert">{imageError}</p>}
       </div>

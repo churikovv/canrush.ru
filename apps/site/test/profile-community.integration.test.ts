@@ -25,9 +25,9 @@ describe.sequential('community profile storage', () => {
     expect((await community.getConnections(a, 'friends')).users).toHaveLength(1);
     await community.setFollowing(b, a, false);
     expect((await community.getProfileCommunity(a)).friends).toBe(0);
-    expect((await community.getProfileCommunity(a)).earned).not.toContain('friend');
-    await pool.query(`insert into "profileAchievement" ("userId", "key") values ($1, 'friend')`, [a]);
-    expect((await community.getProfileCommunity(a)).earned).toContain('friend');
+    expect((await community.getProfileCommunity(a)).earned).not.toContain('collector');
+    await pool.query(`insert into "profileAchievement" ("userId", "key") values ($1, 'collector')`, [a]);
+    expect((await community.getProfileCommunity(a)).earned).toContain('collector');
     await expect(community.setFollowing(a, a, true)).rejects.toThrow('себя');
     expect((await community.getConnections(a, 'following', 2)).users).toEqual([]);
   });
@@ -40,10 +40,11 @@ describe.sequential('community profile storage', () => {
     expect(ratings.count).toBe(2);
     expect(ratings.overall).toBe(3.25);
     expect(ratings.histogram).toEqual(Array.from({ length: 10 }, (_, i) => ({ score: 10 - i, count: [5, 2].includes(10 - i) ? 1 : 0 })));
-    await expect(community.setProfileTags(a, ['first-review', 'friend'])).rejects.toThrow();
-    await community.setProfileTags(a, ['first-review']);
-    expect((await community.getProfileCommunity(a)).tags).toEqual(['first-review']);
-    await expect(community.setProfileTags(a, ['first-review', 'first-review'])).rejects.toThrow();
+    await expect(community.setProfileTags(a, ['three', 'collector'])).rejects.toThrow();
+    await pool.query(`insert into "profileAchievement" ("userId", "key") values ($1, 'three') on conflict do nothing`, [a]);
+    await community.setProfileTags(a, ['three']);
+    expect((await community.getProfileCommunity(a)).tags).toEqual(['three']);
+    await expect(community.setProfileTags(a, ['three', 'three'])).rejects.toThrow();
     expect((await community.getProfileRatings(c)).count).toBe(0);
   });
   it('limits concurrent wall posts and permits removal only by owner or author', async () => {
@@ -166,6 +167,54 @@ describe.sequential('community profile storage', () => {
     await pool.query('update "user" set "telegramChannel" = $2 where id = $1', [b, 'another_channel']);
     await community.getProfileCommunity(b);
     expect((await pool.query('select points from "profileExperience" where "userId" = $1 and "sourceKey" = \'telegram\'', [b])).rows).toEqual([{ points: 20 }]);
+  });
+  it('counts the meme tags from reviews, likes, comments, the profile and posts, and pays their XP once', async () => {
+    const [member, ...likers] = [randomUUID(), randomUUID(), randomUUID(), randomUUID()] as [string, ...string[]];
+    for (const id of [member, ...likers]) await pool.query(`insert into "user" (id, name, email, "emailVerified", username, "createdAt", "updatedAt") values ($1, 'Meme test', $2, true, $3, now() - interval '31 days', now())`, [id, `${id}@example.com`, `test_${id.replaceAll('-', '').slice(0, 16)}`]);
+    try {
+      const drinks: [string, string][] = [['Red Bull', 'original'], ['Red Bull', 'tropical'], ['Red Bull', 'peach'], ['Red Bull', 'coffee'], ['Red Bull', 'lime'],
+        ['Volt Energy', 'original'], ['Volt Energy', 'apple'], ['Volt Energy', 'peach'], ['Volt Energy', 'raspberry'], ['Volt Energy', 'plum_pie'],
+        ['Burn', 'original'], ['Monster', 'original'], ['Gorilla', 'original']];
+      const reviews: string[] = [];
+      for (const [index, [brand, flavor]] of drinks.entries()) reviews.push((await pool.query<{ id: string }>(`insert into review ("userId", brand, flavor, design, taste, composition, text) values ($1, $2, $3, 7, 7, 4, $4) returning id`,
+        [member, brand, flavor, index < 3 ? 'Вообще-то, '.repeat(50) : 'Нормально'])).rows[0]!.id);
+      for (const liker of likers) await pool.query(`insert into "reviewReaction" ("reviewId", "userId", value) values ($1, $2, 1)`, [reviews[0], liker]);
+      for (let index = 0; index < 5; index++) await pool.query(`insert into "reviewComment" ("reviewId", "userId", text) values ($1, $2, 'Есть нюанс')`, [reviews[1], member]);
+      for (let index = 0; index < 3; index++) await pool.query(`insert into "profileComment" ("profileId", "userId", text) values ($1, $1, 'Заметьте меня')`, [member]);
+      await pool.query(`insert into favorite ("userId", brand, flavor) values ($1, 'Red Bull', 'original'), ($1, 'Volt Energy', 'original')`, [member]);
+      const before = await community.getProfileCommunity(member);
+      expect(before.progress).toMatchObject({ classicBrands: 5, accountDays: 31, longReviews: 3, comments: 5, bestReviewLikes: 3, profileLook: 0, wallPosts: 3, redBull: 5, redBullFavorites: 1, volt: 5, voltFavorites: 1 });
+      expect(before.earned).toEqual(expect.arrayContaining(['boomer', 'dushnila', 'based', 'winged', 'voltage']));
+      expect(before.earned).not.toContain('pickme');
+      await pool.query(`update "user" set bio = 'Не такая, как все' where id = $1`, [member]);
+      await pool.query(`insert into "profileImage" ("userId", kind, data) values ($1, 'avatar', '\\x00'::bytea), ($1, 'banner', '\\x00'::bytea)`, [member]);
+      expect((await community.getProfileCommunity(member)).earned).toContain('pickme');
+      await community.getProfileCommunity(member);
+      const xp = await pool.query<{ key: string; points: number }>(`select "sourceKey" as key, points from "profileExperience" where "userId" = $1 and reason = 'achievement' and "sourceKey" = any($2::text[]) order by 1`,
+        [member, ['based', 'boomer', 'dushnila', 'pickme', 'voltage', 'winged']]);
+      expect(xp.rows).toEqual(['based', 'boomer', 'dushnila', 'pickme', 'voltage', 'winged'].map(key => ({ key, points: 20 })));
+      await community.setProfileTags(member, ['voltage']);
+      expect((await community.getProfileCommunity(member)).tags).toEqual(['voltage']);
+    } finally { await pool.query('delete from "user" where id = any($1::text[])', [[member, ...likers]]); }
+  });
+  it('raises a tag to its next tier, pays XP only for the first and counts sparks for every tier', async () => {
+    const { getShop } = await import('../src/lib/shop');
+    const member = randomUUID();
+    await pool.query(`insert into "user" (id, name, email, "emailVerified", username, "createdAt", "updatedAt") values ($1, 'Tier test', $2, true, $3, now(), now())`, [member, `${member}@example.com`, `test_${member.replaceAll('-', '').slice(0, 16)}`]);
+    try {
+      const review = (index: number) => pool.query(`insert into review ("userId", brand, flavor, design, taste, composition, text) values ($1, 'Tier', $2, 7, 7, 4, 'Ок')`, [member, `f${index}`]);
+      for (let index = 0; index < 3; index++) await review(index);
+      expect((await community.getProfileCommunity(member)).tiers.three).toBe(1);
+      for (let index = 3; index < 10; index++) await review(index);
+      expect((await community.getProfileCommunity(member)).tiers.three).toBe(2);
+      // XP for the tag once; the tier is an update, not a new row.
+      expect((await pool.query('select points from "profileExperience" where "userId" = $1 and reason = $2 and "sourceKey" = $3', [member, 'achievement', 'three'])).rows).toEqual([{ points: 20 }]);
+      // «:3» is common (10 points) at tier II: 20 sparks from it.
+      expect((await getShop(member)).sources.achievements).toBe(20);
+      await pool.query('delete from review where "userId" = $1', [member]);
+      // Tiers never go down, like the tags.
+      expect((await community.getProfileCommunity(member)).tiers.three).toBe(2);
+    } finally { await pool.query('delete from "user" where id = $1', [member]); }
   });
   it('cascades community data when an account is deleted', async () => {
     await pool.query('delete from "user" where id = $1', [a]);

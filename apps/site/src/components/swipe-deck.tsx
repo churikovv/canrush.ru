@@ -7,6 +7,7 @@ import Link from '@/components/navigation-progress';
 import type { DatingProgress, DatingRewards, SwipeCard } from '@/lib/drink-swipes';
 import { pickReason } from '@/lib/pick-reason';
 import { TasteEnd } from '@/components/taste-card';
+import { ProfileTag } from '@/components/profile-tag';
 
 /** Past this many pixels a drag decides; below it the card springs back. */
 const THRESHOLD = 110;
@@ -112,7 +113,7 @@ export function SwipeDeck({ cards, signedIn, rewards, progress: initialProgress 
         <button type="button" className="community-button" onClick={more}>Обновить колоду</button>
       </div>}
       {notice && <p className={`swipe-notice${notice.match ? ' is-match' : ''}`} role="status">
-        {notice.text}{notice.tag && <> <span className="profile-tag" data-tag={notice.tag.key}>{notice.tag.label}</span> · +20 XP</>}{notice.signIn && <> · <Link href="/sign-in">Войти</Link></>}
+        {notice.text}{notice.tag && <> <ProfileTag tag={notice.tag.key}>{notice.tag.label}</ProfileTag> · +20 XP</>}{notice.signIn && <> · <Link href="/sign-in">Войти</Link></>}
       </p>}
       {reward && <span key={reward.at} className="swipe-xp" aria-live="polite">+{reward.xp} XP</span>}
     </div>
@@ -143,7 +144,7 @@ function DatingRewardsIsland({ rewards, progress }: { rewards: DatingRewards; pr
       <span className="dating-reward-bar" aria-hidden="true"><span style={{ width: `${xpDone / rewards.xpLimit * 100}%` }} /></span>
     </div>}
     {showTag && <div className="dating-reward is-tag">
-      <span className="dating-reward-title"><span className="profile-tag" data-tag={rewards.tag.key} title="Тег за свидание">{rewards.tag.label}</span></span>
+      <span className="dating-reward-title"><ProfileTag tag={rewards.tag.key} title="Тег за свидание">{rewards.tag.label}</ProfileTag></span>
       <small aria-label={`Свайпы ${swipes} из ${rewards.swipeGoal}, мэтчи ${likes} из ${rewards.likeGoal}`}>{swipes}/{rewards.swipeGoal} свайпов · {likes}/{rewards.likeGoal} ♥</small>
       <span className="dating-reward-bar" aria-hidden="true"><span style={{ width: `${(swipes + likes) / (rewards.swipeGoal + rewards.likeGoal) * 100}%` }} /></span>
     </div>}

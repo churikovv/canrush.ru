@@ -32,8 +32,8 @@ describe('achievement summary', () => {
   });
 
   it('picks the closest goal that can be worked towards, never the beta number or the contest prize', () => {
-    const goal = summary([], { reviews: 1, detailedReviews: 0 }).goal;
-    expect(goal?.item.key).toBe('first-review');
+    const goal = summary([], { reviews: 3, detailedReviews: 0 }).goal;
+    expect(goal?.item.key).toBe('three');
     expect(goal?.completion).toBe(1);
     expect(['engine', 'energizer', 'top']).not.toContain(summary([]).goal?.item.key);
   });

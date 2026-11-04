@@ -1450,3 +1450,120 @@ a.settings-row:focus-visible { outline: 2px solid var(--color-focus); outline-of
   .collection-form-actions > * { width: 100%; }
 }
 @media (min-width: 640px) { .collection-photos { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; } }
+/* Рамки магазина образов (`avatar-frame-shop.tsx`): обычного размера, крутятся только группы вокруг центра кадра.
+   Only transform and opacity move; the glow is a filter on the root svg (Safari ignores it on inner elements). */
+.avatar-frame-shop .frame-bubble, .avatar-frame-shop .frame-aurora, .avatar-frame-shop .frame-holo-ring, .avatar-frame-shop .frame-holo-scan, .avatar-frame-shop .frame-shop-fizz { transform-box: view-box; transform-origin: 50% 50%; }
+.avatar-frame-bubbles { color: #36c6ff; filter: drop-shadow(0 0 1.5px rgb(54 198 255 / .55)); }
+.avatar-frame-bubbles .frame-bubble { opacity: 0; animation: frame-bubble-rise 3.6s ease-in infinite; animation-delay: var(--fx-delay, 0s); }
+.avatar-frame-bubbles .frame-shop-fizz { animation: fx-spin 18s linear infinite; }
+/* Only a turn round the centre: a scale would be round the centre too and pull the bubble onto the face. */
+@keyframes frame-bubble-rise { 0% { opacity: 0; rotate: 0deg; } 15% { opacity: 1; } 80% { opacity: .9; } 100% { opacity: 0; rotate: var(--turn); } }
+.avatar-frame-aurora { filter: drop-shadow(0 0 2.5px rgb(77 255 176 / .5)) drop-shadow(0 0 6px rgb(166 107 255 / .3)); }
+.avatar-frame-aurora .frame-aurora-1 { animation: fx-spin 14s linear infinite; }
+.avatar-frame-aurora .frame-aurora-2 { animation: fx-spin 19s linear infinite reverse; }
+.avatar-frame-aurora .frame-aurora-3 { animation: fx-spin 9s linear infinite; }
+.avatar-frame-aurora .frame-aurora-star { animation: frame-aurora-twinkle 3.2s ease-in-out infinite; animation-delay: var(--fx-delay, 0s); }
+@keyframes frame-aurora-twinkle { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+.avatar-frame-hologram { filter: drop-shadow(0 0 1.5px rgb(255 255 255 / .8)) drop-shadow(0 0 5px rgb(54 214 255 / .45)); }
+.avatar-frame-hologram .frame-holo-ring { animation: fx-spin 8s linear infinite; }
+.avatar-frame-hologram .frame-holo-scan { animation: fx-spin 2.6s linear infinite reverse; }
+.avatar-frame-hologram .frame-holo-brackets { animation: frame-holo-flicker 4s steps(1) infinite; }
+@keyframes frame-holo-flicker { 0%, 100% { opacity: .9; } 46% { opacity: .35; } 48% { opacity: 1; } 50% { opacity: .5; } 52% { opacity: .95; } }
+@media (prefers-reduced-motion: reduce) { .avatar-frame-shop .frame-fx { animation: none; } .avatar-frame-bubbles .frame-bubble { opacity: 1; } }
+/* Магазин образов (`ProfileShop`): строка под рядом плиток и лист снизу — кошелёк искр, предложение недели, вкладки и
+   карточки с превью тега рядом с именем или рамки на аватарке. Ярусы: обычный, редкий, эпический, легендарный. */
+.look-shop-bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; width: 100%; min-height: 64px; margin: 0 0 16px; padding: 10px 12px; border: 1px solid transparent; border-radius: 18px; background: var(--profile-soft); color: var(--profile-ink); font: inherit; text-align: left; cursor: pointer; }
+.look-shop-bar:hover:not(:disabled) { border-color: var(--profile-line); }
+.look-shop-bar:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.look-shop-bar:disabled { cursor: wait; opacity: .65; }
+.look-shop-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--profile-panel); color: var(--profile-accent); }
+.look-shop-copy { display: grid; gap: 2px; min-width: 0; }
+.look-shop-copy strong { font-size: .9375rem; font-weight: 700; }
+.look-shop-copy span { color: var(--profile-muted); font-size: .8125rem; line-height: 1.35; }
+.look-shop-balance, .look-option-price { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px; background: #006eff; color: #fff; font-size: .8125rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.spark-icon { flex: none; color: #006eff; }
+:is(.look-shop-balance, .look-option-price) .spark-icon { color: #fff; }
+.look-shop-bar > svg:last-child { color: var(--profile-muted); }
+/* The tag tile and the tag list show the tag itself, not the achievement's medal. */
+.look-art-chip { position: relative; display: block; box-sizing: border-box; width: 100%; min-width: 0; height: 100%; padding: 4px; overflow: hidden; background: var(--profile-panel); }
+/* The chip keeps its natural size and is scaled to the tile (`--fit`, measured by `TagChip`): no break inside a word. */
+.look-art-chip .tag-wave { position: absolute; top: 50%; left: 50%; width: max-content; max-width: none; translate: -50% -50%; scale: var(--fit, 1); }
+.look-art-chip .profile-tag { white-space: nowrap; }
+.look-option-tag { grid-template-columns: minmax(0, 1fr) auto; min-height: 60px; }
+.look-option-tag .look-option-copy { gap: 6px; }
+.look-option-locked { cursor: default; }
+.look-option-locked:hover { background: transparent; }
+.look-option-locked .tag-wave { filter: grayscale(.85); opacity: .55; }
+.look-option-locked :is(.profile-tag, .tag-glow, .tag-glow i, .tag-edge), .look-option-locked .profile-tag::before, .look-option-locked .profile-tag::after { animation-play-state: paused; }
+.look-option-locked .look-option-copy > span:not(.look-meter) { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.look-option-locked .look-option-lock { color: var(--profile-muted); }
+
+.shop-sheet { --tier: #8a94a6; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+.shop-sheet [data-tier=rare] { --tier: #006eff; }
+.shop-sheet [data-tier=epic] { --tier: #9b5cff; }
+.shop-sheet [data-tier=legendary] { --tier: #f0a500; }
+/* The wallet: balance, where the sparks came from, how more come. */
+.shop-wallet { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 14px; padding: 16px; border-radius: 20px; color: #fff; background: #006eff; }
+.shop-wallet-coin { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: #fff; }
+.shop-wallet-coin .spark-icon { color: #006eff; }
+.shop-wallet-main { margin: 0; font-size: 1rem; font-weight: 700; }
+.shop-wallet-main strong { font-size: 2rem; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.shop-wallet-sources { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.shop-wallet-sources li { display: grid; gap: 2px; padding: 8px 10px; border-radius: 12px; background: rgb(255 255 255 / .16); }
+.shop-wallet-sources span { font-size: .6875rem; font-weight: 700; line-height: 1.2; opacity: .75; }
+.shop-wallet-sources b { font-size: 1rem; font-variant-numeric: tabular-nums; }
+.shop-wallet-spent { grid-column: 1 / -1; margin: 6px 0 0; font-size: .75rem; font-weight: 700; opacity: .75; font-variant-numeric: tabular-nums; }
+.shop-wallet-note { grid-column: 1 / -1; margin: 8px 0 0; font-size: .8125rem; line-height: 1.45; }
+.shop-wallet-note a { color: #fff; font-weight: 800; text-decoration: underline; text-underline-offset: 2px; }
+/* The week's deal: a card in the tier's colour with the old price struck through. */
+.shop-deal { display: grid; gap: 12px; margin-top: 12px; padding: 14px; border-radius: 20px; border: 1.5px solid color-mix(in srgb, var(--tier) 55%, transparent); background: linear-gradient(135deg, color-mix(in srgb, var(--tier) 14%, var(--theme-panel, #fff)), var(--theme-panel, #fff)); }
+.shop-deal-badge { justify-self: start; padding: 4px 10px; border-radius: 999px; background: #006eff; color: #fff; font-size: .75rem; font-weight: 800; }
+.shop-deal-body { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; gap: 12px; }
+.shop-deal-copy { display: grid; gap: 4px; min-width: 0; }
+.shop-deal-copy strong { font-size: 1.125rem; }
+.shop-deal-copy > span { color: var(--theme-muted, #5b6474); font-size: .8125rem; line-height: 1.35; }
+.shop-deal-price { display: inline-flex; align-items: center; gap: 4px; color: var(--theme-text, #111) !important; font-size: 1rem !important; font-weight: 800; }
+.shop-deal-price s { margin-right: 4px; color: var(--theme-muted, #5b6474); font-weight: 600; }
+.shop-tabs { display: flex; gap: 6px; margin: 16px 0 12px; }
+.shop-tab { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1 1 0; min-height: 44px; padding: 0 10px; border: 0; border-radius: 999px; background: var(--theme-subtle, #f3f4f6); color: var(--theme-text, #111); font: inherit; font-weight: 700; cursor: pointer; }
+.shop-tab small { font-size: .75rem; font-weight: 600; opacity: .7; font-variant-numeric: tabular-nums; }
+.shop-tab[aria-selected=true] { background: #006eff; color: #fff; }
+.shop-tab:focus-visible { outline: 3px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.shop-soon { padding: 2px 6px; border-radius: 999px; background: rgb(127 127 127 / .18); font-size: .6875rem; font-weight: 700; }
+.shop-tab[aria-selected=true] .shop-soon { background: rgb(255 255 255 / .25); }
+.shop-message { margin: 0 0 12px; padding: 10px 12px; border-radius: 14px; font-size: .875rem; line-height: 1.45; }
+.shop-message.is-ok { background: color-mix(in srgb, #12b76a 14%, var(--theme-panel, #fff)); }
+.shop-message.is-error { background: color-mix(in srgb, #f04438 14%, var(--theme-panel, #fff)); }
+.shop-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.shop-item { position: relative; display: grid; grid-template-rows: auto auto 1fr auto; gap: 8px; min-width: 0; padding: 10px; border: 1.5px solid color-mix(in srgb, var(--tier) 35%, transparent); border-radius: 18px; background: linear-gradient(180deg, color-mix(in srgb, var(--tier) 9%, var(--theme-panel, #fff)), var(--theme-panel, #fff) 60%); }
+.shop-item[data-owned] { border-style: dashed; }
+.shop-tier { display: inline-flex; align-items: center; gap: 6px; justify-self: start; padding: 3px 8px; border-radius: 999px; background: color-mix(in srgb, var(--tier) 18%, transparent); color: color-mix(in srgb, var(--tier) 70%, var(--theme-text, #111)); font-size: .6875rem; font-weight: 800; letter-spacing: .02em; }
+.shop-tier em { padding: 0 5px; border-radius: 999px; background: #006eff; color: #fff; font-style: normal; }
+.shop-preview { display: grid; place-items: center; height: 92px; overflow: hidden; border-radius: 12px; background: var(--theme-subtle, #f3f4f6); }
+.shop-preview-tag { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 4px 6px; padding: 8px; }
+.shop-preview-name { max-width: 100%; overflow: hidden; font-size: .8125rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+/* The sheet is at most 520 px wide, so the grid keeps two columns and a tag stays on one line, as next to a name. */
+.shop-preview-tag .tag-wave { max-width: 100%; }
+.shop-preview-tag .profile-tag { white-space: nowrap; }
+.shop-preview .appearance-frame-sample.community-avatar { width: 60px; height: 60px; margin: 0; }
+.shop-preview[data-large] { height: 110px; }
+.shop-preview[data-large] .appearance-frame-sample.community-avatar { width: 72px; height: 72px; }
+.shop-item-copy { display: grid; align-content: start; gap: 2px; min-width: 0; }
+.shop-item-copy strong { font-size: .9375rem; }
+.shop-item-copy span { color: var(--theme-muted, #5b6474); font-size: .75rem; line-height: 1.4; }
+.shop-buy { display: inline-flex; align-items: center; justify-content: center; gap: 5px; width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: 999px; background: #006eff; color: #fff; font: inherit; font-weight: 800; font-variant-numeric: tabular-nums; cursor: pointer; }
+.shop-buy .spark-icon { color: #fff; }
+.shop-buy[data-confirm] { background: #0052cc; color: #fff; box-shadow: inset 0 0 0 2px rgb(255 255 255 / .55); }
+.shop-buy.is-owned { background: var(--theme-subtle, #f3f4f6); color: var(--theme-text, #111); }
+.shop-buy.is-owned:disabled { color: var(--theme-muted, #5b6474); cursor: default; }
+.shop-buy:disabled:not(.is-owned) { opacity: .6; }
+.shop-buy:focus-visible { outline: 3px solid var(--color-focus, #006eff); outline-offset: 2px; }
+/* Not enough yet: how far along the member is to this item. */
+.shop-short { display: grid; gap: 6px; align-content: center; min-height: 44px; }
+.shop-short-meter { display: block; height: 6px; overflow: hidden; border-radius: 3px; background: var(--theme-subtle, #f3f4f6); }
+.shop-short-meter i { display: block; height: 100%; border-radius: inherit; background: var(--tier); transform-origin: left; transform: scaleX(var(--value)); }
+.shop-short-copy { display: inline-flex; align-items: center; gap: 4px; color: var(--theme-muted, #5b6474); font-size: .875rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.shop-short-copy small { margin-left: auto; font-size: .75rem; font-weight: 600; }
+.shop-empty { padding: 28px 12px; border-radius: 18px; background: var(--theme-subtle, #f3f4f6); text-align: center; }
+.shop-empty p { margin: 0; line-height: 1.5; }
+.shop-empty p + p { margin-top: 6px; color: var(--theme-muted, #5b6474); font-size: .875rem; }

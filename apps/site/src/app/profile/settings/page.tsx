@@ -29,7 +29,9 @@ import { getProfileRatings, getProfileWall, getConnections, getProfileCommunity 
 import { getListings } from '@/lib/market';
 import { getExperience } from '@/lib/profile-experience';
 import { ensureOwnProfile } from '@/lib/profile';
-import { visibleProfileAchievements } from '@/lib/profile-achievements';
+import { achievementCompletion, achievementStepsDone, visibleProfileAchievements } from '@/lib/profile-achievements';
+import { isScored, UNREACHABLE_ACHIEVEMENTS } from '@/lib/achievement-summary';
+import { getShop } from '@/lib/shop';
 import { CITIES, DEFAULT_CITY } from '@canrush/shared';
 import { TELEGRAM_BOT_OPTIONS } from '@/lib/telegram-bot/settings';
 import { LEGAL_DETAILS } from '@/lib/legal';
@@ -168,10 +170,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     getPool().query<{ kind: string; enabled: boolean }>('select kind,enabled from "notificationPreference" where "userId"=$1', [session.user.id]).then(result => result.rows),
     getPool().query('select 1 from "account" where "userId" = $1 and "providerId" = $2 limit 1', [session.user.id, TELEGRAM_PROVIDER_ID]).then(result => (result.rowCount ?? 0) > 0),
     getBlockedMembers(session.user.id),
-    getPool().query<{ key: string }>('select key from "gachaCosmetic" where "userId" = $1', [session.user.id]).then(result => result.rows.map(row => row.key)),
+    getPool().query<{ key: string }>('select key from "gachaCosmetic" where "userId" = $1 union select key from "shopPurchase" where "userId" = $1', [session.user.id]).then(result => result.rows.map(row => row.key)),
     getPool().query<{ pushAnnouncements: boolean }>('select "pushAnnouncements" from "user" where id = $1', [session.user.id]).then(result => result.rows[0]?.pushAnnouncements ?? true),
     getBrandFrameProgress(session.user.id),
   ]);
+  // After `getProfileCommunity`: it stores newly earned tags, and the balance counts them.
+  const shop = await getShop(session.user.id);
   const ownedFrames = [...gachaFrames, ...ownedBrandFrames(brandFrames)];
   const preferences = new Map(preferenceRows.map(row => [row.kind, row.enabled]));
   // «Помощь»: the member's chat with the team is its own screen (/support); the row says when the team has answered.
@@ -183,6 +187,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const viewerIsAdmin = siteRole === 'admin';
   const achievements = visibleProfileAchievements(viewerIsAdmin, community.earned);
   const earned = community.earned.filter(key => achievements.some(item => item.key === key));
+  // Tags still to earn, closest first: shown locked under the earned ones in the tag list.
+  const lockedTags = visibleProfileAchievements(false, community.earned)
+    .filter(item => !community.earned.includes(item.key) && isScored(item.key) && !UNREACHABLE_ACHIEVEMENTS.has(item.key))
+    .map(item => ({ key: item.key, done: achievementStepsDone(item, community.progress), total: item.steps.length, completion: achievementCompletion(item, community.progress) }))
+    .sort((a, b) => b.completion - a.completion);
   const layoutPreviews = {
     favorites: favorites.length ? <div className="layout-listing-previews">{favorites.slice(0, 3).map(item => <div key={`${item.brand}:${item.flavor}`}>{item.coverImageUrl && <Image src={item.coverImageUrl} width={80} height={80} alt="" />}<strong>{item.brand}</strong></div>)}</div> : <p>Пока нет избранных напитков.</p>,
     experience: <ProfileExperience username={profile.username} initial={experience[profile.username]} expanded />,
@@ -301,7 +310,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   return <BrandShell headerAction={<ProfileNavigation active="profile" />} surfaceClassName="profile-surface">
     <ProfileEditForm level={experienceLevel(experience[profile.username]?.xp ?? 0).level} xp={experience[profile.username]?.xp ?? 0} ownedFrames={ownedFrames} brandFrames={brandFrames} profile={profile} layoutPreviews={layoutPreviews}
-      tags={{ earned, selected: community.tags[0] ?? '' }}
+      tags={{ earned, selected: community.tags[0] ?? '', shopTags: community.shopTags, locked: lockedTags }} shop={{ earned: shop.earned, sources: shop.sources, balance: shop.balance, owned: shop.owned, name: profile.name?.trim() && !profile.name.includes('@') ? profile.name : `@${profile.username}` }}
       settings={settings} accountRows={accountRows} />
   </BrandShell>;
 }

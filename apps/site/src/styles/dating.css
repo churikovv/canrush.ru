@@ -70,7 +70,7 @@
 .dating-reward-bar { display: block; height: 6px; overflow: hidden; border-radius: 999px; background: var(--color-control); }
 .dating-reward-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--color-brand); transition: width 300ms ease-out; }
 .dating-reward.is-tag .dating-reward-bar > span { background: #e5487f; }
-.swipe-notice .profile-tag { vertical-align: middle; }
+.swipe-notice .tag-wave { vertical-align: middle; }
 @media (prefers-reduced-motion: reduce) { .swipe-card.is-resting, .swipe-card.is-leaving, .swipe-button { transition: none; } .swipe-notice.is-match, .swipe-xp { animation: none; } .dating-reward-bar > span { transition: none; } }
 
 /* «Твой вкус» в конце колоды (`TasteEnd`, `taste-card.tsx`): синяя карточка с архетипом, «Поделиться» и один человек

@@ -12,6 +12,7 @@ import { StaffDeleteMenuItem } from '@/components/staff-delete-button';
 import type { CompanyReply, ReviewData } from '@/lib/reviews';
 import { countryFlag, countryName } from '@/lib/countries';
 import { AvatarFrame } from '@/components/avatar-frame';
+import { ProfileTag } from '@/components/profile-tag';
 
 const CRITERIA = [
   { key: 'design', label: 'Дизайн' },
@@ -67,7 +68,7 @@ export function CatalogReviewItem({ review, own = false }: { review: ReviewData;
           <span className="review-item-handle">@{review.author.username}</span>
         </div>
         <div className="review-item-badges">
-          {review.author.tag && <span className="profile-tag" data-tag={profileTagKey(review.author.tag)}>{review.author.tag}</span>}
+          {review.author.tag && <ProfileTag tag={profileTagKey(review.author.tag)}>{review.author.tag}</ProfileTag>}
           <ProfileExperience username={review.author.username} initial={{ xp: review.author.xp ?? 0, rank: null }} />
         </div>
       </header>

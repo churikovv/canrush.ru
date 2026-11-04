@@ -93,7 +93,8 @@ export async function saveProfileCustomization(userId: string, input: ProfileInp
       const ranking = await client.query('select xp from "profileRanking" where id = $1', [userId]);
       const level = experienceLevel(Number(ranking.rows[0]?.xp ?? 0)).level;
       const current = parseProfileAppearance(existing.rows[0]?.profileAppearance) ?? DEFAULT_PROFILE_APPEARANCE;
-      const gacha = (await client.query<{ key: string }>('select key from "gachaCosmetic" where "userId" = $1', [userId])).rows.map(row => row.key);
+      // Frames owned outside levels: the gacha's exclusives and the look shop's purchases.
+      const gacha = (await client.query<{ key: string }>('select key from "gachaCosmetic" where "userId" = $1 union select key from "shopPurchase" where "userId" = $1', [userId])).rows.map(row => row.key);
       const owned = [...gacha, ...ownedBrandFrames(await getBrandFrameProgress(userId, client))];
       if (!canUseProfileAppearance(appearance, level, current, owned)) throw new ProfileImageError(lockedBrandFrameMessage(appearance.frame) ?? 'Это оформление пока закрыто. Повысьте уровень профиля.');
     }

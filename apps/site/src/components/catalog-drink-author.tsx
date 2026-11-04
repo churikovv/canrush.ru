@@ -4,6 +4,7 @@ import Link from '@/components/navigation-progress';
 import { ProfileExperience } from '@/components/profile-experience';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import type { CatalogDrink } from '@/lib/catalog-drinks';
+import { ProfileTag } from '@/components/profile-tag';
 
 const addedOn = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Moscow' });
 const drinksWord = (count: number) => count % 10 === 1 && count % 100 !== 11 ? 'напиток' : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? 'напитка' : 'напитков';
@@ -26,7 +27,7 @@ export function CatalogDrinkAuthor({ author, createdAt }: { author: CatalogDrink
       <div className="catalog-drink-author-who">
         {href ? <Link className="catalog-drink-author-name" href={href}><strong>{name}{author.verified && <VerifiedMark />}</strong><span>@{author.username}</span></Link> : <strong>{name}</strong>}
         <div className="catalog-drink-author-badges">
-          {tag && <span className="profile-tag" data-tag={author.tag}>{tag}</span>}
+          {tag && <ProfileTag tag={author.tag}>{tag}</ProfileTag>}
           {author.username && <ProfileExperience username={author.username} initial={{ xp: author.xp, rank: null }} />}
         </div>
       </div>

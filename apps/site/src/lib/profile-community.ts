@@ -12,7 +12,8 @@ import { COMMENT_PAUSE_MESSAGE, COMMENT_PAUSE_SECONDS } from '@/lib/comment-paus
 import { getReviewsByAuthorDays, type ReviewData } from '@/lib/reviews';
 import { getPublishedTierListsByIds } from '@/lib/tier-lists';
 import type { TierListSummary } from '@/lib/tier-list-types';
-import { ACHIEVEMENT_METRICS, DETAILED_REVIEW_CHARS, FAN_XP_SINCE, PROFILE_ACHIEVEMENTS, ROLE_TAGS, eligibleAchievements, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
+import { isShopTag } from '@/lib/shop-items';
+import { ACHIEVEMENT_METRICS, DETAILED_REVIEW_CHARS, FAN_XP_SINCE, LONG_REVIEW_CHARS, PROFILE_ACHIEVEMENTS, ROLE_TAGS, eligibleAchievements, achievementTier, validateProfileTags, validateWallText, profilePageNumber, type AchievementProgress } from '@/lib/profile-achievements';
 
 export const COMMUNITY_PAGE_SIZE = 20;
 export type ConnectionKind = 'friends' | 'followers' | 'following';
@@ -29,7 +30,7 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
   const result = await db.query<AchievementProgress & {
     following: number; isFollowing: boolean; followsYou: boolean; profileTags: string[]; showOnline: boolean;
   }>(`with r as (
-      select brand, flavor, lower(brand) as b, char_length(btrim(text)) >= $3 as detailed,
+      select brand, flavor, lower(brand) as b, char_length(btrim(text)) >= $3 as detailed, char_length(btrim(text)) >= $5 as long,
         exists(select 1 from "reviewPhoto" p where p."reviewId" = review.id) as photo
       from "review" where "userId" = $1
     ), fav as (select brand, lower(brand) as b, flavor from "favorite" where "userId" = $1)
@@ -63,6 +64,23 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(*)::int from "drinkSwipe" where "userId" = u.id) as swipes,
     (select count(*)::int from "catalogDrink" where "ownerId" = u.id and status = 'published') as "publishedDrinks",
     (select count(*)::int from "drinkSwipe" where "userId" = u.id and liked) as "swipeLikes",
+    -- «Бумер»: the original flavour of different brands, and time on the site.
+    (select count(distinct b)::int from r where split_part(flavor, ':', 1) = 'original') as "classicBrands",
+    floor(extract(epoch from now() - u."createdAt") / 86400)::int as "accountDays",
+    -- «Душнила»: walls of text and arguments under reviews, tier lists and wall posts.
+    (select count(*)::int from r where long) as "longReviews",
+    ((select count(*) from "reviewComment" where "userId" = u.id) + (select count(*) from "tierListComment" where "userId" = u.id)
+      + (select count(*) from "wallReply" where "userId" = u.id))::int as comments,
+    -- «База»: the most liked of the member's reviews, likes from others only.
+    (select coalesce(max(n), 0)::int from (select count(*) as n from "reviewReaction" x join "review" rv on rv.id = x."reviewId"
+      where rv."userId" = u.id and x."userId" <> u.id and x.value = 1 group by rv.id) t) as "bestReviewLikes",
+    -- «Пикми»: avatar, banner and a description (0–3), and posts in the feed or on walls.
+    ((select count(*) from "profileImage" where "userId" = u.id) + (case when coalesce(btrim(u.bio), '') <> '' then 1 else 0 end))::int as "profileLook",
+    (select count(*)::int from "profileComment" where "userId" = u.id) as "wallPosts",
+    (select count(*)::int from r where b = 'red bull') as "redBull",
+    (select count(*)::int from fav where b = 'red bull') as "redBullFavorites",
+    (select count(*)::int from r where b in ('volt', 'volt energy')) as volt,
+    (select count(*)::int from fav where b in ('volt', 'volt energy')) as "voltFavorites",
     (select count(*)::int from r where b = 'flash up') as flash,
     (select count(*)::int from r where b = 'flash up' and detailed) as "flashDetailed",
     (case when exists(select 1 from "siteAdmin" where email = lower(u.email) and role = 'admin') then 1 else 0 end) as admin,
@@ -84,26 +102,34 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(*)::int from "drinkLog" where "userId" = u.id) as "drinkLogs",
     (select coalesce(max(n), 0)::int from (select count(*) as n from (select day - (row_number() over (order by day))::int as run
       from (select distinct day from "drinkStreakDay" where "userId" = u.id) d) s group by run) t) as "drinkStreak"
-    from "user" u where u.id = $1`, [userId, viewerId ?? null, DETAILED_REVIEW_CHARS, `${FAN_XP_SINCE}T00:00:00+03:00`]);
+    from "user" u where u.id = $1`, [userId, viewerId ?? null, DETAILED_REVIEW_CHARS, `${FAN_XP_SINCE}T00:00:00+03:00`, LONG_REVIEW_CHARS]);
   const row = result.rows[0];
   if (!row) throw new CommunityError('Профиль не найден.');
   const progress = Object.fromEntries(ACHIEVEMENT_METRICS.map(metric => [metric, row[metric]])) as AchievementProgress;
   // Role tags are not stored: they follow the current role, so they go away with it.
   const eligible = eligibleAchievements(progress).filter(key => !ROLE_TAGS.has(key));
-  if (eligible.length) await db.query(`insert into "profileAchievement" ("userId", "key") select $1, unnest($2::text[]) on conflict do nothing`, [userId, eligible]);
-  const earned = (await db.query<{ key: string }>('select "key" from "profileAchievement" where "userId" = $1', [userId])).rows.map(item => item.key).filter(key => !ROLE_TAGS.has(key) && PROFILE_ACHIEVEMENTS.some(item => item.key === key));
+  // Each earned tag with the highest tier reached; a tier only ever goes up (XP is paid once, on the first insert).
+  const reached = eligible.map(key => achievementTier(PROFILE_ACHIEVEMENTS.find(item => item.key === key)!, progress));
+  if (eligible.length) await db.query(`insert into "profileAchievement" ("userId", "key", tier) select $1, key, tier from unnest($2::text[], $3::int[]) as reached(key, tier)
+    on conflict ("userId", "key") do update set tier = excluded.tier where "profileAchievement".tier < excluded.tier`, [userId, eligible, reached]);
+  const stored = (await db.query<{ key: string; tier: number }>('select "key", tier from "profileAchievement" where "userId" = $1', [userId])).rows
+    .filter(item => !ROLE_TAGS.has(item.key) && PROFILE_ACHIEVEMENTS.some(achievement => achievement.key === item.key));
+  const earned = stored.map(item => item.key);
+  const tiers: Record<string, number> = Object.fromEntries(stored.map(item => [item.key, item.tier]));
   if (row.admin) earned.push('admin');
   if (row.moderator) earned.push('moderator');
   // Achievements that are not tags: only those already stored (the achievements screen earns new ones).
   const badges = (await db.query<{ key: string }>('select key from "profileBadge" where "userId" = $1', [userId])).rows.map(item => item.key).filter(key => BADGE_KEYS.has(key));
+  // Tags bought in the look shop: worn like earned ones, but they are not achievements.
+  const shopTags = (await db.query<{ key: string }>('select key from "shopPurchase" where "userId" = $1', [userId])).rows.map(item => item.key).filter(isShopTag);
   return { following: row.following, followers: row.followers, friends: row.friends, isFollowing: row.isFollowing, followsYou: row.followsYou,
-    tags: row.profileTags.filter(tag => earned.includes(tag)), showOnline: row.showOnline, progress, earned, badges };
+    tags: row.profileTags.filter(tag => earned.includes(tag) || shopTags.includes(tag)), showOnline: row.showOnline, progress, earned, tiers, badges, shopTags };
 }
 export type ProfileCommunity = Awaited<ReturnType<typeof getProfileCommunity>>;
 
 export async function setProfileTags(userId: string, input: unknown) {
   const community = await getProfileCommunity(userId);
-  const tags = validateProfileTags(input, community.earned);
+  const tags = validateProfileTags(input, [...community.earned, ...community.shopTags]);
   if (!tags) throw new CommunityError('Выберите один полученный тег.');
   await getPool().query('update "user" set "profileTags" = $2 where id = $1', [userId, tags]);
 }

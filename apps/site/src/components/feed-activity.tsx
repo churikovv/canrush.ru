@@ -18,6 +18,7 @@ import { profileTagKey, profileTagLabel } from '@/lib/profile-achievements';
 import type { FeedArticleRow, FeedGachaRow, FeedQuestionRow, FeedReviewGroup } from '@/lib/profile-community';
 import { answersWord } from '@/lib/drink-question-fields';
 import type { TierListProduct, TierListSummary } from '@/lib/tier-list-types';
+import { ProfileTag } from '@/components/profile-tag';
 
 const eventTime = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' });
 /** Shown in a «оценил напитки» event; the rest wait in a stack under it and open in place (they are already loaded). */
@@ -41,7 +42,7 @@ function EventHead({ author, action, at }: { author: EventAuthor; action: string
       {author.avatarId ? <Image src={`/api/profile-images/${author.avatarId}`} width={40} height={40} unoptimized alt="" /> : name.slice(0, 1).toLocaleUpperCase('ru-RU')}
     </Link>
     <div className="feed-event-who">
-      <p><Link className="wall-post-author" href={href}>{name}</Link>{author.verified && <VerifiedMark />}{tag && <span className="profile-tag" data-tag={tag}>{profileTagLabel(tag)}</span>}</p>
+      <p><Link className="wall-post-author" href={href}>{name}</Link>{author.verified && <VerifiedMark />}{tag && <ProfileTag tag={tag}>{profileTagLabel(tag)}</ProfileTag>}</p>
       <p className="feed-event-action">{action} · <time dateTime={at.toISOString()}>{eventTime.format(at)}</time></p>
     </div>
   </header>;

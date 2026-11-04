@@ -24,7 +24,8 @@ export const RARITY_ORDER: readonly AchievementRarity[] = ['legendary', 'epic', 
 export const isScored = (key: string) => !ROLE_TAGS.has(key) && !key.startsWith('week-');
 const unscored = (key: string) => !isScored(key);
 /** Nothing to work towards (the beta number, the contest prize, the month's top that is no longer run): never a goal. */
-const UNREACHABLE = new Set(['engine', 'energizer', 'top']);
+export const UNREACHABLE_ACHIEVEMENTS: ReadonlySet<string> = new Set(['engine', 'energizer', 'top']);
+const UNREACHABLE = UNREACHABLE_ACHIEVEMENTS;
 
 export interface AchievementSummary {
   score: number;
@@ -41,10 +42,11 @@ export interface AchievementSummary {
  * The owner's achievements at a glance. `visible` is what the member may see (secret tags only once held), `dates`
  * the earned rows newest first. Nothing here is stored: the score and title follow the earned tags.
  */
-export function achievementSummary<M extends string>(visible: readonly ProfileAchievement<M>[], earned: readonly string[], progress: Record<M, number>, dates: readonly { key: string; earnedAt: Date | string }[]): AchievementSummary {
+/** `tiers`: the tier reached of each earned achievement (1 when missing); every tier adds the rarity's points again. */
+export function achievementSummary<M extends string>(visible: readonly ProfileAchievement<M>[], earned: readonly string[], progress: Record<M, number>, dates: readonly { key: string; earnedAt: Date | string }[], tiers: Readonly<Record<string, number>> = {}): AchievementSummary {
   const counted = visible.filter(item => !unscored(item.key));
   const held = counted.filter(item => earned.includes(item.key));
-  const score = held.reduce((sum, item) => sum + TROPHY_POINTS[item.rarity], 0);
+  const score = held.reduce((sum, item) => sum + TROPHY_POINTS[item.rarity] * (tiers[item.key] ?? 1), 0);
   let index = 0;
   ACHIEVEMENT_TITLES.forEach((title, at) => { if (score >= title.score) index = at; });
   const title = ACHIEVEMENT_TITLES[index]!;

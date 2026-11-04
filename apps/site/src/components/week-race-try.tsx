@@ -9,6 +9,7 @@ import { DEFAULT_PROFILE_APPEARANCE } from '@/lib/profile-appearance';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import { WEEK_PRIZES, weekGoal, weekPrize } from '@/lib/season-fields';
 import type { WeekRace } from '@/lib/week-race';
+import { ProfileTag } from '@/components/profile-tag';
 
 const number = (value: number) => value.toLocaleString('ru-RU');
 const placeLabel = (places: string) => (places === '1' ? '1 место' : `${places} места`);
@@ -41,7 +42,7 @@ export function WeekRaceTry({ race, signedIn }: { race: WeekRace; signedIn: bool
           <span className="lb-main">
             <span className="lb-name">
               <strong>{me?.username ?? 'Вы'}</strong>
-              <span key={prize.tag} className="race-try-tag"><span className="profile-tag" data-tag={prize.tag}>{profileTagLabel(prize.tag)}</span></span>
+              <span key={prize.tag} className="race-try-tag"><ProfileTag tag={prize.tag}>{profileTagLabel(prize.tag)}</ProfileTag></span>
             </span>
             <span className="lb-stats" aria-live="polite">
               {!signedIn ? <span><Link href="/sign-in">Войдите</Link>, чтобы побороться за тег</span>

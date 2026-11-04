@@ -6,6 +6,7 @@ import { displayName } from '@/components/wall-post';
 import { LEGEND_DEGREE_STEP, LEVEL_TIERS, rankUpRank, type LevelRank } from '@/lib/level-tier';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import type { RankUpRow } from '@/lib/profile-community';
+import { ProfileTag } from '@/components/profile-tag';
 
 const eventTime = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Moscow' });
 
@@ -43,7 +44,7 @@ export function RankUpCard({ rankUp }: { rankUp: RankUpRow }) {
         <Link className="rank-up-avatar" href={profileHref} tabIndex={-1} aria-hidden="true">{avatar}</Link>
         <Link className="rank-up-name" href={profileHref}>{name}</Link>
         {rankUp.verified && <VerifiedMark />}
-        {tag && <span className="profile-tag" data-tag={rankUp.tag}>{tag}</span>}
+        {tag && <ProfileTag tag={rankUp.tag}>{tag}</ProfileTag>}
       </p>
       <p className="rank-up-note">{note(rank)}</p>
       <ol className="rank-up-road" aria-label="Путь рангов">

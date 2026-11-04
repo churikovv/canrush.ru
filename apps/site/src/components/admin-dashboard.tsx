@@ -18,6 +18,7 @@ import { ADMIN_PAGE_SIZE, type AdminDashboardData } from '@/lib/admin-dashboard-
 import { ADMIN_TABS, adminHref, type AdminTab } from '@/lib/admin-tabs';
 import { AdminIcon, AdminShell, type AdminIconName } from '@/components/admin-shell';
 import { flavorName } from '@/lib/catalog-query';
+import { ProfileTag } from '@/components/profile-tag';
 
 interface Props { admin: SiteAdminIdentity; data: AdminDashboardData; query: string; tab: AdminTab; notice?: string; error?: string; campaignPanel?: ReactNode }
 const SUBTITLES: Record<AdminTab, string> = {
@@ -135,7 +136,7 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
             <td><div className="admin-member">
               <span className="admin-member-avatar" data-frame={user.frame}>{user.avatarId ? <Image src={`/api/profile-images/${user.avatarId}`} width={44} height={44} unoptimized alt="" /> : <span aria-hidden="true">{(user.username ?? user.name ?? '?').slice(0, 1).toUpperCase()}</span>}<AvatarFrame frame={user.frame} /></span>
               <div className="admin-member-text">
-                <div className="admin-member-name">{user.username ? <Link href={`/profile/${user.username}`}>{user.name || `@${user.username}`}</Link> : <strong>{user.name || 'Без имени'}</strong>}{user.verified && <VerifiedMark />}{user.tag && <span className="profile-tag" data-tag={user.tag}>{profileTagLabel(user.tag)}</span>}<LevelChip level={experienceLevel(user.xp).level} /></div>
+                <div className="admin-member-name">{user.username ? <Link href={`/profile/${user.username}`}>{user.name || `@${user.username}`}</Link> : <strong>{user.name || 'Без имени'}</strong>}{user.verified && <VerifiedMark />}{user.tag && <ProfileTag tag={user.tag}>{profileTagLabel(user.tag)}</ProfileTag>}<LevelChip level={experienceLevel(user.xp).level} /></div>
                 <span className="admin-member-meta">{user.username && <>@{user.username}</>}{user.email !== `@${user.username}` && <>{user.username && ' · '}{user.email}</>}</span>
               </div>
             </div></td>

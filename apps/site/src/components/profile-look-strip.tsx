@@ -1,15 +1,19 @@
 'use client';
-import Image from 'next/image';
 import Link from '@/components/navigation-progress';
-import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { AvatarFrame } from '@/components/avatar-frame';
 import { LevelChip } from '@/components/level-badge';
 import type { BrandFrameProgress } from '@/lib/brand-frame-fields';
 import { pluralRu } from '@/lib/drink-calendar-fields';
 import { experienceForLevel } from '@/lib/experience-level';
-import { ACHIEVEMENT_RARITIES, achievementImage, PROFILE_ACHIEVEMENTS } from '@/lib/profile-achievements';
-import { BRAND_FRAME_ITEMS, BRAND_FRAME_REVIEWS, isLevelCosmetic, nextAppearanceUnlock, PROFILE_FRAMES, PROFILE_THEMES, type ProfileAppearance } from '@/lib/profile-appearance';
+import { ACHIEVEMENT_RARITIES, PROFILE_ACHIEVEMENTS } from '@/lib/profile-achievements';
+import { BRAND_FRAME_ITEMS, BRAND_FRAME_REVIEWS, isLevelCosmetic, nextAppearanceUnlock, PROFILE_FRAMES, PROFILE_THEMES, SHOP_FRAME_ITEMS, type ProfileAppearance } from '@/lib/profile-appearance';
 import { useAnchoredPopover } from '@/lib/use-anchored-popover';
+import { ProfileTag } from '@/components/profile-tag';
+import { ProfileShop, SparkIcon, type ShopBuy, type ShopView } from '@/components/profile-shop';
+import { SHOP_ITEMS, SHOP_TAGS, type ShopItem, type ShopKind } from '@/lib/shop-items';
+
+const SHOP_FRAME_PRICES = SHOP_ITEMS.filter(item => item.kind === 'frame');
 
 export type LookImageKind = 'avatar' | 'banner';
 /** A picture of the profile as the editor holds it: the shown source and whether it differs from the saved one. */
@@ -25,6 +29,9 @@ const CropIcon = () => <svg {...ICON}><path d="M6 2v14a2 2 0 0 0 2 2h14" /><path
 const TrashIcon = () => <svg {...ICON}><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>;
 const UndoIcon = () => <svg {...ICON}><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>;
 const PencilIcon = () => <svg {...ICON} width={16} height={16}><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z" /><path d="m13.5 6.5 4 4" /></svg>;
+const LockIcon = () => <svg {...ICON} width={16} height={16}><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>;
+const BagIcon = () => <svg {...ICON} width={22} height={22}><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>;
+const Chevron = () => <svg {...ICON} width={18} height={18}><path d="m9 6 6 6-6 6" /></svg>;
 const BlocksIcon = () => <svg {...ICON} width={28} height={28}><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></svg>;
 
 function ThemeSwatch({ theme }: { theme: string }) {
@@ -37,6 +44,30 @@ function FrameSample({ frame, avatarSrc }: { frame: string; avatarSrc: string | 
   </span>;
 }
 const Copy = ({ title, note }: { title: ReactNode; note?: ReactNode }) => <span className="look-option-copy"><strong>{title}</strong>{note && <span>{note}</span>}</span>;
+
+const priceOf = (key: string) => SHOP_ITEMS_BY_KEY.get(key) ?? 0;
+const SHOP_ITEMS_BY_KEY = new Map([...SHOP_TAGS, ...SHOP_FRAME_PRICES].map(item => [item.key, item.price]));
+function ShopPrice({ price }: { price: number }) {
+  return <span className="look-option-price"><SparkIcon size={14} />{price}</span>;
+}
+/**
+ * The tag tile shows the tag itself as it stands next to the name, not the achievement's medal. The tile is narrow on a
+ * phone (about 58 px) and a tag must not break inside a word, so the whole chip is scaled down to fit (`--fit`).
+ */
+function TagChip({ tagKey, label }: { tagKey: string; label: string }) {
+  const box = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const node = box.current;
+    const chip = node?.querySelector<HTMLElement>('.tag-wave');
+    if (!node || !chip) return;
+    const fit = () => node.style.setProperty('--fit', String(Math.min(1, (node.clientWidth - 8) / Math.max(1, chip.offsetWidth))));
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [tagKey, label]);
+  return <span ref={box} className="look-art-chip"><ProfileTag tag={tagKey}>{label}</ProfileTag></span>;
+}
 
 /** Arrows, Home and End move between the options of an open list. */
 function moveFocus(event: KeyboardEvent<HTMLDivElement>) {
@@ -155,30 +186,49 @@ export function ProfileImageMenu({ kind, image, disabled, onPick, onCrop, onRemo
  * change the preview at once and are saved with the profile's «Сохранить»; blocks open their own editor (order and
  * visibility need room).
  */
-export function ProfileLookStrip({ appearance, saved, onAppearance, level, xp, owned, brandFrames, avatarSrc, tag, blocks, disabled, autoOpen }: {
+export type LockedTag = { key: string; done: number; total: number; completion: number };
+
+export function ProfileLookStrip({ appearance, saved, onAppearance, level, xp, owned, brandFrames, avatarSrc, tag, blocks, shop, disabled, autoOpen }: {
   appearance: ProfileAppearance; saved: ProfileAppearance; onAppearance: (value: ProfileAppearance) => void;
   level: number; xp: number; owned: readonly string[]; brandFrames: readonly BrandFrameProgress[];
   /** The avatar shown in the frame samples. */
   avatarSrc: string | null;
-  tag?: { value: string; saved: string; earned: readonly string[]; onChange: (key: string) => void; href: string };
+  /** `locked`: achievement tags not earned yet, closest first, with how many of their steps are done. */
+  tag?: { value: string; saved: string; earned: readonly string[]; shopTags?: readonly string[]; locked?: readonly LockedTag[]; onChange: (key: string) => void; href: string };
   blocks: { shown: number; total: number; open: () => void };
+  /** The look shop: the sparks balance, its sources and the items already bought; `name` stands next to the tags. */
+  shop?: ShopView & { buy?: ShopBuy; name?: string };
   disabled: boolean; autoOpen?: LookTileKey | null;
 }) {
+  const [shopState, setShopState] = useState<ShopView | undefined>(shop && { earned: shop.earned, sources: shop.sources, balance: shop.balance, owned: shop.owned });
+  const [shopOpen, setShopOpen] = useState<ShopKind | null>(null);
+  const bought = shopState?.owned ?? [];
   const theme = PROFILE_THEMES.find(item => item.key === appearance.theme) ?? PROFILE_THEMES[0]!;
   const frame = PROFILE_FRAMES.find(item => item.key === appearance.frame) ?? PROFILE_FRAMES[0]!;
 
   // A frame is usable when the level opens it, it is owned (gacha, brand reviews) or already worn.
-  const usableFrame = (item: typeof PROFILE_FRAMES[number]) => item.level <= level || item.key === saved.frame || owned.includes(item.key);
+  const usableFrame = (item: typeof PROFILE_FRAMES[number]) => item.level <= level || item.key === saved.frame || owned.includes(item.key) || bought.includes(item.key);
   const frames = PROFILE_FRAMES.filter(usableFrame);
   const lockedBrands = BRAND_FRAME_ITEMS.filter(item => !usableFrame(item));
   const lockedFrames = PROFILE_FRAMES.filter(item => isLevelCosmetic(item) && !usableFrame(item));
+  const canShop = Boolean(shopState && shop?.buy);
+  const shopFrames = canShop ? SHOP_FRAME_ITEMS.filter(item => !usableFrame(item)) : [];
   const reviewed = new Map(brandFrames.map(item => [item.key as string, item.reviewed]));
   const usableTheme = (item: typeof PROFILE_THEMES[number]) => item.level <= level || item.key === saved.theme;
-  const tags = tag ? PROFILE_ACHIEVEMENTS.filter(item => tag.earned.includes(item.key)) : [];
+  const ownedShopTags = new Set([...(tag?.shopTags ?? []), ...bought]);
+  const tags: { key: string; label: string; note: string; rarity?: string }[] = tag ? [
+    ...PROFILE_ACHIEVEMENTS.filter(item => tag.earned.includes(item.key)).map(item => ({ key: item.key, label: item.label, rarity: item.rarity, note: `${ACHIEVEMENT_RARITIES[item.rarity]} · ${item.description}` })),
+    ...SHOP_TAGS.filter(item => ownedShopTags.has(item.key)).map(item => ({ key: item.key, label: item.label, note: `Из магазина · ${item.description}` })),
+  ] : [];
+  const shopTagsLeft = canShop ? SHOP_TAGS.filter(item => !ownedShopTags.has(item.key)) : [];
   const currentTag = tags.find(item => item.key === tag?.value);
+  const lockedTags = (tag?.locked ?? []).flatMap(row => { const item = PROFILE_ACHIEVEMENTS.find(candidate => candidate.key === row.key); return item ? [{ ...row, item }] : []; });
+  const openShop = (kind: ShopKind, close?: () => void) => { close?.(); setShopOpen(kind); };
+  const wear = (item: ShopItem) => item.kind === 'tag' ? tag?.onChange(item.key) : onAppearance({ ...appearance, frame: item.key as ProfileAppearance['frame'] });
   const locked = (required: number) => { const gap = required - level; return <span className="look-option-lock"><LevelChip level={required} /><small>ещё {gap} {pluralRu(gap, 'уровень', 'уровня', 'уровней')}</small></span>; };
 
-  return <div className="look-strip" role="group" aria-label="Внешний вид профиля">
+  return <>
+  <div className="look-strip" role="group" aria-label="Внешний вид профиля">
     <LookTile name="frame" label="Рамка" autoOpen={autoOpen === 'frame'} disabled={disabled} empty={appearance.frame === 'none'} changed={appearance.frame !== saved.frame}
       value={frame.label} art={<FrameSample frame={appearance.frame} avatarSrc={avatarSrc} />}>
       {close => <>
@@ -201,6 +251,13 @@ export function ProfileLookStrip({ appearance, saved, onAppearance, level, xp, o
                 <span className="look-option-count">{count} / {BRAND_FRAME_REVIEWS}</span>
               </Link></li>;
             })}</ul>
+          </>}
+          {shopFrames.length > 0 && <>
+            <p className="look-group">В магазине · за искры</p>
+            <ul className="look-options">{shopFrames.map(item => <li key={item.key}>
+              <button type="button" className="look-option" onClick={() => openShop('frame', close)}><FrameSample frame={item.key} avatarSrc={avatarSrc} /><Copy title={item.label} note={item.description} />
+                <ShopPrice price={priceOf(item.key)} /></button>
+            </li>)}</ul>
           </>}
           {lockedFrames.length > 0 && <>
             <p className="look-group">Откроются с уровнем</p>
@@ -231,21 +288,37 @@ export function ProfileLookStrip({ appearance, saved, onAppearance, level, xp, o
       </>}
     </LookTile>
     {tag && <LookTile name="tag" label="Тег" autoOpen={autoOpen === 'tag'} disabled={disabled} empty={!currentTag} changed={tag.value !== tag.saved}
-      value={currentTag?.label ?? 'Без тега'} art={currentTag && <Image className="look-art-tag" src={achievementImage(currentTag.key)} width={52} height={52} alt="" />}>
+      value={currentTag?.label ?? 'Без тега'} art={currentTag && <TagChip tagKey={currentTag.key} label={currentTag.label} />}>
       {close => <>
         <div role="radiogroup" aria-label="Тег рядом с именем">
           <ul className="look-options">
             <li><button type="button" role="radio" aria-checked={!currentTag} className="look-option" onClick={() => { tag.onChange(''); close(); }}>
               <span className="look-option-icon look-option-none" aria-hidden="true">—</span><Copy title="Без тега" note="Только имя и уровень" />{!currentTag && <Check />}
             </button></li>
-            {tags.map(item => <li key={item.key}><button type="button" role="radio" aria-checked={item.key === tag.value} className="look-option" data-rarity={item.rarity} onClick={() => { tag.onChange(item.key); close(); }}>
-              <Image className="look-option-art" src={achievementImage(item.key)} width={44} height={44} alt="" />
-              <Copy title={<span className="profile-tag" data-tag={item.key}>{item.label}</span>} note={`${ACHIEVEMENT_RARITIES[item.rarity]} · ${item.description}`} />
+            {tags.map(item => <li key={item.key}><button type="button" role="radio" aria-checked={item.key === tag.value} className="look-option look-option-tag" data-rarity={item.rarity} onClick={() => { tag.onChange(item.key); close(); }}>
+              <Copy title={<ProfileTag tag={item.key}>{item.label}</ProfileTag>} note={item.note} />
               {item.key === tag.value && <Check />}
             </button></li>)}
           </ul>
+          {shopTagsLeft.length > 0 && <>
+            <p className="look-group">В магазине · за искры</p>
+            <ul className="look-options">{shopTagsLeft.map(item => <li key={item.key}>
+              <button type="button" className="look-option look-option-tag" onClick={() => openShop('tag', close)}>
+                <Copy title={<ProfileTag tag={item.key}>{item.label}</ProfileTag>} note={item.description} /><ShopPrice price={item.price} /></button>
+            </li>)}</ul>
+          </>}
+          {lockedTags.length > 0 && <>
+            <p className="look-group">Ещё не получены · {lockedTags.length}</p>
+            <ul className="look-options">{lockedTags.map(({ item, done, total, completion }) => <li key={item.key}>
+              <div className="look-option look-option-tag look-option-locked">
+                <span className="look-option-copy"><strong><ProfileTag tag={item.key}>{item.label}</ProfileTag></strong><span>{ACHIEVEMENT_RARITIES[item.rarity]} · {item.steps.map(step => step.label).join('; ')}</span>
+                  <span className="look-meter" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(completion * 100)} aria-label={`Прогресс тега «${item.label}»`}><i style={{ '--value': completion } as CSSProperties} /></span></span>
+                <span className="look-option-lock"><LockIcon /><small>{done} из {total}</small></span>
+              </div>
+            </li>)}</ul>
+          </>}
         </div>
-        <p className="look-menu-note">{tags.length ? 'Тег стоит рядом с именем в профиле, отзывах и тирлистах.' : 'Пока нет тегов: их дают достижения.'} <Link href={tag.href}>Все достижения и условия</Link></p>
+        <p className="look-menu-note">{tags.length ? 'Тег стоит рядом с именем в профиле, отзывах и тирлистах.' : 'Пока нет тегов: их дают достижения и магазин.'} <Link href={tag.href}>Все достижения и условия</Link></p>
       </>}
     </LookTile>}
     <div className="look-tile-wrap" data-look="blocks">
@@ -255,5 +328,16 @@ export function ProfileLookStrip({ appearance, saved, onAppearance, level, xp, o
         <span className="look-tile-value">{blocks.shown} из {blocks.total}</span>
       </button>
     </div>
-  </div>;
+  </div>
+  {shopState && shop?.buy && <>
+    <button type="button" className="look-shop-bar" disabled={disabled} onClick={() => setShopOpen('tag')}>
+      <span className="look-shop-icon"><BagIcon /></span>
+      <span className="look-shop-copy"><strong>Магазин образов</strong><span>Теги и рамки за искры</span></span>
+      <span className="look-shop-balance"><SparkIcon />{shopState.balance.toLocaleString('ru-RU')}</span>
+      <Chevron />
+    </button>
+    <ProfileShop open={shopOpen !== null} initialKind={shopOpen ?? 'tag'} onClose={() => setShopOpen(null)} shop={shopState} buy={shop.buy} name={shop.name ?? 'Вы'} avatarSrc={avatarSrc} href={tag?.href ?? '/profile'}
+      onBought={next => setShopState(next)} worn={{ tag: tag?.value ?? '', frame: appearance.frame }} onWear={wear} />
+  </>}
+  </>;
 }

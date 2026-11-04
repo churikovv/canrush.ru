@@ -41,10 +41,11 @@ describe.sequential('profile image storage and displayed tags', () => {
     expect((await getProfileByUserId(a))?.name).toBe('Updated');
   });
   it('allows exactly one earned tag and displays it on preexisting reviews', async () => {
-    await setProfileTags(a, ['first-review']);
-    expect((await getReviewsForUser(a))[0]?.author.tag).toBe('Первое открытие');
-    await expect(setProfileTags(a, ['first-review', 'collector'])).rejects.toThrow();
-    await expect(pool.query('update "user" set "profileTags"=$2 where id=$1', [a, ['first-review', 'collector']])).rejects.toMatchObject({ code: '23514' });
+    await pool.query(`insert into "profileAchievement" ("userId", key) values ($1, 'three') on conflict do nothing`, [a]);
+    await setProfileTags(a, ['three']);
+    expect((await getReviewsForUser(a))[0]?.author.tag).toBe(':3');
+    await expect(setProfileTags(a, ['three', 'collector'])).rejects.toThrow();
+    await expect(pool.query('update "user" set "profileTags"=$2 where id=$1', [a, ['three', 'collector']])).rejects.toMatchObject({ code: '23514' });
     await setProfileTags(a, []); expect((await getReviewsForUser(a))[0]?.author.tag).toBeNull();
   });
   it('restricts the Admin tag to current administrators, including after revocation', async () => {

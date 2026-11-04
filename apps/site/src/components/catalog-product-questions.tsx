@@ -7,6 +7,7 @@ import { displayName } from '@/components/wall-post';
 import { QUESTIONS_SHOWN } from '@/lib/drink-question-fields';
 import type { DrinkQuestion, QuestionAuthor } from '@/lib/drink-questions';
 import { profileTagKey, profileTagLabel } from '@/lib/profile-achievements';
+import { ProfileTag } from '@/components/profile-tag';
 
 const DATE = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });
 
@@ -20,7 +21,7 @@ function AuthorRow({ author, at, company }: { author: QuestionAuthor; at: Date; 
       {author.avatarId ? <Image src={`/api/profile-images/${author.avatarId}`} width={32} height={32} unoptimized alt="" /> : name.slice(0, 1).toLocaleUpperCase('ru-RU')}
     </Link>
     <span className="drink-qa-who">
-      <span className="drink-qa-name"><Link href={href}>{name}</Link>{author.verified && <VerifiedMark />}{tag && <span className="profile-tag" data-tag={tag}>{profileTagLabel(tag)}</span>}</span>
+      <span className="drink-qa-name"><Link href={href}>{name}</Link>{author.verified && <VerifiedMark />}{tag && <ProfileTag tag={tag}>{profileTagLabel(tag)}</ProfileTag>}</span>
       <span className="drink-qa-meta">{company && <b className="drink-qa-company">Компания «{company}»</b>}<time dateTime={at.toISOString()}>{DATE.format(at)}</time></span>
     </span>
   </div>;

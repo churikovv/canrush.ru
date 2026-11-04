@@ -20,7 +20,7 @@ import type { CSSProperties } from 'react';
 import Link from '@/components/navigation-progress';
 import type { ProfileData } from '@/lib/profile';
 import { COMMUNITY_PAGE_SIZE, getConnections, getLastSeen, getPresence, getProfileCommunity, getProfileRatings, getProfileWall } from '@/lib/profile-community';
-import { PROFILE_ACHIEVEMENTS, visibleProfileAchievements } from '@/lib/profile-achievements';
+import { profileTagLabel, visibleProfileAchievements } from '@/lib/profile-achievements';
 import { BADGE_ACHIEVEMENTS } from '@/lib/badges';
 import { WallPost, displayName } from '@/components/wall-post';
 import { FollowControl, PresenceSetting, WallComposer } from '@/components/profile-community-controls';
@@ -39,6 +39,7 @@ import { skinSummary } from '@/lib/can-skin';
 import { cutoutSrc } from '@/lib/can-cutout-src';
 import { ProfilePresence } from '@/components/profile-presence';
 import { SignInPrompt } from '@/components/sign-in-prompt';
+import { ProfileTag } from '@/components/profile-tag';
 
 interface ProfileViewProps {
   profile: ProfileData;
@@ -80,7 +81,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         bannerSrc={profile.bannerId ? `/api/profile-images/${profile.bannerId}` : null}
         status={<ProfilePresence userId={profile.id} initial={presence} lastSeen={lastSeen} />}
         level={<ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} />}
-        tags={community.tags.length > 0 && <div className="profile-tags">{community.tags.map(tag => <a key={tag} href={`${base}/achievements`} className="profile-tag" data-tag={tag}>{PROFILE_ACHIEVEMENTS.find(item => item.key === tag)?.label}</a>)}</div>}
+        tags={community.tags.length > 0 && <div className="profile-tags">{community.tags.map(tag => <ProfileTag key={tag} tag={tag} href={`${base}/achievements`}>{profileTagLabel(tag)}</ProfileTag>)}</div>}
         actions={isOwn ? undefined
           : viewerId ? <div className="profile-hero-buttons"><FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
             <MoreActions label="Ещё действия с профилем"><ProfileReportMenuItem targetId={profile.id} /><BlockMemberButton userId={profile.id} name={`@${profile.username}`} initiallyBlocked={blockedByViewer} variant="menuitem" /></MoreActions></div>

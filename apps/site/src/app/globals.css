@@ -2682,6 +2682,70 @@ html[data-cookie-notice="visible"] .brand-footer {
 .profile-presence--online { color: var(--theme-success, #20783c); }
 .profile-tag { padding: 6px 9px; border-radius: 6px; font-size: .75rem; background: var(--theme-subtle, #edf4ff); color: var(--theme-link, #0058cc); }
 .profile-tag:hover { background: var(--theme-subtle, #dfebff); }
+/* A glow from inside every tag (`ProfileTag`), AI-assistant style, in the tag's own three colours (`--wave-1..3`):
+   two conic gradients turn slowly opposite ways (10 s and 14 s a turn) under a soft edge mask, so the colours drift
+   round the chip's inner edge and fade towards the middle, where the text stays clear; the whole glow breathes. The
+   softness comes from the gradients and the mask, not a blur filter, and only rotate and opacity move. */
+.tag-wave { --wave-1: #006eff; --wave-2: #7c4dff; --wave-3: #00c8ff; display: inline-flex; flex: none; max-width: 100%; }
+.tag-wave .profile-tag { position: relative; isolation: isolate; }
+.tag-glow { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: inherit; pointer-events: none; -webkit-mask: linear-gradient(90deg, #000, transparent 24%, transparent 76%, #000), linear-gradient(#000, transparent 40%, transparent 60%, #000); mask: linear-gradient(90deg, #000, transparent 24%, transparent 76%, #000) add, linear-gradient(#000, transparent 40%, transparent 60%, #000); animation: tag-glow-breathe 4.5s ease-in-out infinite alternate; }
+.tag-glow i { position: absolute; top: 50%; left: 50%; width: 170%; aspect-ratio: 1; border-radius: 50%; translate: -50% -50%; background: conic-gradient(transparent 0 6%, var(--wave-1) 18%, transparent 33%, var(--wave-2) 49%, transparent 63%, var(--wave-3) 77%, transparent 92%); animation: tag-glow-turn 10s linear infinite; }
+.tag-glow i:nth-child(2) { background: conic-gradient(from 140deg, transparent 0 12%, var(--wave-3) 27%, transparent 42%, var(--wave-1) 63%, transparent 80%); opacity: .75; animation-duration: 14s; animation-direction: reverse; }
+@keyframes tag-glow-turn { to { rotate: 1turn; } }
+@keyframes tag-glow-breathe { from { opacity: .55; } to { opacity: .95; } }
+/* Every tag's outline in its own style: a 1.5 px gradient of its three colours exactly on the chip's edge, inside it
+   (border-radius inherited, so it follows any chip), flowing slowly back and forth. It lies over the glow and under
+   the chip's own ::after effects and the text. */
+.tag-edge { position: absolute; inset: 0; z-index: -1; padding: 1.5px; border-radius: inherit; background: linear-gradient(110deg, var(--wave-1), var(--wave-2), var(--wave-3), var(--wave-2), var(--wave-1)) 0 50% / 300% 100%; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); pointer-events: none; animation: tag-edge-flow 8s ease-in-out infinite alternate; }
+@keyframes tag-edge-flow { to { background-position: 100% 50%; } }
+.tag-wave[data-tag=top] { --wave-1: #ffcf3a; --wave-2: #ff2d8a; --wave-3: #00d4ff; }
+.tag-wave[data-tag=energizer] { --wave-1: #5fd7ff; --wave-2: #2e8bff; --wave-3: #a8f0ff; }
+.tag-wave[data-tag=engine] { --wave-1: #1f5bff; --wave-2: #ff3b1f; --wave-3: #ffb000; }
+.tag-wave[data-tag=burner] { --wave-1: #ff3c00; --wave-2: #ffb000; --wave-3: #ff7a00; }
+.tag-wave[data-tag=adrenaline] { --wave-1: #50ffb4; --wave-2: #00c8ff; --wave-3: #2e6bff; }
+.tag-wave[data-tag=deadinside] { --wave-1: #ff2860; --wave-2: #00dcff; --wave-3: #7c3aed; }
+.tag-wave[data-tag=six-seven] { --wave-1: #f2bd45; --wave-2: #fff1bf; --wave-3: #dd981f; }
+.tag-wave[data-tag=three] { --wave-1: #ff5fa2; --wave-2: #ffb3d6; --wave-3: #c084fc; }
+.tag-wave[data-tag=kitty] { --wave-1: #ff9cc6; --wave-2: #ffd1e6; --wave-3: #c4b5fd; }
+.tag-wave[data-tag=telegram] { --wave-1: #229ed9; --wave-2: #7dd3fc; --wave-3: #2e6bff; }
+.tag-wave[data-tag=admin] { --wave-1: #8a94a6; --wave-2: #cbd5e1; --wave-3: #64748b; }
+.tag-wave[data-tag=moderator] { --wave-1: #006eff; --wave-2: #ffd34d; --wave-3: #4aa8ff; }
+.tag-wave[data-tag=seller] { --wave-1: #005bea; --wave-2: #6635d8; --wave-3: #a21caf; }
+.tag-wave[data-tag=altushka] { --wave-1: #c9a7ff; --wave-2: #f5d0fe; --wave-3: #7c3aed; }
+.tag-wave[data-tag=flash] { --wave-1: #ffd84d; --wave-2: #ff6a3d; --wave-3: #d1302a; }
+.tag-wave[data-tag=critic] { --wave-1: #e5341a; --wave-2: #ff8a3d; --wave-3: #ffc29e; }
+.tag-wave[data-tag=explorer] { --wave-1: #b55fd6; --wave-2: #ff8cc8; --wave-3: #6fb8ff; }
+.tag-wave[data-tag=collector] { --wave-1: #3ddc97; --wave-2: #0fa3b1; --wave-3: #a7f3d0; }
+.tag-wave[data-tag=streak-7] { --wave-1: #ff7a00; --wave-2: #ffd76a; --wave-3: #ff3d00; }
+.tag-wave[data-tag=streak-14] { --wave-1: #36a8ff; --wave-2: #006eff; --wave-3: #b3e5ff; }
+.tag-wave[data-tag=streak-30] { --wave-1: #c026d3; --wave-2: #ff2d8a; --wave-3: #ffcf3a; }
+.tag-wave[data-tag=monster] { --wave-1: #7dff36; --wave-2: #2bd96b; --wave-3: #c8ff9a; }
+.tag-wave[data-tag=fan] { --wave-1: #1f6fff; --wave-2: #ff6fae; --wave-3: #8ab4ff; }
+.tag-wave[data-tag=shopper] { --wave-1: #1f6fff; --wave-2: #60a5fa; --wave-3: #b4cfff; }
+.tag-wave[data-tag=date] { --wave-1: #ff6fa3; --wave-2: #ffb3cf; --wave-3: #ff3d7f; }
+.tag-wave[data-tag=sensei] { --wave-1: #7cc0ff; --wave-2: #2563eb; --wave-3: #a5f3fc; }
+.tag-wave[data-tag=week-hero] { --wave-1: #e8a623; --wave-2: #ffd867; --wave-3: #fff3c4; }
+.tag-wave[data-tag=week-best] { --wave-1: #2e8bff; --wave-2: #8ec5ff; --wave-3: #0a46c2; }
+.tag-wave[data-tag=week-charge] { --wave-1: #7a4dff; --wave-2: #c4b5fd; --wave-3: #3b1c9e; }
+.tag-wave[data-tag=boomer] { --wave-1: #e2711d; --wave-2: #f2b134; --wave-3: #8a4b2a; }
+.tag-wave[data-tag=dushnila] { --wave-1: #6fbfa3; --wave-2: #c7ddd3; --wave-3: #5f7d72; }
+.tag-wave[data-tag=based] { --wave-1: #ffcf3a; --wave-2: #ff9d00; --wave-3: #fff1b8; }
+.tag-wave[data-tag=pickme] { --wave-1: #ff6fd8; --wave-2: #c084fc; --wave-3: #ffc2ec; }
+.tag-wave[data-tag=winged] { --wave-1: #8ab4ff; --wave-2: #ffffff; --wave-3: #5fd0ff; }
+.tag-wave[data-tag=voltage] { --wave-1: #9bf1ff; --wave-2: #a855f7; --wave-3: #5b8cff; }
+.tag-wave[data-tag=owl] { --wave-1: #ffcf4a; --wave-2: #6b7cff; --wave-3: #9fb0ff; }
+.tag-wave[data-tag=vibe] { --wave-1: #ff6fd8; --wave-2: #36d6ff; --wave-3: #a66bff; }
+.tag-wave[data-tag=sigma] { --wave-1: #9fb3c8; --wave-2: #e8edf3; --wave-3: #5b6b7d; }
+.tag-wave[data-tag=boss] { --wave-1: #ffcf3a; --wave-2: #fff1b8; --wave-3: #e0a020; }
+.tag-wave[data-tag=chill] { --wave-1: #5eead4; --wave-2: #7dd3fc; --wave-3: #a7f3d0; }
+.tag-wave[data-tag=npc] { --wave-1: #ffd400; --wave-2: #9ca3af; --wave-3: #e5e7eb; }
+.tag-wave[data-tag=crush] { --wave-1: #ff4f8b; --wave-2: #ff9ec0; --wave-3: #ff2d55; }
+.tag-wave[data-tag=battery] { --wave-1: #39ff88; --wave-2: #b8ffd5; --wave-3: #16a34a; }
+.tag-wave[data-tag=tilt] { --wave-1: #ff6a00; --wave-2: #ff2d2d; --wave-3: #ffb36b; }
+.tag-wave[data-tag=auf] { --wave-1: #c7d2fe; --wave-2: #6366f1; --wave-3: #e0e7ff; }
+.tag-wave[data-tag=cyber] { --wave-1: #00f0ff; --wave-2: #ff2bd6; --wave-3: #7c3aed; }
+.tag-wave[data-tag=main] { --wave-1: #ffd84d; --wave-2: #ff7ad9; --wave-3: #7cc7ff; }
+@media (prefers-reduced-motion: reduce) { .tag-glow, .tag-glow i, .tag-edge { animation: none; } }
 .community-shortcut:hover { background: var(--theme-panel, #f5f8ff); border-color: var(--theme-line, #9cbcf0); }
 .community-panel { border: 1px solid var(--theme-line, #dfe3e8); border-radius: 12px; padding: 24px; min-width: 0; scroll-margin-top: 24px; }
 .community-section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
@@ -3439,14 +3503,10 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 @keyframes six-seven-metal { to { background-position: 100% 50%; } }
 @keyframes six-seven-star { 0%,55%,100% { transform: scale(.85) rotate(0deg); opacity: .8; } 70% { transform: scale(1.35) rotate(90deg); opacity: 1; } 85% { transform: scale(1) rotate(90deg); } }
 /* Common and rare tags: an icon with a short, mostly idle accent; rare ones add a continuous base loop. */
-.profile-tag:is([data-tag=first-review],[data-tag=three],[data-tag=kitty],[data-tag=telegram],[data-tag=admin],[data-tag=seller],[data-tag=altushka],[data-tag=flash],[data-tag=critic],[data-tag=explorer],[data-tag=collector],[data-tag=friend]) { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.profile-tag:is([data-tag=three],[data-tag=kitty],[data-tag=telegram],[data-tag=admin],[data-tag=seller],[data-tag=altushka],[data-tag=flash],[data-tag=critic],[data-tag=explorer],[data-tag=collector]) { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
 .profile-tag:is([data-tag=telegram],[data-tag=admin],[data-tag=flash],[data-tag=critic],[data-tag=collector],[data-tag=explorer])::before { content: ''; flex: none; width: 1.1em; height: 1.1em; background: currentColor; -webkit-mask: var(--tag-icon) center / contain no-repeat; mask: var(--tag-icon) center / contain no-repeat; }
 .profile-tag:is([data-tag=admin],[data-tag=collector])::after { content: ''; position: absolute; inset: -2px; z-index: -1; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / .85) 50%, transparent 65%); transform: translateX(-130%); }
 @keyframes tag-flow { to { background-position: 300% 50%; } }
-/* Первое открытие: a sparkle that pops now and then. */
-.profile-tag[data-tag=first-review] { color: #6b4800; background: linear-gradient(120deg, #fff7da, #ffe9a8); box-shadow: inset 0 0 0 1px #f0cf6a; }
-.profile-tag[data-tag=first-review]::before { content: '✦' / ''; color: #e39b00; font-size: .95em; line-height: 1; animation: tag-twinkle 4s ease-in-out infinite; }
-@keyframes tag-twinkle { 0%,70% { transform: scale(.85) rotate(0deg); opacity: .75; } 80% { transform: scale(1.35) rotate(90deg); opacity: 1; } 90%,100% { transform: scale(.85) rotate(90deg); opacity: .75; } }
 /* :3 — a cheeky boop wiggle with a popping heart. */
 .profile-tag[data-tag=three] { color: #a02362; font-weight: 800; background: linear-gradient(120deg, #ffe6f1, #ffd3e6); box-shadow: inset 0 0 0 1px #f7b3d1; transform-origin: 50% 80%; animation: three-boop 4s ease-in-out infinite; }
 .profile-tag[data-tag=three]::before { content: '♥' / ''; color: #ff5fa2; font-size: .8em; line-height: 1; animation: three-heart 4s ease-in-out infinite; }
@@ -3503,18 +3563,10 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 .profile-tag[data-tag=collector]::before { background: linear-gradient(135deg, #3ddc97, #0fa3b1 60%, #1a7f5a); animation: collector-gem 3.2s ease-in-out infinite; }
 .profile-tag[data-tag=collector]::after { animation: top-tag-shine 3.2s ease-in-out infinite; }
 @keyframes collector-gem { 0%,60%,80%,100% { transform: none; } 70% { transform: translateY(-2px) rotate(-10deg) scale(1.15); } }
-/* Пепе: frog eyes that blink and a little hop. */
-.profile-tag[data-tag=friend] { color: #1f4d12; background: linear-gradient(120deg, #d9f2c4, #b6e39a); box-shadow: inset 0 0 0 1px #8ccc68; animation: friend-hop 3.6s ease-in-out infinite; }
-.profile-tag[data-tag=friend]::before { content: ''; flex: none; width: 1.35em; height: .8em; background: radial-gradient(.36em circle at 27% 55%, #1b1b1b 0 34%, #fff 38% 80%, #3f7d23 84% 97%, transparent 100%), radial-gradient(.36em circle at 73% 55%, #1b1b1b 0 34%, #fff 38% 80%, #3f7d23 84% 97%, transparent 100%); animation: friend-blink 3.6s ease-in-out infinite; }
-@keyframes friend-hop { 0%,70%,94%,100% { transform: none; } 78% { transform: translateY(-3px); } 86% { transform: translateY(0) scaleY(.94); } 90% { transform: translateY(-1px); } }
-@keyframes friend-blink { 0%,40%,46%,100% { transform: none; } 43% { transform: scaleY(.1); } }
 /* Drink calendar tags: a sipping can, then flames that grow hotter with the streak (orange → blue → legendary). */
-.profile-tag:is([data-tag=drink-start],[data-tag=streak-7],[data-tag=streak-14],[data-tag=streak-30]) { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; --tag-flame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 22'%3E%3Cpath d='M9 0c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1-9Z'/%3E%3C/svg%3E"); }
-.profile-tag:is([data-tag=drink-start],[data-tag=streak-7],[data-tag=streak-14],[data-tag=streak-30])::before { content: ''; flex: none; width: 1em; height: 1.15em; -webkit-mask: var(--tag-icon, var(--tag-flame)) center / contain no-repeat; mask: var(--tag-icon, var(--tag-flame)) center / contain no-repeat; transform-origin: 50% 100%; }
+.profile-tag:is([data-tag=streak-7],[data-tag=streak-14],[data-tag=streak-30]) { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; --tag-flame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 22'%3E%3Cpath d='M9 0c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1-9Z'/%3E%3C/svg%3E"); }
+.profile-tag:is([data-tag=streak-7],[data-tag=streak-14],[data-tag=streak-30])::before { content: ''; flex: none; width: 1em; height: 1.15em; -webkit-mask: var(--tag-icon, var(--tag-flame)) center / contain no-repeat; mask: var(--tag-icon, var(--tag-flame)) center / contain no-repeat; transform-origin: 50% 100%; }
 .profile-tag:is([data-tag=streak-14],[data-tag=streak-30])::after { content: ''; position: absolute; z-index: -1; pointer-events: none; }
-.profile-tag[data-tag=drink-start] { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 24'%3E%3Cpath d='M4 0h8l1 2v1l1 1v18l-2 2H4l-2-2V4l1-1V2Z'/%3E%3C/svg%3E"); color: #003f8f; background: linear-gradient(120deg, #e3efff, #cfe3ff); box-shadow: inset 0 0 0 1px #a8caff; }
-.profile-tag[data-tag=drink-start]::before { width: .7em; background: linear-gradient(180deg, #3ddc97 0 22%, #0a7a4d 22% 30%, #3ddc97 30%); animation: drink-start-sip 4.4s ease-in-out infinite; }
-@keyframes drink-start-sip { 0%,62%,100% { transform: none; } 70%,84% { transform: translate(1px,-2px) rotate(-38deg); } }
 .profile-tag[data-tag=streak-7] { color: #7a2e00; background: linear-gradient(120deg, #fff1de, #ffd2a6); box-shadow: inset 0 0 0 1px #ffb066; }
 .profile-tag[data-tag=streak-7]::before { background: linear-gradient(0deg, #ff3d00, #ff9f1a 60%, #ffd76a); animation: streak-flicker 1.6s ease-in-out infinite; }
 @keyframes streak-flicker { 0%,100% { transform: scale(1,1) skewX(0); } 25% { transform: scale(.92,1.08) skewX(-4deg); } 50% { transform: scale(1.05,.95) skewX(3deg); } 75% { transform: scale(.96,1.06) skewX(-2deg); } }
@@ -3525,13 +3577,17 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 .profile-tag[data-tag=streak-30],.profile-tag[data-tag=streak-30]:hover { color: #fff; font-weight: 800; letter-spacing: .03em; text-shadow: 0 1px 2px rgb(40 0 60 / .55); background: linear-gradient(110deg, #5b21b6, #c026d3, #ff2d8a, #ff7a18, #ffcf3a, #ff2d8a, #5b21b6) 0 50% / 300% 100%; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .5), 0 0 10px rgb(255 45 138 / .5), 0 0 20px rgb(139 92 246 / .35); animation: top-tag-flow 5s linear infinite, top-tag-glow 2.4s ease-in-out infinite; }
 .profile-tag[data-tag=streak-30]::before { background: linear-gradient(0deg, #fff3b0, #fff); animation: streak-flicker 1s ease-in-out infinite; }
 .profile-tag[data-tag=streak-30]::after { inset: -2px; background: linear-gradient(105deg, transparent 32%, rgb(255 255 255 / .85) 48%, transparent 62%); transform: translateX(-130%); animation: top-tag-shine 3s ease-in-out infinite; }
-/* Монстр (epic): the horned blue beast of the art — claw marks rip across a dark hide and the tag flinches. */
-.profile-tag[data-tag=monster],.profile-tag[data-tag=monster]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M2.5 1.5 7.6 7.6 4.8 9.4ZM21.5 1.5 16.4 7.6 19.2 9.4ZM12 7a8 7.5 0 1 1 0 15 8 7.5 0 1 1 0-15ZM9 12.1a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 1 0 0-3.6ZM15 12.1a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 1 0 0-3.6ZM7.8 17.4h8.4l-1.4 2.3-1.4-1.4-1.4 1.8-1.4-1.8-1.4 1.4Z'/%3E%3C/svg%3E"); position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 5px; color: #eef4ff; font-weight: 800; text-shadow: 0 0 6px rgb(61 139 255 / .75); background: linear-gradient(120deg, #060a14, #0c2c7a 55%, #060a14) 0 50% / 200% 100%; box-shadow: inset 0 0 0 1px rgb(110 165 255 / .5); animation: monster-growl 4s ease-in-out infinite; }
-.profile-tag[data-tag=monster]::before { content: ''; flex: none; width: 1.1em; height: 1.1em; background: #4d94ff; -webkit-mask: var(--tag-icon) center / contain no-repeat; mask: var(--tag-icon) center / contain no-repeat; animation: monster-claw 4s ease-in-out infinite; }
-.profile-tag[data-tag=monster]::after { content: ''; position: absolute; inset: -30% -20%; z-index: -1; pointer-events: none; background: linear-gradient(115deg, transparent 0 30%, rgb(140 190 255 / .95) 31% 32.5%, transparent 33.5% 44%, rgb(140 190 255 / .95) 45% 46.5%, transparent 47.5% 58%, rgb(140 190 255 / .95) 59% 60.5%, transparent 61.5%); opacity: 0; transform: translateX(-55%); animation: monster-rip 4s ease-out infinite; }
-@keyframes monster-rip { 0%,70% { opacity: 0; transform: translateX(-55%); } 73% { opacity: 1; } 84% { opacity: .8; transform: translateX(15%); } 92%,100% { opacity: 0; transform: translateX(40%); } }
-@keyframes monster-growl { 0%,72%,88%,100% { transform: none; background-position: 0 50%; } 75% { transform: translateX(-1px) rotate(-1.5deg); } 78% { transform: translateX(1px) rotate(1.5deg); background-position: 100% 50%; } 81% { transform: translateX(-1px); } }
-@keyframes monster-claw { 0%,70%,88%,100% { transform: none; } 75% { transform: scale(1.3) rotate(-12deg); } }
+/* Монстр (epic): a dark tag with acid-green neon and our own clawed paw (not the brand's logo). The paw is rendered in
+   Blender (`design/3d/build_monster_paw.py`) as a two-frame sprite, claws in and claws out — 3D detail for one small
+   image instead of WebGL, which a tag in every list cannot afford; only background-position switches the frame: every few seconds the beast strikes — the claws come out, the
+   tag shakes and green claw marks rip across it. Only transform, opacity and background-position move. */
+.profile-tag[data-tag=monster],.profile-tag[data-tag=monster]:hover { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 4px; padding-left: 5px; border-radius: 8px; color: #e4ffd4; font-weight: 900; letter-spacing: .03em; text-shadow: 0 0 6px rgb(125 255 54 / .75), 0 1px 0 #000; background: repeating-linear-gradient(115deg, rgb(125 255 54 / .06) 0 1px, transparent 1px 5px), radial-gradient(120% 100% at 15% 50%, rgb(125 255 54 / .18), transparent 60%), linear-gradient(180deg, #151b20, #07090c); box-shadow: inset 0 0 0 1px rgb(125 255 54 / .5), inset 0 1px 0 rgb(255 255 255 / .08), 0 0 8px rgb(125 255 54 / .28); animation: monster-growl 4.2s ease-in-out infinite; }
+.profile-tag[data-tag=monster]::before { content: ''; flex: none; width: 1.6em; height: 1.6em; margin: -.25em 0 -.25em -.1em; background: url("/brand/tags/monster-paw.webp") 0 0 / 200% 100% no-repeat; animation: monster-roar 4.2s steps(1) infinite, monster-claw 4.2s ease-in-out infinite; }
+.profile-tag[data-tag=monster]::after { content: ''; position: absolute; inset: -30% -20%; z-index: -1; pointer-events: none; background: linear-gradient(115deg, transparent 0 30%, rgb(125 255 54 / .35) 30% 30.8%, #b8ff8c 30.8% 32.6%, rgb(125 255 54 / .35) 32.6% 33.4%, transparent 33.4% 44%, rgb(125 255 54 / .35) 44% 44.8%, #b8ff8c 44.8% 46.6%, rgb(125 255 54 / .35) 46.6% 47.4%, transparent 47.4% 58%, rgb(125 255 54 / .35) 58% 58.8%, #b8ff8c 58.8% 60.6%, rgb(125 255 54 / .35) 60.6% 61.4%, transparent 61.4%); opacity: 0; transform: translateX(-60%); animation: monster-rip 4.2s ease-out infinite; }
+@keyframes monster-roar { 0%,70% { background-position: 0 0; } 72%,88% { background-position: 100% 0; } 90%,100% { background-position: 0 0; } }
+@keyframes monster-rip { 0%,72% { opacity: 0; transform: translateX(-60%); } 75% { opacity: 1; } 84% { opacity: .85; transform: translateX(10%); } 92%,100% { opacity: 0; transform: translateX(45%); } }
+@keyframes monster-growl { 0%,72%,88%,100% { transform: none; } 74% { transform: translateX(-1px) rotate(-2deg); } 77% { transform: translateX(1px) rotate(2deg); } 80% { transform: translateX(-1px) rotate(-1deg); } 83% { transform: translateX(1px); } }
+@keyframes monster-claw { 0%,70%,90%,100% { transform: none; } 74% { transform: scale(1.3) rotate(-14deg); } 80% { transform: scale(1.2) rotate(8deg); } 86% { transform: scale(1.1); } }
 /* Фан (rare): Canrush blue that keeps flowing and a heart that beats like a fan's. */
 .profile-tag[data-tag=fan],.profile-tag[data-tag=fan]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11Z'/%3E%3C/svg%3E"); position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 5px; color: #fff; font-weight: 800; background: linear-gradient(115deg, #0047c2, #1f6fff, #0a3d9e, #0047c2) 0 50% / 300% 100%; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .3), 0 2px 8px rgb(0 71 194 / .3); animation: tag-flow 8s linear infinite; }
 .profile-tag[data-tag=fan]::before { content: ''; flex: none; width: 1em; height: 1em; background: #ff6fae; -webkit-mask: var(--tag-icon) center / contain no-repeat; mask: var(--tag-icon) center / contain no-repeat; animation: fan-beat 1.4s ease-in-out infinite; }
@@ -3553,10 +3609,123 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 .profile-tag[data-tag=date]::after { content: ''; position: absolute; z-index: -1; left: .7em; top: 50%; width: .55em; height: .55em; background: #ff6fa3; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11Z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11Z'/%3E%3C/svg%3E") center / contain no-repeat; opacity: 0; animation: date-heart 4.8s ease-out infinite; }
 @keyframes date-sway { 0%,70%,100% { transform: none; } 76% { transform: rotate(-8deg); } 84% { transform: rotate(5deg); } 90% { transform: none; } }
 @keyframes date-heart { 0%,72% { opacity: 0; transform: translateY(0) scale(.6); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-1.1em) scale(1.1); } }
+/* Meme tags (November 2026). Common and rare: an icon with a short accent, rare ones over a continuous base; «База» (epic)
+   has its own signature — a stamp that slams down. Only transform, opacity and background-position move. */
+.profile-tag:is([data-tag=boomer],[data-tag=dushnila],[data-tag=based],[data-tag=pickme],[data-tag=winged],[data-tag=voltage]) { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.profile-tag:is([data-tag=boomer],[data-tag=dushnila],[data-tag=based],[data-tag=pickme],[data-tag=winged],[data-tag=voltage])::before { content: ''; flex: none; width: 1.1em; height: 1.1em; background: currentColor; -webkit-mask: var(--tag-icon) center / contain no-repeat; mask: var(--tag-icon) center / contain no-repeat; }
+.profile-tag:is([data-tag=boomer],[data-tag=dushnila],[data-tag=based],[data-tag=pickme],[data-tag=winged],[data-tag=voltage])::after { content: ''; position: absolute; z-index: -1; pointer-events: none; }
+/* Бумер (rare): a cassette on 70s stripes that keep rolling; now and then the tape is rewound and a VHS tracking line runs down. */
+.profile-tag[data-tag=boomer],.profile-tag[data-tag=boomer]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M3.5 5h17A1.5 1.5 0 0 1 22 6.5v11a1.5 1.5 0 0 1-1.5 1.5H18l-1.5-3h-9L6 19H3.5A1.5 1.5 0 0 1 2 17.5v-11A1.5 1.5 0 0 1 3.5 5Zm4 4.5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm9 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM10 10.5v2h4v-2h-4Z'/%3E%3C/svg%3E"); overflow: hidden; color: #6b3d16; background: repeating-linear-gradient(90deg, #e2711d 0 10px, #f2b134 10px 20px, #8a4b2a 20px 30px) 0 100% / 30px 3px repeat-x, linear-gradient(120deg, #fdf3df, #f1dcb2); box-shadow: inset 0 0 0 1px #e2c38c; animation: boomer-stripes 3s linear infinite; }
+.profile-tag[data-tag=boomer]::before { background: #8a4b2a; animation: boomer-rewind 5s ease-in-out infinite; }
+.profile-tag[data-tag=boomer]::after { inset: 0; background: linear-gradient(180deg, transparent 0 38%, rgb(255 255 255 / .6) 46% 54%, transparent 62%); transform: translateY(-100%); animation: boomer-tracking 5s linear infinite; }
+@keyframes boomer-stripes { to { background-position: 30px 100%, 0 0; } }
+@keyframes boomer-rewind { 0%,72%,92%,100% { transform: none; } 76% { transform: rotate(-10deg) scale(1.1); } 81% { transform: rotate(8deg); } 86% { transform: rotate(-4deg); } }
+@keyframes boomer-tracking { 0%,74% { transform: translateY(-100%); } 90%,100% { transform: translateY(100%); } }
+/* Душнила (rare): stale air rising slowly in a sage chip, and the «вообще-то» finger that wags now and then. */
+.profile-tag[data-tag=dushnila],.profile-tag[data-tag=dushnila]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='8.6' y='1.5' width='3.4' height='13' rx='1.7'/%3E%3Crect x='11.4' y='9.4' width='3.1' height='6' rx='1.55'/%3E%3Crect x='14' y='10.2' width='3.1' height='5.6' rx='1.55'/%3E%3Crect x='16.5' y='11.1' width='2.9' height='5' rx='1.45'/%3E%3Cpath d='M8.6 13h10.8v3.5a5.5 5.5 0 0 1-5.5 5.5h-1a5.5 5.5 0 0 1-4.6-2.5L5 15.4a1.6 1.6 0 0 1 2.5-2l1.1 1.2Z'/%3E%3C/svg%3E"); overflow: hidden; color: #2e4a3f; background: linear-gradient(120deg, #eef3ee, #d3e0d7); box-shadow: inset 0 0 0 1px #b7cbbe; }
+.profile-tag[data-tag=dushnila]::before { background: #4f7a68; transform-origin: 45% 90%; animation: dushnila-wag 4.6s ease-in-out infinite; }
+.profile-tag[data-tag=dushnila]::after { inset: 0; background: radial-gradient(closest-side, rgb(120 150 135 / .35), transparent) 18% 100% / 1.1em 1.1em no-repeat, radial-gradient(closest-side, rgb(120 150 135 / .3), transparent) 55% 100% / .9em .9em no-repeat, radial-gradient(closest-side, rgb(120 150 135 / .3), transparent) 86% 100% / 1em 1em no-repeat; animation: dushnila-haze 3.4s ease-in-out infinite; }
+@keyframes dushnila-wag { 0%,70%,90%,100% { transform: none; } 74% { transform: rotate(-14deg); } 78% { transform: rotate(12deg); } 82% { transform: rotate(-9deg); } 86% { transform: rotate(5deg); } }
+@keyframes dushnila-haze { 0% { opacity: 0; transform: translateY(30%); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(-60%); } }
+/* База (epic): a gold seal on a dark chip. Every few seconds it slams down like a stamp — the chip gives under the blow, a
+   gold ring runs out from it and a sheen crosses the chip. */
+.profile-tag[data-tag=based],.profile-tag[data-tag=based]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='m12 1.8 2.3 1.7 2.8-.3 1.1 2.6 2.6 1.1-.3 2.8 1.7 2.3-1.7 2.3.3 2.8-2.6 1.1-1.1 2.6-2.8-.3L12 22.2l-2.3-1.7-2.8.3-1.1-2.6-2.6-1.1.3-2.8L1.8 12l1.7-2.3-.3-2.8 2.6-1.1 1.1-2.6 2.8.3L12 1.8Zm-1.3 13.9 6-6-1.4-1.4-4.6 4.6-2.1-2.1-1.4 1.4 3.5 3.5Z'/%3E%3C/svg%3E"); overflow: hidden; color: #ffd76a; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 0 6px rgb(255 190 40 / .55), 0 1px 0 #000; background: linear-gradient(105deg, transparent 40%, rgb(255 230 150 / .3) 50%, transparent 60%) -150% 0 / 60% 100% no-repeat, radial-gradient(120% 90% at 12% 50%, rgb(255 190 40 / .22), transparent 60%), linear-gradient(180deg, #221d13, #0b0a08); box-shadow: inset 0 0 0 1px rgb(255 207 58 / .55), inset 0 1px 0 rgb(255 255 255 / .08); animation: based-impact 4.8s ease-out infinite, based-sheen 4.8s ease-in-out infinite; }
+.profile-tag[data-tag=based]::before { background: linear-gradient(135deg, #fff1b8, #ffcf3a 45%, #c98a00); animation: based-stamp 4.8s ease-out infinite; }
+.profile-tag[data-tag=based]::after { left: calc(9px + .55em); top: 50%; width: 2.6em; height: 2.6em; margin: -1.3em 0 0 -1.3em; border-radius: 50%; box-shadow: inset 0 0 0 2px rgb(255 207 58 / .85), 0 0 8px rgb(255 190 40 / .5); opacity: 0; animation: based-ring 4.8s ease-out infinite; }
+@keyframes based-stamp { 0%,62%,100% { transform: none; opacity: 1; } 63% { transform: translateY(-130%) scale(1.9); opacity: 0; } 70% { transform: translateY(-20%) scale(1.5); opacity: 1; } 73% { transform: scale(.82); } 77% { transform: scale(1.12); } 81% { transform: none; } }
+@keyframes based-impact { 0%,72%,84%,100% { transform: none; } 74% { transform: scale(1.04, .9); } 78% { transform: scale(.98, 1.03); } }
+@keyframes based-ring { 0%,72% { opacity: 0; transform: scale(.2); } 74% { opacity: 1; } 92%,100% { opacity: 0; transform: scale(2.4); } }
+@keyframes based-sheen { 0%,76% { background-position: -150% 0, 0 0, 0 0; } 100% { background-position: 250% 0, 0 0, 0 0; } }
+/* Пикми (common): a lilac chip and a hand that shoots up — «я! я!» — with a little sparkle. */
+.profile-tag[data-tag=pickme],.profile-tag[data-tag=pickme]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='5.4' y='5' width='2.8' height='10' rx='1.4'/%3E%3Crect x='8.6' y='2.4' width='2.8' height='12' rx='1.4'/%3E%3Crect x='11.8' y='3.2' width='2.8' height='11' rx='1.4'/%3E%3Crect x='15' y='5.4' width='2.8' height='9' rx='1.4'/%3E%3Cpath d='M5.4 11h12.4v4.5a6.5 6.5 0 0 1-6.5 6.5h-.4a6.5 6.5 0 0 1-5.5-3.1L2.6 14.6a1.6 1.6 0 0 1 2.8-1.6V11Z'/%3E%3C/svg%3E"); color: #8a1d6b; background: linear-gradient(120deg, #ffe9f7, #efdcff); box-shadow: inset 0 0 0 1px #f2b9e6; }
+.profile-tag[data-tag=pickme]::before { background: linear-gradient(160deg, #ff6fd8, #c084fc); transform-origin: 50% 100%; animation: pickme-wave 4.4s ease-in-out infinite; }
+.profile-tag[data-tag=pickme]::after { content: '✦' / ''; z-index: 1; left: calc(9px + .9em); top: -.2em; font-size: .75em; line-height: 1; color: #c084fc; opacity: 0; animation: pickme-sparkle 4.4s ease-out infinite; }
+@keyframes pickme-wave { 0%,66%,90%,100% { transform: none; } 70% { transform: translateY(-2px) rotate(-16deg); } 74% { transform: translateY(-2px) rotate(14deg); } 78% { transform: translateY(-2px) rotate(-14deg); } 82% { transform: translateY(-1px) rotate(10deg); } }
+@keyframes pickme-sparkle { 0%,68% { opacity: 0; transform: scale(.4) rotate(0deg); } 74% { opacity: 1; transform: scale(1.2) rotate(45deg); } 88%,100% { opacity: 0; transform: scale(.6) rotate(90deg); } }
+/* Окрылённый (rare): a night-blue sky where clouds drift past, and white wings that beat twice now and then. Wings only —
+   no logo or can design of the brand. */
+.profile-tag[data-tag=winged],.profile-tag[data-tag=winged]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11.6 15.5C8 15.5 3.2 13.6 1.5 8.2c1.6.8 3.2 1 4.6.7C4.7 8 3.7 6.7 3.3 5c2 1.2 4.4 2 6.3 3.1 1.6 1 2.6 2.6 2.6 4.3 0 1.4-.2 2.4-.6 3.1Z'/%3E%3Cpath transform='matrix(-1 0 0 1 24 0)' d='M11.6 15.5C8 15.5 3.2 13.6 1.5 8.2c1.6.8 3.2 1 4.6.7C4.7 8 3.7 6.7 3.3 5c2 1.2 4.4 2 6.3 3.1 1.6 1 2.6 2.6 2.6 4.3 0 1.4-.2 2.4-.6 3.1Z'/%3E%3C/svg%3E"); overflow: hidden; color: #f4f7ff; font-weight: 800; text-shadow: 0 1px 2px rgb(0 10 40 / .6); background: linear-gradient(180deg, #2350a8, #0b1f4d); box-shadow: inset 0 0 0 1px rgb(160 195 255 / .45); }
+.profile-tag[data-tag=winged]::before { background: #fff; animation: winged-flap 3.8s ease-in-out infinite; }
+.profile-tag[data-tag=winged]::after { inset: 0 -100% 0 0; background: radial-gradient(closest-side, rgb(255 255 255 / .3), transparent) 10% 78% / 22% 40% no-repeat, radial-gradient(closest-side, rgb(255 255 255 / .22), transparent) 38% 20% / 16% 30% no-repeat, radial-gradient(closest-side, rgb(255 255 255 / .3), transparent) 60% 78% / 22% 40% no-repeat, radial-gradient(closest-side, rgb(255 255 255 / .22), transparent) 88% 20% / 16% 30% no-repeat; animation: winged-clouds 7s linear infinite; }
+@keyframes winged-flap { 0%,70%,90%,100% { transform: none; } 74% { transform: translateY(-1px) scale(1.18, .6); } 78% { transform: translateY(-2px) scale(1, 1.06); } 82% { transform: translateY(-1px) scale(1.18, .6); } 86% { transform: translateY(-2px); } }
+@keyframes winged-clouds { to { transform: translateX(-50%); } }
+/* Под напряжением (rare): a high-voltage sign on a dark violet chip with an arc that crackles all the time; now and then
+   the voltage jumps — the arc flares and the sign jolts. */
+.profile-tag[data-tag=voltage],.profile-tag[data-tag=voltage]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M10.3 3.4a2 2 0 0 1 3.4 0l8.6 15A2 2 0 0 1 20.6 21H3.4a2 2 0 0 1-1.7-2.6l8.6-15Zm2.9 5.1L8.4 14.6h2.8l-1 4.4 4.8-6.4h-2.9l1.1-4.1Z'/%3E%3C/svg%3E"); overflow: hidden; color: #e9fbff; font-weight: 800; text-shadow: 0 0 6px rgb(120 230 255 / .7), 0 1px 0 #000; background: radial-gradient(120% 100% at 15% 50%, rgb(168 85 247 / .3), transparent 65%), linear-gradient(180deg, #1d1640, #0b0918); box-shadow: inset 0 0 0 1px rgb(155 241 255 / .4); }
+.profile-tag[data-tag=voltage]::before { background: #ffe14d; animation: voltage-jolt 3.6s linear infinite; }
+.profile-tag[data-tag=voltage]::after { inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 12'%3E%3Cpath d='M0 6 5 2l4 7 5-6 4 5 5-7 4 9 5-6 4 4 4-2' fill='none' stroke='%239bf1ff' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") 0 50% / 40px 70% repeat-x; opacity: .3; animation: voltage-arc 3.6s steps(1) infinite; }
+@keyframes voltage-jolt { 0%,74%,86%,100% { transform: none; } 76% { transform: translate(-1px, 1px) scale(1.25); } 78% { transform: translate(1px, -1px) scale(1.1); } 80% { transform: translate(-1px, 0) scale(1.2); } 83% { transform: translate(1px, 1px); } }
+@keyframes voltage-arc { 0% { background-position: 0 50%; opacity: .3; } 18% { background-position: -13px 50%; opacity: .45; } 36% { background-position: -26px 50%; opacity: .2; } 54% { background-position: -7px 50%; opacity: .4; } 76% { background-position: -19px 50%; opacity: 1; } 78% { background-position: -31px 50%; opacity: .35; } 80% { background-position: -3px 50%; opacity: .95; } 84% { background-position: -22px 50%; opacity: .3; } }
+/* Tags of the look shop (`shop-items.ts`), bought with achievement points: their own look, like the achievements'. */
+.profile-tag:is([data-tag=owl],[data-tag=vibe],[data-tag=sigma],[data-tag=boss]) { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.profile-tag:is([data-tag=owl],[data-tag=vibe],[data-tag=sigma],[data-tag=boss])::before { content: ''; flex: none; }
+.profile-tag:is([data-tag=vibe],[data-tag=sigma],[data-tag=boss])::after { content: ''; position: absolute; z-index: -1; pointer-events: none; }
+/* Сова (25): a night chip with a pair of amber owl eyes that blink now and then and glance aside. */
+.profile-tag[data-tag=owl],.profile-tag[data-tag=owl]:hover { color: #f6ecc8; background: radial-gradient(.35em .35em at 88% 30%, rgb(255 244 200 / .5), transparent), linear-gradient(120deg, #1b2140, #2c3566); box-shadow: inset 0 0 0 1px rgb(160 176 255 / .35); }
+.profile-tag[data-tag=owl]::before { width: 1.35em; height: .75em; background: radial-gradient(circle at 30% 50%, #1b1b1b 0 15%, #ffcf4a 17% 33%, #b07800 35% 39%, transparent 41%), radial-gradient(circle at 70% 50%, #1b1b1b 0 15%, #ffcf4a 17% 33%, #b07800 35% 39%, transparent 41%); animation: owl-blink 4.4s ease-in-out infinite; }
+@keyframes owl-blink { 0%,40%,47%,70%,100% { transform: none; } 43% { transform: scaleY(.08); } 78%,88% { transform: translateX(1.5px); } }
+/* Вайб (50): a violet gradient that keeps flowing and an equalizer — bars 1 and 3 in ::before, 2 and 4 in ::after. */
+.profile-tag[data-tag=vibe],.profile-tag[data-tag=vibe]:hover { color: #fff; font-weight: 800; text-shadow: 0 1px 2px rgb(20 0 40 / .5); background: linear-gradient(115deg, #3a0f6b, #7b2ff7, #0f5a9e, #3a0f6b) 0 50% / 300% 100%; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .25); animation: tag-flow 8s linear infinite; }
+.profile-tag[data-tag=vibe]::before { width: 1em; height: .95em; background: linear-gradient(90deg, #ff6fd8 0 18%, transparent 18% 54%, #36d6ff 54% 72%, transparent 72%); transform-origin: 50% 100%; animation: vibe-bars 1.1s ease-in-out infinite alternate; }
+.profile-tag[data-tag=vibe]::after { z-index: 0; left: 9px; top: 50%; width: 1em; height: .95em; margin-top: -.475em; background: linear-gradient(90deg, transparent 0 27%, #a66bff 27% 45%, transparent 45% 82%, #ff9fe8 82%); transform-origin: 50% 100%; animation: vibe-bars .8s ease-in-out -.4s infinite alternate; }
+@keyframes vibe-bars { 0% { transform: scaleY(.35); } 50% { transform: scaleY(1); } 100% { transform: scaleY(.6); } }
+/* Сигма (100): brushed steel, a Σ that never moves and a cold sheen crossing the chip — no extra emotions. */
+.profile-tag[data-tag=sigma],.profile-tag[data-tag=sigma]:hover { color: #eef3f8; font-weight: 800; letter-spacing: .04em; text-shadow: 0 1px 0 #000; background: repeating-linear-gradient(90deg, rgb(255 255 255 / .04) 0 1px, transparent 1px 3px), linear-gradient(180deg, #3d4652, #1d2229); box-shadow: inset 0 0 0 1px rgb(200 215 230 / .45), inset 0 1px 0 rgb(255 255 255 / .12); }
+.profile-tag[data-tag=sigma]::before { content: 'Σ' / ''; color: #cfe0f2; font-size: 1.05em; font-weight: 900; line-height: 1; text-shadow: 0 0 6px rgb(160 200 240 / .6); }
+.profile-tag[data-tag=sigma]::after { inset: 0; background: linear-gradient(105deg, transparent 40%, rgb(210 235 255 / .4) 50%, transparent 60%) -150% 0 / 60% 100% no-repeat; animation: sigma-sheen 5s ease-in-out infinite; }
+@keyframes sigma-sheen { 0%,70% { background-position: -150% 0; } 100% { background-position: 250% 0; } }
+/* Босс (250): black velvet with gold, a crown that hops now and then and a golden shine running over the chip. */
+.profile-tag[data-tag=boss],.profile-tag[data-tag=boss]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 8.5 7.5 12 12 5l4.5 7L21 8.5 19.5 18h-15L3 8.5Z'/%3E%3Crect x='4.5' y='19' width='15' height='2.2' rx='1'/%3E%3C/svg%3E"); color: #ffe08a; font-weight: 900; letter-spacing: .03em; text-shadow: 0 0 6px rgb(255 200 60 / .55), 0 1px 0 #000; background: radial-gradient(120% 120% at 20% 0%, rgb(255 207 58 / .2), transparent 60%), linear-gradient(180deg, #1a1208, #050403); box-shadow: inset 0 0 0 1px rgb(255 207 58 / .7), 0 0 8px rgb(255 190 40 / .3); }
+.profile-tag[data-tag=boss]::before { width: 1.15em; height: 1.15em; background: linear-gradient(160deg, #fff4c2, #ffcf3a 45%, #c98a00); -webkit-mask: var(--tag-icon) center / contain no-repeat; mask: var(--tag-icon) center / contain no-repeat; transform-origin: 50% 100%; animation: boss-crown 3.6s ease-in-out infinite; }
+.profile-tag[data-tag=boss]::after { inset: -2px; background: linear-gradient(105deg, transparent 35%, rgb(255 236 170 / .55) 50%, transparent 65%); transform: translateX(-130%); animation: top-tag-shine 3.6s ease-in-out infinite; }
+@keyframes boss-crown { 0%,62%,90%,100% { transform: none; } 68% { transform: translateY(-3px) rotate(-10deg); } 74% { transform: translateY(0) rotate(6deg) scale(1.05); } 80% { transform: translateY(-1px) rotate(-3deg); } }
+/* More shop tags (November 2026): common ones idle with a short accent, rare ones over a moving base, epic and
+   legendary with their own signature. Only transform, opacity and background-position move. */
+.profile-tag:is([data-tag=chill],[data-tag=npc],[data-tag=crush],[data-tag=battery],[data-tag=tilt],[data-tag=auf],[data-tag=cyber],[data-tag=main]) { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.profile-tag:is([data-tag=chill],[data-tag=npc],[data-tag=crush],[data-tag=battery],[data-tag=tilt],[data-tag=auf],[data-tag=cyber],[data-tag=main])::before { content: ''; flex: none; width: 1.1em; height: 1.1em; background: currentColor; -webkit-mask: var(--tag-icon) center / contain no-repeat; mask: var(--tag-icon) center / contain no-repeat; }
+.profile-tag:is([data-tag=chill],[data-tag=npc],[data-tag=crush],[data-tag=battery],[data-tag=tilt],[data-tag=auf],[data-tag=cyber],[data-tag=main])::after { content: ''; position: absolute; z-index: -1; pointer-events: none; }
+/* Чилл (common): a mint chip and two waves that drift slowly. */
+.profile-tag[data-tag=chill],.profile-tag[data-tag=chill]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 9c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 15c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E"); color: #0b5a54; background: linear-gradient(120deg, #e3fbf5, #d6f0ff); box-shadow: inset 0 0 0 1px #a7e3d6; }
+.profile-tag[data-tag=chill]::before { background: #14b8a6; animation: chill-drift 4s ease-in-out infinite alternate; }
+@keyframes chill-drift { from { transform: translateX(-1.5px); } to { transform: translateX(1.5px); } }
+/* NPC (common): a dark flat pixel chip with a stepped border, readable on light and dark; a yellow quest marker pops up now and then. */
+.profile-tag[data-tag=npc],.profile-tag[data-tag=npc]:hover { color: #f4f5f7; font-weight: 800; letter-spacing: .08em; text-shadow: 1px 1px 0 #000; border-radius: 2px; background: linear-gradient(180deg, #3a3f48, #23272e); box-shadow: inset 0 0 0 2px #8a919c, inset 2px 2px 0 2px #4b515c; }
+.profile-tag[data-tag=npc]::before { width: .55em; height: 1em; background: linear-gradient(#ffd400 0 0) 50% 0 / 100% 56% no-repeat, linear-gradient(#ffd400 0 0) 50% 100% / 100% 24% no-repeat; -webkit-mask: none; mask: none; animation: npc-quest 3.8s steps(1) infinite; }
+@keyframes npc-quest { 0%,64%,92%,100% { transform: none; } 68% { transform: translateY(-3px); } 72% { transform: none; } 76% { transform: translateY(-3px); } 80% { transform: none; } }
+/* Краш (rare): a pink chip whose heart beats, and little hearts that float up out of it. */
+.profile-tag[data-tag=crush],.profile-tag[data-tag=crush]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11Z'/%3E%3C/svg%3E"); color: #fff; font-weight: 800; text-shadow: 0 1px 2px rgb(120 0 40 / .45); background: linear-gradient(120deg, #ff3d7f, #ff7aa8); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .35); }
+.profile-tag[data-tag=crush]::before { background: #fff; animation: fan-beat 1.2s ease-in-out infinite; }
+.profile-tag[data-tag=crush]::after { inset: 0 0 -100% 0; background: radial-gradient(3px 3px at 22% 30%, rgb(255 255 255 / .9) 60%, transparent), radial-gradient(2px 2px at 58% 70%, rgb(255 255 255 / .7) 60%, transparent), radial-gradient(2.5px 2.5px at 86% 40%, rgb(255 255 255 / .8) 60%, transparent); background-size: 100% 50%; animation: burner-sparks 2.6s linear infinite; }
+/* Батарейка (rare): a dark chip and a battery that fills up again and again, red to green. */
+.profile-tag[data-tag=battery],.profile-tag[data-tag=battery]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 7h15a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Zm17 3h1.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H20v-4Z'/%3E%3C/svg%3E"); color: #eafff2; font-weight: 800; background: linear-gradient(180deg, #17241d, #0b120e); box-shadow: inset 0 0 0 1px rgb(57 255 136 / .4); }
+.profile-tag[data-tag=battery]::before { width: 1.25em; background: linear-gradient(90deg, #39ff88 0 50%, rgb(255 255 255 / .38) 50%) 100% 0 / 200% 100%; animation: battery-charge 3.2s ease-in-out infinite; }
+@keyframes battery-charge { 0% { background-position: 100% 0; } 80%,100% { background-position: 0 0; } }
+/* Тильт (rare): an orange-red chip, a spiral that keeps turning and a rage fit now and then. */
+.profile-tag[data-tag=tilt],.profile-tag[data-tag=tilt]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12.5a1 1 0 0 1 1-1 2 2 0 0 1 2 2 3 3 0 0 1-3 3 4 4 0 0 1-4-4 5 5 0 0 1 5-5 6 6 0 0 1 6 6 7 7 0 0 1-7 7' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E"); color: #fff4ec; font-weight: 800; text-shadow: 0 1px 2px rgb(90 20 0 / .5); background: linear-gradient(120deg, #ff6a00, #e3261b, #ff6a00) 0 50% / 200% 100%; box-shadow: inset 0 0 0 1px rgb(255 220 190 / .4); animation: tag-flow 5s linear infinite, tilt-fit 4.2s ease-in-out infinite; }
+.profile-tag[data-tag=tilt]::before { background: #fff; animation: fx-spin 2.4s linear infinite; }
+@keyframes tilt-fit { 0%,78%,94%,100% { transform: none; } 80% { transform: rotate(-4deg); } 84% { transform: rotate(4deg); } 88% { transform: rotate(-3deg); } 91% { transform: rotate(2deg); } }
+/* Ауф (epic): a night-indigo chip under a silver moon; the howl leaves it in rings, and stars blink. */
+.profile-tag[data-tag=auf],.profile-tag[data-tag=auf]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 3.5A8.5 8.5 0 1 0 20.5 17 7 7 0 0 1 15.5 3.5Z'/%3E%3C/svg%3E"); color: #eef1ff; font-weight: 900; letter-spacing: .04em; text-shadow: 0 0 6px rgb(199 210 254 / .6), 0 1px 0 #000; background: radial-gradient(1.5px 1.5px at 72% 28%, #fff 60%, transparent), radial-gradient(1px 1px at 90% 70%, #fff 60%, transparent), radial-gradient(1px 1px at 52% 80%, #c7d2fe 60%, transparent), linear-gradient(180deg, #1e1b4b, #0b0a24); box-shadow: inset 0 0 0 1px rgb(165 180 252 / .5); }
+.profile-tag[data-tag=auf]::before { background: linear-gradient(160deg, #ffffff, #c7d2fe); }
+.profile-tag[data-tag=auf]::after { left: calc(9px + .55em); top: 50%; width: 2.4em; height: 2.4em; margin: -1.2em 0 0 -1.2em; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgb(199 210 254 / .8); opacity: 0; animation: auf-howl 2.8s ease-out infinite; }
+@keyframes auf-howl { 0% { opacity: .9; transform: scale(.3); } 100% { opacity: 0; transform: scale(2.4); } }
+/* Кибер (epic): black glass with cyan scanlines rolling down, a cyan chip icon and a magenta glitch slice. */
+.profile-tag[data-tag=cyber],.profile-tag[data-tag=cyber]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M7 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm2 4v6h6V9H9Z'/%3E%3Cpath d='M9 2h1.6v3H9zM13.4 2H15v3h-1.6zM9 19h1.6v3H9zM13.4 19H15v3h-1.6zM2 9h3v1.6H2zM2 13.4h3V15H2zM19 9h3v1.6h-3zM19 13.4h3V15h-3z'/%3E%3C/svg%3E"); color: #dffcff; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; text-shadow: 1px 0 0 rgb(255 43 214 / .7), -1px 0 0 rgb(0 240 255 / .7); background: repeating-linear-gradient(0deg, rgb(0 240 255 / .08) 0 1px, transparent 1px 3px) 0 0 / 100% 6px, linear-gradient(180deg, #06121a, #0b0414); box-shadow: inset 0 0 0 1px rgb(0 240 255 / .55); animation: cyber-scan 1.6s linear infinite; }
+.profile-tag[data-tag=cyber]::before { background: #00f0ff; animation: cyber-blink 3.4s steps(1) infinite; }
+.profile-tag[data-tag=cyber]::after { inset: 30% 0 auto; height: 22%; background: rgb(255 43 214 / .55); opacity: 0; animation: cyber-glitch 3.4s steps(1) infinite; }
+@keyframes cyber-scan { to { background-position: 0 6px, 0 0; } }
+@keyframes cyber-blink { 0%,70%,74%,100% { opacity: 1; transform: none; } 72% { opacity: .3; transform: translateX(2px); } }
+@keyframes cyber-glitch { 0%,70%,80%,100% { opacity: 0; transform: none; } 71% { opacity: 1; transform: translateX(-6px); } 74% { opacity: .8; transform: translate(5px, 40%); } 77% { opacity: 1; transform: translateX(-3px); } }
+/* Главный герой (legendary): a dark stage, a gold star and a spotlight that sweeps over the name, with a shine. */
+.profile-tag[data-tag=main],.profile-tag[data-tag=main]:hover { --tag-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m12 2 2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2Z'/%3E%3C/svg%3E"); color: #fff7d6; font-weight: 900; text-shadow: 0 0 8px rgb(255 216 77 / .6), 0 1px 0 #000; background: radial-gradient(60% 140% at 50% -20%, rgb(255 216 77 / .25), transparent 70%), linear-gradient(180deg, #2a1636, #0d0612); box-shadow: inset 0 0 0 1px rgb(255 216 77 / .65), 0 0 10px rgb(255 122 217 / .3); }
+.profile-tag[data-tag=main]::before { background: linear-gradient(160deg, #fff4c2, #ffd84d 50%, #ff9d3d); animation: main-star 3s ease-in-out infinite; }
+.profile-tag[data-tag=main]::after { inset: -40% auto -40% 0; width: 45%; background: radial-gradient(closest-side, rgb(255 244 200 / .55), transparent); transform: translateX(-100%); animation: main-spot 4.5s ease-in-out infinite; }
+@keyframes main-star { 0%,60%,100% { transform: none; } 70% { transform: rotate(72deg) scale(1.3); } 80% { transform: rotate(144deg) scale(1); } }
+@keyframes main-spot { 0% { transform: translateX(-100%); } 50% { transform: translateX(170%); } 100% { transform: translateX(-100%); } }
 @media (prefers-reduced-motion: reduce) {
   .profile-tag[data-tag],.profile-tag[data-tag]:hover,.profile-tag[data-tag]::before,.profile-tag[data-tag]::after { animation: none; }
   .profile-tag[data-tag=burner]::before { transform: scaleY(.65); }
-  .profile-tag:is([data-tag=burner],[data-tag=six-seven],[data-tag=admin],[data-tag=collector],[data-tag=streak-14],[data-tag=streak-30],[data-tag=monster])::after { display: none; }
+  .profile-tag:is([data-tag=burner],[data-tag=six-seven],[data-tag=admin],[data-tag=collector],[data-tag=streak-14],[data-tag=streak-30],[data-tag=monster],[data-tag=boomer],[data-tag=dushnila],[data-tag=sigma],[data-tag=boss],[data-tag=crush],[data-tag=main])::after { display: none; }
 }
 /* Experience panel: tier-tinted glow, a level bar with both ends, the rank road and quick stats. */
 .experience-panel { isolation: isolate; }

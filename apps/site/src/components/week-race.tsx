@@ -8,6 +8,7 @@ import { WeekRaceTry } from '@/components/week-race-try';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import { TOP_PLACES } from '@/lib/season-fields';
 import type { WeekRace } from '@/lib/week-race';
+import { ProfileTag } from '@/components/profile-tag';
 
 
 const number = (value: number) => value.toLocaleString('ru-RU');
@@ -32,7 +33,7 @@ export function WeekRaceBoard({ race, signedIn }: { race: WeekRace; signedIn: bo
           <AvatarFrame frame={entry.frame} />
         </span>
         <span className="lb-main">
-          <span className="lb-name"><strong>{entry.username}</strong>{entry.verified && <VerifiedMark />}{entry.tag && <span className="profile-tag" data-tag={entry.tag}>{profileTagLabel(entry.tag)}</span>}</span>
+          <span className="lb-name"><strong>{entry.username}</strong>{entry.verified && <VerifiedMark />}{entry.tag && <ProfileTag tag={entry.tag}>{profileTagLabel(entry.tag)}</ProfileTag>}</span>
           <span className="lb-stats"><span>{number(entry.xp)} XP за неделю</span></span>
         </span>
         <strong className="week-race-prize" title="Награда за место"><Gift />+{number(entry.reward)}<small>XP</small></strong>
