@@ -103,6 +103,16 @@ export async function chatMessages(viewer: string | null, before?: { id: string;
   return { items, authors: await chatAuthors(items.map(item => item.userId)), hasMore: rows.length > CHAT_PAGE };
 }
 
+/** What the open panel polls and what a sent message answers with: the newest page, who is in the chat, the viewer. */
+export type ChatLoad = ChatPage & { viewer: ChatViewer | null; presence: ChatPresence };
+
+/** The newest page for `userId` (null for a guest). A signed-in viewer is marked present: the header shows them while the panel stays open. */
+export async function loadChat(userId: string | null): Promise<ChatLoad> {
+  if (userId) await touchChatPresence(userId);
+  const [page, presence, viewer] = await Promise.all([chatMessages(userId), chatPresence(userId), userId ? chatViewer(userId) : null]);
+  return { ...page, presence, viewer };
+}
+
 export async function chatViewer(userId: string): Promise<ChatViewer> {
   const row = (await getPool().query<{ username: string | null; staff: boolean; blocked: boolean }>(`select u.username,
       exists(select 1 from "siteAdmin" a where a.email = lower(u.email)) as staff,

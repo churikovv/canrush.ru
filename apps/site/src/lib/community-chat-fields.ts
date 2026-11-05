@@ -8,7 +8,8 @@ export const CHAT_PAUSE_SECONDS = 3;
 export const CHAT_HOURLY_LIMIT = 60;
 /** Messages per page: the newest page is polled, older ones come with «Показать предыдущие». */
 export const CHAT_PAGE = 40;
-/** The open panel asks the server this often (only while the tab is visible). */
+/** The open panel asks the server this often (only while the tab is visible), with a GET of `/api/chat` and not a
+ * server action: Next runs server actions one at a time, so a poll would hold up a message being sent. */
 export const CHAT_POLL_MS = 4000;
 /** Someone is «в чате» while their open panel polled in the last half minute. */
 export const CHAT_PRESENCE_SECONDS = 30;
@@ -79,19 +80,32 @@ export function groupChatMessages<Message extends ChatGroupable>(messages: reado
 
 const byTime = (a: { createdAt: string; id: string }, b: { createdAt: string; id: string }) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
 
+/** Two values the server sent as JSON are the same: the poll keeps what did not change, so React redraws nothing. */
+export const sameJson = (a: unknown, b: unknown) => a === b || JSON.stringify(a) === JSON.stringify(b);
+
 /**
  * Puts a freshly polled newest page into what the panel holds. Older pages loaded before stay; everything from the
  * page's oldest message on is replaced by the page, so deleted messages leave and reactions update. When the page has
  * nothing in common with what is held (the panel was asleep and many messages came), it starts over from the page.
+ * A message that did not change stays the same object, and a page that changed nothing returns `held` itself: the
+ * panel polls every few seconds and must not redraw forty messages with their avatar frames each time.
  */
-export function mergeChatPage<Message extends { id: string; createdAt: string }>(held: readonly Message[], page: readonly Message[], pageHasMore: boolean): { items: Message[]; reset: boolean } {
+export function mergeChatPage<Message extends { id: string; createdAt: string }>(held: readonly Message[], page: readonly Message[], pageHasMore: boolean): { items: readonly Message[]; reset: boolean } {
   // The newest page is empty only when the chat is: nothing held survives.
-  if (!page.length) return { items: [], reset: held.length > 0 };
+  if (!page.length) return { items: held.length ? [] : held, reset: held.length > 0 };
   const first = page[0]!;
-  const ids = new Set(held.map(item => item.id));
-  if (pageHasMore && held.length && !page.some(item => ids.has(item.id))) return { items: [...page], reset: true };
-  const older = held.filter(item => byTime(item, first) < 0);
-  return { items: [...older, ...page], reset: false };
+  const known = new Map(held.map(item => [item.id, item]));
+  const fresh = page.map(item => { const old = known.get(item.id); return old && sameJson(old, item) ? old : item; });
+  if (pageHasMore && held.length && !page.some(item => known.has(item.id))) return { items: fresh, reset: true };
+  const items = [...held.filter(item => byTime(item, first) < 0), ...fresh];
+  const unchanged = items.length === held.length && items.every((item, index) => item === held[index]);
+  return { items: unchanged ? held : items, reset: false };
+}
+
+/** Authors of a polled page over those held: unchanged authors stay the same objects, and nothing new returns `held`. */
+export function mergeChatAuthors<Author>(held: Readonly<Record<string, Author>>, fresh: Readonly<Record<string, Author>>): Readonly<Record<string, Author>> {
+  const changed = Object.entries(fresh).filter(([id, author]) => !sameJson(held[id], author));
+  return changed.length ? { ...held, ...Object.fromEntries(changed) } : held;
 }
 
 /** Adds an older page in front of what is held, without duplicates. */

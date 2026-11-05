@@ -144,3 +144,19 @@ a.chat-name:hover { color: var(--theme-link); }
   .chat-spinner { animation-duration: 2.4s; }
   .chat-react-row button:hover { scale: none; }
 }
+
+/* The viewer's own message while the server takes it: shown at once, faded until the real one replaces it. */
+.chat-message[data-sending] .chat-bubble { opacity: .6; }
+.chat-sending-note { color: var(--theme-muted); font-style: italic; }
+
+/* Groups out of sight (`data-idle`, set by the panel's IntersectionObserver) pause their avatar frames, tags and level
+   chips, pseudo-elements too. !important: frame and tag rules use the `animation` shorthand, which resets the state. */
+.chat-group[data-idle] *, .chat-group[data-idle] *::before, .chat-group[data-idle] *::after { animation-play-state: paused !important; }
+
+/* On a phone the sheet covers the whole page, so the page's animations stop until the chat closes (`html[data-chat-open]`
+   from the panel, which also pauses the page's videos). The sheet itself is left out, its own animations play on. */
+@media (max-width: 639px) {
+  html[data-chat-open] body :not(.chat-sheet, .chat-sheet *),
+  html[data-chat-open] body :not(.chat-sheet, .chat-sheet *)::before,
+  html[data-chat-open] body :not(.chat-sheet, .chat-sheet *)::after { animation-play-state: paused !important; }
+}

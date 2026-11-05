@@ -116,12 +116,12 @@ it('turns duplicates into shards, crafts a missing card once and drops the Hallo
   }
 });
 
-it('shows the best epic or legendary pull of the day in the feed, once per member and day', async () => {
-  const { getFeed } = await import('../src/lib/profile-community');
+it('shows the best epic or legendary pull of the day in the feed, once per member and day — while drops are on', async () => {
+  const { FEED_GACHA_DROPS, getFeed } = await import('../src/lib/profile-community');
   const feed = await getFeed(member, 'following');
   const events = feed.items.filter(item => item.kind === 'gacha');
-  expect(events).toHaveLength(1);
-  expect(events[0]).toMatchObject({ kind: 'gacha', pull: { userId: member, brand } });
+  expect(events).toHaveLength(FEED_GACHA_DROPS ? 1 : 0);
+  if (FEED_GACHA_DROPS) expect(events[0]).toMatchObject({ kind: 'gacha', pull: { userId: member, brand } });
 });
 
 it('pays the caps of a streak already running when the machine opened, once and only for live streaks', async () => {

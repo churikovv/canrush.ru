@@ -3,8 +3,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { CommunityChat } from '@/components/community-chat';
 import {
-  CHAT_EMOJI, CHAT_REACTIONS, CHAT_TEXT_LIMIT, ChatError, chatDayLabel, groupChatMessages, isChatId, isChatReaction, mergeChatPage, parseChatText,
-  prependChatPage, quoteSnippet, toggleReaction,
+  CHAT_EMOJI, CHAT_REACTIONS, CHAT_TEXT_LIMIT, ChatError, chatDayLabel, groupChatMessages, isChatId, isChatReaction, mergeChatAuthors, mergeChatPage,
+  parseChatText, prependChatPage, quoteSnippet, toggleReaction,
 } from '@/lib/community-chat-fields';
 
 const at = (minutes: number) => new Date(Date.UTC(2026, 10, 5, 9, 0) + minutes * 60_000).toISOString();
@@ -62,6 +62,24 @@ describe('polling', () => {
     expect(mergeChatPage(older, page, true)).toEqual({ items: page, reset: true });
     expect(mergeChatPage(older, [], false)).toEqual({ items: [], reset: true });
     expect(mergeChatPage([], page, false)).toEqual({ items: page, reset: false });
+  });
+
+  it('keeps unchanged messages and authors as the same objects, so a quiet poll redraws nothing', () => {
+    const held = [...older, { ...message('c', 'u', 2), text: 'привет' }];
+    const quiet = held.map(item => ({ ...item }));
+    expect(mergeChatPage(held, quiet.slice(1), true).items).toBe(held);
+    const edited = [{ ...held[1]! }, { ...held[2]!, text: 'пока' }];
+    const merged = mergeChatPage(held, edited, true).items;
+    expect(merged).not.toBe(held);
+    expect(merged[1]).toBe(held[1]);
+    expect(merged[2]).toEqual(edited[1]);
+    expect(mergeChatPage([], [], false).items).toEqual([]);
+
+    const authors = { u: { id: 'u', level: 3 }, v: { id: 'v', level: 1 } };
+    expect(mergeChatAuthors(authors, { u: { id: 'u', level: 3 } })).toBe(authors);
+    const grown = mergeChatAuthors(authors, { u: { id: 'u', level: 4 }, w: { id: 'w', level: 1 } });
+    expect(grown).toEqual({ u: { id: 'u', level: 4 }, v: authors.v, w: { id: 'w', level: 1 } });
+    expect(grown.v).toBe(authors.v);
   });
 
   it('puts an older page in front without duplicates', () => {

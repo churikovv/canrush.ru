@@ -228,6 +228,12 @@ const FEED_EVENT_AUTHOR = (author: string) => `u.username is not null and not ex
           and ${notBlockedBy('$2::text', author)}
           and (not $1::boolean or ${author} = $2 or exists(select 1 from "userFollow" f where f."userId" = $2 and f."targetId" = ${author}))`;
 
+/**
+ * Drops of the Банкомат (the day's best epic or legendary pull) in the feed. Off since November 2026: members said the
+ * big card scenes took up too much of the feed. The query and the card stay, `true` brings them back.
+ */
+export const FEED_GACHA_DROPS = false;
+
 export async function getFeed(viewerId: string | null, scope: FeedScope = 'all', page = 1) {
   const following = scope === 'following' && viewerId !== null;
   const saved = scope === 'saved' && viewerId !== null;
@@ -248,11 +254,11 @@ export async function getFeed(viewerId: string | null, scope: FeedScope = 'all',
         from review r join "user" u on u.id = r."userId"
         where not $5::boolean and ${FEED_EVENT_AUTHOR('r."userId"')}
         group by r."userId", (r."createdAt" at time zone 'Europe/Moscow')::date
-        union all
+        ${FEED_GACHA_DROPS ? `union all
         select p."userId" || '|' || to_char((p."createdAt" at time zone 'Europe/Moscow')::date, 'YYYY-MM-DD'), 'gacha', max(p."createdAt")
         from "gachaPull" p join "user" u on u.id = p."userId"
         where not $5::boolean and p.rarity in ('epic', 'legendary') and ${FEED_EVENT_AUTHOR('p."userId"')}
-        group by p."userId", (p."createdAt" at time zone 'Europe/Moscow')::date
+        group by p."userId", (p."createdAt" at time zone 'Europe/Moscow')::date` : ''}
         union all
         select a.id::text, 'article', a."publishedAt" from article a join "user" u on u.id = a."authorId"
         where not $5::boolean and a.status = 'published' and a."publishedAt" is not null and ${FEED_EVENT_AUTHOR('a."authorId"')}
