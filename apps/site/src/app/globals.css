@@ -4391,13 +4391,23 @@ html:has(:is(.support-surface, .market-order-page, .tier-editor, .ae-touchbar, .
 @keyframes site-update-in { from { opacity: 0; translate: -50% -12px; } }
 @media (prefers-reduced-motion: reduce) { .site-update { animation: none; } }
 
-/* Tags, avatar frames and the sheen of level chips stand still unless the member turned their animation on in the
-   settings (`html[data-decor-motion]` from the cookie, `DecorMotionSettings`): dozens of them glowing and moving in a list
-   slowed weak phones down. Paused, not removed: each animation stops on its first frame, which is the static pose, and short
-   flashes start hidden. The shop's previews (`.shop-preview`) move anyway: there the motion is what is being chosen. */
-html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *),
-html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *)::before,
-html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *)::after,
-html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *) *,
-html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *) *::before,
-html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *) *::after { animation-play-state: paused !important; }
+/* Tags, avatar frames and the sheen of level chips (`src/lib/decor-motion.ts`): by default they move on a computer and
+   stand still on a touch screen, where dozens of them glowing in a list slowed weak phones down; the member can fix
+   either in the settings (`html[data-decor-motion="on"|"off"]` from the cookie, `DecorMotionSettings`). Paused, not
+   removed: each animation stops on its first frame, which is the static pose, and short flashes start hidden. The
+   shop's previews (`.shop-preview`) move anyway: there the motion is what is being chosen. The media query is
+   `STILL_DEVICE_QUERY`: change both together. */
+html[data-decor-motion="off"] :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *),
+html[data-decor-motion="off"] :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *)::before,
+html[data-decor-motion="off"] :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *)::after,
+html[data-decor-motion="off"] :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *) *,
+html[data-decor-motion="off"] :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *) *::before,
+html[data-decor-motion="off"] :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *) *::after { animation-play-state: paused !important; }
+@media (hover: none), (pointer: coarse) {
+  html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *),
+  html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *)::before,
+  html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *)::after,
+  html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *) *,
+  html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *) *::before,
+  html:not([data-decor-motion]) :is(.profile-tag, .avatar-frame, .avatar-ring, .profile-level):not(.shop-preview *) *::after { animation-play-state: paused !important; }
+}

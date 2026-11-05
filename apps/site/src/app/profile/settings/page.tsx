@@ -7,7 +7,7 @@ import { getBlockedMembers } from '@/lib/member-blocks';
 import { BlockMemberButton } from '@/components/block-member-button';
 import { ThemeSettings } from '@/components/theme-settings';
 import { DecorMotionSettings } from '@/components/decor-motion-settings';
-import { DECOR_MOTION_COOKIE, decorMotionOn } from '@/lib/decor-motion';
+import { DECOR_MOTION_COOKIE, decorMotionChoice } from '@/lib/decor-motion';
 import { parseSiteTheme, SITE_THEME_COOKIE, type SiteTheme } from '@/lib/site-theme';
 import Link from '@/components/navigation-progress';
 import { auth } from '@/lib/auth';
@@ -158,11 +158,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const session = await auth.api.getSession({ headers: await headers() });
   const jar = await cookies();
   const theme = parseSiteTheme(jar.get(SITE_THEME_COOKIE)?.value) ?? 'system';
-  const decorMotion = decorMotionOn(jar.get(DECOR_MOTION_COOKIE)?.value);
+  const decorMotion = decorMotionChoice(jar.get(DECOR_MOTION_COOKIE)?.value);
   if (!session) return <BrandShell headerAction={<ProfileNavigation />} surfaceClassName="profile-surface">
     <section className="community-directory profile-settings"><h1>Настройки</h1>
       <ThemeSettings theme={theme} />
-      <DecorMotionSettings on={decorMotion} />
+      <DecorMotionSettings choice={decorMotion} />
       <section className="community-panel"><h2>Аккаунт и уведомления</h2><p>Войдите, чтобы настроить профиль, уведомления и посмотреть данные аккаунта.</p><Link className="community-button" href="/sign-in">Войти</Link></section>
       <Panel id="about" title="О CanRush"><AboutLinks /></Panel>
     </section>
@@ -213,7 +213,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const enabledNotifications = NOTIFICATION_OPTIONS.filter(option => preferences.get(option.kind) ?? true).length;
   const settings: SettingsGroup[] = [{ key: 'settings', title: 'Настройки', rows: [
     { key: 'theme', title: 'Тема сайта', value: THEME_LABELS[theme], icon: ICONS.theme, panel: <ThemeSettings theme={theme} /> },
-    { key: 'motion', title: 'Анимация тегов и рамок', value: decorMotion ? 'Включена' : 'Выключена', icon: ICONS.motion, panel: <DecorMotionSettings on={decorMotion} /> },
+    { key: 'motion', title: 'Анимация тегов и рамок', value: decorMotion === 'on' ? 'Включена' : decorMotion === 'off' ? 'Выключена' : 'Как на устройстве', icon: ICONS.motion, panel: <DecorMotionSettings choice={decorMotion} /> },
     { key: 'notifications', title: 'Уведомления', value: `Включено ${enabledNotifications} из ${NOTIFICATION_OPTIONS.length}`, icon: ICONS.notifications, panel:
       <Panel id="notifications" title="Уведомления" note="Выберите, о каких новых событиях сообщать на сайте. Уже полученные уведомления сохранятся.">
         <form action={saveNotificationSettings} className="settings-groups">
