@@ -23,7 +23,20 @@ export type RecommendationReason =
   | { kind: 'similar'; fans: number; match: number }
   | { kind: 'brand'; brand: string }
   | { kind: 'flavor'; token: string };
-export interface RankedDrink { brand: string; flavor: string; score: number; reason: RecommendationReason }
+export interface RankedDrink {
+  brand: string; flavor: string; score: number; reason: RecommendationReason;
+  /** How well it fits, for the story: 60–98 %, from the blended score. */
+  match: number;
+  /** The viewer's own liked drinks behind the pick: of the same brand, with the same flavour, or liked by the same fans. */
+  because: Preference[];
+  /** Neighbours who like it openly — a taste rating of 7+ or a favourite, never a private swipe — closest first, up to three. */
+  publicFans: string[];
+}
+/** The blended score as a «совпадение» percentage: the weakest pick that passes reads 68 %, a strong one up to 98 %. */
+export const matchPercent = (score: number) => Math.round(Math.min(98, Math.max(60, 62 + 60 * score)));
+const PUBLIC_FANS = 3, BECAUSE = 3;
+const likesOpenly = (member: TasteProfile, key: string) => member.favorites.some(item => drinkKey(item) === key)
+  || member.reviews.some(review => review.taste >= 7 && drinkKey(review) === key);
 
 export const drinkKey = (item: Preference) => JSON.stringify([item.brand, canonicalProductFlavor(item.brand, item.flavor)]);
 const isSugarFree = (item: Preference) => canonicalProductFlavor(item.brand, item.flavor).includes('sugarfree');
@@ -87,7 +100,7 @@ function affinity(items: { score: number }[]) {
 
 export function rankRecommendations(viewer: TasteProfile, members: TasteProfile[], catalog: CatalogDrink[], limit = 5): RankedDrink[] {
   const mine = opinions(viewer);
-  const neighbours = members.map(member => { const theirs = opinions(member); return { theirs, weight: similarity(mine, theirs) }; })
+  const neighbours = members.map(member => { const theirs = opinions(member); return { member, theirs, weight: similarity(mine, theirs) }; })
     .filter(neighbour => neighbour.weight > MIN_SIMILARITY)
     .sort((a, b) => b.weight - a.weight).slice(0, NEIGHBOURS);
 
@@ -97,6 +110,7 @@ export function rankRecommendations(viewer: TasteProfile, members: TasteProfile[
   const byToken = new Map<string, number>();
   for (const token of new Set(known.flatMap(entry => tasteTokens(entry.item)))) byToken.set(token, affinity(known.filter(entry => tasteTokens(entry.item).includes(token))));
   const liked = known.filter(entry => entry.score > 0.3);
+  const loved = [...liked].sort((a, b) => b.score - a.score);
   const sugarFree = liked.length ? liked.filter(entry => isSugarFree(entry.item)).length / liked.length : 0;
 
   const ranked: RankedDrink[] = [];
@@ -104,11 +118,12 @@ export function rankRecommendations(viewer: TasteProfile, members: TasteProfile[
     const key = drinkKey(drink);
     if (mine.has(key)) continue;
     let sum = 0, weights = 0, support = 0, fans = 0, fanWeight = 0;
-    for (const { theirs, weight } of neighbours) {
-      const opinion = theirs.get(key);
+    const fanList: typeof neighbours = [];
+    for (const neighbour of neighbours) {
+      const opinion = neighbour.theirs.get(key);
       if (!opinion) continue;
-      sum += weight * opinion.score; weights += weight; support++;
-      if (opinion.score > 0.3) { fans++; fanWeight += weight; }
+      sum += neighbour.weight * opinion.score; weights += neighbour.weight; support++;
+      if (opinion.score > 0.3) { fans++; fanWeight += neighbour.weight; fanList.push(neighbour); }
     }
     const collaborative = weights ? (sum / weights) * support / (support + 1.5) : 0;
     const brand = byBrand.get(drink.brand) ?? 0;
@@ -125,7 +140,14 @@ export function rankRecommendations(viewer: TasteProfile, members: TasteProfile[
       : brand >= flavor && brand > 0.2 ? { kind: 'brand', brand: drink.brand }
       : tokens[0] && flavor > 0.2 ? { kind: 'flavor', token: tokens[0].token }
       : { kind: 'similar', fans, match: fans ? Math.round(100 * fanWeight / fans) : 0 };
-    ranked.push({ brand: drink.brand, flavor: drink.flavor, score, reason });
+    // What of the viewer's own taste stands behind it, for «потому что тебе нравятся…».
+    const because = (reason.kind === 'brand' ? loved.filter(entry => entry.item.brand === drink.brand)
+      : reason.kind === 'flavor' ? loved.filter(entry => tasteTokens(entry.item).includes(reason.token))
+      : loved.map(entry => ({ entry, shared: fanList.filter(fan => (fan.theirs.get(drinkKey(entry.item))?.score ?? 0) > 0.3).length }))
+        .filter(item => item.shared > 0).sort((a, b) => b.shared - a.shared || b.entry.score - a.entry.score).map(item => item.entry))
+      .slice(0, BECAUSE).map(entry => entry.item);
+    const publicFans = fanList.filter(fan => fan.member.userId && likesOpenly(fan.member, key)).slice(0, PUBLIC_FANS).map(fan => fan.member.userId!);
+    ranked.push({ brand: drink.brand, flavor: drink.flavor, score, reason, match: matchPercent(score), because, publicFans });
   }
 
   ranked.sort((a, b) => b.score - a.score || a.brand.localeCompare(b.brand, 'ru'));

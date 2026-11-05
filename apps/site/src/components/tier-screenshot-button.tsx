@@ -2,24 +2,20 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ActionToast } from '@/components/action-toast';
 import { isNativeApp, nativeImage } from '@/lib/native-app';
 import { renderTierScreenshot, renderTierStory } from '@/lib/tier-screenshot';
 
 export interface ScreenshotLabels { title: string; alt: string; file: string }
+const NO_NOTICE = {};
 const TIER_LABELS: ScreenshotLabels = { title: 'Скриншот тирлиста', alt: 'Текущий тирлист', file: 'canrush-tierlist' };
 
 /** Preview dialog with «Как есть» / 9:16 formats, copy and download; shared by tier lists and the drink calendar. */
 export function ScreenshotPreview({ blob, url, renderStory, onClose, labels = TIER_LABELS }: { blob: Blob; url: string; renderStory: () => Promise<Blob>; onClose: () => void; labels?: ScreenshotLabels }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [notice, setNotice] = useState<{ message: string; error: boolean; id: number } | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const sequence = useRef(0);
-  useEffect(() => () => clearTimeout(timer.current), []);
-  function notify(message: string, error = false) {
-    clearTimeout(timer.current);
-    setNotice({ message, error, id: ++sequence.current });
-    timer.current = setTimeout(() => setNotice(null), error ? 6000 : 4000);
-  }
+  // The site's one toast, drawn inside the dialog: the top layer would cover it in body.
+  const [notice, setNotice] = useState<{ text: string; tone: 'success' | 'error'; host: HTMLDialogElement | null } | null>(null);
+  const notify = (text: string, error = false) => setNotice({ text, tone: error ? 'error' : 'success', host: dialog.current });
   const [pending, setPending] = useState(false);
   const [format, setFormat] = useState<'original' | 'story'>('original');
   const [story, setStory] = useState<{ blob: Blob; url: string } | null>(null);
@@ -41,7 +37,7 @@ export function ScreenshotPreview({ blob, url, renderStory, onClose, labels = TI
     if (story || storyPending) return;
     setStoryPending(true);
     try { const frame = await renderStory(); const frameUrl = URL.createObjectURL(frame); storyUrl.current = frameUrl; setStory({ blob: frame, url: frameUrl }); }
-    catch (cause) { setFormat('original'); notify(cause instanceof Error ? cause.message : 'Не удалось подготовить вертикальный формат.', true); }
+    catch (cause) { setFormat('original'); notify(cause instanceof Error ? cause.message : 'Не удалось подготовить вертикальный формат. Попробуйте ещё раз.', true); }
     finally { setStoryPending(false); }
   }
   useEffect(() => {
@@ -72,7 +68,7 @@ export function ScreenshotPreview({ blob, url, renderStory, onClose, labels = TI
         }, 'Не удалось сохранить. Попробуйте «Поделиться».')}>{pending ? 'Сохраняем…' : image?.viaSheet ? 'Сохранить в «Фото»' : 'Сохранить в галерею'}</button>
         <button type="button" className="tier-secondary-action" disabled={!image || pending || (format === 'story' && !story)} onClick={() => run(async () => {
           await image!.share(current.blob, fileName, labels.title);
-        }, 'Не удалось открыть меню «Поделиться».')}>Поделиться</button>
+        }, 'Не удалось открыть меню «Поделиться». Скачайте PNG и поделитесь им сами.')}>Поделиться</button>
         {!image && <p className="tier-screenshot-update" role="status">Обновите приложение CanRush, чтобы сохранять скриншоты.</p>}
       </> : <>
         <button type="button" className="tier-primary-action" disabled={pending || (format === 'story' && !story)} onClick={() => run(async () => {
@@ -82,10 +78,7 @@ export function ScreenshotPreview({ blob, url, renderStory, onClose, labels = TI
           : <a className="tier-secondary-action" href={current.url} download={fileName}>Скачать PNG</a>}
       </>}
     </div>
-    {notice && <div className={`share-toast tier-screenshot-toast${notice.error ? ' share-toast-error' : ''}`}>
-      <span key={notice.id} role={notice.error ? 'alert' : 'status'}>{notice.message}</span>
-      <button type="button" aria-label="Закрыть уведомление" onClick={() => { clearTimeout(timer.current); setNotice(null); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
-    </div>}
+    <ActionToast message={notice?.text} tone={notice?.tone} trigger={notice ?? NO_NOTICE} container={notice?.host} />
   </dialog>, document.body);
 }
 

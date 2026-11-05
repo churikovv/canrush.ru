@@ -91,7 +91,7 @@ const NOTIFICATION_GROUPS = [
   { title: 'Отзывы и комментарии', kinds: ['like', 'review-comment', 'comment-reply', 'business-reply', 'question-answer'] },
   { title: 'Сообщество', kinds: ['follow', 'mention', 'wall-comment', 'overtaken'] },
   { title: 'Компании и цены', kinds: ['company-post', 'price'] },
-  { title: 'Трекер и Банкомат', kinds: ['reminder'] },
+  { title: 'Трекер и Банкомат', kinds: ['reminder', 'card-trade'] },
 ] as const;
 /** The options of a group; the last one also takes any kind no group names yet. */
 function notificationsOf(group: (typeof NOTIFICATION_GROUPS)[number]) {
@@ -112,6 +112,7 @@ const NOTIFICATION_ICONS: Record<(typeof NOTIFICATION_OPTIONS)[number]['kind'], 
   price: <svg {...ICON}><path d="M3 12V4h8l10 10-8 8L3 12Z" /><path d="M7.5 7.5h.01" /></svg>,
   overtaken: <svg {...ICON}><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z" /><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" /></svg>,
   reminder: <svg {...ICON}><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 1.5M5 3 2 6M19 3l3 3" /></svg>,
+  'card-trade': <svg {...ICON}><path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8" /></svg>,
 };
 const EXTERNAL = <svg {...ICON} width={16} height={16}><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" /></svg>;
 
@@ -170,7 +171,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     getPool().query<{ kind: string; enabled: boolean }>('select kind,enabled from "notificationPreference" where "userId"=$1', [session.user.id]).then(result => result.rows),
     getPool().query('select 1 from "account" where "userId" = $1 and "providerId" = $2 limit 1', [session.user.id, TELEGRAM_PROVIDER_ID]).then(result => (result.rowCount ?? 0) > 0),
     getBlockedMembers(session.user.id),
-    getPool().query<{ key: string }>('select key from "gachaCosmetic" where "userId" = $1 union select key from "shopPurchase" where "userId" = $1', [session.user.id]).then(result => result.rows.map(row => row.key)),
+    getPool().query<{ key: string }>(`select key from "gachaCosmetic" where "userId" = $1 union select key from "shopPurchase" where "userId" = $1
+      union select 'charge' from "firstStepReward" where "userId" = $1 and step = 'follow'
+      union select item from "dailyReward" where "userId" = $1 and item is not null`, [session.user.id]).then(result => result.rows.map(row => row.key)),
     getPool().query<{ pushAnnouncements: boolean }>('select "pushAnnouncements" from "user" where id = $1', [session.user.id]).then(result => result.rows[0]?.pushAnnouncements ?? true),
     getBrandFrameProgress(session.user.id),
   ]);
@@ -194,7 +197,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     .sort((a, b) => b.completion - a.completion);
   const layoutPreviews = {
     favorites: favorites.length ? <div className="layout-listing-previews">{favorites.slice(0, 3).map(item => <div key={`${item.brand}:${item.flavor}`}>{item.coverImageUrl && <Image src={item.coverImageUrl} width={80} height={80} alt="" />}<strong>{item.brand}</strong></div>)}</div> : <p>Пока нет избранных напитков.</p>,
-    experience: <ProfileExperience username={profile.username} initial={experience[profile.username]} expanded />,
+    experience: <ProfileExperience username={profile.username} initial={experience[profile.username]} expanded own />,
     ratings: <div><strong className="layout-score">{ratings.overall.toLocaleString('ru-RU', { maximumFractionDigits: 1 })} / 10</strong><p>Средняя оценка · {ratings.count} отзывов</p></div>,
     listings: listings.items.length ? <div className="layout-listing-previews">{listings.items.slice(0, 2).map(item => <div key={item.id}>{item.photos[0] && <Image src={`/api/market-photos/${item.photos[0]}?size=thumbnail`} width={80} height={80} unoptimized alt="" />}<strong>{item.title}</strong></div>)}</div> : <p>Вы пока не создавали объявлений.</p>,
     wall: <div><p>{wall.comments[0]?.text ?? 'Здесь пока тихо. Оставьте первый комментарий.'}</p><span className="community-muted">Записей: {wall.count}</span></div>,

@@ -38,7 +38,7 @@ export function WallPostBody({ id, text: initial, heading, canEdit, canDelete, c
     startTransition(async () => {
       try {
         const result = await editWallPostAction(id, draft);
-        if (result.error || result.text === undefined) { setError(result.error ?? 'Не удалось сохранить запись.'); return; }
+        if (result.error || result.text === undefined) { setError(result.error ?? 'Не удалось сохранить запись. Попробуйте ещё раз.'); return; }
         setText(result.text); setEditing(false);
         router.refresh();
       } catch { setError('Нет связи с сервером. Попробуйте ещё раз.'); }

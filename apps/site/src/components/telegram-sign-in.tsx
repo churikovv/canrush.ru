@@ -110,7 +110,7 @@ export function TelegramSignIn({ callbackURL = '/profile', allow }: { callbackUR
     if (webApp) {
       const result = await signInWithTelegram(webApp, true);
       if (result.status === 'signed-in') return finish();
-      setError(result.status === 'error' ? result.message : 'Не удалось войти через Telegram.');
+      setError(result.status === 'error' ? result.message : 'Не удалось войти через Telegram. Попробуйте ещё раз или войдите по почте.');
       setPending(false);
       return;
     }
@@ -124,7 +124,7 @@ export function TelegramSignIn({ callbackURL = '/profile', allow }: { callbackUR
     setPending(false);
     if (requestError || !data) {
       tab?.close();
-      setError(requestError?.message || 'Не удалось начать вход через Telegram.');
+      setError(requestError?.message || 'Не удалось начать вход через Telegram. Попробуйте ещё раз или войдите по почте.');
       return;
     }
     if (native) window.location.href = data.url;

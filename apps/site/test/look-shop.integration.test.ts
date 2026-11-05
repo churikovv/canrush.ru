@@ -25,13 +25,13 @@ describe.sequential('look shop', () => {
   it('counts sparks from achievements like the trophy score, from levels and from the week race', () => {
     expect(shop.trophyScore(['kitty', 'based', 'first-pull', 'admin', 'week-hero', 'unknown', 'kitty'])).toBe(10 + 50 + 10);
     // 1000 XP is level 5: four levels above the first.
-    expect(shop.sparkEarnings(['kitty'], 1000, [1, 3, 8])).toEqual({ achievements: 10, levels: 60, race: 100 + 60 + 30 });
+    expect(shop.sparkEarnings(['kitty'], 1000, [1, 3, 8])).toEqual({ achievements: 10, levels: 60, race: 100 + 60 + 30, daily: 0 });
   });
   it('spends sparks once at today\'s price, refuses what is owned or too dear and items that do not exist', async () => {
     await pool.query(`insert into "profileAchievement" ("userId", key) values ($1, 'kitty'), ($1, 'flash'), ($1, 'based')`, [member]);
     // 1000 XP: +60 sparks for levels, 145 in all.
     await pool.query(`insert into "profileExperience" ("userId", reason, "sourceKey", points) values ($1, 'achievement', 'shop-test', 1000)`, [member]);
-    expect(await shop.getShop(member)).toEqual({ earned: 145, sources: { achievements: 85, levels: 60, race: 0 }, spent: 0, balance: 145, owned: [] });
+    expect(await shop.getShop(member)).toEqual({ earned: 145, sources: { achievements: 85, levels: 60, race: 0, daily: 0 }, spent: 0, balance: 145, owned: [] });
     await expect(shop.buyShopItem(member, 'monster', now)).rejects.toThrow('Такого товара нет');
     await expect(shop.buyShopItem(member, 'main', now)).rejects.toThrow(`Не хватает ${price('main') - 145} искр`);
     expect(await shop.buyShopItem(member, 'owl', now)).toMatchObject({ spent: price('owl'), balance: 145 - price('owl'), owned: ['owl'] });

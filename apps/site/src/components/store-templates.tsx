@@ -160,7 +160,7 @@ export function StoreTemplates({ items, options, disabled, onAdd }: { items: Pre
     if (!draft) return;
     const { id, name, drinks, publish } = draft;
     start(async () => {
-      const result = await saveStorePresetAction(id ?? null, name, drinks, publish && drinks.length >= MIN_PUBLIC_PRESET_DRINKS).catch(() => ({ error: 'Не удалось сохранить шаблон.' }));
+      const result = await saveStorePresetAction(id ?? null, name, drinks, publish && drinks.length >= MIN_PUBLIC_PRESET_DRINKS).catch(() => ({ error: 'Не удалось сохранить шаблон. Попробуйте ещё раз.' }));
       if ('error' in result) { setError(result.error); return; }
       setTemplates(result);
       setDraft(null);
@@ -172,7 +172,7 @@ export function StoreTemplates({ items, options, disabled, onAdd }: { items: Pre
     if (!opened?.id || !window.confirm(`Удалить шаблон «${opened.name}»?`)) return;
     const { id } = opened;
     start(async () => {
-      const result = await deleteStorePresetAction(id).catch(() => ({ error: 'Не удалось удалить шаблон.' }));
+      const result = await deleteStorePresetAction(id).catch(() => ({ error: 'Не удалось удалить шаблон. Попробуйте ещё раз.' }));
       if ('error' in result) { setError(result.error); return; }
       setTemplates(result);
       setOpened(null);

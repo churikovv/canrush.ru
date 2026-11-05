@@ -4,40 +4,40 @@
  * a soft warm wash and a quiet glow, not a neon frame (PRODUCT.md anti-references).
  */
 .lb-table { --lb-gold: #e8a623; --lb-silver: #a9b4c4; --lb-bronze: #c47a43;
-  overflow: hidden; margin: 16px 0 24px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 24px; background: var(--theme-panel, #fff); }
+  overflow: hidden; margin: 16px 0 24px; border: 1px solid var(--theme-line); border-radius: var(--radius-2xl); background: var(--theme-panel); }
 .lb-head, .lb-row { display: grid; grid-template-columns: 64px 76px minmax(0, 1fr) 84px 150px; align-items: center; column-gap: 16px; }
-.lb-head { padding: 18px 24px 12px; color: var(--theme-muted, #6b7280); font-size: .75rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.lb-head { padding: 18px 24px 12px; color: var(--theme-muted); font-size: .75rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .lb-head > :nth-child(2) { grid-column: 2 / 4; }
 .lb-head > :nth-child(3) { text-align: center; }
 .lb-head > :nth-child(4) { text-align: right; }
 .lb-list { margin: 0; padding: 0; list-style: none; }
-.lb-list li + li { border-top: 1px solid var(--theme-line, #edf0f3); }
+.lb-list li + li { border-top: 1px solid var(--theme-line); }
 /* A hundred rows of animated frames and tags: rows off screen are not laid out, painted or animated. The frames stay
    inside the row (it leaves 24px around the avatar, a heavy frame reaches 17px out), so the paint containment clips
    nothing; `auto` remembers each row's real height once it has been on screen. */
 .lb-list > li { content-visibility: auto; contain-intrinsic-size: auto 92px; }
-.lb-row { position: relative; min-height: 92px; padding: 14px 24px; color: inherit; text-decoration: none; transition: background-color 150ms ease-out; }
-.lb-row:hover { background: var(--theme-subtle, #f6f8fb); }
-.lb-row:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: -2px; }
+.lb-row { position: relative; min-height: 92px; padding: 14px 24px; color: inherit; text-decoration: none; transition: background-color var(--motion-fast) ease-out; }
+.lb-row:hover { background: var(--theme-tint); }
+.lb-row:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
 
-.lb-rank { display: flex; align-items: center; gap: 6px; color: var(--theme-muted, #6b7280); font-variant-numeric: tabular-nums; }
+.lb-rank { display: flex; align-items: center; gap: 6px; color: var(--theme-muted); font-variant-numeric: tabular-nums; }
 .lb-rank b { font-size: 1.375rem; font-weight: 800; }
-li[data-rank] .lb-rank b { color: var(--theme-text, #1a1a1a); font-size: 2rem; font-weight: 900; letter-spacing: -.03em; }
+li[data-rank] .lb-rank b { color: var(--theme-text); font-size: 2rem; font-weight: 900; letter-spacing: -.03em; }
 li[data-rank="1"] .lb-medal { color: var(--lb-gold); }
 li[data-rank="2"] .lb-medal { color: var(--lb-silver); }
 li[data-rank="3"] .lb-medal { color: var(--lb-bronze); }
 
 /* Room around the avatar: heavy frames draw at 160% of it. */
-.lb-avatar { position: relative; display: grid; place-items: center; width: 56px; height: 56px; margin: 10px; border-radius: 50%; background: var(--theme-subtle, #eef1f5); color: var(--color-brand, #006eff); font-size: 1.25rem; font-weight: 800; }
+.lb-avatar { position: relative; display: grid; place-items: center; width: 56px; height: 56px; margin: 10px; border-radius: 50%; background: var(--theme-subtle); color: var(--color-brand); font-size: 1.25rem; font-weight: 800; }
 .lb-avatar > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 
 .lb-main { display: grid; gap: 8px; min-width: 0; }
 .lb-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
-.lb-name strong { overflow: hidden; color: var(--theme-text, #1a1a1a); font-size: 1.125rem; text-overflow: ellipsis; white-space: nowrap; }
+.lb-name strong { overflow: hidden; color: var(--theme-text); font-size: 1.125rem; text-overflow: ellipsis; white-space: nowrap; }
 .lb-name .profile-tag small { font-size: inherit; opacity: .85; }
-.lb-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 10px 2px 8px; border-radius: 999px; font-size: .8125rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-.lb-streak { background: color-mix(in srgb, var(--flame-mid) 14%, transparent); color: color-mix(in srgb, var(--flame-mid) 80%, var(--theme-text, #000)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--flame-mid) 30%, transparent); }
-.lb-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; color: var(--theme-muted, #6b7280); font-size: .9375rem; font-variant-numeric: tabular-nums; }
+.lb-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 10px 2px 8px; border-radius: var(--radius-pill); font-size: .8125rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.lb-streak { background: color-mix(in srgb, var(--flame-mid) 14%, transparent); color: color-mix(in srgb, var(--flame-mid) 80%, var(--theme-text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--flame-mid) 30%, transparent); }
+.lb-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; color: var(--theme-muted); font-size: .9375rem; font-variant-numeric: tabular-nums; }
 .lb-stats > span { display: inline-flex; align-items: center; gap: 6px; }
 .lb-stats > span + span::before { content: ""; width: 4px; height: 4px; margin-right: 8px; border-radius: 50%; background: currentColor; opacity: .35; }
 
@@ -46,9 +46,9 @@ li[data-rank="3"] .lb-medal { color: var(--lb-bronze); }
 .lb-level .level-tier-glyph { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--tier-mid, #8ab4ff); stroke: var(--tier-dark, #3d7bff); stroke-width: 3; }
 .lb-level b { position: relative; color: var(--tier-ink, #fff); font-size: 1.0625rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 
-.lb-xp { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; color: var(--theme-text, #1a1a1a); font-size: 1.375rem; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.01em; white-space: nowrap; }
-.lb-xp svg { color: var(--color-brand, #006eff); }
-.lb-xp small { align-self: flex-end; margin-bottom: 4px; color: var(--theme-muted, #6b7280); font-size: .75rem; font-weight: 800; }
+.lb-xp { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; color: var(--theme-text); font-size: 1.375rem; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.01em; white-space: nowrap; }
+.lb-xp svg { color: var(--color-brand); }
+.lb-xp small { align-self: flex-end; margin-bottom: 4px; color: var(--theme-muted); font-size: .75rem; font-weight: 800; }
 
 /* First place: a warm wash fading to the right, a thin gold edge and a soft glow under the avatar. */
 li[data-rank="1"] .lb-row { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-gold) 13%, transparent), color-mix(in srgb, var(--lb-gold) 4%, transparent) 45%, transparent 75%); }
@@ -59,7 +59,7 @@ li[data-rank="1"] .lb-row:hover { background: linear-gradient(90deg, color-mix(i
 
 /* Phones: no header; rank, avatar and the nick block in a row, level and XP under the counters. */
 @media (max-width: 719px) {
-  .lb-table { border-radius: 20px; }
+  .lb-table { border-radius: var(--radius-xl); }
   .lb-head { display: none; }
   .lb-row { grid-template-columns: 34px 60px minmax(0, 1fr); grid-template-areas: "rank avatar main" "rank avatar meta"; column-gap: 10px; row-gap: 8px; min-height: 0; padding: 14px 14px 14px 12px; }
   .lb-rank { grid-area: rank; flex-direction: column; gap: 2px; }
@@ -81,22 +81,22 @@ li[data-rank="1"] .lb-row:hover { background: linear-gradient(90deg, color-mix(i
 @media (prefers-reduced-motion: reduce) { .lb-row { transition: none; } }
 
 /* «Топ-3 за месяц»: the prize card on top, then the three leaders as ladder rows running edge to edge. */
-.week-race { position: relative; overflow: hidden; margin: 8px 0 28px; padding: 24px 24px 0; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 24px; background: var(--theme-panel, #fff); }
+.week-race { position: relative; overflow: hidden; margin: 8px 0 28px; padding: 24px 24px 0; border: 1px solid var(--theme-line); border-radius: var(--radius-2xl); background: var(--theme-panel); }
 .week-race-hero { display: flex; align-items: center; gap: 20px; padding-bottom: 20px; }
 .week-race-art { width: 112px; height: 112px; flex: none; object-fit: contain; filter: drop-shadow(0 10px 16px rgb(0 70 190 / .28)); transform-origin: 50% 90%; animation: week-race-bob 3.2s ease-in-out infinite; }
 .week-race-copy { min-width: 0; }
 .week-race-copy h3 { margin: 10px 0 6px; font-size: 1.375rem; line-height: 1.2; }
 .week-race-copy p { margin: 0; color: var(--color-muted-strong); font-size: .9375rem; line-height: 1.5; text-wrap: pretty; }
-.week-race-list { --lb-gold: #e8a623; --lb-silver: #a9b4c4; --lb-bronze: #c47a43; margin: 0 -24px; border-top: 1px solid var(--theme-line, #edf0f3); }
+.week-race-list { --lb-gold: #e8a623; --lb-silver: #a9b4c4; --lb-bronze: #c47a43; margin: 0 -24px; border-top: 1px solid var(--theme-line); }
 .week-race-row { grid-template-columns: 64px 76px minmax(0, 1fr) auto; }
-.week-race-prize { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand, #006eff) 12%, transparent); color: var(--color-brand, #006eff); font-size: 1.0625rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand, #006eff) 28%, transparent); }
+.week-race-prize { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-brand) 12%, transparent); color: var(--color-brand); font-size: 1.0625rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand) 28%, transparent); }
 .week-race-prize small { font-size: .75rem; font-weight: 800; opacity: .8; }
-li[data-rank="1"] .week-race-prize { background: color-mix(in srgb, var(--lb-gold) 16%, transparent); color: color-mix(in srgb, var(--lb-gold) 75%, var(--theme-text, #1a1a1a)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lb-gold) 40%, transparent); }
-.week-race-winners { margin: 0 -24px; padding: 14px 24px; border-top: 1px solid var(--theme-line, #edf0f3); color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.5; }
+li[data-rank="1"] .week-race-prize { background: color-mix(in srgb, var(--lb-gold) 16%, transparent); color: color-mix(in srgb, var(--lb-gold) 75%, var(--theme-text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lb-gold) 40%, transparent); }
+.week-race-winners { margin: 0 -24px; padding: 14px 24px; border-top: 1px solid var(--theme-line); color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.5; }
 .week-race .community-empty { margin: 0 0 20px; }
 @keyframes week-race-bob { 0%,100% { transform: rotate(-3deg) translateY(0); } 50% { transform: rotate(3deg) translateY(-4px); } }
 @media (max-width: 719px) {
-  .week-race { padding: 16px 16px 0; border-radius: 20px; }
+  .week-race { padding: 16px 16px 0; border-radius: var(--radius-xl); }
   .week-race-hero { gap: 14px; padding-bottom: 16px; }
   .week-race-art { width: 84px; height: 84px; }
   .week-race-copy h3 { font-size: 1.125rem; }
@@ -109,33 +109,33 @@ li[data-rank="1"] .week-race-prize { background: color-mix(in srgb, var(--lb-gol
 /* Сезон: строка сезона, пропуск и награды за места. */
 .leaderboard-views { margin-bottom: 16px; }
 .week-race-copy h2 { margin: 0 0 6px; font-size: 1.375rem; line-height: 1.2; }
-.race-viewer { margin: 0 -24px; padding: 14px 24px; border-top: 1px solid var(--theme-line, #edf0f3); background: color-mix(in srgb, var(--color-brand, #006eff) 8%, transparent); font-size: .9375rem; }
+.race-viewer { margin: 0 -24px; padding: 14px 24px; border-top: 1px solid var(--theme-line); background: color-mix(in srgb, var(--color-brand) 8%, transparent); font-size: .9375rem; }
 @media (max-width: 719px) { .race-viewer { margin-inline: -16px; padding-inline: 16px; } }
 
 /* Таймер до итогов: плитки на цветах темы, как кнопки выбора места ниже; цифры одной ширины, чтобы секунды не дёргали ряд. */
 .race-timer { display: grid; flex: none; gap: 6px; margin-left: auto; }
-.race-timer-title { color: var(--theme-muted, #6b7280); font-size: .8125rem; font-weight: 700; }
+.race-timer-title { color: var(--theme-muted); font-size: .8125rem; font-weight: 700; }
 .race-timer-cells { display: grid; grid-template-columns: repeat(4, 58px); gap: 6px; }
-.race-timer-cells > span { display: grid; justify-items: center; align-content: center; min-height: 58px; border-radius: 14px; background: var(--theme-subtle, #f0f3f7); color: var(--theme-text, #1a1a1a); }
+.race-timer-cells > span { display: grid; justify-items: center; align-content: center; min-height: 58px; border-radius: 14px; background: var(--theme-subtle); color: var(--theme-text); }
 .race-timer-cells b { font-size: 1.375rem; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.race-timer-cells small { color: var(--theme-muted, #6b7280); font-size: .6875rem; font-weight: 700; line-height: 1.2; }
+.race-timer-cells small { color: var(--theme-muted); font-size: .6875rem; font-weight: 700; line-height: 1.2; }
 
 /* Примерка наград недели: своя строка рейтинга с тегом выбранных мест, такая же, как в списке лидеров. */
-.race-try { margin: 0 -24px; padding: 16px 24px 20px; border-top: 1px solid var(--theme-line, #edf0f3); }
-.community-profile .race-try h3 { margin: 0 0 10px; color: var(--theme-muted, #6b7280); font-size: .875rem; font-weight: 700; }
-.race-try-preview { margin: 0 0 10px; overflow: hidden; border: 1px solid var(--theme-line, #edf0f3); border-radius: 18px; }
+.race-try { margin: 0 -24px; padding: 16px 24px 20px; border-top: 1px solid var(--theme-line); }
+.community-profile .race-try h3 { margin: 0 0 10px; color: var(--theme-muted); font-size: .875rem; font-weight: 700; }
+.race-try-preview { margin: 0 0 10px; overflow: hidden; border: 1px solid var(--theme-line); border-radius: 18px; }
 .race-try-preview .lb-row { min-height: 84px; padding-block: 10px; }
 .race-try-preview .lb-row:hover { background: none; }
 .race-try-preview li[data-rank="1"] .lb-row:hover { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-gold) 13%, transparent), color-mix(in srgb, var(--lb-gold) 4%, transparent) 45%, transparent 75%); }
 .race-try-preview li[data-rank] .lb-rank b { font-size: 1.25rem; letter-spacing: -.02em; white-space: nowrap; }
-.race-try-preview .lb-stats a { color: var(--color-brand, #006eff); font-weight: 700; }
+.race-try-preview .lb-stats a { color: var(--color-brand); font-weight: 700; }
 .race-try-preview .lb-stats > span { display: inline; }
 .race-try-tag { display: inline-flex; animation: race-try-pop 280ms cubic-bezier(.2, 1.5, .4, 1); }
 @keyframes race-try-pop { from { opacity: 0; transform: translateY(4px) scale(.8); } }
 .race-try-picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.race-try-picks button { min-height: 44px; padding: 0 6px; border: 0; border-radius: 999px; background: var(--theme-subtle, #f0f3f7); color: var(--theme-text, #1a1a1a); font: inherit; font-size: .875rem; font-weight: 800; white-space: nowrap; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
-.race-try-picks button[aria-pressed="true"] { background: var(--color-brand, #006eff); color: #fff; }
-.race-try-picks button:focus-visible { outline: 2px solid var(--color-focus, #006eff); outline-offset: 2px; }
+.race-try-picks button { min-height: 44px; padding: 0 6px; border: 0; border-radius: var(--radius-pill); background: var(--theme-subtle); color: var(--theme-text); font: inherit; font-size: .875rem; font-weight: 800; white-space: nowrap; cursor: pointer; transition: background-color var(--motion-fast) ease-out, color var(--motion-fast) ease-out; }
+.race-try-picks button[aria-pressed="true"] { background: var(--color-brand); color: #fff; }
+.race-try-picks button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 @media (max-width: 719px) {
   .week-race-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); }
   .race-timer { grid-column: 1 / -1; margin-left: 0; }

@@ -8,7 +8,78 @@
 .swipe { position: relative; display: grid; gap: 14px; outline: none; }
 /* Card and buttons fit one phone screen under the switcher and above the tab bar. */
 .swipe-stack { position: relative; height: clamp(320px, calc(100dvh - 460px - var(--site-tab-bar-offset, 0px)), 600px); }
-.swipe-card { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 28px; background: var(--theme-panel, #fff); box-shadow: 0 18px 40px -20px rgb(10 20 50 / .45), 0 0 0 1px var(--theme-line, #dfe3e8); touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+/* Signed in, the row under the buttons (`AfterSwipe`) always takes its place: the stack is that much shorter, nothing jumps. */
+.swipe.has-after .swipe-stack { height: clamp(300px, calc(100dvh - 520px - var(--site-tab-bar-offset, 0px)), 560px); }
+/* The drink just swiped as a small card: the can with a mark of the decision, its name, «Оценить» with the XP a review
+   gives, and the heart for the favourites. It keeps one height, and each new drink brings it in afresh. */
+.swipe-after { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 68px; margin: 0; padding: 10px 12px 10px 10px; box-sizing: border-box; border: 1px solid var(--theme-line); border-radius: var(--radius-xl); background: var(--theme-panel); box-shadow: 0 10px 24px -18px rgb(10 20 50 / .45); animation: swipe-after-in 260ms cubic-bezier(.2, .8, .3, 1) both; }
+.swipe-after[data-liked] { background: linear-gradient(90deg, color-mix(in srgb, #ff4e8a 9%, var(--theme-panel)), var(--theme-panel) 46%); }
+.swipe-after.is-hint { display: flex; align-items: center; justify-content: center; gap: 10px; padding-inline: 16px; border-style: dashed; background: transparent; box-shadow: none; color: var(--theme-muted); font-size: .8125rem; line-height: 1.35; animation: none; }
+.swipe-after-hint-icons { display: inline-flex; flex: none; gap: 2px; color: var(--theme-muted); }
+.swipe-after-cover { position: relative; width: 48px; height: 48px; }
+.swipe-after-cover img { width: 100%; height: 100%; border-radius: var(--radius-md); background: #fff; object-fit: contain; }
+.swipe-after-mark { position: absolute; right: -5px; bottom: -5px; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--theme-panel); border-radius: 50%; background: var(--theme-muted); color: #fff; }
+.swipe-after[data-liked] .swipe-after-mark { background: linear-gradient(135deg, #ff4e8a, #e5484d); }
+.swipe-after-mark svg { width: 12px; height: 12px; fill: currentColor; }
+.swipe-after-name { display: grid; min-width: 0; line-height: 1.2; }
+.swipe-after-name small { color: var(--theme-muted); font-size: .75rem; font-weight: 700; }
+.swipe-after[data-liked] .swipe-after-name small { color: color-mix(in srgb, #ff4e8a 62%, var(--theme-text)); }
+.swipe-after-name b { overflow: hidden; color: var(--theme-text); font-size: .9375rem; text-overflow: ellipsis; white-space: nowrap; }
+.swipe-after-rate { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px 0 13px; border-radius: var(--radius-pill); background: var(--brand-blue); color: #fff; font-size: .875rem; font-weight: 800; text-decoration: none; white-space: nowrap; transition: background-color var(--motion-fast) ease-out; }
+.swipe-after-rate:hover { background: color-mix(in srgb, var(--brand-blue) 86%, #000); }
+.swipe-after-rate svg { color: #ffd34d; }
+.swipe-after-xp { position: absolute; top: -9px; right: -4px; padding: 2px 6px; border: 2px solid var(--theme-panel); border-radius: var(--radius-pill); background: #ffd34d; color: #3b2a00; font-size: .625rem; font-weight: 900; line-height: 1.2; }
+.swipe-after-favorite { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--theme-line); border-radius: 50%; background: var(--theme-panel); color: #e5484d; cursor: pointer; transition: background-color var(--motion-fast) ease-out, scale var(--motion-fast) ease-out; }
+.swipe-after-favorite svg { fill: none; stroke: currentColor; stroke-width: 2; }
+.swipe-after-favorite[aria-pressed="true"] { border-color: transparent; background: color-mix(in srgb, #e5484d 14%, var(--theme-panel)); }
+.swipe-after-favorite[aria-pressed="true"] svg { fill: currentColor; animation: swipe-heart-pop 320ms cubic-bezier(.2, .9, .3, 1.4); }
+.swipe-after-favorite:disabled { opacity: .6; cursor: wait; }
+:is(.swipe-after-rate, .swipe-after-favorite):focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+@keyframes swipe-after-in { from { opacity: 0; translate: 0 8px; } }
+@keyframes swipe-heart-pop { 40% { scale: 1.3; } }
+@media (prefers-reduced-motion: reduce) { .swipe-after, .swipe-after-favorite[aria-pressed="true"] svg { animation: none; } }
+/* Narrow phones: the name gives way first, the buttons keep their size. */
+@media (max-width: 359px) { .swipe-after { grid-template-columns: 44px minmax(0, 1fr) auto auto; gap: 8px; } .swipe-after-rate { padding-inline: 11px 13px; } }
+/* A person between the drinks, like a small profile: banner, framed avatar over its edge, then the words. The card
+   measures itself (a size container): on a short phone the banner and avatar shrink and the description gives way. */
+.swipe-card.is-person { container-type: size; background: var(--theme-panel); }
+.swipe-person-banner { position: relative; flex: 0 0 32%; overflow: hidden; background: linear-gradient(135deg, var(--brand-blue), #4b95ff 58%, #9cc8ff); }
+.swipe-person-banner::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 85% 0%, rgb(255 255 255 / .28), transparent 55%); }
+.swipe-person-banner img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.swipe-person-avatar { position: relative; z-index: 1; flex: none; align-self: center; width: 104px; height: 104px; margin-top: -54px; border-radius: 50%; }
+.swipe-person-avatar > img, .swipe-person-avatar > b { display: block; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 0 5px var(--theme-panel), 0 12px 26px -12px rgb(10 20 50 / .55); object-fit: cover; pointer-events: none; }
+.swipe-person-avatar > b { display: grid; place-items: center; background: var(--brand-blue); color: #fff; font-size: 2.5rem; font-weight: 900; }
+.swipe-person-level { position: absolute; z-index: 3; right: -10px; bottom: -2px; }
+/* A large frame (a crown, wings) reaches past the avatar: keep the words below it clear. */
+.swipe-person-avatar:has(.avatar-frame-heavy) { margin-bottom: 20px; }
+.swipe-person-body { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 6px; min-height: 0; padding: 12px 18px 16px; overflow: hidden; text-align: center; }
+.swipe-person-reason { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: var(--radius-pill); font-size: .8125rem; font-weight: 800; }
+.swipe-person-reason.is-taste { background: color-mix(in srgb, #ff4e8a 14%, var(--theme-panel)); color: color-mix(in srgb, #ff4e8a 62%, var(--theme-text)); }
+.swipe-person-reason.is-active { background: var(--theme-tint); color: var(--theme-link); }
+.swipe-person-body h2 { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; margin: 2px 0 0; font-size: 1.5rem; line-height: 1.15; overflow-wrap: anywhere; }
+.swipe-person-handle { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 8px; margin: 0; color: var(--theme-muted); font-size: .875rem; font-weight: 700; }
+.swipe-person-bio { display: -webkit-box; max-width: 34ch; margin: 0; overflow: hidden; color: var(--theme-text); font-size: .9375rem; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.swipe-person-shared { display: flex; align-items: center; gap: 10px; }
+.swipe-person-shared ul { display: flex; margin: 0; padding: 0 0 0 10px; list-style: none; }
+.swipe-person-shared li { display: grid; place-items: center; width: 42px; height: 42px; margin-left: -10px; overflow: hidden; border: 2px solid var(--theme-panel); border-radius: var(--radius-md); background: #fff; box-shadow: 0 6px 14px -8px rgb(10 20 50 / .45); font-size: .5625rem; text-align: center; }
+.swipe-person-shared li:first-child { rotate: -7deg; }
+.swipe-person-shared li:nth-child(3) { rotate: 7deg; }
+.swipe-person-shared img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.swipe-person-shared > span { color: var(--theme-muted); font-size: .8125rem; font-weight: 700; }
+.swipe-person-stats { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 14px; margin: auto 0 0; color: var(--theme-muted); font-size: .8125rem; }
+.swipe-person-stats b { color: var(--theme-text); font-weight: 800; font-variant-numeric: tabular-nums; }
+.swipe-person-stats .swipe-more { margin-top: 0; }
+@container (max-height: 440px) {
+  .swipe-person-banner { flex-basis: 26%; }
+  .swipe-person-avatar { width: 88px; height: 88px; margin-top: -46px; }
+  .swipe-person-bio { -webkit-line-clamp: 1; }
+  .swipe-person-body { gap: 4px; padding-top: 8px; }
+}
+@container (max-height: 360px) {
+  .swipe-person-bio { display: none; }
+  .swipe-person-body h2 { font-size: 1.25rem; }
+}
+.swipe-card { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 28px; background: var(--theme-panel); box-shadow: 0 18px 40px -20px rgb(10 20 50 / .45), 0 0 0 1px var(--theme-line); touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .swipe-card[data-depth="1"] { transform: translateY(14px) scale(.95); opacity: .9; }
 .swipe-card[data-depth="2"] { transform: translateY(28px) scale(.9); opacity: .6; }
 .swipe-card.is-top { z-index: 2; cursor: grab; transform: translateX(var(--dx, 0)) rotate(var(--rot, 0deg)); }
@@ -25,20 +96,24 @@
 .swipe-copy small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .swipe-copy h2 { margin: 0; font-size: 1.625rem; line-height: 1.15; overflow-wrap: anywhere; }
 .swipe-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0; }
-.swipe-facts span { padding: 5px 10px; border-radius: 999px; background: var(--color-subtle); color: var(--color-ink); font-size: .8125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.swipe-facts span { padding: 5px 10px; border-radius: var(--radius-pill); background: var(--color-subtle); color: var(--color-ink); font-size: .8125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .swipe-facts .is-price { background: var(--color-brand); color: #fff; }
 .swipe-reason { margin: 4px 0 0; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.4; }
-.swipe-more { justify-self: start; margin-top: 4px; color: var(--theme-link, #0058cc); font-size: .875rem; font-weight: 700; }
-.swipe-stamp { position: absolute; z-index: 3; top: 26px; padding: 6px 14px; border: 4px solid currentColor; border-radius: 12px; font-size: 1.5rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; pointer-events: none; }
+/* «О напитке», «Профиль»: a quiet pill with an icon, never an underlined link. */
+.swipe-more { display: inline-flex; justify-self: start; align-items: center; gap: 6px; width: fit-content; min-height: 36px; margin-top: 6px; padding: 0 14px 0 11px; border-radius: var(--radius-pill); background: var(--theme-subtle); color: var(--theme-text); font-size: .8125rem; font-weight: 800; text-decoration: none; transition: background-color var(--motion-fast) ease-out; }
+.swipe-more:hover { background: var(--theme-tint); }
+.swipe-more svg { color: var(--theme-muted); }
+.swipe-more:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.swipe-stamp { position: absolute; z-index: 3; top: 26px; padding: 6px 14px; border: 4px solid currentColor; border-radius: var(--radius-md); font-size: 1.5rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; pointer-events: none; }
 .swipe-stamp.is-like { left: 22px; color: #16a34a; opacity: var(--like, 0); rotate: -14deg; }
 .swipe-stamp.is-skip { right: 22px; color: #e5484d; opacity: var(--skip, 0); rotate: 14deg; }
-.swipe-empty { display: grid; place-content: center; gap: 10px; height: 100%; padding: 24px; border: 2px dashed var(--theme-line, #dfe3e8); border-radius: 28px; text-align: center; }
+.swipe-empty { display: grid; place-content: center; gap: 10px; height: 100%; padding: 24px; border: 2px dashed var(--theme-line); border-radius: 28px; text-align: center; }
 .swipe-empty strong { font-size: 1.375rem; }
 .swipe-empty p { margin: 0; color: var(--color-muted-strong); line-height: 1.45; }
 .swipe-empty .community-button { justify-self: center; }
 
 .swipe-actions { display: flex; align-items: center; justify-content: center; gap: 22px; }
-.swipe-button { display: grid; place-items: center; width: 68px; height: 68px; padding: 0; border: 0; border-radius: 50%; background: var(--theme-panel, #fff); box-shadow: 0 10px 24px -10px rgb(10 20 50 / .45), 0 0 0 1px var(--theme-line, #dfe3e8); cursor: pointer; transition: transform 150ms ease-out; }
+.swipe-button { display: grid; place-items: center; width: 68px; height: 68px; padding: 0; border: 0; border-radius: 50%; background: var(--theme-panel); box-shadow: 0 10px 24px -10px rgb(10 20 50 / .45), 0 0 0 1px var(--theme-line); cursor: pointer; transition: transform var(--motion-fast) ease-out; }
 .swipe-button:active:not(:disabled) { transform: scale(.92); }
 .swipe-button:disabled { opacity: .4; cursor: default; }
 .swipe-button.is-skip { color: #e5484d; }
@@ -53,21 +128,21 @@
 .dating-matches h2 { margin: 0 0 10px; font-size: 1.25rem; }
 .dating-matches ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
 .dating-matches a { display: grid; gap: 2px; color: inherit; text-decoration: none; }
-.dating-match-cover { position: relative; display: grid; place-items: center; aspect-ratio: 1; margin-bottom: 4px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--theme-line, #dfe3e8); }
+.dating-match-cover { position: relative; display: grid; place-items: center; aspect-ratio: 1; margin-bottom: 4px; border-radius: var(--radius-lg); background: #fff; box-shadow: 0 0 0 1px var(--theme-line); }
 /* A % height inside a square made by aspect-ratio does not resolve: a tall can photo (member drinks) took its own height and the square cropped it. Absolute + inset 0 + margin auto sizes it against the square. */
 .dating-match-cover img { position: absolute; inset: 0; margin: auto; width: 80%; height: 80%; object-fit: contain; mix-blend-mode: multiply; }
 .dating-matches strong { font-size: .8125rem; }
 .dating-matches a > span:last-child { overflow: hidden; color: var(--color-muted-strong); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
 /* +XP for the first swipes: floats up from the buttons and fades. */
-.swipe-xp { position: absolute; z-index: 4; bottom: 16px; left: 50%; padding: 4px 10px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .875rem; font-weight: 800; pointer-events: none; transform: translateX(-50%); animation: swipe-xp 1.2s ease-out forwards; }
+.swipe-xp { position: absolute; z-index: 4; bottom: 16px; left: 50%; padding: 4px 10px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font-size: .875rem; font-weight: 800; pointer-events: none; transform: translateX(-50%); animation: swipe-xp 1.2s ease-out forwards; }
 @keyframes swipe-xp { from { opacity: 0; translate: 0 10px; } 20% { opacity: 1; translate: 0 0; } 70% { opacity: 1; } to { opacity: 0; translate: 0 -24px; } }
 /* Rewards island over the deck: XP for the first swipes and the way to «Люблю <3», each with its own bar. */
 .dating-rewards { display: grid; grid-auto-columns: 1fr; grid-auto-flow: column; gap: 8px; }
-.dating-reward { display: grid; align-content: start; gap: 6px; min-width: 0; padding: 10px 12px; border-radius: 16px; background: var(--color-subtle); }
+.dating-reward { display: grid; align-content: start; gap: 6px; min-width: 0; padding: 10px 12px; border-radius: var(--radius-lg); background: var(--color-subtle); }
 .dating-reward-title { display: flex; align-items: center; gap: 8px; min-height: 26px; font-size: .875rem; font-weight: 800; white-space: nowrap; }
 .dating-reward-icon { display: grid; flex: none; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--color-brand); color: #fff; }
 .dating-reward small { overflow: hidden; color: var(--color-muted-strong); font-size: .75rem; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
-.dating-reward-bar { display: block; height: 6px; overflow: hidden; border-radius: 999px; background: var(--color-control); }
+.dating-reward-bar { display: block; height: 6px; overflow: hidden; border-radius: var(--radius-pill); background: var(--color-control); }
 .dating-reward-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--color-brand); transition: width 300ms ease-out; }
 .dating-reward.is-tag .dating-reward-bar > span { background: #e5487f; }
 .swipe-notice .tag-wave { vertical-align: middle; }
@@ -89,10 +164,10 @@
 .taste-bento.is-loading strong { font-size: 1.75rem; opacity: .7; }
 .bento-loves { grid-column: 1 / -1; min-height: 132px; background: radial-gradient(90% 130% at 0% 100%, rgb(0 110 255 / .45), transparent 62%), #060a16; }
 .bento-loves ul, .bento-avoids ul { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 8px; margin: 6px 0 0; padding: 0; list-style: none; }
-.bento-loves li { padding: 8px 16px; border: 2px solid #3d8bff; border-radius: 999px; font-size: 1.25rem; font-weight: 800; line-height: 1.2; rotate: 2deg; }
+.bento-loves li { padding: 8px 16px; border: 2px solid #3d8bff; border-radius: var(--radius-pill); font-size: 1.25rem; font-weight: 800; line-height: 1.2; rotate: 2deg; }
 .bento-loves li[data-pos="0"] { border-color: #fff; background: #fff; color: #06102a; rotate: -4deg; }
 .bento-loves li[data-pos="2"] { rotate: -2deg; }
-.bento-avoids li { padding: 6px 12px; border: 1px solid rgb(255 255 255 / .22); border-radius: 999px; color: #b8c6ea; font-size: .9375rem; font-weight: 700; text-decoration: line-through; text-decoration-color: rgb(255 255 255 / .45); }
+.bento-avoids li { padding: 6px 12px; border: 1px solid rgb(255 255 255 / .22); border-radius: var(--radius-pill); color: #b8c6ea; font-size: .9375rem; font-weight: 700; text-decoration: line-through; text-decoration-color: rgb(255 255 255 / .45); }
 .bento-cans { grid-row: span 2; min-height: 236px; grid-template-rows: auto minmax(0, 1fr); background: radial-gradient(65% 50% at 50% 66%, rgb(0 110 255 / .7), transparent 72%), #05070f; }
 .bento-cans ul { position: relative; margin: 0; padding: 0; list-style: none; }
 .bento-cans li { position: absolute; bottom: 4px; left: 50%; width: 48%; height: 88%; translate: -50% 0; }
@@ -109,7 +184,7 @@
 .taste-actions .community-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; margin: 0; }
 .taste-empty { height: auto; min-height: 260px; }
 .taste-empty .taste-more { width: auto; }
-.taste-match { display: grid; gap: 10px; padding: 14px; border-radius: 22px; background: var(--theme-panel, #fff); box-shadow: 0 0 0 1px var(--theme-line, #dfe3e8); }
+.taste-match { display: grid; gap: 10px; padding: 14px; border-radius: 22px; background: var(--theme-panel); box-shadow: 0 0 0 1px var(--theme-line); }
 .taste-match h3 { margin: 0; color: var(--color-muted-strong); font-size: .8125rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 .taste-match-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; }
 .taste-match-person { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 12px; min-width: 0; color: inherit; text-decoration: none; }
@@ -118,10 +193,10 @@
 .taste-match-text { display: grid; min-width: 0; }
 .taste-match-text strong { overflow: hidden; color: var(--color-ink); font-size: 1rem; text-overflow: ellipsis; white-space: nowrap; }
 .taste-match-text small { color: var(--color-muted-strong); font-size: .8125rem; }
-.taste-match-follow { min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--color-brand); color: #fff; font: inherit; font-size: .9375rem; font-weight: 800; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
+.taste-match-follow { min-height: 44px; padding: 0 16px; border: 0; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font: inherit; font-size: .9375rem; font-weight: 800; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
 .taste-match-follow.is-done { background: var(--color-subtle); color: var(--color-ink); }
 .taste-match-follow:disabled { opacity: .6; cursor: default; }
 .taste-match-drinks { display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.taste-match-drinks li { width: 56px; height: 56px; overflow: hidden; border-radius: 12px; background: var(--color-subtle); }
+.taste-match-drinks li { width: 56px; height: 56px; overflow: hidden; border-radius: var(--radius-md); background: var(--color-subtle); }
 .taste-match-drinks img { width: 100%; height: 100%; object-fit: contain; }
 .taste-match-drinks span { display: block; padding: 4px; font-size: .625rem; line-height: 1.2; }

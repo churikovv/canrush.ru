@@ -106,8 +106,8 @@ export type MarketEvent = 'new' | 'confirmed' | 'completed' | 'cancelled' | 'mes
 export function marketText(event: MarketEvent, title: string, counterpart: string, message?: string): string {
   const head: Record<MarketEvent, string> = {
     new: `🛒 <b>Новый заказ</b> от ${escapeHtml(counterpart)}`,
-    confirmed: `✅ <b>Продавец подтвердил заказ</b>`,
-    completed: `🎉 <b>Покупатель завершил заказ</b>`,
+    confirmed: `✅ <b>Заказ подтверждён продавцом</b>`,
+    completed: `🎉 <b>Банки получены — заказ завершён</b>`,
     cancelled: `❌ <b>Заказ отменён</b>`,
     message: `💬 <b>Новое сообщение</b> от ${escapeHtml(counterpart)}`,
   };

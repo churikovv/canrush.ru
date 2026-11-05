@@ -55,7 +55,7 @@ export async function moderateCatalogDrinkAction(id: string, version: string, _p
     revalidatePath('/catalog', 'layout');
     return { saved: true };
   } catch (error) {
-    return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось сохранить решение.' };
+    return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось сохранить решение. Попробуйте ещё раз.' };
   }
 }
 
@@ -77,7 +77,7 @@ export async function updateCatalogDrinkAction(id: string, version: string, _pre
     return { saved: true };
   } catch (error) {
     if (error instanceof CatalogDrinkDuplicate) return { error: error.message, duplicate: error.href };
-    return { error: error instanceof CatalogDrinkError || error instanceof ReviewPhotoError ? error.message : 'Не удалось сохранить напиток.' };
+    return { error: error instanceof CatalogDrinkError || error instanceof ReviewPhotoError ? error.message : 'Не удалось сохранить напиток. Попробуйте ещё раз.' };
   }
 }
 
@@ -88,7 +88,7 @@ export async function deleteCatalogDrinkAction(id: string, _previous: CatalogDri
     revalidateDrinks();
     return { saved: true };
   } catch (error) {
-    return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось удалить напиток.' };
+    return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось удалить напиток. Попробуйте ещё раз.' };
   }
 }
 
@@ -107,7 +107,7 @@ export async function mergeCatalogDrinkAction(id: string, version: string, _prev
     revalidateDrinks();
     return { saved: true };
   } catch (error) {
-    return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось склеить напиток.' };
+    return { error: error instanceof CatalogDrinkError ? error.message : 'Не удалось склеить напиток. Попробуйте ещё раз.' };
   }
 }
 

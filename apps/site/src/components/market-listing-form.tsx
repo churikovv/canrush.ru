@@ -95,7 +95,7 @@ export function MarketListingForm({ brands, inCabinet = false, company = null }:
     const data = formData();
     photos.forEach(photo => data.append('photos', photo));
     setError(''); startTransition(async () => {
-      try { const result = await createListingAction(data); if (result.id) router.push(inCabinet ? '/business/cabinet?section=market&created=1' : `/market/${result.id}`); else setError(result.error ?? 'Не удалось опубликовать объявление.'); }
+      try { const result = await createListingAction(data); if (result.id) router.push(inCabinet ? '/business/cabinet?section=market&created=1' : `/market/${result.id}`); else setError(result.error ?? 'Не удалось опубликовать объявление. Попробуйте ещё раз.'); }
       catch { setError('Не удалось отправить объявление. Проверьте соединение.'); }
     });
   }}><fieldset disabled={pending}>

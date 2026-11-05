@@ -35,7 +35,7 @@ export async function deleteDrinkAction(id: string): Promise<{ error?: string }>
     revalidatePath('/calendar'); // the tab bar's calendar renders the same screen
     return {};
   } catch (error) {
-    return { error: error instanceof DrinkCalendarError ? error.message : 'Не удалось удалить запись.' };
+    return { error: error instanceof DrinkCalendarError ? error.message : 'Не удалось удалить запись. Попробуйте ещё раз.' };
   }
 }
 

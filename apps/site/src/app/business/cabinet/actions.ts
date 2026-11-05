@@ -51,14 +51,14 @@ export async function requestBusinessDrinkAction(_state: BusinessActionState, fo
     const brand = String(form.get('brand') ?? ''), flavor = String(form.get('flavor') ?? '');
     if (!brand || !flavor) throw new BusinessError('Выберите напиток из каталога.');
     await requestBusinessDrink(user.id, brand, flavor);
-  } catch (error) { return { error: message(error, 'Не удалось отправить заявку.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось отправить заявку. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
 
 export async function removeBusinessDrinkAction(brand: string, flavor: string): Promise<BusinessActionState> {
   try { await removeBusinessDrink((await member()).id, brand, flavor); }
-  catch (error) { return { error: message(error, 'Не удалось убрать напиток.') }; }
+  catch (error) { return { error: message(error, 'Не удалось убрать напиток. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
@@ -69,7 +69,7 @@ export async function moderateBusinessAction(id: string, _state: BusinessActionS
     const admin = await requireSiteAdmin();
     const status = form.get('status') === 'approved' ? 'approved' : 'rejected';
     await moderateBusiness(admin.userId, id, status, String(form.get('note') ?? ''));
-  } catch (error) { return { error: message(error, 'Не удалось сохранить решение.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось сохранить решение. Попробуйте ещё раз.') }; }
   revalidatePath('/admin/business');
   return { done: true };
 }
@@ -79,7 +79,7 @@ export async function moderateBusinessDrinkAction(businessId: string, brand: str
     const admin = await requireSiteAdmin();
     const status = form.get('status') === 'approved' ? 'approved' : 'rejected';
     await moderateBusinessDrink(admin.userId, businessId, brand, flavor, status, String(form.get('note') ?? ''));
-  } catch (error) { return { error: message(error, 'Не удалось сохранить решение.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось сохранить решение. Попробуйте ещё раз.') }; }
   revalidatePath('/admin/business');
   return { done: true };
 }
@@ -94,16 +94,16 @@ export async function uploadBusinessLogoAction(form: FormData): Promise<Business
     if (!REVIEW_PHOTO_TYPES.includes(file.type)) throw new BusinessError('Выберите JPG, PNG или WebP.');
     let square: Buffer;
     try { square = await sharp((await encodeStillPhoto(Buffer.from(await file.arrayBuffer()))).data).resize(256, 256, { fit: 'cover' }).webp({ quality: 85 }).toBuffer(); }
-    catch { throw new BusinessError('Не удалось прочитать картинку.'); }
+    catch { throw new BusinessError('Не удалось прочитать картинку. Выберите JPG, PNG или WebP.'); }
     await setBusinessLogo(user.id, square);
-  } catch (error) { return { error: message(error, 'Не удалось загрузить логотип.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось загрузить логотип. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
 
 export async function removeBusinessLogoAction(): Promise<BusinessActionState> {
   try { await removeBusinessLogo((await member()).id); }
-  catch (error) { return { error: message(error, 'Не удалось убрать логотип.') }; }
+  catch (error) { return { error: message(error, 'Не удалось убрать логотип. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
@@ -111,28 +111,28 @@ export async function removeBusinessLogoAction(): Promise<BusinessActionState> {
 export async function inviteBusinessMemberAction(_state: BusinessActionState & { via?: string }, form: FormData): Promise<BusinessActionState & { via?: string }> {
   let via: string;
   try { via = await inviteBusinessMember((await member()).id, String(form.get('target') ?? ''), undefined, form.get('role') === 'analyst' ? 'analyst' : 'manager'); }
-  catch (error) { return { error: message(error, 'Не удалось пригласить.') }; }
+  catch (error) { return { error: message(error, 'Не удалось пригласить. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true, via };
 }
 
 export async function removeBusinessMemberAction(key: string): Promise<BusinessActionState> {
   try { await removeBusinessMember((await member()).id, key); }
-  catch (error) { return { error: message(error, 'Не удалось убрать участника.') }; }
+  catch (error) { return { error: message(error, 'Не удалось убрать участника. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
 
 export async function answerBusinessInviteAction(businessId: string, accept: boolean): Promise<BusinessActionState> {
   try { await answerBusinessInvite((await member()).id, businessId, accept); }
-  catch (error) { return { error: message(error, 'Не удалось ответить на приглашение.') }; }
+  catch (error) { return { error: message(error, 'Не удалось ответить на приглашение. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
 
 export async function leaveBusinessAction(): Promise<BusinessActionState> {
   try { await leaveBusiness((await member()).id); }
-  catch (error) { return { error: message(error, 'Не удалось выйти из команды.') }; }
+  catch (error) { return { error: message(error, 'Не удалось выйти из команды. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
@@ -143,7 +143,7 @@ export async function saveBusinessNotificationsAction(_state: BusinessActionStat
     const user = await member();
     await getPool().query(`insert into "notificationPreference"("userId", kind, enabled) values ($1, 'business-review', $2)
       on conflict ("userId", kind) do update set enabled = excluded.enabled`, [user.id, form.get('reviews') === 'on']);
-  } catch (error) { return { error: message(error, 'Не удалось сохранить.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось сохранить. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
@@ -151,7 +151,7 @@ export async function saveBusinessNotificationsAction(_state: BusinessActionStat
 /** A company reply to a review (replyToReview checks the company, the drink and the text); the drink page shows it. */
 export async function replyReviewAction(reviewId: string, text: string): Promise<BusinessActionState> {
   try { await replyToReview((await member()).id, reviewId, text); }
-  catch (error) { return { error: isFrozenError(error) ? error.message : message(error, 'Не удалось сохранить ответ.') }; }
+  catch (error) { return { error: isFrozenError(error) ? error.message : message(error, 'Не удалось сохранить ответ. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   revalidatePath('/catalog/[product]', 'page');
   return { done: true };
@@ -159,7 +159,7 @@ export async function replyReviewAction(reviewId: string, text: string): Promise
 
 export async function deleteReviewReplyAction(reviewId: string): Promise<BusinessActionState> {
   try { await deleteReviewReply((await member()).id, reviewId); }
-  catch (error) { return { error: message(error, 'Не удалось удалить ответ.') }; }
+  catch (error) { return { error: message(error, 'Не удалось удалить ответ. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   revalidatePath('/catalog/[product]', 'page');
   return { done: true };
@@ -175,14 +175,14 @@ async function approvedCompany(userId: string) {
 /** «Конкуренты»: the owner or any teammate adds a catalog brand to compare with. */
 export async function addCompetitorAction(_state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
   try { const user = await member(); await addCompetitor((await approvedCompany(user.id)).id, String(form.get('brand') ?? ''), user.id); }
-  catch (error) { return { error: message(error, 'Не удалось добавить бренд.') }; }
+  catch (error) { return { error: message(error, 'Не удалось добавить бренд. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
 
 export async function removeCompetitorAction(brand: string): Promise<BusinessActionState> {
   try { const user = await member(); await removeCompetitor((await approvedCompany(user.id)).id, brand, user.id); }
-  catch (error) { return { error: message(error, 'Не удалось убрать бренд.') }; }
+  catch (error) { return { error: message(error, 'Не удалось убрать бренд. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
@@ -193,7 +193,7 @@ export async function saveWeeklyReportAction(enabled: boolean): Promise<Business
     const user = await member();
     if (enabled) await getPool().query(`delete from "businessReportOptOut" where "userId" = $1`, [user.id]);
     else await getPool().query(`insert into "businessReportOptOut"("userId") values ($1) on conflict do nothing`, [user.id]);
-  } catch (error) { return { error: message(error, 'Не удалось сохранить.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось сохранить. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
@@ -201,19 +201,19 @@ export async function saveWeeklyReportAction(enabled: boolean): Promise<Business
 /** A reply template saved from the reply dialog, for the whole team. */
 export async function saveReplyTemplateAction(title: string, text: string): Promise<BusinessActionState & { template?: ReplyTemplate }> {
   try { const template = await saveReplyTemplate((await member()).id, title, text); revalidatePath('/business/cabinet'); return { done: true, template }; }
-  catch (error) { return { error: message(error, 'Не удалось сохранить шаблон.') }; }
+  catch (error) { return { error: message(error, 'Не удалось сохранить шаблон. Попробуйте ещё раз.') }; }
 }
 
 export async function deleteReplyTemplateAction(id: string): Promise<BusinessActionState> {
   try { await deleteReplyTemplate((await member()).id, id); }
-  catch (error) { return { error: message(error, 'Не удалось удалить шаблон.') }; }
+  catch (error) { return { error: message(error, 'Не удалось удалить шаблон. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
 
 export async function setMemberRoleAction(key: string, role: string): Promise<BusinessActionState> {
   try { await setBusinessMemberRole((await member()).id, key, role); }
-  catch (error) { return { error: message(error, 'Не удалось сменить роль.') }; }
+  catch (error) { return { error: message(error, 'Не удалось сменить роль. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
@@ -226,7 +226,7 @@ export async function requestDrinkEditAction(form: FormData): Promise<BusinessAc
     if (photos.length > 1) return { error: 'Добавьте одно фото банки.' };
     const input = parseDrinkEdit(form, photos.length > 0);
     await requestDrinkEdit(user.id, String(form.get('brand') ?? ''), String(form.get('flavor') ?? ''), input, photos[0]);
-  } catch (error) { return { error: error instanceof ReviewPhotoError ? error.message : message(error, 'Не удалось отправить правку.') }; }
+  } catch (error) { return { error: error instanceof ReviewPhotoError ? error.message : message(error, 'Не удалось отправить правку. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet');
   return { done: true };
 }
@@ -234,14 +234,14 @@ export async function requestDrinkEditAction(form: FormData): Promise<BusinessAc
 /** «Где купить»: a store of the CanRush map, a chain or the company's own store for one of its approved drinks. */
 export async function addDrinkStoreAction(brand: string, flavor: string, _state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
   try { await addDrinkStore((await member()).id, brand, flavor, parseDrinkStore(form)); }
-  catch (error) { return { error: error instanceof DrinkStoreError ? error.message : message(error, 'Не удалось добавить магазин.') }; }
+  catch (error) { return { error: error instanceof DrinkStoreError ? error.message : message(error, 'Не удалось добавить магазин. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet'); revalidatePath('/catalog/[product]', 'page');
   return { done: true };
 }
 
 export async function removeDrinkStoreAction(id: string): Promise<BusinessActionState> {
   try { await removeDrinkStore((await member()).id, id); }
-  catch (error) { return { error: message(error, 'Не удалось убрать магазин.') }; }
+  catch (error) { return { error: message(error, 'Не удалось убрать магазин. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet'); revalidatePath('/catalog/[product]', 'page');
   return { done: true };
 }
@@ -249,14 +249,14 @@ export async function removeDrinkStoreAction(id: string): Promise<BusinessAction
 /** The brand's recommended ceiling «до N ₽» for one can volume of its approved drink. */
 export async function setDrinkPriceAction(brand: string, flavor: string, _state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
   try { await setDrinkPrice((await member()).id, brand, flavor, parseDrinkPrice(form)); }
-  catch (error) { return { error: error instanceof DrinkPriceError ? error.message : message(error, 'Не удалось сохранить цену.') }; }
+  catch (error) { return { error: error instanceof DrinkPriceError ? error.message : message(error, 'Не удалось сохранить цену. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet'); revalidatePath('/catalog/[product]', 'page');
   return { done: true };
 }
 
 export async function removeDrinkPriceAction(id: string): Promise<BusinessActionState> {
   try { await removeDrinkPrice((await member()).id, id); }
-  catch (error) { return { error: message(error, 'Не удалось убрать цену.') }; }
+  catch (error) { return { error: message(error, 'Не удалось убрать цену. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet'); revalidatePath('/catalog/[product]', 'page');
   return { done: true };
 }
@@ -266,7 +266,7 @@ export async function moderateDrinkEditAction(id: string, _state: BusinessAction
   try {
     const admin = await requireSiteAdmin();
     await moderateDrinkEdit(admin.userId, id, form.get('status') === 'approved' ? 'approved' : 'rejected', String(form.get('note') ?? ''));
-  } catch (error) { return { error: message(error, 'Не удалось сохранить решение.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось сохранить решение. Попробуйте ещё раз.') }; }
   revalidatePath('/admin/business'); revalidatePath('/catalog', 'layout'); revalidatePath('/business/cabinet');
   return { done: true };
 }
@@ -274,7 +274,7 @@ export async function moderateDrinkEditAction(id: string, _state: BusinessAction
 /** A promotion request from the cabinet. */
 export async function requestPromoAction(_state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
   try { await requestPromo((await member()).id, parsePromoRequest(form)); }
-  catch (error) { return { error: error instanceof PlanRequestError ? error.message : message(error, 'Не удалось отправить заявку.') }; }
+  catch (error) { return { error: error instanceof PlanRequestError ? error.message : message(error, 'Не удалось отправить заявку. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet'); revalidatePath('/admin/business');
   return { done: true };
 }
@@ -285,7 +285,7 @@ export async function setPromoStatusAction(id: string, _state: BusinessActionSta
     const status = String(form.get('status'));
     if (!['contacted', 'running', 'done', 'declined'].includes(status)) return { error: 'Неизвестное действие.' };
     await setPromoStatus(admin.userId, id, status as 'contacted' | 'running' | 'done' | 'declined', String(form.get('erid') ?? ''));
-  } catch (error) { return { error: message(error, 'Не удалось сохранить.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось сохранить. Попробуйте ещё раз.') }; }
   revalidatePath('/admin/business'); revalidatePath('/business/cabinet');
   return { done: true };
 }

@@ -189,7 +189,7 @@ export function ArticleEditor({ initial, options, profileChannel = null }: { ini
       setState(current => ({ ...current, saving: true, error: '' }));
       // A channel being typed and not valid yet is not sent: the field says why, the rest still saves.
       const result = await saveArticleAction(doc.current.id, title, snapshot(), coverId, doc.current.version, CHANNEL.test(channel) ? channel : null).catch(() => ({ error: 'Нет связи с сервером. Правки остались в редакторе — сохраним, когда связь вернётся.' } as { id?: string; version?: string; error?: string }));
-      if (result.error || !result.id) { setState(current => ({ ...current, saving: false, error: result.error ?? 'Не удалось сохранить.' })); return null; }
+      if (result.error || !result.id) { setState(current => ({ ...current, saving: false, error: result.error ?? 'Не удалось сохранить. Попробуйте ещё раз.' })); return null; }
       const created = !doc.current.id;
       doc.current = { id: result.id, version: result.version ?? null };
       // Same route, only a query: a new path would make the router mount the edit page and drop what is being typed.
@@ -426,7 +426,7 @@ export function ArticleEditor({ initial, options, profileChannel = null }: { ini
       const form = new FormData();
       form.set('photo', file);
       const result = await uploadArticleImageAction(id, form);
-      if (result.error || !result.id) { setState(current => ({ ...current, error: result.error ?? 'Не удалось загрузить фото.' })); return; }
+      if (result.error || !result.id) { setState(current => ({ ...current, error: result.error ?? 'Не удалось загрузить фото. Попробуйте ещё раз.' })); return; }
       if (target === 'cover') { setCoverId(result.id); touch(); return; }
       const image: ArticleBlock = { id: newBlockId(), type: 'image', imageId: result.id, caption: '' };
       const element = elements.current.get(target);

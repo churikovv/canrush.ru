@@ -88,7 +88,7 @@ export async function sendBotMessage(adminEmail: string, userId: string, value: 
     await client.query('begin');
     const member = (await client.query<{ reachable: boolean }>(`select ${MEMBER_COLUMNS} from "user" u where u.id = $1`, [userId])).rows[0];
     if (!member) throw new BotMessageError('Участник не найден.');
-    if (!member.reachable) throw new BotMessageError('Сообщение не дойдёт: участник не запускал бота или остановил его.');
+    if (!member.reachable) throw new BotMessageError('Сообщение не дойдёт: бот у участника не запущен или остановлен.');
     const id = (await client.query<{ id: string }>(`insert into "botMessage" ("userId", "fromTeam", text, "adminEmail") values ($1, true, $2, $3) returning id`, [userId, text, adminEmail])).rows[0]!.id;
     await enqueueTelegram(client, userId, 'direct', { text }, `direct:${id}`);
     await client.query(`insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, 'bot-message', 'user', $2)`, [adminEmail, userId]);

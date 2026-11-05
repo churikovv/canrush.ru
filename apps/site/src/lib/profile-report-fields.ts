@@ -30,6 +30,7 @@ export const CONTENT_REPORT_KINDS = {
   'collection-photo': 'Фото коллекции',
   'drink-question': 'Вопрос о напитке',
   'drink-answer': 'Ответ на вопрос о напитке',
+  'chat-message': 'Сообщение в чате',
 } as const;
 export type ContentReportKind = keyof typeof CONTENT_REPORT_KINDS;
 export function contentReportKind(value: string): ContentReportKind | null {

@@ -20,7 +20,7 @@ async function run(key: string, work: (contest: NonNullable<ReturnType<typeof fi
 export async function drawContestAction(key: string, _previous: ContestActionState, form: FormData): Promise<ContestActionState> {
   return run(key, async (contest, email) => {
     const draw = await drawContestWinner(contest, email, { telegram: form.get('telegram') === 'on', avatar: form.get('avatar') === 'on' });
-    return `Победитель: ${draw.winnerLabel} — из ${draw.poolSize}. Напишите ему и отметьте результат.`;
+    return `Победитель: ${draw.winnerLabel} — из ${draw.poolSize}. Напишите победителю и отметьте результат.`;
   });
 }
 

@@ -18,7 +18,7 @@ export function pickReason(reason: PickReason): string {
   if (reason.kind === 'similar') return reason.fans
     ? `Нравится ${reason.fans} ${plural(reason.fans, 'человеку', 'людям', 'людям')} с похожим вкусом${reason.match ? ` · сходство ${reason.match}%` : ''}`
     : 'Похоже на то, что тебе нравится';
-  if (reason.kind === 'brand') return `Ты высоко оцениваешь ${reason.brand} — этот вкус ещё не пробовал`;
+  if (reason.kind === 'brand') return `Ты высоко оцениваешь ${reason.brand}, а этот вкус ещё впереди`;
   if (reason.kind === 'flavor') return `Тебе нравятся вкусы с ${FLAVOR_TOKENS[reason.token] ?? reason.token}`;
   return `Средняя оценка вкуса ${reason.taste.toLocaleString('ru-RU')} из 10 · ${reason.reviews} ${plural(reason.reviews, 'отзыв', 'отзыва', 'отзывов')}`;
 }

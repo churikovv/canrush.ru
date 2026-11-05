@@ -1,6 +1,8 @@
 import { getSessionCookie } from 'better-auth/cookies';
 import { PushRegistration } from '@/components/push-registration';
 import { headers } from 'next/headers';
+import { Suspense } from 'react';
+import { CommunityChat } from '@/components/community-chat';
 import { HeaderMenu } from '@/components/header-menu';
 import { HeaderProfile } from '@/components/header-profile';
 import Link from '@/components/navigation-progress';
@@ -49,6 +51,8 @@ export async function ProfileNavigation({ active, signedIn }: ProfileNavigationP
       <HeaderProfile active={active === 'profile' || active === 'favorites'} signedIn={member} />
       <SiteTabBar active={active} />
       <PushRegistration signedIn={member} />
+      {/* The community chat's button: on every page with this navigation, above the tab bar on a phone. */}
+      <Suspense fallback={null}><CommunityChat signedIn={member} /></Suspense>
     </>
   );
 }

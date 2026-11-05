@@ -4,7 +4,7 @@ import Link from '@/components/navigation-progress';
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { experienceLevel, type Experience } from '@/lib/experience-level';
 import { LevelChipContent, LevelEmblem, LevelTierGlyph } from '@/components/level-badge';
-import { LEVEL_TIERS, levelRank, nextLevelRank } from '@/lib/level-tier';
+import { experienceAtPosition, LEVEL_TIERS, levelRank, nextLevelRank, rankPosition } from '@/lib/level-tier';
 import { nextLevelRewards, type LevelRewardKind } from '@/lib/level-rewards';
 
 // One batched request for all visible authors, including repeated review authors.
@@ -25,7 +25,8 @@ async function refresh() {
   } catch { /* Keep the last confirmed value while offline. */ }
   finally { busy = false; }
 }
-export function ProfileExperience({ username, initial = { xp: 0, rank: null }, expanded = false, achievements }: { username: string; initial?: Experience; expanded?: boolean; achievements?: { earned: number; total: number } }) {
+// `own`: the road of ranks, the quick stats and the next rewards are for the owner; visitors see the rank, the XP and the bar.
+export function ProfileExperience({ username, initial = { xp: 0, rank: null }, expanded = false, own = false, achievements }: { username: string; initial?: Experience; expanded?: boolean; own?: boolean; achievements?: { earned: number; total: number } }) {
   const [value, setValue] = useState(initial);
   useEffect(() => {
     const subscribers = listeners.get(username) ?? new Set();
@@ -38,7 +39,9 @@ export function ProfileExperience({ username, initial = { xp: 0, rank: null }, e
     };
   }, [username]);
   const progress = experienceLevel(value.xp);
-  const rank = levelRank(progress.level);
+  // The exact degree from the XP: the early ones fall inside levels.
+  const position = rankPosition(value.xp);
+  const rank = levelRank(position);
   const { tier } = rank;
   if (!expanded) return <Link className="profile-level" data-level-tier={tier.key} href={`/profile/${username}#experience`} title={`${rank.label} · ${value.xp} XP${value.rank ? ` · № ${value.rank} в рейтинге` : ''}`}><LevelChipContent level={progress.level} /></Link>;
   const number = (n: number) => n.toLocaleString('ru-RU');
@@ -46,20 +49,27 @@ export function ProfileExperience({ username, initial = { xp: 0, rank: null }, e
   const next = LEVEL_TIERS[tierIndex + 1];
   // Position on the rank road: whole tiers passed plus the share of levels inside the current one.
   const road = next ? (tierIndex + (progress.level - tier.min) / (next.min - tier.min)) / (LEVEL_TIERS.length - 1) : 1;
-  // The next degree is the nearer goal; Legend keeps adding degrees, so there is always one.
-  const step = nextLevelRank(progress.level);
-  const levelsToNext = step.min - progress.level;
+  // The next degree is the nearer goal, counted in XP — what an action moves; Myth keeps adding degrees, so there is always one.
+  const step = nextLevelRank(position);
+  const xpToNext = Math.max(1, experienceAtPosition(step.min) - value.xp);
   const upcoming = nextLevelRewards(progress.level);
   const stats: { icon: StatIcon; value: string; label: string; href?: string }[] = [
     ...(achievements ? [{ icon: 'trophy' as const, value: `${achievements.earned} / ${achievements.total}`, label: 'достижений', href: `/profile/${username}/achievements` }] : []),
     ...(value.rank ? [{ icon: 'crown' as const, value: `№ ${number(value.rank)}`, label: 'в рейтинге', href: '/leaderboard' }] : []),
     ...(value.aheadPercent ? [{ icon: 'people' as const, value: `${value.aheadPercent}%`, label: 'участников позади' }] : []),
-    { icon: 'bolt', value: `${levelsToNext} ${levelsToNext === 1 ? 'уровень' : levelsToNext < 5 ? 'уровня' : 'уровней'}`, label: `до «${step.label}»` },
+    { icon: 'bolt', value: `${number(xpToNext)} XP`, label: `до «${step.label}»` },
   ];
   return <section className="community-panel experience-panel" id="experience" data-level-tier={tier.key} aria-labelledby="experience-title">
-    <div className="experience-heading"><h2 id="experience-title">Уровень</h2><Link href="/leaderboard">{value.rank ? `№ ${value.rank} в рейтинге ↗` : 'Рейтинг ↗'}</Link></div>
-    <div className="experience-hero" data-level-tier={tier.key}>
-      <LevelEmblem level={progress.level} wings />
+    {/* The whole panel is a dark game scene, like the season pass but not full screen: the heading at its top, the emblem
+        floating over one dark pedestal for every rank, and the rank, its degree, the XP and the level bar over the
+        pedestal's foot on a gradient. */}
+    <div className="experience-hero rank-scene" data-level-tier={tier.key}>
+      <div className="experience-heading"><h2 id="experience-title">Уровень</h2><Link href="/leaderboard">{value.rank ? `№ ${value.rank} в рейтинге ↗` : 'Рейтинг ↗'}</Link></div>
+      <div className="rank-stage">
+        <span className="rank-pedestal" aria-hidden="true" />
+        <LevelEmblem level={progress.level} position={position} wings />
+      </div>
+      <div className="rank-scene-info">
       <div className="experience-rank">
         <span className="experience-tier">{rank.label}</span>
         {rank.degrees !== null && rank.degrees > 1 && <span className="experience-degrees" role="img" aria-label={`Степень ${rank.degree} из ${rank.degrees}`}>
@@ -72,7 +82,9 @@ export function ProfileExperience({ username, initial = { xp: 0, rank: null }, e
         <div className="experience-track" data-level-tier={tier.key} role="progressbar" aria-valuemin={0} aria-valuemax={progress.required} aria-valuenow={progress.current} aria-label={`Прогресс до уровня ${progress.level + 1}`}><ProfileStatFill value={progress.current / progress.required} /></div>
         <span className="experience-remaining">Ещё {number(progress.remaining)} XP до уровня {progress.level + 1}</span>
       </div>
+      </div>
     </div>
+    {own && <>
     <ol className="experience-road" aria-label="Ранги" style={{ '--road': road } as CSSProperties}>
       {LEVEL_TIERS.map((item, index) => <li key={item.key} data-level-tier={item.key} data-state={index < tierIndex ? 'passed' : index === tierIndex ? 'current' : 'locked'} aria-current={index === tierIndex ? 'step' : undefined}>
         <LevelTierGlyph tier={item.key} /><span>{item.label}</span><small>ур. {item.min}</small>
@@ -89,6 +101,7 @@ export function ProfileExperience({ username, initial = { xp: 0, rank: null }, e
         <strong>{reward.title}</strong><span>{reward.note}</span>
       </li>)}</ul>
     </div>
+    </>}
   </section>;
 }
 

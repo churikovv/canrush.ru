@@ -1,6 +1,6 @@
 /* Инвентарь Банкомата — игровой экран, как сезонный пропуск: без шапки сайта, фон подсвечен цветом банки в фокусе,
    посередине очень крупная карточка со свайпом, под ней облик и действия, внизу лента миниатюр. Тёмный в любой теме сайта. */
-.inv-screen { position: fixed; inset: 0; z-index: 40; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 12px) 0 calc(env(safe-area-inset-bottom, 0px) + 10px); overflow: hidden; background: radial-gradient(120% 70% at 50% 40%, color-mix(in srgb, var(--inv-a) 34%, #0a0d14), #06070b 72%); color: #fff; line-height: 1.3; -webkit-user-select: none; user-select: none; }
+.inv-screen { position: fixed; inset: 0; z-index: var(--layer-overlay); display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 12px) 0 calc(env(safe-area-inset-bottom, 0px) + 10px); overflow: hidden; background: radial-gradient(120% 70% at 50% 40%, color-mix(in srgb, var(--inv-a) 34%, #0a0d14), #06070b 72%); color: #fff; line-height: 1.3; -webkit-user-select: none; user-select: none; }
 
 .inv-top { display: flex; align-items: center; gap: 10px; padding-inline: 16px; }
 .inv-icon-btn { --cut: 10px; display: grid; flex: none; place-items: center; width: 44px; height: 44px; padding: 0; color: #fff; font-size: 1.625rem; line-height: 1; text-decoration: none; cursor: pointer; }
@@ -11,10 +11,15 @@
 .inv-title p { margin: 2px 0 0; overflow: hidden; color: rgb(255 255 255 / .7); font-size: .8125rem; text-overflow: ellipsis; white-space: nowrap; }
 .inv-shards { --cut: 9px; display: inline-flex; flex: none; align-items: center; gap: 5px; min-height: 40px; padding: 0 13px 0 10px; box-sizing: border-box; color: #fff; font-size: 1rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 .inv-shards svg { color: #5fd6ff; }
+/* Обмен: у чужой коллекции — «Обмен» с иконкой, у своей — иконка и число предложений, ждущих ответа. */
+.inv-trade-pill { --cut: 9px; display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px 0 12px; box-sizing: border-box; color: #fff; font-size: .875rem; font-weight: 900; letter-spacing: .04em; text-decoration: none; text-transform: uppercase; }
+.inv-trade-pill.is-own { min-width: 44px; justify-content: center; padding-inline: 12px; }
+.inv-trade-pill b { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: var(--radius-pill); background: var(--brand-blue); color: #fff; font-size: .75rem; font-variant-numeric: tabular-nums; }
+.inv-trade-pill:focus-visible { outline: 0; --rim: #fff; }
 
 .inv-filters { display: flex; gap: 8px; padding: 2px 16px; overflow-x: auto; scrollbar-width: none; }
 .inv-filters::-webkit-scrollbar { display: none; }
-.inv-chip { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px solid rgb(255 255 255 / .16); border-radius: 999px; background: rgb(255 255 255 / .06); color: #fff; font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; }
+.inv-chip { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px solid rgb(255 255 255 / .16); border-radius: var(--radius-pill); background: rgb(255 255 255 / .06); color: #fff; font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; }
 .inv-chip b { color: rgb(255 255 255 / .55); font-weight: 800; font-variant-numeric: tabular-nums; }
 .inv-chip[aria-pressed="true"] { border-color: transparent; background: #fff; color: #0b0d14; }
 .inv-chip[aria-pressed="true"] b { color: rgb(11 13 20 / .55); }
@@ -33,11 +38,11 @@
 .inv-slide { flex: 0 0 var(--slide); padding: 0; border: 0; background: none; color: inherit; font: inherit; opacity: .4; scroll-snap-align: center; scale: .84; transition: scale 240ms ease-out, opacity 240ms ease-out; cursor: pointer; }
 .inv-slide[data-pos="near"] { opacity: .6; }
 .inv-slide[data-pos="active"] { opacity: 1; scale: none; filter: drop-shadow(0 22px 36px rgb(0 0 0 / .55)); }
-.inv-slide:focus-visible { outline: 2px solid #fff; outline-offset: 6px; border-radius: 24px; }
+.inv-slide:focus-visible { outline: 2px solid #fff; outline-offset: 6px; border-radius: var(--radius-2xl); }
 /* За окном живых карточек — лёгкая обложка того же размера: при быстром листании видно банки, а вёрстка не меняется. */
 .inv-slide-lite { position: relative; display: grid; place-items: center; aspect-ratio: 5 / 7; box-sizing: border-box; border: 2px solid color-mix(in srgb, var(--rarity-mid, #fff) 55%, transparent); border-radius: 22px; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--rarity-mid, #fff) 18%, transparent), rgb(255 255 255 / .03) 70%); }
 /* Фото из магазина как есть, плиткой: вырезать фон у каждой пролетающей банки — лишняя работа сервера. */
-.inv-slide-lite img { width: 78%; height: auto; aspect-ratio: 1; border-radius: 16px; background: #fff; object-fit: contain; box-shadow: 0 10px 24px -12px rgb(0 0 0 / .7); -webkit-user-drag: none; }
+.inv-slide-lite img { width: 78%; height: auto; aspect-ratio: 1; border-radius: var(--radius-lg); background: #fff; object-fit: contain; box-shadow: 0 10px 24px -12px rgb(0 0 0 / .7); -webkit-user-drag: none; }
 .inv-slide-lite b { color: rgb(255 255 255 / .45); font-size: 2.5rem; font-weight: 900; }
 .inv-arrow { display: none; }
 
@@ -55,7 +60,7 @@
 .inv-rail { display: flex; gap: 8px; margin: 0; padding: 6px 16px 4px; overflow-x: auto; list-style: none; scrollbar-width: none; overscroll-behavior-x: contain; }
 .inv-rail::-webkit-scrollbar { display: none; }
 .inv-rail li { flex: 0 0 56px; }
-.inv-thumb { display: grid; place-items: center; width: 56px; height: 56px; padding: 4px; box-sizing: border-box; border: 2px solid rgb(255 255 255 / .14); border-radius: 12px; background: rgb(255 255 255 / .06); cursor: pointer; transition: translate 160ms ease-out; }
+.inv-thumb { display: grid; place-items: center; width: 56px; height: 56px; padding: 4px; box-sizing: border-box; border: 2px solid rgb(255 255 255 / .14); border-radius: var(--radius-md); background: rgb(255 255 255 / .06); cursor: pointer; transition: translate 160ms ease-out; }
 .inv-thumb[data-rarity] { border-color: var(--rarity-mid); background: #fff; }
 .inv-thumb img { width: 100%; height: 100%; object-fit: contain; }
 .inv-thumb[aria-current] { outline: 2px solid #fff; outline-offset: 2px; translate: 0 -2px; }

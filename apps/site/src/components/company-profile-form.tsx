@@ -95,7 +95,7 @@ export function CompanyProfileSettingsForm({ info, stores, storeId, hidden, edit
       <Group title="Что показывать" hint="Всё включено. Выключите то, чего на профиле быть не должно.">
         {PROFILE_SECTIONS.map(section => <label key={section.key} className="bc-switch-row">
           <span><strong>{section.label}</strong><small className="bc-muted">{section.hint}</small></span>
-          <input type="checkbox" className="bc-switch" checked={shown.has(section.key)} onChange={event => setShown(current => {
+          <input type="checkbox" className="settings-switch" checked={shown.has(section.key)} onChange={event => setShown(current => {
             const next = new Set(current);
             if (event.target.checked) next.add(section.key); else next.delete(section.key);
             return next;

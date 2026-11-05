@@ -30,7 +30,7 @@ export async function loadSupportAction(threadId?: string, before?: string): Pro
     }
     const thread = await getOwnSupportThread((await member()).id);
     return thread ? { thread, ...await supportMessages(thread.id, before) } : { thread: null, items: [], hasMore: false };
-  } catch (error) { return { error: message(error, 'Не удалось загрузить переписку.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось загрузить переписку. Проверьте интернет и обновите страницу.') }; }
 }
 
 export async function sendSupportAction(text: string): Promise<{ error?: string }> {
@@ -66,7 +66,7 @@ export async function setSupportStatusAction(threadId: string, status: 'open' | 
     const admin = await requireSiteAdmin();
     if (status !== 'open' && status !== 'closed') return { error: 'Неизвестное действие.' };
     await setSupportStatus(admin.userId, threadId, status);
-  } catch (error) { return { error: message(error, 'Не удалось изменить статус.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось изменить статус. Попробуйте ещё раз.') }; }
   revalidatePath('/admin/support');
   return {};
 }

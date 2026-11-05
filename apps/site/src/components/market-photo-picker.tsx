@@ -63,7 +63,7 @@ export function MarketPhotoPicker({ onChange, onBusyChange, disabled = false, cr
       update([...photos, ...added]);
     } catch (cause) {
       allocated.forEach(url => { URL.revokeObjectURL(url); urls.current.delete(url); });
-      setError(cause instanceof Error ? cause.message : 'Не удалось прочитать фото.');
+      setError(cause instanceof Error ? cause.message : 'Не удалось прочитать фото. Выберите его ещё раз.');
     }
     finally { adding.current = false; setBusy(false); onBusyChange?.(false); }
   }

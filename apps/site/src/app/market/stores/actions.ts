@@ -36,7 +36,7 @@ export async function saveStoreAction(id: string | undefined, _previous: StoreSt
 export async function moderateStoreAction(id:string,version:string,_previous:StoreState,form:FormData):Promise<StoreState>{
   const admin=await requireSiteAdmin();
   try{await moderateStore(admin.userId,id,String(form.get('status')) as 'published'|'rejected',String(form.get('note')??''),version);revalidatePath('/market/stores','layout');revalidatePath('/admin/stores');return {saved:true};}
-  catch(error){return {error:error instanceof StoreError?error.message:'Не удалось проверить заявку.'};}
+  catch(error){return {error:error instanceof StoreError?error.message:'Не удалось проверить заявку. Попробуйте ещё раз.'};}
 }
 async function takeDown(run:(adminId:string,adminEmail:string,note:string)=>Promise<void>,form:FormData,failed:string):Promise<StoreState>{
   const admin=await requireSiteAdmin();
@@ -44,10 +44,10 @@ async function takeDown(run:(adminId:string,adminEmail:string,note:string)=>Prom
   catch(error){return {error:error instanceof StoreError?error.message:failed};}
 }
 export async function returnStoreAction(id:string,version:string,_previous:StoreState,form:FormData):Promise<StoreState>{
-  return takeDown((adminId,adminEmail,note)=>returnStoreToDraft(adminId,adminEmail,id,note,version),form,'Не удалось вернуть магазин.');
+  return takeDown((adminId,adminEmail,note)=>returnStoreToDraft(adminId,adminEmail,id,note,version),form,'Не удалось вернуть магазин. Попробуйте ещё раз.');
 }
 export async function deleteStoreAction(id:string,version:string,_previous:StoreState,form:FormData):Promise<StoreState>{
-  return takeDown((adminId,adminEmail,note)=>deleteStoreAsTeam(adminId,adminEmail,id,note,version),form,'Не удалось удалить магазин.');
+  return takeDown((adminId,adminEmail,note)=>deleteStoreAsTeam(adminId,adminEmail,id,note,version),form,'Не удалось удалить магазин. Попробуйте ещё раз.');
 }
 const currentUser=async()=>(await auth.api.getSession({headers:await headers()}))?.user??null;
 const currentUserId=async()=>(await currentUser())?.id??null;
@@ -72,7 +72,7 @@ export async function saveStorePresetAction(id:string|null,name:string,drinks:un
   const user=await currentUser();
   if(!user)return {error:'Войдите, чтобы сохранить шаблон.'};
   try{await saveStorePreset(user.id,String(name),drinks,publish===true,id===null?null:String(id));return await templatesOf(user);}
-  catch(error){return {error:error instanceof StoreError||isFrozenError(error)?error.message:'Не удалось сохранить шаблон.'};}
+  catch(error){return {error:error instanceof StoreError||isFrozenError(error)?error.message:'Не удалось сохранить шаблон. Попробуйте ещё раз.'};}
 }
 export async function deleteStorePresetAction(id:string):Promise<StoreTemplates|{error:string}>{
   const user=await currentUser();

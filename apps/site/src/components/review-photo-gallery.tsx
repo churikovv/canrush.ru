@@ -133,7 +133,7 @@ export function PhotoViewer({ photos, kinds, initialIndex, onClose, source, labe
 
 const KIND_LABEL: Record<WallMediaKind, string> = { image: 'фотографию', gif: 'GIF', video: 'видео' };
 
-export function ReviewPhotoGallery({ photos, kinds, source = 'review-photos' }: { photos: string[]; kinds?: WallMediaKind[]; source?: 'review-photos' | 'wall-photos' | 'comment-media' }) {
+export function ReviewPhotoGallery({ photos, kinds, source = 'review-photos' }: { photos: string[]; kinds?: WallMediaKind[]; source?: 'review-photos' | 'wall-photos' | 'comment-media' | 'chat-media' }) {
   const [active, setActive] = useState<number | null>(null);
   if (!photos.length) return null;
   return (

@@ -16,8 +16,8 @@ export async function enqueuePush(db: Queryable, userId: string, kind: PushKind,
 
 const MARKET_TITLES: Record<MarketEvent, (counterpart: string) => string> = {
   new: counterpart => `Новый заказ от ${counterpart}`,
-  confirmed: () => 'Продавец подтвердил заказ',
-  completed: () => 'Покупатель завершил заказ',
+  confirmed: () => 'Заказ подтверждён продавцом',
+  completed: () => 'Банки получены — заказ завершён',
   cancelled: () => 'Заказ отменён',
   message: counterpart => `Новое сообщение от ${counterpart}`,
 };

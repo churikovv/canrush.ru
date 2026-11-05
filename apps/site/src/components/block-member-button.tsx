@@ -18,7 +18,7 @@ export function BlockMemberButton({ userId, name, initiallyBlocked = false, comp
   const [error, setError] = useState('');
   const [pending, startTransition] = useTransition();
   function toggle() {
-    if (!blocked && !window.confirm(`Заблокировать ${name}? Вы перестанете видеть записи, комментарии и отзывы участника, а он не сможет отвечать вам, писать на вашей стене, подписываться и заказывать у вас.`)) return;
+    if (!blocked && !window.confirm(`Заблокировать ${name}? Вы перестанете видеть записи, комментарии и отзывы этого участника, а ${name} не сможет отвечать вам, писать на вашей стене, подписываться и заказывать у вас.`)) return;
     setError('');
     startTransition(async () => {
       try {

@@ -97,6 +97,10 @@ export async function getProfileCommunity(userId: string, viewerId?: string) {
     (select count(*)::int from "profileAchievement" where "userId" = u.id and key = 'week-hero') as "weekHero",
     (select count(*)::int from "profileAchievement" where "userId" = u.id and key = 'week-best') as "weekBest",
     (select count(*)::int from "profileAchievement" where "userId" = u.id and key = 'week-charge') as "weekCharge",
+    -- Claimed on the home page («Первые шаги», first-steps.ts); the metric only reflects it.
+    (select count(*)::int from "profileAchievement" where "userId" = u.id and key = 'first-charge') as "firstSteps",
+    -- The furthest day of «Лунный цикл» ever taken (daily-rewards.ts), for the two moon tags.
+    (select coalesce(max(step), 0)::int from "dailyReward" where "userId" = u.id) as "dailyStep",
     -- Numbered on sign-up by the beta_engine_member trigger (0073), while the first 500 places last.
     (select count(*)::int from "betaEngine" where "userId" = u.id) as "betaEngine",
     (select count(*)::int from "drinkLog" where "userId" = u.id) as "drinkLogs",

@@ -12,7 +12,8 @@ import { useMediaAttachments } from '@/components/media-attachments';
 import type { StoryRecommendation, WeeklyDigest } from '@/lib/story-digest';
 import { nativeShare } from '@/lib/native-app';
 import { shareImage } from '@/lib/share-image';
-import { pickReason } from '@/lib/pick-reason';
+import { PicksCover, PickSlide, type PickDecision, type PicksView } from '@/components/picks-story';
+import { favoriteSwipedAction, swipeAction } from '@/app/community/dating-actions';
 import { MAX_STORY_CAPTION } from '@/lib/story-limits';
 import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
 import { NRJ_PARTY } from '@/lib/partners';
@@ -23,15 +24,17 @@ import { WALL_MEDIA_ACCEPT } from '@/lib/wall-media-limits';
 export type StorySlide =
   | { kind: 'media'; story: StoryItem }
   | { kind: 'digest'; digest: WeeklyDigest; page: DigestPage }
-  | { kind: 'pick'; item: StoryRecommendation; basis: 'similar' | 'community' }
+  | { kind: 'picks'; page: 'intro' | 'outro'; picks: PicksView }
+  | { kind: 'pick'; item: StoryRecommendation; basis: 'similar' | 'community'; index: number; total: number }
   | { kind: 'promo'; page: 'channel' | 'bot'; miniApp?: string | null }
   | { kind: 'partner' };
 /** Slides of «Твоя неделя», in the order they play. */
 export type DigestPage = 'empty' | 'intro' | 'cans' | 'drink' | 'progress' | 'discover' | 'summary';
 export interface StoryGroupView { key: string; kind: 'user' | 'week' | 'picks' | 'telegram' | 'partner'; title: string; author?: StoryAuthor; own?: boolean; seen?: boolean; slides: StorySlide[] }
 
-/** A photo, GIF or a system card stays this long; a video plays to its end. */
+/** A photo, GIF or a system card stays this long; a video plays to its end. A pick has more to read and do. */
 const SLIDE_MS = 5000;
+const slideMs = (slide: StorySlide) => slide.kind === 'pick' ? 10_000 : slide.kind === 'picks' ? 7000 : SLIDE_MS;
 const SEEN_KEY = 'canrush:stories-seen';
 const SEEN_EVENT = 'canrush:stories-seen';
 
@@ -201,18 +204,6 @@ function DigestCard({ digest, page }: { digest: WeeklyDigest; page: DigestPage }
   </div>;
 }
 
-function PickCard({ item, basis }: { item: StoryRecommendation; basis: 'similar' | 'community' }) {
-  return <div className="story-card story-card-pick">
-    <small>{basis === 'similar' ? 'Тебе понравится' : 'Популярно у сообщества'}</small>
-    {/* eslint-disable-next-line @next/next/no-img-element -- local catalog cover */}
-    <span className="story-pick-cover">{item.cover && <img src={item.cover} alt="" />}</span>
-    <strong>{item.brand}</strong>
-    <p>{item.name}</p>
-    <p className="story-card-note">{pickReason(item.reason)}</p>
-    <Link className="story-card-cta" href={item.href}>Открыть напиток</Link>
-  </div>;
-}
-
 /** What each «Telegram» slide promises: a word or two on a tilted pill, in the order they pop in. */
 const PROMO_PILLS = {
   channel: ['Новые вкусы', 'Розыгрыши', 'Подборки', 'Новости'],
@@ -273,6 +264,8 @@ function StoryViewer({ groups, start, startSlide, signedIn, staff, onClose, onSe
   // Hearts changed in this viewer, by story id, over what the page loaded.
   const [hearts, setHearts] = useState<Record<string, { likes: number; liked: boolean }>>({});
   const [likers, setLikers] = useState<StoryLiker[] | null>(null);
+  // What the viewer did with the picks in this viewer: kept as a favourite or «не моё».
+  const [decisions, setDecisions] = useState<Record<string, PickDecision>>({});
   const elapsed = useRef(0);
   const press = useRef<{ x: number; y: number; at: number; held: boolean; timer: number } | null>(null);
   const group = groups[pos.g]!;
@@ -311,11 +304,11 @@ function StoryViewer({ groups, start, startSlide, signedIn, staff, onClose, onSe
     if (paused || isVideo) return;
     const timer = window.setInterval(() => {
       elapsed.current += 50;
-      if (elapsed.current >= SLIDE_MS) goRef.current(1);
-      else setProgress(elapsed.current / SLIDE_MS);
+      if (elapsed.current >= slideMs(slide)) goRef.current(1);
+      else setProgress(elapsed.current / slideMs(slide));
     }, 50);
     return () => window.clearInterval(timer);
-  }, [paused, isVideo, pos]);
+  }, [paused, isVideo, pos, slide]);
 
   /** «Твоя неделя» goes as a picture, a pick and a member's story as links; the story waits while the sheet is open. */
   async function share() {
@@ -327,6 +320,7 @@ function StoryViewer({ groups, start, startSlide, signedIn, staff, onClose, onSe
       else if (slide.kind === 'pick') result = await shareLink(new URL(slide.item.href, window.location.origin).toString(), `${slide.item.brand} ${slide.item.name} — CanRush`);
       else if (slide.kind === 'partner') result = await shareLink(NRJ_PARTY.telegram.url, `${NRJ_PARTY.name} в Telegram`);
       else if (slide.kind === 'promo') result = await shareLink(slide.page === 'channel' ? TELEGRAM_CHANNEL_URL : TELEGRAM_BOT_URL, slide.page === 'channel' ? 'CanRush в Telegram' : 'Бот CanRush в Telegram');
+      else if (slide.kind === 'picks') return;
       else result = await shareLink(new URL(`/?story=${slide.story.id}`, window.location.origin).toString(), `История @${group.author?.username ?? ''} в CanRush`);
       if (result !== 'cancelled') setNotice(result === 'copied' ? 'Ссылка скопирована' : result === 'saved' ? 'Картинка сохранена' : 'Отправлено');
     } catch { setNotice('Не удалось поделиться. Попробуйте ещё раз.'); }
@@ -351,6 +345,23 @@ function StoryViewer({ groups, start, startSlide, signedIn, staff, onClose, onSe
     setLikers(await storyLikersAction(slide.story.id));
   }
   function closeLikers() { setLikers(null); setPaused(false); void video.current?.play().catch(() => {}); }
+
+  /** The heart on a pick: a favourite, the same as in the dating deck (it remembers the price for alerts). */
+  async function favoritePick(item: StoryRecommendation) {
+    const on = decisions[item.href] !== 'favorite';
+    setDecisions(current => { const next = { ...current }; if (on) next[item.href] = 'favorite'; else delete next[item.href]; return next; });
+    const result = await favoriteSwipedAction(item.brand, item.flavor, on).catch(() => ({ error: 'Не удалось сохранить. Проверьте интернет и попробуйте ещё раз.' }));
+    if (result.error) { setNotice(result.error); setDecisions(current => { const next = { ...current }; if (on) delete next[item.href]; else next[item.href] = 'favorite'; return next; }); return; }
+    setNotice(on ? 'В избранном: сообщим о скидке' : 'Убрали из избранного');
+  }
+  /** «Не моё» is a dating swipe to the left: the next picks steer away from it. */
+  async function nopePick(item: StoryRecommendation) {
+    setDecisions(current => ({ ...current, [item.href]: 'nope' }));
+    const result = await swipeAction(item.brand, item.flavor, false).catch(() => ({ error: 'Не удалось сохранить. Проверьте интернет и попробуйте ещё раз.' }));
+    if (result.error) { setNotice(result.error); setDecisions(current => { const next = { ...current }; delete next[item.href]; return next; }); return; }
+    setNotice('Учтём: такого будет меньше');
+    window.setTimeout(() => goRef.current(1), 700);
+  }
 
   function onPointerDown(event: ReactPointerEvent) {
     if ((event.target as Element).closest('a, button, [role="menu"]')) return;
@@ -377,9 +388,9 @@ function StoryViewer({ groups, start, startSlide, signedIn, staff, onClose, onSe
           : <span className="story-head-author"><Avatar group={group} size={32} /><b>{title}</b></span>}
         {slide.kind === 'media' && <time dateTime={slide.story.createdAt}>{ago(slide.story.createdAt)}</time>}
         <span className="story-head-actions">
-          <button type="button" className="story-close story-share" aria-label={slide.kind === 'digest' ? 'Поделиться неделей картинкой' : 'Поделиться'} disabled={sharing} onClick={() => void share()}>
+          {slide.kind !== 'picks' && <button type="button" className="story-close story-share" aria-label={slide.kind === 'digest' ? 'Поделиться неделей картинкой' : 'Поделиться'} disabled={sharing} onClick={() => void share()}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5" /><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12" /></svg>
-          </button>
+          </button>}
           {slide.kind === 'media' && (group.own
             ? <MoreActions label="Действия с историей"><button className="more-actions-item is-danger" type="button" role="menuitem" onClick={async () => {
                 if (!window.confirm('Удалить эту историю?')) return;
@@ -398,7 +409,9 @@ function StoryViewer({ groups, start, startSlide, signedIn, staff, onClose, onSe
           /* eslint-disable-next-line @next/next/no-img-element -- stored story media, not optimised by Next */
           : <img key={slide.story.id} src={`/api/story-media/${slide.story.id}`} alt={slide.story.caption || `История ${title}`} draggable={false} />)}
         {slide.kind === 'digest' && <DigestCard digest={slide.digest} page={slide.page} />}
-        {slide.kind === 'pick' && <PickCard item={slide.item} basis={slide.basis} />}
+        {slide.kind === 'picks' && <PicksCover page={slide.page} picks={slide.picks} />}
+        {slide.kind === 'pick' && <PickSlide item={slide.item} basis={slide.basis} index={slide.index} total={slide.total} decision={decisions[slide.item.href]}
+          onFavorite={() => void favoritePick(slide.item)} onNope={() => void nopePick(slide.item)} />}
         {slide.kind === 'promo' && <PromoCard page={slide.page} miniApp={slide.miniApp} />}
         {slide.kind === 'partner' && <PartnerCard />}
       </div>

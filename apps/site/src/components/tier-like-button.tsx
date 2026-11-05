@@ -30,7 +30,7 @@ export function TierLikeButton({ id, likes, vote, signedIn, own, kind = 'tierlis
     startTransition(async () => {
       const result = await (kind === 'review' ? reviewDiscussionAction : tierDiscussionAction)(id, 'vote', next);
       if ('interaction' in result && result.interaction) setState({ likes: result.interaction.likes, vote: result.interaction.vote });
-      else { setState(previous); setError(result.error ?? 'Не удалось поставить лайк.'); }
+      else { setState(previous); setError(result.error ?? 'Не удалось поставить лайк. Попробуйте ещё раз.'); }
     });
   }
 

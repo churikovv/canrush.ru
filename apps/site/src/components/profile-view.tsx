@@ -40,6 +40,8 @@ import { cutoutSrc } from '@/lib/can-cutout-src';
 import { ProfilePresence } from '@/components/profile-presence';
 import { SignInPrompt } from '@/components/sign-in-prompt';
 import { ProfileTag } from '@/components/profile-tag';
+import { ShortcutCans, ShortcutEmblems, type ShortcutEmblem } from '@/components/profile-shortcut-peek';
+import { favoriteCans, getShortcutCans, SHORTCUT_PEEK } from '@/lib/profile-shortcut-cans';
 
 interface ProfileViewProps {
   profile: ProfileData;
@@ -52,6 +54,8 @@ interface ProfileViewProps {
 }
 
 const count = new Intl.NumberFormat('ru-RU');
+// The proudest achievements stand out of their card first: rarer, then a higher tier.
+const RARITY_ORDER = ['legendary', 'epic', 'special', 'rare', 'common'];
 
 function TelegramGlyph() {
   return <svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" focusable="false"><path fillRule="evenodd" clipRule="evenodd" d="M9.8885 2.465C10.0121 2.413 10.1473 2.39506 10.2801 2.41306C10.413 2.43106 10.5386 2.48433 10.6438 2.56734C10.7491 2.65035 10.8302 2.76006 10.8787 2.88504C10.9272 3.01003 10.9413 3.14572 10.9195 3.278L9.7855 10.1565C9.6755 10.82 8.9475 11.2005 8.339 10.87C7.83 10.5935 7.074 10.1675 6.394 9.723C6.054 9.5005 5.0125 8.788 5.1405 8.281C5.2505 7.8475 7.0005 6.2185 8.0005 5.25C8.393 4.8695 8.214 4.65 7.7505 5C6.5995 5.869 4.7515 7.1905 4.1405 7.5625C3.6015 7.8905 3.3205 7.9465 2.9845 7.8905C2.3715 7.7885 1.803 7.6305 1.339 7.438C0.712 7.178 0.7425 6.316 1.3385 6.065L9.8885 2.465Z" /></svg>;
@@ -62,11 +66,16 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
     getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getFavoriteGroups(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id), listPublishedDrinksByOwner(profile.id), profile.profileLayout?.hidden.includes('cards') === false ? topCards(profile.id).catch(() => []) : Promise.resolve([]),
     profile.profileLayout?.hidden.includes('shelf') === false ? listCollectionPhotos(profile.id, viewerId ?? null) : Promise.resolve({ photos: [], staff: false }),
   ]);
+  // A slow or failing query only leaves the cards with their icons.
+  const shortcutCans = await getShortcutCans(profile.id).catch(() => ({ reviews: [], tierlists: [] }));
   const blockedByViewer = !isOwn && viewerId ? await isBlockedByViewer(viewerId, profile.id) : false;
   const wallInteractions = await getWallInteractions(wall.comments.map(comment => comment.id), viewerId ?? null);
   const experience = (await getExperience([profile.username]))[profile.username];
   const visibleAchievements = visibleProfileAchievements(viewerIsAdmin, community.earned);
   const visibleEarned = community.earned.filter(key => visibleAchievements.some(item => item.key === key));
+  const emblems: ShortcutEmblem[] = visibleAchievements.filter(item => visibleEarned.includes(item.key))
+    .map(item => ({ key: item.key, rarity: item.rarity, tier: community.tiers[item.key] ?? 1, tiers: 1 + (item.tiers?.length ?? 0) }))
+    .sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity) || b.tier - a.tier).slice(0, SHORTCUT_PEEK);
   const base = `/profile/${profile.username}`;
   const telegramHref = profile.telegramChannel ? `https://t.me/${profile.telegramChannel}` : undefined;
   const showTelegram = !profile.profileLayout?.hiddenFields?.includes('telegramUsername');
@@ -84,17 +93,24 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
         tags={community.tags.length > 0 && <div className="profile-tags">{community.tags.map(tag => <ProfileTag key={tag} tag={tag} href={`${base}/achievements`}>{profileTagLabel(tag)}</ProfileTag>)}</div>}
         actions={isOwn ? undefined
           : viewerId ? <div className="profile-hero-buttons"><FollowControl targetId={profile.id} following={community.isFollowing} mutual={community.followsYou} />
-            <MoreActions label="Ещё действия с профилем"><ProfileReportMenuItem targetId={profile.id} /><BlockMemberButton userId={profile.id} name={`@${profile.username}`} initiallyBlocked={blockedByViewer} variant="menuitem" /></MoreActions></div>
+            <MoreActions label="Ещё действия с профилем">
+              {/* Card trades: the trade screen checks who can trade, so the item is hidden only where it surely cannot work. */}
+              {!blockedByViewer && <Link className="more-actions-item" role="menuitem" href={`/profile/${profile.username}/cards/trade`}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8" /></svg><span>Предложить обмен</span>
+              </Link>}
+              <ProfileReportMenuItem targetId={profile.id} /><BlockMemberButton userId={profile.id} name={`@${profile.username}`} initiallyBlocked={blockedByViewer} variant="menuitem" /></MoreActions></div>
           : <Link className="community-button" href="/sign-in">Войти и подписаться</Link>} />
 
 
       <nav className="community-shortcuts" aria-label="Активность пользователя">
-        {[{ href: `${base}/reviews`, label: 'Отзывы', count: profile.reviewCount, icon: 'stat-reviews' },
-          { href: tierListsHref, label: 'Тирлисты', count: profile.tierListCount, icon: 'stat-tierlists' },
-          { href: favoritesHref, label: 'Избранное', count: profile.favoriteCount, icon: 'stat-favorites' },
-          { href: `${base}/achievements`, label: 'Достижения', count: visibleEarned.length, icon: 'stat-achievements' }].map(item =>
-          <Link href={item.href} key={item.label} className="community-shortcut" data-category={item.icon}>
-            <span className="community-shortcut-icon" style={{ '--shortcut-icon': `url(/brand/icons/${item.icon}.svg)` } as CSSProperties} aria-hidden="true" />
+        {/* Each card shows the member's own things standing out of it: cans reviewed, the top of a tier list, favourite
+            cans without their background and the proudest emblems. An empty card keeps its icon. */}
+        {[{ href: `${base}/reviews`, label: 'Отзывы', count: profile.reviewCount, icon: 'stat-reviews', peek: shortcutCans.reviews.length ? <ShortcutCans cans={shortcutCans.reviews} /> : null },
+          { href: tierListsHref, label: 'Тирлисты', count: profile.tierListCount, icon: 'stat-tierlists', peek: shortcutCans.tierlists.length ? <ShortcutCans cans={shortcutCans.tierlists} /> : null },
+          { href: favoritesHref, label: 'Избранное', count: profile.favoriteCount, icon: 'stat-favorites', peek: favoriteCans(favorites).length ? <ShortcutCans cans={favoriteCans(favorites)} /> : null },
+          { href: `${base}/achievements`, label: 'Достижения', count: visibleEarned.length, icon: 'stat-achievements', peek: emblems.length ? <ShortcutEmblems emblems={emblems} /> : null }].map(item =>
+          <Link href={item.href} key={item.label} className="community-shortcut" data-category={item.icon} data-peek={item.peek ? '' : undefined}>
+            {item.peek ?? <span className="community-shortcut-icon" style={{ '--shortcut-icon': `url(/brand/icons/${item.icon}.svg)` } as CSSProperties} aria-hidden="true" />}
             <strong>{count.format(item.count)}</strong>
             <span>{item.label}</span>
           </Link>)}
@@ -106,7 +122,7 @@ export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref
       <div className="community-columns">
         <div className="community-main profile-arranged-main"><ProfileBlocks layout={profile.profileLayout}>
           <ProfileBlock block="experience">
-          <ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} expanded achievements={{ earned: visibleEarned.length + community.badges.length, total: visibleAchievements.length + BADGE_ACHIEVEMENTS.length }} /></ProfileBlock>
+          <ProfileExperience key={`${profile.username}:${experience?.xp}`} username={profile.username} initial={experience} expanded own={isOwn} achievements={{ earned: visibleEarned.length + community.badges.length, total: visibleAchievements.length + BADGE_ACHIEVEMENTS.length }} /></ProfileBlock>
           <ProfileBlock block="calendar"><DrinkCalendarBlock userId={profile.id} username={profile.username} isOwn={isOwn} /></ProfileBlock>
           <ProfileBlock block="collection"><BrandCollectionBlock summary={collection} username={profile.username} isOwn={isOwn} /></ProfileBlock>
           <ProfileBlock block="ratings">

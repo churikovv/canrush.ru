@@ -22,7 +22,7 @@
   position: relative;
   height: 120px;
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: var(--radius-2xl);
   background: var(--color-brand);
 }
 .auth-illustration::after {
@@ -98,7 +98,7 @@
 .sign-in-divider::after {
   flex: 1;
   height: 1px;
-  background: var(--theme-line, var(--color-control));
+  background: var(--theme-line);
   content: "";
 }
 .telegram-button {
@@ -109,7 +109,7 @@
   justify-content: center;
   gap: 10px;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: #0b7bc2;
   color: #ffffff;
   padding: 14px 18px;
@@ -140,7 +140,7 @@
 .telegram-sign-in-spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid var(--theme-line, var(--color-control));
+  border: 3px solid var(--theme-line);
   border-top-color: #0b7bc2;
   border-radius: 50%;
   animation: telegram-sign-in-spin 0.9s linear infinite;
@@ -171,13 +171,21 @@ html[data-telegram-app] .sign-in-card :is(.sign-in-divider, .sign-in-email) {
 .sign-in-head { display: grid; gap: 8px; margin-bottom: 4px; text-align: center; }
 .sign-in-head h1 { font-size: 2.25rem; }
 .sign-in-head p { margin: 0; color: var(--color-muted-strong); line-height: 1.45; text-wrap: balance; }
-.sign-in-audience { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 16px; background: var(--color-subtle); }
-.sign-in-audience button { min-height: 48px; border: 0; border-radius: 12px; background: transparent; color: var(--color-muted-strong); font: inherit; font-weight: 700; cursor: pointer; transition: background-color var(--motion-fast) ease-out, color var(--motion-fast) ease-out; }
+.sign-in-audience { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: var(--radius-lg); background: var(--color-subtle); }
+.sign-in-audience button { min-height: 48px; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-muted-strong); font: inherit; font-weight: 700; cursor: pointer; transition: background-color var(--motion-fast) ease-out, color var(--motion-fast) ease-out; }
 .sign-in-audience button:hover { color: var(--color-ink); }
 .sign-in-audience button[aria-checked="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 3px rgb(0 0 0 / 12%); }
 .sign-in-field { position: relative; }
-.sign-in-field input { width: 100%; min-height: 56px; padding: 0 52px 0 18px; border: 2px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-ink); font: inherit; font-size: 1rem; }
-.sign-in-clear { position: absolute; top: 6px; right: 6px; display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 12px; background: transparent; color: var(--color-muted-strong); cursor: pointer; }
+/* After the letter: the confirmation, then the code for a link that opened somewhere else. */
+.sign-in-sent { display: grid; gap: 16px; }
+.sign-in-code-label { color: var(--color-text); font-size: .9375rem; font-weight: 700; line-height: 1.35; }
+.sign-in-code input { width: 100%; min-height: 56px; padding: 0 18px; border: 2px solid transparent; border-radius: var(--radius-lg); background: var(--color-subtle); color: var(--color-ink); font: inherit; font-size: 1.5rem; font-weight: 700; letter-spacing: .32em; text-align: center; font-variant-numeric: tabular-nums; }
+.sign-in-code input::placeholder { color: var(--color-muted); letter-spacing: .32em; }
+.sign-in-code input:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 0; }
+.sign-in-code input[aria-invalid="true"] { border-color: var(--color-danger); background: var(--color-danger-soft); }
+.sign-in-resend { width: 100%; }
+.sign-in-field input { width: 100%; min-height: 56px; padding: 0 52px 0 18px; border: 2px solid transparent; border-radius: var(--radius-lg); background: var(--color-subtle); color: var(--color-ink); font: inherit; font-size: 1rem; }
+.sign-in-clear { position: absolute; top: 6px; right: 6px; display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-muted-strong); cursor: pointer; }
 .sign-in-clear:hover { color: var(--color-ink); }
 .sign-in-card .sign-in-email-button { border: 0; background: var(--color-brand); color: #fff; font-weight: 700; }
 .sign-in-card .sign-in-email-button:hover:not(:disabled) { background: color-mix(in srgb, var(--color-brand) 86%, #000); }

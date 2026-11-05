@@ -7,7 +7,7 @@ const pool = new Pool({ connectionString: databaseUrl, max: 4, allowExitOnIdle: 
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
 const { getFeed, setFollowing } = await import('../src/lib/profile-community');
 const { experienceLevel } = await import('../src/lib/experience-level');
-const { levelRank, RANK_UP_TIERS } = await import('../src/lib/level-tier');
+const { isDegreeAnnounced, levelRank, RANK_UP_TIERS } = await import('../src/lib/level-tier');
 
 const ids: string[] = [randomUUID(), randomUUID(), randomUUID()];
 const [a, b, c] = ids as [string, string, string];
@@ -44,7 +44,7 @@ describe.sequential('rank-up feed events', () => {
     for (const row of rows) {
       const rank = levelRank(experienceLevel(row.xp).level);
       expect(row.level).toBe(experienceLevel(row.xp).level);
-      expect([row.tier, row.degree]).toEqual((RANK_UP_TIERS as readonly string[]).includes(rank.tier.key) ? [rank.tier.key, rank.tier.key === 'legend' ? rank.degree : 1] : [null, null]);
+      expect([row.tier, row.degree]).toEqual((RANK_UP_TIERS as readonly string[]).includes(rank.tier.key) ? [rank.tier.key, isDegreeAnnounced(rank.tier.key) ? rank.degree : 1] : [null, null]);
     }
   });
   it('mixes rank-ups into the feed, newest first, and filters them by follows', async () => {

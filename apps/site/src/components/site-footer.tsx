@@ -7,6 +7,7 @@ import { MARKET_OPEN } from '@/lib/market-open';
 import { NRJ_PARTY } from '@/lib/partners';
 import { useRef, useSyncExternalStore } from 'react';
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react';
+import { RUSTORE_URL } from '@/lib/app-links';
 
 const COARSE_POINTER = '(pointer: coarse)';
 
@@ -16,8 +17,6 @@ function subscribeToPointer(onChange: () => void) {
   return () => query.removeEventListener('change', onChange);
 }
 
-/** The Android app's page in RuStore, with the marks RuStore asks for on its button (they count taps on it). */
-const RUSTORE_URL = 'https://www.rustore.ru/catalog/app/ru.canrush.app?utm_source=available_in_rustore&utm_medium=ru.canrush.app&rsm=1&mt_link_id=iios36&mt_sub1=ru.canrush.app';
 
 export function SiteFooter() {
   const footerRef = useRef<HTMLElement>(null);

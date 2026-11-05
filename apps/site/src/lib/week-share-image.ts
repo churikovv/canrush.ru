@@ -42,7 +42,7 @@ export async function renderWeekShare(digest: WeeklyDigest): Promise<Blob> {
   const canvas = document.createElement('canvas');
   canvas.width = width; canvas.height = height;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Не удалось создать изображение.');
+  if (!ctx) throw new Error('Не удалось создать изображение. Попробуйте ещё раз.');
 
   // Background and the slides' shapes: a lime disc, a pink rounded square, a blue ring.
   ctx.fillStyle = '#1e0b4f'; ctx.fillRect(0, 0, width, height);
@@ -116,5 +116,5 @@ export async function renderWeekShare(digest: WeeklyDigest): Promise<Blob> {
 
   ctx.fillStyle = '#fff'; ctx.font = `800 36px ${family}`; ctx.textAlign = 'right';
   ctx.fillText('canrush.ru', width - pad, height - pad);
-  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG.')), 'image/png'));
+  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG. Попробуйте ещё раз.')), 'image/png'));
 }

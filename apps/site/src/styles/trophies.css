@@ -3,7 +3,7 @@
    это и что даёт, внизу лента маленьких медалей. Плашки и кнопки — общие `.can-plate`, `.can-btn`, `.can-meter`. */
 /* The stage keeps at least 170 px: on a short window with the next tier open the emblem shrank to nothing; the screen
    scrolls instead. */
-.trophy-screen { --title-tint: #8db4ff; position: fixed; inset: 0; z-index: 40; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(170px, 1fr) auto auto; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 12px) 0 calc(env(safe-area-inset-bottom, 0px) + 10px); overflow: hidden auto; overscroll-behavior: contain; background: radial-gradient(120% 70% at 50% 44%, color-mix(in srgb, var(--rarity-mid, #3a4152) 30%, #0a0d14), #06070b 72%); color: #fff; line-height: 1.3; -webkit-user-select: none; user-select: none; transition: background-color 300ms ease-out; }
+.trophy-screen { --title-tint: #8db4ff; position: fixed; inset: 0; z-index: var(--layer-overlay); display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(170px, 1fr) auto auto; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 12px) 0 calc(env(safe-area-inset-bottom, 0px) + 10px); overflow: hidden auto; overscroll-behavior: contain; background: radial-gradient(120% 70% at 50% 44%, color-mix(in srgb, var(--rarity-mid, #3a4152) 30%, #0a0d14), #06070b 72%); color: #fff; line-height: 1.3; -webkit-user-select: none; user-select: none; transition: background-color 300ms ease-out; }
 .trophy-screen:not([data-earned]) { background: radial-gradient(120% 70% at 50% 44%, #1a1e29, #06070b 72%); }
 /* Особая редкость есть только у достижений: розовый металл, как у остальных токенов `--rarity-*` в shared.css. */
 .trophy-screen[data-rarity=special], .trophy-screen [data-rarity=special] { --rarity-light: #ffd6ec; --rarity-mid: #ff4fa3; --rarity-dark: #c0186b; --rarity-ink: #fff; --rarity-chip-from: var(--rarity-mid); --rarity-chip-to: var(--rarity-dark); --rarity-glow: rgb(255 70 160 / .45); }
@@ -37,7 +37,7 @@
 
 .trophy-filters { display: flex; gap: 8px; padding: 2px 16px; overflow-x: auto; scrollbar-width: none; }
 .trophy-filters::-webkit-scrollbar { display: none; }
-.trophy-chip { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px solid rgb(255 255 255 / .16); border-radius: 999px; background: rgb(255 255 255 / .06); color: #fff; font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; }
+.trophy-chip { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px solid rgb(255 255 255 / .16); border-radius: var(--radius-pill); background: rgb(255 255 255 / .06); color: #fff; font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; }
 .trophy-chip b { color: rgb(255 255 255 / .55); font-weight: 800; font-variant-numeric: tabular-nums; }
 .trophy-chip[aria-pressed="true"] { border-color: transparent; background: #fff; color: #0b0d14; }
 .trophy-chip[aria-pressed="true"] b { color: rgb(11 13 20 / .55); }
@@ -79,7 +79,7 @@
 .trophy-lock svg { width: 46%; height: 46%; }
 
 .trophy-info { display: grid; justify-items: center; gap: 8px; padding-inline: 16px; text-align: center; }
-.trophy-kicker { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; background: linear-gradient(135deg, var(--rarity-chip-from, #3a4152), var(--rarity-chip-to, #20242f)); color: var(--rarity-ink, #fff); font-size: .6875rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.trophy-kicker { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: var(--radius-pill); background: linear-gradient(135deg, var(--rarity-chip-from, #3a4152), var(--rarity-chip-to, #20242f)); color: var(--rarity-ink, #fff); font-size: .6875rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .trophy-info h2, .trophy-reveal h2 { max-width: 100%; margin: 0; font-size: 1.375rem; font-weight: 900; line-height: 1.15; overflow-wrap: anywhere; text-shadow: 0 2px 10px rgb(0 0 0 / .5); }
 .trophy-desc { max-width: 420px; margin: 0; color: rgb(255 255 255 / .72); font-size: .9375rem; line-height: 1.4; }
 .trophy-status { margin: 0; color: #9cf0b5; font-size: .875rem; font-weight: 800; }
@@ -90,7 +90,7 @@
 .trophy-steps li[data-done] > b { color: #9cf0b5; }
 .trophy-steps i { grid-column: 1 / -1; display: block; height: 6px; overflow: hidden; border-radius: 3px; background: linear-gradient(90deg, var(--rarity-mid, #fff) calc(var(--share) * 100%), rgb(255 255 255 / .12) 0); }
 .trophy-rewards { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.trophy-reward { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 999px; background: rgb(255 255 255 / .1); color: #ffd36b; font-size: .8125rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.trophy-reward { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: var(--radius-pill); background: rgb(255 255 255 / .1); color: #ffd36b; font-size: .8125rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 .trophy-reward svg { width: 15px; height: 15px; }
 .trophy-reward.is-plain { color: rgb(255 255 255 / .6); font-weight: 700; }
 .trophy-actions { display: flex; width: 100%; max-width: 420px; }
@@ -172,47 +172,18 @@
   .trophy-reveal-stage .trophy-art, .trophy-reveal-stage::after, .trophy-reveal-kicker,
   .trophy-reveal .trophy-desc, .trophy-reveal h2, .trophy-reveal .trophy-kicker, .trophy-reveal .trophy-rewards { animation: none; }
 }
-/* Achievement emblems (`AchievementEmblem`): a metal shape of the rarity with a dark recess and the line icon; tiers add
-   rings and a ribbon. The rarity's colours come from `[data-rarity]` (shared.css, special ones at the top of this file). */
-.ach-emblem { display: block; width: 100%; height: auto; overflow: visible; -webkit-user-drag: none; }
-.ach-inner-light { stop-color: color-mix(in srgb, var(--rarity-dark) 55%, #1a1f2b); }
-.ach-inner-dark { stop-color: #090b12; }
-.ach-glow { fill: none; stroke: var(--rarity-mid); stroke-width: 6; opacity: .35; }
-.ach-bevel { stroke: var(--rarity-light); stroke-width: 1.6; opacity: .7; }
-.ach-icon { stroke: #fff; filter: drop-shadow(0 0 2.5px var(--rarity-mid)); }
-.ach-icon-text { fill: #fff; font-family: inherit; font-weight: 900; letter-spacing: -.02em; }
-.ach-tier rect { fill: var(--rarity-dark); stroke: var(--rarity-light); stroke-width: 1.4; }
-.ach-tier text { fill: #fff; font-family: inherit; font-size: 10.5px; font-weight: 900; letter-spacing: .04em; }
-.ach-orbit { fill: none; stroke: var(--rarity-mid); stroke-width: 1.6; stroke-dasharray: 9 4; stroke-linecap: round; opacity: .8; transform-box: view-box; transform-origin: 50px 50px; }
-.ach-orbit-outer { stroke: var(--rarity-light); stroke-width: 1.1; stroke-dasharray: 1.5 5; opacity: .7; }
-.ach-rays { fill: var(--rarity-light); opacity: .22; transform-box: view-box; transform-origin: 50px 50px; }
-.ach-twinkle { fill: #fff; opacity: 0; transform-box: fill-box; transform-origin: center; }
-/* Locked: no colour, no motion (the medal's dark filter and progress ring do the rest). */
-.ach-emblem:not([data-earned]) .ach-icon { filter: none; opacity: .55; }
-.ach-emblem:not([data-earned]) .ach-glow { opacity: 0; }
-@media (prefers-reduced-motion: no-preference) {
-  .ach-emblem[data-earned] .ach-sheen { animation: ach-sheen 4.6s ease-in-out infinite; }
-  .ach-emblem[data-earned] .ach-orbit { animation: fx-spin 16s linear infinite; }
-  .ach-emblem[data-earned] .ach-orbit-outer { animation-duration: 24s; animation-direction: reverse; }
-  .ach-emblem[data-earned] .ach-rays { animation: fx-spin 22s linear infinite; }
-  .ach-emblem[data-earned] .ach-twinkle { animation: ach-twinkle 3s ease-in-out infinite; }
-  .ach-emblem[data-earned][data-rarity=legendary] .ach-glow, .ach-emblem[data-earned][data-tier="3"] .ach-glow { animation: ach-pulse 2.6s ease-in-out infinite; }
-}
-@keyframes ach-sheen { 0%, 55% { transform: translateX(0); } 100% { transform: translateX(170px); } }
-@keyframes ach-twinkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
-@keyframes ach-pulse { 0%, 100% { opacity: .25; } 50% { opacity: .7; } }
 .trophy-thumb .ach-emblem { width: 100%; height: 100%; }
 .trophy-thumb:not([data-earned]) .ach-emblem { filter: grayscale(1) brightness(.5); }
 /* Tiers like divisions: I — II — III in a row, the reached ones lit in the rarity's metal, the next one outlined. */
 .trophy-tiers { display: flex; align-items: center; gap: 6px; margin: 2px 0 4px; padding: 0; list-style: none; }
-.trophy-tiers li { display: grid; place-items: center; min-width: 40px; height: 26px; padding: 0 8px; border-radius: 999px; background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .4); font-size: .75rem; font-weight: 900; letter-spacing: .04em; }
+.trophy-tiers li { display: grid; place-items: center; min-width: 40px; height: 26px; padding: 0 8px; border-radius: var(--radius-pill); background: rgb(255 255 255 / .06); color: rgb(255 255 255 / .4); font-size: .75rem; font-weight: 900; letter-spacing: .04em; }
 .trophy-tiers li + li { position: relative; }
 .trophy-tiers li + li::before { content: ""; position: absolute; right: 100%; width: 6px; height: 2px; background: rgb(255 255 255 / .12); }
 .trophy-tiers li[data-done] { background: linear-gradient(135deg, var(--rarity-light), var(--rarity-mid) 55%, var(--rarity-dark)); color: var(--rarity-ink, #fff); box-shadow: 0 0 12px var(--rarity-glow, transparent); }
 .trophy-tiers li[data-done] + li[data-done]::before { background: var(--rarity-mid); }
 .trophy-tiers li[data-next] { box-shadow: inset 0 0 0 1.5px var(--rarity-mid); color: #fff; }
 .trophy-next-tier { display: grid; justify-items: center; gap: 8px; width: 100%; }
-.trophy-next-tier summary { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: 999px; background: rgb(255 255 255 / .07); color: rgb(255 255 255 / .85); font-size: .8125rem; font-weight: 800; cursor: pointer; list-style: none; }
+.trophy-next-tier summary { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: var(--radius-pill); background: rgb(255 255 255 / .07); color: rgb(255 255 255 / .85); font-size: .8125rem; font-weight: 800; cursor: pointer; list-style: none; }
 .trophy-next-tier summary::-webkit-details-marker { display: none; }
 .trophy-next-tier summary::after { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; rotate: 45deg; translate: 0 -2px; }
 .trophy-next-tier[open] summary::after { rotate: -135deg; translate: 0 2px; }

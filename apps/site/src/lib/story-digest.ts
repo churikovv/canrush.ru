@@ -1,10 +1,11 @@
 import type { CatalogGroup } from '@canrush/shared';
 import { getPool } from '@/db/pool';
-import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
+import { catalogGroupSlug, catalogRetailerCount, flavorName } from '@/lib/catalog-query';
 import { addDays, moscowDay } from '@/lib/drink-calendar-fields';
 import { getDrinkOverview } from '@/lib/drink-calendar';
 import type { Preference, RatedPreference } from '@/lib/profile-compatibility';
 import { drinkKey, rankRecommendations, type CatalogDrink, type RecommendationReason, type TasteProfile } from '@/lib/story-recommendations';
+import { tasteCard, type TasteSignal } from '@/lib/taste-card-fields';
 
 /** «Твоя неделя»: seven days (Moscow) ending with `today`; the home page passes last Sunday, so it is the finished week. */
 export interface WeeklyDigest {
@@ -54,8 +55,26 @@ export async function getWeeklyDigest(userId: string, today = moscowDay()): Prom
 }
 
 export type PickReason = RecommendationReason | { kind: 'community'; taste: number; reviews: number };
-export interface StoryRecommendation { brand: string; name: string; href: string; cover: string | null; reason: PickReason }
-export interface Recommendations { basis: 'similar' | 'community'; items: StoryRecommendation[] }
+/** A drink of the viewer's own: the full label, and the flavour alone for lines that already name the brand. */
+export interface PickDrink { label: string; flavor: string; cover: string | null }
+export interface StoryRecommendation {
+  brand: string; flavor: string; name: string; href: string; cover: string | null; reason: PickReason;
+  /** «Совпадение» 60–98 %; `null` for the community's picks, which say nothing about the viewer. */
+  match: number | null;
+  /** The viewer's own liked drinks behind the pick. */
+  because: PickDrink[];
+  /** People with a similar taste who like it openly (a rating or a favourite), with a nickname, not blocked either way. */
+  fans: { username: string; avatarId: string | null }[];
+  /** The lowest price in the viewer's city and the number of chains; `null` when nobody sells it now. */
+  price: number | null; stores: number; sugarfree: boolean;
+}
+/** What the picks know about the viewer, for the story's first slide. */
+export interface PicksProfile {
+  /** «Твой вкус» archetype and its line, once there are enough decisions (`tasteCard`). */
+  title: string | null; lead: string | null; loves: string[]; brand: string | null; sugarfree: boolean;
+  reviews: number; favorites: number; swipes: number;
+}
+export interface Recommendations { basis: 'similar' | 'community'; items: StoryRecommendation[]; profile: PicksProfile }
 
 const CANDIDATES = 60;
 
@@ -104,19 +123,52 @@ export async function getRecommendations(userId: string, groups: CatalogGroup[])
   const db = getPool();
   const byKey = new Map(groups.map(group => [drinkKey(group), group]));
   const { viewer, members } = await tasteNeighbourhood(userId);
-  const toItem = (brand: string, flavor: string, reason: PickReason): StoryRecommendation | null => {
+  const drink = (item: { brand: string; flavor: string }): PickDrink => {
+    const group = byKey.get(drinkKey(item));
+    return group ? { label: `${group.brand} ${flavorName(group.flavor)}`, flavor: flavorName(group.flavor), cover: group.coverImageUrl ?? null }
+      : { label: `${item.brand} ${flavorName(item.flavor)}`, flavor: flavorName(item.flavor), cover: null };
+  };
+  const toItem = (brand: string, flavor: string, reason: PickReason, extra: Pick<StoryRecommendation, 'match' | 'because' | 'fans'>): StoryRecommendation | null => {
     const group = byKey.get(drinkKey({ brand, flavor }));
-    return group ? { brand: group.brand, name: flavorName(group.flavor), href: `/catalog/${catalogGroupSlug(group.brand, group.flavor)}`, cover: group.coverImageUrl ?? null, reason } : null;
+    if (!group) return null;
+    const selling = group.variants.length > 0;
+    return {
+      brand: group.brand, flavor: group.flavor, name: flavorName(group.flavor), href: `/catalog/${catalogGroupSlug(group.brand, group.flavor)}`, cover: group.coverImageUrl ?? null, reason,
+      ...extra, price: selling && group.minPrice > 0 ? group.minPrice : null, stores: selling ? catalogRetailerCount(group) : 0, sugarfree: /(^|:)(sugarfree|sweetener)\b/.test(group.flavor),
+    };
+  };
+
+  // The same decisions as the «Твой вкус» card in dating: liked swipes and favourites, clear taste ratings.
+  const signals: TasteSignal[] = [
+    ...(viewer.swipes ?? []).map(item => ({ brand: item.brand, flavor: item.flavor, liked: item.liked, source: 'swipe' as const })),
+    ...viewer.favorites.map(item => ({ brand: item.brand, flavor: item.flavor, liked: true, source: 'favorite' as const })),
+    ...viewer.reviews.filter(review => review.taste >= 7 || review.taste <= 4).map(review => ({ brand: review.brand, flavor: review.flavor, liked: review.taste >= 7, source: 'review' as const })),
+  ];
+  const card = tasteCard(signals);
+  const profile: PicksProfile = {
+    title: card?.title ?? null, lead: card?.lead ?? null, loves: card?.loves.map(item => item.label) ?? [], brand: card?.brand?.name ?? null, sugarfree: card?.sugarfree === 'loves',
+    reviews: new Set(viewer.reviews.map(drinkKey)).size, favorites: viewer.favorites.length, swipes: viewer.swipes?.length ?? 0,
   };
 
   const catalog: CatalogDrink[] = groups.map(group => ({ brand: group.brand, flavor: group.flavor, inStock: group.variants.length > 0 }));
-  const items = rankRecommendations(viewer, members, catalog).flatMap(drink => toItem(drink.brand, drink.flavor, drink.reason) ?? []);
-  if (items.length >= 3) return { basis: 'similar', items };
+  const ranked = rankRecommendations(viewer, members, catalog);
+  // Fans are shown by nickname only when they are on the site openly: a nickname, no site block, no block either way.
+  const fanIds = [...new Set(ranked.flatMap(item => item.publicFans))];
+  const fans = fanIds.length ? new Map((await db.query<{ id: string; username: string; avatarId: string | null }>(
+    `select u.id, u.username, (select id::text from "profileImage" where "userId" = u.id and kind = 'avatar') as "avatarId" from "user" u
+      where u.id = any($2::text[]) and u.username is not null and not exists(select 1 from "userBlock" b where b."userId" = u.id)
+        and not exists(select 1 from "memberBlock" m where (m."blockerId" = $1 and m."blockedId" = u.id) or (m."blockerId" = u.id and m."blockedId" = $1))`,
+    [userId, fanIds])).rows.map(row => [row.id, { username: row.username, avatarId: row.avatarId }])) : new Map<string, { username: string; avatarId: string | null }>();
+  const items = ranked.flatMap(item => toItem(item.brand, item.flavor, item.reason, {
+    match: item.match, because: item.because.map(drink),
+    fans: item.publicFans.flatMap(id => fans.get(id) ?? []),
+  }) ?? []);
+  if (items.length >= 3) return { basis: 'similar', items, profile };
 
   const tried = new Set([...viewer.favorites, ...viewer.reviews, ...viewer.drinks, ...(viewer.swipes ?? [])].map(drinkKey));
   const { rows } = await db.query<{ brand: string; flavor: string; count: number; taste: number }>(
     `select brand, flavor, count(*)::int as count, avg(taste)::float as taste from review group by brand, flavor having count(*) >= 2 order by avg(taste) desc, count(*) desc limit 40`);
   const popular = rows.filter(row => !tried.has(drinkKey(row)))
-    .flatMap(row => toItem(row.brand, row.flavor, { kind: 'community', taste: Math.round(row.taste * 10) / 10, reviews: row.count }) ?? []).slice(0, 5);
-  return { basis: 'community', items: popular };
+    .flatMap(row => toItem(row.brand, row.flavor, { kind: 'community', taste: Math.round(row.taste * 10) / 10, reviews: row.count }, { match: null, because: [], fans: [] }) ?? []).slice(0, 5);
+  return { basis: 'community', items: popular, profile };
 }

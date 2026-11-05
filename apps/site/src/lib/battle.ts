@@ -113,6 +113,15 @@ async function paidToday(db: Queryable, userId: string) {
   return (await db.query<{ n: number }>(`select count(*)::int n from "ringLedger" where "userId" = $1 and reason = 'battle' and "createdAt" >= ${dayStart}`, [userId])).rows[0]?.n ?? 0;
 }
 
+/** Для баннера битвы на главной: колечки, сколько побед сегодня ещё оплатится и идёт ли бой. Без колоды — она дорогая. */
+export interface BattleTeaser { rings: number; paidLeft: number; inBattle: boolean }
+export async function getBattleTeaser(userId: string): Promise<BattleTeaser> {
+  const pool = getPool();
+  const [rings, paid, row] = await Promise.all([ringsOf(pool, userId), paidToday(pool, userId),
+    pool.query<{ active: boolean }>(`select exists(select 1 from "battle" where "userId" = $1 and status = 'active') as active`, [userId])]);
+  return { rings, paidLeft: Math.max(0, PAID_WINS_PER_DAY - paid), inBattle: row.rows[0]?.active ?? false };
+}
+
 /** Главный экран боя: идущий бой, если есть, и колода, с которой участник выйдет. */
 export async function getBattleHome(userId: string, drinks?: GachaDrink[], now = Date.now()): Promise<BattleHome> {
   const pool = getPool();

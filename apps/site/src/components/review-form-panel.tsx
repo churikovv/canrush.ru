@@ -16,7 +16,12 @@ export function ReviewFormPanel({ brand, flavor, existing, authenticated }: { br
   useEffect(() => {
     const show = () => setOpen(true);
     window.addEventListener(REVIEW_EDIT_EVENT, show);
-    return () => window.removeEventListener(REVIEW_EDIT_EVENT, show);
+    // «Оценить» from the dating deck links to `?tab=reviews#write-review`: the sheet opens with the form already open.
+    const timer = window.location.hash === '#write-review' ? window.setTimeout(() => {
+      setOpen(true);
+      window.setTimeout(() => document.getElementById('review-form-panel')?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 120);
+    }, 0) : 0;
+    return () => { window.removeEventListener(REVIEW_EDIT_EVENT, show); window.clearTimeout(timer); };
   }, []);
   const toggle = () => {
     if (open) { setOpen(false); return; }

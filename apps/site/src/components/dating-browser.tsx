@@ -6,6 +6,8 @@ import { auth } from '@/lib/auth';
 import { loadCatalogSnapshot } from '@/lib/catalog';
 import { withCatalogDrinks } from '@/lib/catalog-drinks';
 import { datingRewards, getDatingProgress, getLikedSwipes, getSwipeDeck } from '@/lib/drink-swipes';
+import { peopleSchedule } from '@/lib/people-suggestions';
+import { XP_SOURCES } from '@/lib/xp-sources';
 
 /**
  * «Дейтинг» in the community: a deck of drinks to swipe right («нравится») or left («пропустить»). Signed in, the
@@ -16,13 +18,14 @@ export async function DatingBrowser() {
   // The city's drinks in shops and the ones members added (they have no prices yet but can be dated all the same).
   const groups = await withCatalogDrinks(snapshot.groups);
   const viewerId = session?.user.id ?? null;
-  const [deck, liked, progress] = await Promise.all([getSwipeDeck(viewerId, groups), viewerId ? getLikedSwipes(viewerId, groups) : [], viewerId ? getDatingProgress(viewerId) : null]);
+  const [deck, liked, progress, peopleAt] = await Promise.all([getSwipeDeck(viewerId, groups), viewerId ? getLikedSwipes(viewerId, groups) : [], viewerId ? getDatingProgress(viewerId) : null,
+    viewerId ? peopleSchedule(viewerId).catch(() => []) : []]);
   return <div className="dating">
     <header className="dating-head">
       <h1>Дейтинг напитков</h1>
       <p>Вправо — нравится, влево — пропустить. <span>Чем больше свайпов, тем точнее «Тебе понравится».</span></p>
     </header>
-    <SwipeDeck cards={deck} signedIn={Boolean(viewerId)} rewards={datingRewards()} progress={progress} />
+    <SwipeDeck cards={deck} signedIn={Boolean(viewerId)} rewards={datingRewards()} progress={progress} peopleAt={peopleAt} reviewXp={XP_SOURCES.find(source => source.reason === 'review')?.points} />
     {liked.length > 0 && <section className="dating-matches" aria-labelledby="dating-matches-title">
       <h2 id="dating-matches-title">Твои мэтчи</h2>
       <ul>{liked.map(item => <li key={`${item.brand}:${item.flavor}`}><Link href={item.href}>

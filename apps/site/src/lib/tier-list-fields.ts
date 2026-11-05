@@ -85,7 +85,7 @@ export function validateTierListInput(values: { title: string; emoji?: string; i
   if (emoji && !(TIER_LIST_EMOJIS as readonly string[]).includes(emoji)) errors.emoji = 'Выберите эмодзи из списка.';
   if (!tiers) errors.tiers = 'Выберите от одной до шести разных секций.';
   if (items && tiers && items.some(item => !tiers.includes(item.tier))) errors.items = 'Восстановите секцию или переместите из неё напитки.';
-  if (!items) errors.items = 'Не удалось прочитать расположение товаров.';
+  if (!items) errors.items = 'Не удалось прочитать расположение товаров. Обновите страницу и попробуйте ещё раз.';
 
   return Object.keys(errors).length > 0 ? { errors } : { data: { title, emoji, items: items ?? [], tiers: tiers ?? [] } };
 }

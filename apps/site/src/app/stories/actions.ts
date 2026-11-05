@@ -30,7 +30,7 @@ export async function deleteStoryAction(id: string): Promise<StoryActionState> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { error: 'Войдите в аккаунт и повторите действие.' };
   try { await deleteStory(session.user.id, id); revalidatePath('/'); return {}; }
-  catch (error) { return { error: error instanceof StoryError ? error.message : 'Не удалось удалить историю.' }; }
+  catch (error) { return { error: error instanceof StoryError ? error.message : 'Не удалось удалить историю. Попробуйте ещё раз.' }; }
 }
 
 const STORY_ID = /^[0-9a-f-]{36}$/u;
@@ -41,7 +41,7 @@ export async function likeStoryAction(id: string, like: boolean): Promise<{ erro
   if (!session) return { error: 'Войдите, чтобы ставить лайки историям.', signIn: true };
   if (typeof id !== 'string' || !STORY_ID.test(id) || typeof like !== 'boolean') return { error: 'История недоступна.' };
   try { return { likes: await setStoryLike(session.user.id, id, like) }; }
-  catch (error) { return { error: error instanceof StoryError ? error.message : 'Не удалось поставить лайк.' }; }
+  catch (error) { return { error: error instanceof StoryError ? error.message : 'Не удалось поставить лайк. Попробуйте ещё раз.' }; }
 }
 
 /** The author's list of who liked their story. */

@@ -50,7 +50,7 @@ export async function signInWithTelegram(webApp: TelegramWebApp, createAccount: 
     method: 'POST',
     body: { initData: webApp.initData, createAccount },
   });
-  if (error || !data) return { status: 'error', message: error?.message || 'Не удалось войти через Telegram.' };
+  if (error || !data) return { status: 'error', message: error?.message || 'Не удалось войти через Telegram. Попробуйте ещё раз или войдите по почте.' };
   return data;
 }
 

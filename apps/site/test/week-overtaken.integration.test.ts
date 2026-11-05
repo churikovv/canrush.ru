@@ -46,12 +46,12 @@ it('tells the members of the week top five that someone passed them, with the ne
   expect(await overtaken(sixth)).toEqual([]);
   expect(await overtaken(fourth)).toEqual([]);
   const { items } = await getNotifications(fifth);
-  expect(items[0]).toMatchObject({ kind: 'overtaken', title: `@${username(chaser)} обогнал вас в топе недели`, detail: 'Теперь вы на 6 месте · отставание 50 XP', href: '/leaderboard' });
+  expect(items[0]).toMatchObject({ kind: 'overtaken', title: `@${username(chaser)} теперь выше вас в топе недели`, detail: 'Вы на 6 месте · отставание 50 XP', href: '/leaderboard' });
   // The Telegram bot gets the same notification through notification_telegram, rendered with an «Открыть» button.
   const queued = (await pool.query<{ kind: 'notification'; payload: Record<string, unknown> }>(`select kind, payload from "telegramOutbox" where "chatId" = $1`, [telegramId])).rows;
   expect(queued).toHaveLength(1);
   const message = await renderOutboxMessage(queued[0]!, 'https://canrush.ru');
-  expect(message?.text).toBe(`🔔 <b>@${username(chaser)} обогнал вас в топе недели</b>\nТеперь вы на 6 месте · отставание 50 XP`);
+  expect(message?.text).toBe(`🔔 <b>@${username(chaser)} теперь выше вас в топе недели</b>\nВы на 6 месте · отставание 50 XP`);
   expect(JSON.stringify(message?.keyboard)).toContain('https://canrush.ru/leaderboard');
 });
 

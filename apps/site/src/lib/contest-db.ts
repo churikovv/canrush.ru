@@ -120,7 +120,7 @@ export function confirmContestWinner(contest: Contest, adminEmail: string, drawI
       where id = $1 and contest = $2 and status = 'pending' returning "winnerId"`, [drawId, contest.key, adminEmail]);
     const winnerId = rows[0]?.winnerId;
     if (!rows[0]) throw new ContestError('Этот розыгрыш уже закрыт. Обновите страницу.');
-    if (!winnerId) throw new ContestError('Победитель удалил аккаунт — переиграйте.');
+    if (!winnerId) throw new ContestError('Аккаунт победителя удалён — переиграйте.');
     if (contest.tag) await client.query('insert into "profileAchievement" ("userId", key) values ($1, $2) on conflict do nothing', [winnerId, contest.tag]);
     await audit(client, adminEmail, 'confirm', `${contest.key}:${winnerId}`);
   });

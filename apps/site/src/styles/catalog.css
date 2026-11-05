@@ -42,7 +42,7 @@
   display: grid;
   gap: 16px;
   border: 1px solid var(--color-control);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
   padding: 16px;
 }
@@ -50,7 +50,7 @@
   width: 100%;
   min-height: 48px;
   border: 1px solid transparent;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--color-subtle);
   color: var(--color-text);
   padding: 10px 12px;
@@ -89,7 +89,7 @@
   width: 278px;
   max-width: 100%;
   aspect-ratio: 1;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--color-subtle);
 }
 .catalog-product-information {
@@ -114,9 +114,9 @@
   max-width: 55%;
   min-height: 28px;
   align-items: center;
-  border-radius: 8px;
-  background: var(--theme-subtle, #f3f5f5);
-  color: var(--theme-text, #454b50);
+  border-radius: var(--radius-sm);
+  background: var(--theme-subtle);
+  color: var(--theme-text);
   padding: 5px 10px;
   font-size: 0.75rem;
   line-height: 1.4;
@@ -162,7 +162,7 @@
   display: grid;
   gap: 12px;
   border: 1px solid var(--color-control);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 12px;
   grid-template-columns: 1fr;
 }
@@ -222,10 +222,10 @@
   border-radius: 50%;
   background: var(--color-subtle);
   color: var(--color-muted-strong);
-  transition: background-color 150ms ease-out, color 150ms ease-out;
+  transition: background-color var(--motion-fast) ease-out, color var(--motion-fast) ease-out;
 }
 .catalog-store-offer-arrow svg {
-  transition: transform 150ms ease-out;
+  transition: transform var(--motion-fast) ease-out;
 }
 .catalog-store-offer:is(:hover, :focus-visible) .catalog-store-offer-arrow {
   background: var(--color-brand);
@@ -244,7 +244,7 @@
 .catalog-ingredients-card {
   padding: 20px;
   border: 1px solid var(--color-control);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
 }
 .catalog-ingredients-text {
@@ -269,7 +269,7 @@
   gap: 6px;
   min-height: 26px;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-subtle);
   color: var(--color-muted-strong);
   font-size: .8125rem;
@@ -328,7 +328,7 @@
   flex-direction: column-reverse;
   gap: 2px;
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--color-subtle);
 }
 .catalog-nutrition-active dd {
@@ -354,7 +354,7 @@
 .catalog-nutrition-table {
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   border: 1px solid var(--color-control);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 .catalog-nutrition-table > div {
@@ -436,16 +436,16 @@
 .catalog-filter-count { color: var(--color-brand-deep); font-weight: 700; }
 .catalog-filter-panel { top: calc(100% + 8px); }
 @media (max-width: 639px) { .catalog-layout > .catalog-city-caption { display: none; } }
-.catalog-store-volume { border: 1px solid var(--color-control); border-radius: 16px; padding: 20px; gap: 16px; }
+.catalog-store-volume { border: 1px solid var(--color-control); border-radius: var(--radius-lg); padding: 20px; gap: 16px; }
 .catalog-store-volume .catalog-store-list { border: 0; padding: 0; border-radius: 0; }
-.catalog-volume-card { border: 1px solid var(--color-control); border-radius: 16px; padding: 20px; }
+.catalog-volume-card { border: 1px solid var(--color-control); border-radius: var(--radius-lg); padding: 20px; }
 .catalog-volume-card .catalog-store-volume { border: 0; padding: 0; }
 .catalog-volume-card .catalog-store-volume h3 { display: none; }
 .catalog-archive-heading { grid-column: 1 / -1; margin-top: 24px; }
 /* Review order: a compact segmented switch above the list. */
-.review-sort { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--color-subtle); width: fit-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.review-sort { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--radius-md); background: var(--color-subtle); width: fit-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .review-sort::-webkit-scrollbar { display: none; }
-.review-sort button { flex-shrink: 0; min-height: 36px; padding: 6px 14px; border: 0; border-radius: 9px; background: transparent; color: var(--color-muted-strong); font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.review-sort button { flex-shrink: 0; min-height: 36px; padding: 6px 14px; border: 0; border-radius: 9px; background: transparent; color: var(--color-muted-strong); font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; transition: background-color var(--motion-fast) ease-out, color var(--motion-fast) ease-out; }
 .review-sort button:hover { color: var(--color-ink); }
 .review-sort button[aria-pressed="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
 .review-sort button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
@@ -453,19 +453,19 @@
 
 /* Dating counts under the drink name: hearts from right swipes, crosses from left ones. */
 /* «В дейтинге»: its own card island under the name, like the other panels of the product. */
-.catalog-swipe-card { display: grid; gap: 12px; margin: 8px 0 16px; padding: 16px 20px; border: 1px solid var(--color-control); border-radius: 16px; background: var(--color-surface); }
+.catalog-swipe-card { display: grid; gap: 12px; margin: 8px 0 16px; padding: 16px 20px; border: 1px solid var(--color-control); border-radius: var(--radius-lg); background: var(--color-surface); }
 .catalog-swipe-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .catalog-swipe-head strong { font-size: 1rem; }
-.catalog-swipe-head a { padding: 6px 12px; border-radius: 999px; background: var(--color-subtle); color: var(--theme-link, #0058cc); font-size: .875rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.catalog-swipe-head a { padding: 6px 12px; border-radius: var(--radius-pill); background: var(--color-subtle); color: var(--theme-link); font-size: .875rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .catalog-swipe-head a:hover { background: var(--color-control); }
 .catalog-swipe-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.catalog-swipe-stats > span { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .8125rem; }
+.catalog-swipe-stats > span { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--color-subtle); color: var(--color-muted-strong); font-size: .8125rem; }
 .catalog-swipe-stats svg { grid-row: span 2; }
 .catalog-swipe-stats b { color: var(--color-ink); font-size: 1.375rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .catalog-swipe-stats .is-liked svg { color: #e5484d; }
 .catalog-swipe-stats .is-skipped svg { color: var(--color-muted-strong); }
 /* Share of «нравится» among all decisions; the rest of the track is «пропустили». */
-.catalog-swipe-bar { display: block; height: 6px; overflow: hidden; border-radius: 999px; background: var(--color-control); }
+.catalog-swipe-bar { display: block; height: 6px; overflow: hidden; border-radius: var(--radius-pill); background: var(--color-control); }
 .catalog-swipe-bar > span { display: block; height: 100%; border-radius: inherit; background: #e5484d; }
 
 /* «Добавить напиток» (/catalog/new): the store form's steps with pill choices for flavours and volumes. */
@@ -474,20 +474,20 @@
 /* The flavour field: chosen flavours as chips inside one text field, suggestions drop down while typing. */
 .catalog-flavor-label { font-size: .875rem; font-weight: 600; }
 .catalog-flavor-input { position: relative; margin-top: 8px; }
-.catalog-flavor-field { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 52px; padding: 6px 8px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); cursor: text; }
+.catalog-flavor-field { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 52px; padding: 6px 8px; border: 1px solid transparent; border-radius: var(--radius-lg); background: var(--color-subtle); cursor: text; }
 .catalog-flavor-field:focus-within { border-color: var(--color-brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 22%, transparent); }
 .store-form .catalog-flavor-field input:not([type=hidden]) { flex: 1; min-width: 140px; min-height: 36px; padding: 0 6px; border: 0; background: transparent; box-shadow: none; outline: none; }
 .catalog-flavor-plus { color: var(--color-muted-strong); font-weight: 800; }
-.catalog-flavor-chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 6px 5px 12px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .875rem; font-weight: 700; animation: flavor-chip-in 180ms ease-out; }
+.catalog-flavor-chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 6px 5px 12px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font-size: .875rem; font-weight: 700; animation: flavor-chip-in 180ms ease-out; }
 .catalog-flavor-chip[data-own] { background: color-mix(in srgb, var(--color-brand) 16%, var(--color-surface)); color: var(--color-brand); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand) 50%, transparent); }
 .catalog-flavor-chip button { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: rgb(255 255 255 / .2); color: inherit; cursor: pointer; }
 .catalog-flavor-chip[data-own] button { background: color-mix(in srgb, var(--color-brand) 18%, transparent); }
 @keyframes flavor-chip-in { from { opacity: 0; transform: scale(.85); } }
-.catalog-flavor-options { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0; max-height: 300px; margin: 0; padding: 6px; overflow-y: auto; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); box-shadow: 0 18px 40px -18px rgb(0 0 0 / .45); list-style: none; }
+.catalog-flavor-options { position: absolute; z-index: var(--layer-raised); top: calc(100% + 6px); left: 0; right: 0; max-height: 300px; margin: 0; padding: 6px; overflow-y: auto; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); box-shadow: var(--shadow-popover); list-style: none; }
 .catalog-flavor-options li { padding: 10px 12px; border-radius: 10px; cursor: pointer; }
 .catalog-flavor-options li[aria-selected=true] { background: var(--color-subtle); }
 .catalog-flavor-options b { color: var(--color-brand); }
-.catalog-drink-chips button { min-height: 38px; padding: 6px 14px; border: 1px solid var(--color-control); border-radius: 999px; background: var(--color-surface); color: var(--color-text); font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out; }
+.catalog-drink-chips button { min-height: 38px; padding: 6px 14px; border: 1px solid var(--color-control); border-radius: var(--radius-pill); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer; transition: background-color var(--motion-fast) ease-out, border-color var(--motion-fast) ease-out; }
 .catalog-drink-chips button[aria-pressed=true] { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
 .catalog-drink-chips button:disabled { opacity: .45; cursor: default; }
 /* Sugar: three choice cards (с сахаром / без сахара / с сахарозаменителем), the chosen one in the brand colour. */
@@ -495,19 +495,19 @@
 /* One mark on top of the sugar choice, as wide as the sugar row. */
 .store-form .catalog-drink-juice { grid-template-columns: 1fr; }
 /* «Больше не производится»: a row with a switch on the right (a checkbox with role=switch). */
-.store-form .catalog-drink-discontinued { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); cursor: pointer; transition: border-color 150ms ease-out, background-color 150ms ease-out; }
+.store-form .catalog-drink-discontinued { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); cursor: pointer; transition: border-color var(--motion-fast) ease-out, background-color var(--motion-fast) ease-out; }
 .store-form .catalog-drink-discontinued:has(input:checked) { border-color: color-mix(in srgb, var(--color-brand) 60%, transparent); background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface)); }
 .catalog-drink-discontinued > span { display: grid; gap: 2px; min-width: 0; }
 .catalog-drink-discontinued small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 400; line-height: 1.4; }
-.store-form .catalog-drink-discontinued input:not([type=hidden]) { position: relative; flex: none; appearance: none; width: 48px; height: 28px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 999px; background: var(--color-control); cursor: pointer; transition: background-color 150ms ease-out; }
-.store-form .catalog-drink-discontinued input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .3); transition: transform 150ms ease-out; }
+.store-form .catalog-drink-discontinued input:not([type=hidden]) { position: relative; flex: none; appearance: none; width: 48px; height: 28px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: var(--radius-pill); background: var(--color-control); cursor: pointer; transition: background-color var(--motion-fast) ease-out; }
+.store-form .catalog-drink-discontinued input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .3); transition: transform var(--motion-fast) ease-out; }
 .store-form .catalog-drink-discontinued input:checked { background: var(--color-brand); }
 .store-form .catalog-drink-discontinued input:checked::after { transform: translateX(20px); }
 .store-form .catalog-drink-discontinued input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .store-form .catalog-drink-discontinued input, .store-form .catalog-drink-discontinued input::after { transition: none; } }
-.catalog-drink-archived { justify-self: start; width: fit-content; padding: 3px 10px; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .75rem; font-weight: 700; }
+.catalog-drink-archived { justify-self: start; width: fit-content; padding: 3px 10px; border-radius: var(--radius-pill); background: var(--color-subtle); color: var(--color-muted-strong); font-size: .75rem; font-weight: 700; }
 .catalog-drink-sugar legend { grid-column: 1 / -1; margin-bottom: 8px; padding: 0; }
-.store-form .catalog-drink-sugar-option { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); cursor: pointer; transition: border-color 150ms ease-out, background-color 150ms ease-out; }
+.store-form .catalog-drink-sugar-option { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid var(--color-control); border-radius: 14px; background: var(--color-surface); cursor: pointer; transition: border-color var(--motion-fast) ease-out, background-color var(--motion-fast) ease-out; }
 .store-form .catalog-drink-sugar-option:has(input:checked) { border-color: color-mix(in srgb, var(--color-brand) 60%, transparent); background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface)); }
 .store-form .catalog-drink-sugar-option input:not([type=hidden]) { flex: none; width: 18px; height: 18px; min-height: 0; margin: 2px 0 0; accent-color: var(--color-brand); }
 .catalog-drink-sugar-option span { display: grid; gap: 2px; min-width: 0; }
@@ -518,8 +518,8 @@
 .catalog-drink-volume { display: flex; gap: 8px; margin-top: 10px; }
 .catalog-drink-volume label { flex: 1; max-width: 200px; }
 .catalog-drink-count { justify-self: end; color: var(--color-muted-strong); font-size: .75rem; font-variant-numeric: tabular-nums; }
-.catalog-drink-preview { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; align-items: start; padding: 16px; border: 1px solid var(--color-control); border-radius: 16px; }
-.catalog-drink-preview-cover { display: grid; place-items: center; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 12px; background: #fff; }
+.catalog-drink-preview { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; align-items: start; padding: 16px; border: 1px solid var(--color-control); border-radius: var(--radius-lg); }
+.catalog-drink-preview-cover { display: grid; place-items: center; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--radius-md); background: #fff; }
 .catalog-drink-preview-cover img { width: 100%; height: 100%; object-fit: contain; }
 .catalog-drink-preview > div { display: grid; gap: 4px; min-width: 0; }
 .catalog-drink-preview small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
@@ -529,17 +529,17 @@
 .catalog-drink-rules { display: grid; gap: 6px; margin: 0; padding-left: 20px; color: var(--color-muted-strong); font-size: .875rem; }
 .catalog-drink-requests { max-width: 720px; margin-top: 32px; }
 .catalog-pending-search { display: flex; gap: 8px; max-width: 720px; margin: 8px 0 4px; }
-.catalog-pending-search input { flex: 1; min-width: 0; min-height: 48px; padding: 10px 14px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-ink); font: inherit; }
+.catalog-pending-search input { flex: 1; min-width: 0; min-height: 48px; padding: 10px 14px; border: 1px solid transparent; border-radius: var(--radius-lg); background: var(--color-subtle); color: var(--color-ink); font: inherit; }
 .catalog-pending-count { min-height: 1.2em; margin: 8px 0 12px; color: var(--color-muted-strong); font-size: .875rem; }
 .catalog-pending-list { display: grid; gap: 8px; max-width: 720px; margin: 0; padding: 0; list-style: none; }
-.catalog-pending-list li { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--color-control); border-radius: 16px; }
+.catalog-pending-list li { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--color-control); border-radius: var(--radius-lg); }
 .catalog-pending-list li > div { display: grid; gap: 2px; min-width: 0; }
 .catalog-pending-list small { color: var(--color-muted-strong); font-size: .8125rem; }
 .catalog-pending-list strong { overflow-wrap: anywhere; }
 .catalog-pending-full, .catalog-pending-meta { color: var(--color-muted-strong); font-size: .875rem; overflow-wrap: anywhere; }
-.catalog-pending-meta a { color: var(--theme-link, #0058cc); }
-.catalog-pending-can { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 12px; background: var(--color-subtle); color: var(--color-muted-strong); }
-.catalog-pending-empty { display: grid; justify-items: start; gap: 6px; max-width: 720px; padding: 20px; border: 1px dashed var(--color-control); border-radius: 16px; }
+.catalog-pending-meta a { color: var(--theme-link); }
+.catalog-pending-can { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--color-subtle); color: var(--color-muted-strong); }
+.catalog-pending-empty { display: grid; justify-items: start; gap: 6px; max-width: 720px; padding: 20px; border: 1px dashed var(--color-control); border-radius: var(--radius-lg); }
 .catalog-pending-empty span { color: var(--color-muted-strong); }
 .catalog-pending-empty .community-button { margin-top: 8px; }
 @media (max-width: 639px) { .catalog-pending-empty { justify-items: stretch; } .catalog-pending-empty .community-button { width: 100%; justify-content: center; text-align: center; } }
@@ -547,14 +547,14 @@
 @media (pointer: coarse) { .catalog-pending-search input { font-size: 1rem; } }
 .catalog-drink-requests h2 { margin: 0 0 12px; font-size: 1.25rem; }
 .catalog-drink-requests ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.catalog-drink-requests li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--color-control); border-radius: 16px; }
+.catalog-drink-requests li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--color-control); border-radius: var(--radius-lg); }
 .catalog-drink-requests li > div { display: grid; gap: 4px; min-width: 0; }
 .catalog-drink-requests p { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; }
 .catalog-drink-requests small { color: var(--color-muted-strong); }
-.catalog-drink-requests a { color: var(--theme-link, #0058cc); font-size: .875rem; font-weight: 700; }
-.catalog-drink-request-cover { width: 56px; height: 56px; overflow: hidden; border-radius: 12px; background: #fff; }
+.catalog-drink-requests a { color: var(--theme-link); font-size: .875rem; font-weight: 700; }
+.catalog-drink-request-cover { width: 56px; height: 56px; overflow: hidden; border-radius: var(--radius-md); background: #fff; }
 .catalog-drink-request-cover img { width: 100%; height: 100%; object-fit: contain; }
-.catalog-drink-status { padding: 2px 10px; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .75rem; font-weight: 800; }
+.catalog-drink-status { padding: 2px 10px; border-radius: var(--radius-pill); background: var(--color-subtle); color: var(--color-muted-strong); font-size: .75rem; font-weight: 800; }
 [data-status=published] .catalog-drink-status { background: color-mix(in srgb, #16a34a 16%, transparent); color: #15803d; }
 [data-status=rejected] .catalog-drink-status { background: color-mix(in srgb, #e5484d 16%, transparent); color: #d1343a; }
 .catalog-drink-note { color: var(--color-text); font-size: .875rem; }
@@ -564,14 +564,14 @@
 .catalog-controls:has(.catalog-add-button) { grid-template-columns: minmax(0, 1fr) auto auto; }
 .catalog-controls:has(.catalog-pending-button) { grid-template-columns: minmax(0, 1fr) auto auto auto; }
 .catalog-pending-button { position: relative; }
-.catalog-pending-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .6875rem; font-weight: 800; line-height: 20px; text-align: center; }
+.catalog-pending-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font-size: .6875rem; font-weight: 800; line-height: 20px; text-align: center; }
 /* A member's drink on its page: a badge and the volumes under the name, a calm empty price state, the author card. */
-.catalog-full-name { margin: -4px 0 12px; color: var(--color-muted-strong, #5b6472); font-size: 1rem; font-weight: 600; }
+.catalog-full-name { margin: -4px 0 12px; color: var(--color-muted-strong); font-size: 1rem; font-weight: 600; }
 .catalog-added-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 16px; padding: 0; list-style: none; }
-.catalog-added-facts li { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; background: var(--color-subtle); color: var(--color-text); font-size: .8125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.catalog-added-facts li { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: var(--radius-pill); background: var(--color-subtle); color: var(--color-text); font-size: .8125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .catalog-added-facts .catalog-added-badge { background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); }
 .catalog-added-facts .catalog-added-archived { background: var(--color-control); color: var(--color-ink); }
-.catalog-added-empty { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px 14px; align-items: start; padding: 18px; border: 1px dashed var(--color-control); border-radius: 16px; }
+.catalog-added-empty { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px 14px; align-items: start; padding: 18px; border: 1px dashed var(--color-control); border-radius: var(--radius-lg); }
 .catalog-added-empty-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--color-subtle); color: var(--color-muted-strong); }
 .catalog-added-empty strong { font-size: 1rem; }
 .catalog-added-empty p { margin: 4px 0 0; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.45; }
@@ -588,7 +588,7 @@
 .catalog-drink-author-name span { color: var(--color-muted-strong); font-size: .875rem; }
 .catalog-drink-author-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .catalog-drink-author-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(160px, 240px)); gap: 8px; margin: 0; }
-.catalog-drink-author-stats div { padding: 10px 12px; border-radius: 12px; background: var(--color-subtle); }
+.catalog-drink-author-stats div { padding: 10px 12px; border-radius: var(--radius-md); background: var(--color-subtle); }
 .catalog-drink-author-stats dt { color: var(--color-muted-strong); font-size: .75rem; }
 .catalog-drink-author-stats dd { margin: 2px 0 0; font-weight: 800; }
 @media (max-width: 639px) {
@@ -606,7 +606,7 @@
 .catalog-company-check svg { width: 11px; height: 11px; }
 .catalog-drink-company-bio { display: -webkit-box; margin: 0; overflow: hidden; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .catalog-drink-company .catalog-drink-author-stats { grid-template-columns: repeat(2, minmax(160px, 240px)); }
-.catalog-drink-company .company-follow { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 20px; border-color: var(--color-brand); border-radius: 999px; background: var(--color-brand); color: #fff; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.catalog-drink-company .company-follow { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 20px; border-color: var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .catalog-drink-company .company-follow.is-following { border-color: var(--color-control); background: var(--color-subtle); color: var(--color-ink); }
 .catalog-drink-company .company-follow-short { display: none; }
 @media (max-width: 639px) {
@@ -623,7 +623,7 @@
 .drink-radar-shape { fill: color-mix(in srgb, var(--color-brand) 30%, transparent); stroke: var(--color-brand); stroke-width: 1.5; stroke-linejoin: round; }
 .drink-radar-shape.is-catalog { fill: none; stroke: var(--color-muted-strong); stroke-dasharray: 4 3; }
 .drink-radar-dot { fill: var(--color-brand); }
-.drink-radar-chart text { fill: var(--color-text, var(--color-ink)); font-size: 13px; }
+.drink-radar-chart text { fill: var(--color-text); font-size: 13px; }
 .drink-radar-chart .drink-radar-value { fill: var(--color-ink); font-weight: 700; }
 .drink-radar-key { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin: 0; color: var(--color-muted-strong); font-size: .8125rem; }
 .drink-radar-swatch { display: inline-block; width: 14px; height: 10px; border: 1.5px solid var(--color-brand); border-radius: 3px; background: color-mix(in srgb, var(--color-brand) 30%, transparent); }
@@ -665,7 +665,7 @@
 .review-steps-back:hover { background: var(--color-subtle); }
 .review-steps-list { display: flex; flex: 1; justify-content: safe center; min-width: 0; gap: 5px; margin: 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
 .review-steps-list li { flex: none; }
-.review-steps-list span, .review-steps-list button { display: inline-flex; align-items: center; min-height: 32px; padding: 0 11px; border: 0; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font: inherit; font-size: .8125rem; font-weight: 600; white-space: nowrap; }
+.review-steps-list span, .review-steps-list button { display: inline-flex; align-items: center; min-height: 32px; padding: 0 11px; border: 0; border-radius: var(--radius-pill); background: var(--color-subtle); color: var(--color-muted-strong); font: inherit; font-size: .8125rem; font-weight: 600; white-space: nowrap; }
 .review-steps-list button { cursor: pointer; color: var(--color-ink); }
 .review-steps-list li[aria-current] span { background: var(--color-brand); color: #fff; }
 
@@ -684,8 +684,8 @@
 .rating-dial-row { display: flex; align-items: baseline; gap: 6px; }
 .rating-dial-value { flex: none; box-sizing: content-box; min-width: 0; padding: 0 2px; border: 0; border-radius: 14px; background: none; color: var(--color-ink); font: inherit; font-size: clamp(4.5rem, 22vw, 6.5rem); font-weight: 800; line-height: 1; letter-spacing: 0; text-align: center; font-variant-numeric: tabular-nums; caret-color: var(--color-brand); cursor: text; }
 .rating-dial-value:focus { outline: none; }
-.rating-dial-value:focus-visible { box-shadow: 0 0 0 3px var(--color-focus, var(--color-brand)); }
-.rating-dial-near { flex: none; min-width: 28px; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--color-muted-strong); font: inherit; font-size: 1.75rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; cursor: pointer; transition: color var(--motion-fast, 120ms) ease-out; }
+.rating-dial-value:focus-visible { box-shadow: 0 0 0 3px var(--color-focus); }
+.rating-dial-near { flex: none; min-width: 28px; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--color-muted-strong); font: inherit; font-size: 1.75rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; cursor: pointer; transition: color var(--motion-fast) ease-out; }
 .rating-dial-near[data-far] { min-width: 22px; font-size: 1.25rem; opacity: .45; }
 .rating-dial-near:hover:not(:disabled) { color: var(--color-ink); }
 .rating-dial-dots { display: inline-flex; flex: none; gap: 3px; margin-bottom: 6px; opacity: .6; }
@@ -697,9 +697,9 @@
 .rating-dial-hint { margin: 2px 0 0; color: var(--color-muted-strong); font-size: .8125rem; text-align: center; }
 
 /* The rating card on a drink page (CatalogReviewsSheet): opens the reviews in a sheet over the page. */
-.catalog-rating-card { position: relative; display: grid; gap: 14px; padding: 14px 16px 16px 18px; border: 1px solid var(--color-control); border-radius: 20px; background: var(--color-surface, transparent); color: var(--color-ink); transition: background-color var(--motion-fast, 120ms) ease-out; }
-.catalog-rating-card:hover { background: color-mix(in srgb, var(--color-subtle) 60%, var(--color-surface, transparent)); }
-.catalog-rating-card:has(.catalog-rating-card-head:focus-visible) { outline: 3px solid var(--color-focus, var(--color-brand)); outline-offset: 2px; }
+.catalog-rating-card { position: relative; display: grid; gap: 14px; padding: 14px 16px 16px 18px; border: 1px solid var(--color-control); border-radius: var(--radius-xl); background: var(--color-surface); color: var(--color-ink); transition: background-color var(--motion-fast) ease-out; }
+.catalog-rating-card:hover { background: color-mix(in srgb, var(--color-subtle) 60%, var(--color-surface)); }
+.catalog-rating-card:has(.catalog-rating-card-head:focus-visible) { outline: 3px solid var(--color-focus); outline-offset: 2px; }
 /* The head button stretches over the whole card, so a tap anywhere — the lists too — opens the reviews. */
 .catalog-rating-card-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center; gap: 4px 12px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
 .catalog-rating-card-head:focus-visible { outline: none; }
@@ -712,7 +712,7 @@
 .catalog-rating-highlights h3 { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--color-ink); font-size: .875rem; font-weight: 700; }
 .catalog-rating-highlights h3 > span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--tone) 18%, transparent); color: var(--tone); }
 .catalog-rating-highlights ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.catalog-rating-highlights li { padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 14%, var(--color-subtle)); color: var(--color-ink); font-size: .875rem; line-height: 1.3; }
+.catalog-rating-highlights li { padding: 6px 12px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--tone) 14%, var(--color-subtle)); color: var(--color-ink); font-size: .875rem; line-height: 1.3; }
 .catalog-rating-highlights section[data-tone="bad"] li { background: var(--color-subtle); }
 .catalog-rating-card-score { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; }
 .catalog-rating-card-score strong { font-size: 1.75rem; font-weight: 800; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
@@ -727,19 +727,19 @@
 .catalog-rating-latest-avatar { display: grid; flex: none; place-items: center; width: 28px; height: 28px; overflow: hidden; border-radius: 50%; background: var(--color-subtle); color: var(--color-brand); font-size: .8125rem; font-weight: 800; }
 .catalog-rating-latest-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .catalog-rating-latest-head b { overflow: hidden; color: var(--color-ink); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.catalog-rating-latest-score { flex: none; padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 16%, transparent); color: var(--color-brand); font-size: .8125rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.catalog-rating-latest-score { flex: none; padding: 1px 8px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-brand) 16%, transparent); color: var(--color-brand); font-size: .8125rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .catalog-rating-latest-head small { flex: none; margin-left: auto; color: var(--color-muted-strong); font-size: .8125rem; }
 .catalog-rating-latest p { display: -webkit-box; margin: 0; overflow: hidden; color: var(--color-ink); font-size: .9375rem; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; }
 @media (min-width: 640px) { .catalog-rating-latest p { -webkit-line-clamp: 2; line-clamp: 2; } }
 /* «Что говорят»: своя карточка под входом в отзывы, нажимать на неё незачем. */
-.catalog-highlights-card { display: grid; gap: 12px; padding: 14px 16px 16px 18px; border: 1px solid var(--color-control); border-radius: 20px; background: var(--color-surface, transparent); }
+.catalog-highlights-card { display: grid; gap: 12px; padding: 14px 16px 16px 18px; border: 1px solid var(--color-control); border-radius: var(--radius-xl); background: var(--color-surface); }
 .catalog-highlights-card h2 { margin: 0; color: var(--color-ink); font-size: 1.0625rem; font-weight: 800; line-height: 1.2; }
 
 /* The reviews sheet: full screen, the page under it does not scroll. In the apps the page draws under the status bar
    (viewport-fit=cover) and the sheet sits in the top layer, outside the page's insets: its head keeps clear of the bar
    and the sheet of the side cut-outs itself. The insets are 0 in browsers. */
 html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
-.catalog-reviews-sheet { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); border: 0; border-radius: 0; background: var(--color-page, var(--color-surface, #fff)); color: var(--color-ink); overflow: auto; overscroll-behavior: contain; }
+.catalog-reviews-sheet { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); border: 0; border-radius: 0; background: var(--color-page, var(--color-surface)); color: var(--color-ink); overflow: auto; overscroll-behavior: contain; }
 .catalog-reviews-sheet::backdrop { background: rgb(10 14 22 / .55); }
 .catalog-reviews-sheet[open] { animation: catalog-sheet-in 260ms cubic-bezier(.2, .8, .2, 1); }
 @keyframes catalog-sheet-in { from { transform: translateY(32px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -776,8 +776,8 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 .catalog-price-history .price-history-hint { margin: 16px 0 0; color: var(--color-muted-strong); font-size: .8125rem; }
 
 /* Data confirmed by the brand (an approved card edit from its cabinet): a quiet mark and the brand's own words. */
-.catalog-brand-verified { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 12px; padding: 5px 12px 5px 8px; border-radius: 12px; background: color-mix(in srgb, var(--color-brand) 10%, transparent); color: var(--color-brand); font-size: .8125rem; font-weight: 700; }
-.catalog-brand-description { margin: 0 0 16px; padding: 14px 16px; border-radius: 16px; background: var(--color-subtle); }
+.catalog-brand-verified { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 12px; padding: 5px 12px 5px 8px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-brand) 10%, transparent); color: var(--color-brand); font-size: .8125rem; font-weight: 700; }
+.catalog-brand-description { margin: 0 0 16px; padding: 14px 16px; border-radius: var(--radius-lg); background: var(--color-subtle); }
 .catalog-brand-description h2 { margin: 0 0 4px; color: var(--color-muted-strong); font-size: .8125rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
 .catalog-brand-description p { margin: 0; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
 
@@ -790,7 +790,7 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 .catalog-brand-store-icon { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border-radius: 10px; background: color-mix(in srgb, var(--color-brand) 12%, var(--color-subtle)); color: var(--color-brand); }
 
 /* The brand's recommended price over a volume's offers; offers above it say so, quietly — a guide, not a verdict. */
-.catalog-price-ceiling { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-brand) 10%, var(--color-subtle)); color: var(--color-ink); font-size: .875rem; line-height: 1.4; }
+.catalog-price-ceiling { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-brand) 10%, var(--color-subtle)); color: var(--color-ink); font-size: .875rem; line-height: 1.4; }
 .catalog-price-ceiling svg { flex: none; color: var(--color-brand); }
 .catalog-store-offer.is-over-ceiling small em { color: var(--color-muted-strong); font-style: normal; }
 /* «Выпускается и в 330 мл»: a can volume the card knows (a merged request) that no shop sells — one step under the prices. */
@@ -800,18 +800,18 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 .catalog-drink-extras { display: grid; gap: 6px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-control); }
 .catalog-drink-extras-hint { margin: 0; color: var(--color-muted-strong); font-size: .8125rem; line-height: 1.45; }
 .catalog-drink-preview-cover { position: relative; }
-.catalog-drink-preview-more { position: absolute; right: 6px; bottom: 6px; padding: 2px 8px; border-radius: 999px; background: rgb(0 0 0 / 65%); color: #fff; font-size: .75rem; font-weight: 700; }
+.catalog-drink-preview-more { position: absolute; right: 6px; bottom: 6px; padding: 2px 8px; border-radius: var(--radius-pill); background: rgb(0 0 0 / 65%); color: #fff; font-size: .75rem; font-weight: 700; }
 
 /* The drink's photos in a row (drink-photo-gallery.tsx): the cover, then the author's extra photos; swipe, arrows, dots. */
 .drink-gallery { position: relative; width: 100%; max-width: 420px; }
 .drink-gallery-track { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
 .drink-gallery-track::-webkit-scrollbar { display: none; }
-.drink-gallery-track:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; border-radius: 16px; }
+.drink-gallery-track:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; border-radius: var(--radius-lg); }
 .drink-gallery-slide { display: grid; place-items: center; min-width: 0; scroll-snap-align: center; }
-.drink-gallery-slide.is-photo { aspect-ratio: 1; width: 278px; max-width: 100%; margin: 0 auto; padding: 0; border: 0; border-radius: 16px; overflow: hidden; background: var(--color-subtle); cursor: zoom-in; }
+.drink-gallery-slide.is-photo { aspect-ratio: 1; width: 278px; max-width: 100%; margin: 0 auto; padding: 0; border: 0; border-radius: var(--radius-lg); overflow: hidden; background: var(--color-subtle); cursor: zoom-in; }
 .drink-gallery-slide.is-photo img { width: 100%; height: 100%; object-fit: cover; }
 .drink-gallery-dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
-.drink-gallery-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--color-control); transition: width 150ms ease-out, background-color 150ms ease-out; }
+.drink-gallery-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--color-control); transition: width var(--motion-fast) ease-out, background-color var(--motion-fast) ease-out; }
 .drink-gallery-dots span[data-current] { width: 18px; border-radius: 3px; background: var(--color-brand); }
 .drink-gallery-arrow { position: absolute; top: calc(50% - 30px); display: none; place-items: center; width: 40px; height: 40px; border: 1px solid var(--color-control); border-radius: 50%; background: var(--color-surface); color: var(--color-ink); font-size: 1.5rem; line-height: 1; cursor: pointer; }
 .drink-gallery-arrow.is-prev { left: 0; }
@@ -842,7 +842,7 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 .drink-qa-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; font-size: .9375rem; font-weight: 700; }
 .drink-qa-name a { overflow: hidden; color: var(--color-ink); text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
 .drink-qa-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--color-muted-strong); font-size: .8125rem; }
-.drink-qa-company { padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 12%, transparent); color: var(--color-brand); font-weight: 700; }
+.drink-qa-company { padding: 1px 8px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-brand) 12%, transparent); color: var(--color-brand); font-weight: 700; }
 .drink-qa-text { margin: 0; color: var(--color-ink); line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
 .drink-qa-question > .drink-qa-text { font-size: 1rem; font-weight: 600; }
 .drink-qa-answers { gap: 12px; margin-left: 16px; padding-left: 14px; border-left: 2px solid var(--color-control); }
@@ -894,8 +894,8 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 
 /* Подсказки поиска под полем (`CatalogControls`, `/api/search-suggest`): бренды по первым буквам или по вкусу. Список
    во всю ширину строки поиска, над выдачей; строки — 56 px, чтобы попасть пальцем. */
-.catalog-suggest { position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 12; display: grid; gap: 2px; max-height: min(420px, 60dvh); margin: 0; padding: 6px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--color-control); border-radius: 18px; background: var(--color-surface); box-shadow: 0 16px 40px -12px rgb(0 0 0 / .28); list-style: none; }
-.catalog-suggest-row { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 56px; padding: 6px 10px; border-radius: 12px; cursor: pointer; }
+.catalog-suggest { position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 12; display: grid; gap: 2px; max-height: min(420px, 60dvh); margin: 0; padding: 6px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--color-control); border-radius: 18px; background: var(--color-surface); box-shadow: var(--shadow-popover); list-style: none; }
+.catalog-suggest-row { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 56px; padding: 6px 10px; border-radius: var(--radius-md); cursor: pointer; }
 .catalog-suggest-row[aria-selected="true"], .catalog-suggest-row:hover { background: var(--color-subtle); }
 .catalog-suggest-cover { display: grid; place-items: center; width: 40px; height: 40px; overflow: hidden; border-radius: 10px; background: var(--color-subtle); }
 .catalog-suggest-cover img { width: 100%; height: 100%; object-fit: contain; }

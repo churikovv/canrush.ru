@@ -61,28 +61,38 @@ const LETTER: Record<SignInAudience, { subject: string; lead: string; button: st
   business: { subject: 'Вход в кабинет CanRush для бизнеса', lead: 'Откройте кабинет CanRush для бизнеса по ссылке:', button: 'Открыть кабинет' },
 };
 
-export function renderMagicLinkEmail(link: string, audience: SignInAudience = 'personal'): MagicLinkEmailContent {
+/** Six digits read in threes: «482 913». Only digits ever reach the letter. */
+const spacedCode = (code: string) => code.replace(/\D/g, '').replace(/^(\d{3})(\d{3})$/, '$1 $2');
+
+/**
+ * The sign-in letter: the link, and — when there is one — the code for the same sign-in. The code is for a link that
+ * opened in the mail app's own browser: the member types it on the sign-in page they came from.
+ */
+export function renderMagicLinkEmail(link: string, audience: SignInAudience = 'personal', code?: string): MagicLinkEmailContent {
   const safeLink = escapeHtml(link);
   const letter = LETTER[audience];
+  const digits = code ? spacedCode(code) : '';
+  const codeHtml = digits ? `<p style="font-size:16px;line-height:1.5;margin:0 0 8px">Или введите код на странице входа:</p><p style="font-size:32px;line-height:1;font-weight:700;letter-spacing:6px;color:#000;margin:0 0 24px;font-family:'Courier New',monospace">${escapeHtml(digits)}</p>` : '';
   return {
     subject: letter.subject,
     text: [
       letter.lead,
       link,
+      ...(digits ? ['', `Или введите код на странице входа: ${digits}`] : []),
       '',
-      'Ссылка действует 15 минут и срабатывает один раз.',
+      digits ? 'Ссылка и код действуют 15 минут и срабатывают один раз.' : 'Ссылка действует 15 минут и срабатывает один раз.',
       'Если вы не запрашивали вход, просто проигнорируйте письмо.',
     ].join('\n'),
-    html: `<!doctype html><html lang="ru"><body style="margin:0;background:#f3f4f6;color:#3e3e3f;font-family:Arial,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 16px"><tr><td align="center"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#fff;border-radius:16px;padding:32px"><tr><td><div style="font-size:24px;font-weight:700;color:#000;margin-bottom:16px">${letter.subject}</div><p style="font-size:16px;line-height:1.5;margin:0 0 24px">Подтвердите вход. Ссылка действует 15 минут и срабатывает один раз.</p><p style="margin:0 0 24px"><a href="${safeLink}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;font-size:16px;line-height:1;padding:16px 20px;border-radius:16px">${letter.button}</a></p><p style="font-size:13px;line-height:1.5;color:#3e3e3f;margin:0 0 8px;overflow-wrap:anywhere">${safeLink}</p><p style="font-size:13px;line-height:1.5;color:#656566;margin:0">Если вы не запрашивали вход, просто проигнорируйте письмо.</p></td></tr></table></td></tr></table></body></html>`,
+    html: `<!doctype html><html lang="ru"><body style="margin:0;background:#f3f4f6;color:#3e3e3f;font-family:Arial,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 16px"><tr><td align="center"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#fff;border-radius:16px;padding:32px"><tr><td><div style="font-size:24px;font-weight:700;color:#000;margin-bottom:16px">${letter.subject}</div><p style="font-size:16px;line-height:1.5;margin:0 0 24px">Подтвердите вход. ${digits ? 'Ссылка и код действуют 15 минут и срабатывают' : 'Ссылка действует 15 минут и срабатывает'} один раз.</p><p style="margin:0 0 24px"><a href="${safeLink}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;font-size:16px;line-height:1;padding:16px 20px;border-radius:16px">${letter.button}</a></p>${codeHtml}<p style="font-size:13px;line-height:1.5;color:#3e3e3f;margin:0 0 8px;overflow-wrap:anywhere">${safeLink}</p><p style="font-size:13px;line-height:1.5;color:#656566;margin:0">Если вы не запрашивали вход, просто проигнорируйте письмо.</p></td></tr></table></td></tr></table></body></html>`,
   };
 }
 
 /** Sends the sign-in letter through the configured SMTP; a business letter comes from «<name> для бизнеса», same address. */
-export async function sendMagicLinkEmail(email: string, token: string, audience: SignInAudience = 'personal'): Promise<void> {
+export async function sendMagicLinkEmail(email: string, token: string, audience: SignInAudience = 'personal', code?: string): Promise<void> {
   const auth = getAuthEnv();
   const smtp = getSmtpEnv();
   const link = buildMagicLinkConfirmationUrl(auth.authUrl, token, audience);
-  const content = renderMagicLinkEmail(link, audience);
+  const content = renderMagicLinkEmail(link, audience, code);
 
   await getTransporter().sendMail({
     from: {

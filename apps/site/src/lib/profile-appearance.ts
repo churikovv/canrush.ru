@@ -9,6 +9,9 @@ export const PROFILE_THEMES = [
   { key: 'cobalt', level: 15, tone: 'dark', label: 'Кобальт', description: 'Весь профиль в фирменном синем, жёлтые акценты' },
   { key: 'ember', level: 18, tone: 'dark', label: 'Пламя', description: 'Тёмный фон и раскалённые оранжевые акценты' },
   { key: 'legend', level: 20, tone: 'dark', label: 'Легенда', description: 'Глубокий индиго в цвет эмблемы ранга Легенда' },
+  // Фоны «Лунного цикла» (`daily-reward-fields.ts`): уровнем не открываются, только днём пути (`daily`).
+  { key: 'moonlight', level: 999, tone: 'light', label: 'Лунный свет', description: 'Серебристый фон и чернильно-синие акценты', daily: 10 },
+  { key: 'midnight', level: 999, tone: 'dark', label: 'Полночь', description: 'Ночное небо и серебристо-голубые акценты', daily: 25 },
 ] as const;
 /** Theme attributes for a profile surface: `data-profile-tone` carries the light/dark fixes shared by all presets of that tone. */
 export function profileThemeAttributes(theme: string | undefined) {
@@ -29,6 +32,11 @@ export const PROFILE_FRAMES = [
   { key: 'legend', level: 20, label: 'Корона Легенды' },
   // Эксклюзив Банкомата (`gachaCosmetic`): уровнем не открывается, только с «Тыквенного автомата».
   { key: 'pumpkin', level: 999, label: 'Тыквенная', special: 'Тыквенный автомат' },
+  // Награда новичка из «Первых шагов» (`firstStepReward`): за первую подписку, уровнем не открывается.
+  { key: 'charge', level: 999, label: 'Заряд', special: 'Первые шаги' },
+  // Рамки «Лунного цикла»: день пути (`daily`), уровнем не открываются.
+  { key: 'crescent', level: 999, label: 'Полумесяц', daily: 15, description: 'Месяц обнимает аватарку, рядом мерцают звёзды' },
+  { key: 'moon-cycle', level: 999, label: 'Лунный цикл', daily: 30, description: 'Восемь фаз луны идут по кругу, полная сияет сверху' },
   // Рамки брендов: уровнем не открываются — отзывами на BRAND_FRAME_REVIEWS разных вкусов бренда (`brand-frame-fields.ts`).
   { key: 'monster', level: 999, label: 'Monster', brand: 'Monster', description: 'Пасть с клыками, шипы и токсичная слизь' },
   { key: 'redbull', level: 999, label: 'Red Bull', brand: 'Red Bull', description: 'Крылья, рога и рубин в серебре' },
@@ -53,8 +61,8 @@ export type BrandFrameItem = Extract<FrameItem, { brand: string }>;
 export const BRAND_FRAME_ITEMS = PROFILE_FRAMES.filter((item): item is BrandFrameItem => 'brand' in item);
 export type ShopFrameItem = Extract<FrameItem, { shop: true }>;
 export const SHOP_FRAME_ITEMS = PROFILE_FRAMES.filter((item): item is ShopFrameItem => 'shop' in item);
-/** Frames and themes that a level opens; the gacha's, the brands' and the shop's open elsewhere. */
-export const isLevelCosmetic = (item: { key: string }) => !('special' in item) && !('brand' in item) && !('shop' in item);
+/** Frames and themes that a level opens; the gacha's, the brands', the shop's and the daily path's open elsewhere. */
+export const isLevelCosmetic = (item: { key: string }) => !('special' in item) && !('brand' in item) && !('shop' in item) && !('daily' in item);
 export type ProfileAppearance = { theme: typeof PROFILE_THEMES[number]['key']; frame: typeof PROFILE_FRAMES[number]['key'] };
 export const DEFAULT_PROFILE_APPEARANCE: ProfileAppearance = { theme: 'default', frame: 'none' };
 export function parseProfileAppearance(value: unknown): ProfileAppearance | null {
@@ -76,6 +84,6 @@ export function nextAppearanceUnlock(level: number): { level: number; themes: st
 
 /** Existing equipped cosmetics remain usable; new choices require earned levels or, for the gacha's, brands' and shop's frames, owning them. */
 export function canUseProfileAppearance(value: ProfileAppearance, level: number, current = DEFAULT_PROFILE_APPEARANCE, owned: readonly string[] = []): boolean {
-  return (value.theme === current.theme || PROFILE_THEMES.some(item => item.key === value.theme && item.level <= level))
+  return (value.theme === current.theme || owned.includes(value.theme) || PROFILE_THEMES.some(item => item.key === value.theme && item.level <= level))
     && (value.frame === current.frame || owned.includes(value.frame) || PROFILE_FRAMES.some(item => item.key === value.frame && item.level <= level));
 }

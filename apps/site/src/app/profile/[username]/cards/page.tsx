@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { CardInventory, type InventoryCard } from '@/components/card-inventory';
 import { auth } from '@/lib/auth';
+import { incomingTrades } from '@/lib/card-trades';
 import { getAlbum } from '@/lib/gacha';
 import { getProfileByUsername } from '@/lib/profile';
 
@@ -19,12 +20,13 @@ export default async function GachaAlbumPage({ params }: { params: Promise<{ use
   const profile = await getProfileByUsername(username);
   if (!profile) notFound();
   const isOwn = session?.user.id === profile.id;
-  const album = await getAlbum(profile.id);
+  const [album, waiting] = await Promise.all([getAlbum(profile.id), isOwn ? incomingTrades(profile.id) : 0]);
   const cards: InventoryCard[] = album.brands.flatMap(brand => brand.cards)
     .filter(card => card.owned || isOwn)
     .map(({ brand, flavor, name, cover, href, rarity, count, owned, cost }) => owned
       ? { brand, flavor, name, cover, href, rarity, count, owned, cost }
       // A missing can keeps its brand and price only: the name, cover and flavour would spoil the surprise.
       : { brand, flavor, name: '', cover: '', href: '', rarity, count: 0, owned, cost });
-  return <CardInventory cards={cards} isOwn={isOwn} shards={album.shards} owner={`@${profile.username}`} backHref={isOwn ? '/profile' : `/profile/${profile.username}`} />;
+  return <CardInventory cards={cards} isOwn={isOwn} shards={album.shards} owner={`@${profile.username}`} backHref={isOwn ? '/profile' : `/profile/${profile.username}`}
+    trade={isOwn ? { href: '/gacha/trades', waiting } : { href: `/profile/${profile.username}/cards/trade` }} />;
 }

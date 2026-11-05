@@ -223,8 +223,8 @@ export function BusinessNotificationsForm({ reviews }: { reviews: boolean }) {
   const [pending, start] = useTransition();
   return <div className="bc-form">
     <label className="bc-switch-row">
-      <span><strong>Новые отзывы на напитки компании</strong><small className="bc-muted">Уведомление на сайте, в Telegram-боте и в приложении, когда участник оценил ваш подтверждённый напиток.</small></span>
-      <input type="checkbox" className="bc-switch" checked={on} disabled={pending} onChange={event => {
+      <span><strong>Новые отзывы на напитки компании</strong><small className="bc-muted">Уведомление на сайте, в Telegram-боте и в приложении, когда у вашего подтверждённого напитка появляется отзыв.</small></span>
+      <input type="checkbox" className="settings-switch" checked={on} disabled={pending} onChange={event => {
         const next = event.target.checked; setOn(next);
         start(async () => {
           const form = new FormData(); if (next) form.set('reviews', 'on');
@@ -405,7 +405,7 @@ export function WeeklyReportSwitch({ enabled, email }: { enabled: boolean; email
   return <div className="bc-form">
     <label className="bc-switch-row">
       <span><strong>Еженедельный отчёт на почту</strong><small className="bc-muted">По понедельникам утром: отзывы и оценки за неделю, поиски, просмотры карточек и переходы в магазины, сравнение с конкурентами.{email ? ` Придёт на ${email}.` : ' У аккаунта нет почты — отчёт не придёт.'}</small></span>
-      <input type="checkbox" className="bc-switch" checked={on} disabled={pending} onChange={event => {
+      <input type="checkbox" className="settings-switch" checked={on} disabled={pending} onChange={event => {
         const next = event.target.checked; setOn(next);
         start(async () => {
           const result = await saveWeeklyReportAction(next).catch(() => ({ error: 'Нет связи с сервером.' }) as { error?: string; done?: boolean });

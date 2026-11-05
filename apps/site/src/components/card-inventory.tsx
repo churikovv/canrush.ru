@@ -23,6 +23,7 @@ const WINDOW = 3;
 /** How long the strip must be still before the card in focus changes (`scrollend` comes sooner where it exists). */
 const SETTLE_MS = 120;
 const ARROW = (turn: number) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: `rotate(${turn}deg)` }}><path d="m15 5-7 7 7 7" /></svg>;
+const SWAP = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8" /></svg>;
 const order = (a: InventoryCard, b: InventoryCard) => rarityRank(b.rarity) - rarityRank(a.rarity) || a.brand.localeCompare(b.brand, 'ru') || a.name.localeCompare(b.name, 'ru');
 
 /**
@@ -31,7 +32,11 @@ const order = (a: InventoryCard, b: InventoryCard) => rarityRank(b.rarity) - rar
  * Filters by rarity and by brand; the owner also sees the missing cans and crafts them for shards. A tap on the card
  * in focus opens it up close (`CardInspector`).
  */
-export function CardInventory({ cards, isOwn, shards, owner, backHref }: { cards: InventoryCard[]; isOwn: boolean; shards: number; owner: string; backHref: string }) {
+export function CardInventory({ cards, isOwn, shards, owner, backHref, trade }: {
+  cards: InventoryCard[]; isOwn: boolean; shards: number; owner: string; backHref: string;
+  /** Card trades: the owner's list of offers (with those waiting for an answer), or a trade with this member. */
+  trade?: { href: string; waiting?: number };
+}) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>('all');
   const [brand, setBrand] = useState<string | null>(null);
@@ -124,6 +129,10 @@ export function CardInventory({ cards, isOwn, shards, owner, backHref }: { cards
         <h1>Коллекция</h1>
         <p>{isOwn ? 'Ваши карточки' : owner} · {owned.length} из {cards.length}</p>
       </div>
+      {trade && (isOwn
+        // The count of offers waiting sits inside the plate: a corner badge would be cut off by its clipped corners.
+        ? <Link className="can-plate inv-trade-pill is-own" href={trade.href} aria-label={trade.waiting ? `Обмены: ждут ответа ${trade.waiting}` : 'Обмены'}>{SWAP}{Boolean(trade.waiting) && <b aria-hidden="true">{trade.waiting}</b>}</Link>
+        : <Link className="can-plate inv-trade-pill" href={trade.href}>{SWAP}Обмен</Link>)}
       {isOwn && <span className="can-plate inv-shards" title="Осколки: дубли превращаются в них, из них собираются недостающие карточки"><ShardIcon size={18} />{shards}<span className="sr-only"> осколков</span></span>}
     </header>
 

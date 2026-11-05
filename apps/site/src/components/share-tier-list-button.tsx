@@ -1,22 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
+import { ActionToast } from '@/components/action-toast';
 import { nativeShare } from '@/lib/native-app';
+
+const NO_NOTICE = {};
 
 /** Shares a link (with optional text) through the system sheet on touch devices, the clipboard elsewhere; confirms in a toast. */
 export function ShareTierListButton({ title, text, path, label = 'Поделиться' }: { title: string; text?: string; path?: string; label?: string }) {
-  const [notice, setNotice] = useState<{ message: string; error: boolean; id: number } | null>(null);
+  // The site's one toast (`ActionToast`): a new object shows it again, even with the same text.
+  const [notice, setNotice] = useState<{ text: string; tone: 'success' | 'error' } | null>(null);
   const [pending, setPending] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const sequence = useRef(0);
-  useEffect(() => () => clearTimeout(timer.current), []);
-
-  function notify(message: string, error = false) {
-    clearTimeout(timer.current);
-    setNotice({ message, error, id: ++sequence.current });
-    timer.current = setTimeout(() => setNotice(null), error ? 6000 : 4000);
-  }
+  const notify = (text: string, error = false) => setNotice({ text, tone: error ? 'error' : 'success' });
 
   async function share() {
     const url = path ? new URL(path, window.location.origin).toString() : window.location.href;
@@ -57,14 +52,7 @@ export function ShareTierListButton({ title, text, path, label = 'Поделит
           <path d="M5 13v6h14v-6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
-      {notice && createPortal(
-        <div className={`share-toast${notice.error ? ' share-toast-error' : ''}`}>
-          <span key={notice.id} role={notice.error ? 'alert' : 'status'}>{notice.message}</span>
-          <button type="button" aria-label="Закрыть уведомление" onClick={() => { clearTimeout(timer.current); setNotice(null); }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" /></svg>
-          </button>
-        </div>, document.body,
-      )}
+      <ActionToast message={notice?.text} tone={notice?.tone} trigger={notice ?? NO_NOTICE} />
     </>
   );
 }

@@ -75,7 +75,7 @@ export function SupportChat({ staff = false, threadId, initial, header, empty }:
       const result = await loadSupportAction(threadId, messages[0].id);
       if ('error' in result) { anchor.current = null; setError(result.error); }
       else { setHasMore(result.hasMore); setMessages(previous => merge([...result.items, ...previous])); }
-    } catch { anchor.current = null; setError('Не удалось загрузить сообщения.'); }
+    } catch { anchor.current = null; setError('Не удалось загрузить сообщения. Проверьте интернет и обновите страницу.'); }
     finally { setOlderBusy(false); }
   }
 

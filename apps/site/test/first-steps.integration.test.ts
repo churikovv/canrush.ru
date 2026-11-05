@@ -5,7 +5,7 @@ const url = process.env.TEST_DATABASE_URL ?? 'postgresql://localhost:5432/canrus
 if (new URL(url).pathname !== '/canrush_site_test') throw new Error('Test DB only');
 const pool = new Pool({ connectionString: url, max: 3 });
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
-const { getFirstSteps, hideFirstSteps, NEWCOMER_DAYS } = await import('../src/lib/first-steps');
+const { claimFirstStep, getFirstSteps, hideFirstSteps, wearFirstStepReward, FIRST_SWIPES, NEWCOMER_DAYS } = await import('../src/lib/first-steps');
 const { getFirstDayMetrics } = await import('../src/lib/admin-dashboard-data');
 const { getGachaState } = await import('../src/lib/gacha');
 
@@ -16,61 +16,77 @@ async function member(createdAt = 'now()') {
   await pool.query(`insert into "user"(id,name,email,"emailVerified","createdAt","updatedAt",username) values($1,'First steps',$2,true,${createdAt},now(),$3)`, [id, `${id}@example.com`, `fs_${id.slice(0, 12)}`]);
   return id;
 }
-const done = async (id: string) => (await getFirstSteps(id))?.filter(step => step.done).map(step => step.key);
+const steps = async (id: string) => (await getFirstSteps(id))?.steps;
+const done = async (id: string) => (await steps(id))?.filter(step => step.done).map(step => step.key);
 const pull = (id: string, at = 'now()') => pool.query(`insert into "gachaPull"("userId",batch,brand,flavor,rarity,"createdAt") values($1,gen_random_uuid(),'Бренд','вкус','common',${at})`, [id]);
+const swipe = (id: string, count: number) => pool.query(`insert into "drinkSwipe"("userId",brand,flavor,liked) select $1,'Бренд','вкус ' || gen_random_uuid(),true from generate_series(1, $2::int)`, [id, count]);
+const follow = (id: string, target: string) => pool.query(`insert into "userFollow"("userId","targetId") values($1,$2)`, [id, target]);
+const look = async (id: string) => (await pool.query<{ tags: string[]; frame: string }>(`select "profileTags" as tags, "profileAppearance"->>'frame' as frame from "user" where id = $1`, [id])).rows[0];
 
-beforeAll(async () => { await member(); });
+let other = '';
+beforeAll(async () => { other = await member(); });
 afterAll(async () => {
   await pool.query('delete from "user" where id = any($1::text[])', [ids]);
   await pool.end();
 });
 
-it('ticks each step from real data and leaves when all are done', async () => {
+it('ticks the three steps from real data, gives the tag and the frame by button and leaves when all is taken', async () => {
   const id = await member();
-  expect(await getFirstSteps(id)).toEqual(expect.arrayContaining([expect.objectContaining({ key: 'gacha', done: false, reward: '+30 крышек', href: '/gacha' })]));
+  expect((await steps(id))?.[0]).toMatchObject({ key: 'gacha', done: false, reward: { kind: 'caps' }, href: '/gacha' });
   expect(await done(id)).toEqual([]);
 
   await pull(id);
   expect(await done(id)).toEqual(['gacha']);
-  await pool.query(`insert into "drinkSwipe"("userId",brand,flavor,liked) values($1,'Бренд','вкус',true)`, [id]);
-  expect(await done(id)).toEqual(['gacha', 'dating']);
-  await pool.query(`insert into "drinkLog"("userId",name,brand,flavor,day) values($1,'Бренд вкус','Бренд','вкус',(now() at time zone 'Europe/Moscow')::date)`, [id]);
-  expect(await done(id)).toEqual(['gacha', 'dating', 'drink']);
-  await pool.query(`insert into "profileImage"("userId",kind,data) values($1,'avatar','\\x00')`, [id]);
+  await swipe(id, FIRST_SWIPES - 1);
+  expect((await steps(id))?.find(step => step.key === 'swipes')).toMatchObject({ done: false, progress: { value: FIRST_SWIPES - 1, goal: FIRST_SWIPES } });
+  expect(await claimFirstStep(id, 'swipes')).toMatchObject({ ok: false });
+  await swipe(id, 1);
+  expect((await steps(id))?.find(step => step.key === 'swipes')).toMatchObject({ done: true, claimable: true });
+
+  expect(await claimFirstStep(id, 'swipes')).toEqual({ ok: true, equipped: true });
+  expect((await look(id))?.tags).toEqual(['first-charge']);
+  const xp = await pool.query(`select points from "profileExperience" where "userId" = $1 and reason = 'achievement' and "sourceKey" = 'first-charge'`, [id]);
+  expect(xp.rowCount).toBe(1);
+  expect(await claimFirstStep(id, 'swipes')).toEqual({ ok: true, equipped: true });
+  expect((await pool.query(`select 1 from "profileExperience" where "userId" = $1 and "sourceKey" = 'first-charge'`, [id])).rowCount).toBe(1);
+
+  expect(await claimFirstStep(id, 'follow')).toMatchObject({ ok: false });
+  await follow(id, other);
+  expect((await steps(id))?.find(step => step.key === 'follow')).toMatchObject({ done: true, claimable: true });
+  expect(await claimFirstStep(id, 'follow')).toEqual({ ok: true, equipped: true });
+  expect((await look(id))?.frame).toBe('charge');
   expect(await getFirstSteps(id)).toBeNull();
 });
 
-it('counts a review as the drink step and needs a nickname for the profile step', async () => {
+it('puts a reward on only into an empty slot, and «Надеть» swaps it in later', async () => {
   const id = await member();
-  await pool.query(`insert into review("userId",brand,flavor,design,taste,composition,text) values($1,'Бренд','вкус',5,5,5,'Хороший напиток')`, [id]);
-  expect(await done(id)).toEqual(['drink']);
-  await pool.query(`update "user" set username = null where id = $1`, [id]);
-  await pool.query(`insert into "profileImage"("userId",kind,data) values($1,'avatar','\\x00')`, [id]);
-  expect(await done(id)).toEqual(['drink']);
+  await pool.query(`insert into "profileAchievement"("userId",key) values($1,'date')`, [id]);
+  await pool.query(`update "user" set "profileTags" = array['date'], "profileAppearance" = jsonb_set("profileAppearance", '{frame}', '"pulse"') where id = $1`, [id]);
+  await swipe(id, FIRST_SWIPES);
+  await follow(id, other);
+  expect(await wearFirstStepReward(id, 'swipes')).toBe(false);
+  expect(await claimFirstStep(id, 'swipes')).toEqual({ ok: true, equipped: false });
+  expect(await claimFirstStep(id, 'follow')).toEqual({ ok: true, equipped: false });
+  expect(await look(id)).toEqual({ tags: ['date'], frame: 'pulse' });
+  expect(await wearFirstStepReward(id, 'swipes')).toBe(true);
+  expect(await wearFirstStepReward(id, 'follow')).toBe(true);
+  expect(await look(id)).toEqual({ tags: ['first-charge'], frame: 'charge' });
 });
 
-it('ticks the Telegram step only when the bot can write: linked, started and not stopped', async () => {
+it('offers someone to follow while that step waits, never the member themself', async () => {
   const id = await member();
-  const chat = 900_000_000_000 + Math.floor(Math.random() * 1_000_000_000);
-  const step = async () => (await getFirstSteps(id, { telegram: true }))?.find(item => item.key === 'telegram');
-  expect(await step()).toMatchObject({ done: false, href: '/profile/settings?section=telegram-bot' });
-  expect((await getFirstSteps(id, { telegram: false }))?.some(item => item.key === 'telegram')).toBe(false);
-  await pool.query(`insert into account(id,"accountId","providerId",issuer,"userId","createdAt","updatedAt") values($1,$2,'telegram','local:telegram',$3,now(),now())`, [randomUUID(), String(chat), id]);
-  expect((await step())?.done).toBe(false);
-  await pool.query(`insert into "telegramChat"("telegramId","chatId") values($1,$1)`, [chat]);
-  try {
-    expect((await step())?.done).toBe(true);
-    await pool.query(`update "telegramChat" set "blockedAt" = now() where "telegramId" = $1`, [chat]);
-    expect((await step())?.done).toBe(false);
-  } finally {
-    await pool.query(`delete from "telegramChat" where "telegramId" = $1`, [chat]);
-  }
+  await pool.query(`update "user" set "lastSeenAt" = now() where id = $1`, [other]);
+  const card = await getFirstSteps(id);
+  expect(card?.person?.id).toBeTruthy();
+  expect(card?.person?.id).not.toBe(id);
+  await follow(id, other);
+  expect((await getFirstSteps(id))?.person).toBeNull();
 });
 
 it('names the welcome caps only until they are paid', async () => {
   const id = await member();
   await getGachaState(id);
-  expect((await getFirstSteps(id))?.find(step => step.key === 'gacha')?.reward).toBeNull();
+  expect((await steps(id))?.find(step => step.key === 'gacha')?.reward).toEqual({ kind: 'card' });
 });
 
 it('keeps «Скрыть» in the database, whichever device asks next', async () => {
@@ -91,6 +107,8 @@ it('shows the card to newcomers only: an old member with XP and the blocked do n
   await pool.query('insert into "userBlock"("userId") values($1)', [blocked]);
   expect(await getFirstSteps(blocked)).toBeNull();
   expect(await getFirstSteps(randomUUID())).toBeNull();
+  await swipe(veteran, FIRST_SWIPES);
+  expect(await claimFirstStep(veteran, 'swipes')).toMatchObject({ ok: false });
 });
 
 it('counts first-day actions for newcomers whose first day is over', async () => {

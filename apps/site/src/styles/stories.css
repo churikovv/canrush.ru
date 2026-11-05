@@ -5,11 +5,11 @@
 .stories-row > li { position: relative; flex: none; }
 .story-chip { display: grid; justify-items: center; gap: 6px; width: 72px; padding: 0; border: 0; background: none; color: var(--color-ink); font: inherit; cursor: pointer; }
 .story-chip:focus-visible { outline: none; }
-.story-chip:focus-visible .story-ring { outline: 3px solid var(--color-focus, #006eff); outline-offset: 2px; }
-.story-ring { position: relative; display: grid; width: 68px; height: 68px; padding: 3px; border-radius: 50%; background: conic-gradient(from 210deg, #006eff, #8b5cf6, #ff3b81, #ffb703, #006eff); transition: transform 150ms ease-out; }
+.story-chip:focus-visible .story-ring { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.story-ring { position: relative; display: grid; width: 68px; height: 68px; padding: 3px; border-radius: 50%; background: conic-gradient(from 210deg, var(--brand-blue), #8b5cf6, #ff3b81, #ffb703, var(--brand-blue)); transition: transform var(--motion-fast) ease-out; }
 .story-chip:active .story-ring { transform: scale(.95); }
 .story-ring[data-kind=week] { background: conic-gradient(from 210deg, #6d28d9, #a855f7, #ec4899, #6d28d9); }
-.story-ring[data-kind=picks] { background: conic-gradient(from 210deg, #006eff, #22d3ee, #34d399, #006eff); }
+.story-ring[data-kind=picks] { background: conic-gradient(from 210deg, var(--brand-blue), #22d3ee, #34d399, var(--brand-blue)); }
 .story-ring.is-seen { background: color-mix(in srgb, var(--color-muted-strong) 35%, transparent); }
 .story-ring.is-add { background: none; padding: 0; }
 .story-avatar { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; border: 3px solid var(--color-surface); border-radius: 50%; background: var(--color-subtle); color: var(--color-ink); font-size: 1.25rem; font-weight: 800; }
@@ -48,7 +48,7 @@
 /* Under a member's story: the caption and the heart (or, for the author, likes and views that open «who liked»). */
 .story-foot { position: absolute; z-index: 3; left: 16px; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: flex-end; justify-content: flex-end; gap: 10px; pointer-events: none; }
 .story-foot > * { pointer-events: auto; }
-.story-like, .story-stats { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 48px; padding: 0 12px; border: 0; border-radius: 999px; background: rgb(0 0 0 / .45); color: #fff; font: inherit; font-weight: 800; font-variant-numeric: tabular-nums; cursor: pointer; }
+.story-like, .story-stats { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 48px; padding: 0 12px; border: 0; border-radius: var(--radius-pill); background: rgb(0 0 0 / .45); color: #fff; font: inherit; font-weight: 800; font-variant-numeric: tabular-nums; cursor: pointer; }
 .story-like { min-width: 48px; justify-content: center; }
 .story-like.is-liked { color: #ff4e6a; }
 .story-like.is-liked svg { animation: story-like-pop 360ms cubic-bezier(.2, .9, .3, 1.4); }
@@ -77,29 +77,27 @@
 
 /* System stories: the weekly digest and the picks, drawn as cards. */
 .story-card { display: flex; flex-direction: column; justify-content: center; gap: 12px; width: 100%; height: 100%; padding: 96px 28px calc(48px + env(safe-area-inset-bottom)); }
-.story-card-pick { align-items: flex-start; background: linear-gradient(170deg, #0f172a, #0b3b8f); }
 .story-card small { font-size: .8125rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
 .story-card p { margin: 0; font-size: 1.125rem; line-height: 1.4; }
 .story-card-note { opacity: .85; font-size: .9375rem !important; }
-.story-card-pick > strong { font-size: 1.75rem; line-height: 1.15; }
 /* «Telegram», poster style: centred heavy headline, tilted colour pills between its halves, one round button. */
 .tg-promo { --tg-bg: #006eff; --tg-ink: #fff; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; width: 100%; height: 100%; padding: 88px 24px calc(40px + env(safe-area-inset-bottom)); overflow: hidden; background: var(--tg-bg); color: var(--tg-ink); text-align: center; }
 .tg-promo[data-page=bot] { --tg-bg: #f4f1ea; --tg-ink: #111; }
 .tg-promo > *, .tg-promo-pills li { animation: wrap-rise 600ms cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--line, 0) * 110ms + 100ms); }
 .tg-promo-pills { animation: none; }
-.tg-promo-handle { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; background: rgb(255 255 255 / .16); font-size: .875rem; font-weight: 700; }
+.tg-promo-handle { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: var(--radius-pill); background: rgb(255 255 255 / .16); font-size: .875rem; font-weight: 700; }
 .tg-promo[data-page=bot] .tg-promo-handle { background: rgb(0 0 0 / .07); }
 .tg-promo-handle img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
 .tg-promo-title { max-width: 12ch; font-size: clamp(2.5rem, 13vw, 3.5rem); font-weight: 700; line-height: .92; letter-spacing: -.03em; text-transform: uppercase; overflow-wrap: anywhere; }
 .tg-promo-pills { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 6px 0; padding: 0; list-style: none; }
-.tg-promo-pills li { padding: 9px 20px; border-radius: 999px; font-size: 1.125rem; font-weight: 700; white-space: nowrap; box-shadow: 0 10px 22px -14px rgb(0 0 0 / .6); }
+.tg-promo-pills li { padding: 9px 20px; border-radius: var(--radius-pill); font-size: 1.125rem; font-weight: 700; white-space: nowrap; box-shadow: 0 10px 22px -14px rgb(0 0 0 / .6); }
 .tg-promo-pills li:nth-child(4n + 1) { background: #ff5a1f; color: #fff; rotate: -4deg; }
 .tg-promo-pills li:nth-child(4n + 2) { background: #b9a7ff; color: #1b1340; rotate: 3deg; }
 .tg-promo-pills li:nth-child(4n + 3) { background: #ffc93c; color: #2b1d00; rotate: -2deg; }
 .tg-promo-pills li:nth-child(4n + 4) { background: #12203d; color: #fff; rotate: 4deg; }
-.tg-promo[data-page=bot] .tg-promo-pills li:nth-child(4n + 4) { background: #006eff; }
+.tg-promo[data-page=bot] .tg-promo-pills li:nth-child(4n + 4) { background: var(--brand-blue); }
 .tg-promo-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
-.tg-promo-cta { min-height: 48px; padding: 14px 26px; border-radius: 999px; background: var(--tg-ink); color: var(--tg-bg); font-weight: 700; text-decoration: none; }
+.tg-promo-cta { min-height: 48px; padding: 14px 26px; border-radius: var(--radius-pill); background: var(--tg-ink); color: var(--tg-bg); font-weight: 700; text-decoration: none; }
 .tg-promo-cta.is-secondary { background: transparent; color: var(--tg-ink); box-shadow: inset 0 0 0 2px currentColor; }
 @media (prefers-reduced-motion: reduce) { .tg-promo > *, .tg-promo-pills li { animation: none; } }
 /* NRJ PARTY: the partner's red, their logo on a white tile, the description and two buttons. */
@@ -110,12 +108,84 @@
 .story-telegram-actions { position: relative; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 .story-telegram-actions .story-card-cta { margin-top: 0; }
 .story-card-cta.is-secondary { background: transparent; color: #fff; box-shadow: inset 0 0 0 2px rgb(255 255 255 / .8); }
-.story-pick-cover { position: relative; display: grid; place-items: center; width: min(70%, 260px); aspect-ratio: 1; margin-bottom: 8px; overflow: hidden; border-radius: 28px; background: #fff; }
-/* A % height inside a square made by aspect-ratio does not resolve: a tall can photo (member drinks) took its own height and the square cropped it. Absolute + inset 0 + margin auto sizes it against the square. */
-.story-pick-cover img { position: absolute; inset: 0; margin: auto; width: 82%; height: 82%; object-fit: contain; mix-blend-mode: multiply; }
-.story-card-cta { position: relative; z-index: 2; align-self: flex-start; margin-top: 12px; padding: 12px 20px; border-radius: 999px; background: #fff; color: #111; font-weight: 800; text-decoration: none; }
+.story-card-cta { position: relative; z-index: 2; align-self: flex-start; margin-top: 12px; padding: 12px 20px; border-radius: var(--radius-pill); background: #fff; color: #111; font-weight: 800; text-decoration: none; }
 
-.story-composer { width: min(420px, calc(100vw - 24px)); padding: 16px; border: 0; border-radius: 24px; background: var(--color-surface); color: var(--color-ink); }
+/* «Тебе понравится» (`picks-story.tsx`): dark slides, the can glowing in its flavour's colour (`--pick` from can-skin), a ring
+   for «совпадение», where it sells in the city, «Почему тебе» with the viewer's own drinks and the people behind the pick,
+   and three actions. The first and last slides are on the brand colours, shapes drifting like «Твоя неделя». Overflow is
+   clip, not hidden: the glow sticks out, and a hidden box scrolls sideways when a pressed button takes focus. */
+.pick, .picks-cover { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: center; gap: 12px; width: 100%; height: 100%; padding: 92px 24px calc(28px + env(safe-area-inset-bottom)); overflow: clip; background: #070c22; color: #fff; }
+.pick > :not(.pick-glow), .picks-cover > :not(.wrap-shapes) { position: relative; z-index: 1; animation: wrap-rise 600ms cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--line, 0) * 110ms + 80ms); }
+.pick-glow { position: absolute; z-index: 0; left: 50%; top: 30%; width: 140%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--pick) 75%, transparent), transparent); opacity: .5; pointer-events: none; animation: pick-breathe 5s ease-in-out infinite; }
+.pick-kicker { font-size: .8125rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .8; }
+/* The can sits absolutely in the stage: a % height of a grid or flex child with an auto track does not resolve, and a tall can photo took its own height over the whole slide. */
+.pick-stage { height: clamp(120px, 29dvh, 270px); }
+.pick-can-img { display: block; }
+.pick-can-img.is-big { position: absolute; inset: 0; margin: auto; height: 100%; width: auto; max-width: 64%; object-fit: contain; filter: drop-shadow(0 18px 22px rgb(0 0 0 / .55)); animation: pick-float 4.2s ease-in-out infinite; }
+.pick-can-img.is-big:not([data-cutout]) { aspect-ratio: 1; padding: 8%; border-radius: 28px; background: #fff; }
+.pick-can-img.is-empty { display: grid; place-items: center; aspect-ratio: 1; border-radius: 24px; background: rgb(255 255 255 / .1); font-size: 3rem; }
+.pick-match { position: absolute; right: 0; top: 0; display: grid; place-items: center; align-content: center; width: 78px; height: 78px; border-radius: 50%; background: conic-gradient(#fff calc(var(--m) * 1%), rgb(255 255 255 / .18) 0); }
+.pick-match::before { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: #0d1536; }
+.pick-match b, .pick-match small { position: relative; }
+.pick-match b { font-size: 1.375rem; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.pick-match small { font-size: .625rem; font-weight: 700; opacity: .75; }
+.pick-name small { display: block; font-size: .875rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; opacity: .75; }
+.pick-name strong { display: block; font-size: clamp(1.75rem, 8vw, 2.25rem); font-weight: 900; line-height: 1.05; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.pick-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.pick-facts li { padding: 6px 12px; border-radius: var(--radius-pill); background: rgb(255 255 255 / .12); font-size: .8125rem; font-weight: 700; }
+.pick-why { display: grid; gap: 8px; padding: 14px; border-radius: var(--radius-xl); background: rgb(255 255 255 / .08); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12); }
+.pick-why h3 { margin: 0; color: color-mix(in srgb, var(--pick) 45%, #fff); font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.pick-why p { margin: 0; font-size: 1rem; line-height: 1.35; }
+.pick-why b { font-weight: 800; }
+.pick-why small { font-size: .8125rem; opacity: .75; }
+.pick-fans { display: inline-flex; margin-right: 8px; vertical-align: middle; }
+.pick-fans span { display: grid; place-items: center; width: 26px; height: 26px; overflow: hidden; border-radius: 50%; background: var(--brand-blue); box-shadow: 0 0 0 2px #151d3d; font-size: .75rem; font-weight: 800; }
+.pick-fans span + span { margin-left: -8px; }
+.pick-fans img { width: 100%; height: 100%; object-fit: cover; }
+.pick-because { display: flex; align-items: center; gap: 10px; }
+.pick-because-cans { display: flex; flex: none; }
+.pick-because-cans .pick-can-img[data-cutout] { width: 24px; height: 42px; }
+.pick-because-cans .pick-can-img:not([data-cutout]) { width: 34px; height: 34px; }
+.pick-because-cans .pick-can-img + .pick-can-img { margin-left: -4px; }
+.pick-because small { min-width: 0; line-height: 1.35; }
+.pick-can-img.is-small { flex: none; width: 28px; height: 28px; object-fit: contain; }
+.pick-can-img.is-small:not([data-cutout]) { padding: 2px; border-radius: 8px; background: #fff; }
+.pick-can-img.is-small.is-empty { font-size: .875rem; }
+.pick-actions { display: flex; align-items: center; gap: 10px; }
+.pick-open { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: var(--radius-pill); background: #fff; color: #0b1230; font-weight: 800; text-decoration: none; }
+.pick-round { display: grid; flex: none; place-items: center; width: 52px; height: 52px; border: 0; border-radius: 50%; background: rgb(255 255 255 / .14); color: #fff; cursor: pointer; }
+.pick-round[aria-pressed=true] { background: #fff; color: #e5484d; }
+.pick-round:disabled { opacity: .45; cursor: default; }
+.pick[data-nope] .pick-stage { opacity: .35; filter: grayscale(1); transition: opacity 300ms ease-out; }
+.picks-cover { --s1: var(--brand-blue); --s2: #7c5cff; --s3: #3fd6ff; background: linear-gradient(170deg, #0a1640, #0b2a8f); gap: 14px; }
+.picks-cover[data-page=outro] { --s1: #7c5cff; --s2: #3fd6ff; --s3: #fff; background: var(--brand-blue); }
+.picks-cover .wrap-shapes { opacity: .55; }
+.picks-cover .picks-for { text-transform: none; letter-spacing: 0; }
+.picks-cover > small { font-size: .8125rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+.picks-cover p { margin: 0; font-size: 1.0625rem; line-height: 1.4; }
+.picks-title { font-size: clamp(2.25rem, 11vw, 3rem); font-weight: 900; line-height: 1; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.picks-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.picks-chips li { padding: 8px 14px; border-radius: var(--radius-pill); background: rgb(255 255 255 / .14); font-size: .875rem; font-weight: 800; }
+.picks-chips li:first-child { background: #fff; color: #0b2a8f; }
+.picks-cover .picks-basis { font-size: .875rem; opacity: .75; }
+.picks-fan { display: flex; justify-content: center; margin-top: 6px; }
+.picks-fan .pick-can-img.is-small { width: 76px; height: 104px; filter: drop-shadow(0 12px 16px rgb(0 0 0 / .45)); }
+.picks-fan .pick-can-img.is-small:not([data-cutout]) { height: 76px; border-radius: 18px; }
+.picks-fan > :nth-child(1) { rotate: -12deg; translate: 14px 8px; }
+.picks-fan > :nth-child(2) { z-index: 1; scale: 1.15; }
+.picks-fan > :nth-child(3) { rotate: 12deg; translate: -14px 8px; }
+.picks-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 4px 0; padding: 0; list-style: none; }
+.picks-grid a { position: relative; display: grid; place-items: center; aspect-ratio: 3 / 4; border-radius: var(--radius-lg); background: rgb(255 255 255 / .14); color: #fff; text-decoration: none; }
+.picks-grid .pick-can-img.is-small { width: 64%; height: 70%; }
+.picks-grid .pick-can-img.is-small:not([data-cutout]) { height: auto; aspect-ratio: 1; }
+.picks-grid b { position: absolute; left: 50%; bottom: -8px; translate: -50% 0; padding: 2px 8px; border-radius: var(--radius-pill); background: #fff; color: #0b2a8f; font-size: .75rem; font-weight: 900; }
+.pick-cta { display: inline-flex; align-items: center; gap: 8px; }
+@keyframes pick-breathe { 0%, 100% { opacity: .42; scale: 1; } 50% { opacity: .6; scale: 1.06; } }
+@keyframes pick-float { 0%, 100% { translate: 0 0; rotate: -3deg; } 50% { translate: 0 -8px; rotate: 2deg; } }
+@media (max-height: 700px) { .pick { gap: 9px; padding-top: 84px; } .pick-because small { display: none; } }
+@media (prefers-reduced-motion: reduce) { .pick > *, .picks-cover > *, .pick-glow, .pick-can-img.is-big { animation: none !important; } }
+
+.story-composer { width: min(420px, calc(100vw - 24px)); padding: 16px; border: 0; border-radius: var(--radius-2xl); background: var(--color-surface); color: var(--color-ink); }
 .story-composer::backdrop { background: rgb(0 0 0 / .6); }
 .story-composer[open] { display: grid; gap: 12px; }
 .story-composer-head { display: flex; align-items: center; justify-content: space-between; }
@@ -125,7 +195,7 @@
 .story-composer-pick small { font-weight: 400; font-size: .8125rem; }
 .story-composer-pick img, .story-composer-pick video { width: 100%; height: 100%; object-fit: cover; }
 .story-composer-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.story-composer-caption input { width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid transparent; border-radius: 16px; background: var(--color-subtle); color: var(--color-ink); font: inherit; }
+.story-composer-caption input { width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid transparent; border-radius: var(--radius-lg); background: var(--color-subtle); color: var(--color-ink); font: inherit; }
 .story-composer-submit { width: 100%; justify-content: center; min-height: 48px; }
 @media (prefers-reduced-motion: reduce) { .story-ring { transition: none; } }
 
@@ -146,7 +216,7 @@
 /* XP can run to four digits with a plus and a unit, so this number is smaller than the others. */
 .wrap[data-page=progress] .wrap-number { font-size: clamp(3.75rem, 20vw, 7rem); white-space: nowrap; }
 .wrap-lead { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
-.wrap-badge { align-self: flex-start; padding: 8px 14px; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 700; }
+.wrap-badge { align-self: flex-start; padding: 8px 14px; border-radius: var(--radius-pill); background: var(--ink); color: var(--bg); font-weight: 700; }
 .wrap-week { display: grid; grid-template-columns: repeat(7, 1fr); align-items: end; gap: 8px; height: 132px; margin: 8px 0 0; padding: 0; list-style: none; }
 .wrap-week li { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; height: 100%; text-align: center; }
 .wrap-week li > span { display: grid; align-items: start; justify-items: center; height: max(10px, calc(var(--h) * 100% - 22px)); padding-top: 4px; border-radius: 10px; background: var(--ink); color: var(--bg); transform-origin: bottom; animation: wrap-bar 700ms cubic-bezier(.2, .8, .2, 1) both; animation-delay: 500ms; }
@@ -189,7 +259,7 @@
 .story-frame[data-tone=light] .story-progress span { background: rgb(19 20 26 / .2); }
 .story-frame[data-tone=light] .story-progress i { background: #13141a; }
 .story-share:disabled { opacity: .5; cursor: progress; }
-.story-notice { position: absolute; z-index: 5; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); margin: 0; padding: 10px 16px; border-radius: 999px; background: #fff; color: #13141a; font-weight: 700; white-space: nowrap; box-shadow: 0 10px 28px -10px rgb(0 0 0 / .5); transform: translateX(-50%); }
+.story-notice { position: absolute; z-index: 5; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); margin: 0; padding: 10px 16px; border-radius: var(--radius-pill); background: #fff; color: #13141a; font-weight: 700; white-space: nowrap; box-shadow: 0 10px 28px -10px rgb(0 0 0 / .5); transform: translateX(-50%); }
 /* iPhone Duo (and other foldables) opened like a book: the viewer sits in the right half instead of across the fold.
    Viewport Segments is a WebKit preview behind a flag in Safari 27.1, so this only applies where the browser exposes it. */
 @media (horizontal-viewport-segments: 2) {

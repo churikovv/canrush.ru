@@ -28,7 +28,7 @@ export async function createCompanyPostAction(businessId: string, _previous: Com
     await createCompanyPost(id, parsePostText(form.get('text')), file ? { name: file.name, data: Buffer.from(await file.arrayBuffer()) } : null, photos);
     revalidatePath(`/company/${businessId}`);
     return { saved: true, at: Date.now() };
-  } catch (error) { return failure(error, 'Не удалось опубликовать запись.'); }
+  } catch (error) { return failure(error, 'Не удалось опубликовать запись. Попробуйте ещё раз.'); }
 }
 
 export async function deleteCompanyPostAction(businessId: string, postId: string): Promise<CompanyActionState> {
@@ -38,7 +38,7 @@ export async function deleteCompanyPostAction(businessId: string, postId: string
     await deleteCompanyPost(id, postId);
     revalidatePath(`/company/${businessId}`);
     return { saved: true, at: Date.now() };
-  } catch (error) { return failure(error, 'Не удалось удалить запись.'); }
+  } catch (error) { return failure(error, 'Не удалось удалить запись. Попробуйте ещё раз.'); }
 }
 
 /** «Закрепить как главную презентацию» on a PDF post, or unpin it (`postId` null). */
@@ -49,7 +49,7 @@ export async function pinCompanyPresentationAction(businessId: string, postId: s
     await pinCompanyPresentation(id, postId);
     revalidatePath(`/company/${businessId}`);
     return { saved: true, at: Date.now() };
-  } catch (error) { return failure(error, 'Не удалось закрепить презентацию.'); }
+  } catch (error) { return failure(error, 'Не удалось закрепить презентацию. Попробуйте ещё раз.'); }
 }
 
 /** A new award: PDF or picture, told by the file's content; a picture is re-encoded, so nothing else gets through. */
@@ -72,7 +72,7 @@ export async function createCompanyAwardAction(businessId: string, _previous: Co
     }
     revalidatePath(`/company/${businessId}`);
     return { saved: true, at: Date.now() };
-  } catch (error) { return failure(error, 'Не удалось добавить награду.'); }
+  } catch (error) { return failure(error, 'Не удалось добавить награду. Попробуйте ещё раз.'); }
 }
 
 export async function deleteCompanyAwardAction(businessId: string, awardId: string): Promise<CompanyActionState> {
@@ -82,7 +82,7 @@ export async function deleteCompanyAwardAction(businessId: string, awardId: stri
     await deleteCompanyAward(id, awardId);
     revalidatePath(`/company/${businessId}`);
     return { saved: true, at: Date.now() };
-  } catch (error) { return failure(error, 'Не удалось удалить награду.'); }
+  } catch (error) { return failure(error, 'Не удалось удалить награду. Попробуйте ещё раз.'); }
 }
 
 /** «Подписаться» / «Вы подписаны» on a company profile: returns the subscriber count after the change. */
@@ -93,7 +93,7 @@ export async function followCompanyAction(businessId: string, on: boolean): Prom
     const followers = await setCompanyFollow(id, businessId, on);
     revalidatePath(`/company/${businessId}`);
     return { saved: true, followers, at: Date.now() };
-  } catch (error) { return failure(error, 'Не удалось изменить подписку.'); }
+  } catch (error) { return failure(error, 'Не удалось изменить подписку. Попробуйте ещё раз.'); }
 }
 
 /** The profile banner from the cabinet: a wide picture cropped to 3:1 (1500×500 WebP); `remove=1` takes it down. */
@@ -108,13 +108,13 @@ export async function companyBannerAction(_previous: CompanyActionState, form: F
       if (file.size > MAX_REVIEW_PHOTO_BYTES || !REVIEW_PHOTO_TYPES.includes(file.type)) return { error: 'Баннер — JPG, PNG или WebP до 5 МБ.', at: Date.now() };
       let wide: Buffer;
       try { wide = await sharp((await encodeStillPhoto(Buffer.from(await file.arrayBuffer()))).data).resize(1500, 500, { fit: 'cover' }).webp({ quality: 82 }).toBuffer(); }
-      catch { return { error: 'Не удалось прочитать картинку.', at: Date.now() }; }
+      catch { return { error: 'Не удалось прочитать картинку. Выберите JPG, PNG или WebP.', at: Date.now() }; }
       await setCompanyBanner(id, wide);
     }
     revalidatePath('/business/cabinet');
     revalidatePath('/company', 'layout');
     return { saved: true, at: Date.now() };
-  } catch (error) { return failure(error, 'Не удалось сохранить баннер.'); }
+  } catch (error) { return failure(error, 'Не удалось сохранить баннер. Попробуйте ещё раз.'); }
 }
 
 /**
@@ -132,5 +132,5 @@ export async function saveCompanyProfileAllAction(_previous: CompanyActionState,
     revalidatePath('/business/cabinet');
     revalidatePath('/company', 'layout');
     return { saved: true, at: Date.now() };
-  } catch (error) { return failure(error, 'Не удалось сохранить профиль.'); }
+  } catch (error) { return failure(error, 'Не удалось сохранить профиль. Попробуйте ещё раз.'); }
 }

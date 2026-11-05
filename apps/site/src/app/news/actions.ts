@@ -52,7 +52,7 @@ export async function reopenArticleAction(id: string): Promise<ArticleActionStat
     revalidatePath('/news');
     revalidatePath(`/news/${id}`);
   } catch (error) {
-    return { error: message(error, 'Не удалось вернуть статью в черновики.') };
+    return { error: message(error, 'Не удалось вернуть статью в черновики. Попробуйте ещё раз.') };
   }
   redirect(`/news/${id}/edit`);
 }
@@ -64,7 +64,7 @@ export async function deleteArticleAction(id: string): Promise<ArticleActionStat
     revalidatePath('/news');
     revalidatePath('/admin/articles');
   } catch (error) {
-    return { error: message(error, 'Не удалось удалить статью.') };
+    return { error: message(error, 'Не удалось удалить статью. Попробуйте ещё раз.') };
   }
   redirect('/news');
 }
@@ -104,7 +104,7 @@ export async function likeArticleAction(id: string, like: boolean): Promise<{ li
     const user = await member();
     return await setArticleLike(user.id, id, like);
   } catch (error) {
-    return { error: message(error, 'Не удалось поставить лайк.') };
+    return { error: message(error, 'Не удалось поставить лайк. Попробуйте ещё раз.') };
   }
 }
 
@@ -116,6 +116,6 @@ export async function deleteDraftAction(id: string): Promise<ArticleActionState>
     revalidatePath('/news');
     return { done: true };
   } catch (error) {
-    return { error: message(error, 'Не удалось удалить черновик.') };
+    return { error: message(error, 'Не удалось удалить черновик. Попробуйте ещё раз.') };
   }
 }

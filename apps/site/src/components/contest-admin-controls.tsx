@@ -29,11 +29,11 @@ export function ContestWinnerActions({ contestKey, drawId, tagLabel }: { contest
   const [redrawn, redraw, redrawing] = useActionState(redrawContestAction.bind(null, contestKey), {});
   const busy = confirming || redrawing;
   return <div className="contest-winner-actions">
-    <form action={confirm} onSubmit={event => { if (!window.confirm(tagLabel ? `Связались с победителем? Он получит тег «${tagLabel}» навсегда.` : 'Связались с победителем?')) event.preventDefault(); }}>
+    <form action={confirm} onSubmit={event => { if (!window.confirm(tagLabel ? `Связались с победителем? Тег «${tagLabel}» останется у победителя навсегда.` : 'Связались с победителем?')) event.preventDefault(); }}>
       <input type="hidden" name="drawId" value={drawId} />
       <button className="community-button" type="submit" disabled={busy}>{confirming ? 'Сохраняем…' : tagLabel ? 'Связались — выдать тег' : 'Связались'}</button>
     </form>
-    <form action={redraw} onSubmit={event => { if (!window.confirm('Победитель не вышел на связь? Он выбывает из этого конкурса, и мы сразу выберем другого.')) event.preventDefault(); }}>
+    <form action={redraw} onSubmit={event => { if (!window.confirm('Победитель не на связи? Этот участник выбывает из конкурса, и мы сразу выберем другого.')) event.preventDefault(); }}>
       <input type="hidden" name="drawId" value={drawId} />
       <button className="community-button community-button-secondary" type="submit" disabled={busy}>{redrawing ? 'Переигрываем…' : 'Не ответил — переиграть'}</button>
     </form>

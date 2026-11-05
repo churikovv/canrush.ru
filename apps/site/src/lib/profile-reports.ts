@@ -31,6 +31,7 @@ const CONTENT_SOURCES: Record<ContentReportKind, string> = {
   'collection-photo': 'select "userId" as author, coalesce(caption, \'Фото коллекции без подписи\') as excerpt from "collectionPhoto" where id=$1',
   'drink-question': 'select "userId" as author, brand || \' · \' || flavor || E\'\\n\' || text as excerpt from "drinkQuestion" where id=$1',
   'drink-answer': 'select "userId" as author, text as excerpt from "drinkAnswer" where id=$1',
+  'chat-message': 'select "userId" as author, case when text = \'\' then \'Сообщение без текста\' else text end as excerpt from "chatMessage" where id=$1',
 };
 
 async function submit(

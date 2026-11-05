@@ -7,7 +7,7 @@ export const ACHIEVEMENT_METRICS = [
   'admin', 'moderator', 'telegram', 'monthlyTop', 'drinkLogs', 'drinkStreak', 'contestWin', 'betaEngine', 'weekHero', 'weekBest', 'weekCharge',
   'monster', 'monsterDetailed', 'weeklyXp', 'publishedStores', 'swipes', 'swipeLikes', 'publishedDrinks',
   'classicBrands', 'accountDays', 'longReviews', 'comments', 'bestReviewLikes', 'profileLook', 'wallPosts',
-  'redBull', 'redBullFavorites', 'volt', 'voltFavorites',
+  'redBull', 'redBullFavorites', 'volt', 'voltFavorites', 'firstSteps', 'dailyStep',
 ] as const;
 export type AchievementMetric = typeof ACHIEVEMENT_METRICS[number];
 export type AchievementProgress = Record<AchievementMetric, number>;
@@ -45,6 +45,12 @@ export const PROFILE_ACHIEVEMENTS: readonly ProfileAchievement[] = [
     { metric: 'betaEngine', goal: 1, label: 'Зарегистрироваться среди первых 500 участников' }] },
   { key: 'energizer', label: 'Энерджайзер', rarity: 'special', description: 'Секретный тег победителя розыгрыша ящика энергетиков', steps: [
     { metric: 'contestWin', goal: 1, label: 'Выиграть розыгрыш ящика энергетиков' }] },
+  { key: 'first-charge', label: 'Первый заряд', rarity: 'special', description: 'Награда новичка из «Первых шагов» на главной', steps: [
+    { metric: 'firstSteps', goal: 1, label: 'Сделать пять свайпов в дейтинге напитков и забрать награду' }] },
+  { key: 'moon-young', label: 'Молодой месяц', rarity: 'common', description: 'Пять дней «Лунного цикла» подряд', steps: [
+    { metric: 'dailyStep', goal: 5, label: 'Дойти до 5-го дня ежедневных наград' }] },
+  { key: 'moon-full', label: 'Полнолуние', rarity: 'rare', description: 'Двадцать дней «Лунного цикла» подряд', steps: [
+    { metric: 'dailyStep', goal: 20, label: 'Дойти до 20-го дня ежедневных наград' }] },
   { key: 'top', label: 'ТОП', rarity: 'legendary', description: 'Победитель гонки месяца. Больше не выдаётся и остаётся у победителей', steps: [
     { metric: 'monthlyTop', goal: 1, label: 'Попасть в топ-3 рейтинга месяца' }] },
   { key: 'week-hero', label: 'Герой недели', rarity: 'special', description: 'Первое место в гонке недели. Тег держится до следующих итогов', steps: [
@@ -191,7 +197,7 @@ export function eligibleAchievements(progress: AchievementProgress): string[] {
 }
 
 /** Tags hidden from everyone but admins and those who already have them. */
-const SECRET_ACHIEVEMENTS = new Set(['energizer', 'top', 'week-hero', 'week-best', 'week-charge']);
+const SECRET_ACHIEVEMENTS = new Set(['energizer', 'top', 'week-hero', 'week-best', 'week-charge', 'first-charge']);
 /** The moderator tag is listed for administrators and for the moderator who holds it, like a secret one. */
 export function visibleProfileAchievements(viewerIsAdmin: boolean, earned: readonly string[] = []) {
   return PROFILE_ACHIEVEMENTS.filter(item => item.key === 'admin' ? viewerIsAdmin

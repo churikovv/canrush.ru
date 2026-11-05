@@ -59,7 +59,7 @@ export async function removeFavoriteAction(_previous: string, formData: FormData
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect('/sign-in');
   const brand = formData.get('brand'), flavor = formData.get('flavor');
-  if (typeof brand !== 'string' || typeof flavor !== 'string' || brand.length > 120 || flavor.length > 80) return 'Не удалось определить товар.';
+  if (typeof brand !== 'string' || typeof flavor !== 'string' || brand.length > 120 || flavor.length > 80) return 'Не удалось определить товар. Обновите страницу и попробуйте ещё раз.';
   try {
     await getPool().query('delete from "favorite" where "userId" = $1 and "brand" = $2 and "flavor" = $3', [session.user.id, brand, flavor]);
   } catch { return 'Не удалось удалить товар. Попробуйте ещё раз.'; }

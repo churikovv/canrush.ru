@@ -11,4 +11,5 @@ export const NOTIFICATION_OPTIONS = [
   { kind: 'price', label: 'Изменение цен в избранном' },
   { kind: 'overtaken', label: 'Вас обогнали в топе недели' },
   { kind: 'reminder', label: 'Напоминания о серии и бесплатной крутке' },
+  { kind: 'card-trade', label: 'Обмен карточками Банкомата' },
 ] as const;

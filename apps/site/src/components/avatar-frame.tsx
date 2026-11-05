@@ -2,6 +2,8 @@ import type { CSSProperties } from 'react';
 import { BrandAvatarFrame, isBrandFrame } from '@/components/avatar-frame-brands';
 import { HeavyAvatarFrame, isHeavyFrame } from '@/components/avatar-frame-heavy';
 import { isShopFrame, ShopAvatarFrame } from '@/components/avatar-frame-shop';
+import { ChargeAvatarFrame } from '@/components/avatar-frame-charge';
+import { isMoonFrame, MoonAvatarFrame } from '@/components/avatar-frame-moon';
 import type { ProfileAppearance } from '@/lib/profile-appearance';
 
 type Spark = { x: number; y: number; scale: number; delay: number; embers?: [number, number][] };
@@ -72,6 +74,8 @@ export function AvatarFrame({ frame }: { frame: ProfileAppearance['frame'] }) {
   if (isHeavyFrame(frame)) return <HeavyAvatarFrame frame={frame} />;
   if (isBrandFrame(frame)) return <BrandAvatarFrame frame={frame} />;
   if (isShopFrame(frame)) return <ShopAvatarFrame frame={frame} />;
+  if (frame === 'charge') return <ChargeAvatarFrame />;
+  if (isMoonFrame(frame)) return <MoonAvatarFrame frame={frame} />;
   const ring = frame === 'abyss' || frame === 'nova';
   if (frame === 'pumpkin') return <svg className="avatar-frame avatar-frame-pumpkin" viewBox="0 0 100 100" fill="none" aria-hidden="true" focusable="false"><PumpkinFrame /></svg>;
   return <>

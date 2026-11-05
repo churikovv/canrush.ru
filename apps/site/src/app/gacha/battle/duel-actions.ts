@@ -78,5 +78,5 @@ export async function duelPollAction(duelId: unknown, after: unknown): Promise<D
 export async function rematchAction(duelId: unknown): Promise<{ error: string } | { code: string }> {
   const id = await member();
   if (!id || !isId(duelId)) return { error: 'Такого боя нет.' };
-  try { return await rematchDuel(id, duelId); } catch (error) { return refusal(error, 'Не удалось позвать на реванш.', 'duel rematch failed'); }
+  try { return await rematchDuel(id, duelId); } catch (error) { return refusal(error, 'Не удалось позвать на реванш. Попробуйте ещё раз.', 'duel rematch failed'); }
 }

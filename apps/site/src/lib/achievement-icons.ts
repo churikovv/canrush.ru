@@ -19,6 +19,11 @@ export const ACHIEVEMENT_ICONS: Record<string, AchievementIcon> = {
   'week-hero': { d: CUP },
   'week-best': { d: 'M8 2.5l2.5 6M16 2.5l-2.5 6M12 9.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM12 12.5v5M10.5 13.5 12 12.5' },
   'week-charge': { d: BOLT },
+  // The power button: the first charge goes on.
+  'first-charge': { d: 'M12 2.5v8.5M6.8 5.6a8 8 0 1 0 10.4 0' },
+  // A young crescent, and the full moon with its craters.
+  'moon-young': { d: 'M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5Z' },
+  'moon-full': { d: 'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17ZM9 9.5h.01M14.5 8h.01M13.5 14.5a1.5 1.5 0 1 0 0 .01M8.5 14h.01' },
   'streak-7': { d: FLAME },
   'streak-14': { d: `${FLAME}M12 21.5c-1.7 0-3-1.3-3-3 0-1.8 1.5-2.8 3-4.5 1.5 1.7 3 2.7 3 4.5 0 1.7-1.3 3-3 3Z` },
   'streak-30': { d: `${FLAME}M12 21.5c-1.7 0-3-1.3-3-3 0-1.8 1.5-2.8 3-4.5 1.5 1.7 3 2.7 3 4.5 0 1.7-1.3 3-3 3ZM4 4l1.5 1.5M20 4l-1.5 1.5` },

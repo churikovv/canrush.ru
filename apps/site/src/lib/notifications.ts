@@ -3,6 +3,7 @@ import { getPool } from '@/db/pool';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { activeOffers, type CatalogFile } from '@/lib/catalog-files';
 import { days, pluralRu } from '@/lib/drink-calendar-fields';
+import { TRADE_OFFER_HOURS } from '@/lib/card-trade-fields';
 import { huntItemName } from '@/lib/hunt-fields';
 import { isResolvedFlavor, type CityId } from '@canrush/shared';
 
@@ -58,22 +59,31 @@ const NOTIFICATION_SELECT = `select n.*,u.name,u.username,r.brand,r.flavor,c.tex
       left join "user" wo on wo.id=rw."profileId"
       join "user" owner on owner.id=n."userId"`;
 
+/**
+ * The words of a notification — the same in the bell, in Telegram and in push. Who did something is a nick, never a
+ * known gender, so actions are in the present tense («отвечает», «предлагает») or without a verb: a past verb would
+ * have to be masculine or feminine.
+ */
 function describeNotification(row: any): NotificationItem {
     const actor = row.username ? `@${row.username}` : row.name && !row.name.includes('@') ? row.name : 'Участник';
-    let title = `${actor} подписался на вас`;
+    let title = `${actor} теперь среди ваших подписчиков`;
     let detail = ''; let href = row.username ? `/profile/${encodeURIComponent(row.username)}` : '/profile'; let city: string | undefined;
     if (row.kind==='like' || row.kind==='review-comment') {
-      title = row.kind==='like' ? `${actor} поставил лайк вашему отзыву` : `${actor} прокомментировал ваш отзыв`;
+      title = row.kind==='like' ? `${actor} лайкает ваш отзыв` : `${actor} комментирует ваш отзыв`;
       detail = `${row.brand} · ${flavorName(row.flavor)}${row.comment ? ' — '+row.comment.slice(0,160) : ''}`;
       href = `/catalog/${catalogGroupSlug(row.brand,row.flavor)}?tab=reviews#review-${row.reviewId}`;
     } else if (row.kind==='wall-comment') {
-      title = `${actor} оставил запись на вашей стене`; detail = row.wall?.slice(0,160) ?? '';
+      title = `${actor} пишет на вашей стене`; detail = row.wall?.slice(0,160) ?? '';
       href = row.ownerUsername ? `/profile/${encodeURIComponent(row.ownerUsername)}#wall` : '/profile#wall';
     } else if (row.kind==='comment-reply' || row.kind==='mention') {
       // Both point at a discussion (or a wall/feed record); payload says where it lives.
       const p = row.payload;
-      title = row.kind==='mention' ? `${actor} упомянул вас` : `${actor} ответил на ваш комментарий`;
-      if (p.target==='review' && row.replyBrand) {
+      title = row.kind==='mention' ? `${actor} упоминает вас` : `${actor} отвечает на ваш комментарий`;
+      if (p.target==='chat') {
+        // The community chat (migration 0198): the link opens its panel on the message.
+        title = row.kind==='mention' ? `${actor} упоминает вас в чате` : `${actor} отвечает вам в чате`;
+        href = `/?chat=${encodeURIComponent(p.messageId)}`;
+      } else if (p.target==='review' && row.replyBrand) {
         detail = `${row.replyBrand} · ${flavorName(row.replyFlavor)}`;
         href = `/catalog/${catalogGroupSlug(row.replyBrand,row.replyFlavor)}?tab=reviews#review-${p.reviewId}`;
       } else if (p.target==='tierlist' && row.replyTierSlug) {
@@ -118,8 +128,8 @@ function describeNotification(row: any): NotificationItem {
     } else if (row.kind==='overtaken') {
       // Someone passed the member in the week's top five (migration 0168): the new place and how far behind they are.
       const p = row.payload;
-      title = `${actor} обогнал вас в топе недели`;
-      detail = `Теперь вы на ${p.place} месте · отставание ${p.gap} XP`;
+      title = `${actor} теперь выше вас в топе недели`;
+      detail = `Вы на ${p.place} месте · отставание ${p.gap} XP`;
       href = '/leaderboard';
     } else if (row.kind==='drink-merged') {
       // A moderator merged the member's drink into a catalog card it duplicated (catalog-drink-merge.ts).
@@ -144,13 +154,13 @@ function describeNotification(row: any): NotificationItem {
     } else if (row.kind==='business-reply') {
       // The company of the drink answered the member's review (migration 0124); off in the notification settings.
       const p = row.payload;
-      title = `${p.business} ответили на ваш отзыв`;
+      title = `${p.business} отвечает на ваш отзыв`;
       detail = `${p.brand} · ${flavorName(p.flavor)} — ${p.text}`;
       href = `/catalog/${catalogGroupSlug(p.brand,p.flavor)}?tab=reviews#review-${row.reviewId}`;
     } else if (row.kind==='question-answer') {
       // Someone answered the member's question about a drink (migration 0185); off in the notification settings.
       const p = row.payload;
-      title = `${actor} ответил на ваш вопрос`;
+      title = `${actor} отвечает на ваш вопрос`;
       detail = `${p.brand} · ${flavorName(p.flavor)} — ${p.text}`;
       href = `/catalog/${catalogGroupSlug(p.brand,p.flavor)}?tab=questions#question-${p.questionId}`;
     } else if (row.kind==='duel-invite') {
@@ -158,6 +168,17 @@ function describeNotification(row: any): NotificationItem {
       title = `${actor} вызывает вас на битву банок`;
       detail = 'Примите вызов — бой начнётся сразу';
       href = `/gacha/battle/duel/${encodeURIComponent(String(row.payload.code))}`;
+    } else if (row.kind==='card-trade') {
+      // A card trade (migration 0195): an offer to the member, or the member's offer accepted; off in the settings.
+      const p = row.payload;
+      if (p.type==='accepted') {
+        title = `${actor} принимает ваш обмен`;
+        detail = 'Новые карточки уже в коллекции';
+      } else {
+        title = `${actor} предлагает обмен карточками`;
+        detail = `Получите ${p.get} ${pluralRu(Number(p.get), 'карточку', 'карточки', 'карточек')}, отдадите ${p.give} — ответьте за ${days(TRADE_OFFER_HOURS / 24)}`;
+      }
+      href = '/gacha/trades';
     } else if (row.kind==='business-invite') {
       // The owner of a company invited the member to its cabinet; accepting happens in the cabinet.
       const p = row.payload;
@@ -166,7 +187,7 @@ function describeNotification(row: any): NotificationItem {
       href = '/business/cabinet';
     } else if (row.kind==='support-reply') {
       // The team answered the member's «Помощь» chat (migration 0137); always on — it answers their own question.
-      title = 'Поддержка CanRush ответила';
+      title = 'Ответ от поддержки CanRush';
       detail = row.payload.text ?? '';
       href = '/support';
     } else if (row.kind==='reminder') {

@@ -41,8 +41,8 @@ export function AdminMemberMenu({ member, context, canDelete, team = false }: {
     {member.frozen
       ? <form action={unfreezeUserAction}>{hidden}<Item><Snow /><span>Разморозить</span></Item></form>
       : ([[1, 'на сутки'], [7, 'на неделю'], [30, 'на месяц']] as const).map(([days, label]) => <form key={days} action={freezeUserAction}>{hidden}<input type="hidden" name="days" value={days} />
-        <Item confirm={`Заморозить ${member.label} ${label}? Писать, комментировать и публиковать он не сможет, профиль останется виден.`}><Snow /><span>Заморозить {label}</span></Item></form>)}
-    <form action={member.blocked ? unblockUserAction : blockUserAction}>{hidden}<Item danger={!member.blocked} confirm={member.blocked ? undefined : `Заблокировать ${member.label}? Его записи и отзывы скроются, писать он не сможет.`}><Ban /><span>{member.blocked ? 'Разблокировать' : 'Заблокировать'}</span></Item></form>
+        <Item confirm={`Заморозить ${member.label} ${label}? Писать, комментировать и публиковать будет нельзя, профиль останется виден.`}><Snow /><span>Заморозить {label}</span></Item></form>)}
+    <form action={member.blocked ? unblockUserAction : blockUserAction}>{hidden}<Item danger={!member.blocked} confirm={member.blocked ? undefined : `Заблокировать ${member.label}? Записи и отзывы участника скроются, писать будет нельзя.`}><Ban /><span>{member.blocked ? 'Разблокировать' : 'Заблокировать'}</span></Item></form>
     {canDelete && <form action={deleteUserAction}>{hidden}<Item danger confirm={`Удалить аккаунт ${member.label} со всеми отзывами, записями и опытом? Это нельзя отменить.`}><TrashIcon /><span>Удалить аккаунт</span></Item></form>}
     </>}
   </MoreActions>;

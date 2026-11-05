@@ -1,7 +1,8 @@
+import { createHmac } from 'node:crypto';
 import { attributeRegistration } from '@/lib/campaigns';
 import { betterAuth } from 'better-auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
-import { magicLink } from 'better-auth/plugins';
+import { emailOTP, magicLink } from 'better-auth/plugins';
 import type { Pool } from 'pg';
 import { getPool } from '@/db/pool';
 import {
@@ -21,7 +22,18 @@ interface RateLimitRecord {
   lastRequest: bigint | number | string;
 }
 
-export type MagicLinkSender = (email: string, token: string, audience?: SignInAudience) => Promise<void>;
+/** `code` — the six digits for the same sign-in, when they could be made: the letter carries both. */
+export type MagicLinkSender = (email: string, token: string, audience?: SignInAudience, code?: string) => Promise<void>;
+
+/** The sign-in code: six digits, the same 15 minutes as the link, three tries, then a new letter. */
+export const SIGN_IN_CODE_LENGTH = 6;
+export const SIGN_IN_CODE_ATTEMPTS = 3;
+/**
+ * The code plugin's own routes stay closed: a code is made only inside the magic link letter, so asking for a letter
+ * keeps its origin check and its limits per address and per IP. Only signing in with the code is open.
+ */
+const CLOSED_CODE_PATHS = new Set(['/email-otp/send-verification-otp', '/email-otp/check-verification-otp', '/email-otp/verify-email',
+  '/email-otp/request-password-reset', '/forget-password/email-otp', '/email-otp/reset-password', '/email-otp/request-email-change', '/email-otp/change-email']);
 
 export interface CreateAuthOptions {
   database?: Pool;
@@ -47,7 +59,8 @@ function requestOrigin(value: string | null): string | undefined {
 
 function createEmailRateLimitHook(secret: string, trustedOrigin: string) {
   return createAuthMiddleware(async (ctx) => {
-    if (ctx.path !== '/sign-in/magic-link') return;
+    if (CLOSED_CODE_PATHS.has(ctx.path)) throw new APIError('NOT_FOUND');
+    if (ctx.path !== '/sign-in/magic-link' && ctx.path !== '/sign-in/email-otp') return;
 
     const fetchSite = ctx.headers?.get('sec-fetch-site');
     const origin = requestOrigin(ctx.headers?.get('origin') ?? null);
@@ -58,6 +71,8 @@ function createEmailRateLimitHook(secret: string, trustedOrigin: string) {
     if (!trustedRequest) {
       throw new APIError('FORBIDDEN', { message: 'Недоверенный источник запроса.' });
     }
+    // The code itself is limited by its three tries and the plugin's per-IP limit; the letter limits below are for asking.
+    if (ctx.path === '/sign-in/email-otp') return;
 
     const body = ctx.body as { email?: unknown } | undefined;
     if (typeof body?.email !== 'string') return;
@@ -133,8 +148,10 @@ export function createAuth(options: CreateAuthOptions = {}) {
   const env = getAuthEnv();
   const sendMagicLink = options.sendMagicLink ?? sendMagicLinkEmail;
   const telegramBotToken = options.telegramBotToken !== undefined ? options.telegramBotToken : (getTelegramEnv()?.botToken ?? null);
+  // Set once the instance exists: the magic link letter asks the code plugin for a code to put next to the link.
+  let issueSignInCode: ((email: string) => Promise<string>) | null = null;
 
-  return betterAuth({
+  const instance = betterAuth({
     appName: 'CanRush',
     baseURL: env.authUrl,
     secret: env.authSecret,
@@ -172,7 +189,23 @@ export function createAuth(options: CreateAuthOptions = {}) {
           max: 5,
         },
         storeToken: 'hashed',
-        sendMagicLink: async ({ email, token, url }) => sendMagicLink(email, token, audienceFromVerifyUrl(url)),
+        sendMagicLink: async ({ email, token, url }) => {
+          // A link opened in a mail app's own browser signs in there, not where the member asked; the code works anywhere.
+          // No code is no reason to hold the letter back: the link alone still signs in.
+          const code = await issueSignInCode?.(email).catch(() => undefined);
+          await sendMagicLink(email, token, audienceFromVerifyUrl(url), code);
+        },
+      }),
+      emailOTP({
+        otpLength: SIGN_IN_CODE_LENGTH,
+        expiresIn: 15 * 60,
+        allowedAttempts: SIGN_IN_CODE_ATTEMPTS,
+        disableSignUp: false,
+        // A keyed hash, not plain SHA-256: six digits are a million guesses, and a copy of the database leaves the server.
+        storeOTP: { hash: async (otp) => createHmac('sha256', env.authSecret).update(`sign-in-code:${otp}`).digest('base64url') },
+        rateLimit: { window: 60, max: 5 },
+        // Never called: the routes that send a code on their own are closed (`CLOSED_CODE_PATHS`).
+        sendVerificationOTP: async () => { throw new APIError('NOT_FOUND'); },
       }),
       telegramMiniApp({ botToken: telegramBotToken, botUsername: options.telegramBotUsername !== undefined ? options.telegramBotUsername : (getTelegramEnv()?.botUsername ?? null), trustedOrigin: env.authUrl }),
       reviewLogin({
@@ -182,6 +215,8 @@ export function createAuth(options: CreateAuthOptions = {}) {
       }),
     ],
   });
+  issueSignInCode = (email) => instance.api.createVerificationOTP({ body: { email, type: 'sign-in' } });
+  return instance;
 }
 
 export const auth = createAuth();

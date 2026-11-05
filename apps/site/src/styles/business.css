@@ -5,7 +5,7 @@
 .biz p:not(.biz-real *) { margin: 0; }
 
 .biz-actions { display: grid; gap: 10px; }
-.biz-button { display: inline-flex; min-height: 56px; align-items: center; justify-content: center; padding: 14px 24px; border: 2px solid var(--color-brand); border-radius: 16px; background: var(--color-brand); color: #fff; font-weight: 700; text-decoration: none; text-align: center; transition: background-color var(--motion-fast, 150ms) ease-out, border-color var(--motion-fast, 150ms) ease-out; }
+.biz-button { display: inline-flex; min-height: 56px; align-items: center; justify-content: center; padding: 14px 24px; border: 2px solid var(--color-brand); border-radius: var(--radius-lg); background: var(--color-brand); color: #fff; font-weight: 700; text-decoration: none; text-align: center; transition: background-color var(--motion-fast) ease-out, border-color var(--motion-fast) ease-out; }
 .biz-button:hover { background: color-mix(in srgb, var(--color-brand) 86%, #000); border-color: color-mix(in srgb, var(--color-brand) 86%, #000); }
 .biz-button.is-ghost { border-color: transparent; background: var(--color-subtle); color: var(--color-ink); }
 .biz-button.is-ghost:hover { background: var(--color-control); }
@@ -18,18 +18,18 @@
 /* On a phone the two cards sit side by side under the art, so they never cover its sign. */
 
 /* Example screens: drawn in the cabinet's look, labelled so nobody takes the numbers as real. */
-.biz-card { position: relative; display: grid; gap: 14px; width: 100%; max-width: 380px; margin-inline: auto; padding: 16px; border-radius: 20px; background: var(--color-surface); color: var(--color-ink); box-shadow: 0 10px 30px rgb(0 0 0 / 10%); }
+.biz-card { position: relative; display: grid; gap: 14px; width: 100%; max-width: 380px; margin-inline: auto; padding: 16px; border-radius: var(--radius-xl); background: var(--color-surface); color: var(--color-ink); box-shadow: 0 10px 30px rgb(0 0 0 / 10%); }
 .biz-card small { color: var(--color-muted-strong); font-size: .8125rem; }
 .biz-card-head, .biz-card-row { display: flex; align-items: center; gap: 12px; }
 .biz-card-head > div { display: grid; flex: 1; min-width: 0; }
 .biz-card-row { justify-content: space-between; }
 .biz-can { flex: none; width: 40px; height: 56px; border-radius: 10px 10px 8px 8px; background: linear-gradient(180deg, #d9dde3 0 10%, var(--color-brand) 10% 100%); box-shadow: inset -6px 0 0 #00000026; }
 .biz-can.is-new { background: linear-gradient(180deg, #d9dde3 0 10%, #f5b400 10% 100%); }
-.biz-score { padding: 4px 10px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .9375rem; }
+.biz-score { padding: 4px 10px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font-size: .9375rem; }
 .biz-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.biz-kpis div { display: grid; gap: 2px; padding: 10px; border-radius: 12px; background: var(--color-subtle); }
+.biz-kpis div { display: grid; gap: 2px; padding: 10px; border-radius: var(--radius-md); background: var(--color-subtle); }
 .biz-kpis b { font-size: 1.0625rem; }
-.biz-kpis i { justify-self: start; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); font-size: .6875rem; font-style: normal; font-weight: 700; }
+.biz-kpis i { justify-self: start; padding: 1px 6px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); font-size: .6875rem; font-style: normal; font-weight: 700; }
 .biz-card-split { display: grid; grid-template-columns: minmax(0, 1fr) 96px; align-items: end; gap: 14px; }
 .biz-radar { width: 96px; height: 96px; overflow: visible; }
 .biz-radar-grid { fill: none; stroke: var(--color-control); stroke-width: 1; }
@@ -41,17 +41,17 @@
 .biz-insight p span { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--tone) 18%, transparent); color: var(--tone); }
 .biz-insight[data-tone="muted"] .biz-chips span { background: var(--color-subtle); }
 .biz-lineup { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.biz-lineup li { display: grid; grid-template-columns: auto 92px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--color-subtle); font-size: .875rem; }
-.biz-lineup b { padding: 2px 8px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .8125rem; }
+.biz-lineup li { display: grid; grid-template-columns: auto 92px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-md); background: var(--color-subtle); font-size: .875rem; }
+.biz-lineup b { padding: 2px 8px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font-size: .8125rem; }
 .biz-can.is-small { width: 18px; height: 26px; border-radius: 5px 5px 4px 4px; box-shadow: inset -3px 0 0 #00000026; }
-.biz-like { height: 6px; border-radius: 999px; background: var(--color-control); }
+.biz-like { height: 6px; border-radius: var(--radius-pill); background: var(--color-control); }
 .biz-like span { display: block; width: calc(var(--v) * 100%); height: 100%; border-radius: inherit; background: var(--color-brand); }
 .biz-notice { display: grid; grid-template-columns: 36px 1fr; gap: 10px; padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--color-brand) 10%, var(--color-subtle)); }
 .biz-notice > div { display: grid; gap: 2px; min-width: 0; }
 .biz-notice strong { font-size: .875rem; }
 .biz-team { display: flex; align-items: center; }
 .biz-team .biz-avatar { margin-right: -8px; border: 3px solid var(--color-surface); }
-.biz-invite { margin-left: 18px; padding: 6px 12px; border-radius: 999px; background: var(--color-subtle); color: var(--color-brand); font-size: .8125rem; font-weight: 700; }
+.biz-invite { margin-left: 18px; padding: 6px 12px; border-radius: var(--radius-pill); background: var(--color-subtle); color: var(--color-brand); font-size: .8125rem; font-weight: 700; }
 .biz-avatar { display: grid; flex: none; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: var(--color-control); font-weight: 700; }
 .biz-avatar.is-brand { background: var(--color-brand); color: #fff; }
 
@@ -59,13 +59,13 @@
 .biz-spark { display: flex; align-items: flex-end; gap: 4px; height: 56px; }
 .biz-spark span { flex: 1; height: calc(var(--v) * 100%); border-radius: 4px 4px 2px 2px; background: color-mix(in srgb, var(--color-brand) calc(30% + var(--v) * 70%), transparent); }
 .biz-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.biz-chips span { padding: 5px 10px; border-radius: 999px; background: color-mix(in srgb, var(--tone, var(--color-brand)) 14%, var(--color-subtle)); color: var(--color-ink); font-size: .8125rem; font-weight: 600; }
+.biz-chips span { padding: 5px 10px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--tone, var(--color-brand)) 14%, var(--color-subtle)); color: var(--color-ink); font-size: .8125rem; font-weight: 600; }
 .biz-steps-mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
 .biz-steps-mini li { padding: 8px 6px; border-radius: 10px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .8125rem; font-weight: 700; text-align: center; }
 .biz-steps-mini li.is-done { background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); }
 .biz-steps-mini li.is-current { background: var(--color-brand); color: #fff; }
-.biz-order { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--color-subtle); font-size: .875rem; }
-.biz-status { padding: 3px 8px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .75rem; font-weight: 700; }
+.biz-order { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--color-subtle); font-size: .875rem; }
+.biz-status { padding: 3px 8px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font-size: .75rem; font-weight: 700; }
 .biz-status.is-done { background: var(--color-control); color: var(--color-ink); }
 
 
@@ -84,11 +84,11 @@
 .biz-queries li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-control); font-size: .9375rem; }
 .biz-queries li:last-child { border-bottom: 0; }
 .biz-queries b { color: var(--color-brand); }
-.biz-missed { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-brand) 10%, var(--color-subtle)); font-size: .875rem; font-weight: 600; }
+.biz-missed { display: grid; gap: 2px; padding: 10px 12px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-brand) 10%, var(--color-subtle)); font-size: .875rem; font-weight: 600; }
 .biz-review { display: grid; grid-template-columns: 36px 1fr; gap: 10px; }
 .biz-review.is-brand { margin-left: 24px; padding: 10px; border-left: 3px solid var(--color-brand); border-radius: 4px 14px 14px 4px; background: color-mix(in srgb, var(--color-brand) 10%, transparent); }
 .biz-review p { font-size: .9375rem; line-height: 1.4; }
-.biz-review i { margin-left: 4px; padding: 2px 6px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .6875rem; font-style: normal; vertical-align: 2px; }
+.biz-review i { margin-left: 4px; padding: 2px 6px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font-size: .6875rem; font-style: normal; vertical-align: 2px; }
 
 /* ── Hero: centred like a product page — the «Новое» pill, the headline in an ink-to-muted fill, the actions, then the
    cabinet's overview under a soft brand glow. Everything enters in a short stagger (CSS only: it plays before
@@ -102,11 +102,11 @@
 .biz-hero > .biz-showcase { animation-duration: 900ms; animation-delay: 320ms; }
 @keyframes biz-rise { from { opacity: 0; transform: translateY(14px); } }
 
-.biz-pill { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; max-width: 100%; padding: 4px 14px 4px 4px; overflow: hidden; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 999px; background: var(--color-surface); color: var(--color-muted-strong); font-size: .875rem; font-weight: 600; text-decoration: none; isolation: isolate; transition: border-color 150ms ease-out, color 150ms ease-out; }
+.biz-pill { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; max-width: 100%; padding: 4px 14px 4px 4px; overflow: hidden; border: 1px solid var(--theme-line); border-radius: var(--radius-pill); background: var(--color-surface); color: var(--color-muted-strong); font-size: .875rem; font-weight: 600; text-decoration: none; isolation: isolate; transition: border-color var(--motion-fast) ease-out, color var(--motion-fast) ease-out; }
 .biz-pill::after { position: absolute; inset: 0; z-index: -1; background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--color-brand) 16%, transparent) 50%, transparent 65%); transform: translateX(-100%); animation: biz-shine 6s ease-in-out 1.2s infinite; content: ""; }
 @keyframes biz-shine { 0%, 70% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-.biz-pill:hover { border-color: color-mix(in srgb, var(--color-brand) 50%, var(--theme-line, #dfe3e8)); color: var(--color-ink); }
-.biz-pill-tag { padding: 5px 10px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .75rem; }
+.biz-pill:hover { border-color: color-mix(in srgb, var(--color-brand) 50%, var(--theme-line)); color: var(--color-ink); }
+.biz-pill-tag { padding: 5px 10px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font-size: .75rem; }
 .biz-pill-arrow { flex: none; transition: transform 200ms cubic-bezier(.2, .8, .2, 1); }
 .biz-pill:hover .biz-pill-arrow { transform: translateX(3px); }
 
@@ -120,7 +120,7 @@
 .biz-cta svg { flex: none; transition: transform 200ms cubic-bezier(.2, .8, .2, 1); }
 .biz-cta:hover svg { transform: translateX(4px); }
 .biz-hero .biz-button:not(.is-ghost) { box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--color-brand) 70%, transparent); }
-.biz-button { transition: background-color 150ms ease-out, border-color 150ms ease-out, transform 200ms cubic-bezier(.2, .8, .2, 1), box-shadow 200ms ease-out; }
+.biz-button { transition: background-color var(--motion-fast) ease-out, border-color var(--motion-fast) ease-out, transform 200ms cubic-bezier(.2, .8, .2, 1), box-shadow 200ms ease-out; }
 .biz-button:hover { transform: translateY(-2px); }
 .biz-button:active { transform: translateY(0) scale(.97); }
 
@@ -146,7 +146,7 @@
   /* Stands on the screen's top edge — 14 px over its border, above the top bar's buttons — at any width. */
   .biz-showcase-mascot { top: -181px; right: 3%; width: 180px; }
   /* The note sits over the fade, where the screen dissolves. */
-  .biz-showcase-note { position: absolute; bottom: 9%; left: 50%; z-index: 2; margin: 0; padding: 6px 14px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 999px; background: var(--color-surface); transform: translateX(-50%); }
+  .biz-showcase-note { position: absolute; bottom: 9%; left: 50%; z-index: 2; margin: 0; padding: 6px 14px; border: 1px solid var(--theme-line); border-radius: var(--radius-pill); background: var(--color-surface); transform: translateX(-50%); }
 }
 @media (prefers-reduced-motion: reduce) {
   .biz-button, .biz-pill-arrow, .biz-cta svg { transition: none; }
@@ -156,7 +156,7 @@
 /* The preview is the cabinet's own markup (`.bc-root` and friends from business-cabinet.css): here it is a picture in a
    frame, so the app-shell parts that hold the viewport — 100dvh heights, the sticky sidebar, the phone drawer, the
    burger's gap — are set back to plain flow. A fixed height with a fading mask cuts it like a product shot. */
-.biz-screen { position: relative; z-index: 1; height: 600px; overflow: clip; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 22px; background: var(--color-subtle);
+.biz-screen { position: relative; z-index: 1; height: 600px; overflow: clip; border: 1px solid var(--theme-line); border-radius: 22px; background: var(--color-subtle);
   box-shadow: 0 30px 60px -30px rgb(10 25 60 / 35%); text-align: left;
   -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); mask-image: linear-gradient(to bottom, #000 55%, transparent 98%); }
 .biz-real.bc-root { min-height: 0; height: 100%; pointer-events: none; user-select: none; }
@@ -190,7 +190,7 @@
 .biz-numbers { display: grid; gap: 14px; }
 .biz-numbers-head { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
 .biz-numbers-head h2 { font-size: clamp(1.375rem, 5vw, 1.75rem); }
-.biz-live { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, #16a34a 12%, transparent); color: #15803d; font-size: .8125rem; font-weight: 700; }
+.biz-live { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: var(--radius-pill); background: color-mix(in srgb, #16a34a 12%, transparent); color: #15803d; font-size: .8125rem; font-weight: 700; }
 :root[data-site-theme=graphite] .biz-live { color: #4ade80; }
 @media (prefers-color-scheme: dark) { :root[data-site-theme=system] .biz-live { color: #4ade80; } }
 .biz-live i { position: relative; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
@@ -199,7 +199,7 @@
 
 .biz-stack { display: grid; justify-items: center; gap: 8px; width: 100%; max-width: 640px; margin-inline: auto; }
 /* The other figures: plain theme surfaces with the brand blue only in the icon and on hover. */
-.biz-stack-pill { --w: 100%; display: flex; align-items: center; gap: 12px; width: var(--w); min-height: 56px; padding: 0 20px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 999px;
+.biz-stack-pill { --w: 100%; display: flex; align-items: center; gap: 12px; width: var(--w); min-height: 56px; padding: 0 20px; border: 1px solid var(--theme-line); border-radius: var(--radius-pill);
   background: var(--color-surface); color: var(--color-ink); font: inherit; font-weight: 700; cursor: pointer;
   transition: transform 220ms cubic-bezier(.2, .8, .2, 1), border-color 200ms ease-out, background-color 200ms ease-out; animation: biz-rise 420ms cubic-bezier(.2, .8, .2, 1) both; }
 .biz-stack-pill[data-distance="1"] { --w: 90%; }
@@ -225,7 +225,7 @@
 .biz-story-ring-fill { fill: none; stroke: #fff; stroke-width: 4; stroke-linecap: round; }
 .biz-story-ring b { font-size: .8125rem; font-variant-numeric: tabular-nums; }
 .biz-story-ring-label { margin: -10px 0 0; color: #ffffffcc; font-size: .75rem; text-align: center; }
-.biz-story-next { justify-self: end; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: #fff; color: var(--color-brand); font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; transition: transform 150ms ease-out; }
+.biz-story-next { justify-self: end; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 0; border-radius: var(--radius-pill); background: #fff; color: var(--color-brand); font: inherit; font-size: .875rem; font-weight: 800; cursor: pointer; transition: transform var(--motion-fast) ease-out; }
 .biz-story-next:hover { transform: translateX(2px); }
 .biz-story-next:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .biz-story-figures { display: flex; justify-content: space-between; gap: 12px; }
@@ -233,12 +233,12 @@
 .biz-story-figures > div:last-child { text-align: right; }
 .biz-story-figures small { color: #ffffffcc; font-size: .75rem; font-weight: 600; }
 .biz-story-figures strong { color: #fff; font-size: clamp(1.875rem, 8.5vw, 3rem); font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -0.03em; white-space: nowrap; }
-.biz-story-picture { display: grid; gap: 10px; margin: 0; padding: 14px; border-radius: 20px; background: var(--deep); }
+.biz-story-picture { display: grid; gap: 10px; margin: 0; padding: 14px; border-radius: var(--radius-xl); background: var(--deep); }
 .biz-story-picture figcaption { color: #ffffffcc; font-size: .75rem; font-weight: 600; }
 .biz-story-bars { display: flex; align-items: flex-end; gap: 6px; height: 88px; }
 .biz-story-bars span { flex: 1; border-radius: 6px 6px 2px 2px; background: #ffffff59; }
 .biz-story-bars span:last-child { background: #fff; }
-.biz-story-split { display: flex; gap: 4px; height: 14px; overflow: hidden; border-radius: 999px; background: #ffffff26; }
+.biz-story-split { display: flex; gap: 4px; height: 14px; overflow: hidden; border-radius: var(--radius-pill); background: #ffffff26; }
 .biz-story-split span { min-width: 4px; transition: flex-grow 80ms linear; }
 .biz-story [data-part="0"] { --part: #fff; }
 .biz-story [data-part="1"] { --part: #ffffff73; }
@@ -249,7 +249,7 @@
 .biz-story-legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--part); }
 .biz-story-legend b { margin-left: auto; color: #fff; font-variant-numeric: tabular-nums; }
 .biz-story-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.biz-story-chips li { padding: 6px 12px; border-radius: 999px; background: #fff; color: var(--color-brand); font-size: .8125rem; font-weight: 700; }
+.biz-story-chips li { padding: 6px 12px; border-radius: var(--radius-pill); background: #fff; color: var(--color-brand); font-size: .8125rem; font-weight: 700; }
 .biz-story-chips li.is-more { border: 1px dashed #ffffff99; background: transparent; color: #fff; }
 .biz-story-foot { display: grid; gap: 4px; margin: 0; padding-left: 12px; border-left: 3px solid #fff; }
 .biz-story-foot > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
@@ -279,9 +279,9 @@
    «Скоро», three steps, questions beside their heading and the closing call. Quiet surfaces, the brand blue for
    numbers, accents and the final panel. */
 .biz-principles { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.biz-principle { display: grid; gap: 8px; padding: 20px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 22px; background: var(--color-surface); transition: border-color 200ms ease-out, transform 220ms cubic-bezier(.2, .8, .2, 1); }
-.biz-principle:hover { border-color: color-mix(in srgb, var(--color-brand) 45%, var(--theme-line, #dfe3e8)); transform: translateY(-3px); }
-.biz-principle-art { display: grid; place-items: center; height: 150px; margin: -4px -4px 8px; border-radius: 16px; background: var(--color-subtle); }
+.biz-principle { display: grid; gap: 8px; padding: 20px; border: 1px solid var(--theme-line); border-radius: 22px; background: var(--color-surface); transition: border-color 200ms ease-out, transform 220ms cubic-bezier(.2, .8, .2, 1); }
+.biz-principle:hover { border-color: color-mix(in srgb, var(--color-brand) 45%, var(--theme-line)); transform: translateY(-3px); }
+.biz-principle-art { display: grid; place-items: center; height: 150px; margin: -4px -4px 8px; border-radius: var(--radius-lg); background: var(--color-subtle); }
 .biz-principle-art svg { width: min(100%, 220px); height: auto; overflow: visible; }
 .biz-principle strong { color: var(--color-ink); font-size: 1.0625rem; }
 .biz-principle p { color: var(--color-muted-strong); line-height: 1.5; }
@@ -298,7 +298,7 @@
 .biz-chapters { display: grid; scroll-margin-top: 80px; }
 .biz-chapter { position: relative; display: grid; gap: 28px; padding: 56px 0; }
 /* The hairline runs across the whole window, like linear.app's section rules (the page clips the x-overflow). */
-.biz-chapter::before, .biz-soon::before { position: absolute; top: 0; left: 50%; width: 100vw; height: 1px; background: var(--theme-line, #dfe3e8); transform: translateX(-50%); content: ""; }
+.biz-chapter::before, .biz-soon::before { position: absolute; top: 0; left: 50%; width: 100vw; height: 1px; background: var(--theme-line); transform: translateX(-50%); content: ""; }
 .biz-kicker { display: flex; align-items: center; gap: 10px; color: var(--color-muted-strong); font-size: .875rem; font-weight: 700; }
 .biz-kicker b { color: var(--color-brand); font-variant-numeric: tabular-nums; }
 .biz-chapter-head { display: grid; gap: 14px; }
@@ -310,7 +310,7 @@
 .biz-more:hover { color: var(--color-brand); }
 .biz-more:hover svg { transform: translateX(4px); }
 
-.biz-frame { position: relative; display: grid; gap: 14px; padding: 18px; overflow: clip; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 28px; background: var(--color-subtle);
+.biz-frame { position: relative; display: grid; gap: 14px; padding: 18px; overflow: clip; border: 1px solid var(--theme-line); border-radius: 28px; background: var(--color-subtle);
   -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent); mask-image: linear-gradient(to bottom, #000 70%, transparent); }
 .biz-frame-screen { min-width: 0; }
 .biz-frame-screen:nth-child(n + 3) { display: none; }
@@ -332,21 +332,21 @@
 
 .biz-soon { position: relative; display: grid; gap: 14px; padding-top: 56px; }
 .biz-soon h2 { font-size: clamp(1.75rem, 7vw, 2.5rem); letter-spacing: -0.03em; }
-.biz-soon h2::after { margin-left: 12px; padding: 4px 10px; border: 1px dashed var(--theme-line, #dfe3e8); border-radius: 999px; color: var(--color-muted-strong); font-size: .8125rem; font-weight: 700; letter-spacing: 0; vertical-align: middle; content: "скоро"; }
+.biz-soon h2::after { margin-left: 12px; padding: 4px 10px; border: 1px dashed var(--theme-line); border-radius: var(--radius-pill); color: var(--color-muted-strong); font-size: .8125rem; font-weight: 700; letter-spacing: 0; vertical-align: middle; content: "скоро"; }
 .biz-soon > div { display: grid; gap: 10px; }
 .biz-soon > div p { max-width: 36em; color: var(--color-muted-strong); font-size: 1.0625rem; line-height: 1.55; }
 
 .biz-start { display: grid; gap: 20px; }
 .biz-start h2, .biz-faq h2 { font-size: clamp(2rem, 8vw, 3rem); line-height: 1.04; letter-spacing: -0.04em; }
 .biz-start ol { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.biz-start li { display: grid; gap: 8px; padding: 20px; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 22px; background: var(--color-surface); }
+.biz-start li { display: grid; gap: 8px; padding: 20px; border: 1px solid var(--theme-line); border-radius: 22px; background: var(--color-surface); }
 .biz-start li > b { color: var(--color-brand); font-size: 2.25rem; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -0.04em; }
 .biz-start li strong { margin-top: 12px; color: var(--color-ink); font-size: 1.0625rem; }
 .biz-start li span { color: var(--color-muted-strong); line-height: 1.45; }
 
 .biz-faq { display: grid; gap: 20px; }
-.biz-faq-list { display: grid; border-top: 1px solid var(--theme-line, #dfe3e8); }
-.biz-faq details { border-bottom: 1px solid var(--theme-line, #dfe3e8); }
+.biz-faq-list { display: grid; border-top: 1px solid var(--theme-line); }
+.biz-faq details { border-bottom: 1px solid var(--theme-line); }
 .biz-faq summary { display: flex; min-height: 64px; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; color: var(--color-ink); font-size: 1.0625rem; font-weight: 700; cursor: pointer; list-style: none; }
 .biz-faq summary::-webkit-details-marker { display: none; }
 .biz-faq summary::after { flex: none; width: 14px; height: 14px; background: linear-gradient(currentColor, currentColor) center / 14px 2px no-repeat, linear-gradient(currentColor, currentColor) center / 2px 14px no-repeat; color: var(--color-muted-strong); transition: transform 200ms cubic-bezier(.2, .8, .2, 1); content: ""; }
@@ -366,7 +366,7 @@
   .biz-frame { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 24px; }
   .biz-caps { grid-template-columns: repeat(2, 1fr); column-gap: 32px; }
   .biz-caps-title { grid-column: 1 / -1; }
-  .biz-caps ul + ul { padding-left: 32px; border-left: 1px solid var(--theme-line, #dfe3e8); }
+  .biz-caps ul + ul { padding-left: 32px; border-left: 1px solid var(--theme-line); }
   .biz-start ol { grid-template-columns: repeat(3, 1fr); }
   .biz-final { padding: 64px 32px; }
   .biz-final .biz-actions { justify-content: center; width: auto; }
@@ -389,7 +389,7 @@
   .biz-caps details p, .biz-faq details p, .biz-principle:hover .biz-art-accent, .biz-principle:hover .biz-art-accent-fill { animation: none; }
 }
 /* Extra screens of the chapters. */
-.biz-share { display: flex; gap: 4px; height: 12px; overflow: hidden; border-radius: 999px; }
+.biz-share { display: flex; gap: 4px; height: 12px; overflow: hidden; border-radius: var(--radius-pill); }
 .biz-share span:nth-child(1) { background: var(--color-brand); }
 .biz-share span:nth-child(2) { background: color-mix(in srgb, var(--color-ink) 45%, var(--color-subtle)); }
 .biz-share span:nth-child(3) { background: color-mix(in srgb, var(--color-ink) 22%, var(--color-subtle)); }
@@ -406,7 +406,7 @@
 /* «6.0 Тарифы»: the chapter around the plans; the plans and the comparison table themselves are in
    business-cabinet.css, shared with the cabinet. */
 .biz-pricing { position: relative; display: grid; gap: 28px; padding-top: 56px; scroll-margin-top: 80px; }
-.biz-pricing::before { position: absolute; top: 0; left: 50%; width: 100vw; height: 1px; background: var(--theme-line, #dfe3e8); transform: translateX(-50%); content: ""; }
+.biz-pricing::before { position: absolute; top: 0; left: 50%; width: 100vw; height: 1px; background: var(--theme-line); transform: translateX(-50%); content: ""; }
 .biz-pricing-head { display: grid; gap: 14px; }
 .biz-pricing-head h2 { font-size: clamp(2.5rem, 11vw, 4.5rem); line-height: 1; letter-spacing: -0.045em; }
 .biz-pricing-head p { max-width: 36em; color: var(--color-muted-strong); font-size: 1.0625rem; line-height: 1.55; }

@@ -72,7 +72,7 @@ describe.sequential('Telegram bot', () => {
 
     await deliverOwn();
     const sent = calls.find(call => call.method === 'sendMessage');
-    expect(String(sent?.body.text)).toContain(`@a${runId} подписался на вас`);
+    expect(String(sent?.body.text)).toContain(`@a${runId} теперь среди ваших подписчиков`);
     expect(JSON.stringify(sent?.body.reply_markup)).toContain(`https://canrush.test/profile/a${runId}`);
     expect((await outbox())[0]?.sentAt).not.toBeNull();
 

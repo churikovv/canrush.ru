@@ -57,7 +57,7 @@ async function draw(data: DrinkSummaryShot, width: number, height: number): Prom
   const canvas = document.createElement('canvas');
   canvas.width = width; canvas.height = height;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Не удалось создать изображение.');
+  if (!ctx) throw new Error('Не удалось создать изображение. Попробуйте ещё раз.');
   const pad = 72, story = height / width > 1.5;
   ctx.fillStyle = BLUE; ctx.fillRect(0, 0, width, height);
   ctx.fillStyle = 'rgb(255 255 255 / .08)';
@@ -127,7 +127,7 @@ async function draw(data: DrinkSummaryShot, width: number, height: number): Prom
   ctx.textAlign = 'left';
   ctx.fillStyle = 'rgb(255 255 255 / .9)'; ctx.font = `700 30px ${family}`;
   ctx.fillText('canrush.ru · трекер выпитого', pad, height - pad + 8);
-  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG.')), 'image/png'));
+  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG. Попробуйте ещё раз.')), 'image/png'));
 }
 
 export const renderDrinkSummary = (data: DrinkSummaryShot) => draw(data, 1080, 1350);

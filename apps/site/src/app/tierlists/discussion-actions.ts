@@ -18,8 +18,8 @@ export async function tierDiscussionAction(id: string, action: 'read' | 'vote' |
     if (!(await getTierInteractions([id], viewer)).has(id)) return { error: 'Тирлист недоступен.' };
     const settings = (await getPool().query<{ reactionsEnabled: boolean; commentsEnabled: boolean }>(`select "reactionsEnabled", "commentsEnabled" from "tierList" where id=$1 and status='published'`, [id])).rows[0];
     if (!settings) return { error: 'Тирлист недоступен.' };
-    if (action === 'vote' && !settings.reactionsEnabled) return { error: 'Автор отключил реакции.' };
-    if (action !== 'vote' && !settings.commentsEnabled) return { error: 'Автор отключил комментарии.' };
+    if (action === 'vote' && !settings.reactionsEnabled) return { error: 'Реакции отключены автором тирлиста.' };
+    if (action !== 'vote' && !settings.commentsEnabled) return { error: 'Комментарии отключены автором тирлиста.' };
     let edited: { id: string; text: string; editedAt: string } | undefined;
     if (action !== 'read') {
       if (!viewer) return { error: 'Войдите, чтобы участвовать в обсуждении.', signIn: true };

@@ -214,7 +214,11 @@ export function ProfileLookStrip({ appearance, saved, onAppearance, level, xp, o
   const canShop = Boolean(shopState && shop?.buy);
   const shopFrames = canShop ? SHOP_FRAME_ITEMS.filter(item => !usableFrame(item)) : [];
   const reviewed = new Map(brandFrames.map(item => [item.key as string, item.reviewed]));
-  const usableTheme = (item: typeof PROFILE_THEMES[number]) => item.level <= level || item.key === saved.theme;
+  const usableTheme = (item: typeof PROFILE_THEMES[number]) => item.level <= level || item.key === saved.theme || owned.includes(item.key);
+  // «Лунный цикл» (daily rewards): what the path still holds, with its day.
+  const dailyDay = (item: object) => ('daily' in item ? item.daily as number : 0);
+  const lockedDailyThemes = PROFILE_THEMES.filter(item => dailyDay(item) && !usableTheme(item));
+  const lockedDailyFrames = PROFILE_FRAMES.filter(item => dailyDay(item) && !usableFrame(item));
   const ownedShopTags = new Set([...(tag?.shopTags ?? []), ...bought]);
   const tags: { key: string; label: string; note: string; rarity?: string }[] = tag ? [
     ...PROFILE_ACHIEVEMENTS.filter(item => tag.earned.includes(item.key)).map(item => ({ key: item.key, label: item.label, rarity: item.rarity, note: `${ACHIEVEMENT_RARITIES[item.rarity]} · ${item.description}` })),
@@ -259,6 +263,13 @@ export function ProfileLookStrip({ appearance, saved, onAppearance, level, xp, o
                 <ShopPrice price={priceOf(item.key)} /></button>
             </li>)}</ul>
           </>}
+          {lockedDailyFrames.length > 0 && <>
+            <p className="look-group">Лунный цикл · ежедневные награды</p>
+            <ul className="look-options">{lockedDailyFrames.map(item => <li key={item.key}>
+              <button type="button" role="radio" aria-checked={false} disabled className="look-option"><FrameSample frame={item.key} avatarSrc={avatarSrc} />
+                <Copy title={item.label} note={`День ${dailyDay(item)} подряд`} /></button>
+            </li>)}</ul>
+          </>}
           {lockedFrames.length > 0 && <>
             <p className="look-group">Откроются с уровнем</p>
             <ul className="look-options">{lockedFrames.map(item => <li key={item.key}>
@@ -277,9 +288,15 @@ export function ProfileLookStrip({ appearance, saved, onAppearance, level, xp, o
               <ThemeSwatch theme={item.key} /><Copy title={item.label} note={item.description} />{item.key === appearance.theme && <Check />}
             </button>
           </li>)}</ul>
-          {PROFILE_THEMES.some(item => !usableTheme(item)) && <>
+          {lockedDailyThemes.length > 0 && <>
+            <p className="look-group">Лунный цикл · ежедневные награды</p>
+            <ul className="look-options">{lockedDailyThemes.map(item => <li key={item.key}>
+              <button type="button" role="radio" aria-checked={false} disabled className="look-option"><ThemeSwatch theme={item.key} /><Copy title={item.label} note={`День ${dailyDay(item)} подряд · ${item.description}`} /></button>
+            </li>)}</ul>
+          </>}
+          {PROFILE_THEMES.some(item => !usableTheme(item) && !dailyDay(item)) && <>
             <p className="look-group">Откроются с уровнем</p>
-            <ul className="look-options">{PROFILE_THEMES.filter(item => !usableTheme(item)).map(item => <li key={item.key}>
+            <ul className="look-options">{PROFILE_THEMES.filter(item => !usableTheme(item) && !dailyDay(item)).map(item => <li key={item.key}>
               <button type="button" role="radio" aria-checked={false} disabled className="look-option"><ThemeSwatch theme={item.key} /><Copy title={item.label} note={item.description} />{locked(item.level)}</button>
             </li>)}</ul>
           </>}

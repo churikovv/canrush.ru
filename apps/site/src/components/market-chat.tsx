@@ -50,7 +50,7 @@ export function MarketChat({ initialOrder, initialMessages, initialHasMore, user
     busy.current = true;
     try {
       const result = await loadMessagesAction(orderId);
-      if ('error' in result) { setConnectionError(result.error ?? 'Не удалось обновить сообщения.'); return; }
+      if ('error' in result) { setConnectionError(result.error ?? 'Не удалось обновить сообщения. Проверьте интернет и обновите страницу.'); return; }
       setConnectionError(''); setOrder(result.order);
       if (result.hasMore && !result.items.some(item => item.id === latestReceived.current)) {
         setMessages(result.items); setHasMore(true);
@@ -72,15 +72,15 @@ export function MarketChat({ initialOrder, initialMessages, initialHasMore, user
     setLoadingOlder(true);
     try {
       const result = await loadMessagesAction(orderId, messages[0].id);
-      if ('error' in result) setError(result.error ?? 'Не удалось загрузить сообщения.');
+      if ('error' in result) setError(result.error ?? 'Не удалось загрузить сообщения. Проверьте интернет и обновите страницу.');
       else { setHasMore(result.hasMore); setMessages(previous => [...new Map([...result.items, ...previous].map(item => [item.id, item])).values()]); }
-    } catch { setError('Не удалось загрузить сообщения.'); }
+    } catch { setError('Не удалось загрузить сообщения. Проверьте интернет и обновите страницу.'); }
     finally { setLoadingOlder(false); }
   }
   function changeStatus(status: OrderStatus) {
     setError(''); startTransition(async () => {
       try { const result = await orderStatusAction(orderId, status); if (result.error) setError(result.error); else { setConfirmStatus(null); await refresh(); } }
-      catch { setError('Не удалось изменить статус.'); }
+      catch { setError('Не удалось изменить статус. Попробуйте ещё раз.'); }
     });
   }
   const isBuyer = order.buyerId === userId;

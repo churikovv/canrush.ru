@@ -59,7 +59,7 @@ export async function prepareWallMedia(form: FormData): Promise<PreparedWallMedi
     if (metadata.format === 'gif' || (metadata.format === 'webp' && (metadata.pages ?? 1) > 1)) {
       if (file.size > MAX_WALL_GIF_BYTES) throw new ReviewPhotoError('GIF должен быть не больше 8 МБ.');
       try { media.push(await encodeAnimation(bytes)); }
-      catch (error) { throw error instanceof ReviewPhotoError ? error : new ReviewPhotoError('Не удалось прочитать GIF.'); }
+      catch (error) { throw error instanceof ReviewPhotoError ? error : new ReviewPhotoError('Не удалось прочитать GIF. Выберите другой файл.'); }
       continue;
     }
     if (file.size > MAX_REVIEW_PHOTO_BYTES) throw new ReviewPhotoError('Каждая фотография должна быть не больше 5 МБ.');

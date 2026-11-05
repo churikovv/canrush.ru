@@ -15,7 +15,7 @@ import { XpGuide } from '@/components/xp-guide';
 import { flameTier } from '@/lib/drink-calendar-fields';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { experienceLevel } from '@/lib/experience-level';
-import { levelRank } from '@/lib/level-tier';
+import { levelRank, rankPosition } from '@/lib/level-tier';
 import { auth } from '@/lib/auth';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import { getLeaderboard, type LeaderboardRow } from '@/lib/profile-experience';
@@ -40,7 +40,7 @@ const plural = (value: number, one: string, few: string, many: string) => {
 /** One row as in a game ladder: place, framed avatar, nick with streak and tag, counters, level tile and XP. */
 function Row({ user }: { user: LeaderboardRow }) {
   const { level } = experienceLevel(user.xp);
-  const rank = levelRank(level);
+  const rank = levelRank(rankPosition(user.xp));
   return <li data-rank={user.rank <= 3 ? user.rank : undefined}><Link className="lb-row" href={`/profile/${user.username}`}>
     <span className="lb-rank"><b>{user.rank}</b>{user.rank <= 3 && <Medal />}</span>
     <span className="lb-avatar" data-frame={user.frame}>

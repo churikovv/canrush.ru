@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { LevelEmblem, LevelTierGlyph } from '@/components/level-badge';
 import { displayName } from '@/components/wall-post';
-import { LEGEND_DEGREE_STEP, LEVEL_TIERS, rankUpRank, type LevelRank } from '@/lib/level-tier';
+import { LEVEL_TIERS, nextLevelRank, rankUpRank, TOP_DEGREE_STEP, type LevelRank } from '@/lib/level-tier';
 import { profileTagLabel } from '@/lib/profile-achievements';
 import type { RankUpRow } from '@/lib/profile-community';
 import { ProfileTag } from '@/components/profile-tag';
@@ -12,8 +12,10 @@ const eventTime = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeSty
 
 function note(rank: LevelRank) {
   if (rank.tier.key === 'gold') return 'Первый из высоких рангов CanRush';
-  if (rank.tier.key === 'platinum') return 'Впереди только Легенда';
-  return rank.degree === 1 ? `Высший ранг CanRush. Дальше — новая степень каждые ${LEGEND_DEGREE_STEP} уровней` : `Следующая степень — на ${rank.min + LEGEND_DEGREE_STEP} уровне`;
+  if (rank.tier.key === 'platinum') return 'Впереди Легенда и Миф';
+  if (rank.tier.key === 'myth') return rank.degree === 1 ? `Высший ранг CanRush. Дальше — новая степень каждые ${TOP_DEGREE_STEP} уровней` : `Следующая степень — на ${rank.min + TOP_DEGREE_STEP} уровне`;
+  const next = nextLevelRank(rank.min);
+  return next.tier.key === 'myth' ? `Дальше — Миф на ${next.min} уровне` : `Следующая степень — на ${next.min} уровне`;
 }
 // Confetti pieces around the emblem: position, colour slot, delay. Pure CSS, still until the card's cycle runs.
 const CONFETTI = [
@@ -21,7 +23,7 @@ const CONFETTI = [
   { x: 90, y: 78, delay: -2.4 }, { x: 70, y: 94, delay: -3.1 }, { x: 14, y: 86, delay: -3.6 }, { x: 2, y: 56, delay: -4.2 },
 ];
 
-/** A feed event: a member reached gold, platinum, legend or a further legend degree. The look escalates with the tier. */
+/** A feed event: a member reached gold, platinum, a degree of legend or of myth. The look escalates with the tier. */
 export function RankUpCard({ rankUp }: { rankUp: RankUpRow }) {
   const rank = rankUpRank(rankUp.tier, rankUp.degree);
   const { tier } = rank;

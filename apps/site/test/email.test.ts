@@ -13,6 +13,15 @@ describe('magic link email', () => {
     expect(email.html).not.toMatch(/<img|tracking|pixel/i);
   });
 
+  it('puts the sign-in code into the same letter, read in threes', () => {
+    const email = renderMagicLinkEmail('https://canrush.ru/auth/confirm?token=AbCd', 'personal', '482913');
+    expect(email.text).toContain('Или введите код на странице входа: 482 913');
+    expect(email.text).toContain('Ссылка и код действуют 15 минут');
+    expect(email.html).toContain('482 913');
+    // Without a code the letter stays as it was.
+    expect(renderMagicLinkEmail('https://canrush.ru/auth/confirm?token=AbCd').text).not.toContain('код');
+  });
+
   it('writes the business letter about the cabinet', () => {
     const email = renderMagicLinkEmail('https://canrush.ru/auth/confirm?token=AbCd&for=business', 'business');
     expect(email.subject).toBe('Вход в кабинет CanRush для бизнеса');

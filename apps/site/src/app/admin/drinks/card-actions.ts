@@ -28,7 +28,7 @@ export async function mergeCatalogCardAction(card: Card, _previous: CardActionSt
     await mergeCatalogCard(admin.userId, admin.email, card, target);
     revalidateCatalog();
     return { saved: true };
-  } catch (error) { return { error: message(error, 'Не удалось склеить карточки.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось склеить карточки. Попробуйте ещё раз.') }; }
 }
 
 /** A new cover (one still photo), or `restore` back to the parser's. */
@@ -44,7 +44,7 @@ export async function setCardPhotoAction(card: Card, _previous: CardActionState,
     }
     revalidateCatalog();
     return { saved: true };
-  } catch (error) { return { error: message(error, 'Не удалось сохранить фото.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось сохранить фото. Попробуйте ещё раз.') }; }
 }
 
 export async function setCardNameAction(card: Card, _previous: CardActionState, form: FormData): Promise<CardActionState> {
@@ -53,7 +53,7 @@ export async function setCardNameAction(card: Card, _previous: CardActionState, 
     await setCardFullName(admin.userId, admin.email, card, parseCardFullName(form.get('fullName')));
     revalidateCatalog();
     return { saved: true };
-  } catch (error) { return { error: message(error, 'Не удалось сохранить название.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось сохранить название. Попробуйте ещё раз.') }; }
 }
 
 export async function setCardHiddenAction(card: Card, hidden: boolean): Promise<CardActionState> {
@@ -62,7 +62,7 @@ export async function setCardHiddenAction(card: Card, hidden: boolean): Promise<
     await setCardHidden(admin.userId, admin.email, card, hidden);
     revalidateCatalog();
     return { saved: true };
-  } catch (error) { return { error: message(error, 'Не удалось сохранить.') }; }
+  } catch (error) { return { error: message(error, 'Не удалось сохранить. Попробуйте ещё раз.') }; }
 }
 
 /** «Не дубль» / «Вкус верный»: the card leaves the neural network's queue. */
@@ -72,5 +72,5 @@ export async function dismissCardCheckAction(card: Card): Promise<CardActionStat
     await dismissCardCheck(admin.userId, admin.email, card);
     revalidatePath('/admin/drinks');
     return { saved: true };
-  } catch { return { error: 'Не удалось сохранить.' }; }
+  } catch { return { error: 'Не удалось сохранить. Попробуйте ещё раз.' }; }
 }

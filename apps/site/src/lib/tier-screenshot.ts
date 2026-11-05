@@ -52,7 +52,7 @@ function authorCaptionFor(telegramChannel?: string | null, authorUsername?: stri
 }
 
 function toPng(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG.')), 'image/png'));
+  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG. Попробуйте ещё раз.')), 'image/png'));
 }
 
 /** Render only the current board, excluding editor controls and selection outlines. */
@@ -67,7 +67,7 @@ export async function renderTierScreenshot(board: HTMLElement, title: string, te
   const canvas = document.createElement('canvas');
   canvas.width = Math.ceil(width * scale); canvas.height = Math.ceil(height * scale);
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Не удалось создать изображение.');
+  if (!ctx) throw new Error('Не удалось создать изображение. Попробуйте ещё раз.');
   ctx.scale(scale, scale);
   ctx.fillStyle = getComputedStyle(board).getPropertyValue('--color-brand').trim() || '#006eff';
   ctx.beginPath(); ctx.roundRect(0, 0, width, height, 20); ctx.fill();
@@ -125,7 +125,7 @@ export async function renderTierStory(board: HTMLElement, title: string, telegra
   const canvas = document.createElement('canvas');
   canvas.width = width; canvas.height = height;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Не удалось создать изображение.');
+  if (!ctx) throw new Error('Не удалось создать изображение. Попробуйте ещё раз.');
   const boardStyle = getComputedStyle(board);
   const surface = boardStyle.getPropertyValue('--color-surface').trim() || '#ffffff';
   const border = boardStyle.getPropertyValue('--color-control').trim() || '#dfe3e8';

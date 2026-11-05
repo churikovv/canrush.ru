@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { drinkKey, opinions, rankRecommendations, similarity, type CatalogDrink, type TasteProfile } from '../src/lib/story-recommendations.js';
+import { drinkKey, matchPercent, opinions, rankRecommendations, similarity, type CatalogDrink, type TasteProfile } from '../src/lib/story-recommendations.js';
 
 const fav = (brand: string, flavor: string) => ({ brand, flavor });
 const rev = (brand: string, flavor: string, taste: number) => ({ brand, flavor, taste, design: 7 });
@@ -52,5 +52,27 @@ describe('story recommendations', () => {
     expect(ranked[0]!.reason).toEqual({ kind: 'brand', brand: 'Burn' });
     expect(ranked.find(drink => drink.brand === 'Volt')?.reason).toEqual({ kind: 'flavor', token: 'mango' });
     expect(ranked.some(drink => drink.flavor === 'original' && drink.brand === 'Volt')).toBe(false);
+  });
+
+  it('reads the score as a 60–98 % match and shows the viewer their own drinks behind a pick', () => {
+    expect(matchPercent(0.1)).toBe(68);
+    expect(matchPercent(-1)).toBe(60);
+    expect(matchPercent(2)).toBe(98);
+    const burnFan = profile({ reviews: [rev('Burn', 'apple_kiwi', 9), rev('Burn', 'tropical', 9), rev('Monster', 'original', 3)] });
+    const [pick] = rankRecommendations(burnFan, [], catalog(['Burn', 'mango']));
+    expect(pick).toMatchObject({ brand: 'Burn', reason: { kind: 'brand', brand: 'Burn' } });
+    expect(pick!.match).toBeGreaterThanOrEqual(60);
+    expect(pick!.because.map(item => item.flavor).sort()).toEqual(['apple_kiwi', 'tropical']);
+  });
+
+  it('names only the fans who like a pick openly — a rating or a favourite, never a private swipe', () => {
+    const shared = [rev('Burn', 'apple_kiwi', 9), rev('Monster', 'monster_mango_loco', 9), rev('Adrenaline', 'original', 2)];
+    const open = { ...profile({ reviews: [...shared, rev('Flash Up', 'mango', 10)] }), userId: 'open' };
+    const kept = { ...profile({ reviews: shared, favorites: [fav('Flash Up', 'mango')] }), userId: 'kept' };
+    const secret = { ...profile({ reviews: shared, swipes: [{ brand: 'Flash Up', flavor: 'mango', liked: true }] }), userId: 'secret' };
+    const [pick] = rankRecommendations(viewer, [open, kept, secret], catalog(['Flash Up', 'mango']));
+    expect(pick).toMatchObject({ brand: 'Flash Up', reason: { kind: 'similar', fans: 3 } });
+    expect(pick!.publicFans.sort()).toEqual(['kept', 'open']);
+    expect(pick!.because.length).toBeGreaterThan(0);
   });
 });

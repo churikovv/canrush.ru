@@ -29,7 +29,7 @@ const NOTICES: Record<string, string> = {
   'user-unblocked': 'Пользователь разблокирован.',
   'user-verified': 'Галочка выдана.',
   'user-unverified': 'Галочка снята.',
-  'user-frozen': 'Участник заморожен: писать он не сможет до конца срока.',
+  'user-frozen': 'Участник заморожен: до конца срока писать нельзя.',
   'user-unfrozen': 'Заморозка снята.',
   'tierlists-purged': 'Все тирлисты участника удалены.',
   'comments-purged': 'Все комментарии и записи участника удалены.',

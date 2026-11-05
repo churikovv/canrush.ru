@@ -26,6 +26,8 @@ x-site-env: &site-env
   TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
   # «Рецензии на отзывы» in the business cabinet; without it the feature is off.
   GIGACHAT_AUTH_KEY: ${GIGACHAT_AUTH_KEY:-}
+  # The Android APK for phones without RuStore, served by nginx on the host (deploy/nginx/canrush.ru.conf).
+  ANDROID_APK_URL: ${ANDROID_APK_URL:-}
   # ChatGPT through gpt-api.ru: drinks on store photos; without it the step stays silent.
   GPT_API_KEY: ${GPT_API_KEY:-}
   TELEGRAM_API_URL: ${TELEGRAM_API_URL:-}

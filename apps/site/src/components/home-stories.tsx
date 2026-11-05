@@ -42,10 +42,17 @@ export async function HomeStories({ viewerId, groups, openStory }: { viewerId: s
     const pages: DigestPage[] = !digest.cans && !digest.xp ? ['empty'] : ['intro', 'cans', ...(week.favorite ? ['drink' as const] : []), 'progress', 'discover', 'summary'];
     system.push({ key: `week:${monday}`, kind: 'week', title: 'Твоя неделя', slides: pages.map(page => ({ kind: 'digest', digest: week, page })) });
   }
-  if (recommendations?.items.length) system.push({
-    key: `picks:${moscowDay()}`, kind: 'picks', title: 'Тебе понравится',
-    slides: recommendations.items.map(item => ({ kind: 'pick', item, basis: recommendations.basis })),
-  });
+  // «Тебе понравится»: who it is for and what we know of their taste, one slide per drink, then all of them at a glance.
+  if (recommendations?.items.length) {
+    const picks = { basis: recommendations.basis, profile: recommendations.profile, items: recommendations.items, username: viewer?.username ?? null };
+    const total = recommendations.items.length;
+    system.push({
+      key: `picks:${moscowDay()}`, kind: 'picks', title: 'Тебе понравится',
+      slides: [{ kind: 'picks', page: 'intro', picks },
+        ...recommendations.items.map((item, index) => ({ kind: 'pick' as const, item, basis: recommendations.basis, index: index + 1, total })),
+        { kind: 'picks', page: 'outro', picks }],
+    });
+  }
   // For everyone, guests too: the channel and the bot. The key is versioned so a new campaign lights the ring again.
   // The partner's story comes back every Monday (Moscow): its key is the week, so the ring lights up again.
   system.push({ key: `nrj:${moscowWeekStart()}`, kind: 'partner', title: 'NRJ PARTY', slides: [{ kind: 'partner' }] });

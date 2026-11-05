@@ -147,7 +147,7 @@ export async function renderTasteShare(card: TasteCardView): Promise<Blob> {
   const canvas = document.createElement('canvas');
   canvas.width = WIDTH; canvas.height = HEIGHT;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Не удалось создать изображение.');
+  if (!ctx) throw new Error('Не удалось создать изображение. Попробуйте ещё раз.');
   ctx.fillStyle = '#03050c'; ctx.fillRect(0, 0, WIDTH, HEIGHT);
   ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
 
@@ -247,5 +247,5 @@ export async function renderTasteShare(card: TasteCardView): Promise<Blob> {
   ctx.textAlign = 'right'; ctx.globalAlpha = .7; ctx.font = `700 34px ${family}`;
   ctx.fillText('canrush.ru', WIDTH - PAD - 8, HEIGHT - PAD - 8);
   ctx.globalAlpha = 1; ctx.textAlign = 'left';
-  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG.')), 'image/png'));
+  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG. Попробуйте ещё раз.')), 'image/png'));
 }

@@ -2,7 +2,7 @@
    work area with a top bar, a toolbar (segmented tabs, search, filter, sort), KPI cards and tables with pagination.
    Phones: the sidebar is a drawer, tables turn into cards. A plain UI font, lighter than the site's display face. */
 .bc-root, .bc-apply {
-  --bc-line: var(--theme-line, var(--color-control));
+  --bc-line: var(--theme-line);
   --bc-panel: var(--color-surface);
   --bc-soft: var(--color-subtle);
   /* The sidebar and the frame around the work area, and what stands raised on it (search, current item, company). */
@@ -39,10 +39,10 @@
 /* Sidebar */
 .bc-sidebar { display: flex; flex-direction: column; gap: 16px; height: 100%; padding: 20px 16px; overflow-y: auto; }
 .bc-brand { display: flex; align-items: center; gap: 10px; padding: 0 4px; color: var(--bc-text); text-decoration: none; }
-.bc-brand-mark { width: 40px; height: 40px; flex: none; border-radius: 12px; background: var(--color-brand) url("/brand/logo-mark-white.svg") center / 20px no-repeat; }
+.bc-brand-mark { width: 40px; height: 40px; flex: none; border-radius: var(--radius-md); background: var(--color-brand) url("/brand/logo-mark-white.svg") center / 20px no-repeat; }
 .bc-brand strong { font-size: 1.125rem; font-weight: 700; letter-spacing: -.01em; }
-.bc-brand small { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); font-size: .75rem; font-weight: 600; }
-.bc-search { position: relative; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px 0 12px; border: 1px solid var(--bc-line); border-radius: 12px; background: var(--bc-raised); color: var(--bc-muted); }
+.bc-brand small { padding: 2px 8px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-brand) 14%, transparent); color: var(--color-brand); font-size: .75rem; font-weight: 600; }
+.bc-search { position: relative; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px 0 12px; border: 1px solid var(--bc-line); border-radius: var(--radius-md); background: var(--bc-raised); color: var(--bc-muted); }
 .bc-search input[type="search"] { flex: 1; min-width: 0; height: 42px; border: 0; background: transparent; color: var(--bc-text); font-size: .9375rem; outline: none; }
 .bc-search input::placeholder { color: var(--bc-muted); }
 .bc-search:focus-within { border-color: var(--bc-text); }
@@ -55,7 +55,7 @@
 .bc-nav-top svg, .bc-nav-group > summary svg { flex: none; color: var(--bc-muted); }
 .bc-nav-group > summary { list-style: none; }
 .bc-nav-group > summary::-webkit-details-marker { display: none; }
-.bc-caret { margin-left: auto; display: grid; transition: transform 150ms ease-out; }
+.bc-caret { margin-left: auto; display: grid; transition: transform var(--motion-fast) ease-out; }
 .bc-nav-group:not([open]) .bc-caret { transform: rotate(-90deg); }
 .bc-nav-items { display: grid; gap: 2px; margin: 2px 0 6px 21px; padding-left: 12px; border-left: 1px solid var(--bc-line); }
 .bc-nav-items a { position: relative; display: flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 10px; color: var(--bc-muted); text-decoration: none; }
@@ -67,8 +67,8 @@
 .bc-workspace { list-style: none; cursor: pointer; }
 .bc-workspace::-webkit-details-marker { display: none; }
 .bc-workspace:hover { border-color: color-mix(in srgb, var(--bc-text) 20%, var(--bc-line)); }
-.bc-workspace:focus-visible { outline: 2px solid var(--color-focus, var(--color-brand)); outline-offset: 2px; }
-.bc-workspace-chevron { transition: transform 150ms ease-out; }
+.bc-workspace:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.bc-workspace-chevron { transition: transform var(--motion-fast) ease-out; }
 .bc-workspace-menu[open] .bc-workspace-chevron { transform: rotate(180deg); }
 .bc-dropdown.bc-workspace-menu .bc-workspace-items { top: auto; right: 0; bottom: calc(100% + 6px); left: 0; min-width: 0; }
 .bc-workspace-items a { gap: 10px; min-height: 44px; }
@@ -83,7 +83,7 @@
 .bc-workspace-text [data-status="approved"] { color: var(--bc-good); }
 .bc-workspace-text [data-status="pending"] { color: var(--bc-mid); }
 .bc-workspace-text [data-status="rejected"] { color: var(--bc-bad); }
-.bc-workspace-chevron { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--bc-line); border-radius: 8px; color: var(--bc-muted); }
+.bc-workspace-chevron { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--bc-line); border-radius: var(--radius-sm); color: var(--bc-muted); }
 
 /* Work area */
 .bc-main { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 100dvh; background: var(--bc-panel); }
@@ -99,14 +99,14 @@
 .bc-icon-button:hover { background: var(--bc-soft); }
 .bc-icon-button:disabled { cursor: wait; opacity: .6; }
 .bc-dot { position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; border: 2px solid var(--bc-panel); border-radius: 50%; background: #ef4444; }
-.bc-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border: 1px solid var(--bc-text); border-radius: 10px; background: var(--bc-text); color: var(--bc-panel); font: 600 .9375rem var(--bc-font, inherit); text-decoration: none; white-space: nowrap; cursor: pointer; box-shadow: 0 1px 2px rgb(0 0 0 / 12%); transition: opacity 150ms ease-out; }
+.bc-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border: 1px solid var(--bc-text); border-radius: 10px; background: var(--bc-text); color: var(--bc-panel); font: 600 .9375rem var(--bc-font, inherit); text-decoration: none; white-space: nowrap; cursor: pointer; box-shadow: 0 1px 2px rgb(0 0 0 / 12%); transition: opacity var(--motion-fast) ease-out; }
 .bc-button:hover:not(:disabled) { opacity: .88; }
 .bc-button:disabled { cursor: wait; opacity: .6; }
 .bc-button.is-outline, .bc-button.is-ghost { border-color: var(--bc-line); background: var(--bc-panel); color: var(--bc-text); box-shadow: none; }
 .bc-button.is-outline:hover, .bc-button.is-ghost:hover { background: var(--bc-soft); opacity: 1; }
 .bc-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--bc-line); }
 .bc-toolbar.is-inner { padding: 0; border: 0; }
-.bc-segments { display: flex; gap: 4px; max-width: 100%; padding: 4px; overflow-x: auto; border-radius: 12px; background: var(--bc-soft); scrollbar-width: none; }
+.bc-segments { display: flex; gap: 4px; max-width: 100%; padding: 4px; overflow-x: auto; border-radius: var(--radius-md); background: var(--bc-soft); scrollbar-width: none; }
 .bc-segments::-webkit-scrollbar { display: none; }
 .bc-segments a { display: inline-flex; flex: none; min-height: 36px; align-items: center; gap: 6px; padding: 0 16px; border-radius: 9px; color: var(--bc-muted); font-weight: 500; text-decoration: none; white-space: nowrap; }
 .bc-segments a:hover { color: var(--bc-text); }
@@ -118,9 +118,9 @@
 .bc-tool-button:hover { background: var(--bc-soft); }
 .bc-tool-button svg { color: var(--bc-muted); }
 .bc-dropdown { position: relative; }
-.bc-dropdown-menu { position: absolute; z-index: 20; top: calc(100% + 6px); right: 0; display: grid; gap: 2px; min-width: 220px; max-height: 320px; padding: 6px; overflow-y: auto; border: 1px solid var(--bc-line); border-radius: 12px; background: var(--bc-panel); box-shadow: 0 16px 36px -14px rgb(10 25 60 / .35); }
+.bc-dropdown-menu { position: absolute; z-index: var(--layer-raised); top: calc(100% + 6px); right: 0; display: grid; gap: 2px; min-width: 220px; max-height: 320px; padding: 6px; overflow-y: auto; border: 1px solid var(--bc-line); border-radius: var(--radius-md); background: var(--bc-panel); box-shadow: var(--shadow-popover); }
 .bc-dropdown.is-up .bc-dropdown-menu { top: auto; bottom: calc(100% + 6px); left: 0; right: auto; min-width: 160px; }
-.bc-dropdown-menu a { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--bc-text); text-decoration: none; white-space: nowrap; }
+.bc-dropdown-menu a { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: var(--radius-sm); color: var(--bc-text); text-decoration: none; white-space: nowrap; }
 .bc-dropdown-menu a:hover { background: var(--bc-soft); }
 .bc-dropdown-menu a[aria-current="true"] { font-weight: 600; background: var(--bc-soft); }
 .bc-content { display: grid; gap: 16px; align-content: start; padding: 16px; min-width: 0; }
@@ -157,11 +157,11 @@
 .bc-dist { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .bc-dist li { display: grid; grid-template-columns: 20px 1fr 32px; align-items: center; gap: 8px; font-size: .8125rem; }
 .bc-dist small { color: var(--bc-muted); text-align: right; }
-.bc-dist span { height: 10px; width: max(2px, calc(var(--v) * 100%)); border-radius: 999px; background: var(--bc-text); }
+.bc-dist span { height: 10px; width: max(2px, calc(var(--v) * 100%)); border-radius: var(--radius-pill); background: var(--bc-text); }
 .bc-dist b { color: var(--bc-muted); font-weight: 500; font-variant-numeric: tabular-nums; }
 
 /* Pills, people, drinks */
-.bc-pill { --tone: var(--bc-muted); display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; padding: 4px 12px; border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--tone) 14%, transparent); color: var(--tone); font-size: .875rem; font-weight: 600; white-space: nowrap; }
+.bc-pill { --tone: var(--bc-muted); display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; padding: 4px 12px; border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent); border-radius: var(--radius-pill); background: color-mix(in srgb, var(--tone) 14%, transparent); color: var(--tone); font-size: .875rem; font-weight: 600; white-space: nowrap; }
 .bc-pill[data-tone="good"] { --tone: var(--bc-good); }
 .bc-pill[data-tone="mid"] { --tone: var(--bc-mid); }
 .bc-pill[data-tone="bad"] { --tone: var(--bc-bad); }
@@ -223,7 +223,7 @@
 .bc-form { display: grid; gap: 14px; }
 .bc-kinds { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
 .bc-kinds legend { margin-bottom: 8px; font-weight: 600; }
-.bc-kind { display: grid; gap: 2px; padding: 12px 14px; border: 2px solid var(--bc-line); border-radius: 12px; background: var(--bc-panel); cursor: pointer; }
+.bc-kind { display: grid; gap: 2px; padding: 12px 14px; border: 2px solid var(--bc-line); border-radius: var(--radius-md); background: var(--bc-panel); cursor: pointer; }
 .bc-kind[data-checked] { border-color: var(--color-brand); }
 .bc-kind input { position: absolute; opacity: 0; pointer-events: none; }
 .bc-kind:has(input:focus-visible) { outline: 2px solid var(--color-brand); outline-offset: 2px; }
@@ -234,7 +234,7 @@
 .bc-field-row { display: grid; gap: 14px; }
 .bc-form > .bc-button { width: 100%; min-height: 48px; }
 .bc-attach { display: grid; gap: 10px; }
-.bc-attach-picked { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--bc-soft); }
+.bc-attach-picked { display: grid; gap: 8px; padding: 12px; border-radius: var(--radius-md); background: var(--bc-soft); }
 .bc-attach-picked span { font-weight: 600; }
 .bc-moderation { display: grid; gap: 8px; }
 .bc-moderation > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -247,9 +247,9 @@
 
 /* Phones: the sidebar is a drawer over the page. */
 @media (max-width: 959px) {
-  .bc-sidebar-wrap { position: fixed; inset: 0 auto 0 0; z-index: 50; width: min(300px, 86vw); background: var(--bc-frame); box-shadow: 0 0 40px rgb(0 0 0 / 25%); transform: translateX(-105%); transition: transform 200ms ease-out; }
+  .bc-sidebar-wrap { position: fixed; inset: 0 auto 0 0; z-index: var(--layer-loading); width: min(300px, 86vw); background: var(--bc-frame); box-shadow: 0 0 40px rgb(0 0 0 / 25%); transform: translateX(-105%); transition: transform 200ms ease-out; }
   .bc-root[data-nav-open] .bc-sidebar-wrap { transform: none; }
-  .bc-scrim { position: fixed; inset: 0; z-index: 40; border: 0; background: rgb(0 0 0 / 40%); opacity: 0; pointer-events: none; transition: opacity 200ms ease-out; }
+  .bc-scrim { position: fixed; inset: 0; z-index: var(--layer-overlay); border: 0; background: rgb(0 0 0 / 40%); opacity: 0; pointer-events: none; transition: opacity 200ms ease-out; }
   .bc-root[data-nav-open] .bc-scrim { opacity: 1; pointer-events: auto; }
   .bc-topbar-actions { width: 100%; }
   .bc-kpi { padding: 14px; }
@@ -305,12 +305,12 @@
 .bc-form-card > p { line-height: 1.5; }
 .bc-inline-form { display: grid; gap: 4px; justify-items: start; }
 /* Orders: the unread counter and the market chat inside a cabinet card. */
-.bc-count { display: inline-grid; min-width: 24px; height: 24px; place-items: center; padding: 0 7px; border-radius: 999px; background: #ef4444; color: #fff; font-size: .75rem; font-weight: 700; }
+.bc-count { display: inline-grid; min-width: 24px; height: 24px; place-items: center; padding: 0 7px; border-radius: var(--radius-pill); background: #ef4444; color: #fff; font-size: .75rem; font-weight: 700; }
 .bc-chat-card { max-width: 920px; padding: 0; border: 0; background: none; }
 /* «Помощь и поддержка»: the support chat as a box of its own height, the mail line under it. */
 .bc-support { display: grid; gap: 10px; }
 .bc-workspace-menu .bc-dot { position: static; flex: none; margin-left: auto; }
-.bc-support .support-chat { height: min(640px, calc(100dvh - 200px)); min-height: 380px; border: 1px solid var(--bc-line, var(--color-control)); border-radius: 16px; background: var(--color-surface); }
+.bc-support .support-chat { height: min(640px, calc(100dvh - 200px)); min-height: 380px; border: 1px solid var(--bc-line, var(--color-control)); border-radius: var(--radius-lg); background: var(--color-surface); }
 .bc-support .support-screen-header h2 { margin: 0; font-size: 1.0625rem; line-height: 1.3; }
 .bc-support-mail { margin: 0; }
 /* While the cookie bar is up it covers the bottom of a phone screen: the chat ends above it. */
@@ -330,15 +330,15 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 .bc-insight-lists h3 { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--bc-text); font-size: .9375rem; font-weight: 700; }
 .bc-insight-lists h3 > span { display: grid; flex: none; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: color-mix(in srgb, var(--tone) 18%, transparent); color: var(--tone); }
 .bc-insight-lists ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.bc-insight-lists li { padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 14%, var(--bc-panel)); color: var(--bc-text); font-size: .875rem; line-height: 1.3; }
+.bc-insight-lists li { padding: 6px 12px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--tone) 14%, var(--bc-panel)); color: var(--bc-text); font-size: .875rem; line-height: 1.3; }
 .bc-insight-lists section[data-tone="muted"] li { background: var(--bc-panel); }
 .bc-insight-lists p { margin: 0; }
 .bc-insight-mood, .bc-insight-status { --tone: var(--bc-muted); }
 .bc-insight-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid var(--bc-line); }
 @media (min-width: 960px) { .bc-insight-lists { grid-template-columns: repeat(3, 1fr); } }
 /* The row «⋯» menu, portalled to body (outside .bc-root, so plain colour tokens here). */
-.bc-row-menu { position: fixed; z-index: 1000; display: grid; gap: 2px; min-width: 200px; padding: 6px; border: 1px solid var(--theme-line, var(--color-control)); border-radius: 12px; background: var(--color-surface); box-shadow: 0 16px 36px -14px rgb(10 25 60 / .45); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", Arial, sans-serif; animation: header-menu-in .14s ease-out; }
-.bc-row-menu a { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--color-ink); font-size: .9375rem; text-decoration: none; }
+.bc-row-menu { position: fixed; z-index: var(--layer-portal); display: grid; gap: 2px; min-width: 200px; padding: 6px; border: 1px solid var(--theme-line); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: 0 16px 36px -14px rgb(10 25 60 / .45); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", Arial, sans-serif; animation: header-menu-in .14s ease-out; }
+.bc-row-menu a { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: var(--radius-sm); color: var(--color-ink); font-size: .9375rem; text-decoration: none; }
 .bc-row-menu a:hover, .bc-row-menu a:focus-visible { background: var(--color-subtle); outline: none; }
 .bc-row-menu-button[aria-expanded="true"] { background: var(--color-subtle); }
 @media (max-width: 639px) {
@@ -357,20 +357,16 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 .bc-cell-actions { text-align: right; }
 .bc-switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 4px 0; cursor: pointer; }
 .bc-switch-row > span { display: grid; gap: 4px; }
-.bc-switch { flex: none; appearance: none; width: 48px; height: 28px; margin: 0; border-radius: 999px; background: var(--bc-line); cursor: pointer; position: relative; transition: background-color 150ms ease-out; }
-.bc-switch::after { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 25%); transition: transform 150ms ease-out; content: ""; }
-.bc-switch:checked { background: var(--color-brand); }
-.bc-switch:checked::after { transform: translateX(20px); }
-.bc-switch:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+/* The switch is the site's one `.settings-switch` (shared.css); off, it takes the cabinet's line colour. */
+.bc-root .settings-switch:not(:checked) { background: var(--bc-line); }
 .bc-docs { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.bc-docs a { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--bc-line); border-radius: 12px; color: var(--bc-text); text-decoration: none; }
+.bc-docs a { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--bc-line); border-radius: var(--radius-md); color: var(--bc-text); text-decoration: none; }
 .bc-docs a:hover { background: var(--bc-soft); }
 @media (min-width: 640px) { .bc-invite-form { grid-template-columns: minmax(0, 360px) auto; justify-content: start; align-items: end; } .bc-invite-form > :not(.bc-field):not(.bc-button) { grid-column: 1 / -1; } }
-@media (prefers-reduced-motion: reduce) { .bc-switch, .bc-switch::after { transition: none; } }
 /* Grid and flex children shrink below their content, so a long tab row scrolls instead of widening the page. */
 .bc-content > *, .bc-toolbar, .bc-segments { min-width: 0; }
 /* Invite by email or nickname, and the theme choice (the samples are the site's own .site-theme-sample). */
-.bc-invite-mode { display: inline-flex; justify-self: start; gap: 4px; padding: 4px; border-radius: 12px; background: var(--bc-soft); }
+.bc-invite-mode { display: inline-flex; justify-self: start; gap: 4px; padding: 4px; border-radius: var(--radius-md); background: var(--bc-soft); }
 .bc-invite-mode button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; color: var(--bc-muted); font: inherit; font-weight: 500; cursor: pointer; }
 .bc-invite-mode button[aria-checked="true"] { background: var(--bc-panel); color: var(--bc-text); font-weight: 600; box-shadow: 0 1px 3px rgb(0 0 0 / 10%); }
 .bc-theme-options { display: grid; gap: 10px; }
@@ -385,8 +381,8 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 
 /* «Поиск»: queries that named a brand and found nothing, and the table's «brand in the query» mark. */
 .bc-search-missed { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.bc-search-missed li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--bc-soft); }
-.bc-search-missed b { padding: 2px 10px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 16%, transparent); color: var(--color-brand); }
+.bc-search-missed li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--bc-soft); }
+.bc-search-missed b { padding: 2px 10px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-brand) 16%, transparent); color: var(--color-brand); }
 .bc-search-note { margin-top: 12px; font-size: .8125rem; line-height: 1.45; }
 .bc-search-named { margin-left: 8px; padding: 2px 8px; font-size: .75rem; }
 
@@ -395,12 +391,12 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 .bc-reply-button { min-height: 36px; padding: 6px 12px; font-size: .8125rem; white-space: nowrap; }
 .bc-reply-preview { display: block; margin-top: 6px; padding: 6px 10px; border-left: 3px solid var(--color-brand); border-radius: 4px 10px 10px 4px; background: color-mix(in srgb, var(--color-brand) 8%, var(--bc-soft)); color: var(--bc-text); font-size: .8125rem; line-height: 1.4; }
 .bc-reply-preview b { color: var(--color-brand); }
-.bc-reply-dialog { width: min(560px, calc(100vw - 32px)); padding: 0; text-align: left; font-weight: 400; border: 1px solid var(--bc-line); border-radius: 20px; background: var(--bc-panel); color: var(--bc-text); }
+.bc-reply-dialog { width: min(560px, calc(100vw - 32px)); padding: 0; text-align: left; font-weight: 400; border: 1px solid var(--bc-line); border-radius: var(--radius-xl); background: var(--bc-panel); color: var(--bc-text); }
 .bc-reply-dialog::backdrop { background: rgb(10 14 22 / .55); }
 .bc-reply-dialog form { display: grid; gap: 10px; padding: 20px; }
 .bc-reply-dialog h2 { margin: 0; font-size: 1.125rem; }
 .bc-reply-dialog p { margin: 0; line-height: 1.45; }
-.bc-reply-dialog textarea { width: 100%; min-height: 140px; padding: 12px; border: 1px solid var(--bc-line); border-radius: 12px; background: var(--bc-soft); color: var(--bc-text); font: inherit; line-height: 1.5; resize: vertical; }
+.bc-reply-dialog textarea { width: 100%; min-height: 140px; padding: 12px; border: 1px solid var(--bc-line); border-radius: var(--radius-md); background: var(--bc-soft); color: var(--bc-text); font: inherit; line-height: 1.5; resize: vertical; }
 .bc-reply-count { justify-self: end; font-size: .75rem; }
 .bc-reply-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .bc-button.is-danger { border-color: transparent; background: transparent; color: var(--bc-bad); box-shadow: none; margin-left: auto; }
@@ -409,7 +405,7 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 
 /* «Карточки»: where taps on store offers go — each row is filled to its share of the busiest store. */
 .bc-cards-stores { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.bc-cards-stores li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px;
+.bc-cards-stores li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: var(--radius-md);
   background: linear-gradient(90deg, color-mix(in srgb, var(--color-brand) 14%, transparent) calc(var(--v) * 100%), var(--bc-soft) 0); }
 .bc-cards-stores span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bc-cards-stores b { flex: none; color: var(--color-brand); }
@@ -424,7 +420,7 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 
 /* The bell's panel: under the button on wide screens, across the screen on phones. */
 .bc-notify { position: relative; }
-.bc-notify-panel { position: absolute; z-index: 40; top: calc(100% + 8px); right: 0; display: grid; grid-template-rows: auto auto 1fr; width: min(400px, calc(100vw - 32px)); max-height: min(560px, calc(100dvh - 120px)); overflow: hidden; border: 1px solid var(--bc-line); border-radius: 16px; background: var(--bc-panel); box-shadow: 0 20px 44px -16px rgb(10 25 60 / .4); text-align: left; }
+.bc-notify-panel { position: absolute; z-index: var(--layer-overlay); top: calc(100% + 8px); right: 0; display: grid; grid-template-rows: auto auto 1fr; width: min(400px, calc(100vw - 32px)); max-height: min(560px, calc(100dvh - 120px)); overflow: hidden; border: 1px solid var(--bc-line); border-radius: var(--radius-lg); background: var(--bc-panel); box-shadow: 0 20px 44px -16px rgb(10 25 60 / .4); text-align: left; }
 .bc-notify-panel header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 16px 16px 10px; border-bottom: 1px solid var(--bc-line); }
 .bc-notify-panel header strong { font-size: 1rem; }
 .bc-notify-panel header span { font-size: .8125rem; }
@@ -451,17 +447,17 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
    names: you are the brand blue, competitors are neutral greys of different depth. */
 .bc-competitor-picker { display: grid; gap: 14px; }
 .bc-competitor-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.bc-competitor-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 4px 0 14px; border: 1px solid var(--bc-line); border-radius: 999px; background: var(--bc-soft); font-weight: 600; }
+.bc-competitor-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 4px 0 14px; border: 1px solid var(--bc-line); border-radius: var(--radius-pill); background: var(--bc-soft); font-weight: 600; }
 .bc-competitor-chip button { display: grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--bc-muted); font-size: 1.125rem; cursor: pointer; }
 .bc-competitor-chip button:hover { background: color-mix(in srgb, var(--bc-text) 8%, transparent); color: var(--bc-text); }
 .bc-competitor-add { display: flex; flex-wrap: wrap; gap: 8px; }
 .bc-competitor-field { flex: 1 1 240px; min-width: 0; }
 .bc-competitor-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: .875rem; }
-.bc-competitor-suggest-chip { min-height: 36px; padding: 0 12px; border: 1px dashed var(--bc-line); border-radius: 999px; background: transparent; color: var(--bc-text); font: inherit; cursor: pointer; }
+.bc-competitor-suggest-chip { min-height: 36px; padding: 0 12px; border: 1px dashed var(--bc-line); border-radius: var(--radius-pill); background: transparent; color: var(--bc-text); font: inherit; cursor: pointer; }
 .bc-competitor-suggest-chip:hover { border-style: solid; background: var(--bc-soft); }
 @media (max-width: 639px) { .bc-competitor-add .bc-button { width: 100%; } }
 
-.bc-attention-bar { display: flex; gap: 3px; height: 14px; overflow: hidden; border-radius: 999px; background: var(--bc-soft); }
+.bc-attention-bar { display: flex; gap: 3px; height: 14px; overflow: hidden; border-radius: var(--radius-pill); background: var(--bc-soft); }
 .bc-attention-bar span { min-width: 4px; }
 .bc-root [data-side="0"] { --side: var(--color-brand); }
 .bc-root [data-side="1"] { --side: color-mix(in srgb, var(--bc-text) 70%, var(--bc-panel)); }
@@ -501,7 +497,7 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 .bc-templates { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .bc-templates-label { margin-right: 2px; color: var(--bc-muted); font-size: .8125rem; font-weight: 600; }
 .bc-templates-empty { font-size: .8125rem; }
-.bc-template-chip { display: inline-flex; align-items: center; max-width: 100%; border: 1px solid var(--bc-line); border-radius: 999px; background: var(--bc-panel); }
+.bc-template-chip { display: inline-flex; align-items: center; max-width: 100%; border: 1px solid var(--bc-line); border-radius: var(--radius-pill); background: var(--bc-panel); }
 .bc-template-chip button { min-height: 36px; border: 0; background: none; color: var(--bc-text); font: inherit; font-size: .875rem; cursor: pointer; }
 .bc-template-chip > button:first-child { overflow: hidden; padding: 0 4px 0 12px; text-overflow: ellipsis; white-space: nowrap; }
 .bc-template-chip:hover { border-color: var(--color-brand); background: color-mix(in srgb, var(--color-brand) 6%, transparent); }
@@ -517,10 +513,10 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 @media (max-width: 639px) { .bc-template-save-actions .bc-button { flex: 1 1 100%; } }
 
 /* Reviews waiting for an answer: the badge in the sidebar and the banner on the overview. */
-.bc-nav-badge { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--color-brand); color: #fff; font-size: .75rem; font-weight: 700; line-height: 1.5; text-align: center; }
+.bc-nav-badge { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font-size: .75rem; font-weight: 700; line-height: 1.5; text-align: center; }
 .bc-nav-group[open] .bc-nav-group-badge { display: none; }
 .bc-nav-group-badge + .bc-caret { margin-left: 0; }
-.bc-queue-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 16px; border: 1px solid color-mix(in srgb, var(--color-brand) 30%, var(--bc-line)); border-radius: 16px; background: color-mix(in srgb, var(--color-brand) 6%, var(--bc-panel)); }
+.bc-queue-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 16px; border: 1px solid color-mix(in srgb, var(--color-brand) 30%, var(--bc-line)); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--color-brand) 6%, var(--bc-panel)); }
 .bc-queue-banner > div { display: grid; flex: 1 1 260px; gap: 2px; min-width: 0; }
 .bc-queue-banner .bc-kpi-icon { color: var(--color-brand); }
 @media (max-width: 639px) { .bc-queue-banner .bc-button { width: 100%; } }
@@ -528,10 +524,10 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 /* First steps on the overview. */
 .bc-checklist .bc-card-head > div { display: grid; gap: 2px; }
 .bc-link-button.is-muted { color: var(--bc-muted); }
-.bc-checklist-bar { height: 6px; margin: 4px 0 12px; overflow: hidden; border-radius: 999px; background: var(--bc-soft); }
+.bc-checklist-bar { height: 6px; margin: 4px 0 12px; overflow: hidden; border-radius: var(--radius-pill); background: var(--bc-soft); }
 .bc-checklist-bar span { display: block; height: 100%; border-radius: inherit; background: var(--color-brand); transition: width 300ms ease-out; }
 .bc-checklist ol { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
-.bc-checklist li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; }
+.bc-checklist li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-md); }
 .bc-checklist li[data-next] { background: color-mix(in srgb, var(--color-brand) 6%, transparent); }
 .bc-checklist-mark { display: grid; flex: none; width: 24px; height: 24px; place-items: center; border: 2px solid var(--bc-line); border-radius: 50%; }
 .bc-checklist li[data-done] .bc-checklist-mark { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
@@ -552,10 +548,10 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 /* «Правка карточки»: the can photo with its picker beside the fields. */
 .bc-drink-edit-photo { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 12px; border: 1px solid var(--bc-line); border-radius: 14px; }
 .bc-drink-edit-photo > div { display: grid; flex: 1 1 220px; gap: 6px; justify-items: start; }
-.bc-drink-edit-cover { display: grid; flex: none; width: 96px; height: 96px; place-items: center; overflow: hidden; border-radius: 12px; background: var(--bc-soft); font-size: 1.5rem; }
+.bc-drink-edit-cover { display: grid; flex: none; width: 96px; height: 96px; place-items: center; overflow: hidden; border-radius: var(--radius-md); background: var(--bc-soft); font-size: 1.5rem; }
 .bc-drink-edit-cover img { width: 100%; height: 100%; object-fit: contain; }
 .bc-file-button { cursor: pointer; }
-.bc-file-button:focus-within { outline: 2px solid var(--color-focus, var(--color-brand)); outline-offset: 2px; }
+.bc-file-button:focus-within { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .bc-row-actions .bc-button.is-outline { white-space: nowrap; }
 
 /* Admin: a card edit — what the card shows now against what the brand proposes. */
@@ -563,7 +559,7 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 .bc-edit-diff > div { display: grid; gap: 6px; }
 .bc-edit-diff dt { color: var(--bc-muted); font-size: .8125rem; font-weight: 600; }
 .bc-edit-diff dd { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin: 0; }
-.bc-edit-diff dd > span { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--bc-soft); white-space: pre-line; overflow-wrap: anywhere; }
+.bc-edit-diff dd > span { display: grid; gap: 4px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--bc-soft); white-space: pre-line; overflow-wrap: anywhere; }
 .bc-edit-diff small { color: var(--bc-muted); font-size: .75rem; }
 .bc-edit-after { border: 1px solid color-mix(in srgb, var(--color-brand) 40%, var(--bc-line)); background: color-mix(in srgb, var(--color-brand) 6%, var(--bc-panel)) !important; }
 .bc-edit-photos img { width: 120px; height: 120px; border-radius: 10px; object-fit: contain; background: #fff; }
@@ -593,7 +589,7 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 .bc-billing-cell dd { margin: 0; }
 .bc-billing-cell b { font-size: 1.375rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .bc-billing-cell small { color: var(--bc-muted); font-size: .875rem; }
-.bc-billing-cell i { height: 3px; overflow: hidden; border-radius: 999px; background: var(--bc-soft); }
+.bc-billing-cell i { height: 3px; overflow: hidden; border-radius: var(--radius-pill); background: var(--bc-soft); }
 .bc-billing-cell i span { display: block; height: 100%; border-radius: inherit; background: var(--bc-text); }
 .bc-billing-cell i span[data-over] { background: var(--bc-mid); }
 .bc-billing-note { grid-column: 1 / -1; margin: 0; padding: 14px 0; border-top: 1px solid var(--bc-line); color: var(--bc-muted); font-size: .875rem; line-height: 1.5; }
@@ -618,7 +614,7 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 .bc-addon-price small { color: var(--bc-muted); font-size: .8125rem; }
 .bc-addon .biz-plan-cta { margin-top: 8px; }
 .bc-addon[data-picked] .biz-plan-cta { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
-.bc-addon-icon { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border: 1px solid var(--bc-line); border-radius: 12px; color: var(--color-brand); }
+.bc-addon-icon { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border: 1px solid var(--bc-line); border-radius: var(--radius-md); color: var(--color-brand); }
 .bc-addon-form { padding: 20px 0 4px; }
 .bc-addon-form-head { display: flex; align-items: center; gap: 12px; }
 .bc-addon-form-head h3 { margin: 0; font-size: 1.0625rem; }
@@ -686,7 +682,7 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 
 /* «Рекомендованная цена»: the drink's own cans as chips above the volume field. */
 .bc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.bc-chip { min-height: 36px; padding: 0 14px; border: 1px solid var(--bc-line); border-radius: 999px; background: var(--bc-panel); color: var(--bc-text); font: inherit; font-weight: 500; cursor: pointer; }
+.bc-chip { min-height: 36px; padding: 0 14px; border: 1px solid var(--bc-line); border-radius: var(--radius-pill); background: var(--bc-panel); color: var(--bc-text); font: inherit; font-weight: 500; cursor: pointer; }
 .bc-chip[aria-pressed="true"] { border-color: var(--color-brand); background: color-mix(in srgb, var(--color-brand) 12%, var(--bc-panel)); color: var(--color-brand); font-weight: 600; }
 
 /* Plans and «Сравнение тарифов» in the manner of linear.app/pricing — shared by the landing («6.0 Тарифы») and the
@@ -695,17 +691,17 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
    a table grouped by topic with ticks, crosses and numbers. The columns follow their own width (a container query),
    because the cabinet's work area is narrower than the window. */
 .biz-plans-box { container-type: inline-size; }
-.biz-plans { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--theme-line, #dfe3e8); }
-.biz-plan { display: flex; flex-direction: column; gap: 14px; padding: 28px 0; border-bottom: 1px solid var(--theme-line, #dfe3e8); }
+.biz-plans { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--theme-line); }
+.biz-plan { display: flex; flex-direction: column; gap: 14px; padding: 28px 0; border-bottom: 1px solid var(--theme-line); }
 .biz-plan h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; color: var(--color-ink); font-size: 1.375rem; letter-spacing: -0.02em; }
-.biz-plan-badge { padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--color-brand) 12%, transparent); color: var(--color-brand); font-size: .75rem; font-weight: 700; letter-spacing: 0; }
+.biz-plan-badge { padding: 4px 10px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-brand) 12%, transparent); color: var(--color-brand); font-size: .75rem; font-weight: 700; letter-spacing: 0; }
 .biz-plan-price { margin: 0; }
 .biz-plan-price b { color: var(--color-ink); font-size: 1.375rem; font-variant-numeric: tabular-nums; }
 .biz-plan-price small { color: var(--color-muted-strong); font-size: 1rem; }
-.biz-plan-term { display: flex; align-items: center; min-height: 44px; padding: 10px 0; border-block: 1px solid var(--theme-line, #dfe3e8); color: var(--color-muted-strong); font-size: .9375rem; }
+.biz-plan-term { display: flex; align-items: center; min-height: 44px; padding: 10px 0; border-block: 1px solid var(--theme-line); color: var(--color-muted-strong); font-size: .9375rem; }
 .biz-switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
 .biz-switch input { position: absolute; opacity: 0; pointer-events: none; }
-.biz-switch span { position: relative; flex: none; width: 36px; height: 20px; border-radius: 999px; background: var(--color-control); transition: background-color 150ms ease-out; }
+.biz-switch span { position: relative; flex: none; width: 36px; height: 20px; border-radius: var(--radius-pill); background: var(--color-control); transition: background-color var(--motion-fast) ease-out; }
 .biz-switch span::after { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 20%); transition: transform 180ms cubic-bezier(.2, .8, .2, 1); content: ""; }
 .biz-switch input:checked + span { background: var(--color-brand); }
 .biz-switch input:checked + span::after { transform: translateX(16px); }
@@ -720,7 +716,7 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 .biz-plan li.is-previous { color: var(--color-muted-strong); font-weight: 600; }
 .biz-plan li.is-previous::before { background: none; color: var(--color-muted-strong); content: "+"; font-weight: 800; text-align: center; line-height: 17px; }
 .biz-plan li.is-previous::after { display: none; }
-.biz-plan-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; margin-top: auto; border: 1px solid var(--theme-line, #dfe3e8); border-radius: 999px; background: var(--color-subtle); color: var(--color-ink); font-weight: 700; text-decoration: none; transition: transform 150ms ease-out, background-color 150ms ease-out; }
+.biz-plan-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; margin-top: auto; border: 1px solid var(--theme-line); border-radius: var(--radius-pill); background: var(--color-subtle); color: var(--color-ink); font-weight: 700; text-decoration: none; transition: transform var(--motion-fast) ease-out, background-color var(--motion-fast) ease-out; }
 .biz-plan-cta:hover { transform: translateY(-1px); background: var(--color-control); }
 .biz-plan-cta.is-primary { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
 .biz-plan-cta.is-primary:hover { background: color-mix(in srgb, var(--color-brand) 88%, #000); }
@@ -730,21 +726,21 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 .biz-compare { display: grid; gap: 12px; }
 .biz-compare h3 { margin: 24px 0 0; color: var(--color-ink); font-size: clamp(1.5rem, 6vw, 2rem); letter-spacing: -0.03em; }
 .biz-compare table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .875rem; }
-.biz-compare thead th { position: sticky; top: 0; z-index: 1; padding: 14px 4px; border-bottom: 1px solid var(--theme-line, #dfe3e8); background: var(--color-surface); color: var(--color-ink); font-weight: 700; text-align: center; }
+.biz-compare thead th { position: sticky; top: 0; z-index: 1; padding: 14px 4px; border-bottom: 1px solid var(--theme-line); background: var(--color-surface); color: var(--color-ink); font-weight: 700; text-align: center; }
 .biz-compare thead th:first-child { width: 46%; }
 .biz-compare tbody th { padding: 13px 8px 13px 0; color: var(--color-muted-strong); font-weight: 500; text-align: left; }
 .biz-compare td { padding: 13px 4px; color: var(--color-ink); text-align: center; font-variant-numeric: tabular-nums; }
-.biz-compare tbody tr + tr > * { border-top: 1px solid color-mix(in srgb, var(--theme-line, #dfe3e8) 70%, transparent); }
+.biz-compare tbody tr + tr > * { border-top: 1px solid color-mix(in srgb, var(--theme-line) 70%, transparent); }
 .biz-compare-group th { padding: 32px 0 10px !important; color: var(--color-ink) !important; font-size: 1.125rem; font-weight: 700 !important; }
 .biz-yes, .biz-no { display: inline-block; width: 17px; height: 17px; border-radius: 50%; vertical-align: middle; }
 .biz-yes { background: var(--color-brand) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12 4 4 8-8'/%3E%3C/svg%3E") center / 10px no-repeat; }
 .biz-no { background: linear-gradient(45deg, transparent 45%, currentColor 45% 55%, transparent 55%), linear-gradient(-45deg, transparent 45%, currentColor 45% 55%, transparent 55%); color: color-mix(in srgb, var(--color-ink) 35%, transparent); width: 12px; height: 12px; }
 @container (min-width: 620px) {
-  .biz-plans { grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--theme-line, #dfe3e8); }
+  .biz-plans { grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--theme-line); }
   .biz-plan { padding: 32px 28px; border-bottom: 0; }
   .biz-plan:first-child { padding-left: 0; }
   .biz-plan:last-child { padding-right: 0; }
-  .biz-plan + .biz-plan { border-left: 1px solid var(--theme-line, #dfe3e8); }
+  .biz-plan + .biz-plan { border-left: 1px solid var(--theme-line); }
 }
 @media (min-width: 900px) { .biz-compare table { font-size: .9375rem; } .biz-compare thead th:first-child { width: 40%; } }
 @media (prefers-reduced-motion: reduce) { .biz-switch span, .biz-switch span::after, .biz-plan-cta { transition: none; } .biz-plan-cta:hover { transform: none; } }
@@ -754,13 +750,13 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 .bc-profile-sections { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; }
 .bc-profile-sections legend { margin-bottom: 6px; padding: 0; font-weight: 600; }
 .bc-profile-link { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-.bc-banner-preview { display: grid; place-items: center; aspect-ratio: 3 / 1; overflow: hidden; border: 1px solid var(--bc-line); border-radius: 12px; background: var(--bc-raised); color: var(--bc-muted, inherit); font-size: .875rem; text-align: center; }
+.bc-banner-preview { display: grid; place-items: center; aspect-ratio: 3 / 1; overflow: hidden; border: 1px solid var(--bc-line); border-radius: var(--radius-md); background: var(--bc-raised); color: var(--bc-muted, inherit); font-size: .875rem; text-align: center; }
 .bc-banner-preview img { width: 100%; height: 100%; object-fit: cover; }
 .bc-banner-preview span { padding: 12px; }
 
 /* Two entries into the cabinet at the top of the sidebar: «Аналитика» and «Управление» as a segmented switch; the list
    under it shows only the open half. */
-.bc-space-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0 0 12px; padding: 4px; border: 1px solid var(--bc-line); border-radius: 12px; background: var(--bc-frame); }
+.bc-space-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0 0 12px; padding: 4px; border: 1px solid var(--bc-line); border-radius: var(--radius-md); background: var(--bc-frame); }
 .bc-space-switch a { position: relative; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 8px; border-radius: 9px; color: var(--bc-muted); font-size: .875rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
 .bc-space-switch a:hover { color: var(--bc-text); }
 .bc-space-switch a[aria-current] { background: var(--bc-raised); color: var(--bc-text); box-shadow: 0 1px 2px rgb(0 0 0 / 12%), inset 0 0 0 1px var(--bc-line); }
@@ -772,7 +768,7 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 
 /* KPIs as in Linear's insights: one hairline frame split into cells, a small label with its icon on top, the number
    under it — no raised icon squares. */
-.bc-kpis { gap: 0; overflow: hidden; border: 1px solid var(--bc-line); border-radius: 12px; background: var(--bc-panel); }
+.bc-kpis { gap: 0; overflow: hidden; border: 1px solid var(--bc-line); border-radius: var(--radius-md); background: var(--bc-panel); }
 .bc-kpi { gap: 10px; padding: 16px 18px; border: 0; border-radius: 0; background: none; box-shadow: none; }
 .bc-kpi + .bc-kpi { border-left: 1px solid var(--bc-line); }
 .bc-kpi-label { display: flex; align-items: flex-start; gap: 6px; color: var(--bc-muted); font-size: .8125rem; font-weight: 500; line-height: 1.35; }

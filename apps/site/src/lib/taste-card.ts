@@ -47,14 +47,19 @@ export async function getTasteCard(userId: string): Promise<TasteCardView | null
  * Один участник с похожим вкусом, на которого зритель ещё не подписан: ник есть, не заблокирован сайтом и не в
  * блокировке друг у друга. Сходство — то же, что у «Тебе понравится», по участникам с общими напитками.
  */
-export async function getTasteMatch(userId: string): Promise<TasteMatch | null> {
+/** Members with a taste like the viewer's, closest first, with the drinks both like (no account checks here). */
+export async function rankTasteMatches(userId: string): Promise<{ id: string; weight: number; shared: { brand: string; flavor: string }[] }[]> {
   const { viewer, members } = await tasteNeighbourhood(userId);
   const mine = opinions(viewer);
-  const ranked = members.map(member => {
+  return members.map(member => {
     const theirs = opinions(member);
     const shared = [...mine].filter(([key, item]) => item.score > LIKES && (theirs.get(key)?.score ?? 0) > LIKES).map(([, item]) => item.item);
     return { id: member.userId!, weight: similarity(mine, theirs), shared };
   }).filter(item => item.id && item.weight > MIN_SIMILARITY && item.shared.length > 0).sort((a, b) => b.weight - a.weight || b.shared.length - a.shared.length);
+}
+
+export async function getTasteMatch(userId: string): Promise<TasteMatch | null> {
+  const ranked = await rankTasteMatches(userId);
   if (!ranked.length) return null;
   const { rows } = await getPool().query<{ id: string; username: string; name: string; avatarId: string | null }>(`
     select u.id, u.username, u.name, (select p.id::text from "profileImage" p where p."userId" = u.id and p.kind = 'avatar') as "avatarId"

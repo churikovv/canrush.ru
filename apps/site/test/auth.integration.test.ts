@@ -14,13 +14,15 @@ process.env.BETTER_AUTH_SECRET = TEST_SECRET;
 
 const { createAuth } = await import('../src/lib/auth.js');
 const pool = new Pool({ connectionString: DATABASE_URL, max: 2, allowExitOnIdle: true });
-const sentLinks: Array<{ email: string; token: string; audience?: string }> = [];
+const sentLinks: Array<{ email: string; token: string; audience?: string; code?: string }> = [];
 const auth = createAuth({
   database: pool,
-  sendMagicLink: async (email, token, audience) => {
-    sentLinks.push({ email, token, audience });
+  sendMagicLink: async (email, token, audience, code) => {
+    sentLinks.push({ email, token, audience, code });
   },
 });
+/** The magic link rows hold JSON; sign-in code rows hold «hash:tries», so the cast is guarded. */
+const LINK_EMAIL = `case when "value" like '{%' then ("value"::jsonb ->> 'email') end`;
 const runId = randomUUID().replaceAll('-', '');
 const ipParts = [runId.slice(0, 4), runId.slice(4, 8), runId.slice(8, 12), runId.slice(12, 16)];
 
@@ -98,7 +100,7 @@ describe.sequential('Magic Link authentication', () => {
       identifier: string;
     }>(
       `select "identifier", "expiresAt" from "verification"
-       where ("value"::jsonb ->> 'email') = $1
+       where ${LINK_EMAIL} = $1
        order by "createdAt" desc limit 1`,
       [email],
     );
@@ -161,7 +163,7 @@ describe.sequential('Magic Link authentication', () => {
 
     await pool.query(
       `update "verification" set "expiresAt" = now() - interval '1 minute'
-       where ("value"::jsonb ->> 'email') = $1`,
+       where ${LINK_EMAIL} = $1`,
       [email],
     );
     const response = await auth.handler(verificationRequest(sent.token, testIp(2)));
@@ -211,5 +213,69 @@ describe.sequential('Magic Link authentication', () => {
     // A member's request stays personal.
     expect((await auth.handler(magicLinkRequest(`personal-${runId}@example.com`, testIp(6)))).status).toBe(200);
     expect(sentLinks.at(-1)?.audience).toBe('personal');
+  });
+});
+
+function codeRequest(email: string, otp: string, ip: string, origin = BASE_URL): Request {
+  return new Request(`${BASE_URL}/api/auth/sign-in/email-otp`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', origin, 'sec-fetch-site': origin === BASE_URL ? 'same-origin' : 'cross-site', 'x-forwarded-for': ip },
+    body: JSON.stringify({ email, otp }),
+  });
+}
+const lastLetter = (email: string) => sentLinks.slice().reverse().find((entry) => entry.email === email);
+const wrong = (code: string) => String((Number(code) + 1) % 1_000_000).padStart(6, '0');
+
+describe.sequential('Sign-in code from the same letter', () => {
+  it('puts six digits next to the link, stores only a keyed hash and signs in once', async () => {
+    const email = `code-${runId}@example.com`;
+    expect((await auth.handler(magicLinkRequest(email, testIp(7)))).status).toBe(200);
+    const code = lastLetter(email)?.code;
+    expect(code).toMatch(/^\d{6}$/);
+    const stored = await pool.query<{ value: string; expiresAt: Date }>('select value, "expiresAt" from verification where identifier = $1', [`sign-in-otp-${email}`]);
+    expect(stored.rows).toHaveLength(1);
+    expect(stored.rows[0]!.value).not.toContain(code!);
+    expect(new Date(stored.rows[0]!.expiresAt).getTime() - Date.now()).toBeGreaterThan(14 * 60 * 1_000);
+
+    const response = await auth.handler(codeRequest(email, code!, testIp(7)));
+    expect(response.status).toBe(200);
+    const cookie = (response.headers.get('set-cookie') ?? '').split(';', 1)[0] ?? '';
+    expect((await auth.api.getSession({ headers: new Headers({ cookie }) }))?.user.email).toBe(email);
+    // The code is spent; the link from the same letter still works on its own.
+    expect((await auth.handler(codeRequest(email, code!, testIp(7)))).status).toBe(400);
+  });
+
+  it('allows three wrong tries, then even the right code is refused', async () => {
+    const email = `code-tries-${runId}@example.com`;
+    expect((await auth.handler(magicLinkRequest(email, testIp(8)))).status).toBe(200);
+    const code = lastLetter(email)!.code!;
+    for (let index = 0; index < 3; index += 1) expect((await auth.handler(codeRequest(email, wrong(code), testIp(8)))).status).toBe(400);
+    const refused = await auth.handler(codeRequest(email, code, testIp(9)));
+    expect(refused.status).toBe(403);
+    expect((await refused.json()).code).toBe('TOO_MANY_ATTEMPTS');
+  });
+
+  it('makes a new letter replace the old code', async () => {
+    const email = `code-again-${runId}@example.com`;
+    expect((await auth.handler(magicLinkRequest(email, testIp(10)))).status).toBe(200);
+    const first = lastLetter(email)!.code!;
+    expect((await auth.handler(magicLinkRequest(email, testIp(10)))).status).toBe(200);
+    const second = lastLetter(email)!.code!;
+    if (first !== second) expect((await auth.handler(codeRequest(email, first, testIp(10)))).status).toBe(400);
+    expect((await auth.handler(codeRequest(email, second, testIp(11)))).status).toBe(200);
+  });
+
+  it('refuses a code from another site and keeps the plugin\'s own routes closed', async () => {
+    const email = `code-origin-${runId}@example.com`;
+    expect((await auth.handler(magicLinkRequest(email, testIp(12)))).status).toBe(200);
+    expect((await auth.handler(codeRequest(email, lastLetter(email)!.code!, testIp(12), 'https://attacker.example'))).status).toBe(403);
+    for (const path of ['/email-otp/send-verification-otp', '/email-otp/check-verification-otp', '/forget-password/email-otp']) {
+      const response = await auth.handler(new Request(`${BASE_URL}/api/auth${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', origin: BASE_URL, 'sec-fetch-site': 'same-origin', 'x-forwarded-for': testIp(13) },
+        body: JSON.stringify({ email, type: 'sign-in', otp: '000000' }),
+      }));
+      expect(response.status).toBe(404);
+    }
   });
 });

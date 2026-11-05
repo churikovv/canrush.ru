@@ -61,7 +61,7 @@ export default async function AdminBotPage({ searchParams }: { searchParams: Pro
               <span className="support-admin-text"><strong>{item.name}{item.username && <small> {item.username}</small>}</strong><span>{item.lastFromTeam && 'Вы: '}{item.preview}</span></span>
               <span className="support-admin-meta"><time dateTime={new Date(item.lastMessageAt).toISOString()}>{when.format(new Date(item.lastMessageAt))}</time>{item.unread > 0 && <b className="support-admin-dot" aria-label="Новый ответ" />}</span>
             </Link>
-          </li>)}</ul> : <div className="bc-empty"><strong>Диалогов пока нет</strong><span>Найдите участника по нику или откройте его из конкурса.</span></div>}
+          </li>)}</ul> : <div className="bc-empty"><strong>Диалогов пока нет</strong><span>Найдите участника по нику или откройте диалог из конкурса.</span></div>}
       </section>
       <section className="support-admin-thread" aria-label="Диалог">
         {open ? <>
@@ -74,7 +74,7 @@ export default async function AdminBotPage({ searchParams }: { searchParams: Pro
           {open.messages.length ? <div className="bot-dialog-scroll"><ol className="bot-dialog">{open.messages.map(message => <li key={message.id} data-team={message.fromTeam || undefined}>
             <p>{message.text}</p><time dateTime={new Date(message.createdAt).toISOString()}>{when.format(new Date(message.createdAt))}{message.failed && ' · не доставлено'}</time>
           </li>)}</ol></div> : open.member.reachable && <div className="bc-empty"><strong>Сообщений пока нет</strong><span>Напишите первым: участник получит сообщение от бота.</span></div>}
-          {!open.member.reachable && <p className="bot-dialog-note">Участник не запускал бота или остановил его, поэтому сообщение не дойдёт. Свяжитесь с участником по почте или в Telegram напрямую.</p>}
+          {!open.member.reachable && <p className="bot-dialog-note">Бот у участника не запущен или остановлен, поэтому сообщение не дойдёт. Свяжитесь с участником по почте или в Telegram напрямую.</p>}
           <AdminBotForm key={open.member.id} userId={open.member.id} disabled={!open.member.reachable} />
         </> : <div className="bc-empty support-admin-pick"><strong>Выберите участника</strong><span>Слева диалоги и поиск по нику, имени и почте.</span></div>}
       </section>
