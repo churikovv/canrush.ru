@@ -88,7 +88,7 @@ export const PASS_LOOP_SECONDS = 6;
 
 /**
  * Банка пропуска растёт с уровнем: `from` — уровень, на котором стадия открывается. Сцены — `public/brand/pass/can-<номер
- * стадии>`, рендер — `design/3d/build_pass_can.py`. Это украшение витрины, а не товар: своего напитка и бренда чужих в ней нет.
+ * стадии>`, рендер — `marketing/design/3d/build_pass_can.py`. Это украшение витрины, а не товар: своего напитка и бренда чужих в ней нет.
  */
 export const PASS_STAGES: readonly { from: number; name: string; line: string; rarity: Rarity }[] = [
   { from: 0, name: 'Жестянка', line: 'Голый алюминий. С неё начинается каждый сезон.', rarity: 'common' },

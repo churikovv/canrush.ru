@@ -3623,7 +3623,7 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 .profile-tag[data-tag=streak-30]::before { background: linear-gradient(0deg, #fff3b0, #fff); animation: streak-flicker 1s ease-in-out infinite; }
 .profile-tag[data-tag=streak-30]::after { inset: -2px; background: linear-gradient(105deg, transparent 32%, rgb(255 255 255 / .85) 48%, transparent 62%); transform: translateX(-130%); animation: top-tag-shine 3s ease-in-out infinite; }
 /* Монстр (epic): a dark tag with acid-green neon and our own clawed paw (not the brand's logo). The paw is rendered in
-   Blender (`design/3d/build_monster_paw.py`) as a two-frame sprite, claws in and claws out — 3D detail for one small
+   Blender (`marketing/design/3d/build_monster_paw.py`) as a two-frame sprite, claws in and claws out — 3D detail for one small
    image instead of WebGL, which a tag in every list cannot afford; only background-position switches the frame: every few seconds the beast strikes — the claws come out, the
    tag shakes and green claw marks rip across it. Only transform, opacity and background-position move. */
 .profile-tag[data-tag=monster],.profile-tag[data-tag=monster]:hover { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 4px; padding-left: 5px; border-radius: var(--radius-sm); color: #e4ffd4; font-weight: 900; letter-spacing: .03em; text-shadow: 0 0 6px rgb(125 255 54 / .75), 0 1px 0 #000; background: repeating-linear-gradient(115deg, rgb(125 255 54 / .06) 0 1px, transparent 1px 5px), radial-gradient(120% 100% at 15% 50%, rgb(125 255 54 / .18), transparent 60%), linear-gradient(180deg, #151b20, #07090c); box-shadow: inset 0 0 0 1px rgb(125 255 54 / .5), inset 0 1px 0 rgb(255 255 255 / .08), 0 0 8px rgb(125 255 54 / .28); animation: monster-growl 4.2s ease-in-out infinite; }
@@ -4298,7 +4298,12 @@ html[data-native-app] .pull-refresh:not([data-state="pulling"]) { transition: tr
 .battle-home { background: #1d168f url("/brand/battle/board.webp") 15% 0 / 165% auto no-repeat; }
 .battle-home::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, rgb(14 10 70 / .92) 0, rgb(14 10 70 / .6) 46%, transparent 72%), linear-gradient(0deg, rgb(14 10 70 / .55), transparent 55%); }
 .battle-home .game-promo-body { width: 64%; }
-.battle-home-owl { position: absolute; z-index: 2; top: 4px; right: calc(29% - 30px); filter: drop-shadow(0 6px 10px rgb(0 0 0 / .45)); }
+/* Сова on the moon. The board is laid out by the banner's width (165% wide, 15% across), so the moon's centre sits at 74% of
+   the width across and 10.9% of the width down, its disc 21.8% of the width: the owl takes the same measures. A top
+   margin in percent counts from the width, so it follows the moon at any banner size; a fixed top left it above the
+   moon on a wide banner. */
+.battle-home-owl { position: absolute; z-index: 2; top: 0; left: 74%; width: 17%; margin-top: calc(10.9% - 8.5%); translate: -50% 0; filter: drop-shadow(0 6px 10px rgb(0 0 0 / .45)); }
+.battle-home-owl .drink-bird { display: block; width: 100%; height: auto; }
 .battle-home-cards { position: absolute; z-index: 2; right: 14px; bottom: 14px; display: flex; }
 .battle-home-cards i { position: relative; display: block; width: 44px; height: 60px; margin-left: -14px; border-radius: 8px; background: linear-gradient(160deg, #3a2fd0, #1a1470); box-shadow: inset 0 0 0 2px rgb(255 255 255 / .55), 0 8px 14px -6px rgb(0 0 0 / .6); }
 .battle-home-cards i::before { content: ''; position: absolute; inset: 14px 9px; background: #fff; opacity: .9; -webkit-mask: url("/brand/logo-mark-white.svg") center / contain no-repeat; mask: url("/brand/logo-mark-white.svg") center / contain no-repeat; }

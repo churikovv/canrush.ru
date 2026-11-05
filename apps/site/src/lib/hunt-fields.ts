@@ -27,7 +27,7 @@ export const HUNT_LEVELS: readonly HuntLevel[] = [
 
 /**
  * Магазин растёт с уровнем: `from` — уровень, на котором стадия открывается. Сцены — `public/brand/hunt/store-<номер стадии>`,
- * рендер — `design/3d/build_hunt_store.py`. В кадре только наше имя: ни чужих брендов, ни настоящих сетей.
+ * рендер — `marketing/design/3d/build_hunt_store.py`. В кадре только наше имя: ни чужих брендов, ни настоящих сетей.
  */
 export const HUNT_STAGES: readonly { from: number; name: string; line: string }[] = [
   { from: 0, name: 'Ларёк', line: 'Прилавок и ящик банок. С него начинается ваша сеть.' },

@@ -9,7 +9,7 @@ import type { BetaEngine, EngineCrewMember } from '@/lib/beta-engine';
 import { BETA_ENGINE_PLACES } from '@/lib/beta-engine-fields';
 import { pluralRu } from '@/lib/drink-calendar-fields';
 
-/** The engine's loop in Blender (`design/3d/build_engine.py`): one turn, like the pass can, so a finger can turn it. */
+/** The engine's loop in Blender (`marketing/design/3d/build_engine.py`): one turn, like the pass can, so a finger can turn it. */
 const ENGINE_LOOP_SECONDS = 6;
 const count = (value: number) => value.toLocaleString('ru-RU');
 

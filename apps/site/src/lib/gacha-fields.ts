@@ -115,7 +115,7 @@ export interface GachaBanner {
   stars: RegExp; boost: number;
   /** Эксклюзив баннера: шанс в промилле за крутку и гарант — не позже этой крутки на баннере */
   cosmetic?: GachaCosmetic & { odds: number; pity: number };
-  /** Сцена из Blender (`design/3d`): петля автомата, выпадение банки и постер — вместо CSS-автомата */
+  /** Сцена из Blender (`marketing/design/3d`): петля автомата, выпадение банки и постер — вместо CSS-автомата */
   scene?: GachaScene;
 }
 /** `ground` — цвет низа кадра: им сцена продолжается под видео. */
