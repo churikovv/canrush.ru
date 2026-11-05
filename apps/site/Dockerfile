@@ -22,6 +22,10 @@ COPY .eslintrc.cjs eslint.config.mjs ./
 # The commit being deployed: Next.js tells pages of the previous build to reload (next.config.ts deploymentId)
 ARG DEPLOYMENT_ID=""
 ENV NEXT_DEPLOYMENT_ID=$DEPLOYMENT_ID
+# Salts the ids of server actions. Without it every build makes a new key, every action gets a new id, and each deploy
+# broke all buttons of the pages already open. Constant (from .env) — an unchanged action keeps its id. Next writes the
+# key into the build output, so the running server needs nothing more. An empty value falls back to a random key.
+ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=""
 
 # Build shared package first (site depends on it)
 RUN npm run build -w @canrush/shared

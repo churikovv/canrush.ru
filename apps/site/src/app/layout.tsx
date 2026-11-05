@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { parseSiteTheme, SITE_THEME_COOKIE } from '@/lib/site-theme';
+import { DECOR_MOTION_COOKIE, decorMotionOn } from '@/lib/decor-motion';
 import { CampaignTracker } from '@/components/campaign-tracker';
 import { NavigationProgressProvider } from '@/components/navigation-progress';
 import type { Metadata, Viewport } from 'next';
@@ -10,6 +11,7 @@ import { CookieNotice } from '@/components/cookie-notice';
 import { SiteMotionProvider } from '@/components/site-motion-provider';
 import { TelegramMiniApp } from '@/components/telegram-mini-app';
 import { NativeAppShell } from '@/components/native-app-shell';
+import { SiteUpdate } from '@/components/site-update';
 import { YandexMetrika } from '@/components/yandex-metrika';
 import { GoogleAnalytics } from '@/components/google-analytics';
 import { googleAnalyticsId } from '@/lib/google-analytics';
@@ -86,10 +88,13 @@ export async function generateViewport(): Promise<Viewport> {
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  const theme = parseSiteTheme((await cookies()).get(SITE_THEME_COOKIE)?.value) ?? 'system';
+  const jar = await cookies();
+  const theme = parseSiteTheme(jar.get(SITE_THEME_COOKIE)?.value) ?? 'system';
+  // Tags and avatar frames animate only for those who turned it on (`DecorMotionSettings`); globals.css pauses them otherwise.
+  const decorMotion = decorMotionOn(jar.get(DECOR_MOTION_COOKIE)?.value);
   const analyticsId = googleAnalyticsId();
   return (
-    <html data-site-theme={theme} lang="ru" className={objectSans.variable} data-scroll-behavior="smooth">
+    <html data-site-theme={theme} data-decor-motion={decorMotion ? 'on' : undefined} lang="ru" className={objectSans.variable} data-scroll-behavior="smooth">
       <body>
         <SiteMotionProvider>
           <a className="skip-link" href="#main-content">
@@ -100,6 +105,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <ActivityHeartbeat />
           <TelegramMiniApp />
           <NativeAppShell />
+          <SiteUpdate />
           {analyticsId && <GoogleAnalytics id={analyticsId} />}
           <Suspense fallback={null}>
             <YandexMetrika />

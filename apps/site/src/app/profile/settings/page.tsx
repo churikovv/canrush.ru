@@ -6,6 +6,8 @@ import { cookies, headers } from 'next/headers';
 import { getBlockedMembers } from '@/lib/member-blocks';
 import { BlockMemberButton } from '@/components/block-member-button';
 import { ThemeSettings } from '@/components/theme-settings';
+import { DecorMotionSettings } from '@/components/decor-motion-settings';
+import { DECOR_MOTION_COOKIE, decorMotionOn } from '@/lib/decor-motion';
 import { parseSiteTheme, SITE_THEME_COOKIE, type SiteTheme } from '@/lib/site-theme';
 import Link from '@/components/navigation-progress';
 import { auth } from '@/lib/auth';
@@ -46,6 +48,7 @@ export const metadata = { title: 'Профиль и настройки', robots:
 const ICON = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
 const ICONS = {
   theme: <svg {...ICON}><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" /></svg>,
+  motion: <svg {...ICON}><path d="M12 3v3M12 18v3M3 12h3M18 12h3M12 8l1.2 2.8L16 12l-2.8 1.2L12 16l-1.2-2.8L8 12l2.8-1.2Z" /></svg>,
   notifications: <svg {...ICON}><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7.5 2 7.5H4S6 15 6 9Z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>,
   telegram: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.7 3.3a1.6 1.6 0 0 0-1.7-.2L2.9 9.6c-1.2.5-1.1 2.2.1 2.6l3.9 1.2 1.5 4.8c.3.9 1.4 1.2 2.1.5l2.2-2.1 4.1 3c.9.7 2.2.2 2.4-.9l2.6-13.9c.1-.6-.1-1.2-.6-1.5ZM10 14.2l-.6 3.2-1.1-3.6 9.4-7.5-7.7 7.9Z" /></svg>,
   blocked: <svg {...ICON}><circle cx="12" cy="12" r="9" /><path d="m5.6 5.6 12.8 12.8" /></svg>,
@@ -153,10 +156,13 @@ function AboutLinks() {
 /** Profile editing and site settings in one place (the header's gear): islands of rows, each opening its panel. */
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
-  const theme = parseSiteTheme((await cookies()).get(SITE_THEME_COOKIE)?.value) ?? 'system';
+  const jar = await cookies();
+  const theme = parseSiteTheme(jar.get(SITE_THEME_COOKIE)?.value) ?? 'system';
+  const decorMotion = decorMotionOn(jar.get(DECOR_MOTION_COOKIE)?.value);
   if (!session) return <BrandShell headerAction={<ProfileNavigation />} surfaceClassName="profile-surface">
     <section className="community-directory profile-settings"><h1>Настройки</h1>
       <ThemeSettings theme={theme} />
+      <DecorMotionSettings on={decorMotion} />
       <section className="community-panel"><h2>Аккаунт и уведомления</h2><p>Войдите, чтобы настроить профиль, уведомления и посмотреть данные аккаунта.</p><Link className="community-button" href="/sign-in">Войти</Link></section>
       <Panel id="about" title="О CanRush"><AboutLinks /></Panel>
     </section>
@@ -207,6 +213,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const enabledNotifications = NOTIFICATION_OPTIONS.filter(option => preferences.get(option.kind) ?? true).length;
   const settings: SettingsGroup[] = [{ key: 'settings', title: 'Настройки', rows: [
     { key: 'theme', title: 'Тема сайта', value: THEME_LABELS[theme], icon: ICONS.theme, panel: <ThemeSettings theme={theme} /> },
+    { key: 'motion', title: 'Анимация тегов и рамок', value: decorMotion ? 'Включена' : 'Выключена', icon: ICONS.motion, panel: <DecorMotionSettings on={decorMotion} /> },
     { key: 'notifications', title: 'Уведомления', value: `Включено ${enabledNotifications} из ${NOTIFICATION_OPTIONS.length}`, icon: ICONS.notifications, panel:
       <Panel id="notifications" title="Уведомления" note="Выберите, о каких новых событиях сообщать на сайте. Уже полученные уведомления сохранятся.">
         <form action={saveNotificationSettings} className="settings-groups">

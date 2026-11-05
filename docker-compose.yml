@@ -87,6 +87,8 @@ services:
       args:
         # The commit (deploy/deploy-site.sh passes it): pages of the previous build reload instead of failing.
         DEPLOYMENT_ID: ${DEPLOYMENT_ID:-}
+        # A constant key keeps server action ids across deploys, so open pages keep working (apps/site/Dockerfile).
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-}
     restart: unless-stopped
     depends_on:
       postgres:
