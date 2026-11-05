@@ -1,6 +1,9 @@
 import { VerifiedMark } from '@/components/verified-mark';
 import type { AdminQueues } from '@/lib/admin-queues';
 import type { AdminAppMetrics, AdminFirstDayMetrics, PlatformCounts } from '@/lib/admin-dashboard-data';
+import type { AdminRetention, AdminUsage } from '@/lib/admin-growth';
+import { cohortShare, DAILY_MILESTONES, RETENTION_WINDOWS, USAGE_FEATURES, type CohortCell } from '@/lib/admin-growth-fields';
+import type { CSSProperties } from 'react';
 import { CONTENT_REPORT_KINDS, REPORT_REASONS } from '@/lib/profile-report-fields';
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
@@ -77,6 +80,7 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
         </div>
         <p className="admin-chart-note">{data.activity.some(day => day.count) ? 'Участники, которые хотя бы раз открыли сайт с входом в этот день. Учитываются и скрывшие статус, имён здесь нет.' : 'График заполнится с сегодняшнего дня: активность раньше не записывалась.'}</p>
       </section>
+      {data.retention && <RetentionMetrics retention={data.retention} />}
       <div className="admin-analytics-grid">
         <section className="admin-data-panel" aria-labelledby="admin-registrations-title"><div className="admin-panel-heading"><h2 id="admin-registrations-title">Регистрации</h2><span>14 дней · МСК</span></div>
           <div className="admin-registration-chart" role="img" aria-label={`Регистрации по дням: ${data.registrations.map(day => `${day.day}: ${day.count}`).join('; ')}`}>
@@ -105,6 +109,7 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
         </dl></section>
       </div>
       {data.firstDay && <FirstDayMetrics firstDay={data.firstDay} />}
+      {data.usage && <FeatureUsage usage={data.usage} />}
       {data.apps && <AppMetrics apps={data.apps} />}
     </>}
     {tab === 'campaigns' && campaignPanel}
@@ -152,6 +157,95 @@ export function AdminDashboard({ admin, data, query, tab, notice, error, campaig
       {data.total > 0 && <nav className="admin-table-pagination" aria-label="Страницы записей"><span>{(data.page - 1) * ADMIN_PAGE_SIZE + 1}–{Math.min(data.page * ADMIN_PAGE_SIZE, data.total)} из {number(data.total)}</span><div>{data.page > 1 && <Link href={adminHref(tab, query, data.page - 1)}>← Назад</Link>}<span>{data.page} / {pages}</span>{data.page < pages && <Link href={adminHref(tab, query, data.page + 1)}>Далее →</Link>}</div></nav>}
     </section>}
   </AdminShell>;
+}
+
+const percent = (part: number, whole: number) => whole > 0 ? `${Math.round(part / whole * 100)}%` : '—';
+const share = (part: number, whole: number) => whole > 0 ? `${percent(part, whole)} · ${number(part)} из ${number(whole)}` : '—';
+const weekLabel = (monday: string) => {
+  const start = new Date(`${monday}T00:00:00`);
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const day = (date: Date) => date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+  // On a phone only the Monday is shown: the whole range would push the table wider than the screen.
+  return <>{day(start)}<span className="admin-cohort-end"> – {day(end)}</span></>;
+};
+
+/**
+ * «Удержание»: members by the week they signed up and how many came back the next day, in the second week and in the
+ * fifth (`RETENTION_WINDOWS`). A cell counts only members whose window is over, so a young week shows «—» or a share
+ * of fewer members; the tint grows with the share. Beside it — how sticky the month is.
+ */
+function RetentionCell({ cell, note }: { cell: CohortCell; note: string }) {
+  const value = cohortShare(cell);
+  if (value === null) return <td><span className="admin-cohort-cell" data-empty title="Срок ещё не прошёл">—</span></td>;
+  return <td><span className="admin-cohort-cell" style={{ '--share': value / 100 } as CSSProperties} title={`${note}: ${cell.returned} из ${cell.eligible}`}>
+    <strong>{value}%</strong><small>{number(cell.returned)} из {number(cell.eligible)}</small>
+  </span></td>;
+}
+
+function RetentionMetrics({ retention }: { retention: AdminRetention }) {
+  const since = retention.since ? new Date(`${retention.since}T00:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : null;
+  const { daily, monthly, days } = retention.stickiness;
+  return <div className="admin-analytics-grid">
+    <section className="admin-data-panel" aria-labelledby="admin-retention-title"><div className="admin-panel-heading"><h2 id="admin-retention-title">Удержание</h2><span>по неделе регистрации · МСК</span></div>
+      {retention.cohorts.length ? <div className="admin-cohorts-scroll"><table className="admin-cohorts">
+        <thead><tr><th scope="col">Неделя</th><th scope="col">Пришли</th>{RETENTION_WINDOWS.map(window => <th scope="col" key={window.key} title={window.note}>{window.label}</th>)}</tr></thead>
+        <tbody>{retention.cohorts.map(cohort => <tr key={cohort.week}>
+          <th scope="row">{weekLabel(cohort.week)}</th><td className="admin-cohort-members">{number(cohort.members)}</td>
+          {RETENTION_WINDOWS.map(window => <RetentionCell key={window.key} cell={cohort.cells[window.key]} note={window.note} />)}
+        </tr>)}</tbody>
+      </table></div> : <p className="admin-chart-note">Пока нет регистраций с тех пор, как записываются заходы.</p>}
+      <p className="admin-chart-note">Вернулись: «1 день» — на следующий день после регистрации, «7 дней» — хоть раз на 7–13-й день, «30 дней» — хоть раз на 28–34-й. В доле только те, у кого этот срок уже прошёл; «—» — ещё рано. Заблокированные не считаются{since ? `, заходы записываются с ${since}` : ''}.</p>
+    </section>
+    <section className="admin-data-panel" aria-labelledby="admin-returning-title"><div className="admin-panel-heading"><h2 id="admin-returning-title">Возвращаются</h2><span>30 дней</span></div><dl className="admin-summary-list">
+      <div><dt>Заходят каждый день</dt><dd>{monthly > 0 ? `${percent(daily, monthly)} · ${number(Math.round(daily))} из ${number(monthly)}` : '—'}</dd></div>
+      <div><dt>Остались с прошлого месяца</dt><dd>{share(retention.monthBack.returned, retention.monthBack.previous)}</dd></div>
+      <div><dt>Новички вернулись на следующий день</dt><dd>{share(retention.nextDay.returned, retention.nextDay.eligible)}</dd></div>
+    </dl>
+      <p className="admin-chart-note">«Каждый день» — сколько участников в среднем заходит за день из всех, кто заходил за 30 полных дней{days > 0 && days < 30 ? ` (дней с данными пока ${days})` : ''}. «С прошлого месяца» — из заходивших 31–60 дней назад снова заходили за последние 30.</p>
+    </section>
+  </div>;
+}
+
+/**
+ * «Чем пользуются»: members who used each feature by day (`USAGE_FEATURES`), sorted by weekly reach, with the share of
+ * the week's active members. Below — how far «Лунный цикл» runs get and how newcomers do with «Первые шаги».
+ */
+function FeatureUsage({ usage }: { usage: AdminUsage }) {
+  const features = usage.features.map(feature => ({ ...feature, ...USAGE_FEATURES.find(item => item.key === feature.key)! }))
+    .sort((a, b) => b.week - a.week || b.month - a.month);
+  const { daily, firstSteps } = usage;
+  return <>
+    <section className="admin-data-panel" aria-labelledby="admin-usage-title"><div className="admin-panel-heading"><h2 id="admin-usage-title">Чем пользуются</h2><span>14 дней · МСК</span></div>
+      <ul className="admin-usage">{features.map(feature => {
+        const max = Math.max(1, ...feature.byDay.map(day => day.members));
+        return <li key={feature.key}>
+          <span className="admin-usage-name"><strong>{feature.label}</strong><small>{feature.note}</small></span>
+          <span className="admin-usage-spark" role="img" aria-label={`${feature.label} по дням: ${feature.byDay.map(day => `${day.day.slice(8)}: ${day.members}`).join('; ')}`}>
+            {feature.byDay.map(day => <i key={day.day} title={`${day.day}: ${day.members}`} data-zero={day.members === 0 || undefined} style={{ height: `${Math.max(6, day.members / max * 100)}%` }} />)}
+          </span>
+          <span className="admin-usage-numbers"><strong>{number(feature.week)}</strong><small>за 7 дней · {percent(feature.week, usage.activeWeek)} активных</small><small>{number(feature.month)} за 30 дней</small></span>
+        </li>;
+      })}</ul>
+      <p className="admin-chart-note">Разные участники, которые сделали это в день по Москве; доля — от {number(usage.activeWeek)} заходивших за 7 дней. Истории не считаем: их записи удаляются через неделю. Заблокированные не считаются.</p>
+    </section>
+    <div className="admin-analytics-grid admin-usage-grid">
+      <section className="admin-data-panel" aria-labelledby="admin-daily-title"><div className="admin-panel-heading"><h2 id="admin-daily-title">Лунный цикл</h2></div><dl className="admin-summary-list">
+        <div><dt>Забрали сегодня</dt><dd>{number(daily.today)}</dd></div>
+        <div><dt>Идут по пути сейчас</dt><dd>{number(daily.alive)}</dd></div>
+        {DAILY_MILESTONES.map(step => <div key={step}><dt>Дошли до {step}-го дня</dt><dd>{number(daily.reached[step] ?? 0)}</dd></div>)}
+        <div><dt>Прошли все 30 дней хоть раз</dt><dd>{number(daily.finished)}</dd></div>
+        <div><dt>Забирали хоть раз</dt><dd>{number(daily.ever)}</dd></div>
+      </dl><p className="admin-chart-note">«Идут сейчас» — забрали награду сегодня или вчера: пропуск дня начинает путь заново.</p></section>
+      <section className="admin-data-panel" aria-labelledby="admin-steps-title"><div className="admin-panel-heading"><h2 id="admin-steps-title">Первые шаги</h2><span>новички 30 дней</span></div><dl className="admin-summary-list">
+        <div><dt>Новичков</dt><dd>{number(firstSteps.members)}</dd></div>
+        <div><dt>Крутили Банкомат</dt><dd>{share(firstSteps.pulled, firstSteps.members)}</dd></div>
+        <div><dt>5 свайпов в дейтинге</dt><dd>{share(firstSteps.swiped, firstSteps.members)}</dd></div>
+        <div><dt>Подписались на участника</dt><dd>{share(firstSteps.followed, firstSteps.members)}</dd></div>
+        <div><dt>Все три шага</dt><dd>{share(firstSteps.all, firstSteps.members)}</dd></div>
+        <div><dt>Забрали тег / рамку</dt><dd>{number(firstSteps.tag)} / {number(firstSteps.frame)}</dd></div>
+      </dl><p className="admin-chart-note">Шаги считаются за всё время с регистрации, не только в первые сутки.</p></section>
+    </div>
+  </>;
 }
 
 const PLATFORMS: { key: keyof PlatformCounts; label: string }[] = [

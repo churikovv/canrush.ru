@@ -4,6 +4,7 @@ import { normalizeAdminSearch } from '@/lib/admin-fields';
 import { DEFAULT_PROFILE_APPEARANCE, parseProfileAppearance } from '@/lib/profile-appearance';
 import { adminPage, type AdminTab } from '@/lib/admin-tabs';
 import type { AdminEntry, AdminUserEntry } from '@/lib/admin';
+import { getFeatureUsage, getRetentionMetrics, type AdminRetention, type AdminUsage } from '@/lib/admin-growth';
 
 export const ADMIN_PAGE_SIZE = 25;
 export interface AdminMetrics {
@@ -33,6 +34,10 @@ export interface AdminDashboardData {
   /** «Приложения»: members by the platform they came from (`platformDay`) and devices registered for push. */
   apps: AdminAppMetrics | null;
   firstDay: AdminFirstDayMetrics | null;
+  /** «Удержание»: weekly sign-up cohorts coming back, stickiness and last month's members still here. */
+  retention: AdminRetention | null;
+  /** «Чем пользуются»: members per feature by day, «Лунный цикл» runs and «Первые шаги» of newcomers. */
+  usage: AdminUsage | null;
 }
 
 /** Newcomers of the last 30 days whose first 24 hours are over, and what they did in those hours. */
@@ -54,13 +59,13 @@ export interface AdminAppMetrics {
 /** `showEmails` is off for moderators: their tables show `@nickname` instead of the email and search ignores emails. */
 export async function getAdminDashboardData(search: string, tab: AdminTab, requestedPage = 1, showEmails = true): Promise<AdminDashboardData> {
   const db = getPool();
-  const result: AdminDashboardData = { market: [], reports: [], users: [], admins: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [], activity: [], swipesByDay: [], apps: null, firstDay: null };
+  const result: AdminDashboardData = { market: [], reports: [], users: [], admins: [], total: 0, page: 1, metrics: null, registrations: [], onlineByHour: [], activity: [], swipesByDay: [], apps: null, firstDay: null, retention: null, usage: null };
   if (tab === 'campaigns') return result;
   if (tab === 'analytics') {
     await db.query(`delete from "presenceSample" where bucket < now() - interval '8 days'`);
     await db.query(`delete from "activityDay" where day < (now() at time zone 'Europe/Moscow')::date - 400`);
     await db.query(`delete from "platformDay" where day < (now() at time zone 'Europe/Moscow')::date - 400`);
-    const [metrics, registrations, online, activity, swipes, apps, firstDay] = await Promise.all([
+    const [metrics, registrations, online, activity, swipes, apps, firstDay, retention, usage] = await Promise.all([
       db.query<AdminMetrics>(`select
         (select count(*)::int from "user") as users,
         -- Same rule as the profile status (getPresence): a heartbeat within 2 minutes and a live session.
@@ -117,8 +122,12 @@ export async function getAdminDashboardData(search: string, tab: AdminTab, reque
       from days left join counts using(day) order by days.day`),
       getAppMetrics(),
       getFirstDayMetrics(),
+      getRetentionMetrics(),
+      getFeatureUsage(),
     ]);
     result.firstDay = firstDay;
+    result.retention = retention;
+    result.usage = usage;
     result.apps = apps;
     result.swipesByDay = swipes.rows;
     result.activity = activity.rows;

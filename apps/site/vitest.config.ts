@@ -25,7 +25,7 @@ export default defineConfig({
       'test/profile-community.integration.test.ts',
       'test/review-photos.integration.test.ts',
       'test/auth.integration.test.ts', 'test/review-login.integration.test.ts', 'test/push.integration.test.ts', 'test/push-broadcast.integration.test.ts', 'test/member-blocks.integration.test.ts', 'test/saved-posts.integration.test.ts',
-      'test/admin.integration.test.ts', 'test/week-overtaken.integration.test.ts', 'test/bot-messages.integration.test.ts', 'test/october-top-bonus.integration.test.ts', 'test/moderator-role.integration.test.ts', 'test/catalog-drink-merge.integration.test.ts', 'test/staff-moderation.integration.test.ts', 'test/admin-members.integration.test.ts', 'test/community-chat.integration.test.ts',
+      'test/admin.integration.test.ts', 'test/week-overtaken.integration.test.ts', 'test/bot-messages.integration.test.ts', 'test/october-top-bonus.integration.test.ts', 'test/moderator-role.integration.test.ts', 'test/catalog-drink-merge.integration.test.ts', 'test/staff-moderation.integration.test.ts', 'test/admin-members.integration.test.ts', 'test/community-chat.integration.test.ts', 'test/admin-growth.integration.test.ts',
       'node_modules/**',
       '.next/**',
     ],

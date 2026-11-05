@@ -391,3 +391,38 @@ div.admin-drink-card-match > p { margin: 0; }
 .hunt-admin-actions form { display: flex; gap: 6px; }
 .hunt-admin-actions input[name="note"] { min-width: 0; width: 160px; min-height: 40px; padding: 0 10px; box-sizing: border-box; border: 1px solid var(--theme-line); border-radius: var(--radius-sm); background: transparent; color: inherit; font: inherit; }
 @media (pointer: coarse) { .hunt-admin-actions input[name="note"] { font-size: 1rem; } }
+
+/* «Удержание»: weekly sign-up cohorts, each share tinted by its size (`--share` 0–1). The table scrolls inside its
+   panel on a narrow phone instead of widening the page. */
+.admin-cohorts-scroll { overflow-x: auto; margin: 0 -4px 12px; }
+.admin-cohorts { width: 100%; border-collapse: separate; border-spacing: 4px; font-variant-numeric: tabular-nums; }
+.admin-cohorts thead th { padding: 0 8px 4px; color: var(--theme-muted); font-size: .75rem; font-weight: 700; text-align: right; white-space: nowrap; }
+.admin-cohorts thead th:first-child, .admin-cohorts tbody th { text-align: left; }
+.admin-cohorts tbody th { padding-right: 8px; font-size: .8125rem; font-weight: 700; white-space: nowrap; }
+.admin-cohorts td { padding: 0; text-align: right; white-space: nowrap; }
+.admin-cohort-members { padding-right: 8px; font-weight: 700; }
+.admin-cohort-cell { display: grid; justify-items: end; gap: 1px; min-width: 64px; padding: 8px 10px; box-sizing: border-box; border-radius: var(--radius-md); background: color-mix(in srgb, var(--brand-blue) calc(var(--share, 0) * 45%), var(--theme-subtle)); }
+.admin-cohort-cell strong { font-size: .9375rem; line-height: 1.2; }
+.admin-cohort-cell small { color: var(--theme-muted); font-size: .6875rem; }
+.admin-cohort-cell[data-empty] { background: none; color: var(--theme-muted); }
+
+/* «Чем пользуются»: a row per feature — name, members by day, weekly reach. */
+.admin-usage { display: grid; margin: 0 0 12px; padding: 0; list-style: none; }
+.admin-usage li { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(120px, auto); align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--theme-line); }
+.admin-usage li:last-child { border-bottom: 0; }
+.admin-usage-name { display: grid; gap: 2px; min-width: 0; }
+.admin-usage-name small { color: var(--theme-muted); font-size: .75rem; }
+.admin-usage-spark { display: flex; align-items: flex-end; gap: 3px; height: 36px; }
+.admin-usage-spark i { flex: 1; border-radius: 2px; background: var(--brand-blue); }
+.admin-usage-spark i[data-zero] { background: var(--theme-line); }
+.admin-usage-numbers { display: grid; justify-items: end; gap: 1px; font-variant-numeric: tabular-nums; text-align: right; }
+.admin-usage-numbers strong { font-size: 1.0625rem; line-height: 1.2; }
+.admin-usage-numbers small { color: var(--theme-muted); font-size: .75rem; white-space: nowrap; }
+.admin-usage-grid { margin-top: 20px; }
+@media (max-width: 639px) {
+  .admin-usage li { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+  .admin-usage-spark { grid-column: 1 / -1; grid-row: 2; height: 28px; }
+  .admin-cohort-cell { min-width: 54px; padding: 6px 7px; }
+  .admin-cohort-end { display: none; }
+  .admin-cohorts thead th, .admin-cohorts tbody th, .admin-cohort-members { padding-right: 4px; padding-left: 4px; }
+}
