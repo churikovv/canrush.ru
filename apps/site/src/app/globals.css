@@ -3304,6 +3304,8 @@ html[data-cookie-notice="visible"] .action-toast { bottom: calc(var(--site-tab-b
 .level-stop-deep { stop-color: color-mix(in srgb, var(--tier-dark) 45%, #000); }
 .level-stop-gem { stop-color: var(--gem-mid, var(--tier-mid)); }
 .level-stop-gem-deep { stop-color: var(--gem-dark, var(--tier-dark)); }
+/* Gold's gem is amber, not the metal's own yellow: in the gold mount a gold stone disappears. */
+[data-level-tier=gold] { --gem-mid: #ff8f1f; --gem-dark: #6e1d00; }
 [data-level-tier=legend] { --gem-mid: #c86bff; --gem-dark: #3b0f86; }
 [data-level-tier=myth] { --gem-mid: #ff2a52; --gem-dark: #4a0014; }
 .rank-chrome, .rank-blade, .rank-shadow { stroke: color-mix(in srgb, var(--tier-dark) 55%, #000); stroke-width: 1; stroke-linejoin: round; }
