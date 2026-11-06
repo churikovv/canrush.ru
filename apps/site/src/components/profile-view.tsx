@@ -10,6 +10,7 @@ import { ProfileBlock, ProfileBlocks } from '@/components/profile-blocks';
 import { getFavoriteGroups } from '@/lib/catalog';
 import { ProfileConnections } from '@/components/profile-connections';
 import { getListings } from '@/lib/market';
+import { marketOpenFor } from '@/lib/market-open';
 import { formatPrice } from '@/lib/market-fields';
 import { ProfileReportMenuItem } from '@/components/profile-report-form';
 import { ProfileRatingStats } from '@/components/profile-rating-stats';
@@ -63,7 +64,7 @@ function TelegramGlyph() {
 
 export async function ProfileView({ profile, isOwn, favoritesHref, tierListsHref, viewerId, viewerIsAdmin = false, wallPage = 1 }: ProfileViewProps) {
   const [community, ratings, wall, presence, lastSeen, friends, listings, favorites, compatibility, collection, addedDrinks, cards, shelf] = await Promise.all([
-    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), getListings(1, isOwn ? profile.id : undefined, false, profile.username), getFavoriteGroups(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id), listPublishedDrinksByOwner(profile.id), profile.profileLayout?.hidden.includes('cards') === false ? topCards(profile.id).catch(() => []) : Promise.resolve([]),
+    getProfileCommunity(profile.id, viewerId), getProfileRatings(profile.id), getProfileWall(profile.id, wallPage, viewerId ?? null), getPresence(profile.id), getLastSeen(profile.id), getConnections(profile.id, 'friends'), marketOpenFor('member') ? getListings(1, isOwn ? profile.id : undefined, false, profile.username) : Promise.resolve({ items: [], hasMore: false }), getFavoriteGroups(profile.id), !isOwn && viewerId ? getProfileCompatibility(viewerId, profile.id) : null, getBrandCollections(profile.id), listPublishedDrinksByOwner(profile.id), profile.profileLayout?.hidden.includes('cards') === false ? topCards(profile.id).catch(() => []) : Promise.resolve([]),
     profile.profileLayout?.hidden.includes('shelf') === false ? listCollectionPhotos(profile.id, viewerId ?? null) : Promise.resolve({ photos: [], staff: false }),
   ]);
   // A slow or failing query only leaves the cards with their icons.

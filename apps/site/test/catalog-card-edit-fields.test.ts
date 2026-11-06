@@ -38,6 +38,12 @@ describe('catalog card edits', () => {
     expect(applyCardEdits(result, [])).toBe(result);
   });
 
+  it('marks a card the team says is no longer made, prices and all', () => {
+    const [card] = applyCardEdits([group('mango', [offer(99, 'a')])], [edit('mango', { discontinued: true })]);
+    expect(card).toMatchObject({ flavor: 'mango', discontinued: true, minPrice: 99 });
+    expect(applyCardEdits([group('mango')], [edit('mango', { discontinued: false })])[0]).not.toHaveProperty('discontinued');
+  });
+
   it('checks the full name', () => {
     expect(parseCardFullName('  Tornado   Max  Black ')).toBe('Tornado Max Black');
     expect(parseCardFullName('')).toBe('');

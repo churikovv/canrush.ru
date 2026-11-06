@@ -5,6 +5,9 @@ const url = process.env.TEST_DATABASE_URL ?? 'postgresql://localhost:5432/canrus
 if (new URL(url).pathname !== '/canrush_site_test') throw new Error('Test DB only');
 const pool = new Pool({ connectionString: url, max: 4 });
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
+// The market's mode (`MARKET_MODE`): these tests cover the member market (`open`), the last one switches it.
+const mode = vi.hoisted(() => ({ mode: 'open' as 'closed' | 'business' | 'open' }));
+vi.mock('../src/lib/market-mode', () => ({ get MARKET_MODE() { return mode.mode; } }));
 const api = await import('../src/lib/market');
 const users = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
 const [seller, buyer, stranger, lateBuyer] = users as [string, string, string, string];
@@ -153,4 +156,40 @@ it('reopens only owned available listings without resetting stock or reviving de
  expect(await api.getListing(id)).toMatchObject({closed:false,quantity:3});
  await pool.query('update "marketListing" set closed=true,quantity=0 where id=$1',[id]);await expect(api.reopenListing(buyer,id)).rejects.toThrow();
  await pool.query('update "marketListing" set quantity=3,"deletedAt"=now() where id=$1',[id]);await expect(api.reopenListing(buyer,id)).rejects.toThrow();
+});
+it('hides personal listings while only companies sell: no publishing, ordering, reopening or chat, but closing works', async () => {
+  const brand = `Personal-${randomUUID()}`;
+  const id = (await pool.query(`insert into "marketListing"("sellerId",title,description,city,price,delivery,quantity,brand) values($1,'Personal','Test','Москва',100,array['pickup'],5,$2) returning id`, [buyer, brand])).rows[0].id as string;
+  const photoId = (await pool.query(`insert into "marketPhoto"("listingId",position,data,thumbnail) values($1,0,$2,$3) returning id`, [id, photo.data, photo.thumbnail])).rows[0].id as string;
+  const personalOrder = (await pool.query(`insert into "marketOrder"("listingId","buyerId",quantity,"unitPrice") values($1,$2,1,100) returning id`, [id, stranger])).rows[0].id as string;
+  expect((await api.getListings(1, undefined, false, undefined, { brand })).items.map(item => item.id)).toEqual([id]);
+  mode.mode = 'business';
+  try {
+    expect((await api.getListings(1, undefined, false, undefined, { brand })).items).toEqual([]);
+    expect((await api.getMarketFilterOptions()).brands).not.toContain(brand);
+    // The seller still has it in «Мои» and on its page, to close it; staff open it too.
+    expect((await api.getListings(1, buyer, false, undefined, { brand })).items.map(item => item.id)).toEqual([id]);
+    expect(await api.getListing(id, buyer)).not.toBeNull();
+    expect(await api.getListing(id, lateBuyer)).toBeNull();
+    expect(await api.getListing(id, lateBuyer, true)).not.toBeNull();
+    expect(await api.getMarketPhoto(photoId, null, false)).toBeUndefined();
+    expect(await api.getMarketPhoto(photoId, buyer, false)).toEqual(photo.data);
+    expect(await api.getMarketPhoto(photoId, stranger, true)).toEqual(photo.thumbnail);
+    await expect(api.startOrder(lateBuyer, id)).rejects.toThrow('недоступно');
+    await expect(api.createListing(lateBuyer, { title: 'Test', description: 'Test', city: 'Москва', price: 100, quantity: 1, delivery: ['pickup'] }, [photo])).rejects.toThrow('только подтверждённые компании');
+    // An order already made stays: its chat is read-only, its status can still be closed out.
+    expect(await api.getOrder(stranger, personalOrder)).toMatchObject({ fromCompany: false });
+    await expect(api.sendMarketMessage(stranger, personalOrder, 'Hi', [])).rejects.toThrow('личным объявлениям');
+    await api.changeOrderStatus(stranger, personalOrder, 'cancelled');
+    expect((await api.getListing(id, buyer))?.quantity).toBe(5);
+    await api.closeListing(buyer, id);
+    await expect(api.reopenListing(buyer, id)).rejects.toThrow('только подтверждённые компании');
+    mode.mode = 'closed';
+    await expect(api.createListing(lateBuyer, { title: 'Test', description: 'Test', city: 'Москва', price: 100, quantity: 1, delivery: ['pickup'] }, [photo])).rejects.toThrow('временно закрыт');
+    await expect(api.startOrder(lateBuyer, id)).rejects.toThrow('временно закрыт');
+    await expect(api.reopenListing(buyer, id)).rejects.toThrow('временно закрыт');
+  } finally { mode.mode = 'open'; }
+  // Back to the member market, the same listing is the seller's to publish again.
+  await api.reopenListing(buyer, id);
+  expect((await api.getListings(1, undefined, false, undefined, { brand })).items.map(item => item.id)).toEqual([id]);
 });

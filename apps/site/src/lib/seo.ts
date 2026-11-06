@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen } from '@/lib/market-open';
 
 export const SITE_NAME = 'CanRush';
 export const SITE_URL = 'https://canrush.ru';
 export const DEFAULT_DESCRIPTION =
-  `CanRush — социальная сеть для любителей энергетиков: отзывы, рейтинги и тирлисты, сравнение цен в магазинах России${MARKET_OPEN ? ' и маркет редких напитков' : ''}.`;
+  `CanRush — социальная сеть для любителей энергетиков: отзывы, рейтинги и тирлисты, сравнение цен в магазинах России${marketOpen() ? ' и маркет редких напитков' : ''}.`;
 
 export const OG_IMAGE_SIZE = { width: 1200, height: 630 };
 

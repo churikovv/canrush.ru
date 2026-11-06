@@ -129,6 +129,8 @@ export async function dismissCardCheck(staffId: string, staffEmail: string, card
 export interface AdminCatalogCard {
   brand: string; flavor: string; name: string; fullName: string | null; cover: string | null; offers: number;
   hidden: boolean; mergedInto: { brand: string; flavor: string; label: string } | null; ownPhoto: boolean;
+  /** «Снят с производства» by the team (`catalogCardEdit.discontinued`). */
+  discontinued: boolean;
   /** Merged by the neural network on its own, not by the team. */
   byNetwork: boolean;
   check: CardCheck | null;
@@ -151,7 +153,7 @@ export async function listCatalogCards(query: string, page: number, size: number
       return {
         brand: group.brand, flavor: group.flavor, name: flavorName(group.flavor), fullName: item?.fullName ?? null, offers: group.variants.length,
         cover: item?.photoVersion != null ? cardPhotoUrl(item.id, item.photoVersion) : group.coverImageUrl ?? null, ownPhoto: item?.photoVersion != null,
-        hidden: item?.hidden ?? false, mergedInto: target ? { ...target, label: `${target.brand} · ${flavorName(target.flavor)}` } : null,
+        hidden: item?.hidden ?? false, discontinued: item?.discontinued ?? false, mergedInto: target ? { ...target, label: `${target.brand} · ${flavorName(target.flavor)}` } : null,
         byNetwork: !!item?.mergedInto && item.updatedBy === NETWORK_ACTOR, check: checks.get(cardKey(group.brand, group.flavor)) ?? null,
       };
     })

@@ -40,7 +40,7 @@ import { LEGAL_DETAILS } from '@/lib/legal';
 import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
 import { saveNotificationSettings, saveTelegramBotSettings, unlinkTelegram } from './actions';
 import { supportUnreadForUser } from '@/lib/support';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen } from '@/lib/market-open';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Профиль и настройки', robots: { index: false, follow: false } };
@@ -285,7 +285,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </div>
           <div className="settings-list tg-settings-perks">
             <div className="settings-row"><span className="settings-row-icon is-telegram" aria-hidden="true">{PERK_ICONS.login}</span><span className="settings-row-text"><strong>Вход в один тап</strong><small>Мини-приложение CanRush открывает аккаунт сразу</small></span></div>
-            <div className="settings-row"><span className="settings-row-icon is-telegram" aria-hidden="true">{ICONS.notifications}</span><span className="settings-row-text"><strong>{MARKET_OPEN ? 'Уведомления и маркет' : 'Уведомления'}</strong><small>{MARKET_OPEN ? 'Ответы, подписки и сообщения заказов' : 'Ответы, упоминания и подписки'} от @{telegram.botUsername}</small></span></div>
+            <div className="settings-row"><span className="settings-row-icon is-telegram" aria-hidden="true">{ICONS.notifications}</span><span className="settings-row-text"><strong>{marketOpen() ? 'Уведомления и маркет' : 'Уведомления'}</strong><small>{marketOpen() ? 'Ответы, подписки и сообщения заказов' : 'Ответы, упоминания и подписки'} от @{telegram.botUsername}</small></span></div>
             <div className="settings-row"><span className="settings-row-icon is-telegram" aria-hidden="true">{BOT_ICONS.promoAlerts}</span><span className="settings-row-text"><strong>Акции на избранное</strong><small>Каждое утро и подборка недели</small></span></div>
           </div>
           <TelegramLinkButton />

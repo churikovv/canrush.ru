@@ -19,7 +19,7 @@ import { ProfileHeader } from '@/components/profile-header';
 import { useSignOut } from '@/components/sign-out-button';
 import { PROFILE_BIO_MAX } from '@/lib/profile-fields';
 import { DEFAULT_PROFILE_LAYOUT, PROFILE_BLOCKS, type ProfileBlockKey } from '@/lib/profile-layout';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpenFor } from '@/lib/market-open';
 import type { ProfileData } from '@/lib/profile';
 import { ProfileTag } from '@/components/profile-tag';
 
@@ -227,7 +227,7 @@ export function ProfileEditForm({ profile, layoutPreviews, level = 1, xp, ownedF
   const cropImage = (kind: ImageKind) => { void editCrop(kind); };
   const removeImage = (kind: ImageKind) => forgetImage(kind, { remove: true });
   const undoImage = (kind: ImageKind) => forgetImage(kind, undefined);
-  const marketOut = (key: string) => !MARKET_OPEN && key === 'listings';
+  const marketOut = (key: string) => !marketOpenFor('member') && key === 'listings';
   const visibleBlocks = (() => { const layout = profile.profileLayout ?? DEFAULT_PROFILE_LAYOUT; return layout.order.filter(key => !layout.hidden.includes(key) && !marketOut(key)).length; })();
   const sectionGroups: { key: string; title: string; rows: { key: Section; title: string; value?: string; tone?: string; icon?: ReactNode; href?: string; onSelect?: () => void }[] }[] = [
     { key: 'profile', title: 'Профиль', rows: [

@@ -8,7 +8,7 @@ import { HeaderProfile } from '@/components/header-profile';
 import Link from '@/components/navigation-progress';
 import { NavigationIcon, type NavigationSection } from '@/components/navigation-icon';
 import { SiteTabBar } from '@/components/site-tab-bar';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen, marketOpenFor } from '@/lib/market-open';
 
 interface ProfileNavigationProps {
   active?: NavigationSection;
@@ -22,7 +22,7 @@ interface ProfileNavigationProps {
  */
 const COMMUNITY = [
   { section: 'tierlists', href: '/tierlists', label: 'Тирлисты', hint: 'Рейтинги вкусов' },
-  ...(MARKET_OPEN ? [{ section: 'market', href: '/market', label: 'Объявления', hint: 'Маркет банок от участников' }] as const : []),
+  ...(marketOpen() ? [{ section: 'market', href: '/market', label: 'Объявления', hint: marketOpenFor('member') ? 'Маркет банок от участников' : 'Банки от проверенных компаний' }] as const : []),
   { section: 'feed', href: '/feed', label: 'Лента', hint: 'Записи всех стен' },
   { section: 'news', href: '/news', label: 'Новости', hint: 'Статьи участников' },
   { section: 'dating', href: '/community?type=dating', label: 'Дейтинг', hint: 'Свайпай напитки' },

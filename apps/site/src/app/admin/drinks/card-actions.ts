@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { requireSiteAdmin } from '@/lib/admin';
-import { CatalogCardError, mergeCatalogCard, setCardFullName, setCardHidden, setCardPhoto } from '@/lib/catalog-card-edits';
+import { CatalogCardError, mergeCatalogCard, setCardDiscontinued, setCardFullName, setCardHidden, setCardPhoto } from '@/lib/catalog-card-edits';
 import { parseCardFullName } from '@/lib/catalog-card-edit-fields';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { dismissCardCheck } from '@/lib/catalog-card-check';
@@ -61,6 +61,17 @@ export async function setCardHiddenAction(card: Card, hidden: boolean): Promise<
   try {
     await setCardHidden(admin.userId, admin.email, card, hidden);
     revalidateCatalog();
+    return { saved: true };
+  } catch (error) { return { error: message(error, 'Не удалось сохранить. Попробуйте ещё раз.') }; }
+}
+
+/** «Снят с производства» on a parser card, or back in production. */
+export async function setCardDiscontinuedAction(card: Card, discontinued: boolean): Promise<CardActionState> {
+  const admin = await requireSiteAdmin();
+  try {
+    await setCardDiscontinued(admin.userId, admin.email, card, discontinued);
+    revalidateCatalog();
+    revalidatePath('/profile', 'layout');
     return { saved: true };
   } catch (error) { return { error: message(error, 'Не удалось сохранить. Попробуйте ещё раз.') }; }
 }

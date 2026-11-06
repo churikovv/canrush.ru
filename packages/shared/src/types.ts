@@ -210,4 +210,6 @@ export interface CatalogGroup {
   fullName?: string;
   /** Объёмы банки, известные без предложений магазинов (правка карточки командой), мл */
   volumes?: number[];
+  /** Снят с производства: отметка напитка участника или команды на карточке парсера (сайт, `catalogCardEdit`) */
+  discontinued?: boolean;
 }

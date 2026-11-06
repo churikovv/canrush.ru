@@ -15,7 +15,8 @@ export async function getTriedDrinks(userId: string): Promise<TriedDrink[]> {
  */
 export async function getBrandCollections(userId: string): Promise<CollectionSummary & { xp: number }> {
   const [options, tried] = await Promise.all([storeDrinkOptions(), getTriedDrinks(userId)]);
-  const summary = buildBrandCollections(options, tried);
+  // Drinks no longer made (a member drink's mark or the team's on a parser card) are optional: they count once tried.
+  const summary = buildBrandCollections(options.map(option => option.discontinued ? { ...option, archived: true } : option), tried);
   const awards = collectionAwards(summary);
   const paid = !awards.length ? { rows: [] } : await getPool().query<{ points: number }>(`insert into "profileExperience" ("userId", reason, "sourceKey", points)
     select $1, 'collection', a.key, a.points from unnest($2::text[], $3::int[]) as a(key, points)

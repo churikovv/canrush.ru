@@ -6,7 +6,11 @@ import type { StoreItem } from '@/lib/store-fields';
 import type { Store } from '@/lib/stores';
 
 /** Catalog drink the store form offers in its picker. */
-export interface StoreDrinkOption { brand: string; flavor: string; label: string; cover?: string; /** A member drink's full name, searched too. */ fullName?: string }
+export interface StoreDrinkOption {
+  brand: string; flavor: string; label: string; cover?: string; /** A member drink's full name, searched too. */ fullName?: string;
+  /** «Снят с производства» (a member drink's mark or the team's on a parser card): optional in brand collections. */
+  discontinued?: true;
+}
 /** Store drink as rendered: catalog drinks get their product page and cover. */
 export type StoreItemView = StoreItem & { href?: string; cover?: string };
 export type StoreView = Omit<Store, 'catalog'> & { catalog: StoreItemView[] };
@@ -19,7 +23,7 @@ export async function storeDrinkOptions(): Promise<StoreDrinkOption[]> {
   for (const group of mergeCatalogAliases(await loadAllCatalogGroups())) {
     const brand = group.brand.trim();
     if (!brand || brand.toLowerCase() === 'unknown' || isExcludedEnergyBrand(brand) || !isResolvedFlavor(group.flavor)) continue;
-    options.set(key(group.brand, group.flavor), { brand: group.brand, flavor: group.flavor, label: `${group.brand} · ${flavorName(group.flavor)}`, ...(group.coverImageUrl?.startsWith('/') ? { cover: group.coverImageUrl } : {}), ...(group.fullName ? { fullName: group.fullName } : {}) });
+    options.set(key(group.brand, group.flavor), { brand: group.brand, flavor: group.flavor, label: `${group.brand} · ${flavorName(group.flavor)}`, ...(group.coverImageUrl?.startsWith('/') ? { cover: group.coverImageUrl } : {}), ...(group.fullName ? { fullName: group.fullName } : {}), ...(group.discontinued ? { discontinued: true as const } : {}) });
   }
   return [...options.values()].sort((a, b) => a.label.localeCompare(b.label, 'ru'));
 }

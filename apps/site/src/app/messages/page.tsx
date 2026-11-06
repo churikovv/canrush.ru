@@ -10,19 +10,19 @@ import { MarketInboxRefresh } from '@/components/market-inbox-refresh';
 import { MarketTabs } from '@/components/section-tabs';
 import { auth } from '@/lib/auth';
 import { getOrders } from '@/lib/market';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen, marketOpenFor, newListingHref } from '@/lib/market-open';
 import { ORDER_STATUS, formatPrice } from '@/lib/market-fields';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Заказы', robots: { index: false, follow: false } };
 export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  if (!MARKET_OPEN) redirect('/search');
+  if (!marketOpen()) redirect('/search');
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect('/sign-in');
   const query = await searchParams;
   const page = Math.min(10000, Math.max(1, Number.parseInt(query.page ?? '1', 10) || 1));
   const { items, hasMore } = await getOrders(session.user.id, page);
   return <BrandShell headerAction={<ProfileNavigation active="market" />}><div className="market-layout market-inbox"><MarketInboxRefresh />
-    <header className="market-heading"><div><h1>Маркет</h1><p>Энергетики от участников CanRush</p></div><Link className="community-button" href="/market/new">Создать объявление</Link></header>
+    <header className="market-heading"><div><h1>Маркет</h1><p>{marketOpenFor('member') ? 'Энергетики от участников CanRush' : 'Энергетики от проверенных компаний'}</p></div><Link className="community-button" href={newListingHref()}>{marketOpenFor('member') ? 'Создать объявление' : 'Продавать от компании'}</Link></header>
     <MarketTabs active="orders" signedIn />
     {items.length ? <ul className="market-threads">{items.map(order => <li key={order.id}><Link href={`/messages/${order.id}`}>
       <div className="market-thread-person"><strong>{order.buyerId === session.user.id ? order.sellerName : order.buyerName}</strong><span>{order.buyerId === session.user.id ? 'Покупаете' : 'Продаёте'}</span>{order.unread > 0 && <span className="market-unread" aria-label={`${order.unread} непрочитанных сообщений`}>{order.unread}</span>}</div>

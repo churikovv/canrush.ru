@@ -8,6 +8,7 @@ import { getPool } from '@/db/pool';
 import { withCatalogDrinks } from '@/lib/catalog-drinks';
 import { withBrandCovers } from '@/lib/brand-covers';
 import { withCardEdits } from '@/lib/catalog-card-edits';
+import { catalogGroupSlug, decodeCatalogGroupSlug } from '@/lib/catalog-query';
 
 interface FavoriteRow extends QueryResultRow {
   brand: string;
@@ -30,6 +31,16 @@ export async function loadCatalogGroups(): Promise<CatalogGroup[]> { return (awa
  * A file group wins over a member's drink with the same identity; the database being away leaves the files alone.
  */
 export const loadAllCatalogGroups = cache(async (): Promise<CatalogGroup[]> => withBrandCovers(await withCatalogDrinks(await withCardEdits(await readAllCatalogGroups()), { archived: true })));
+
+/** A catalog card by its address, without a city: a crawler, a printed QR code and a badge on another site carry no cookie. */
+export async function drinkBySlug(slug: string): Promise<CatalogGroup | null> {
+  const groups = await loadAllCatalogGroups();
+  const decoded = decodeCatalogGroupSlug(slug);
+  if (!decoded) return groups.find(group => catalogGroupSlug(group.brand, group.flavor) === slug) ?? null;
+  const { brand, flavor } = reviewedProductIdentity(decoded.brand, decoded.flavor);
+  const canonical = canonicalProductFlavor(brand, flavor);
+  return groups.find(group => group.brand === brand && group.flavor === canonical) ?? null;
+}
 /** Drinks in shops of any city plus member-added ones, which have no offers yet. */
 export const loadTierPickerGroups = cache(async (): Promise<CatalogGroup[]> => withBrandCovers(await withCatalogDrinks(await withCardEdits(await readTierPickerGroups()))));
 

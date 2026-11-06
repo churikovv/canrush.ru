@@ -72,11 +72,15 @@ it('marks a request that repeats a catalog card, puts it first and lets the team
 
 it('asks the halves when the filter refuses the whole list and does not trust a half-answered «new»', async () => {
   const candidates = Array.from({ length: 4 }, (_, index) => ({ brand, flavor: `f${index}`, kind: 'shop' as const }));
+  // The fake model looks for a card on the list («2. Дубль … · f0 — карточка магазина»), not for the text anywhere in the
+  // prompt: the brand is random hex, and a brand like «Дубль 3af0b1» made every question — halves too — look refused.
+  const lists = (messages: { content: string }[], flavor: string) =>
+    messages[1]!.content.split('\n').some(line => /^\d+\. /u.test(line) && line.includes(` · ${flavor} — `));
   let calls = 0;
-  const refusing = { chat: async (messages: { content: string }[]) => { calls++; return messages[1]!.content.includes('f0') ? 'Как и любая языковая модель…' : '{"verdict":"new","match":null}'; } };
+  const refusing = { chat: async (messages: { content: string }[]) => { calls++; return lists(messages, 'f0') ? 'Как и любая языковая модель…' : '{"verdict":"new","match":null}'; } };
   expect(await check.judgeDrink(refusing, { brand, flavor: 'x' }, candidates)).toMatchObject({ verdict: 'failed' });
   expect(calls).toBe(4); // two votes on the whole list, then one per half
-  const finding = { chat: async (messages: { content: string }[]) => messages[1]!.content.includes('f0') ? '…мнением' : messages[1]!.content.includes('f2') ? '{"verdict":"duplicate","match":1,"reason":"да"}' : '{"verdict":"new"}' };
+  const finding = { chat: async (messages: { content: string }[]) => lists(messages, 'f0') ? '…мнением' : lists(messages, 'f2') ? '{"verdict":"duplicate","match":1,"reason":"да"}' : '{"verdict":"new"}' };
   expect(await check.judgeDrink(finding, { brand, flavor: 'x' }, candidates)).toMatchObject({ verdict: 'duplicate', match: { flavor: 'f2' } });
   expect(await check.judgeDrink(finding, { brand: 'Другой', flavor: 'x' }, candidates)).toMatchObject({ verdict: 'new' });
   // A flavour that is part of a barely-sold card's mix goes to the moderator even when the model says «new» — while the

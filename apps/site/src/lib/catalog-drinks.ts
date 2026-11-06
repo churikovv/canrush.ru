@@ -68,7 +68,7 @@ const getPublishedDrinkIdentities = cache(async () => (await getPool().query<{ i
 
 type PublishedDrink = Awaited<ReturnType<typeof getPublishedDrinkIdentities>>[number];
 const drinkGroup = (drink: PublishedDrink): CatalogGroup => ({ brand: drink.brand, flavor: drink.flavor, variants: [], minPrice: 0,
-  coverImageUrl: drinkPhotoUrl(drink.id, drink.updatedAt), ...(drink.fullName ? { fullName: drink.fullName } : {}) });
+  coverImageUrl: drinkPhotoUrl(drink.id, drink.updatedAt), ...(drink.fullName ? { fullName: drink.fullName } : {}), ...(drink.discontinued ? { discontinued: true } : {}) });
 
 /**
  * The same drinks as catalog groups: no offers yet, the member's or the brand's photo as the cover. Discontinued ones

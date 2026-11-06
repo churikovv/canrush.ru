@@ -7,7 +7,10 @@ import { AUTHOR_COLUMNS } from '@/lib/profile-community';
 import { isContentId } from '@/lib/profile-report-fields';
 
 export interface QuestionAuthor { username: string; name: string; avatarId: string | null; xp: number; tag: string | null; verified: boolean }
-/** `company` — the drink's company, when the answer comes from its owner or an active member of its team. */
+/**
+ * `company` — when the answer comes from the owner or an active member of an approved company of this drink: the page's
+ * company or any other with the drink approved (each sees the question in its cabinet's «Вопросы»).
+ */
 export interface DrinkAnswer extends QuestionAuthor { id: string; questionId: string; userId: string; text: string; createdAt: Date; company: string | null }
 export interface DrinkQuestion extends QuestionAuthor { id: string; userId: string; text: string; createdAt: Date; answers: DrinkAnswer[] }
 
@@ -28,11 +31,13 @@ export async function getDrinkQuestions(brand: string, flavor: string, viewerId:
   ]);
   const ids = questions.rows.map(question => question.id);
   const answers = ids.length ? (await getPool().query<DrinkAnswer>(`select a.id, a."questionId", a."userId", a.text, a."createdAt", ${AUTHOR_COLUMNS},
-      (select b.name from business b where b.id = $3::uuid and b.status = 'approved'
-        and (b."ownerId" = a."userId" or exists(select 1 from "businessMember" m where m."businessId" = b.id and m."userId" = a."userId" and m.status = 'active'))) as company
+      (select b.name from business b where b.status = 'approved'
+        and (b.id = $3::uuid or exists(select 1 from "businessDrink" d where d."businessId" = b.id and d.status = 'approved' and d.brand = $4 and d.flavor = $5))
+        and (b."ownerId" = a."userId" or exists(select 1 from "businessMember" m where m."businessId" = b.id and m."userId" = a."userId" and m.status = 'active'))
+        order by b.id = $3::uuid desc, b."createdAt" limit 1) as company
     from "drinkAnswer" a join "user" u on u.id = a."userId"
     where a."questionId" = any($1::uuid[]) and ${VISIBLE_AUTHOR('$2::text', 'a."userId"')}
-    order by a."createdAt", a.id`, [ids, viewerId, companyId])).rows : [];
+    order by a."createdAt", a.id`, [ids, viewerId, companyId, brand, flavor])).rows : [];
   return {
     questions: questions.rows.map(({ total: _total, ...question }) => ({ ...question, answers: answers.filter(answer => answer.questionId === question.id) })),
     total: questions.rows[0]?.total ?? 0,

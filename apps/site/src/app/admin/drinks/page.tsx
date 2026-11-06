@@ -89,6 +89,7 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
             <code title="Ключ вкуса">{card.flavor}</code>
             {card.mergedInto && <span className="catalog-drink-archived">Склеена с «{card.mergedInto.label}»</span>}
             {card.hidden && <span className="catalog-drink-archived">Скрыта из каталога</span>}
+            {card.discontinued && <span className="catalog-drink-archived">Снят с производства</span>}
           </div>
           <CatalogCardAdminMenu card={card} />
         </div>

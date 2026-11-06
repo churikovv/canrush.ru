@@ -81,3 +81,28 @@ it('reads paid shares from ledger keys, brand names with colons included', () =>
 it('pluralises flavours in Russian', () => {
   expect([1, 2, 5, 11, 21, 24, 112].map(flavors)).toEqual(['1 вкус', '2 вкуса', '5 вкусов', '11 вкусов', '21 вкус', '24 вкуса', '112 вкусов']);
 });
+
+it('keeps archived drinks optional: shown, counted only once tried, never a collection on their own', () => {
+  const withArchive = [
+    ...options,
+    { brand: 'Burn', flavor: 'burn_old_apple', archived: true },
+    { brand: 'Burn', flavor: 'burn_old_pear', archived: true },
+    { brand: 'Bang', flavor: 'bang_cherry', archived: true },
+    { brand: 'Bang', flavor: 'bang_peach', archived: true },
+  ];
+  const fresh = buildBrandCollections(withArchive, []);
+  const burn = fresh.brands.find(item => item.brand === 'Burn')!;
+  expect([burn.tried, burn.total, burn.items.length]).toEqual([0, 3, 5]);
+  expect(burn.items.slice(-2).every(item => item.archived)).toBe(true);
+  // A brand only of drinks no longer made isn't a collection: one review would close it.
+  expect(fresh.brands.map(item => item.brand)).not.toContain('Bang');
+
+  // Everything still made makes 100%; a tried archived drink joins both sides and pays as usual.
+  const all = buildBrandCollections(withArchive, ['original', 'guava', 'cherry'].map(flavor => ({ brand: 'Burn', flavor, source: 'review' as const })));
+  expect(all.brands.find(item => item.brand === 'Burn')).toMatchObject({ tried: 3, total: 3 });
+  expect(collectionAwards(all).filter(award => award.key.startsWith('Burn:')).map(award => award.key)).toContain('Burn:100');
+  const plus = buildBrandCollections(withArchive, [{ brand: 'Burn', flavor: 'guava', source: 'review' }, { brand: 'Burn', flavor: 'burn_old_pear', source: 'calendar' }]);
+  const counted = plus.brands.find(item => item.brand === 'Burn')!;
+  expect([counted.tried, counted.total]).toEqual([2, 4]);
+  expect(counted.items[0]!.tried.length && counted.items[1]!.tried.length).toBeTruthy();
+});

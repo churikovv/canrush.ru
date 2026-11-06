@@ -1,0 +1,98 @@
+/* «QR и значок» in the business cabinet and its print page (/business/cabinet/poster). The poster is drawn in `cqw`
+   of its container, so the preview on a 375 px phone and the A4 sheet from the printer are one picture. Its colours are
+   fixed, not the theme's: paper is white whatever the site looks like. */
+
+/* The cabinet section */
+.bm-intro { max-width: 680px; line-height: 1.5; }
+.bm-grid { display: grid; gap: 12px; align-items: start; }
+.bm-card > p { line-height: 1.5; }
+.bm-poster-preview { width: min(100%, 300px); margin-inline: auto; container-type: inline-size; border-radius: 6px; box-shadow: 0 1px 2px rgb(0 0 0 / 10%), 0 10px 30px -12px rgb(0 0 0 / 28%); overflow: hidden; }
+.bm-actions { display: grid; gap: 8px; }
+.bm-badge { display: grid; gap: 12px; }
+.bm-badge-themes { justify-self: start; }
+.bm-badge-themes button { display: inline-flex; flex: none; min-height: 36px; align-items: center; padding: 0 16px; border: 0; border-radius: 9px; background: none; color: var(--bc-muted); font: 500 .9375rem var(--bc-font, inherit); white-space: nowrap; cursor: pointer; }
+.bm-badge-themes button:hover { color: var(--bc-text); }
+.bm-badge-themes button[aria-checked="true"] { background: var(--bc-panel); color: var(--bc-text); font-weight: 600; box-shadow: 0 1px 3px rgb(0 0 0 / 10%); }
+.bm-badge-preview { display: grid; min-height: 112px; place-items: center; padding: 24px 12px; border: 1px solid var(--bc-line); border-radius: 12px; background: #f4f6f9; }
+.bm-badge-preview[data-theme="dark"] { background: #05070a; }
+.bm-badge-preview img { max-width: 100%; height: auto; }
+.bm-code { display: grid; gap: 6px; color: var(--bc-muted); font-size: .875rem; }
+.bm-code textarea { width: 100%; padding: 12px 14px; border: 1px solid transparent; border-radius: 12px; background: var(--color-subtle); color: var(--bc-text); font: .8125rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; resize: none; }
+.bm-code textarea:focus { outline: 3px solid var(--color-focus); }
+.bm-note { font-size: .875rem; line-height: 1.5; }
+@media (pointer: coarse) { .bm-code textarea { font-size: 1rem; } }
+@media (min-width: 640px) {
+  .bm-actions { display: flex; flex-wrap: wrap; }
+}
+@media (min-width: 1100px) {
+  .bm-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (max-width: 639px) {
+  .bm-actions .bc-button, .bm-badge > .bc-button { width: 100%; }
+  .bm-badge-themes { justify-self: stretch; }
+  .bm-badge-themes button { flex: 1 1 0; justify-content: center; }
+}
+
+/* The print page */
+.poster-page { display: grid; gap: 16px; justify-items: center; min-height: 100dvh; padding: 16px 16px 48px; background: var(--color-subtle); color: var(--color-ink); font-family: var(--bc-font, inherit); }
+.poster-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; width: min(100%, 794px); }
+.poster-toolbar .bc-segments a { min-height: 40px; }
+.poster-tip { width: min(100%, 794px); color: var(--color-muted-strong); font-size: .875rem; line-height: 1.5; }
+.poster-native-note { max-width: 360px; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.5; }
+.poster-print { width: min(100%, 794px); container-type: inline-size; box-shadow: 0 1px 2px rgb(0 0 0 / 10%), 0 18px 48px -18px rgb(0 0 0 / 35%); }
+@media (max-width: 639px) {
+  .poster-toolbar > .bc-button, .poster-toolbar > .bc-segments { width: 100%; }
+  .poster-toolbar .bc-segments a { flex: 1 1 0; justify-content: center; }
+}
+
+/* The sheet */
+.poster-sheet { position: relative; display: flex; flex-direction: column; width: 100%; aspect-ratio: 210 / 297; overflow: hidden; background: #fff; color: #0b0d12; font-family: var(--font-sans); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.poster-mark { flex: none; fill: var(--brand-blue); }
+.poster-sheet.is-a4 { align-items: center; gap: 2.4cqw; padding: 7cqw 7cqw 0; text-align: center; }
+.poster-head { display: flex; align-self: stretch; align-items: center; justify-content: space-between; }
+.poster-logo { display: inline-flex; align-items: center; gap: 2cqw; }
+.poster-logo .poster-mark { width: 9cqw; height: auto; }
+.poster-wordmark { display: block; width: 23cqw; aspect-ratio: 63 / 18; background: #0b0d12; -webkit-mask: url('/brand/logo-wordmark-white.svg') center / contain no-repeat; mask: url('/brand/logo-wordmark-white.svg') center / contain no-repeat; }
+.poster-age { padding: .6cqw 1.6cqw; border: .35cqw solid #0b0d12; border-radius: 1.4cqw; font-size: 2.6cqw; font-weight: 700; line-height: 1; }
+.poster-cans { position: relative; display: flex; align-items: flex-end; justify-content: center; width: 60cqw; height: 27cqw; margin-top: 1cqw; border-radius: 50% 50% 4cqw 4cqw / 60% 60% 4cqw 4cqw; background: radial-gradient(closest-side, rgb(0 110 255 / 16%), rgb(0 110 255 / 4%) 70%, transparent); }
+.poster-can { width: auto; height: 27cqw; object-fit: contain; filter: drop-shadow(0 1.2cqw 1.4cqw rgb(0 0 0 / 22%)); }
+.poster-can.is-photo { width: 24cqw; height: 24cqw; border-radius: 3cqw; filter: none; }
+.poster-cans[data-count="2"] .poster-can, .poster-cans[data-count="3"] .poster-can { height: 23cqw; }
+.poster-cans[data-count="2"] .poster-can:first-child { rotate: -6deg; translate: 2cqw 0; }
+.poster-cans[data-count="2"] .poster-can:last-child { rotate: 6deg; translate: -2cqw 0; }
+.poster-cans[data-count="3"] .poster-can:first-child { rotate: -9deg; translate: 3cqw .6cqw; }
+.poster-cans[data-count="3"] .poster-can:nth-child(2) { position: relative; z-index: 1; height: 27cqw; }
+.poster-cans[data-count="3"] .poster-can:last-child { rotate: 9deg; translate: -3cqw .6cqw; }
+/* Two classes: the cabinet paints its own `h1`, `strong` and `b` (`.bc-root h1`) in the theme's ink and UI font. */
+.poster-sheet .poster-title { margin: 0; color: #0b0d12; font-family: inherit; font-size: 8.4cqw; font-weight: 700; line-height: 1.05; letter-spacing: -.02em; }
+.poster-name { margin: -1cqw 0 0; color: #4a5160; font-size: 3.8cqw; font-weight: 600; line-height: 1.2; }
+.poster-qr { display: grid; justify-items: center; gap: 2.2cqw; margin-top: 1cqw; }
+.poster-qr-code { display: block; width: 40cqw; height: 40cqw; padding: 1.6cqw; border: .8cqw solid var(--brand-blue); border-radius: 4cqw; background: #fff; }
+.poster-qr p { max-width: 64cqw; margin: 0; color: #4a5160; font-size: 3cqw; line-height: 1.35; }
+.poster-sheet .poster-qr b { display: block; color: #0b0d12; font-family: inherit; font-size: 3.4cqw; }
+.poster-url { margin: 0; color: #6b7280; font-size: 2.3cqw; word-break: break-all; }
+.poster-foot { align-self: stretch; margin: auto -7cqw 0; padding: 3.6cqw 7cqw; background: var(--brand-blue); color: #fff; font-size: 3.1cqw; font-weight: 600; line-height: 1.3; }
+.poster-sheet .poster-foot b { color: #fff; font-family: inherit; font-size: 4.2cqw; }
+
+.poster-sheet.is-labels { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 1fr); }
+.poster-label { display: grid; grid-template-columns: 22cqw minmax(0, 1fr); align-items: center; gap: 2.6cqw; padding: 3.4cqw; border-right: .2cqw dashed #b7bdc8; border-bottom: .2cqw dashed #b7bdc8; }
+.poster-label:nth-child(2n) { border-right: 0; }
+.poster-label:nth-last-child(-n + 2) { border-bottom: 0; }
+.poster-label-qr { display: block; width: 22cqw; height: 22cqw; }
+.poster-label-text { display: grid; gap: 1.2cqw; text-align: left; }
+.poster-label-brand { display: inline-flex; align-items: center; gap: 1cqw; color: #4a5160; font-size: 2.3cqw; font-weight: 700; }
+.poster-label-brand .poster-mark { width: 3.6cqw; height: auto; }
+.poster-sheet .poster-label-text strong { color: #0b0d12; font-family: inherit; font-size: 3.4cqw; font-weight: 700; line-height: 1.15; }
+.poster-label-text span:not(.poster-label-brand) { color: #4a5160; font-size: 2.4cqw; line-height: 1.25; }
+.poster-label-text small { color: var(--brand-blue-deep); font-size: 2.1cqw; font-weight: 600; }
+
+/* Paper: only the sheet, the size of A4, without the page's margins. `:has()` keeps it off every other page once this
+   stylesheet stays loaded after a client-side navigation. */
+.poster-print { page: poster; }
+@page poster { size: A4 portrait; margin: 0; }
+@media print {
+  html:has(.poster-print) body :not(:has(.poster-print)):not(.poster-print):not(.poster-print *) { display: none !important; }
+  html:has(.poster-print), html:has(.poster-print) body, html:has(.poster-print) .poster-page { margin: 0; padding: 0; background: #fff; min-height: 0; }
+  /* A hair under 297 mm: a rounded-up sheet would push an empty second page out of the printer. */
+  .poster-print { width: 210mm; height: 296.5mm; overflow: hidden; box-shadow: none; }
+}

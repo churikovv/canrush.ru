@@ -12,11 +12,11 @@ import { NavigationIcon } from '@/components/navigation-icon';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { StoreBrowser } from '@/components/store-browser';
 import { auth } from '@/lib/auth';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen } from '@/lib/market-open';
 import { seoMetadata } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { ...seoMetadata({ title: 'Поиск', description: MARKET_OPEN ? 'Поиск энергетиков, магазинов и объявлений CanRush.' : 'Поиск энергетиков и магазинов CanRush.', path: '/search' }), robots: { index: false } };
+export const metadata: Metadata = { ...seoMetadata({ title: 'Поиск', description: marketOpen() ? 'Поиск энергетиков, магазинов и объявлений CanRush.' : 'Поиск энергетиков и магазинов CanRush.', path: '/search' }), robots: { index: false } };
 
 const ALL_SCOPES = [
   { key: 'catalog', label: 'Каталог', icon: 'can' },
@@ -25,7 +25,7 @@ const ALL_SCOPES = [
 ] as const;
 type Scope = typeof ALL_SCOPES[number]['key'];
 // While the market is closed, `?type=market` falls back to the catalog.
-const SCOPES = ALL_SCOPES.filter(item => MARKET_OPEN || item.key !== 'market');
+const SCOPES = ALL_SCOPES.filter(item => marketOpen() || item.key !== 'market');
 
 /** The tab bar's «Поиск»: the full catalog, stores (list or map) and market listings behind one pinned switcher. */
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {

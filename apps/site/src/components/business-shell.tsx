@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react';
 import { BusinessNotifications } from '@/components/business-shell-client';
 import { DashboardShell } from '@/components/dashboard-shell';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen } from '@/lib/market-open';
 import Link from '@/components/navigation-progress';
 import { BUSINESS_KINDS, type BusinessKind, type BusinessStatus } from '@/lib/business-fields';
 import { planInfo, type BusinessPlan } from '@/lib/business-plans';
 
-/** Sections of the member market inside the cabinet: gone while `MARKET_OPEN` is false. */
+/** Sections of the market inside the cabinet: gone while the market is closed (`marketOpen()`). */
 export const MARKET_SECTIONS: readonly string[] = ['market', 'new-listing', 'orders'];
-export type BusinessSection = 'overview' | 'reviews' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'drink-stores' | 'drink-price' | 'wholesale' | 'new-drink' | 'market' | 'new-listing' | 'orders' | 'settings' | 'plan' | 'support';
+export type BusinessSection = 'overview' | 'reviews' | 'questions' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'drink-stores' | 'drink-price' | 'wholesale' | 'new-drink' | 'materials' | 'market' | 'new-listing' | 'orders' | 'settings' | 'plan' | 'support';
 export const businessHref = (section: BusinessSection, params: Record<string, string> = {}) =>
   `/business/cabinet?${new URLSearchParams({ ...(section !== 'overview' ? { section } : {}), ...params })}`.replace(/\?$/, '');
 
@@ -30,6 +30,8 @@ const ICONS = {
   versus: <path d="M4 5l5 7-5 7M20 5l-5 7 5 7" />,
   tag: <><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9Z" /><circle cx="8" cy="8" r="1.5" /></>,
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+  question: <><circle cx="12" cy="12" r="9" /><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6M12 17h.01" /></>,
+  qr: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3" /></>,
 };
 export type BusinessIconName = keyof typeof ICONS;
 export function BusinessIcon({ name, size = 20 }: { name: BusinessIconName; size?: number }) {
@@ -53,8 +55,10 @@ const SPACES: Record<Space, { label: string; icon: BusinessIconName; items: { la
   ] },
   manage: { label: 'Управление', icon: 'settings', items: [
     { label: 'Отзывы и ответы', icon: 'star', section: 'reviews' },
+    { label: 'Вопросы', icon: 'question', section: 'questions' },
     { label: 'Напитки', icon: 'can', section: 'drinks', also: ['new-drink', 'drink-edit', 'drink-stores', 'drink-price'] },
-    ...(MARKET_OPEN ? [
+    { label: 'QR и значок', icon: 'qr', section: 'materials' },
+    ...(marketOpen() ? [
       { label: 'Объявления', icon: 'bag', section: 'market', also: ['new-listing'] },
       { label: 'Заказы и чаты', icon: 'chat', section: 'orders' },
     ] satisfies { label: string; icon: BusinessIconName; section: BusinessSection; also?: BusinessSection[] }[] : []),
@@ -103,7 +107,7 @@ export function BusinessShell({ business, active, title, actions, toolbar, unrea
       </>,
     }}
     tools={<>
-      {MARKET_OPEN && <Link className="bc-icon-button" href={businessHref('orders')} aria-label={unreadMessages ? `Заказы и чаты: ${unreadMessages} новых сообщений` : 'Заказы и чаты'} title="Заказы и чаты">
+      {marketOpen() && <Link className="bc-icon-button" href={businessHref('orders')} aria-label={unreadMessages ? `Заказы и чаты: ${unreadMessages} новых сообщений` : 'Заказы и чаты'} title="Заказы и чаты">
         <BusinessIcon name="chat" />{unreadMessages > 0 && <span className="bc-dot" aria-hidden="true" />}
       </Link>}
       <BusinessNotifications unread={unread} />

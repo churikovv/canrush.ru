@@ -14,6 +14,8 @@ export interface CardEdit {
   updatedBy?: string | null;
   /** Can volumes the card comes in besides those shops sell (a merged request for another can), ml. */
   volumes?: number[];
+  /** «Снят с производства» (migration 0202): the drink page says so, brand collections don't require it. */
+  discontinued?: boolean;
 }
 
 export const MAX_CARD_FULL_NAME = 80;
@@ -66,6 +68,7 @@ export function applyCardEdits(groups: CatalogGroup[], list: CardEdit[]): Catalo
       ...(edit.fullName ? { fullName: edit.fullName } : {}),
       ...(edit.photoVersion !== null ? { coverImageUrl: cardPhotoUrl(edit.id, edit.photoVersion) } : {}),
       ...(edit.volumes?.length ? { volumes: joinVolumes(group.volumes ?? [], edit.volumes) } : {}),
+      ...(edit.discontinued ? { discontinued: true } : {}),
     }];
   });
 }

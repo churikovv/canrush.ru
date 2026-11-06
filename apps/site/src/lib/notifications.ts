@@ -145,6 +145,12 @@ function describeNotification(row: any): NotificationItem {
       title = `Новый отзыв: ${p.brand} · ${flavorName(p.flavor)}`;
       detail = `${actor} · вкус ${p.taste}, дизайн ${p.design} · ${p.business}`;
       href = '/business/cabinet?section=reviews';
+    } else if (row.kind==='business-question') {
+      // A question about a drink the member's company has approved (migration 0201); off in the cabinet's notification settings.
+      const p = row.payload;
+      title = `Новый вопрос: ${p.brand} · ${flavorName(p.flavor)}`;
+      detail = `${actor} — ${p.text}`;
+      href = '/business/cabinet?section=questions';
     } else if (row.kind==='company-post') {
       // A company the member subscribed to published news or a presentation (migration 0151); off in the settings.
       const p = row.payload;

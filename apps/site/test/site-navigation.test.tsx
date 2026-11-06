@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { SiteTabBar } from '@/components/site-tab-bar';
 import { FeedTabs, MarketTabs, StoreTabs } from '@/components/section-tabs';
-import { MARKET_OPEN } from '../src/lib/market-open';
+import { marketOpen } from '../src/lib/market-open';
 vi.mock('../src/app/notifications/push-actions', () => ({ registerPushDeviceAction: vi.fn(), unregisterPushDeviceAction: vi.fn() }));
 
 function links(html: string) {
@@ -79,11 +79,31 @@ describe('header menus', () => {
     const html = renderToStaticMarkup(await ProfileNavigation({ signedIn: true }));
     const header = html.slice(0, html.indexOf('<nav class="site-tab-bar"'));
     // Each group label links to its first page, then the panel lists every page of the group.
-    expect(links(header).map(({ href }) => href)).toEqual(['/tierlists', '/tierlists', ...(MARKET_OPEN ? ['/market'] : []), '/feed', '/news', '/community?type=dating', '/community?type=people', '/leaderboard', '/catalog', '/catalog', '/prices', '/market/stores', '/business', '/profile']);
-    // The market's «Объявления» is gone while it is closed (`MARKET_OPEN`).
-    expect(header.includes('Объявления')).toBe(MARKET_OPEN);
+    expect(links(header).map(({ href }) => href)).toEqual(['/tierlists', '/tierlists', ...(marketOpen() ? ['/market'] : []), '/feed', '/news', '/community?type=dating', '/community?type=people', '/leaderboard', '/catalog', '/catalog', '/prices', '/market/stores', '/business', '/profile']);
+    // The market's «Объявления» is gone while it is closed (`marketOpen()`).
+    expect(header.includes('Объявления')).toBe(marketOpen());
     for (const label of ['Сообщество', 'Магазины', 'Тирлисты', 'Лента', 'Новости', 'Каталог', 'Цены', 'Найти', 'Для бизнеса']) expect(header).toContain(label);
     expect(header.match(/aria-expanded="false"/g)).toHaveLength(2);
+  });
+
+  // Each mode of `MARKET_MODE`, with a fresh copy of the header (its menus are built once per module).
+  it.each([
+    ['closed', false, null],
+    ['business', true, 'Банки от проверенных компаний'],
+    ['open', true, 'Маркет банок от участников'],
+  ] as const)('shows the market in the header when the mode is %s', async (mode, shown, hint) => {
+    vi.resetModules();
+    vi.doMock('../src/lib/market-mode', () => ({ MARKET_MODE: mode }));
+    try {
+      const { ProfileNavigation: Navigation } = await import('@/components/profile-navigation');
+      const html = renderToStaticMarkup(await Navigation({ signedIn: true }));
+      const header = html.slice(0, html.indexOf('<nav class="site-tab-bar"'));
+      expect(links(header).some(({ href }) => href === '/market')).toBe(shown);
+      if (hint) expect(header).toContain(hint);
+      const { marketOpenFor, newListingHref } = await import('../src/lib/market-open');
+      expect([marketOpenFor('company'), marketOpenFor('member')]).toEqual([shown, mode === 'open']);
+      expect(newListingHref()).toBe(mode === 'open' ? '/market/new' : '/business/cabinet?section=new-listing');
+    } finally { vi.doUnmock('../src/lib/market-mode'); vi.resetModules(); }
   });
 
   it('marks the store finder in the header menu and search in the tab bar', async () => {

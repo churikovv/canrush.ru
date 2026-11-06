@@ -13,9 +13,9 @@ export class CatalogCardError extends Error {}
 const ADMIN = 'exists(select 1 from "user" u join "siteAdmin" a on lower(u.email) = a.email where u.id = $1)';
 
 /** All edits, one cheap query per request (no photo bytes). */
-export const cardEdits = cache(async (): Promise<CardEdit[]> => (await getPool().query<{ id: string; brand: string; flavor: string; mergedIntoBrand: string | null; mergedIntoFlavor: string | null; hidden: boolean; fullName: string | null; photoVersion: Date | null; updatedBy: string | null; volumes: number[] }>(
-  `select id, brand, flavor, "mergedIntoBrand", "mergedIntoFlavor", hidden, "fullName", case when photo is not null then "updatedAt" end as "photoVersion", "updatedBy", volumes from "catalogCardEdit"`)).rows
-  .map(row => ({ id: row.id, brand: row.brand, flavor: row.flavor, hidden: row.hidden, fullName: row.fullName, updatedBy: row.updatedBy, volumes: row.volumes,
+export const cardEdits = cache(async (): Promise<CardEdit[]> => (await getPool().query<{ id: string; brand: string; flavor: string; mergedIntoBrand: string | null; mergedIntoFlavor: string | null; hidden: boolean; fullName: string | null; photoVersion: Date | null; updatedBy: string | null; volumes: number[]; discontinued: boolean }>(
+  `select id, brand, flavor, "mergedIntoBrand", "mergedIntoFlavor", hidden, "fullName", case when photo is not null then "updatedAt" end as "photoVersion", "updatedBy", volumes, discontinued from "catalogCardEdit"`)).rows
+  .map(row => ({ id: row.id, brand: row.brand, flavor: row.flavor, hidden: row.hidden, fullName: row.fullName, updatedBy: row.updatedBy, volumes: row.volumes, discontinued: row.discontinued,
     mergedInto: row.mergedIntoBrand && row.mergedIntoFlavor ? { brand: row.mergedIntoBrand, flavor: row.mergedIntoFlavor } : null,
     photoVersion: row.photoVersion ? row.photoVersion.getTime() : null })));
 
@@ -49,6 +49,14 @@ export async function setCardFullName(staffId: string, staffEmail: string, card:
 /** Hide a card that is not a drink of the catalog (a juice, a set, a mistake), or bring it back. */
 export async function setCardHidden(staffId: string, staffEmail: string, card: { brand: string; flavor: string }, hidden: boolean): Promise<void> {
   await edit(staffId, staffEmail, card, hidden ? 'catalog-card-hide' : 'catalog-card-show', 'hidden = $4', [hidden]);
+}
+
+/**
+ * «Снят с производства» on a parser card, or back: the drink page says so and brand collections stop requiring it. The
+ * card stays where it is in the catalog — what shops still sell keeps its prices.
+ */
+export async function setCardDiscontinued(staffId: string, staffEmail: string, card: { brand: string; flavor: string }, discontinued: boolean): Promise<void> {
+  await edit(staffId, staffEmail, card, discontinued ? 'catalog-card-archive' : 'catalog-card-unarchive', 'discontinued = $4', [discontinued]);
 }
 
 /** Our own cover over the parser's photo, or null to go back to the parser's. */

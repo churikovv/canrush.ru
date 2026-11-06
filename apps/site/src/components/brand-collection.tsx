@@ -15,13 +15,17 @@ function Progress({ collection, label }: { collection: { tried: number; total: n
     aria-valuetext={`${collection.tried} из ${collection.total}`} style={{ '--collection-progress': completion(collection) } as CSSProperties} />;
 }
 
+/** An archived drink — no longer made: optional, it counts once tried. The mark is a small box in the cover's corner. */
+const ARCHIVED_NOTE = 'архивный, для коллекции необязателен';
+
 function Can({ item, brand }: { item: CollectionItem; brand: string }) {
   const tried = item.tried.length > 0;
-  return <Link className="brand-collection-can" data-tried={tried || undefined} href={item.href} data-collection-can="" data-search={normalizeCollectionSearch(`${item.name} ${transliterate(item.name)}`)}
-    title={tried ? `${brand} · ${item.name}: ${item.tried.map(source => SOURCE_LABELS[source]).join(', ')}` : `${brand} · ${item.name}: ещё не пробовали`}>
+  const state = tried ? item.tried.map(source => SOURCE_LABELS[source]).join(', ') : 'ещё не пробовали';
+  return <Link className="brand-collection-can" data-tried={tried || undefined} data-archived={item.archived || undefined} href={item.href} data-collection-can="" data-search={normalizeCollectionSearch(`${item.name} ${transliterate(item.name)}`)}
+    title={`${brand} · ${item.name}: ${state}${item.archived ? ` · ${ARCHIVED_NOTE}` : ''}`}>
     <span className="brand-collection-cover">{item.cover ? <Image src={item.cover} width={96} height={96} sizes="96px" alt="" /> : <span aria-hidden="true">?</span>}</span>
     <span className="brand-collection-name">{item.name}</span>
-    <span className="sr-only">{tried ? ', попробовано' : ', ещё не пробовали'}</span>
+    <span className="sr-only">{tried ? ', попробовано' : ', ещё не пробовали'}{item.archived ? `, ${ARCHIVED_NOTE}` : ''}</span>
   </Link>;
 }
 
@@ -50,7 +54,9 @@ const brandSearch = (brand: string) => normalizeCollectionSearch(brandSearchTerm
 /** Full collection page: every brand is a disclosure, started ones are open; search filters them in place. */
 export function BrandCollectionList({ summary }: { summary: CollectionSummary }) {
   const counts = { all: summary.brands.length, started: summary.started, done: summary.completed, new: summary.brands.length - summary.started };
-  return <BrandCollectionSearch counts={counts}><div className="brand-collection-list">{summary.brands.map(collection =>
+  const archived = summary.brands.some(collection => collection.items.some(item => item.archived));
+  return <BrandCollectionSearch counts={counts}>{archived && <p className="brand-collection-legend"><span className="brand-collection-archive-mark" aria-hidden="true" />
+    Архивный вкус — снят с производства. Для коллекции он необязателен, но засчитывается, если его пробовали.</p>}<div className="brand-collection-list">{summary.brands.map(collection =>
     <details key={collection.brand} id={`brand-${collection.slug}`} className="community-panel brand-collection-card" data-done={isComplete(collection) || undefined} open={collection.tried > 0}
       data-collection-brand="" data-status={status(collection)} data-search={brandSearch(collection.brand)} data-open-default={String(collection.tried > 0)}>
       <summary><BrandHeading collection={collection} /></summary>

@@ -5,7 +5,7 @@ import Link from '@/components/navigation-progress';
 import { BETA_ENGINE_PLACES, type BetaEngine } from '@/lib/beta-engine';
 import type { Contest } from '@/lib/contest';
 import type { HomeMetrics } from '@/lib/home-metrics';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen } from '@/lib/market-open';
 
 const count = new Intl.NumberFormat('ru-RU');
 
@@ -15,7 +15,7 @@ const count = new Intl.NumberFormat('ru-RU');
  */
 const ART = {
   catalog: [425, 480], prices: [425, 480], stores: [480, 474], tierlists: [391, 480], leaderboard: [411, 480],
-  pass: [387, 480], engine: [480, 420], dating: [480, 465], business: [480, 474],
+  pass: [387, 480], engine: [480, 420], dating: [480, 465], business: [480, 474], market: [466, 480],
 } as const;
 const art = (key: keyof typeof ART) => ({ src: `/brand/home3d/${key}.webp`, width: ART[key][0], height: ART[key][1] });
 const OLD_ART = (src: string) => ({ src, width: 120, height: 120 });
@@ -47,7 +47,7 @@ export function HomeServices({ metrics, contest, joined, engine }: {
     ...(contest?.phase === 'open' ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`, art: OLD_ART('/brand/home/contest.png') }] : []),
     ...(engine.taken < BETA_ENGINE_PLACES ? [{ key: 'engine', href: '/engine', label: 'Бета сайта', note: 'каждый важен', art: art('engine') }] : []),
     { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: art('dating') },
-    ...(MARKET_OPEN ? [{ key: 'market', href: '/search?type=market', label: 'Маркет', note: 'объявления', art: OLD_ART('/brand/home/market.png') }] : []),
+    ...(marketOpen() ? [{ key: 'market', href: '/search?type=market', label: 'Маркет', note: 'объявления', art: art('market') }] : []),
     // The landing for brands, distributors and shops (CanRush для бизнеса).
     { key: 'business', href: '/business', label: 'Бизнес', note: 'для брендов', art: art('business') },
   ];

@@ -808,3 +808,23 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 @media (min-width: 960px) {
   .bc-profile-group { grid-template-columns: 220px minmax(0, 1fr); gap: 24px; }
 }
+
+/* «Вопросы»: questions about the company's drinks, their answers and the company's answer form. */
+.bq-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.bq-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.bq-text { font-size: 1rem; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-line; }
+.bq-answers { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.bq-answers li { display: grid; gap: 4px; padding: 10px 12px; border-left: 3px solid var(--bc-line); border-radius: 4px 10px 10px 4px; background: var(--bc-soft); }
+.bq-answers li[data-company] { border-left-color: var(--brand-blue); background: color-mix(in srgb, var(--brand-blue) 8%, var(--bc-panel)); }
+.bq-answers p { line-height: 1.5; overflow-wrap: anywhere; white-space: pre-line; }
+.bq-answer-author { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: .875rem; }
+.bq-answer-open { justify-self: start; }
+.bq-answer-field { display: grid; gap: 6px; }
+.bq-answer-field textarea { width: 100%; min-height: 96px; padding: 12px 14px; border: 1px solid transparent; border-radius: 12px; background: var(--color-subtle); color: var(--bc-text); font: .9375rem/1.5 var(--bc-font, inherit); resize: vertical; }
+.bq-answer-field textarea:focus { outline: 3px solid var(--color-focus); }
+.bq-answer-field small { justify-self: end; font-size: .75rem; font-variant-numeric: tabular-nums; }
+.bq-answer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (pointer: coarse) { .bq-answer-field textarea { font-size: 1rem; } }
+@media (max-width: 639px) {
+  .bq-answer-open, .bq-answer-actions .bc-button { width: 100%; }
+}

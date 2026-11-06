@@ -7,7 +7,7 @@ import { loadAllCatalogGroups } from '@/lib/catalog';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { getCompanyListings, type Listing } from '@/lib/market';
 import { frozenMessage, isFrozenError, isUserBlocked } from '@/lib/moderation';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen } from '@/lib/market-open';
 
 /**
  * A company's public profile (/company/<id>, migration 0148): the logo as its avatar, the store on the CanRush map it
@@ -53,8 +53,8 @@ export async function getCompanyProfile(id: string, viewerId: string | null): Pr
   const [store, drinks, listings, posts, awards, follow] = await Promise.all([
     business.storeId && !hidden.has('store') ? companyStore(business.storeId) : null,
     hidden.has('drinks') ? [] : companyDrinks(id),
-    // No «Маркет» tab while the market is closed (`MARKET_OPEN`): the tab only shows when there are listings.
-    hidden.has('listings') || !MARKET_OPEN ? [] : getCompanyListings(id),
+    // No «Маркет» tab while the market is closed (`marketOpen()`): the tab only shows when there are listings.
+    hidden.has('listings') || !marketOpen() ? [] : getCompanyListings(id),
     hidden.has('presentations') && !role ? [] : listCompanyPosts(id),
     hidden.has('awards') ? [] : listCompanyAwards(id),
     getPool().query<{ followers: number; following: boolean }>(`select count(*)::int as followers, coalesce(bool_or("userId" = $2), false) as following from "businessFollow" where "businessId" = $1`, [id, viewerId]).then(result => result.rows[0]!),

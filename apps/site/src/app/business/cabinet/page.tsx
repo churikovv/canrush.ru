@@ -2,13 +2,14 @@ import '@/styles/shared.css';
 import '@/styles/market.css';
 import '@/styles/catalog.css';
 import '@/styles/business-cabinet.css';
+import '@/styles/brand-materials.css';
 import type { Metadata } from 'next';
 import type { CSSProperties, ReactNode } from 'react';
 import { cookies, headers } from 'next/headers';
 import { parseSiteTheme, SITE_THEME_COOKIE } from '@/lib/site-theme';
 import { redirect } from 'next/navigation';
 import { BrandShell } from '@/components/brand-shell';
-import { BusinessDrinkAttach, BusinessDrinkRemove, BusinessDrinkRequest, BusinessForm, BusinessInviteAnswer, BusinessInviteForm, BusinessLeave, BusinessLogoForm, BusinessMemberRemove, BusinessMemberRole, BusinessNotificationsForm, BusinessReplyButton, BusinessThemeForm, CompetitorPicker, DrinkEditForm, DrinkPriceForm, DrinkPriceRemove, DrinkStoreForm, DrinkStoreRemove, PromoAddons, WeeklyReportSwitch } from '@/components/business-forms';
+import { BusinessDrinkAttach, BusinessDrinkRemove, BusinessDrinkRequest, BusinessForm, BusinessInviteAnswer, BusinessInviteForm, BusinessLeave, BusinessLogoForm, BusinessMemberRemove, BusinessMemberRole, BusinessNotificationsForm, BusinessQuestionAnswer, BusinessReplyButton, QuestionAnsweredToast, BusinessThemeForm, CompetitorPicker, DrinkEditForm, DrinkPriceForm, DrinkPriceRemove, DrinkStoreForm, DrinkStoreRemove, PromoAddons, WeeklyReportSwitch } from '@/components/business-forms';
 import { CatalogDrinkForm } from '@/components/catalog-drink-form';
 import { MarketListingForm } from '@/components/market-listing-form';
 import { MarketChat } from '@/components/market-chat';
@@ -18,7 +19,7 @@ import { MarketInboxRefresh } from '@/components/market-inbox-refresh';
 import { PHOTO_ID_PATTERN } from '@/lib/review-photo-limits';
 import { ScoreRadar } from '@/components/score-radar';
 import { BusinessDropdown, BusinessIcon, BusinessPagination, BusinessSegments, BusinessShell, MARKET_SECTIONS, SortHeader, businessHref, type BusinessSection, type SortDir } from '@/components/business-shell';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen, marketOpenFor } from '@/lib/market-open';
 import { FormAlert } from '@/components/form-alert';
 import { BusinessChecklist, BusinessRowMenu } from '@/components/business-shell-client';
 import { Kpi } from '@/components/business-kpi';
@@ -56,16 +57,23 @@ import { ORDER_STATUS, formatPrice, type OrderStatus } from '@/lib/market-fields
 import { storeDrinkOptions } from '@/lib/store-catalog';
 import { CompanyBannerForm, CompanyProfileSettingsForm } from '@/components/company-profile-form';
 import { companyStoreOptions, getCompanyProfileSettings } from '@/lib/business-profile';
+import { BrandPoster } from '@/components/brand-poster';
+import { BadgeCode, QrDownload } from '@/components/brand-materials-client';
+import { countUnansweredQuestions, listBusinessQuestions, type BusinessQuestionView } from '@/lib/business-questions';
+import { companyTargets, targetCovers, targetRating } from '@/lib/brand-materials';
+import { badgeEmbedCode, badgeImageUrl, pickTarget, targetParams, targetReviewLink, type MaterialTarget } from '@/lib/brand-materials-fields';
+import { qrSvg } from '@/lib/qr-code';
+import { SITE_URL } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Кабинет бизнеса', robots: { index: false, follow: false } };
 
-type Params = { section?: string; source?: string; page?: string; size?: string; drink?: string; q?: string; sort?: string; status?: string; view?: string; created?: string; by?: string; dir?: string; order?: string; tab?: string; days?: string };
+type Params = { section?: string; source?: string; page?: string; size?: string; drink?: string; brand?: string; q?: string; sort?: string; status?: string; view?: string; created?: string; by?: string; dir?: string; order?: string; tab?: string; days?: string };
 const number = new Intl.NumberFormat('ru-RU');
 const longDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' });
 const longDayTime = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
 const shortDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow' });
-const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', insights: 'Разбор нейросетью', search: 'Поиск', cards: 'Карточки', competitors: 'Конкуренты', brand: 'Бренд', drinks: 'Напитки', 'drink-edit': 'Правка карточки', 'drink-stores': 'Где купить', 'drink-price': 'Рекомендованная цена', wholesale: 'Оптовые цены', 'new-drink': 'Новый напиток', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки', plan: 'Тариф и продвижение', support: 'Помощь и поддержка' };
+const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', questions: 'Вопросы о напитках', insights: 'Разбор нейросетью', search: 'Поиск', cards: 'Карточки', competitors: 'Конкуренты', brand: 'Бренд', drinks: 'Напитки', 'drink-edit': 'Правка карточки', 'drink-stores': 'Где купить', 'drink-price': 'Рекомендованная цена', wholesale: 'Оптовые цены', 'new-drink': 'Новый напиток', materials: 'QR и значок', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки', plan: 'Тариф и продвижение', support: 'Помощь и поддержка' };
 const ORDER_TONE: Record<OrderStatus, string> = { new: 'mid', confirmed: 'good', completed: 'good', cancelled: 'bad' };
 const DRINK_REQUEST: Record<CatalogDrinkStatus, { label: string; tone: string }> = { pending: { label: 'На модерации', tone: 'mid' }, published: { label: 'В каталоге', tone: 'good' }, rejected: { label: 'Нужно исправить', tone: 'bad' } };
 const SECTIONS = Object.keys(TITLES) as BusinessSection[];
@@ -135,19 +143,30 @@ function ReplyQueueBanner({ queue }: { queue: { unanswered: number; lowUnanswere
   </div>;
 }
 
+/** «N вопросов ждут ответа» on the overview, next to the reviews' one: a question is to the brand, a quick answer sells. */
+function QuestionQueueBanner({ count }: { count: number }) {
+  return <div className="bc-queue-banner">
+    <span className="bc-kpi-icon" aria-hidden="true"><BusinessIcon name="question" /></span>
+    <div><strong>{number.format(count)} {plural(count, 'вопрос ждёт', 'вопроса ждут', 'вопросов ждут')} ответа</strong>
+      <span className="bc-muted">Покупатели спрашивают о ваших напитках — ответ компании виден всем на странице напитка.</span></div>
+    <Link className="bc-button" href={businessHref('questions')}>Ответить</Link>
+  </div>;
+}
+
 const plural = (count: number, one: string, few: string, many: string) => {
   const ones = count % 10, tens = count % 100;
   return ones === 1 && tens !== 11 ? one : ones >= 2 && ones <= 4 && (tens < 12 || tens > 14) ? few : many;
 };
 
-async function Overview({ business, canReply }: { business: Business; canReply: boolean }) {
-  const [analytics, recent, templates, queue] = await Promise.all([getBusinessAnalytics(business.id), listBusinessReviews(business.id, { limit: 5 }), listReplyTemplates(business.id), countReviewQueue(business.id)]);
+async function Overview({ business, canReply, userId }: { business: Business; canReply: boolean; userId: string }) {
+  const [analytics, recent, templates, queue, questions] = await Promise.all([getBusinessAnalytics(business.id), listBusinessReviews(business.id, { limit: 5 }), listReplyTemplates(business.id), countReviewQueue(business.id), countUnansweredQuestions(business.id, userId)]);
   if (!analytics.drinks) return <Empty title="Прикрепите напитки, чтобы увидеть аналитику" text="Аналитика считает только подтверждённые напитки компании." action={<Link className="bc-button" href={businessHref('drinks')}>Перейти к напиткам</Link>} />;
   const { reviews, brand } = analytics;
   const maxWeek = Math.max(1, ...reviews.weekly.map(item => item.count));
   const change = percentChange(reviews.last30, reviews.previous30);
   return <>
     {canReply && queue.unanswered > 0 && <ReplyQueueBanner queue={queue} />}
+    {canReply && questions.unanswered > 0 && <QuestionQueueBanner count={questions.unanswered} />}
     <div className="bc-kpis">
       <Kpi icon="reviews" value={number.format(reviews.total)} delta={reviews.last30} label="Отзывов на ваши напитки" />
       <Kpi icon="taste" value={decimal(reviews.taste)} label="Средняя оценка вкуса" />
@@ -740,8 +759,13 @@ async function NewDrink({ verified }: { verified: boolean }) {
   </section>;
 }
 
-/** «Новое объявление» inside the cabinet: the market's step form; publishing returns to the listings. */
+/**
+ * «Новое объявление» inside the cabinet: the market's step form; publishing returns to the listings. While only
+ * companies sell, it is for the owner and managers of an approved company, always on its behalf.
+ */
 async function NewListing({ userId, business, asCompany }: { userId: string; business: Business; asCompany: boolean }) {
+  if (!marketOpenFor('member') && business.status !== 'approved') return <Empty title="Объявления — после проверки компании" text="Сейчас в маркете продают только подтверждённые компании. Как только команда CanRush подтвердит вашу, здесь появится форма объявления." action={<Link className="bc-button is-outline" href={businessHref('overview')}>К обзору</Link>} />;
+  if (!marketOpenFor('member') && !asCompany) return <Empty title="Объявления публикуют владелец и менеджеры" text="У аналитика кабинет только для чтения. Попросите владельца компании сменить вам роль в настройках команды." action={<Link className="bc-button is-outline" href={businessHref('market')}>К объявлениям</Link>} />;
   const [groups, blocked] = await Promise.all([loadAllCatalogGroups(), isUserBlocked(userId)]);
   const brands = [...new Set(groups.map(group => group.brand).filter(brand => brand && brand.toLowerCase() !== 'unknown'))].sort((a, b) => a.localeCompare(b, 'ru'));
   return <section className="bc-card bc-form-card">
@@ -778,7 +802,7 @@ async function Market({ userId, business, params }: { userId: string; business: 
         <td><Link className="bc-drink" href={`/market/${item.id}`}>
           {/* eslint-disable-next-line @next/next/no-img-element -- listing photos are served from the database */}
           <span className="bc-drink-cover">{item.photos[0] ? <img src={`/api/market-photos/${item.photos[0]}?thumb`} alt="" loading="lazy" /> : '⚡'}</span>
-          <span><strong>{item.title}</strong><small>{item.businessName ? `От компании${item.sellerId === userId ? '' : ` · ${item.sellerName}`}` : 'Лично'}{item.brand ? ` · ${item.brand}` : ''}</small></span>
+          <span><strong>{item.title}</strong><small>{item.businessName ? `От компании${item.sellerId === userId ? '' : ` · ${item.sellerName}`}` : marketOpenFor('member') ? 'Лично' : 'Лично · скрыто в маркете'}{item.brand ? ` · ${item.brand}` : ''}</small></span>
         </Link></td>
         <td data-label="Цена">{formatPrice(item.price)}</td>
         <td data-label="Осталось">{item.quantity} шт.</td>
@@ -928,14 +952,14 @@ async function Settings({ business, role, userId, params }: { business: Business
     </>;
   }
   if (tab === 'notifications') {
-    const disabled = (await getPool().query(`select 1 from "notificationPreference" where "userId" = $1 and kind = 'business-review' and not enabled`, [userId])).rowCount;
+    const off = new Set((await getPool().query<{ kind: string }>(`select kind from "notificationPreference" where "userId" = $1 and kind in ('business-review', 'business-question') and not enabled`, [userId])).rows.map(row => row.kind));
     const [optedOut, email] = await Promise.all([
       getPool().query(`select 1 from "businessReportOptOut" where "userId" = $1`, [userId]).then(result => Boolean(result.rowCount)),
       getPool().query<{ email: string }>(`select email from "user" where id = $1`, [userId]).then(result => result.rows[0]?.email ?? ''),
     ]);
     return <>{tabs}
       <section className="bc-card"><div className="bc-card-head"><h2>Уведомления кабинета</h2><span className="bc-muted">лично для вас</span></div>
-        <BusinessNotificationsForm reviews={!disabled} />
+        <BusinessNotificationsForm enabled={{ 'business-review': !off.has('business-review'), 'business-question': !off.has('business-question') }} />
         <WeeklyReportSwitch enabled={!optedOut} email={isTelegramPlaceholderEmail(email) ? null : email} />
       </section>
       <section className="bc-card"><div className="bc-card-head"><h2>Заказы, сообщения и остальное</h2></div>
@@ -1017,6 +1041,90 @@ function Upsell({ feature }: { feature: PlanFeature }) {
  * us until the payment page exists), the full comparison folded away, and «Дополнительные услуги» — promotion
  * placements as columns with a request under them, and the requests sent.
  */
+/**
+ * «Вопросы»: what members ask about the company's approved drinks on the drink pages, the newest first, «Без ответа» —
+ * no answer from the company's team yet. The owner and managers answer right under a question; the answer goes to the
+ * drink page with the company's name and the asker hears about it.
+ */
+async function Questions({ business, params, userId, canAct }: { business: Business; params: Params; userId: string; canAct: boolean }) {
+  const view: BusinessQuestionView = params.view === 'all' ? 'all' : 'unanswered';
+  const size = SIZES.includes(Number(params.size)) ? Number(params.size) : 20;
+  const page = Math.min(500, Math.max(1, parseInt(params.page ?? '1', 10) || 1));
+  const [{ items, total }, counts] = await Promise.all([listBusinessQuestions(business.id, userId, { view, page, size }), countUnansweredQuestions(business.id, userId)]);
+  const link = (over: Record<string, string | undefined>) => businessHref('questions', Object.fromEntries(Object.entries({ view: view === 'all' ? 'all' : undefined, size: size !== 20 ? String(size) : undefined, ...over })
+    .filter((entry): entry is [string, string] => Boolean(entry[1]))));
+  if (!counts.all) return <Empty title="Вопросов пока нет" text="Покупатели спрашивают о напитке на его странице, в «Вопросах и ответах». О новом вопросе придёт уведомление, а ответить можно прямо отсюда." action={<Link className="bc-button is-outline" href={businessHref('drinks')}>Ваши напитки</Link>} />;
+  return <>
+    {canAct && <QuestionAnsweredToast />}
+    <div className="bc-toolbar is-inner">
+      <BusinessSegments label="Какие вопросы" items={[
+        { href: link({ view: undefined, page: undefined }), label: 'Без ответа', current: view === 'unanswered', count: counts.unanswered },
+        { href: link({ view: 'all', page: undefined }), label: 'Все', current: view === 'all', count: counts.all },
+      ]} />
+    </div>
+    {items.length ? <div className="bc-stack">
+      <ol className="bq-list">{items.map(question => <li key={question.id} className="bc-card bq-item">
+        <div className="bq-head">
+          <Link className="bc-drink" href={`/catalog/${question.slug}?tab=questions#question-${question.id}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- local covers */}
+            <span className="bc-drink-cover">{question.cover ? <img src={question.cover} alt="" loading="lazy" /> : '⚡'}</span>
+            <span><strong>{question.name}</strong><small>@{question.username} · {longDayTime.format(question.createdAt)}</small></span>
+          </Link>
+          <span className="bc-pill" data-tone={question.answered ? 'good' : 'mid'}>{question.answered ? 'Есть ответ компании' : 'Ждёт ответа'}</span>
+        </div>
+        <p className="bq-text">{question.text}</p>
+        {question.answers.length > 0 && <ul className="bq-answers" aria-label="Ответы">{question.answers.map(answer => <li key={answer.id} data-company={answer.company || undefined}>
+          <span className="bq-answer-author"><strong>@{answer.username}</strong>{answer.company && <span className="bc-pill">{business.name}</span>}<small className="bc-muted">{longDayTime.format(answer.createdAt)}</small></span>
+          <p>{answer.text}</p>
+        </li>)}</ul>}
+        {canAct && <BusinessQuestionAnswer questionId={question.id} author={`@${question.username}`} />}
+      </li>)}</ol>
+      <BusinessPagination page={page} size={size} total={total} sizes={SIZES} href={(to, perPage) => link({ page: to > 1 ? String(to) : undefined, size: perPage !== 20 ? String(perPage) : undefined })} />
+    </div> : <Empty title="На все вопросы есть ответ" text="Новый вопрос появится здесь — и в уведомлениях, если они включены." action={<Link className="bc-button is-outline" href={link({ view: 'all' })}>Все вопросы</Link>} />}
+  </>;
+}
+
+const sameTarget = (a: MaterialTarget, b: MaterialTarget) => a.kind === b.kind && a.brand === b.brand && (a.kind === 'brand' || (b.kind === 'drink' && a.flavor === b.flavor));
+
+/**
+ * «QR и значок»: a printed QR poster that brings a buyer at the shelf to the drink's reviews, and the rating badge for
+ * the brand's own site — for a drink of the company's brands or the whole brand. Free on every plan: both bring people.
+ */
+async function Materials({ business, params }: { business: Business; params: Params }) {
+  const targets = await companyTargets(business.id);
+  const target = pickTarget(targets, params);
+  if (!target) return <Empty title="Нужен подтверждённый напиток" text="QR-плакат и значок делаются для напитков ваших брендов: прикрепите напиток — после проверки они появятся здесь." action={<Link className="bc-button" href={businessHref('drinks')}>Прикрепить напитки</Link>} />;
+  const [covers, rating] = await Promise.all([targetCovers(target, business.id), targetRating(target)]);
+  const keep = targetParams(target);
+  const poster = (format: string) => `/business/cabinet/poster?${new URLSearchParams({ ...keep, format })}`;
+  const variant = (theme: 'light' | 'dark') => ({ src: badgeImageUrl(target, theme).slice(SITE_URL.length), code: badgeEmbedCode(target, theme) });
+  const file = target.kind === 'drink' ? target.slug : target.brand.toLowerCase().replace(/[^a-z0-9а-яё]+/giu, '-');
+  return <>
+    <p className="bc-muted bm-intro">Плакат у полки ведёт покупателя прямо к отзывам о напитке, а значок показывает оценку участников на вашем сайте. Оба бесплатны на любом тарифе.</p>
+    <div className="bc-toolbar is-inner">
+      <BusinessDropdown icon={<BusinessIcon name="can" size={18} />} label={target.kind === 'brand' ? `${target.brand} — весь бренд` : target.name}
+        items={targets.map(item => ({ href: businessHref('materials', targetParams(item)), label: item.kind === 'brand' ? `${item.brand} — весь бренд` : item.name, current: sameTarget(item, target) }))} />
+    </div>
+    <div className="bm-grid">
+      <section className="bc-card bm-card" aria-labelledby="bm-poster">
+        <div className="bc-card-head"><h2 id="bm-poster">QR-плакат</h2><span className="bc-muted">для полки, кассы и стойки</span></div>
+        <p className="bc-muted">Покупатель наводит камеру и попадает к отзывам о {target.kind === 'drink' ? 'напитке' : 'бренде'} — {target.kind === 'drink' ? 'форма оценки уже открыта' : 'со всеми вкусами'}. Печатайте на обычной бумаге A4.</p>
+        <div className="bm-poster-preview" inert aria-hidden="true"><BrandPoster target={target} covers={covers} rating={rating} format="a4" /></div>
+        <div className="bm-actions">
+          <Link className="bc-button" href={poster('a4')}>Плакат A4</Link>
+          <Link className="bc-button is-outline" href={poster('labels')}>Наклейки · 8 на листе</Link>
+          <QrDownload href={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(qrSvg(targetReviewLink(target)))}`} fileName={`canrush-qr-${file}.svg`} />
+        </div>
+      </section>
+      <section className="bc-card bm-card" aria-labelledby="bm-badge">
+        <div className="bc-card-head"><h2 id="bm-badge">Значок оценки</h2><span className="bc-muted">для сайта бренда</span></div>
+        <p className="bc-muted">Средняя оценка участников и число отзывов — картинкой со ссылкой на CanRush. Пока отзывов меньше трёх, значок зовёт оценить первым.</p>
+        <BadgeCode name={target.name} variants={{ light: variant('light'), dark: variant('dark') }} />
+      </section>
+    </div>
+  </>;
+}
+
 async function PlanSection({ business, role, canAct }: { business: Business; role: BusinessRole; canAct: boolean }) {
   const current = effectivePlan(business);
   const info = PLANS[current];
@@ -1181,7 +1289,7 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
   }
   const { business, role } = cabinet;
   // While the market is closed its sections (listings, a new listing, orders) open the overview instead.
-  const section = SECTIONS.includes(params.section as BusinessSection) && (MARKET_OPEN || !MARKET_SECTIONS.includes(params.section as string)) ? params.section as BusinessSection : 'overview';
+  const section = SECTIONS.includes(params.section as BusinessSection) && (marketOpen() || !MARKET_SECTIONS.includes(params.section as string)) ? params.section as BusinessSection : 'overview';
   const approved = business.status === 'approved';
   // An analyst looks: no replies, drink requests or publishing on the company's behalf.
   const canAct = role !== 'analyst';
@@ -1196,23 +1304,23 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     : section === 'new-listing' ? <Link className="bc-button is-outline" href={businessHref('market')}>К объявлениям</Link>
     : section === 'orders' ? (params.order ? <Link className="bc-button is-outline" href={businessHref('orders')}>Все заказы</Link> : <Link className="bc-button" href={businessHref('new-listing')}>Новое объявление</Link>)
     : section === 'settings' || section === 'support' ? undefined
-    : section === 'plan' || section === 'wholesale' ? undefined
+    : section === 'plan' || section === 'wholesale' || section === 'materials' || section === 'questions' ? undefined
     : <>{approved && hasFeature(business, 'export') && <a className="bc-button is-outline" href={`/business/cabinet/export${section === 'search' || section === 'cards' || section === 'competitors' ? `?kind=${section}` : ''}`} download
         title={section === 'search' ? 'Частые запросы' : section === 'cards' ? 'Просмотры и переходы по напиткам' : section === 'competitors' ? 'Сравнение с конкурентами' : 'Все отзывы'}>Экспорт CSV</a>}
       {canAct && <Link className="bc-button" href={businessHref('drinks')}>Прикрепить напиток</Link>}</>;
   // A section beyond the plan shows what it gives and the way to the plan, not the data.
   const gated = (feature: PlanFeature, content: ReactNode) => hasFeature(business, feature) ? content : <Upsell feature={feature} />;
   const locked = (title: string) => <Empty title={title} text="Команда подтвердит компанию и её напитки — и здесь появятся отзывы, оценки и метрики бренда." action={<Link className="bc-button" href={businessHref('drinks')}>Прикрепить напитки</Link>} />;
-  const waiting = approved ? (await countReviewQueue(business.id)).unanswered : 0;
+  const [waiting, asked] = approved ? await Promise.all([countReviewQueue(business.id).then(queue => queue.unanswered), countUnansweredQuestions(business.id, session.user.id).then(queue => queue.unanswered)]) : [0, 0];
   return <BusinessShell business={business} active={section} title={TITLES[section]} actions={actions} unread={counts?.notifications ?? 0} unreadMessages={counts?.messages ?? 0}
     supportUnread={section !== 'support' && await supportUnreadForUser(session.user.id)}
-    badges={{ reviews: { count: waiting, label: `без ответа: ${waiting}` } }}>
+    badges={{ reviews: { count: waiting, label: `без ответа: ${waiting}` }, questions: { count: asked, label: `без ответа: ${asked}` } }}>
     {business.status === 'pending' && <FormAlert tone="warning" title="Компания на проверке">Обычно это занимает пару дней. Пока можно прикрепить напитки и заполнить настройки — аналитика откроется после подтверждения.</FormAlert>}
     {business.status === 'rejected' && <FormAlert title="Компания не прошла проверку" actions={section !== 'settings' ? <Link className="bc-button is-outline" href={businessHref('settings')}>Исправить</Link> : undefined}>
       {business.moderationNote || 'Поправьте данные компании в настройках и отправьте снова.'}
     </FormAlert>}
     {section === 'overview' && <BusinessChecklist businessId={business.id} steps={await getOnboarding(business)} />}
-    {section === 'overview' && (approved ? <Overview business={business} canReply={canAct} /> : locked('Аналитика появится после проверки'))}
+    {section === 'overview' && (approved ? <Overview business={business} canReply={canAct} userId={session.user.id} /> : locked('Аналитика появится после проверки'))}
     {section === 'reviews' && (approved ? <Reviews business={business} params={params} canReply={canAct} /> : locked('Отзывы появятся после проверки'))}
     {section === 'insights' && (!approved ? locked('Разбор появится после проверки') : gated('insights', <Insights business={business} />))}
     {section === 'search' && (!approved ? locked('Поиск появится после проверки') : gated('search', <Search business={business} params={params} />))}
@@ -1226,6 +1334,8 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     {section === 'drink-stores' && (approved ? <DrinkStoresSection business={business} params={params} canAct={canAct} /> : locked('Магазины можно указать после проверки'))}
     {section === 'drink-price' && (approved ? <DrinkPriceSection business={business} params={params} canAct={canAct} /> : locked('Цену можно указать после проверки'))}
     {section === 'new-drink' && <NewDrink verified={approved && canAct} />}
+    {section === 'questions' && (approved ? <Questions business={business} params={params} userId={session.user.id} canAct={canAct} /> : locked('Вопросы появятся после проверки'))}
+    {section === 'materials' && (approved ? <Materials business={business} params={params} /> : locked('QR-плакат и значок появятся после проверки'))}
     {section === 'new-listing' && <NewListing userId={session.user.id} business={business} asCompany={canAct} />}
     {section === 'orders' && <Orders userId={session.user.id} params={params} />}
     {section === 'market' && <Market userId={session.user.id} business={business} params={params} />}

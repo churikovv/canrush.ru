@@ -8,6 +8,7 @@ import type { MarketMessage, MarketOrder } from '@/lib/market';
 import { ORDER_STATUS, ORDER_STEPS, DELIVERY, formatPrice, orderNextStep, orderStepIndex, type OrderStatus } from '@/lib/market-fields';
 import { loadMessagesAction, orderStatusAction, readMessagesAction, sendMessageAction } from '@/app/market/actions';
 import { MarketPhotoPicker } from './market-photo-picker';
+import { MARKET_PERSONAL_CHAT_MESSAGE, marketOpenFor } from '@/lib/market-open';
 
 const TIME = { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' } as const;
 const DAY = { timeZone: 'Europe/Moscow', day: 'numeric', month: 'long' } as const;
@@ -45,6 +46,8 @@ export function MarketChat({ initialOrder, initialMessages, initialHasMore, user
   const bottom = useRef<HTMLDivElement>(null);
   const form = useRef<HTMLFormElement>(null);
   const orderId = order.id;
+  // A personal listing's chat while only companies sell: read-only, the status buttons stay.
+  const readOnly = !marketOpenFor(order.fromCompany ? 'company' : 'member');
   const refresh = useCallback(async () => {
     if (busy.current) return;
     busy.current = true;
@@ -154,7 +157,7 @@ export function MarketChat({ initialOrder, initialMessages, initialHasMore, user
         <div ref={bottom} />
       </div>
       {error && <p className="market-error" role="alert">{error}</p>}
-      {blocked ? <p className="market-chat-blocked">Отправка сообщений для этого аккаунта ограничена.</p> : <form ref={form} className="market-compose" onSubmit={event => {
+      {blocked ? <p className="market-chat-blocked">Отправка сообщений для этого аккаунта ограничена.</p> : readOnly ? <p className="market-chat-blocked">{MARKET_PERSONAL_CHAT_MESSAGE}</p> : <form ref={form} className="market-compose" onSubmit={event => {
         event.preventDefault();
         if (!canSend) return;
         setError('');

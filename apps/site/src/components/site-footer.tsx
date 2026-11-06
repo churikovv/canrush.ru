@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from '@/components/navigation-progress';
 import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen } from '@/lib/market-open';
 import { NRJ_PARTY } from '@/lib/partners';
 import { useRef, useSyncExternalStore } from 'react';
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react';
@@ -98,7 +98,7 @@ export function SiteFooter() {
               <nav className="footer-service-links" aria-label="Разделы CanRush">
                 <Link href="/tierlists">Тирлисты энергетиков</Link>
                 <Link href="/catalog">Каталог энергетиков</Link>
-                {MARKET_OPEN && <Link href="/market">Маркет</Link>}
+                {marketOpen() && <Link href="/market">Маркет</Link>}
                 <Link href="/prices">Цены по магазинам</Link>
                 <Link href="/business">CanRush для бизнеса</Link>
                 <Link href="/terms">Пользовательское соглашение</Link>

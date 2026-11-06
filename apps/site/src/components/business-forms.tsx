@@ -1,6 +1,6 @@
 'use client';
 import { startTransition, useActionState, useEffect, useEffectEvent, useRef, useState, useTransition, type ReactNode } from 'react';
-import { answerBusinessInviteAction, deleteReviewReplyAction, inviteBusinessMemberAction, replyReviewAction, leaveBusinessAction, removeBusinessLogoAction, removeBusinessMemberAction, saveBusinessNotificationsAction, uploadBusinessLogoAction, moderateBusinessAction, moderateBusinessDrinkAction, removeBusinessDrinkAction, requestBusinessDrinkAction, saveBusinessAction, addCompetitorAction, removeCompetitorAction, saveWeeklyReportAction, saveReplyTemplateAction, deleteReplyTemplateAction, setMemberRoleAction, requestDrinkEditAction, moderateDrinkEditAction, requestPromoAction, setPromoStatusAction, addDrinkStoreAction, removeDrinkStoreAction, setDrinkPriceAction, removeDrinkPriceAction } from '@/app/business/cabinet/actions';
+import { answerBusinessInviteAction, deleteReviewReplyAction, inviteBusinessMemberAction, replyReviewAction, leaveBusinessAction, removeBusinessLogoAction, removeBusinessMemberAction, saveBusinessNotificationAction, answerBusinessQuestionAction, type CabinetNotification, uploadBusinessLogoAction, moderateBusinessAction, moderateBusinessDrinkAction, removeBusinessDrinkAction, requestBusinessDrinkAction, saveBusinessAction, addCompetitorAction, removeCompetitorAction, saveWeeklyReportAction, saveReplyTemplateAction, deleteReplyTemplateAction, setMemberRoleAction, requestDrinkEditAction, moderateDrinkEditAction, requestPromoAction, setPromoStatusAction, addDrinkStoreAction, removeDrinkStoreAction, setDrinkPriceAction, removeDrinkPriceAction } from '@/app/business/cabinet/actions';
 import { saveThemeSettings } from '@/app/profile/settings/theme-actions';
 import { ActionToast } from '@/components/action-toast';
 import { FormAlert } from '@/components/form-alert';
@@ -14,6 +14,7 @@ import { DRINK_STORE_LIMITS, type DrinkStoreKind } from '@/lib/brand-drink-store
 import type { StoreOption } from '@/lib/brand-drink-stores';
 import { PROMO_PLACEMENTS, type PromoPlacement } from '@/lib/business-plans';
 import type { SiteTheme } from '@/lib/site-theme';
+import { ANSWER_MAX } from '@/lib/drink-question-fields';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
 
 export interface BusinessFormValues { name: string; kind: BusinessKind; website: string | null; telegram: string | null; contactEmail: string | null; about: string | null }
@@ -213,22 +214,23 @@ export function BusinessLeave() {
   }}>Выйти из команды</button>;
 }
 
-/**
- * Notifications of the cabinet: new reviews of the company's drinks (site, Telegram bot and app push alike). The switch
- * saves at once — a form action would reset the checkbox to its first state after saving.
- */
-export function BusinessNotificationsForm({ reviews }: { reviews: boolean }) {
-  const [on, setOn] = useState(reviews);
+const CABINET_SWITCHES: { kind: CabinetNotification; title: string; hint: string }[] = [
+  { kind: 'business-review', title: 'Новые отзывы на напитки компании', hint: 'Уведомление на сайте, в Telegram-боте и в приложении, когда у вашего подтверждённого напитка появляется отзыв.' },
+  { kind: 'business-question', title: 'Новые вопросы о напитках компании', hint: 'Когда покупатель спрашивает о вашем подтверждённом напитке на его странице: ответить можно в разделе «Вопросы».' },
+];
+
+/** One switch of the cabinet's notifications. It saves at once — a form action would reset the checkbox after saving. */
+function CabinetSwitch({ kind, title, hint, enabled }: { kind: CabinetNotification; title: string; hint: string; enabled: boolean }) {
+  const [on, setOn] = useState(enabled);
   const [state, setState] = useState<{ done?: boolean; error?: string }>({});
   const [pending, start] = useTransition();
-  return <div className="bc-form">
+  return <>
     <label className="bc-switch-row">
-      <span><strong>Новые отзывы на напитки компании</strong><small className="bc-muted">Уведомление на сайте, в Telegram-боте и в приложении, когда у вашего подтверждённого напитка появляется отзыв.</small></span>
+      <span><strong>{title}</strong><small className="bc-muted">{hint}</small></span>
       <input type="checkbox" className="settings-switch" checked={on} disabled={pending} onChange={event => {
         const next = event.target.checked; setOn(next);
         start(async () => {
-          const form = new FormData(); if (next) form.set('reviews', 'on');
-          const result = await saveBusinessNotificationsAction({}, form).catch(() => ({ error: 'Нет связи с сервером.' }) as { error?: string; done?: boolean });
+          const result = await saveBusinessNotificationAction(kind, next).catch(() => ({ error: 'Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.' }) as { error?: string; done?: boolean });
           if (result.error) setOn(!next);
           setState(result);
         });
@@ -236,7 +238,61 @@ export function BusinessNotificationsForm({ reviews }: { reviews: boolean }) {
     </label>
     {state.error && <FormAlert>{state.error}</FormAlert>}
     <ActionToast message={state.done ? (on ? 'Уведомления включены' : 'Уведомления выключены') : undefined} trigger={state} />
-  </div>;
+  </>;
+}
+
+/** Notifications of the cabinet: new reviews and new questions about the company's drinks (site, Telegram bot and app push alike). */
+export function BusinessNotificationsForm({ enabled }: { enabled: Record<CabinetNotification, boolean> }) {
+  return <div className="bc-form">{CABINET_SWITCHES.map(item => <CabinetSwitch key={item.kind} {...item} enabled={enabled[item.kind]} />)}</div>;
+}
+
+const ANSWERED_EVENT = 'bc-question-answered';
+
+/**
+ * «Ответ опубликован» for «Вопросы»: an answered question leaves «Без ответа» together with its form, so the toast lives
+ * at the section's top, which stays on the page while the list changes.
+ */
+export function QuestionAnsweredToast() {
+  const [trigger, setTrigger] = useState<{ shown: boolean }>({ shown: false });
+  useEffect(() => {
+    const show = () => setTrigger({ shown: true });
+    window.addEventListener(ANSWERED_EVENT, show);
+    return () => window.removeEventListener(ANSWERED_EVENT, show);
+  }, []);
+  return <ActionToast message={trigger.shown ? 'Ответ опубликован на странице напитка' : undefined} trigger={trigger} />;
+}
+
+/**
+ * The company's answer to a question about its drink, under the question in «Вопросы»: «Ответить» opens the field. The
+ * text stays in the field if the server says no; a sent answer closes it and the list shows it with the company's name.
+ */
+export function BusinessQuestionAnswer({ questionId, author }: { questionId: string; author: string }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [state, setState] = useState<{ done?: boolean; error?: string }>({});
+  const [pending, start] = useTransition();
+  const field = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { if (open) field.current?.focus(); }, [open]);
+  if (!open) return <button type="button" className="bc-button is-outline bq-answer-open" onClick={() => setOpen(true)}>Ответить</button>;
+  return <form className="bc-form bq-answer" onSubmit={event => {
+    event.preventDefault();
+    start(async () => {
+      const result = await answerBusinessQuestionAction(questionId, text).catch(() => ({ error: 'Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.' }) as { error?: string; done?: boolean });
+      setState(result);
+      if (result.done) { setText(''); setOpen(false); window.dispatchEvent(new Event(ANSWERED_EVENT)); }
+    });
+  }}>
+    <label className="bq-answer-field">
+      <span className="sr-only">Ответ на вопрос {author}</span>
+      <textarea ref={field} value={text} maxLength={ANSWER_MAX} rows={3} placeholder="Ответ от имени компании" onChange={event => setText(event.target.value)} />
+      <small className="bc-muted">{text.length} / {ANSWER_MAX}</small>
+    </label>
+    {state.error && <FormAlert>{state.error}</FormAlert>}
+    <div className="bq-answer-actions">
+      <button type="submit" className="bc-button" disabled={pending || !text.trim()}>{pending ? 'Отправляем…' : 'Опубликовать ответ'}</button>
+      <button type="button" className="bc-button is-outline" disabled={pending} onClick={() => { setOpen(false); setState({}); }}>Отмена</button>
+    </div>
+  </form>;
 }
 
 const THEMES = [{ key: 'light', label: 'Светлая' }, { key: 'graphite', label: 'Тёмная' }, { key: 'system', label: 'Системная' }] as const;

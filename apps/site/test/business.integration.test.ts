@@ -6,6 +6,9 @@ if (new URL(url).pathname !== '/canrush_site_test') throw new Error('Test DB onl
 const pool = new Pool({ connectionString: url, max: 4 });
 const brand = `Biz ${randomUUID().slice(0, 8)}`;
 vi.mock('../src/db/pool', () => ({ getPool: () => pool }));
+// The market's mode (`MARKET_MODE`): only companies sell here, as on the site since November 2026; one test switches it.
+const mode = vi.hoisted(() => ({ mode: 'business' as 'closed' | 'business' | 'open' }));
+vi.mock('../src/lib/market-mode', () => ({ get MARKET_MODE() { return mode.mode; } }));
 vi.mock('../src/lib/store-catalog', () => ({ storeDrinkOptions: async () => [{ brand, flavor: 'mango', label: `${brand} · mango` }, { brand, flavor: 'peach', label: `${brand} · peach` }] }));
 const rival = `${brand} Rival`;
 vi.mock('../src/lib/catalog', () => ({ loadAllCatalogGroups: async () => [{ brand, flavor: 'mango', variants: [], minPrice: 0 }, { brand, flavor: 'peach', variants: [], minPrice: 0 },
@@ -220,6 +223,40 @@ it('publishes a listing on behalf of the approved company only for its team', as
   expect(await market.getListing(id)).toMatchObject({ sellerId: owner, businessId: company.id, businessName: 'Energy Lab' });
   expect((await market.getCabinetListings(fan, company.id)).map(item => item.id)).toContain(id);
   expect((await market.getCabinetListings(fan, null)).map(item => item.id)).not.toContain(id);
+});
+
+it('sells only from the company while only companies sell: every member sees and orders, the chat works', async () => {
+  const market = await import('../src/lib/market');
+  const company = (await business.getOwnBusiness(owner))!;
+  const photo = { data: Buffer.from('test'), thumbnail: Buffer.from('thumb') };
+  const lot = { title: 'Набор', description: 'Двенадцать банок', city: 'Москва', price: 12000, quantity: 12, delivery: ['pickup' as const], brand };
+  // A member's personal listing is refused, whether or not they are in a company.
+  await expect(market.createListing(staff, lot, [photo])).rejects.toThrow('только подтверждённые компании');
+  // The owner published a listing a moment ago: the minute's pause between listings is the database's.
+  await pool.query(`update "user" set "lastMarketListingAt" = null where id = $1`, [owner]);
+  const id = await market.createListing(owner, lot, [photo], company.id);
+  expect((await market.getListings(1, undefined, false, undefined, { brand })).items.map(item => item.id)).toEqual([id]);
+  expect((await market.getMarketFilterOptions()).brands).toContain(brand);
+  expect(await market.getListing(id, staff)).toMatchObject({ businessName: 'Energy Lab' });
+  const order = await market.startOrder(staff, id, 2);
+  expect(await market.getOrder(owner, order)).toMatchObject({ fromCompany: true, quantity: 2, buyerId: staff });
+  await market.sendMarketMessage(owner, order, 'Когда удобно забрать?', []);
+  expect((await market.getMessages(staff, order)).items.map(item => item.text)).toEqual(['Когда удобно забрать?']);
+  await market.changeOrderStatus(owner, order, 'confirmed');
+  // A company that loses its approval stops selling: its listing is hidden and not ordered.
+  await pool.query(`update business set status = 'pending' where id = $1`, [company.id]);
+  try {
+    expect((await market.getListings(1, undefined, false, undefined, { brand })).items).toEqual([]);
+    expect(await market.getListing(id, fan)).toBeNull();
+    await expect(market.startOrder(fan, id, 1)).rejects.toThrow('недоступно');
+    await expect(market.sendMarketMessage(staff, order, 'Привет', [])).rejects.toThrow('личным объявлениям');
+  } finally { await pool.query(`update business set status = 'approved' where id = $1`, [company.id]); }
+  // Closed, the market refuses even a company.
+  mode.mode = 'closed';
+  try {
+    await expect(market.createListing(owner, lot, [photo], company.id)).rejects.toThrow('временно закрыт');
+    await expect(market.startOrder(fan, id, 1)).rejects.toThrow('временно закрыт');
+  } finally { mode.mode = 'business'; }
 });
 
 it('compares the company with competitor brands', async () => {

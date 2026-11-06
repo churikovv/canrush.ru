@@ -1,6 +1,6 @@
 'use client';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpenFor } from '@/lib/market-open';
 import { DEFAULT_PROFILE_LAYOUT, PROFILE_BLOCKS, PROFILE_BLOCK_FIELDS, isRequiredProfileBlock, parseProfileLayout, placeProfileBlock, type ProfileLayout, type ProfileBlockKey } from '@/lib/profile-layout';
 
 const EASING = 'cubic-bezier(.2,.8,.2,1)';
@@ -47,7 +47,7 @@ export function ProfileLayoutEditor({ initial = DEFAULT_PROFILE_LAYOUT, disabled
     <input type="hidden" name="profileLayout" value={JSON.stringify(layout)} />
     <div className="profile-layout-columns">{(['main', 'side'] as const).map(area => {
       // The listings block stays in the saved order while the market is closed, only out of sight.
-      const keys = layout.order.filter(key => PROFILE_BLOCKS.find(x => x.key === key)?.area === area && (MARKET_OPEN || key !== 'listings'));
+      const keys = layout.order.filter(key => PROFILE_BLOCKS.find(x => x.key === key)?.area === area && (marketOpenFor('member') || key !== 'listings'));
       return <div key={area} className="profile-layout-column"><h3>{area === 'main' ? 'Основная колонка' : 'Боковая колонка'}</h3><div className="profile-layout-stack">{keys.map((key, index) => {
         const block = PROFILE_BLOCKS.find(x => x.key === key)!;
         const hidden = layout.hidden.includes(key);

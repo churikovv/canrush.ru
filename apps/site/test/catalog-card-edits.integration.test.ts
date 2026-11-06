@@ -71,3 +71,16 @@ it('hides a card, names it and gives it our own cover', async () => {
   expect((await pool.query(`select action from "adminAuditLog" where "adminEmail" = $1 order by id`, [staffEmail])).rows.map(row => row.action))
     .toEqual(['catalog-card-merge', 'catalog-card-hide', 'catalog-card-name', 'catalog-card-photo', 'catalog-card-photo-reset', 'catalog-card-show']);
 });
+
+it('marks a card «Снят с производства» for the team, and only for the team', async () => {
+  const black = { brand, flavor: 'black' };
+  await expect(edits.setCardDiscontinued(member, `${member}@example.com`, black, true)).rejects.toThrow('Нет доступа');
+  await edits.setCardDiscontinued(staff, staffEmail, black, true);
+  const marked = (await edits.withCardEdits(await files.readAllCatalogGroups())).find(group => group.brand === brand && group.flavor === 'black');
+  expect(marked).toMatchObject({ discontinued: true });
+  expect((await checks.listCatalogCards(brand, 1, 10)).items.find(item => item.flavor === 'black')).toMatchObject({ discontinued: true });
+  await edits.setCardDiscontinued(staff, staffEmail, black, false);
+  expect((await edits.withCardEdits(await files.readAllCatalogGroups())).find(group => group.brand === brand && group.flavor === 'black')).not.toHaveProperty('discontinued');
+  expect((await pool.query(`select action from "adminAuditLog" where "adminEmail" = $1 and action like 'catalog-card-%archive' order by id`, [staffEmail])).rows.map(row => row.action))
+    .toEqual(['catalog-card-archive', 'catalog-card-unarchive']);
+});

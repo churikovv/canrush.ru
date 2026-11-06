@@ -48,7 +48,8 @@ export function proxy(request: NextRequest) {
       : NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set('Content-Security-Policy', contentSecurityPolicy);
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-  response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+  // The rating badge is a picture for brands' own sites (`/badge/…`): other origins may show it.
+  response.headers.set('Cross-Origin-Resource-Policy', pathname.startsWith('/badge/') ? 'cross-origin' : 'same-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(), usb=()');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-Content-Type-Options', 'nosniff');

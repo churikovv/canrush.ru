@@ -11,7 +11,7 @@ import { MarketError, parseListing, type OrderStatus } from '@/lib/market-fields
 import { createListing, closeListing, reopenListing, deleteArchivedListing, startOrder, changeOrderStatus, sendMarketMessage, getOrder, getMessages, markMessagesRead } from '@/lib/market';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { getCabinet } from '@/lib/business';
-import { MARKET_CLOSED_MESSAGE, MARKET_OPEN } from '@/lib/market-open';
+import { MARKET_BUSINESS_ONLY_MESSAGE, MARKET_CLOSED_MESSAGE, MARKET_PERSONAL_CHAT_MESSAGE, marketOpen, marketOpenFor } from '@/lib/market-open';
 
 export interface MarketActionState { error?: string; id?: string; success?: boolean }
 async function currentUser() {
@@ -24,7 +24,9 @@ function failure(error: unknown): MarketActionState {
   return { error: isMemberBlockedError(error) ? MEMBER_BLOCKED_MESSAGE : error instanceof MarketError || error instanceof ReviewPhotoError || isFrozenError(error) ? error.message : 'Не удалось выполнить действие. Попробуйте ещё раз.' };
 }
 export async function createListingAction(form: FormData): Promise<MarketActionState> {
-  if (!MARKET_OPEN) return { error: MARKET_CLOSED_MESSAGE };
+  if (!marketOpen()) return { error: MARKET_CLOSED_MESSAGE };
+  // While only companies sell, a personal listing is refused before its photos are decoded; `createListing` checks again.
+  if (form.get('asBusiness') !== '1' && !marketOpenFor('member')) return { error: MARKET_BUSINESS_ONLY_MESSAGE };
   try {
     const user = await currentUser();
     const input = parseListing(form);
@@ -38,7 +40,7 @@ export async function createListingAction(form: FormData): Promise<MarketActionS
   } catch (error) { return failure(error); }
 }
 export async function listingAction(id: string, operation: 'order' | 'close' | 'delete' | 'reopen', quantity = 1): Promise<MarketActionState> {
-  if (!MARKET_OPEN && (operation === 'order' || operation === 'reopen')) return { error: MARKET_CLOSED_MESSAGE };
+  if (!marketOpen() && (operation === 'order' || operation === 'reopen')) return { error: MARKET_CLOSED_MESSAGE };
   try {
     const user = await currentUser();
     if (operation === 'order') {
@@ -59,10 +61,12 @@ export async function orderStatusAction(id: string, status: OrderStatus): Promis
   } catch (error) { return failure(error); }
 }
 export async function sendMessageAction(id: string, form: FormData): Promise<MarketActionState> {
-  if (!MARKET_OPEN) return { error: MARKET_CLOSED_MESSAGE };
+  if (!marketOpen()) return { error: MARKET_CLOSED_MESSAGE };
   try {
     const user = await currentUser();
-    if (!await getOrder(user.id, id)) throw new MarketError('Переписка недоступна.');
+    const order = await getOrder(user.id, id);
+    if (!order) throw new MarketError('Переписка недоступна.');
+    if (!marketOpenFor(order.fromCompany ? 'company' : 'member')) throw new MarketError(MARKET_PERSONAL_CHAT_MESSAGE);
     const text = form.get('text');
     if (typeof text !== 'string' || text.length > 4000) throw new MarketError('Сообщение должно быть не длиннее 4000 символов.');
     const { photos } = await prepareReviewPhotos(form);

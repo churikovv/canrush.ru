@@ -6,18 +6,22 @@ import { FormAlert } from '@/components/form-alert';
 import { EditIcon } from '@/components/action-icons';
 import { MoreActions } from '@/components/more-actions';
 import { searchMergeTargetsAction } from '@/app/catalog/new/actions';
-import { dismissCardCheckAction, mergeCatalogCardAction, setCardHiddenAction, setCardNameAction, setCardPhotoAction } from '@/app/admin/drinks/card-actions';
+import { dismissCardCheckAction, mergeCatalogCardAction, setCardDiscontinuedAction, setCardHiddenAction, setCardNameAction, setCardPhotoAction } from '@/app/admin/drinks/card-actions';
 import { MAX_CARD_FULL_NAME } from '@/lib/catalog-card-edit-fields';
 import type { AdminCatalogCard } from '@/lib/catalog-card-check';
 import type { CardActionState } from '@/app/admin/drinks/card-actions';
 
 const subscribeNever = () => () => {};
+/** The box of «Снят с производства», as on the drink page and in brand collections. */
+function ArchiveIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 4h18v4H3zM5 8v12h14V8M10 12h4" /></svg>;
+}
 type Dialog = 'photo' | 'name' | 'merge';
 type MergeTarget = { brand: string; flavor: string; label: string; cover?: string };
 
 /**
- * «⋯» on a parser card in /admin/drinks: change the cover, the full name, hide it from the catalog or bring it back,
- * merge it into another card. The dialogs live in a portal so they outlive the closed menu.
+ * «⋯» on a parser card in /admin/drinks: change the cover, the full name, mark it «Снят с производства» or back, hide it
+ * from the catalog or bring it back, merge it into another card. The dialogs live in a portal so they outlive the menu.
  */
 export function CatalogCardAdminMenu({ card }: { card: AdminCatalogCard }) {
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
@@ -35,11 +39,17 @@ export function CatalogCardAdminMenu({ card }: { card: AdminCatalogCard }) {
     if (hide && !window.confirm(`Скрыть «${label}» из каталога? Карточка пропадёт из списка, поиска и тирлистов, отзывы останутся.`)) return;
     startHiding(async () => { const result = await setCardHiddenAction(target, hide); setError(result.error ?? ''); });
   }
+  function toggleDiscontinued() {
+    const archive = !card.discontinued;
+    if (archive && !window.confirm(`Отметить «${label}» как снятый с производства? На странице напитка появится плашка, а в коллекциях вкусов он станет необязательным. Цены магазинов останутся.`)) return;
+    startHiding(async () => { const result = await setCardDiscontinuedAction(target, archive); setError(result.error ?? ''); });
+  }
   return <>
     <MoreActions label={`Действия: ${label}`}>
       <button className="more-actions-item" type="button" role="menuitem" onClick={() => show('photo')}><PhotoIcon /><span>Сменить фото</span></button>
       <button className="more-actions-item" type="button" role="menuitem" onClick={() => show('name')}><EditIcon /><span>Полное название</span></button>
       {!card.mergedInto && <button className="more-actions-item" type="button" role="menuitem" onClick={() => show('merge')}><MergeIcon /><span>Склеить с…</span></button>}
+      {!card.mergedInto && !card.hidden && <button className="more-actions-item" type="button" role="menuitem" disabled={hiding} onClick={toggleDiscontinued}><ArchiveIcon /><span>{card.discontinued ? 'Вернуть в производство' : 'Снят с производства'}</span></button>}
       <button className={card.hidden ? 'more-actions-item' : 'more-actions-item is-danger'} type="button" role="menuitem" disabled={hiding} onClick={toggleHidden}><HideIcon /><span>{card.hidden ? 'Вернуть в каталог' : 'Скрыть из каталога'}</span></button>
     </MoreActions>
     {error && <p className="field-error admin-drink-card-error" role="alert">{error}</p>}

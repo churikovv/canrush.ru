@@ -7,7 +7,7 @@ import { ACHIEVEMENT_TITLES, ACHIEVEMENT_XP, achievementSummary, isScored, TROPH
 import { isSiteAdminEmail } from '@/lib/admin';
 import { auth } from '@/lib/auth';
 import { getBadges } from '@/lib/badge-progress';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpenFor } from '@/lib/market-open';
 import { BADGE_ACHIEVEMENTS } from '@/lib/badges';
 import { getProfileByUsername } from '@/lib/profile';
 import { achievementCompletion, tierCount, tierSteps, visibleProfileAchievements, type ProfileAchievement } from '@/lib/profile-achievements';
@@ -18,9 +18,9 @@ export const metadata = { title: 'Достижения', robots: { index: false,
 
 /**
  * Role tags, the giveaway's tag and the beta number cannot be worked towards: they only appear once held. So does
- * «Селлер» while the market is closed (`MARKET_OPEN`).
+ * «Селлер» while members don't sell personally (`marketOpenFor('member')`): company sellers still earn it.
  */
-const ONLY_WHEN_HELD = new Set(['admin', 'moderator', 'energizer', 'engine', ...(MARKET_OPEN ? [] : ['seller'])]);
+const ONLY_WHEN_HELD = new Set(['admin', 'moderator', 'energizer', 'engine', ...(marketOpenFor('member') ? [] : ['seller'])]);
 
 /**
  * Achievements as a game screen (`TrophyRoom`), like the season pass and the card inventory. Tags and the achievements

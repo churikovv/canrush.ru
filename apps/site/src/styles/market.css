@@ -249,6 +249,8 @@
 .market-card-price { color: var(--color-ink); font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .market-card-price small { color: var(--color-muted-strong); font-size: .8125rem; font-weight: 500; }
 .market-card-copy .market-city { margin: 0; }
+/* Own personal listing while only companies sell (`MARKET_MODE = 'business'`): seen only in «Мои». */
+.market-card-copy .market-card-hidden { justify-self: start; margin: 2px 0 0; padding: 2px 10px; border-radius: 999px; background: var(--color-subtle); color: var(--color-muted-strong); font-size: .8125rem; font-weight: 600; }
 .market-card-copy .market-card-description { min-height: 0; margin: 4px 0 0; color: var(--color-text); }
 @media (max-width: 639px) {
   .market-card { padding: 6px; border-radius: 18px; }

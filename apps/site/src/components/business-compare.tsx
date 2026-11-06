@@ -1,11 +1,11 @@
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen } from '@/lib/market-open';
 import { FEATURE_LABELS, PLANS, PLAN_ORDER, type BusinessPlan, type PlanFeature } from '@/lib/business-plans';
 
 const yes = (plan: BusinessPlan, feature: PlanFeature) => PLANS[plan].features.includes(feature);
 const COMPARE_GROUPS: { title: string; rows: [string, ...(boolean | string)[]][] }[] = [
   { title: 'Отзывы и каталог', rows: [
     ['Отзывы на ваши напитки', true, true, true], ['Ответы от имени компании', true, true, true], ['Шаблоны ответов', true, true, true],
-    ['Новые напитки без модерации', true, true, true], ['Правки карточек', true, true, true], ...(MARKET_OPEN ? [['Объявления от компании', true, true, true] as [string, boolean, boolean, boolean]] : []),
+    ['Новые напитки без модерации', true, true, true], ['Правки карточек', true, true, true], ...(marketOpen() ? [['Объявления от компании', true, true, true] as [string, boolean, boolean, boolean]] : []),
   ] },
   { title: 'Аналитика', rows: [
     ['Обзор и очередь ответов', true, true, true],

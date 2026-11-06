@@ -5,13 +5,18 @@ import type { PreparedReviewPhoto } from './review-photos';
 import type { MarketEvent } from './telegram-bot/format';
 import { enqueueTelegram, type MarketPayload } from './telegram-bot/outbox';
 import { enqueuePush } from './push/outbox';
+import { MARKET_BUSINESS_ONLY_MESSAGE, MARKET_CLOSED_MESSAGE, MARKET_PERSONAL_CHAT_MESSAGE, marketOpen, marketOpenFor } from './market-open';
 
 export interface Listing extends ListingInput {
   id: string; sellerId: string; sellerName: string; username: string | null; closed: boolean; createdAt: string; photos: string[];
   /** Set when the listing is published on behalf of an approved company (migration 0126): its name and logo. */
   businessId: string | null; businessName: string | null; businessLogoId: string | null;
 }
-export interface MarketOrder { id: string; listingId: string; buyerId: string; sellerId: string; status: OrderStatus; title: string; price: number; unitPrice: number; quantity: number; city: string; delivery: Delivery[]; closed: boolean; buyerName: string; sellerName: string; buyerUsername: string | null; sellerUsername: string | null; photoId: string | null; updatedAt: string; unread: number }
+export interface MarketOrder { id: string; listingId: string; buyerId: string; sellerId: string; status: OrderStatus; title: string; price: number; unitPrice: number; quantity: number; city: string; delivery: Delivery[]; closed: boolean; buyerName: string; sellerName: string; buyerUsername: string | null; sellerUsername: string | null; photoId: string | null; updatedAt: string; unread: number;
+  /** The listing is published on behalf of a company that is approved now: its chat stays open while only companies sell. */
+  fromCompany: boolean }
+/** SQL: the listing `l` is on behalf of a company that is approved now. */
+const FROM_COMPANY = `exists(select 1 from business bz where bz.id=l."businessId" and bz.status='approved')`;
 export interface MarketMessage { id: string; senderId: string; text: string; createdAt: string; photos: string[] }
 async function transaction<T>(work: (db: PoolClient) => Promise<T>) {
   const db = await getPool().connect();
@@ -37,6 +42,9 @@ async function savePhotos(db: PoolClient, kind: 'listingId' | 'messageId', id: s
  * and only while the company is approved. The seller is still the member — orders and the chat go to them.
  */
 export async function createListing(userId: string, input: ListingInput, photos: PreparedReviewPhoto[], businessId: string | null = null) {
+  if (!marketOpen()) throw new MarketError(MARKET_CLOSED_MESSAGE);
+  // While only companies sell (`MARKET_MODE = 'business'`), a personal listing is refused before anything is written.
+  if (!businessId && !marketOpenFor('member')) throw new MarketError(MARKET_BUSINESS_ONLY_MESSAGE);
   if (!photos.length || photos.length > 5) throw new MarketError('Добавьте от 1 до 5 фотографий.');
   return transaction(async db => {
     await allowed(db, userId); await cooldown(db, userId, 'lastMarketListingAt', 60);
@@ -54,10 +62,14 @@ const listingSelect = `select l.*,case when trim(u.name)<>'' and u.name not like
   array(select p.id::text from "marketPhoto" p where p."listingId"=l.id order by position) as photos,
   b.name as "businessName",b."logoId" as "businessLogoId"
   from "marketListing" l join "user" u on u.id=l."sellerId" left join business b on b.id=l."businessId" and b.status='approved'`;
+/**
+ * Listings for the market. Its own («Мои», `mine`) are all there, so a hidden personal listing can still be closed;
+ * everyone else sees only open ones, and while only companies sell only those of an approved company (`b`).
+ */
 export async function getListings(page = 1, mine?: string, archive = false, seller?: string, filters: MarketFilters = {}) {
   const { rows } = await getPool().query(`${listingSelect} where l."deletedAt" is null and ($8::text is null or strpos(lower(concat_ws(' ',l.title,l.description,l.brand)),lower($8))>0) and ($5::text is null or lower(l.brand)=lower($5)) and ($6::text is null or l."anyCity" or lower(l.city)=lower($6)) and ($7::text is null or $7=any(l.delivery)) and ($4::text is null or u.username=$4) and (not $3::boolean or l.closed) and
-    ($1::text is not null and l."sellerId"=$1 or $1::text is null and not l.closed and not exists(select 1 from "userBlock" where "userId"=l."sellerId"))
-    order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24, Boolean(mine && archive), seller ?? null, filters.brand || null, filters.city || null, filters.delivery || null, filters.q?.trim().slice(0,200) || null]);
+    ($1::text is not null and l."sellerId"=$1 or $1::text is null and not l.closed and not exists(select 1 from "userBlock" where "userId"=l."sellerId") and ($9::boolean or b.id is not null))
+    order by l."createdAt" desc,l.id desc limit 25 offset $2`, [mine ?? null, (page - 1) * 24, Boolean(mine && archive), seller ?? null, filters.brand || null, filters.city || null, filters.delivery || null, filters.q?.trim().slice(0,200) || null, marketOpenFor('member')]);
   return { items: rows.slice(0, 24).map(row => ({ ...row, createdAt: row.createdAt.toISOString() }) as Listing), hasMore: rows.length > 24 };
 }
 /** The cabinet's listings: the member's own and every listing published on behalf of their company, newest first. */
@@ -67,7 +79,8 @@ export async function getCabinetListings(userId: string, businessId: string | nu
 }
 export async function getListing(id: string, viewer?: string, admin = false) {
   marketId(id);
-  const { rows } = await getPool().query(`${listingSelect} where l.id=$1 and ($3::boolean or (l."deletedAt" is null and (l."sellerId"=$2 or not exists(select 1 from "userBlock" where "userId"=l."sellerId"))))`, [id, viewer ?? null, admin]);
+  // A personal listing while only companies sell: its seller and staff only.
+  const { rows } = await getPool().query(`${listingSelect} where l.id=$1 and ($3::boolean or (l."deletedAt" is null and (l."sellerId"=$2 or (not exists(select 1 from "userBlock" where "userId"=l."sellerId") and ($4::boolean or b.id is not null)))))`, [id, viewer ?? null, admin, marketOpenFor('member')]);
   return rows[0] ? { ...rows[0], createdAt: rows[0].createdAt.toISOString() } as Listing : null;
 }
 export async function getActiveOrderId(userId: string, listingId: string): Promise<string | undefined> {
@@ -84,6 +97,8 @@ export async function reopenListing(userId: string, id: string) {
   marketId(id);
   return transaction(async db => {
     await allowed(db, userId);
+    if (!marketOpen()) throw new MarketError(MARKET_CLOSED_MESSAGE);
+    if (!marketOpenFor('member') && !(await db.query(`select 1 from "marketListing" l where l.id=$1 and ${FROM_COMPANY}`, [id])).rowCount) throw new MarketError(MARKET_BUSINESS_ONLY_MESSAGE);
     const result = await db.query('update "marketListing" set closed=false where id=$1 and "sellerId"=$2 and "deletedAt" is null and quantity>0 returning id', [id,userId]);
     if (!result.rowCount) throw new MarketError('Повторная публикация доступна только для своего неудалённого объявления с остатком товара.');
     await db.query(`update "user" set "profileLayout"=jsonb_set("profileLayout",'{hidden}',("profileLayout"->'hidden')-'listings') where id=$1`, [userId]);
@@ -103,6 +118,7 @@ async function notifyMarket(db: PoolClient, recipientId: string, actorId: string
 }
 export async function startOrder(userId: string, listingId: string, requestedQuantity = 1) {
   marketId(listingId);
+  if (!marketOpen()) throw new MarketError(MARKET_CLOSED_MESSAGE);
   const quantity = parseQuantity(requestedQuantity);
   return transaction(async db => {
     await allowed(db, userId);
@@ -113,6 +129,9 @@ export async function startOrder(userId: string, listingId: string, requestedQua
     const existing = await db.query(`select id from "marketOrder" where "listingId"=$1 and "buyerId"=$2 and status in ('new','confirmed')`, [listingId, userId]);
     if (existing.rows[0]) return existing.rows[0].id as string;
     if (listing.deletedAt || listing.closed || (await db.query('select 1 from "userBlock" where "userId"=$1', [listing.sellerId])).rowCount) throw new MarketError('Объявление больше недоступно.');
+    // While only companies sell, a personal listing (or one of a company that lost its approval) is not ordered.
+    const company = Boolean(listing.businessId) && Boolean((await db.query(`select 1 from business where id=$1 and status='approved'`, [listing.businessId])).rowCount);
+    if (!marketOpenFor(company ? 'company' : 'member')) throw new MarketError('Объявление больше недоступно.');
     if (listing.quantity < quantity) throw new MarketError(`Недостаточно товара. Доступно ${listing.quantity} шт.`);
     await cooldown(db, userId, 'lastMarketOrderAt', 10);
     await db.query('update "marketListing" set quantity=quantity-$2 where id=$1', [listingId, quantity]);
@@ -121,7 +140,7 @@ export async function startOrder(userId: string, listingId: string, requestedQua
     return result.rows[0].id as string;
   });
 }
-const orderSelect = `select o.*,(o."unitPrice"::bigint*o.quantity)::double precision as price,l."sellerId",l.title,l.city,l.delivery,l.closed,
+const orderSelect = `select o.*,(o."unitPrice"::bigint*o.quantity)::double precision as price,l."sellerId",l.title,l.city,l.delivery,l.closed,${FROM_COMPANY} as "fromCompany",
   (select p.id::text from "marketPhoto" p where p."listingId"=l.id order by p.position limit 1) as "photoId",b.username as "buyerUsername",s.username as "sellerUsername",
   case when trim(b.name)<>'' and b.name not like '%@%' then b.name else coalesce(b.username,'Участник') end as "buyerName",
   case when trim(s.name)<>'' and s.name not like '%@%' then s.name else coalesce(s.username,'Участник') end as "sellerName",
@@ -137,9 +156,9 @@ export async function getOrder(userId: string, id: string) {
   return rows[0] ? { ...rows[0], updatedAt: rows[0].updatedAt.toISOString() } as MarketOrder : null;
 }
 async function lockOrder(db: PoolClient, userId: string, id: string) {
-  const { rows } = await db.query(`select o.*,l."sellerId" from "marketOrder" o join "marketListing" l on l.id=o."listingId" where o.id=$1 and (o."buyerId"=$2 or l."sellerId"=$2) for update of o`, [id, userId]);
+  const { rows } = await db.query(`select o.*,l."sellerId",${FROM_COMPANY} as "fromCompany" from "marketOrder" o join "marketListing" l on l.id=o."listingId" where o.id=$1 and (o."buyerId"=$2 or l."sellerId"=$2) for update of o`, [id, userId]);
   if (!rows[0]) throw new MarketError('Переписка недоступна.');
-  return rows[0] as { buyerId: string; sellerId: string; listingId: string; quantity: number; stockReserved: boolean; status: OrderStatus };
+  return rows[0] as { buyerId: string; sellerId: string; listingId: string; quantity: number; stockReserved: boolean; status: OrderStatus; fromCompany: boolean };
 }
 export async function changeOrderStatus(userId: string, id: string, status: OrderStatus) {
   marketId(id);
@@ -158,6 +177,9 @@ export async function sendMarketMessage(userId: string, id: string, text: string
   return transaction(async db => {
     await allowed(db, userId);
     const order = await lockOrder(db, userId, id);
+    if (!marketOpen()) throw new MarketError(MARKET_CLOSED_MESSAGE);
+    // Status changes stay open for every order, but a personal listing's chat is read-only while only companies sell.
+    if (!marketOpenFor(order.fromCompany ? 'company' : 'member')) throw new MarketError(MARKET_PERSONAL_CHAT_MESSAGE);
     await cooldown(db, userId, 'lastMarketMessageAt', 3);
     const result = await db.query('insert into "marketMessage"("orderId","senderId",text) values($1,$2,$3) returning id', [id, userId, text]);
     await savePhotos(db, 'messageId', result.rows[0].id, photos);
@@ -187,7 +209,9 @@ export async function getMarketPhoto(id: string, userId: string | null, thumbnai
     left join "marketMessage" m on m.id=p."messageId"
     left join "marketOrder" o on o.id=m."orderId"
     left join "marketListing" ol on ol.id=o."listingId"
-    where p.id=$1 and ((l.id is not null and l."deletedAt" is null and not exists(select 1 from "userBlock" where "userId"=l."sellerId")) or l."sellerId"=$2 or o."buyerId"=$2 or ol."sellerId"=$2 or (l.id is not null and exists(select 1 from "user" au join "siteAdmin" sa on sa.email=lower(au.email) where au.id=$2)))`, [id, userId]);
+    where p.id=$1 and ((l.id is not null and l."deletedAt" is null and not exists(select 1 from "userBlock" where "userId"=l."sellerId") and ($3::boolean or ${FROM_COMPANY}))
+      or l."sellerId"=$2 or o."buyerId"=$2 or ol."sellerId"=$2 or exists(select 1 from "marketOrder" lo where lo."listingId"=l.id and lo."buyerId"=$2)
+      or (l.id is not null and exists(select 1 from "user" au join "siteAdmin" sa on sa.email=lower(au.email) where au.id=$2)))`, [id, userId, marketOpenFor('member')]);
   return rows[0]?.data;
 }
 
@@ -198,7 +222,7 @@ export async function deleteArchivedListing(userId: string, id: string) {
 }
 
 export async function getMarketFilterOptions() {
-  const { rows } = await getPool().query<{brand:string|null;city:string;anyCity:boolean}>(`select distinct brand,city,"anyCity" from "marketListing" l where not closed and "deletedAt" is null and not exists(select 1 from "userBlock" b where b."userId"=l."sellerId")`);
+  const { rows } = await getPool().query<{brand:string|null;city:string;anyCity:boolean}>(`select distinct brand,city,"anyCity" from "marketListing" l where not closed and "deletedAt" is null and not exists(select 1 from "userBlock" b where b."userId"=l."sellerId") and ($1::boolean or ${FROM_COMPANY})`, [marketOpenFor('member')]);
   return { brands: [...new Set(rows.flatMap(row=>row.brand?[row.brand]:[]))].sort((a,b)=>a.localeCompare(b,'ru')), cities: [...new Set(rows.filter(row=>!row.anyCity).map(row=>row.city))].sort((a,b)=>a.localeCompare(b,'ru')) };
 }
 

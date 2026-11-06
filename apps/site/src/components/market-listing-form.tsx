@@ -9,6 +9,7 @@ import { DELIVERY, MarketError, formatPrice, parseListing } from '@/lib/market-f
 import { createListingAction } from '@/app/market/actions';
 import { FormStep } from './form-step';
 import { FormAlert } from '@/components/form-alert';
+import { marketOpenFor } from '@/lib/market-open';
 
 const STEPS = [
   { id: 'listing-step-title', title: 'Название' },
@@ -27,10 +28,13 @@ const EMPTY: Fields = { title: '', description: '', price: '', quantity: '', cit
  * title → photos → brand and description → price, quantity, city and delivery → a check of the card. The same form in
  * the market and in the business cabinet (`inCabinet`: after publishing it returns to the cabinet's listings). Each
  * step is checked before moving on, and the last one runs the server's own `parseListing`, so its messages match.
+ * While only companies sell (`marketOpenFor('member')` is false) the listing always goes out on the company's behalf:
+ * there is no «Лично», and the pages show the form only to those who may publish for an approved company.
  */
 export function MarketListingForm({ brands, inCabinet = false, company = null }: { brands: string[]; inCabinet?: boolean; company?: { name: string; logoId: string | null } | null }) {
   const [step, setStep] = useState(0);
-  // In the cabinet of an approved company the listing goes out on its behalf unless «Лично» is picked.
+  // In the cabinet of an approved company the listing goes out on its behalf unless «Лично» is picked (when allowed).
+  const personal = marketOpenFor('member');
   const [asCompany, setAsCompany] = useState(Boolean(company));
   const [reached, setReached] = useState(0);
   const [fields, setFields] = useState<Fields>(EMPTY);
@@ -130,7 +134,7 @@ export function MarketListingForm({ brands, inCabinet = false, company = null }:
 
     <section className="form-card" aria-labelledby="listing-step-check" tabIndex={-1} hidden={step !== LAST_STEP}>
       <FormStep n={5} id="listing-step-check" title="Проверка" hint="Так объявление увидят в маркете. Если что-то не так — вернитесь к нужному шагу." />
-      {company && <fieldset className="market-listing-author"><legend>Опубликовать от имени</legend>
+      {company && personal && <fieldset className="market-listing-author"><legend>Опубликовать от имени</legend>
         <label><input type="radio" name="listing-author" checked={asCompany} onChange={() => setAsCompany(true)} />
           <span className="market-company-logo" aria-hidden="true">{company.logoId ? <Image src={`/api/business-logos/${company.logoId}`} width={40} height={40} unoptimized alt="" /> : company.name.slice(0, 1).toUpperCase()}</span>
           <span><strong>{company.name}</strong><small>Компания: название и логотип в маркете</small></span></label>

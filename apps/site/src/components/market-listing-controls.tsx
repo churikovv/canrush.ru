@@ -4,7 +4,8 @@ import Link from '@/components/navigation-progress';
 import { useRouter } from 'next/navigation';
 import { listingAction } from '@/app/market/actions';
 import { formatPrice } from '@/lib/market-fields';
-export function MarketListingControls({ id, own, closed, authenticated, available, unitPrice, activeOrderId, compact = false }: { id: string; own: boolean; closed: boolean; authenticated: boolean; available: number; unitPrice: number; activeOrderId?: string; compact?: boolean }) {
+/** `canReopen` is false for a personal listing while only companies sell: the seller can still close or delete it. */
+export function MarketListingControls({ id, own, closed, authenticated, available, unitPrice, activeOrderId, compact = false, canReopen = true }: { id: string; own: boolean; closed: boolean; authenticated: boolean; available: number; unitPrice: number; activeOrderId?: string; compact?: boolean; canReopen?: boolean }) {
   const [error, setError] = useState('');
   const [confirm, setConfirm] = useState(false);
   const [choosing, setChoosing] = useState(!compact);
@@ -15,13 +16,13 @@ export function MarketListingControls({ id, own, closed, authenticated, availabl
   const valid = /^\d+$/.test(quantity) && Number.isSafeInteger(count) && count >= 1 && count <= available;
   if (activeOrderId) return <Link className="community-button" href={`/messages/${activeOrderId}`}>Открыть заказ</Link>;
   if (closed && own) return <div className="market-listing-controls market-archive-controls"><span className="market-status">Объявление в архиве</span>
-    <button className="community-button" disabled={pending || available < 1} onClick={() => {
+    {canReopen && <button className="community-button" disabled={pending || available < 1} onClick={() => {
       setError(''); startTransition(async () => {
         try { const result = await listingAction(id, 'reopen'); if (result.error) setError(result.error); else { setConfirm(false); router.refresh(); } }
         catch { setError('Не удалось опубликовать объявление. Попробуйте ещё раз.'); }
       });
-    }}>Опубликовать снова</button>
-    {available < 1 && <p className="market-note">Нет свободного остатка для повторной публикации.</p>}
+    }}>Опубликовать снова</button>}
+    {canReopen && available < 1 && <p className="market-note">Нет свободного остатка для повторной публикации.</p>}
     <div className="market-listing-delete-section">
     <button className="community-button community-button-secondary" disabled={pending} onClick={() => {
       if (!confirm) { setConfirm(true); return; }

@@ -22,6 +22,10 @@ import { addDrinkStore, removeDrinkStore } from '@/lib/brand-drink-stores';
 import { DrinkPriceError, parseDrinkPrice } from '@/lib/brand-drink-price-fields';
 import { removeDrinkPrice, setDrinkPrice } from '@/lib/brand-drink-prices';
 import { addCompetitor, removeCompetitor } from '@/lib/business-competitors';
+import { answerBusinessQuestion } from '@/lib/business-questions';
+import { catalogGroupSlug } from '@/lib/catalog-query';
+import { DrinkQuestionError } from '@/lib/drink-question-fields';
+import { MEMBER_BLOCKED_MESSAGE, isMemberBlockedError } from '@/lib/member-blocks';
 
 export interface BusinessActionState { error?: string; done?: boolean }
 
@@ -137,13 +141,32 @@ export async function leaveBusinessAction(): Promise<BusinessActionState> {
   return { done: true };
 }
 
-/** «Новые отзывы на напитки компании» — the same preference table as the site's notification settings. */
-export async function saveBusinessNotificationsAction(_state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
+/** Kinds of the cabinet's own notifications: new reviews and new questions about the company's drinks. */
+const CABINET_NOTIFICATIONS = ['business-review', 'business-question'] as const;
+export type CabinetNotification = (typeof CABINET_NOTIFICATIONS)[number];
+
+/** A switch of «Уведомления кабинета» — the same preference table as the site's notification settings. */
+export async function saveBusinessNotificationAction(kind: CabinetNotification, enabled: boolean): Promise<BusinessActionState> {
+  if (!CABINET_NOTIFICATIONS.includes(kind)) return { error: 'Такого уведомления нет.' };
   try {
     const user = await member();
-    await getPool().query(`insert into "notificationPreference"("userId", kind, enabled) values ($1, 'business-review', $2)
-      on conflict ("userId", kind) do update set enabled = excluded.enabled`, [user.id, form.get('reviews') === 'on']);
+    await getPool().query(`insert into "notificationPreference"("userId", kind, enabled) values ($1, $2, $3)
+      on conflict ("userId", kind) do update set enabled = excluded.enabled`, [user.id, kind, enabled === true]);
   } catch (error) { return { error: message(error, 'Не удалось сохранить. Попробуйте ещё раз.') }; }
+  revalidatePath('/business/cabinet');
+  return { done: true };
+}
+
+/** The company's answer to a question about its drink, from «Вопросы»: the drink page shows it with the company's name. */
+export async function answerBusinessQuestionAction(questionId: string, text: string): Promise<BusinessActionState> {
+  try {
+    const drink = await answerBusinessQuestion((await member()).id, questionId, text);
+    revalidatePath(`/catalog/${catalogGroupSlug(drink.brand, drink.flavor)}`);
+  } catch (error) {
+    if (error instanceof DrinkQuestionError) return { error: error.message };
+    if (isMemberBlockedError(error)) return { error: MEMBER_BLOCKED_MESSAGE };
+    return { error: message(error, 'Не удалось отправить ответ. Попробуйте ещё раз.') };
+  }
   revalidatePath('/business/cabinet');
   return { done: true };
 }

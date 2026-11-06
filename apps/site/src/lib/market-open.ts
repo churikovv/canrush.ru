@@ -1,11 +1,31 @@
+import { MARKET_MODE } from './market-mode';
+
+export type { MarketMode } from './market-mode';
+
+/** Who sells: `company` — an approved company, from the business cabinet; `member` — a personal listing. */
+export type MarketSeller = 'member' | 'company';
+
 /**
- * The member market — listings, orders and their chats — is closed for now (November 2026) while CanRush applies to
- * payment systems: a market where members sell cans to each other is a different kind of business for them than paid
- * plans. Closed, every way in is gone (header, footer, search, home, profiles, company pages, the business cabinet and
- * landing, the plans), `/market` and `/messages` lead to search, a listing or a chat is a 404, and the actions refuse
- * new listings, orders and messages. The data stays: setting this back to `true` brings the market back as it was.
- * `/market/stores` is the store map, not the market, and stays open.
+ * The market is on in some form (`MARKET_MODE` is not `closed`): its links in the header, footer, search, home and
+ * profiles, `/market`, `/messages`, the cabinet's «Объявления» and «Заказы и чаты», orders and chats.
+ * `/market/stores` is the store map, not the market: it is open in every mode.
  */
-export const MARKET_OPEN = false;
+export function marketOpen() {
+  return MARKET_MODE !== 'closed';
+}
+
+/** Whether this kind of seller may publish, be shown and be ordered from in the current mode. */
+export function marketOpenFor(seller: MarketSeller) {
+  return MARKET_MODE === 'open' || (MARKET_MODE === 'business' && seller === 'company');
+}
+
+/** Where «Создать объявление» leads: the member form, or the cabinet while only companies sell. */
+export function newListingHref() {
+  return marketOpenFor('member') ? '/market/new' : '/business/cabinet?section=new-listing';
+}
 
 export const MARKET_CLOSED_MESSAGE = 'Маркет временно закрыт.';
+/** A personal listing while only companies sell. */
+export const MARKET_BUSINESS_ONLY_MESSAGE = 'Сейчас объявления публикуют только подтверждённые компании — из кабинета «CanRush для бизнеса».';
+/** A chat of a personal listing while only companies sell: the order can still be completed or cancelled. */
+export const MARKET_PERSONAL_CHAT_MESSAGE = 'Переписка по личным объявлениям сейчас закрыта: в маркете продают только компании. Заказ можно завершить или отменить.';

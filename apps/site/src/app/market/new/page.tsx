@@ -9,12 +9,14 @@ import { BrandShell } from '@/components/brand-shell';
 import { ProfileNavigation } from '@/components/profile-navigation';
 import { MarketListingForm } from '@/components/market-listing-form';
 import { auth } from '@/lib/auth';
-import { MARKET_OPEN } from '@/lib/market-open';
+import { marketOpen, marketOpenFor, newListingHref } from '@/lib/market-open';
 import { isUserBlocked } from '@/lib/moderation';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Создать объявление', robots: { index: false, follow: false } };
 export default async function NewListingPage() {
-  if (!MARKET_OPEN) redirect('/search');
+  if (!marketOpen()) redirect('/search');
+  // While only companies sell, a listing is published from the business cabinet (it asks a member without one to apply).
+  if (!marketOpenFor('member')) redirect(newListingHref());
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect('/sign-in');
   const brands = [...new Set((await loadAllCatalogGroups()).map(group=>group.brand).filter(brand=>brand && brand.toLowerCase()!=='unknown'))].sort((a,b)=>a.localeCompare(b,'ru'));
