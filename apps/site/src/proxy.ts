@@ -4,6 +4,7 @@ import { getSessionCookie } from 'better-auth/cookies';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+const EMBEDDABLE = /^\/(?:badge|brand\/mail|images\/products|brand\/products|api\/(?:catalog-drinks|brand-drink-photos|catalog-card-photos))\//u;
 const SIGNED_IN_PAGES = /^\/(?:profile(?:\/(?:edit|favorites|tierlists))?|tierlists\/(?:new|[^/]+\/edit))$/u;
 
 export function proxy(request: NextRequest) {
@@ -48,8 +49,9 @@ export function proxy(request: NextRequest) {
       : NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set('Content-Security-Policy', contentSecurityPolicy);
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-  // The rating badge is a picture for brands' own sites (`/badge/…`): other origins may show it.
-  response.headers.set('Cross-Origin-Resource-Policy', pathname.startsWith('/badge/') ? 'cross-origin' : 'same-origin');
+  // The rating badge is a picture for brands' own sites (`/badge/…`); the comeback letter shows the logo, the trophy and
+  // drink covers in mail apps. Other origins may show these; everything else stays same-origin.
+  response.headers.set('Cross-Origin-Resource-Policy', EMBEDDABLE.test(pathname) ? 'cross-origin' : 'same-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(), usb=()');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-Content-Type-Options', 'nosniff');

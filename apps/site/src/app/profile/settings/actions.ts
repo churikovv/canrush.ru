@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getPool } from '@/db/pool';
 import { NOTIFICATION_OPTIONS } from '@/lib/notification-preferences';
+import { COMEBACK_PREFERENCE } from '@/lib/comeback-email-fields';
 
 export async function saveNotificationSettings(form: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -20,6 +21,9 @@ export async function saveNotificationSettings(form: FormData) {
     on conflict ("userId",kind) do update set enabled=excluded.enabled`,
     [session.user.id, NOTIFICATION_OPTIONS.map(x => x.kind), NOTIFICATION_OPTIONS.map(x => form.get(x.kind) === 'on')]);
   await getPool().query('update "user" set "pushAnnouncements" = $2 where id = $1', [session.user.id, form.get('announcements') === 'on']);
+  // The letter switch is not shown to Telegram-only accounts: their address is a placeholder, letters never go there.
+  if (!isTelegramPlaceholderEmail(session.user.email)) await getPool().query(`insert into "notificationPreference" ("userId", kind, enabled) values ($1, $2, $3)
+    on conflict ("userId", kind) do update set enabled = excluded.enabled`, [session.user.id, COMEBACK_PREFERENCE, form.get(COMEBACK_PREFERENCE) === 'on']);
   redirect('/profile/settings?section=notifications&saved=1');
 }
 

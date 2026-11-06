@@ -25,6 +25,11 @@ export async function register() {
     const { startBusinessReportWorker } = await import('@/lib/business-report-worker');
     startBusinessReportWorker();
   }
+  // «Что нового на CanRush» тем, кто давно не заходил: production only, unless COMEBACK_EMAIL_WORKER=on.
+  if (process.env.COMEBACK_EMAIL_WORKER === 'on' || (process.env.NODE_ENV === 'production' && process.env.COMEBACK_EMAIL_WORKER !== 'off')) {
+    const { startComebackEmailWorker } = await import('@/lib/comeback-email-worker');
+    startComebackEmailWorker();
+  }
 }
 
 /**

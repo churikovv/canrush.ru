@@ -116,6 +116,7 @@ services:
       DIGEST_WORKER: "off"
       DRINK_CHECK_WORKER: "off"
       BUSINESS_REPORT_WORKER: "off"
+      COMEBACK_EMAIL_WORKER: "off"
     volumes: *site-volumes
     ports:
       - "127.0.0.1:3003:3000"

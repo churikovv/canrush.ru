@@ -129,6 +129,20 @@ export async function getAwardBoard(viewerId: string | null, now = Date.now()): 
   };
 }
 
+/** A category for the home story's slide: its title and up to three nominees' covers, the best rated first. */
+export interface AwardPreview { category: AwardCategory; title: string; covers: string[] }
+const PREVIEW_TTL_MS = 10 * 60 * 1000;
+let preview: { at: number; items: AwardPreview[] } | null = null;
+
+/** The story's categories with their nominees' cans, built from the board as a guest sees it; ten minutes in the process. */
+export async function getAwardPreview(now = Date.now()): Promise<AwardPreview[]> {
+  if (preview && now - preview.at < PREVIEW_TTL_MS) return preview.items;
+  const board = await getAwardBoard(null, now);
+  const items = board.categories.map(category => ({ category: category.key, title: category.title, covers: category.nominees.flatMap(nominee => nominee.cover ? [nominee.cover] : []).slice(0, 3) }));
+  preview = { at: now, items };
+  return items;
+}
+
 /** The winner of each category for the results story: the most votes, a tie goes to the better rating. */
 export async function getAwardWinners(): Promise<{ category: AwardCategory; title: string; brand: string; name: string; cover: string | null; share: number }[]> {
   const board = await getAwardBoard(null, Date.parse(AWARD.closesAt));

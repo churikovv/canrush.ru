@@ -41,14 +41,26 @@ export function NotificationBell() {
    * Opening the bell reads everything: the list loads as it is, so the new ones keep their dot while the panel is
    * open, then the server marks them read and the counter on the bell goes to zero.
    */
-  async function openPanel() {
+  const openPanel = useCallback(async () => {
     setOpen(true);
     if (!await load()) return;
     try {
       const result = await notificationAction('read-all');
       if (!result.error && result.authenticated) setIdentity({ authenticated: true, unread: result.unread });
     } catch { /* The counter stays; the next refresh or opening tries again. */ }
-  }
+  }, [load, setIdentity]);
+  // «?notifications=open» (the link in the comeback letter) opens the panel once; the address is left clean. It waits
+  // for the session to be known: before that the bell renders nothing, and the panel would have nowhere to open.
+  useEffect(() => {
+    if (!authenticated || new URLSearchParams(window.location.search).get('notifications') !== 'open') return;
+    const timer = window.setTimeout(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('notifications');
+      window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+      void openPanel();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [authenticated, openPanel]);
   useEffect(() => {
     if(!open) return;
     const dialog = panel.current; const button = trigger.current; const previous = document.body.style.overflow;

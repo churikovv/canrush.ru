@@ -17,7 +17,9 @@ import { favoriteSwipedAction, swipeAction } from '@/app/community/dating-action
 import { MAX_STORY_CAPTION } from '@/lib/story-limits';
 import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
 import { NRJ_PARTY } from '@/lib/partners';
-import { AWARD, AWARD_CATEGORIES } from '@/lib/awards-fields';
+import { AWARD, AWARD_CATEGORIES, type AwardCategory } from '@/lib/awards-fields';
+import type { AwardPreview } from '@/lib/awards';
+import { AwardCan, AwardMark, awardTileColors } from '@/components/award-marks';
 import { renderWeekShare } from '@/lib/week-share-image';
 import type { StoryAuthor, StoryItem, StoryLiker } from '@/lib/stories';
 import { WALL_MEDIA_ACCEPT } from '@/lib/wall-media-limits';
@@ -29,9 +31,9 @@ export type StorySlide =
   | { kind: 'pick'; item: StoryRecommendation; basis: 'similar' | 'community'; index: number; total: number }
   | { kind: 'promo'; page: 'channel' | 'bot'; miniApp?: string | null }
   | { kind: 'partner' }
-  | { kind: 'award'; page: 'intro' | 'categories' | 'results'; winners?: AwardWinner[] };
+  | { kind: 'award'; page: 'intro' | 'categories' | 'results'; categories?: AwardPreview[]; winners?: AwardWinner[] };
 /** A winner of «Премия за энергию» for the results slide. */
-export interface AwardWinner { title: string; brand: string; name: string; cover: string | null; share: number }
+export interface AwardWinner { category: AwardCategory; title: string; brand: string; name: string; cover: string | null; share: number }
 /** Slides of «Твоя неделя», in the order they play. */
 export type DigestPage = 'empty' | 'intro' | 'cans' | 'drink' | 'progress' | 'discover' | 'summary';
 export interface StoryGroupView { key: string; kind: 'user' | 'week' | 'picks' | 'telegram' | 'partner' | 'awards'; title: string; author?: StoryAuthor; own?: boolean; seen?: boolean; slides: StorySlide[] }
@@ -244,31 +246,37 @@ function PromoCard({ page, miniApp }: { page: 'channel' | 'bot'; miniApp?: strin
 }
 
 /**
- * «Премия за энергию»: while voting is open — the trophy and the invitation, then the four categories; with the results —
- * the winners. Every slide leads to /awards.
+ * «Премия за энергию»: while voting is open — the trophy and the invitation, then the four categories as the award page's
+ * tiles (their colours and marks, the nominees' cans); with the results — the same tiles with the winners. Every slide
+ * leads to /awards.
  */
-function AwardCard({ page, winners = [] }: { page: 'intro' | 'categories' | 'results'; winners?: AwardWinner[] }) {
+function AwardCard({ page, categories = [], winners = [] }: { page: 'intro' | 'categories' | 'results'; categories?: AwardPreview[]; winners?: AwardWinner[] }) {
+  const line = (value: number) => ({ '--line': value }) as CSSProperties;
   return <div className="award-story" data-page={page}>
     {page === 'intro' && <>
-      <Image className="award-story-trophy" src="/brand/awards/trophy.webp" width={772} height={800} sizes="260px" unoptimized alt="" style={{ '--line': 0 } as CSSProperties} />
-      <span className="award-story-chip" style={{ '--line': 1 } as CSSProperties}>Голосование до {AWARD.lastDayLabel}</span>
-      <strong className="award-story-title" style={{ '--line': 2 } as CSSProperties}>{AWARD.title}<span>{AWARD.year}</span></strong>
-      <p style={{ '--line': 3 } as CSSProperties}>Выберите лучшие энергетики года — голосуют участники CanRush</p>
+      <Image className="award-story-trophy" src="/brand/awards/trophy.webp" width={772} height={800} sizes="260px" unoptimized alt="" style={line(0)} />
+      <span className="award-story-chip" style={line(1)}>Голосование до {AWARD.lastDayLabel}</span>
+      <strong className="award-story-title" style={line(2)}>{AWARD.title}<span>{AWARD.year}</span></strong>
+      <p style={line(3)}>Выберите лучшие энергетики года — голосуют участники CanRush</p>
     </>}
-    {page === 'categories' && <>
-      <strong className="award-story-title" style={{ '--line': 0 } as CSSProperties}>4 номинации</strong>
-      <ol className="award-story-list">{AWARD_CATEGORIES.map((category, index) => <li key={category.key} style={{ '--line': index + 1 } as CSSProperties}>
-        <b>{String(index + 1).padStart(2, '0')}</b><span>{category.title}<small>{category.hint}</small></span>
-      </li>)}</ol>
+    {page !== 'intro' && <>
+      <span className="award-story-chip" style={line(0)}>{page === 'results' ? `Итоги · ${AWARD.resultsLabel}` : `${AWARD.title} ${AWARD.year}`}</span>
+      <strong className="award-story-heading" style={line(1)}>{page === 'results' ? 'Победители' : '4 номинации'}</strong>
+      <ul className="award-story-grid">{AWARD_CATEGORIES.map((category, index) => {
+        const winner = page === 'results' ? winners.find(item => item.category === category.key) : undefined;
+        const covers = page === 'results' ? (winner?.cover ? [winner.cover] : []) : categories.find(item => item.category === category.key)?.covers ?? [];
+        return <li key={category.key} className="award-story-tile" style={{ ...awardTileColors(category.key), ...line(index + 2) }}>
+          <AwardMark category={category.key} className="award-story-mark" />
+          <b>{category.title}</b>
+          <span className="award-story-cans">{covers.length
+            ? covers.map(cover => <AwardCan key={cover} cover={cover} className="award-story-can" />)
+            : <span className="award-story-can is-empty" aria-hidden="true">{page === 'results' ? '—' : '+'}</span>}</span>
+          {page === 'results' && <small>{winner ? <>{winner.brand} · {winner.name}<br />{winner.share}% голосов</> : 'Голосов не было'}</small>}
+        </li>;
+      })}</ul>
+      {page === 'categories' && <p style={line(6)}>Выберите номинанта в каждой — до {AWARD.lastDayLabel.replace(' ', '\u00a0')}</p>}
     </>}
-    {page === 'results' && <>
-      <strong className="award-story-title" style={{ '--line': 0 } as CSSProperties}>Итоги премии<span>{AWARD.year}</span></strong>
-      <ol className="award-story-list">{winners.map((winner, index) => <li key={winner.title} style={{ '--line': index + 1 } as CSSProperties}>
-        {winner.cover ? <Image src={winner.cover} width={48} height={48} unoptimized={winner.cover.startsWith('/')} alt="" /> : <b>⚡</b>}
-        <span>{winner.brand} · {winner.name}<small>{winner.title} · {winner.share}%</small></span>
-      </li>)}</ol>
-    </>}
-    <Link className="award-story-cta" href="/awards" style={{ '--line': 6 } as CSSProperties}>{page === 'results' ? 'Все итоги' : 'Голосовать'}</Link>
+    <Link className="award-story-cta" href="/awards" style={line(7)}>{page === 'results' ? 'Все итоги' : page === 'categories' ? 'Выбрать номинантов' : 'Голосовать'}</Link>
   </div>;
 }
 
@@ -449,7 +457,7 @@ function StoryViewer({ groups, start, startSlide, signedIn, staff, onClose, onSe
           onFavorite={() => void favoritePick(slide.item)} onNope={() => void nopePick(slide.item)} />}
         {slide.kind === 'promo' && <PromoCard page={slide.page} miniApp={slide.miniApp} />}
         {slide.kind === 'partner' && <PartnerCard />}
-        {slide.kind === 'award' && <AwardCard page={slide.page} winners={slide.winners} />}
+        {slide.kind === 'award' && <AwardCard page={slide.page} categories={slide.categories} winners={slide.winners} />}
       </div>
       {slide.kind === 'media' && heart && <footer className="story-foot">
         {slide.story.caption && <p className="story-caption">{slide.story.caption}</p>}

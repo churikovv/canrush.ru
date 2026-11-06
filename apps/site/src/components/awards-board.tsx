@@ -1,7 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-import { useEffect, useId, useMemo, useState, useSyncExternalStore, useTransition, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useState, useSyncExternalStore, useTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { voteAwardAction, type AwardVoteState } from '@/app/awards/actions';
 import { ActionToast } from '@/components/action-toast';
@@ -11,7 +10,7 @@ import { StoreDrinkPicker } from '@/components/store-drink-picker';
 import { loadDrinkOptions } from '@/components/wall-drink';
 import type { AwardBoard, AwardCategoryView, AwardNomineeView } from '@/lib/awards';
 import { awardCategory, isSugarFreeDrink, votesLabel, type AwardCategory } from '@/lib/awards-fields';
-import { cutoutSrc } from '@/lib/can-cutout-src';
+import { AwardCan, AwardMark, awardTileColors } from '@/components/award-marks';
 import type { StoreDrinkOption } from '@/lib/store-catalog';
 
 const NOTHING_TAKEN = new Set<string>();
@@ -21,22 +20,6 @@ const reviewsWord = (count: number) => count % 10 === 1 && count % 100 !== 11 ? 
 
 function Check() {
   return <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.6 8.4 2.8 2.8 6-6.4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-}
-
-/** A big outline mark per category, in the tile's corner as Steam's award cards have theirs. */
-const MARKS: Record<AwardCategory, ReactNode> = {
-  design: <path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.6-.9 1.2-1.8-.5-1.1.2-2.2 1.4-2.2H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10ZM7.5 12a1.3 1.3 0 1 1 0-.01M10 7.5a1.3 1.3 0 1 1 0-.01M15 7.5a1.3 1.3 0 1 1 0-.01" />,
-  taste: <path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10Z" />,
-  drink: <path d="M5 17h14l1-9-4.5 3.5L12 5 8.5 11.5 4 8l1 9Zm0 3h14" />,
-  sugarfree: <path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14Zm0 0 7-7" />,
-};
-
-/** A can: our cover without its shop background, standing on the tile's glow; another site's photo on a light panel. */
-function Can({ cover, size, className }: { cover: string | null; size: number; className: string }) {
-  if (!cover) return <span className={`${className} is-empty`} aria-hidden="true">⚡</span>;
-  const cut = cutoutSrc(cover);
-  // eslint-disable-next-line @next/next/no-img-element -- the cutout route serves a sized WebP
-  return cut ? <img className={className} src={cut} alt="" loading="lazy" /> : <Image className={`${className} is-photo`} src={cover} width={size} height={size} alt="" />;
 }
 
 /**
@@ -80,15 +63,15 @@ export function AwardsBoard({ board, signedIn }: { board: AwardBoard; signedIn: 
       const winner = !open && (item.nominees[0]?.votes ?? 0) > 0 ? item.nominees[0]! : null;
       const shown = winner ?? mine ?? null;
       return <li key={item.key}>
-        <button type="button" className="award-tile" data-category={item.key} data-chosen={shown ? '' : undefined} onClick={() => show(item.key)}
+        <button type="button" className="award-tile" data-category={item.key} style={awardTileColors(item.key)} data-chosen={shown ? '' : undefined} onClick={() => show(item.key)}
           aria-label={`${item.title}: ${shown ? `${winner ? 'победитель' : 'ваш голос'} — ${shown.brand} · ${shown.name}` : open ? 'выбрать номинанта' : 'итоги'}`}>
-          <svg className="award-tile-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{MARKS[item.key]}</svg>
+          <AwardMark category={item.key} className="award-tile-mark" />
           <strong className="award-tile-title">{item.title}</strong>
           <span className="award-tile-stage">
             {shown
-              ? <Can cover={shown.cover} size={160} className="award-tile-can" />
+              ? <AwardCan cover={shown.cover} className="award-tile-can" />
               : item.nominees.length
-                ? <span className="award-tile-fan" aria-hidden="true">{item.nominees.slice(0, 3).map(nominee => <Can key={`${nominee.brand}:${nominee.flavor}`} cover={nominee.cover} size={96} className="award-tile-can" />)}</span>
+                ? <span className="award-tile-fan" aria-hidden="true">{item.nominees.slice(0, 3).map(nominee => <AwardCan key={`${nominee.brand}:${nominee.flavor}`} cover={nominee.cover} className="award-tile-can" />)}</span>
                 : <span className="award-tile-can is-empty" aria-hidden="true">+</span>}
           </span>
           <span className="award-tile-foot">
@@ -131,7 +114,7 @@ function Nominee({ nominee, category, winner, votable, busy, disabled, onVote }:
   const { reviews, taste, design, overall } = nominee.rating;
   const main = !reviews ? 'Отзывов пока нет' : metric === 'design' ? `★ дизайн ${one(design)}` : metric === 'taste' ? `★ вкус ${one(taste)}` : `★ ${one(overall)} из 10`;
   const body = <>
-    <Can cover={nominee.cover} size={64} className="award-pick-can" />
+    <AwardCan cover={nominee.cover} className="award-pick-can" />
     <span className="award-pick-text">
       <small>{winner ? 'Победитель · ' : ''}{nominee.brand}{!nominee.seeded && ' · добавлен участниками'}</small>
       <strong>{nominee.name}</strong>

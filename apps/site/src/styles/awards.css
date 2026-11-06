@@ -32,9 +32,6 @@
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12), 0 12px 24px -14px rgb(0 10 40 / .7);
   transition: translate .2s ease, box-shadow .2s ease;
 }
-.award-tile[data-category=design] { --tile-a: #5b35d6; --tile-b: #22146b; }
-.award-tile[data-category=taste] { --tile-a: #0d7fa3; --tile-b: #083a5c; }
-.award-tile[data-category=sugarfree] { --tile-a: #13906a; --tile-b: #0a3d33; }
 .award-tile:hover { translate: 0 -3px; box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / .55), 0 16px 28px -14px rgb(0 10 40 / .8); }
 .award-tile:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .award-tile-mark { position: absolute; top: -22px; left: -22px; width: 120px; height: 120px; color: rgb(255 255 255 / .1); pointer-events: none; }

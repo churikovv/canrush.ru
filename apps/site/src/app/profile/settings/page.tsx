@@ -21,6 +21,7 @@ import { NOTIFICATION_OPTIONS } from '@/lib/notification-preferences';
 import { getTelegramEnv } from '@/lib/env';
 import { TELEGRAM_PROVIDER_ID } from '@/lib/telegram-auth';
 import { isTelegramPlaceholderEmail } from '@/lib/telegram-init-data';
+import { COMEBACK_PREFERENCE } from '@/lib/comeback-email-fields';
 import { TelegramLinkButton, TelegramUnlinkButton } from '@/components/telegram-link-button';
 import { siteRoleForEmail } from '@/lib/admin';
 import { ownedBrandFrames } from '@/lib/brand-frame-fields';
@@ -235,6 +236,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 <span className="settings-row-text"><strong>Новости и события в приложении</strong><small>Push о новых сезонах и событиях CanRush</small></span>
                 <input className="settings-switch" type="checkbox" role="switch" name="announcements" defaultChecked={announcements} />
               </label>
+              {!telegramOnly && <label className="settings-row">
+                <span className="settings-row-icon" aria-hidden="true"><svg {...ICON}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3.5 6.5 8.5 6.5 8.5-6.5" /></svg></span>
+                <span className="settings-row-text"><strong>Письма о новом на сайте</strong><small>Если вы давно не заходили — не чаще раза в две недели</small></span>
+                <input className="settings-switch" type="checkbox" role="switch" name={COMEBACK_PREFERENCE} defaultChecked={preferences.get(COMEBACK_PREFERENCE) ?? true} />
+              </label>}
             </div>
           </section>
           <button className="community-button settings-save" type="submit">Сохранить настройки</button>

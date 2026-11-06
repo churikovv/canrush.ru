@@ -3,8 +3,8 @@ export const LEGAL_DETAILS = {
   effectiveDate: '4 ноября 2026 года',
   effectiveDateIso: '2026-11-04',
   // The privacy policy and the account deletion page have their own edition date (Android app, push).
-  privacyEffectiveDate: '4 ноября 2026 года',
-  privacyEffectiveDateIso: '2026-11-04',
+  privacyEffectiveDate: '6 ноября 2026 года',
+  privacyEffectiveDateIso: '2026-11-06',
   // The owner of the site and operator of personal data (149-ФЗ art. 10, 152-ФЗ); the address is not published.
   ownerName: 'Чуриков Владимир Владимирович',
   ownerStatus: 'самозанятый (плательщик налога на профессиональный доход)',
