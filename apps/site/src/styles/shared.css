@@ -1206,3 +1206,36 @@ a.wall-drink:focus-visible { outline: 2px solid var(--theme-link); outline-offse
 .wall-drink[data-compact] b { font-size: .9375rem; }
 .wall-drink[data-compact] .wall-drink-bolt { width: 40px; height: 40px; }
 @media (prefers-reduced-motion: reduce) { .wall-drink-arrow { transition: none; } }
+
+/* Точки продаж компании (`PointsBoard`): раздел кабинета «Точки продаж» и вкладка «Где купить» профиля компании. */
+.points-board { display: grid; gap: 16px; min-width: 0; }
+.points-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; min-width: 0; }
+.points-cities { display: flex; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.points-cities::-webkit-scrollbar { display: none; }
+.points-cities button { flex: none; min-height: 40px; padding: 0 14px; border: 1px solid var(--color-control); border-radius: var(--radius-pill); background: transparent; color: var(--color-text); font: inherit; font-size: .875rem; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.points-cities button span { margin-left: 2px; color: var(--color-muted-strong); font-weight: 500; }
+.points-cities button[aria-pressed="true"] { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+.points-cities button[aria-pressed="true"] span { color: rgb(255 255 255 / 80%); }
+.points-add { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.points-map .store-map { height: 420px; }
+.points-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.points-list > li { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 14px; border: 1px solid var(--color-control); border-radius: var(--radius-lg); background: var(--theme-panel); scroll-margin: 16px; }
+.points-list > li[data-selected] { border-color: var(--color-brand); box-shadow: 0 0 0 1px var(--color-brand); }
+.points-item { display: flex; align-items: flex-start; gap: 12px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.points-item-text { display: grid; gap: 4px; min-width: 0; }
+.points-item-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.points-item-head strong { font-size: 1rem; overflow-wrap: anywhere; }
+.points-kind { padding: 2px 8px; border-radius: var(--radius-pill); background: var(--color-subtle); color: var(--color-muted-strong); font-size: .75rem; font-weight: 600; }
+.points-address { line-height: 1.4; overflow-wrap: anywhere; }
+.points-meta { color: var(--color-muted-strong); font-size: .875rem; line-height: 1.4; overflow-wrap: anywhere; }
+.points-drinks { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0 0 0 40px; list-style: none; }
+.points-drinks a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border-radius: var(--radius-pill); background: var(--theme-tint); color: var(--color-brand); font-size: .8125rem; font-weight: 600; text-decoration: none; }
+.points-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-left: 40px; }
+.points-actions a, .points-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 1px solid var(--color-control); border-radius: var(--radius-pill); background: transparent; color: var(--color-text); font: inherit; font-size: .875rem; font-weight: 600; text-decoration: none; cursor: pointer; }
+.points-actions .is-danger { border-color: var(--color-danger); background: var(--color-danger-soft); color: var(--color-danger); }
+@media (max-width: 639px) {
+  .points-map .store-map { height: 320px; }
+  .points-add { width: 100%; justify-content: center; margin-left: 0; }
+  .points-drinks, .points-actions { padding-left: 0; }
+  .points-actions > * { flex: 1 1 auto; }
+}

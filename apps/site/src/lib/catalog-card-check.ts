@@ -1,7 +1,7 @@
 import { isAssortmentFlavor, isExcludedEnergyBrand, isResolvedFlavor, type CatalogGroup } from '@canrush/shared';
 import { getPool } from '@/db/pool';
 import { cardEdits, mergeCatalogCardAutomatically, NETWORK_ACTOR } from '@/lib/catalog-card-edits';
-import { cardKey, cardPhotoUrl, mergeTarget } from '@/lib/catalog-card-edit-fields';
+import { cardKey, cardPhotoUrl, mergeTarget, renameTarget } from '@/lib/catalog-card-edit-fields';
 import { readAllCatalogGroups } from '@/lib/catalog-files';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { catalogCandidates, judgeDrink } from '@/lib/drink-duplicate-check';
@@ -129,6 +129,8 @@ export async function dismissCardCheck(staffId: string, staffEmail: string, card
 export interface AdminCatalogCard {
   brand: string; flavor: string; name: string; fullName: string | null; cover: string | null; offers: number;
   hidden: boolean; mergedInto: { brand: string; flavor: string; label: string } | null; ownPhoto: boolean;
+  /** The names the card had before the team renamed it (`catalogCardEdit.renamed`), as «Бренд · Вкус». */
+  renamedFrom: string[];
   /** «Снят с производства» by the team (`catalogCardEdit.discontinued`). */
   discontinued: boolean;
   /** Merged by the neural network on its own, not by the team. */
@@ -146,20 +148,35 @@ export async function listCatalogCards(query: string, page: number, size: number
   const [edits, checks] = await Promise.all([cardEdits(), getCardChecks()]);
   const byKey = new Map(edits.map(item => [cardKey(item.brand, item.flavor), item]));
   const typed = query.trim().toLowerCase().replace(/ё/gu, 'е');
-  const cards = (await readAllCatalogGroups()).filter(group => (view === 'queue' || isResolvedFlavor(group.flavor)) && group.brand.trim() && group.brand.toLowerCase() !== 'unknown')
-    .map((group): AdminCatalogCard => {
-      const item = byKey.get(cardKey(group.brand, group.flavor));
-      const target = item?.mergedInto ? mergeTarget(byKey, group.brand, group.flavor) : null;
-      return {
-        brand: group.brand, flavor: group.flavor, name: flavorName(group.flavor), fullName: item?.fullName ?? null, offers: group.variants.length,
-        cover: item?.photoVersion != null ? cardPhotoUrl(item.id, item.photoVersion) : group.coverImageUrl ?? null, ownPhoto: item?.photoVersion != null,
-        hidden: item?.hidden ?? false, discontinued: item?.discontinued ?? false, mergedInto: target ? { ...target, label: `${target.brand} · ${flavorName(target.flavor)}` } : null,
-        byNetwork: !!item?.mergedInto && item.updatedBy === NETWORK_ACTOR, check: checks.get(cardKey(group.brand, group.flavor)) ?? null,
-      };
-    })
+  // A renamed card shows once, under its name now; the parser's groups under the old names add their offers to it.
+  const shown = new Map<string, AdminCatalogCard>();
+  for (const group of (await readAllCatalogGroups()).filter(group => (view === 'queue' || isResolvedFlavor(group.flavor)) && group.brand.trim() && group.brand.toLowerCase() !== 'unknown')) {
+    const name = renameTarget(byKey, group.brand, group.flavor);
+    const own = name.brand === group.brand && name.flavor === group.flavor;
+    const key = cardKey(name.brand, name.flavor);
+    const before = shown.get(key);
+    if (before) {
+      before.offers += group.variants.length;
+      if (!own) before.renamedFrom.push(`${group.brand} · ${flavorName(group.flavor)}`);
+      else { before.check = checks.get(key) ?? before.check; if (!before.ownPhoto) before.cover = group.coverImageUrl ?? before.cover; }
+      continue;
+    }
+    const item = byKey.get(key);
+    const target = item?.mergedInto ? mergeTarget(byKey, name.brand, name.flavor) : null;
+    shown.set(key, {
+      brand: name.brand, flavor: name.flavor, name: flavorName(name.flavor), fullName: item?.fullName ?? null, offers: group.variants.length,
+      cover: item?.photoVersion != null ? cardPhotoUrl(item.id, item.photoVersion) : group.coverImageUrl ?? null, ownPhoto: item?.photoVersion != null,
+      hidden: item?.hidden ?? false, discontinued: item?.discontinued ?? false, mergedInto: target ? { ...target, label: `${target.brand} · ${flavorName(target.flavor)}` } : null,
+      byNetwork: !!item?.mergedInto && item.updatedBy === NETWORK_ACTOR,
+      // The neural network's verdict is about the parser's group under that very name; a renamed card was the team's call.
+      check: own ? checks.get(key) ?? null : null,
+      renamedFrom: own ? [] : [`${group.brand} · ${flavorName(group.flavor)}`],
+    });
+  }
+  const cards = [...shown.values()]
     .filter(card => view === 'all' || (view === 'auto' ? card.byNetwork
       : !!card.check && ['duplicate', 'unsure', 'unknown'].includes(card.check.verdict) && !card.check.dismissed && !card.hidden && !card.mergedInto))
-    .filter(card => !typed || `${card.brand} ${card.name} ${card.flavor} ${card.fullName ?? ''}`.toLowerCase().replace(/ё/gu, 'е').includes(typed))
+    .filter(card => !typed || `${card.brand} ${card.name} ${card.flavor} ${card.fullName ?? ''} ${card.renamedFrom.join(' ')}`.toLowerCase().replace(/ё/gu, 'е').includes(typed))
     .sort((a, b) => a.brand.localeCompare(b.brand, 'ru') || a.name.localeCompare(b.name, 'ru'));
   return { items: cards.slice((page - 1) * size, page * size), total: cards.length };
 }

@@ -2,6 +2,7 @@ import { canonicalProductFlavor, reviewedProductIdentity, type CatalogGroup, typ
 import { cache } from 'react';
 import { getPool } from '@/db/pool';
 import { readAllCatalogGroups } from '@/lib/catalog-files';
+import { withCardEdits } from '@/lib/catalog-card-edits';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { CatalogDrinkError, MAX_DRINK_EXTRA_PHOTOS, type CatalogDrinkEdit, type CatalogDrinkInput } from '@/lib/catalog-drink-fields';
 import type { PreparedReviewPhoto } from '@/lib/review-photos';
@@ -30,9 +31,18 @@ export class CatalogDrinkDuplicate extends CatalogDrinkError {
   constructor(message: string, readonly href: string, readonly confirmable = false) { super(message); }
 }
 
+/**
+ * The parser's cards as the catalog shows them (the team's merges and renames applied) and under their names in the
+ * files: a renamed card owns both its new name and the old one, which still leads to it.
+ */
+async function parserCards(): Promise<CatalogGroup[]> {
+  const files = await readAllCatalogGroups();
+  return [...await withCardEdits(files), ...files];
+}
+
 /** The parser's card with this identity, if any: a member drink under it would stay hidden behind that card. */
 export async function catalogFileMatch(brand: string, flavor: string): Promise<CatalogGroup | undefined> {
-  return (await readAllCatalogGroups()).find(group => lower(group.brand) === lower(brand) && lower(group.flavor) === lower(flavor));
+  return (await parserCards()).find(group => lower(group.brand) === lower(brand) && lower(group.flavor) === lower(flavor));
 }
 
 const COLUMNS = `d.id, d.brand, d.flavor, d."fullName", d.volumes, d.ingredients, d.status, d.discontinued, d."moderationNote", d."createdAt", d."updatedAt",
@@ -132,7 +142,7 @@ const lower = (value: string) => value.toLocaleLowerCase('ru-RU');
  * Fuel), and the canonical flavour would turn «original» into «game_fuel» before they could match, leaving the
  * drink under its own brand and past the duplicate check. Then the flavour is made canonical and the aliases run again.
  */
-function drinkIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
+export function drinkIdentity(brand: string, flavor: string): { brand: string; flavor: string } {
   const typed = reviewedProductIdentity(brand, flavor);
   return reviewedProductIdentity(typed.brand, canonicalProductFlavor(typed.brand, typed.flavor));
 }
@@ -146,7 +156,7 @@ function drinkIdentity(brand: string, flavor: string): { brand: string; flavor: 
 export async function submitCatalogDrink(userId: string, input: CatalogDrinkInput, photo: PreparedReviewPhoto | undefined, confirmMatch = false, businessId: string | null = null, extras: PreparedReviewPhoto[] = []): Promise<{ id: string; published: boolean; href: string }> {
   if (!photo) throw new CatalogDrinkError('Добавьте фото банки.');
   if (extras.length > MAX_DRINK_EXTRA_PHOTOS) throw new CatalogDrinkError(`Дополнительных фото — не больше ${MAX_DRINK_EXTRA_PHOTOS}.`);
-  const files = await readAllCatalogGroups();
+  const files = await parserCards();
   const published = await catalogDrinkGroups();
   const brand = [...files, ...published].find(group => lower(group.brand) === lower(input.brand))?.brand ?? input.brand;
   const identity = drinkIdentity(brand, input.flavor);
@@ -237,7 +247,7 @@ export async function updateCatalogDrink(adminId: string, adminEmail: string, id
     const current = (await db.query<{ brand: string; flavor: string; status: CatalogDrinkStatus; discontinued: boolean }>(`select d.brand, d.flavor, d.status, d.discontinued from "catalogDrink" d
       where d.id = $2 and date_trunc('milliseconds', d."updatedAt") = $3::timestamptz and ${ADMIN} for update`, [adminId, id, version])).rows[0];
     if (!current) throw new CatalogDrinkError('Напиток изменился или удалён. Обновите страницу.');
-    const files = await readAllCatalogGroups();
+    const files = await parserCards();
     const published = (await catalogDrinkGroups()).filter(group => !(group.brand === current.brand && group.flavor === current.flavor));
     const brand = [...files, ...published].find(group => lower(group.brand) === lower(edit.brand))?.brand ?? edit.brand;
     const identity = drinkIdentity(brand, edit.flavor);

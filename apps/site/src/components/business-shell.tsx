@@ -8,7 +8,7 @@ import { planInfo, type BusinessPlan } from '@/lib/business-plans';
 
 /** Sections of the market inside the cabinet: gone while the market is closed (`marketOpen()`). */
 export const MARKET_SECTIONS: readonly string[] = ['market', 'new-listing', 'orders'];
-export type BusinessSection = 'overview' | 'reviews' | 'questions' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'drink-stores' | 'drink-price' | 'wholesale' | 'new-drink' | 'materials' | 'market' | 'new-listing' | 'orders' | 'settings' | 'plan' | 'support';
+export type BusinessSection = 'overview' | 'reviews' | 'questions' | 'insights' | 'search' | 'cards' | 'competitors' | 'brand' | 'drinks' | 'drink-edit' | 'drink-stores' | 'drink-price' | 'wholesale' | 'new-drink' | 'materials' | 'points' | 'market' | 'new-listing' | 'orders' | 'settings' | 'plan' | 'support';
 export const businessHref = (section: BusinessSection, params: Record<string, string> = {}) =>
   `/business/cabinet?${new URLSearchParams({ ...(section !== 'overview' ? { section } : {}), ...params })}`.replace(/\?$/, '');
 
@@ -31,6 +31,7 @@ const ICONS = {
   tag: <><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9Z" /><circle cx="8" cy="8" r="1.5" /></>,
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
   question: <><circle cx="12" cy="12" r="9" /><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6M12 17h.01" /></>,
+  pin: <><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" /><circle cx="12" cy="9.5" r="2.5" /></>,
   qr: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3" /></>,
 };
 export type BusinessIconName = keyof typeof ICONS;
@@ -58,6 +59,7 @@ const SPACES: Record<Space, { label: string; icon: BusinessIconName; items: { la
     { label: 'Вопросы', icon: 'question', section: 'questions' },
     { label: 'Напитки', icon: 'can', section: 'drinks', also: ['new-drink', 'drink-edit', 'drink-stores', 'drink-price'] },
     { label: 'QR и значок', icon: 'qr', section: 'materials' },
+    { label: 'Точки продаж', icon: 'pin', section: 'points' },
     ...(marketOpen() ? [
       { label: 'Объявления', icon: 'bag', section: 'market', also: ['new-listing'] },
       { label: 'Заказы и чаты', icon: 'chat', section: 'orders' },

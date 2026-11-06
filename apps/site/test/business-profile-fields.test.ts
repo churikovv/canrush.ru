@@ -5,7 +5,7 @@ describe('company profile rules', () => {
   it('shows every section unless switched off', () => {
     const form = new FormData();
     form.set('show-store', 'on'); form.set('show-drinks', 'on');
-    expect(parseHiddenSections(form)).toEqual(['presentations', 'listings', 'awards']);
+    expect(parseHiddenSections(form)).toEqual(['presentations', 'points', 'listings', 'awards']);
   });
 
   it('tells a PDF by its content and keeps a clean file name', () => {

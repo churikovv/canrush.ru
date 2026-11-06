@@ -8,6 +8,7 @@ import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
 import { getCompanyListings, type Listing } from '@/lib/market';
 import { frozenMessage, isFrozenError, isUserBlocked } from '@/lib/moderation';
 import { marketOpen } from '@/lib/market-open';
+import type { PointView } from '@/lib/business-points';
 
 /**
  * A company's public profile (/company/<id>, migration 0148): the logo as its avatar, the store on the CanRush map it
@@ -29,7 +30,7 @@ export interface CompanyProfile {
   followers: number; following: boolean;
   /** The viewer's place in the company: an owner or a manager edits the wall. */
   role: BusinessRole | null;
-  store: CompanyStore | null; drinks: CompanyDrink[]; listings: Listing[]; posts: CompanyPost[]; awards: CompanyAward[];
+  store: CompanyStore | null; drinks: CompanyDrink[]; points: PointView[]; listings: Listing[]; posts: CompanyPost[]; awards: CompanyAward[];
   /** The presentation laid open in its own block: the pinned PDF post, else the newest one; `pinned` — chosen by the team. */
   presentation: (CompanyPost & { pinned: boolean }) | null;
 }
@@ -50,9 +51,11 @@ export async function getCompanyProfile(id: string, viewerId: string | null): Pr
   const role = await viewerRole(id, viewerId);
   if (business.status !== 'approved' && !role) return null;
   const hidden = new Set(business.profileHidden);
-  const [store, drinks, listings, posts, awards, follow] = await Promise.all([
+  const [store, drinks, points, listings, posts, awards, follow] = await Promise.all([
     business.storeId && !hidden.has('store') ? companyStore(business.storeId) : null,
     hidden.has('drinks') ? [] : companyDrinks(id),
+    // The team sees its points with the section switched off too, with a note.
+    hidden.has('points') && !role ? [] : import('@/lib/business-points').then(module => module.pointViews(id)),
     // No «Маркет» tab while the market is closed (`marketOpen()`): the tab only shows when there are listings.
     hidden.has('listings') || !marketOpen() ? [] : getCompanyListings(id),
     hidden.has('presentations') && !role ? [] : listCompanyPosts(id),
@@ -63,7 +66,7 @@ export async function getCompanyProfile(id: string, viewerId: string | null): Pr
   const pinned = posts.find(post => post.id === business.presentationId && post.fileName)
     ?? (business.presentationId && posts.length ? (await listCompanyPosts(id, 1, business.presentationId))[0] : undefined);
   const shown = pinned ?? posts.find(post => post.fileName);
-  return { business, role, store, drinks, listings, posts, awards, presentation: shown ? { ...shown, pinned: Boolean(pinned) } : null, followers: follow.followers, following: follow.following };
+  return { business, role, store, drinks, points, listings, posts, awards, presentation: shown ? { ...shown, pinned: Boolean(pinned) } : null, followers: follow.followers, following: follow.following };
 }
 
 async function companyStore(storeId: string): Promise<CompanyStore | null> {
@@ -71,7 +74,7 @@ async function companyStore(storeId: string): Promise<CompanyStore | null> {
 }
 
 /** The company's drinks: those it attached and the team approved, and those it published itself from the cabinet. */
-async function companyDrinks(businessId: string): Promise<CompanyDrink[]> {
+export async function companyDrinks(businessId: string): Promise<CompanyDrink[]> {
   const [{ rows }, groups] = await Promise.all([getPool().query<{ brand: string; flavor: string }>(
     `select brand, flavor from "businessDrink" where "businessId" = $1 and status = 'approved'
      union select brand, flavor from "catalogDrink" where "businessId" = $1 and status = 'published'`, [businessId]), loadAllCatalogGroups()]);

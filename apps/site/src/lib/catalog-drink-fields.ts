@@ -59,7 +59,7 @@ export function parseCatalogDrink(form: FormData, knownFlavors: ReadonlySet<stri
 }
 
 /** Brand, the flavours picked from the list or typed (`flavor`/`customFlavor`), juice and the sugar choice, as one catalog key. */
-function parseIdentity(form: FormData, knownFlavors: ReadonlySet<string>): { brand: string; flavor: string } {
+export function parseIdentity(form: FormData, knownFlavors: ReadonlySet<string>): { brand: string; flavor: string } {
   const brand = collapse(String(form.get('brand') ?? ''));
   if (brand.length < 2 || brand.length > 40) throw new CatalogDrinkError('Укажите бренд — от 2 до 40 символов.');
   const custom = form.getAll('customFlavor').map(String).filter(value => collapse(value));

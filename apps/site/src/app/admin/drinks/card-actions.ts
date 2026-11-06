@@ -1,14 +1,21 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { requireSiteAdmin } from '@/lib/admin';
-import { CatalogCardError, mergeCatalogCard, setCardDiscontinued, setCardFullName, setCardHidden, setCardPhoto } from '@/lib/catalog-card-edits';
+import { CatalogCardDuplicate, CatalogCardError, mergeCatalogCard, renameCatalogCard, setCardDiscontinued, setCardFullName, setCardHidden, setCardPhoto } from '@/lib/catalog-card-edits';
+import { loadAllCatalogGroups } from '@/lib/catalog';
+import { readAllCatalogGroups } from '@/lib/catalog-files';
+import { BASIC_FLAVORS, catalogGroupSlug } from '@/lib/catalog-query';
+import { CatalogDrinkError, parseIdentity } from '@/lib/catalog-drink-fields';
+import { drinkIdentity } from '@/lib/catalog-drinks';
 import { parseCardFullName } from '@/lib/catalog-card-edit-fields';
 import { prepareReviewPhotos, ReviewPhotoError } from '@/lib/review-photos';
 import { dismissCardCheck } from '@/lib/catalog-card-check';
 import { storeDrinkOptions } from '@/lib/store-catalog';
 
 /** «Карточки каталога» in /admin/drinks: the team's edits of the parser's cards (`catalogCardEdit`). */
-export interface CardActionState { error?: string; saved?: boolean }
+export interface CardActionState { error?: string; saved?: boolean; /** A rename onto a name the catalog has: the card to merge into instead. */ duplicate?: { brand: string; flavor: string; label: string; href: string } }
+const KNOWN_FLAVORS = new Set(BASIC_FLAVORS.map(flavor => flavor.key));
+const lower = (value: string) => value.toLocaleLowerCase('ru-RU');
 type Card = { brand: string; flavor: string };
 
 function revalidateCatalog() {
@@ -29,6 +36,28 @@ export async function mergeCatalogCardAction(card: Card, _previous: CardActionSt
     revalidateCatalog();
     return { saved: true };
   } catch (error) { return { error: message(error, 'Не удалось склеить карточки. Попробуйте ещё раз.') }; }
+}
+
+/**
+ * «Переименовать»: the same brand, flavour, sugar and juice inputs as a member drink. The brand keeps the catalog's
+ * spelling, the flavour its canonical key; a name the catalog already shows comes back as `duplicate` to merge into.
+ */
+export async function renameCatalogCardAction(card: Card, _previous: CardActionState, form: FormData): Promise<CardActionState> {
+  const admin = await requireSiteAdmin();
+  try {
+    const typed = parseIdentity(form, KNOWN_FLAVORS);
+    const [files, shown] = await Promise.all([readAllCatalogGroups(), loadAllCatalogGroups()]);
+    const brand = [...shown, ...files].find(group => lower(group.brand) === lower(typed.brand))?.brand ?? typed.brand;
+    await renameCatalogCard(admin.userId, admin.email, card, drinkIdentity(brand, typed.flavor), files, shown);
+    revalidateCatalog();
+    revalidatePath('/profile', 'layout');
+    revalidatePath('/business/cabinet');
+    return { saved: true };
+  } catch (error) {
+    if (error instanceof CatalogCardDuplicate) return { error: error.message, duplicate: { ...error.target, href: `/catalog/${catalogGroupSlug(error.target.brand, error.target.flavor)}` } };
+    if (error instanceof CatalogDrinkError) return { error: error.message };
+    return { error: message(error, 'Не удалось переименовать карточку. Попробуйте ещё раз.') };
+  }
 }
 
 /** A new cover (one still photo), or `restore` back to the parser's. */

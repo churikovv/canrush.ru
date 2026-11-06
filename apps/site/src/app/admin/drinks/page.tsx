@@ -27,7 +27,7 @@ const TABS: { key: TabKey; label: string; title: string; subtitle: string; empty
   { key: 'pending', label: 'На проверке', title: 'Напитки на проверке', subtitle: 'Сверьте бренд и вкус с фото банки: так напиток появится в каталоге и к нему привяжутся отзывы.', empty: ['Все заявки проверены', 'Новые напитки появятся здесь после отправки.'] },
   { key: 'published', label: 'Добавленные', title: 'Добавленные напитки', subtitle: 'Опубликованные напитки участников. В меню «⋯» — правка бренда, вкуса, фото, объёмов и состава или удаление из каталога.', empty: ['Пока ничего не добавлено', 'Здесь появятся напитки после публикации.'] },
   { key: 'duplicates', label: 'Возможные дубли', title: 'Возможные дубли', subtitle: 'Опубликованные напитки, которые нейросеть сочла похожими на другую карточку. Сравните и склейте в меню «⋯» или отметьте «Не дубль».', empty: ['Подозрений нет', 'Нейросеть проверяет напитки постепенно — новые подозрения появятся здесь.'] },
-  { key: 'catalog', label: 'Карточки каталога', title: 'Карточки каталога', subtitle: 'Напитки, которые парсер собрал из магазинов. В меню «⋯» — своё фото, полное название, склейка с другой карточкой и скрытие из каталога. Парсер эти правки не перезаписывает.', empty: ['Карточек нет', 'Здесь появятся напитки из магазинов после работы парсера.'] },
+  { key: 'catalog', label: 'Карточки каталога', title: 'Карточки каталога', subtitle: 'Напитки, которые парсер собрал из магазинов. В меню «⋯» — своё фото, переименование (например, после редизайна), полное название, склейка с другой карточкой и скрытие из каталога. Парсер эти правки не перезаписывает.', empty: ['Карточек нет', 'Здесь появятся напитки из магазинов после работы парсера.'] },
   { key: 'rejected', label: 'Отклонённые', title: 'Отклонённые заявки', subtitle: 'Заявки, которые вернули автору. Их можно поправить и удалить.', empty: ['Отклонённых заявок нет', 'Здесь появятся заявки, возвращённые на исправление.'] },
 ];
 
@@ -87,11 +87,12 @@ export default async function AdminDrinksPage({ searchParams }: { searchParams: 
             {card.fullName && <span className="admin-drink-card-full">{card.fullName}</span>}
             <span className="admin-drink-card-meta">{card.offers ? `В магазинах · ${card.offers} ${card.offers % 10 === 1 && card.offers % 100 !== 11 ? 'предложение' : card.offers % 10 >= 2 && card.offers % 10 <= 4 && (card.offers % 100 < 10 || card.offers % 100 >= 20) ? 'предложения' : 'предложений'}` : 'Архив · нет в магазинах'}{card.ownPhoto ? ' · своё фото' : ''}</span>
             <code title="Ключ вкуса">{card.flavor}</code>
+            {card.renamedFrom.length > 0 && <span className="admin-drink-card-full">Было: {card.renamedFrom.join(', ')}</span>}
             {card.mergedInto && <span className="catalog-drink-archived">Склеена с «{card.mergedInto.label}»</span>}
             {card.hidden && <span className="catalog-drink-archived">Скрыта из каталога</span>}
             {card.discontinued && <span className="catalog-drink-archived">Снят с производства</span>}
           </div>
-          <CatalogCardAdminMenu card={card} />
+          <CatalogCardAdminMenu card={card} brands={brands} flavors={flavors} />
         </div>
         {card.check && (view !== 'all' || ['duplicate', 'unsure', 'unknown'].includes(card.check.verdict)) && !card.check.dismissed && !card.hidden && (view === 'auto' || !card.mergedInto) && <CardCheckNote card={card} check={card.check} />}
       </li>)}</ul> : <div className="admin-data-panel"><div className="admin-empty-result"><strong>{query ? 'Ничего не нашлось' : view === 'queue' ? 'Очередь пуста' : view === 'auto' ? 'Нейросеть ещё ничего не склеила' : tab.empty[0]}</strong><span>{query ? 'Попробуйте другой бренд или вкус.' : view === 'queue' ? 'Карточки, в которых нейросеть сомневается, появятся здесь.' : view === 'auto' ? 'Карточки, в дублях которых она уверена, она склеит сама и покажет здесь.' : tab.empty[1]}</span></div></div>)

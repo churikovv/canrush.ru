@@ -828,3 +828,11 @@ html[data-cookie-notice="visible"] .bc-support .support-chat { height: min(640px
 @media (max-width: 639px) {
   .bq-answer-open, .bq-answer-actions .bc-button { width: 100%; }
 }
+
+/* Форма точки продаж (`PointForm` в `business-points.tsx`) — в окне ответа на отзыв. */
+.points-dialog { max-height: calc(100dvh - 24px); overflow-y: auto; }
+.points-form select { width: 100%; min-height: 48px; padding: 0 12px; border: 1px solid var(--bc-line); border-radius: 10px; background: var(--bc-panel); color: var(--bc-text); font: inherit; font-weight: 400; }
+.points-form-drinks { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.points-form-drinks legend { margin-bottom: 8px; padding: 0; font-weight: 500; font-size: .9375rem; }
+@media (pointer: coarse) { .points-form input, .points-form select { font-size: 1rem; } }
+@media (min-width: 640px) { .points-form .bc-store-form-row { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); } }

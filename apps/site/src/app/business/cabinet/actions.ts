@@ -23,6 +23,8 @@ import { DrinkPriceError, parseDrinkPrice } from '@/lib/brand-drink-price-fields
 import { removeDrinkPrice, setDrinkPrice } from '@/lib/brand-drink-prices';
 import { addCompetitor, removeCompetitor } from '@/lib/business-competitors';
 import { answerBusinessQuestion } from '@/lib/business-questions';
+import { parsePoint, PointError } from '@/lib/business-point-fields';
+import { deletePoint, savePoint } from '@/lib/business-points';
 import { catalogGroupSlug } from '@/lib/catalog-query';
 import { DrinkQuestionError } from '@/lib/drink-question-fields';
 import { MEMBER_BLOCKED_MESSAGE, isMemberBlockedError } from '@/lib/member-blocks';
@@ -266,6 +268,21 @@ export async function removeDrinkStoreAction(id: string): Promise<BusinessAction
   try { await removeDrinkStore((await member()).id, id); }
   catch (error) { return { error: message(error, 'Не удалось убрать магазин. Попробуйте ещё раз.') }; }
   revalidatePath('/business/cabinet'); revalidatePath('/catalog/[product]', 'page');
+  return { done: true };
+}
+
+/** A point of sale: new (`id` null) or the company's own one edited; the address goes to the geocoder. */
+export async function savePointAction(id: string | null, _state: BusinessActionState, form: FormData): Promise<BusinessActionState> {
+  try { await savePoint((await member()).id, id, parsePoint(form)); }
+  catch (error) { return { error: error instanceof PointError ? error.message : message(error, 'Не удалось сохранить точку. Попробуйте ещё раз.') }; }
+  revalidatePath('/business/cabinet'); revalidatePath('/company/[id]', 'page');
+  return { done: true };
+}
+
+export async function deletePointAction(id: string): Promise<BusinessActionState> {
+  try { await deletePoint((await member()).id, id); }
+  catch (error) { return { error: message(error, 'Не удалось удалить точку. Попробуйте ещё раз.') }; }
+  revalidatePath('/business/cabinet'); revalidatePath('/company/[id]', 'page');
   return { done: true };
 }
 

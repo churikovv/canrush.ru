@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogGroup } from '@canrush/shared';
-import { applyCardEdits, cardKey, joinVolumes, mergeTarget, parseCardFullName, volumesWithoutOffers, type CardEdit } from '../src/lib/catalog-card-edit-fields';
+import { applyCardEdits, cardKey, joinVolumes, mergeTarget, parseCardFullName, renameClash, renameTarget, volumesWithoutOffers, type CardEdit } from '../src/lib/catalog-card-edit-fields';
 
 const offer = (price: number, url: string) => ({ source: 'edadeal' as const, retailer: 'Магнит', volumeMl: 450, price, url, fetchedAt: '2026-10-29T00:00:00.000Z' });
 const group = (flavor: string, variants: CatalogGroup['variants'] = [], cover?: string): CatalogGroup => ({ brand: 'Tornado', flavor, variants, minPrice: variants.length ? Math.min(...variants.map(item => item.price)) : 0, ...(cover ? { coverImageUrl: cover } : {}) });
@@ -48,5 +48,20 @@ describe('catalog card edits', () => {
     expect(parseCardFullName('  Tornado   Max  Black ')).toBe('Tornado Max Black');
     expect(parseCardFullName('')).toBe('');
     expect(() => parseCardFullName('x')).toThrow('Полное название');
+  });
+
+  it('follows renames for the card’s name now, and tells a clash from going back', () => {
+    const edit = (brand: string, flavor: string, to: string, renamed: boolean): CardEdit => ({ id: flavor, brand, flavor, mergedInto: { brand, flavor: to }, renamed, hidden: false, fullName: null, photoVersion: null });
+    const list = [edit('B', 'old', 'new', true), edit('B', 'new', 'newer', true), edit('B', 'dup', 'mango', false)];
+    const map = new Map(list.map(item => [cardKey(item.brand, item.flavor), item]));
+    expect(renameTarget(map, 'B', 'old')).toEqual({ brand: 'B', flavor: 'newer' });
+    // A merge is not a rename: the card keeps its name in the admin and shows «Склеена с …».
+    expect(renameTarget(map, 'B', 'dup')).toEqual({ brand: 'B', flavor: 'dup' });
+    const shown = [{ brand: 'B', flavor: 'newer' }, { brand: 'B', flavor: 'mango' }];
+    const card = { brand: 'B', flavor: 'newer' };
+    expect(renameClash(map, shown, card, { brand: 'b', flavor: 'MANGO' })).toEqual({ brand: 'B', flavor: 'mango' });
+    expect(renameClash(map, shown, card, { brand: 'B', flavor: 'dup' })).toEqual({ brand: 'B', flavor: 'mango' });
+    expect(renameClash(map, shown, card, { brand: 'B', flavor: 'old' })).toBeNull();
+    expect(renameClash(map, shown, card, { brand: 'B', flavor: 'fresh' })).toBeNull();
   });
 });

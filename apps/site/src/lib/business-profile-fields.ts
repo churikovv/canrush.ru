@@ -4,11 +4,12 @@ import { BusinessError } from '@/lib/business-fields';
  * Rules of a company's public profile (/company/<id>), shared by the browser and the server: which sections it shows
  * and what a wall post with a PDF presentation may be.
  */
-export type ProfileSection = 'store' | 'presentations' | 'drinks' | 'listings' | 'awards';
+export type ProfileSection = 'store' | 'presentations' | 'drinks' | 'points' | 'listings' | 'awards';
 export const PROFILE_SECTIONS: { key: ProfileSection; label: string; hint: string }[] = [
   { key: 'store', label: 'Магазин', hint: 'кнопка «Перейти в магазин» и адрес' },
   { key: 'presentations', label: 'Презентации', hint: 'стена с PDF и новостями компании' },
   { key: 'drinks', label: 'Напитки', hint: 'подтверждённые напитки компании из каталога' },
+  { key: 'points', label: 'Где купить', hint: 'точки продаж компании на карте' },
   { key: 'listings', label: 'Объявления', hint: 'открытые объявления маркета от компании' },
   { key: 'awards', label: 'Награды', hint: 'дипломы и сертификаты: вкладка появится с первой наградой' },
 ];

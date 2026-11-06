@@ -1,7 +1,8 @@
 import { cache } from 'react';
 import type { CatalogGroup } from '@canrush/shared';
 import { getPool } from '@/db/pool';
-import { applyCardEdits, cardKey, type CardEdit } from '@/lib/catalog-card-edit-fields';
+import { applyCardEdits, cardKey, renameClash, renameTarget, sameIdentity, type CardEdit } from '@/lib/catalog-card-edit-fields';
+import { flavorName } from '@/lib/catalog-query';
 import type { PreparedReviewPhoto } from '@/lib/review-photos';
 
 /**
@@ -9,13 +10,19 @@ import type { PreparedReviewPhoto } from '@/lib/review-photos';
  * cover. The parser keeps rewriting its files, so the edits live in the database and are laid over every catalog load.
  */
 export class CatalogCardError extends Error {}
+/** A rename onto a name the catalog already has: the dialog offers to merge into that card instead. */
+export class CatalogCardDuplicate extends CatalogCardError {
+  constructor(readonly target: { brand: string; flavor: string; label: string }) {
+    super(`«${target.label}» уже есть в каталоге. Склейте карточки, чтобы не было двух одинаковых.`);
+  }
+}
 
 const ADMIN = 'exists(select 1 from "user" u join "siteAdmin" a on lower(u.email) = a.email where u.id = $1)';
 
 /** All edits, one cheap query per request (no photo bytes). */
-export const cardEdits = cache(async (): Promise<CardEdit[]> => (await getPool().query<{ id: string; brand: string; flavor: string; mergedIntoBrand: string | null; mergedIntoFlavor: string | null; hidden: boolean; fullName: string | null; photoVersion: Date | null; updatedBy: string | null; volumes: number[]; discontinued: boolean }>(
-  `select id, brand, flavor, "mergedIntoBrand", "mergedIntoFlavor", hidden, "fullName", case when photo is not null then "updatedAt" end as "photoVersion", "updatedBy", volumes, discontinued from "catalogCardEdit"`)).rows
-  .map(row => ({ id: row.id, brand: row.brand, flavor: row.flavor, hidden: row.hidden, fullName: row.fullName, updatedBy: row.updatedBy, volumes: row.volumes, discontinued: row.discontinued,
+export const cardEdits = cache(async (): Promise<CardEdit[]> => (await getPool().query<{ id: string; brand: string; flavor: string; mergedIntoBrand: string | null; mergedIntoFlavor: string | null; renamed: boolean; hidden: boolean; fullName: string | null; photoVersion: Date | null; updatedBy: string | null; volumes: number[]; discontinued: boolean }>(
+  `select id, brand, flavor, "mergedIntoBrand", "mergedIntoFlavor", renamed, hidden, "fullName", case when photo is not null then "updatedAt" end as "photoVersion", "updatedBy", volumes, discontinued from "catalogCardEdit"`)).rows
+  .map(row => ({ id: row.id, brand: row.brand, flavor: row.flavor, renamed: row.renamed, hidden: row.hidden, fullName: row.fullName, updatedBy: row.updatedBy, volumes: row.volumes, discontinued: row.discontinued,
     mergedInto: row.mergedIntoBrand && row.mergedIntoFlavor ? { brand: row.mergedIntoBrand, flavor: row.mergedIntoFlavor } : null,
     photoVersion: row.photoVersion ? row.photoVersion.getTime() : null })));
 
@@ -86,6 +93,7 @@ async function mergeCards(card: { brand: string; flavor: string }, target: { bra
   try {
     await db.query('begin');
     if (staffId !== undefined && !(await db.query(`select 1 where ${ADMIN}`, [staffId])).rowCount) throw new CatalogCardError('Нет доступа.');
+    await db.query(`select pg_advisory_xact_lock(hashtext('catalog-card-edit'))`);
     // No loops: the target must not lead back to this card.
     const chain = (await db.query<{ brand: string; flavor: string; mergedIntoBrand: string | null; mergedIntoFlavor: string | null }>('select brand, flavor, "mergedIntoBrand", "mergedIntoFlavor" from "catalogCardEdit" where "mergedIntoBrand" is not null')).rows;
     const next = new Map(chain.map(row => [cardKey(row.brand, row.flavor), { brand: row.mergedIntoBrand!, flavor: row.mergedIntoFlavor! }]));
@@ -97,7 +105,7 @@ async function mergeCards(card: { brand: string; flavor: string }, target: { bra
       step = further;
     }
     await db.query(`insert into "catalogCardEdit"(brand, flavor, "mergedIntoBrand", "mergedIntoFlavor", "updatedBy") values ($1, $2, $3, $4, $5)
-      on conflict (brand, flavor) do update set "mergedIntoBrand" = excluded."mergedIntoBrand", "mergedIntoFlavor" = excluded."mergedIntoFlavor", "updatedAt" = clock_timestamp(), "updatedBy" = excluded."updatedBy"`,
+      on conflict (brand, flavor) do update set "mergedIntoBrand" = excluded."mergedIntoBrand", "mergedIntoFlavor" = excluded."mergedIntoFlavor", renamed = false, "updatedAt" = clock_timestamp(), "updatedBy" = excluded."updatedBy"`,
     [card.brand, card.flavor, target.brand, target.flavor, actor]);
     await db.query('update "catalogCardEdit" set "mergedIntoBrand" = $3, "mergedIntoFlavor" = $4 where "mergedIntoBrand" = $1 and "mergedIntoFlavor" = $2', [card.brand, card.flavor, target.brand, target.flavor]);
     await addCardVolumes(db, target, (await db.query<{ volumes: number[] }>('select volumes from "catalogCardEdit" where brand = $1 and flavor = $2', [card.brand, card.flavor])).rows[0]?.volumes ?? [], actor);
@@ -105,6 +113,55 @@ async function mergeCards(card: { brand: string; flavor: string }, target: { bra
     await db.query('update "catalogDrinkRename" set "toBrand" = $3, "toFlavor" = $4 where "toBrand" = $1 and "toFlavor" = $2', [card.brand, card.flavor, target.brand, target.flavor]);
     await db.query('insert into "catalogDrinkRename"("fromBrand", "fromFlavor", "toBrand", "toFlavor") values ($1, $2, $3, $4)', [card.brand, card.flavor, target.brand, target.flavor]);
     await audit(db, actor, action, card.brand, card.flavor);
+    await db.query('commit');
+  } catch (error) { await db.query('rollback'); throw error; } finally { db.release(); }
+}
+
+/**
+ * Rename a parser card, usually after a redesign: the card lives on under the new name. Its old name keeps leading to it
+ * (`catalogCardEdit`, `renamed`), so the shops' offers under the old name still land here; members' reviews, favourites,
+ * collections and the company data move (`move_drink_identity`), the old address redirects, the card's own edits (full
+ * name, photo, «Снят с производства», volumes) go along. A name the catalog already shows — or an old name of another
+ * card — is a duplicate: `CatalogCardDuplicate`, and the dialog offers the merge. Renaming back to an old name works.
+ * `parsed` — all parser groups (raw), `shown` — the identities the catalog shows now.
+ */
+export async function renameCatalogCard(staffId: string, staffEmail: string, card: { brand: string; flavor: string }, next: { brand: string; flavor: string },
+  parsed: readonly { brand: string; flavor: string }[], shown: readonly { brand: string; flavor: string }[]): Promise<void> {
+  if (sameIdentity(card, next)) throw new CatalogCardError('Название не изменилось.');
+  const edits = await cardEdits();
+  const byKey = new Map(edits.map(edit => [cardKey(edit.brand, edit.flavor), edit]));
+  if (!parsed.some(group => sameIdentity(renameTarget(byKey, group.brand, group.flavor), card))) throw new CatalogCardError('Карточка изменилась — обновите страницу.');
+  const hidden = parsed.filter(group => byKey.get(cardKey(group.brand, group.flavor))?.hidden);
+  const clash = renameClash(byKey, [...shown, ...hidden], card, next);
+  if (clash) throw new CatalogCardDuplicate({ ...clash, label: `${clash.brand} · ${flavorName(clash.flavor)}` });
+  const db = await getPool().connect();
+  try {
+    await db.query('begin');
+    if (!(await db.query(`select 1 where ${ADMIN}`, [staffId])).rowCount) throw new CatalogCardError('Нет доступа.');
+    // One rename or merge at a time: the chains below are read and rewritten as a whole.
+    await db.query(`select pg_advisory_xact_lock(hashtext('catalog-card-edit'))`);
+    // Back to an old name: that name is the card again, its own road to the current one goes.
+    await db.query(`update "catalogCardEdit" set "mergedIntoBrand" = null, "mergedIntoFlavor" = null, renamed = false where brand = $1 and flavor = $2`, [next.brand, next.flavor]);
+    // The card's look moves to the new name; the old row keeps only the road.
+    await db.query(`insert into "catalogCardEdit" (brand, flavor, "fullName", photo, thumbnail, discontinued, volumes, "updatedBy")
+        select $3, $4, e."fullName", e.photo, e.thumbnail, coalesce(e.discontinued, false), coalesce(e.volumes, '{}'), $5
+        from (select 1) one left join "catalogCardEdit" e on e.brand = $1 and e.flavor = $2
+      on conflict (brand, flavor) do update set "fullName" = excluded."fullName", photo = excluded.photo, thumbnail = excluded.thumbnail, discontinued = excluded.discontinued,
+        volumes = (select array(select distinct v from unnest("catalogCardEdit".volumes || excluded.volumes) v order by v))[1:12], hidden = false,
+        "updatedAt" = clock_timestamp(), "updatedBy" = excluded."updatedBy"`, [card.brand, card.flavor, next.brand, next.flavor, staffEmail]);
+    await db.query(`insert into "catalogCardEdit" (brand, flavor, "mergedIntoBrand", "mergedIntoFlavor", renamed, "updatedBy") values ($1, $2, $3, $4, true, $5)
+      on conflict (brand, flavor) do update set "mergedIntoBrand" = excluded."mergedIntoBrand", "mergedIntoFlavor" = excluded."mergedIntoFlavor", renamed = true,
+        "fullName" = null, photo = null, thumbnail = null, discontinued = false, volumes = '{}', hidden = false, "updatedAt" = clock_timestamp(), "updatedBy" = excluded."updatedBy"`,
+    [card.brand, card.flavor, next.brand, next.flavor, staffEmail]);
+    // Older names and cards merged into this one lead straight to the new name.
+    await db.query(`update "catalogCardEdit" set "mergedIntoBrand" = $3, "mergedIntoFlavor" = $4 where "mergedIntoBrand" = $1 and "mergedIntoFlavor" = $2 and not (brand = $3 and flavor = $4)`,
+      [card.brand, card.flavor, next.brand, next.flavor]);
+    await db.query('select move_drink_identity($1, $2, $3, $4)', [card.brand, card.flavor, next.brand, next.flavor]);
+    await db.query('update "catalogDrinkRename" set "toBrand" = $3, "toFlavor" = $4 where "toBrand" = $1 and "toFlavor" = $2', [card.brand, card.flavor, next.brand, next.flavor]);
+    await db.query('delete from "catalogDrinkRename" where ("fromBrand" = $1 and "fromFlavor" = $2) or ("fromBrand" = "toBrand" and "fromFlavor" = "toFlavor")', [next.brand, next.flavor]);
+    await db.query('insert into "catalogDrinkRename"("fromBrand", "fromFlavor", "toBrand", "toFlavor") values ($1, $2, $3, $4)', [card.brand, card.flavor, next.brand, next.flavor]);
+    await db.query('insert into "adminAuditLog" ("adminEmail", action, "targetType", "targetId") values ($1, $2, $3, $4)',
+      [staffEmail, 'catalog-card-rename', 'catalog-card', `${card.brand} · ${card.flavor} → ${next.brand} · ${next.flavor}`]);
     await db.query('commit');
   } catch (error) { await db.query('rollback'); throw error; } finally { db.release(); }
 }

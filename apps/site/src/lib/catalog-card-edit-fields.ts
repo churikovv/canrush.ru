@@ -7,6 +7,8 @@ import type { CatalogGroup } from '@canrush/shared';
 export interface CardEdit {
   id: string; brand: string; flavor: string;
   mergedInto: { brand: string; flavor: string } | null;
+  /** The edge `mergedInto` is a rename by the team (migration 0206): the card lives on under the new name. */
+  renamed?: boolean;
   hidden: boolean; fullName: string | null;
   /** `updatedAt` of a card with our own photo, for the photo's address; null without one. */
   photoVersion: number | null;
@@ -32,6 +34,38 @@ export function mergeTarget(edits: Map<string, CardEdit>, brand: string, flavor:
     current = next;
   }
   return current;
+}
+
+/**
+ * The name a card has now: its renames followed, merges not (a chain is cut after ten steps). The admin lists a renamed
+ * card under it, with what it was called before.
+ */
+export function renameTarget(edits: Map<string, CardEdit>, brand: string, flavor: string): { brand: string; flavor: string } {
+  let current = { brand, flavor };
+  for (let step = 0; step < 10; step++) {
+    const edit = edits.get(cardKey(current.brand, current.flavor));
+    if (!edit?.mergedInto || !edit.renamed) break;
+    current = edit.mergedInto;
+  }
+  return current;
+}
+
+const lower = (value: string) => value.toLocaleLowerCase('ru-RU');
+/** The same identity, whatever the case: «Burn · Mango» and «burn · mango» are one drink for duplicates. */
+export const sameIdentity = (a: { brand: string; flavor: string }, b: { brand: string; flavor: string }) => lower(a.brand) === lower(b.brand) && lower(a.flavor) === lower(b.flavor);
+
+/**
+ * What a rename of the card `card` to `next` would clash with, as the catalog stands: a card already showing under that
+ * name (a parser card, a renamed one, a member drink), or an old name of another card (it leads there). Renaming back to
+ * a name that leads to this very card is not a clash. `shown` — the identities the catalog shows now.
+ */
+export function renameClash(edits: Map<string, CardEdit>, shown: readonly { brand: string; flavor: string }[], card: { brand: string; flavor: string }, next: { brand: string; flavor: string }): { brand: string; flavor: string } | null {
+  if (sameIdentity(card, next)) return null;
+  const exact = shown.find(item => sameIdentity(item, next)) ?? next;
+  const end = mergeTarget(edits, exact.brand, exact.flavor);
+  if (sameIdentity(end, card)) return null;
+  if (!sameIdentity(end, exact)) return end;
+  return shown.some(item => sameIdentity(item, next)) ? exact : null;
 }
 
 const offerKey = (offer: CatalogGroup['variants'][number]) => JSON.stringify([offer.source, offer.retailer, offer.volumeMl, offer.url]);

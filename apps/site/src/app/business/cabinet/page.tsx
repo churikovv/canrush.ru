@@ -56,7 +56,11 @@ import { getCabinetListings, getMessages, getOrder, getOrders } from '@/lib/mark
 import { ORDER_STATUS, formatPrice, type OrderStatus } from '@/lib/market-fields';
 import { storeDrinkOptions } from '@/lib/store-catalog';
 import { CompanyBannerForm, CompanyProfileSettingsForm } from '@/components/company-profile-form';
-import { companyStoreOptions, getCompanyProfileSettings } from '@/lib/business-profile';
+import { companyDrinks, companyStoreOptions, getCompanyProfileSettings } from '@/lib/business-profile';
+import { PointsBoard } from '@/components/business-points';
+import { listBusinessPoints, pointViews } from '@/lib/business-points';
+import { MAX_BUSINESS_POINTS, plural as pointPlural } from '@/lib/business-point-fields';
+import { selectedCity } from '@/lib/location';
 import { BrandPoster } from '@/components/brand-poster';
 import { BadgeCode, QrDownload } from '@/components/brand-materials-client';
 import { countUnansweredQuestions, listBusinessQuestions, type BusinessQuestionView } from '@/lib/business-questions';
@@ -73,7 +77,7 @@ const number = new Intl.NumberFormat('ru-RU');
 const longDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Moscow' });
 const longDayTime = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
 const shortDay = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow' });
-const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', questions: 'Вопросы о напитках', insights: 'Разбор нейросетью', search: 'Поиск', cards: 'Карточки', competitors: 'Конкуренты', brand: 'Бренд', drinks: 'Напитки', 'drink-edit': 'Правка карточки', 'drink-stores': 'Где купить', 'drink-price': 'Рекомендованная цена', wholesale: 'Оптовые цены', 'new-drink': 'Новый напиток', materials: 'QR и значок', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки', plan: 'Тариф и продвижение', support: 'Помощь и поддержка' };
+const TITLES: Record<BusinessSection, string> = { overview: 'Обзор', reviews: 'Отзывы', questions: 'Вопросы о напитках', insights: 'Разбор нейросетью', search: 'Поиск', cards: 'Карточки', competitors: 'Конкуренты', brand: 'Бренд', drinks: 'Напитки', 'drink-edit': 'Правка карточки', 'drink-stores': 'Где купить', 'drink-price': 'Рекомендованная цена', wholesale: 'Оптовые цены', 'new-drink': 'Новый напиток', materials: 'QR и значок', points: 'Точки продаж', market: 'Объявления', 'new-listing': 'Новое объявление', orders: 'Заказы и чаты', settings: 'Настройки', plan: 'Тариф и продвижение', support: 'Помощь и поддержка' };
 const ORDER_TONE: Record<OrderStatus, string> = { new: 'mid', confirmed: 'good', completed: 'good', cancelled: 'bad' };
 const DRINK_REQUEST: Record<CatalogDrinkStatus, { label: string; tone: string }> = { pending: { label: 'На модерации', tone: 'mid' }, published: { label: 'В каталоге', tone: 'good' }, rejected: { label: 'Нужно исправить', tone: 'bad' } };
 const SECTIONS = Object.keys(TITLES) as BusinessSection[];
@@ -1090,6 +1094,27 @@ const sameTarget = (a: MaterialTarget, b: MaterialTarget) => a.kind === b.kind &
  * «QR и значок»: a printed QR poster that brings a buyer at the shelf to the drink's reviews, and the rating badge for
  * the brand's own site — for a drink of the company's brands or the whole brand. Free on every plan: both bring people.
  */
+/**
+ * «Точки продаж»: где купить напитки компании или где стоят её магазины — на карте и списком. Покупатели видят их во
+ * вкладке «Где купить» профиля компании. Владелец и менеджеры добавляют и правят, аналитик смотрит.
+ */
+async function Points({ business, canAct }: { business: Business; canAct: boolean }) {
+  const [points, drinks, city] = await Promise.all([listBusinessPoints(business.id), companyDrinks(business.id), selectedCity()]);
+  const views = await pointViews(business.id, points);
+  const cities = new Set(points.map(point => point.city)).size;
+  return <section className="bc-card bc-points">
+    <div className="bc-card-head">
+      <h2>{points.length ? `${points.length} ${pointPlural(points.length, 'точка', 'точки', 'точек')} в ${cities} ${pointPlural(cities, 'городе', 'городах', 'городах')}` : 'Где купить ваши напитки'}</h2>
+      {points.length > 0 && <Link className="bc-link" href={`/company/${business.id}?tab=points`}>Как видят покупатели</Link>}
+    </div>
+    <p className="bc-muted">Магазины, киоски и кафе, где продаются ваши напитки, или ваши собственные точки. Покупатели увидят их на карте в профиле компании, во вкладке «Где купить». До {MAX_BUSINESS_POINTS} точек.</p>
+    {!points.length && <p className="bc-store-empty">{canAct ? 'Пока ни одной точки — добавьте первую: название и адрес, на карту её поставим сами.' : 'Точек пока нет. Добавить их могут владелец и менеджеры.'}</p>}
+    {!canAct && points.length > 0 && <p className="bc-muted">У роли «Аналитик» только просмотр.</p>}
+    <PointsBoard points={views} apiKey={process.env.YANDEX_MAPS_API_KEY ?? ''} center={[city.lat, city.lng]} editable={canAct} city={city.name}
+      drinks={drinks.map(drink => ({ brand: drink.brand, flavor: drink.flavor, name: drink.name }))} addLabel={points.length ? 'Добавить точку' : 'Добавить первую точку'} />
+  </section>;
+}
+
 async function Materials({ business, params }: { business: Business; params: Params }) {
   const targets = await companyTargets(business.id);
   const target = pickTarget(targets, params);
@@ -1304,7 +1329,7 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     : section === 'new-listing' ? <Link className="bc-button is-outline" href={businessHref('market')}>К объявлениям</Link>
     : section === 'orders' ? (params.order ? <Link className="bc-button is-outline" href={businessHref('orders')}>Все заказы</Link> : <Link className="bc-button" href={businessHref('new-listing')}>Новое объявление</Link>)
     : section === 'settings' || section === 'support' ? undefined
-    : section === 'plan' || section === 'wholesale' || section === 'materials' || section === 'questions' ? undefined
+    : section === 'plan' || section === 'wholesale' || section === 'materials' || section === 'points' || section === 'questions' ? undefined
     : <>{approved && hasFeature(business, 'export') && <a className="bc-button is-outline" href={`/business/cabinet/export${section === 'search' || section === 'cards' || section === 'competitors' ? `?kind=${section}` : ''}`} download
         title={section === 'search' ? 'Частые запросы' : section === 'cards' ? 'Просмотры и переходы по напиткам' : section === 'competitors' ? 'Сравнение с конкурентами' : 'Все отзывы'}>Экспорт CSV</a>}
       {canAct && <Link className="bc-button" href={businessHref('drinks')}>Прикрепить напиток</Link>}</>;
@@ -1336,6 +1361,7 @@ export default async function BusinessCabinetPage({ searchParams }: { searchPara
     {section === 'new-drink' && <NewDrink verified={approved && canAct} />}
     {section === 'questions' && (approved ? <Questions business={business} params={params} userId={session.user.id} canAct={canAct} /> : locked('Вопросы появятся после проверки'))}
     {section === 'materials' && (approved ? <Materials business={business} params={params} /> : locked('QR-плакат и значок появятся после проверки'))}
+    {section === 'points' && (approved ? <Points business={business} canAct={canAct} /> : locked('Точки продаж можно добавить после проверки'))}
     {section === 'new-listing' && <NewListing userId={session.user.id} business={business} asCompany={canAct} />}
     {section === 'orders' && <Orders userId={session.user.id} params={params} />}
     {section === 'market' && <Market userId={session.user.id} business={business} params={params} />}

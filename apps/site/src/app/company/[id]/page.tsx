@@ -12,6 +12,8 @@ import { CompanyAwardForm, CompanyAwards } from '@/components/company-awards';
 import { CompanyFollowButton } from '@/components/company-follow-button';
 import { CompanyDeckUpload, CompanyFile, CompanyPhotos, CompanyPostForm, CompanyPostMenu } from '@/components/company-wall';
 import { PdfPages } from '@/components/pdf-pages';
+import { PointsBoard } from '@/components/business-points';
+import { selectedCity } from '@/lib/location';
 import { CoverImage } from '@/components/cover-image';
 import { FormAlert } from '@/components/form-alert';
 import { MarketCompanyLogo } from '@/components/market-company-logo';
@@ -49,8 +51,8 @@ const SITE_ICON = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" st
 const PIN_ICON = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" /><circle cx="12" cy="9.5" r="2.5" /></svg>;
 const CHECK = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 12.5 4 4 8-9" /></svg>;
 const PDF_ICON = <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>;
-type Tab = 'feed' | 'drinks' | 'market' | 'awards' | 'about';
-const TABS: { key: Tab; label: string }[] = [{ key: 'feed', label: 'Лента' }, { key: 'drinks', label: 'Напитки' }, { key: 'market', label: 'Маркет' }, { key: 'awards', label: 'Награды' }, { key: 'about', label: 'О бренде' }];
+type Tab = 'feed' | 'drinks' | 'points' | 'market' | 'awards' | 'about';
+const TABS: { key: Tab; label: string }[] = [{ key: 'feed', label: 'Лента' }, { key: 'drinks', label: 'Напитки' }, { key: 'points', label: 'Где купить' }, { key: 'market', label: 'Маркет' }, { key: 'awards', label: 'Награды' }, { key: 'about', label: 'О бренде' }];
 
 /**
  * A brand's page in the manner of a social profile: a wide banner, the round logo with the check over it, «Официальный
@@ -64,7 +66,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
   const [{ id }, query, session] = await Promise.all([params, searchParams, auth.api.getSession({ headers: await headers() })]);
   const profile = await getCompanyProfile(id, session?.user.id ?? null);
   if (!profile) notFound();
-  const { business, role, store, drinks, listings, posts, awards, presentation, followers, following } = profile;
+  const { business, role, store, drinks, points, listings, posts, awards, presentation, followers, following } = profile;
   const hidden = new Set(business.profileHidden);
   const editor = role === 'owner' || role === 'manager';
   const staff = session ? await isSiteStaffEmail(session.user.email) : false;
@@ -75,8 +77,11 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
   const showListings = !hidden.has('listings') && listings.length > 0;
   // «Награды» is the team's to fill: visitors get the tab with the first award, and a switched-off section has none.
   const showAwards = !hidden.has('awards') && (awards.length > 0 || editor);
+  // «Где купить» shows with the first point; the team sees the tab before that, with the way to the cabinet.
+  const showPoints = (!hidden.has('points') && points.length > 0) || editor;
   // «Маркет» is there only while the company sells something.
-  const tabs = TABS.filter(item => (item.key !== 'market' || showListings) && (item.key !== 'awards' || showAwards));
+  const tabs = TABS.filter(item => (item.key !== 'market' || showListings) && (item.key !== 'awards' || showAwards) && (item.key !== 'points' || showPoints));
+  const city = await selectedCity();
   const tab: Tab = tabs.some(item => item.key === query.tab) ? query.tab as Tab : 'feed';
   const href = (next: Tab) => `/company/${business.id}${next === 'feed' ? '' : `?tab=${next}`}`;
   // In «Лента» the decks stand apart from the news: the «Презентация» block opens one whole (the one picked by `?deck=`,
@@ -154,6 +159,14 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
         </section> : null}
         {!(showDrinks || (editor && drinks.length > 0)) && <p className="company-empty company-section">{editor ? 'Прикрепите напитки компании в кабинете — они появятся здесь.' : 'Напитков компании пока нет в каталоге.'}</p>}
       </>}
+
+      {tab === 'points' && <section className="company-section" aria-labelledby="company-points-title">
+        <div className="company-section-head"><h2 id="company-points-title">Где купить</h2>{editor && <Link className="company-store-link" href="/business/cabinet?section=points">Точки в кабинете ↗</Link>}</div>
+        {hidden.has('points') && editor && <p className="company-muted company-hidden-note">Раздел скрыт от посетителей в настройках профиля.</p>}
+        {points.length > 0
+          ? <PointsBoard points={points} apiKey={process.env.YANDEX_MAPS_API_KEY ?? ''} center={[city.lat, city.lng]} city={city.name} />
+          : <p className="company-empty">Добавьте магазины, где продаются ваши напитки, в кабинете: «Управление → Точки продаж». Покупатели увидят их здесь на карте.</p>}
+      </section>}
 
       {tab === 'market' && showListings && <>
         {showListings && <section className="company-section" aria-labelledby="company-listings">
