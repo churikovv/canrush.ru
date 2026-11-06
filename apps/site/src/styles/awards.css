@@ -1,0 +1,133 @@
+/* «Премия за энергию» (/awards), in the manner of the Steam Awards: a blue stage of broken glass with the trophy and the
+   title, a grid of category tiles (2 on a phone, 4 from 960 px), each showing the member's pick or the winner; a tap
+   opens the category as a sheet. Mobile first. */
+.awards-page { display: grid; gap: 20px; width: min(100%, 1120px); margin: 0 auto; }
+
+.awards-stage {
+  position: relative; display: grid; grid-template-columns: 96px minmax(0, 1fr); grid-template-areas: 'trophy head' 'grid grid';
+  align-items: center; gap: 16px 12px; padding: 16px 12px; overflow: hidden; border-radius: var(--radius-xl); color: #fff;
+  background:
+    linear-gradient(115deg, transparent 0 38%, rgb(255 255 255 / .07) 38% 52%, transparent 52%),
+    linear-gradient(200deg, transparent 0 60%, rgb(255 255 255 / .06) 60% 72%, transparent 72%),
+    linear-gradient(330deg, transparent 0 70%, rgb(0 20 80 / .25) 70%),
+    radial-gradient(120% 90% at 20% 0%, #2f8bff 0%, var(--brand-blue) 50%, var(--brand-blue-deep) 100%);
+}
+.awards-trophy { grid-area: trophy; width: 96px; height: auto; filter: drop-shadow(0 12px 18px rgb(0 20 80 / .4)); animation: award-float 4.5s ease-in-out infinite; }
+.awards-stage-head { grid-area: head; display: grid; justify-items: start; gap: 6px; min-width: 0; }
+.awards-chip { padding: 4px 10px; border-radius: var(--radius-pill); background: rgb(255 255 255 / .18); font-size: .75rem; font-weight: 700; }
+.awards-stage h1 { margin: 0; font-size: clamp(1.375rem, 6.5vw, 2.75rem); font-weight: 800; line-height: 1; letter-spacing: -.02em; text-transform: uppercase; }
+.awards-stage h1 span { opacity: .7; }
+.awards-stage-head p { max-width: 60ch; margin: 0; color: rgb(255 255 255 / .86); font-size: .875rem; line-height: 1.4; }
+.awards-voters { font-size: .8125rem; color: rgb(255 255 255 / .8); }
+.awards-voters b { color: #fff; }
+@keyframes award-float { 50% { translate: 0 -6px; rotate: -2deg; } }
+
+/* Category tiles */
+.award-grid { grid-area: grid; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.award-grid > li { display: grid; }
+.award-tile {
+  --tile-a: #1150d8; --tile-b: #0a2468;
+  position: relative; display: grid; grid-template-rows: auto 1fr auto; gap: 6px; width: 100%; min-height: 236px; padding: 12px 10px 10px; overflow: hidden;
+  border: 0; border-radius: 16px; background: linear-gradient(165deg, var(--tile-a), var(--tile-b)); color: #fff; font: inherit; text-align: center; cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12), 0 12px 24px -14px rgb(0 10 40 / .7);
+  transition: translate .2s ease, box-shadow .2s ease;
+}
+.award-tile[data-category=design] { --tile-a: #5b35d6; --tile-b: #22146b; }
+.award-tile[data-category=taste] { --tile-a: #0d7fa3; --tile-b: #083a5c; }
+.award-tile[data-category=sugarfree] { --tile-a: #13906a; --tile-b: #0a3d33; }
+.award-tile:hover { translate: 0 -3px; box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / .55), 0 16px 28px -14px rgb(0 10 40 / .8); }
+.award-tile:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.award-tile-mark { position: absolute; top: -22px; left: -22px; width: 120px; height: 120px; color: rgb(255 255 255 / .1); pointer-events: none; }
+.award-tile-title { position: relative; display: grid; place-items: center; min-height: 2.4em; font-size: 1rem; font-weight: 800; line-height: 1.15; }
+.award-tile-stage { position: relative; display: grid; place-items: center; min-height: 118px; }
+.award-tile-stage::before { content: ''; position: absolute; inset: 8% 12%; border-radius: 50%; background: radial-gradient(closest-side, rgb(255 255 255 / .3), transparent); }
+.award-tile-can { position: relative; width: auto; max-width: 100%; height: 118px; object-fit: contain; filter: drop-shadow(0 10px 12px rgb(0 0 0 / .45)); }
+.award-tile-can.is-photo { width: 104px; height: 104px; padding: 6px; border-radius: 12px; background: #fff; filter: none; }
+.award-tile-can.is-empty { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: rgb(255 255 255 / .14); font-size: 2rem; }
+.award-tile-fan { position: relative; display: flex; align-items: flex-end; justify-content: center; }
+.award-tile-fan .award-tile-can { height: 88px; margin: 0 -12px; opacity: .6; }
+.award-tile-fan .award-tile-can:first-child { rotate: -10deg; }
+.award-tile-fan .award-tile-can:nth-child(2) { z-index: 1; height: 100px; opacity: .8; }
+.award-tile-fan .award-tile-can:nth-child(3) { rotate: 10deg; }
+.award-tile-fan .award-tile-can.is-photo { width: 64px; height: 64px; }
+.award-tile-foot { position: relative; display: grid; gap: 2px; padding: 8px; border-radius: 10px; background: rgb(0 0 0 / .24); }
+.award-tile-foot small { display: inline-flex; align-items: center; justify-content: center; gap: 4px; color: rgb(255 255 255 / .78); font-size: .75rem; font-weight: 600; }
+.award-tile-foot b { font-size: .875rem; line-height: 1.2; overflow-wrap: anywhere; }
+.award-tile[data-chosen] .award-tile-foot { background: #fff; color: var(--brand-blue-deep); }
+.award-tile[data-chosen] .award-tile-foot small { color: var(--brand-blue); }
+
+.awards-notice { padding: 12px 14px; border-radius: 14px; background: var(--color-subtle); color: var(--color-ink); line-height: 1.45; }
+.awards-notice a { color: var(--color-brand-deep); font-weight: 600; }
+
+.awards-rules { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--theme-line); border-radius: 18px; background: var(--color-surface); }
+.awards-rules h2 { margin: 0; font-size: 1.125rem; }
+.awards-rules ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.awards-rules li { position: relative; padding-left: 26px; color: var(--color-muted-strong); line-height: 1.45; }
+.awards-rules li::before { content: ''; position: absolute; top: 3px; left: 0; width: 16px; height: 16px; border-radius: 50%; background: var(--brand-blue) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4.5 8.2 2.3 2.3 4.7-5' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% no-repeat; }
+.awards-rules b { color: var(--color-ink); }
+/* «Все условия»: the rest of the rules behind a pill, so the two that matter (the deadline, the results) stand alone. */
+.awards-more { display: grid; gap: 10px; }
+.awards-more summary { display: inline-flex; align-items: center; gap: 6px; justify-self: start; min-height: 40px; padding: 0 14px; border-radius: var(--radius-pill); background: var(--color-subtle); color: var(--color-ink); font-size: .875rem; font-weight: 700; list-style: none; cursor: pointer; }
+.awards-more summary::-webkit-details-marker { display: none; }
+.awards-more summary::after { content: ''; width: 8px; height: 8px; margin-top: -3px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; rotate: 45deg; transition: rotate .2s ease, margin .2s ease; }
+.awards-more[open] summary::after { margin-top: 3px; rotate: 225deg; }
+.awards-more summary:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .awards-more summary::after { transition: none; } }
+
+/* The category's sheet: nominees as rows, a tap votes; «Добавить свой напиток» is its second screen. */
+.bottom-sheet.award-sheet { min-height: min(72dvh, 560px); }
+.bottom-sheet.award-sheet .award-sheet-hint { margin: 0 0 12px; color: var(--color-muted-strong); font-size: .875rem; line-height: 1.4; }
+.award-sheet-note { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--theme-tint); color: var(--color-ink); font-size: .875rem; line-height: 1.4; }
+.award-sheet-note a { color: var(--color-brand-deep); font-weight: 700; }
+.award-picks { display: grid; gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
+.award-pick { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-radius: 14px; background: var(--color-subtle); }
+.award-pick[data-mine] { box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.award-pick[data-winner] { background: var(--theme-tint); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.award-pick-main { display: grid; grid-template-columns: 56px minmax(0, 1fr) 22px; align-items: center; gap: 12px; width: 100%; min-height: 76px; padding: 10px 4px 10px 10px; border: 0; border-radius: 14px; background: none; color: inherit; font: inherit; text-align: left; }
+button.award-pick-main { cursor: pointer; }
+button.award-pick-main:disabled { cursor: default; }
+button.award-pick-main:not(:disabled):hover { background: color-mix(in srgb, var(--brand-blue) 8%, transparent); }
+button.award-pick-main:focus-visible { outline: 3px solid var(--color-focus); outline-offset: -3px; }
+.award-pick-can { width: 56px; height: 56px; object-fit: contain; }
+.award-pick-can.is-photo { border-radius: 10px; background: #fff; }
+.award-pick-can.is-empty { display: grid; place-items: center; border-radius: 10px; background: var(--color-surface); color: var(--brand-blue); font-size: 1.5rem; }
+.award-pick-text { display: grid; gap: 2px; min-width: 0; }
+.award-pick-text small { color: var(--color-muted-strong); font-size: .75rem; }
+.award-pick-text strong { font-size: .9375rem; line-height: 1.25; overflow-wrap: anywhere; }
+.award-pick-rating { color: var(--color-muted-strong); font-size: .8125rem; }
+.award-pick-share { display: grid; gap: 4px; margin-top: 4px; color: var(--color-muted-strong); font-size: .75rem; font-variant-numeric: tabular-nums; }
+.award-pick-share b { color: var(--color-ink); }
+.award-pick-bar { height: 6px; overflow: hidden; border-radius: 3px; background: color-mix(in srgb, var(--color-ink) 10%, transparent); }
+.award-pick-bar span { display: block; height: 100%; border-radius: inherit; background: var(--brand-blue); }
+.award-pick-mark { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: #fff; }
+/* A radio: an empty ring on a row that can be chosen, the filled tick on the member's vote. */
+button.award-pick-main .award-pick-mark { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-ink) 32%, transparent); }
+.award-pick[data-mine] .award-pick-mark { background: var(--brand-blue); box-shadow: none; }
+.award-pick-reviews { display: flex; align-items: center; align-self: stretch; padding: 0 12px 0 6px; color: var(--color-muted-strong); font-size: .75rem; white-space: nowrap; text-decoration: underline; text-underline-offset: 2px; }
+.award-add { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 0 16px; border: 1.5px dashed var(--theme-line); border-radius: 14px; background: none; color: var(--color-ink); font: inherit; font-weight: 700; cursor: pointer; }
+.award-add:hover:not(:disabled) { border-color: var(--brand-blue); color: var(--color-brand-deep); }
+.award-add:disabled { opacity: .55; cursor: wait; }
+
+@media (min-width: 640px) {
+  .awards-page { gap: 24px; }
+  .awards-stage { grid-template-columns: 140px minmax(0, 1fr); gap: 20px; padding: 24px; }
+  .awards-trophy { width: 140px; }
+  .awards-chip { font-size: .8125rem; }
+  .awards-stage-head p { font-size: 1rem; }
+  .award-grid { gap: 14px; }
+  .award-tile { min-height: 270px; padding: 14px 12px 12px; }
+  .award-tile-title { font-size: 1.125rem; }
+  .award-tile-stage { min-height: 140px; }
+  .award-tile-can { height: 140px; }
+  .awards-rules { padding: 20px 24px; }
+}
+/* Wide screens: the trophy stands on the left of the whole stage, as on Steam, the title and the tiles to its right. */
+@media (min-width: 960px) {
+  .awards-stage { grid-template-columns: 240px minmax(0, 1fr); grid-template-areas: 'trophy head' 'trophy grid'; align-items: start; padding: 28px 32px; }
+  .awards-trophy { width: 240px; align-self: center; }
+  .award-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .awards-trophy { animation: none; }
+  .award-tile { transition: none; }
+}

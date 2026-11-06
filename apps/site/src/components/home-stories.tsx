@@ -5,6 +5,8 @@ import { getRecommendations, getWeeklyDigest } from '@/lib/story-digest';
 import { getPool } from '@/db/pool';
 import { getStoryGroups } from '@/lib/stories';
 import { getTelegramEnv } from '@/lib/env';
+import { getAwardWinners } from '@/lib/awards';
+import { AWARD, awardPhase } from '@/lib/awards-fields';
 
 /** Monday of the current week, Moscow time. */
 function moscowWeekStart(now = new Date()): string {
@@ -34,6 +36,14 @@ export async function HomeStories({ viewerId, groups, openStory }: { viewerId: s
     viewer ? getRecommendations(viewer.id, groups) : null,
   ]);
   const system: StoryGroupView[] = [];
+  // «Премия за энергию» for everyone, guests too: the invitation while voting is open, the winners after it. First of
+  // the system stories — the season's main event; a new key with the results lights the ring again.
+  const award = awardPhase();
+  if (award === 'open') system.push({ key: `awards:${AWARD.key}`, kind: 'awards', title: 'Премия', slides: [{ kind: 'award', page: 'intro' }, { kind: 'award', page: 'categories' }] });
+  if (award === 'results') {
+    const winners = await getAwardWinners().catch(() => []);
+    if (winners.length) system.push({ key: `awards:${AWARD.key}:results`, kind: 'awards', title: 'Премия', slides: [{ kind: 'award', page: 'results', winners }] });
+  }
   // Wrapped-style: intro, cans by day, the drink of the week, progress, discoveries and a summary card.
   // An empty week is one slide that invites to log a can; the drink slide needs a drink from the catalog.
   if (digest) {

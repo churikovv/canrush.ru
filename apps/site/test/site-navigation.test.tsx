@@ -6,6 +6,9 @@ import { SiteTabBar } from '@/components/site-tab-bar';
 import { FeedTabs, MarketTabs, StoreTabs } from '@/components/section-tabs';
 import { marketOpen } from '../src/lib/market-open';
 vi.mock('../src/app/notifications/push-actions', () => ({ registerPushDeviceAction: vi.fn(), unregisterPushDeviceAction: vi.fn() }));
+// Whether the market has a listing to show (`marketHasListings` reads the database): the header asks it.
+const market = vi.hoisted(() => ({ listings: true }));
+vi.mock('../src/lib/market-shown', () => ({ marketHasListings: async () => market.listings }));
 
 function links(html: string) {
   return [...html.matchAll(/<a\s([^>]*)>/g)].map(([, attributes = '']) => ({
@@ -84,6 +87,16 @@ describe('header menus', () => {
     expect(header.includes('Объявления')).toBe(marketOpen());
     for (const label of ['Сообщество', 'Магазины', 'Тирлисты', 'Лента', 'Новости', 'Каталог', 'Цены', 'Найти', 'Для бизнеса']) expect(header).toContain(label);
     expect(header.match(/aria-expanded="false"/g)).toHaveLength(2);
+  });
+
+  it('leaves «Объявления» out while the market has nothing to show', async () => {
+    market.listings = false;
+    try {
+      const html = renderToStaticMarkup(await ProfileNavigation({ signedIn: true }));
+      const header = html.slice(0, html.indexOf('<nav class="site-tab-bar"'));
+      expect(header).not.toContain('Объявления');
+      expect(links(header).map(({ href }) => href)).not.toContain('/market');
+    } finally { market.listings = true; }
   });
 
   // Each mode of `MARKET_MODE`, with a fresh copy of the header (its menus are built once per module).

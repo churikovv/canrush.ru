@@ -9,6 +9,7 @@ import Link from '@/components/navigation-progress';
 import { NavigationIcon, type NavigationSection } from '@/components/navigation-icon';
 import { SiteTabBar } from '@/components/site-tab-bar';
 import { marketOpen, marketOpenFor } from '@/lib/market-open';
+import { marketHasListings } from '@/lib/market-shown';
 
 interface ProfileNavigationProps {
   active?: NavigationSection;
@@ -37,7 +38,9 @@ const STORES = [
 
 export async function ProfileNavigation({ active, signedIn }: ProfileNavigationProps) {
   const member = signedIn ?? Boolean(getSessionCookie(await headers()));
-  const items = (group: typeof COMMUNITY | typeof STORES) => group.map(item => ({ ...item, current: item.section === active }));
+  // «Объявления» only while the market has a listing to show: an empty market is a dead end (`marketHasListings`).
+  const market = await marketHasListings().catch(() => false);
+  const items = (group: typeof COMMUNITY | typeof STORES) => group.filter(item => market || item.section !== 'market').map(item => ({ ...item, current: item.section === active }));
   return (
     <>
       <nav className="profile-navigation" aria-label="Основная навигация">

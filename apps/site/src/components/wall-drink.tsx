@@ -22,7 +22,8 @@ export type WallDrinkState = ReturnType<typeof useWallDrink>;
 const NOTHING_TAKEN = new Set<string>();
 // The catalog list is loaded once per page, when the picker first opens: the feed itself does not carry it.
 let loading: Promise<StoreDrinkOption[]> | null = null;
-function loadOptions(): Promise<StoreDrinkOption[]> {
+/** The catalog for a drink picker (`/api/drink-options`), loaded once per page; the award page's «Добавить напиток» takes it too. */
+export function loadDrinkOptions(): Promise<StoreDrinkOption[]> {
   loading ??= fetch('/api/drink-options').then(response => (response.ok ? response.json() as Promise<StoreDrinkOption[]> : Promise.reject(new Error(String(response.status)))));
   loading.catch(() => { loading = null; });
   return loading;
@@ -42,7 +43,7 @@ export function useDrinkSheet(state: WallDrinkState) {
     setShown(true);
     setFailed(false);
     window.requestAnimationFrame(() => { sheet.current?.showModal(); document.getElementById(pickerId)?.focus(); });
-    if (!options) loadOptions().then(setOptions, () => setFailed(true));
+    if (!options) loadDrinkOptions().then(setOptions, () => setFailed(true));
   }
   const close = () => sheet.current?.close();
   const element = shown ? createPortal(<BottomSheet ref={sheet} className="wall-drink-sheet" labelledBy={titleId}>

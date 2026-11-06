@@ -32,6 +32,14 @@ describe('home metrics', () => {
     expect(html).toContain('Бета сайта');
   });
 
+  it('shows the market icon only while the market has a listing to show', () => {
+    const hrefs = (market: boolean) => [...renderToStaticMarkup(createElement(HomeServices, {
+      metrics: { reviews: 0, tierLists: 0, stores: 0, drinks: 0 }, contest: null, joined: false, engine: { taken: 10, number: null } as never, market,
+    })).matchAll(/href="([^"]*)"/g)].map(match => match[1]);
+    expect(hrefs(true)).toContain('/search?type=market');
+    expect(hrefs(false)).not.toContain('/search?type=market');
+  });
+
   it('shows the contest icon only while entries are open', () => {
     const hrefs = (phase: 'open' | 'results') => [...renderToStaticMarkup(createElement(HomeServices, {
       metrics: { reviews: 0, tierLists: 0, stores: 0, drinks: 0 }, contest: { contest: CONTESTS[0]!, phase }, joined: false,

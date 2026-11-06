@@ -17,6 +17,7 @@ import { favoriteSwipedAction, swipeAction } from '@/app/community/dating-action
 import { MAX_STORY_CAPTION } from '@/lib/story-limits';
 import { TELEGRAM_BOT_URL, TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
 import { NRJ_PARTY } from '@/lib/partners';
+import { AWARD, AWARD_CATEGORIES } from '@/lib/awards-fields';
 import { renderWeekShare } from '@/lib/week-share-image';
 import type { StoryAuthor, StoryItem, StoryLiker } from '@/lib/stories';
 import { WALL_MEDIA_ACCEPT } from '@/lib/wall-media-limits';
@@ -27,10 +28,13 @@ export type StorySlide =
   | { kind: 'picks'; page: 'intro' | 'outro'; picks: PicksView }
   | { kind: 'pick'; item: StoryRecommendation; basis: 'similar' | 'community'; index: number; total: number }
   | { kind: 'promo'; page: 'channel' | 'bot'; miniApp?: string | null }
-  | { kind: 'partner' };
+  | { kind: 'partner' }
+  | { kind: 'award'; page: 'intro' | 'categories' | 'results'; winners?: AwardWinner[] };
+/** A winner of «Премия за энергию» for the results slide. */
+export interface AwardWinner { title: string; brand: string; name: string; cover: string | null; share: number }
 /** Slides of «Твоя неделя», in the order they play. */
 export type DigestPage = 'empty' | 'intro' | 'cans' | 'drink' | 'progress' | 'discover' | 'summary';
-export interface StoryGroupView { key: string; kind: 'user' | 'week' | 'picks' | 'telegram' | 'partner'; title: string; author?: StoryAuthor; own?: boolean; seen?: boolean; slides: StorySlide[] }
+export interface StoryGroupView { key: string; kind: 'user' | 'week' | 'picks' | 'telegram' | 'partner' | 'awards'; title: string; author?: StoryAuthor; own?: boolean; seen?: boolean; slides: StorySlide[] }
 
 /** A photo, GIF or a system card stays this long; a video plays to its end. A pick has more to read and do. */
 const SLIDE_MS = 5000;
@@ -83,6 +87,7 @@ function Avatar({ group, size = 56 }: { group: StoryGroupView; size?: number }) 
   if (group.kind === 'picks') return <span className="story-avatar story-avatar-picks" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3.5 14 9l5.5 2-5.5 2-2 5.5-2-5.5-5.5-2L10 9l2-5.5Z" /><path d="M19 3v3M17.5 4.5h3" /></svg></span>;
   if (group.kind === 'telegram') return <span className="story-avatar story-avatar-telegram" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M21.4 4.3 2.9 11.5c-1.3.5-1.3 1.2-.2 1.6l4.7 1.5 1.8 5.6c.2.6.4.8.8.8s.6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.6c.3-1.3-.5-1.9-1.4-1.5ZM9.3 14.2l8.6-5.4c.4-.3.8-.1.5.2l-7.1 6.4-.3 3.1-1.7-4.3Z" /></svg></span>;
   if (group.kind === 'partner') return <span className="story-avatar story-avatar-partner" aria-hidden="true"><Image src={NRJ_PARTY.logo} width={size} height={size} alt="" /></span>;
+  if (group.kind === 'awards') return <span className="story-avatar story-avatar-awards" aria-hidden="true"><Image src="/brand/home3d/awards.webp" width={size} height={size} unoptimized alt="" /></span>;
   const author = group.author!;
   return <span className="story-avatar" aria-hidden="true">{author.avatarId
     ? <Image src={`/api/profile-images/${author.avatarId}`} width={size} height={size} unoptimized alt="" />
@@ -238,6 +243,35 @@ function PromoCard({ page, miniApp }: { page: 'channel' | 'bot'; miniApp?: strin
   </div>;
 }
 
+/**
+ * «Премия за энергию»: while voting is open — the trophy and the invitation, then the four categories; with the results —
+ * the winners. Every slide leads to /awards.
+ */
+function AwardCard({ page, winners = [] }: { page: 'intro' | 'categories' | 'results'; winners?: AwardWinner[] }) {
+  return <div className="award-story" data-page={page}>
+    {page === 'intro' && <>
+      <Image className="award-story-trophy" src="/brand/awards/trophy.webp" width={772} height={800} sizes="260px" unoptimized alt="" style={{ '--line': 0 } as CSSProperties} />
+      <span className="award-story-chip" style={{ '--line': 1 } as CSSProperties}>Голосование до {AWARD.lastDayLabel}</span>
+      <strong className="award-story-title" style={{ '--line': 2 } as CSSProperties}>{AWARD.title}<span>{AWARD.year}</span></strong>
+      <p style={{ '--line': 3 } as CSSProperties}>Выберите лучшие энергетики года — голосуют участники CanRush</p>
+    </>}
+    {page === 'categories' && <>
+      <strong className="award-story-title" style={{ '--line': 0 } as CSSProperties}>4 номинации</strong>
+      <ol className="award-story-list">{AWARD_CATEGORIES.map((category, index) => <li key={category.key} style={{ '--line': index + 1 } as CSSProperties}>
+        <b>{String(index + 1).padStart(2, '0')}</b><span>{category.title}<small>{category.hint}</small></span>
+      </li>)}</ol>
+    </>}
+    {page === 'results' && <>
+      <strong className="award-story-title" style={{ '--line': 0 } as CSSProperties}>Итоги премии<span>{AWARD.year}</span></strong>
+      <ol className="award-story-list">{winners.map((winner, index) => <li key={winner.title} style={{ '--line': index + 1 } as CSSProperties}>
+        {winner.cover ? <Image src={winner.cover} width={48} height={48} unoptimized={winner.cover.startsWith('/')} alt="" /> : <b>⚡</b>}
+        <span>{winner.brand} · {winner.name}<small>{winner.title} · {winner.share}%</small></span>
+      </li>)}</ol>
+    </>}
+    <Link className="award-story-cta" href="/awards" style={{ '--line': 6 } as CSSProperties}>{page === 'results' ? 'Все итоги' : 'Голосовать'}</Link>
+  </div>;
+}
+
 /** The weekly NRJ PARTY story: the community that supports CanRush, what they post and where to follow them. */
 function PartnerCard() {
   return <div className="story-card story-card-partner">
@@ -319,6 +353,7 @@ function StoryViewer({ groups, start, startSlide, signedIn, staff, onClose, onSe
       if (slide.kind === 'digest') result = await shareImage(await renderWeekShare(slide.digest), `canrush-week-${slide.digest.to}.png`, 'Моя неделя в CanRush');
       else if (slide.kind === 'pick') result = await shareLink(new URL(slide.item.href, window.location.origin).toString(), `${slide.item.brand} ${slide.item.name} — CanRush`);
       else if (slide.kind === 'partner') result = await shareLink(NRJ_PARTY.telegram.url, `${NRJ_PARTY.name} в Telegram`);
+      else if (slide.kind === 'award') result = await shareLink(new URL('/awards', window.location.origin).toString(), `${AWARD.title} ${AWARD.year} — CanRush`);
       else if (slide.kind === 'promo') result = await shareLink(slide.page === 'channel' ? TELEGRAM_CHANNEL_URL : TELEGRAM_BOT_URL, slide.page === 'channel' ? 'CanRush в Telegram' : 'Бот CanRush в Telegram');
       else if (slide.kind === 'picks') return;
       else result = await shareLink(new URL(`/?story=${slide.story.id}`, window.location.origin).toString(), `История @${group.author?.username ?? ''} в CanRush`);
@@ -414,6 +449,7 @@ function StoryViewer({ groups, start, startSlide, signedIn, staff, onClose, onSe
           onFavorite={() => void favoritePick(slide.item)} onNope={() => void nopePick(slide.item)} />}
         {slide.kind === 'promo' && <PromoCard page={slide.page} miniApp={slide.miniApp} />}
         {slide.kind === 'partner' && <PartnerCard />}
+        {slide.kind === 'award' && <AwardCard page={slide.page} winners={slide.winners} />}
       </div>
       {slide.kind === 'media' && heart && <footer className="story-foot">
         {slide.story.caption && <p className="story-caption">{slide.story.caption}</p>}

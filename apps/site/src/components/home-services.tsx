@@ -5,7 +5,7 @@ import Link from '@/components/navigation-progress';
 import { BETA_ENGINE_PLACES, type BetaEngine } from '@/lib/beta-engine';
 import type { Contest } from '@/lib/contest';
 import type { HomeMetrics } from '@/lib/home-metrics';
-import { marketOpen } from '@/lib/market-open';
+import { AWARD, awardPhase } from '@/lib/awards-fields';
 
 const count = new Intl.NumberFormat('ru-RU');
 
@@ -15,7 +15,7 @@ const count = new Intl.NumberFormat('ru-RU');
  */
 const ART = {
   catalog: [425, 480], prices: [425, 480], stores: [480, 474], tierlists: [391, 480], leaderboard: [411, 480],
-  pass: [387, 480], engine: [480, 420], dating: [480, 465], business: [480, 474], market: [466, 480],
+  pass: [387, 480], awards: [463, 480], engine: [480, 420], dating: [480, 465], business: [480, 474], market: [466, 480],
 } as const;
 const art = (key: keyof typeof ART) => ({ src: `/brand/home3d/${key}.webp`, width: ART[key][0], height: ART[key][1] });
 const OLD_ART = (src: string) => ({ src, width: 120, height: 120 });
@@ -26,13 +26,16 @@ const OLD_ART = (src: string) => ({ src, width: 120, height: 120 });
  * race, the pass, the giveaway, the beta «Двигатель» places, drink dating, the market and business. The row scrolls
  * sideways on phones.
  */
-export function HomeServices({ metrics, contest, joined, engine }: {
+export function HomeServices({ metrics, contest, joined, engine, market = false }: {
   metrics: HomeMetrics;
   /** The season's «Банкомат» banner is on the page: its small icon steps aside */
   contest: { contest: Contest; phase: 'open' | 'results' } | null;
   joined: boolean;
   engine: BetaEngine;
+  /** The market has an open listing to show (`marketHasListings`): an empty market gets no icon. */
+  market?: boolean;
 }) {
+  const award = awardPhase();
   // Sections with a switcher open in it (/search, /community), as from the tab bar: the bare pages (/catalog,
   // /tierlists, /market…) have no «Каталог / Магазины / Маркет» or «Тирлисты / Дейтинг / Люди» row on a phone.
   const big = [
@@ -42,12 +45,14 @@ export function HomeServices({ metrics, contest, joined, engine }: {
     { key: 'tierlists', href: '/community', label: 'Тирлисты', note: metrics.tierLists ? count.format(metrics.tierLists) : '', art: art('tierlists') },
   ];
   const small = [
+    // «Премия за энергию» while it runs and with its results: first in the row, the season's main event.
+    ...(award === 'open' || award === 'results' ? [{ key: 'awards', href: '/awards', label: 'Премия', note: award === 'open' ? `до ${AWARD.lastDayLabel.replace(' декабря', ' дек.')}` : 'итоги', art: art('awards') }] : []),
     { key: 'leaderboard', href: '/leaderboard', label: 'Лидеры', note: 'гонка недели', art: art('leaderboard') },
     { key: 'pass', href: '/pass', label: 'Пропуск', note: seasonTitle(moscowDay().slice(0, 7)), art: art('pass') },
     ...(contest?.phase === 'open' ? [{ key: 'contest', href: '/contest', label: 'Конкурс', note: joined ? 'вы участвуете' : `до ${contest.contest.lastDayLabel}`, art: OLD_ART('/brand/home/contest.png') }] : []),
     ...(engine.taken < BETA_ENGINE_PLACES ? [{ key: 'engine', href: '/engine', label: 'Бета сайта', note: 'каждый важен', art: art('engine') }] : []),
     { key: 'dating', href: '/community?type=dating', label: 'Дейтинг', note: 'рекомендации', art: art('dating') },
-    ...(marketOpen() ? [{ key: 'market', href: '/search?type=market', label: 'Маркет', note: 'объявления', art: art('market') }] : []),
+    ...(market ? [{ key: 'market', href: '/search?type=market', label: 'Маркет', note: 'объявления', art: art('market') }] : []),
     // The landing for brands, distributors and shops (CanRush для бизнеса).
     { key: 'business', href: '/business', label: 'Бизнес', note: 'для брендов', art: art('business') },
   ];

@@ -28,6 +28,7 @@ import { getDailyRewards } from '@/lib/daily-rewards';
 import { BattleHomeBanner } from '@/components/battle-home-banner';
 import { HomeGames } from '@/components/home-games';
 import { getBattleTeaser } from '@/lib/battle';
+import { marketHasListings } from '@/lib/market-shown';
 import { AppOffer } from '@/components/app-offer';
 import { androidApkUrl, RUSTORE_URL } from '@/lib/app-links';
 export const dynamic = 'force-dynamic';
@@ -42,14 +43,14 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const [session, counts, allGroups] = await Promise.all([auth.api.getSession({ headers: await headers() }), getHomeCounts(), loadAllCatalogGroups()]);
   const resolved = groups.filter(group => isResolvedFlavor(group.flavor));
   const gacha = activeBanner();
-  const [contestEntry, engine, teaser, firstSteps, daily, battle] = await Promise.all([contest && session ? getContestEntry(contest.contest, session.user.id) : null, getBetaEngine(session?.user.id ?? null),
+  const [contestEntry, engine, teaser, firstSteps, daily, battle, market] = await Promise.all([contest && session ? getContestEntry(contest.contest, session.user.id) : null, getBetaEngine(session?.user.id ?? null),
     session ? getGachaTeaser(session.user.id).catch(() => null) : null, session ? getFirstSteps(session.user.id).catch(() => null) : null,
-    session ? getDailyRewards(session.user.id).catch(() => null) : null, session ? getBattleTeaser(session.user.id).catch(() => null) : null]);
+    session ? getDailyRewards(session.user.id).catch(() => null) : null, session ? getBattleTeaser(session.user.id).catch(() => null) : null, marketHasListings().catch(() => false)]);
   return <BrandShell headerAction={<ProfileNavigation active="home" />} surfaceClassName="catalog-surface home-surface">
     <div className="home-layout">
       <h1 className="sr-only">CanRush — социальная сеть для энергокомьюнити: лента, цены и рейтинги энергетиков</h1>
       <HomeStories viewerId={session?.user.id ?? null} groups={await withCatalogDrinks(resolved)} openStory={typeof story === 'string' ? story : undefined} />
-      <HomeServices metrics={{ ...counts, ...catalogMetrics(resolved, allGroups) }} contest={contest} joined={Boolean(contestEntry?.cans)} engine={engine} />
+      <HomeServices metrics={{ ...counts, ...catalogMetrics(resolved, allGroups) }} contest={contest} joined={Boolean(contestEntry?.cans)} engine={engine} market={market} />
       {daily && <DailyRewards state={daily} />}
       {firstSteps && <FirstSteps card={firstSteps} />}
       <HomeGames>
