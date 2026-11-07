@@ -1,13 +1,18 @@
 import { recordBotReply } from '@/lib/bot-messages';
 import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { CITIES, DEFAULT_CITY, findCity, type CityId } from '@canrush/shared';
 import type { Pool } from 'pg';
-import { callTelegram, type InlineKeyboard } from './api';
-import { searchProducts } from './catalog';
+import { callTelegram, callTelegramForm, type InlineKeyboard } from './api';
+import { bestPromos, cityPromos, searchProducts } from './catalog';
+import { DIGEST_LIMIT } from './jobs';
 import { askLoginConfirmation, decideLogin } from './login';
 import { TELEGRAM_BOT_OPTIONS, type TelegramBotColumn } from './settings';
-import { escapeHtml, openButton, productCard, productName, productSummary, productUrl, truncate } from './format';
-import { marketOpen } from '@/lib/market-open';
+import {
+  digestText, escapeHtml, greetingName, noDealsText, openButton, productCard, productName, productSummary, productUrl, searchHintText,
+  startKeyboard, truncate, welcomeText,
+} from './format';
 
 export interface BotContext {
   pool: Pool;
@@ -79,20 +84,6 @@ function settingsText(state: ChatState): string {
   return lines.join('\n');
 }
 
-function welcomeText(ctx: BotContext, state: ChatState): string {
-  const lines = [
-    '<b>Привет! Это бот CanRush ⚡</b>',
-    '',
-    '• Напишите название энергетика — покажу, где он дешевле в вашем городе, и его рейтинг.',
-    `• В любом чате наберите <code>@${escapeHtml(ctx.botUsername)} burn</code> и отправьте карточку другу.`,
-    `• Пришлю уведомления сайта${marketOpen() ? ', сообщения маркета' : ''} и акции на ваше избранное.`,
-    '',
-    `Город: ${escapeHtml(cityName(state.settings?.city))} — /city. Что присылать — /settings.`,
-  ];
-  if (!state.linked) lines.push('', 'Чтобы получать уведомления, войдите в CanRush кнопкой ниже.');
-  return lines.join('\n');
-}
-
 async function send(ctx: BotContext, chatId: number, text: string, keyboard?: InlineKeyboard): Promise<void> {
   await callTelegram(ctx.token, 'sendMessage', {
     chat_id: chatId,
@@ -103,10 +94,69 @@ async function send(ctx: BotContext, chatId: number, text: string, keyboard?: In
   });
 }
 
+/** The /start video (`marketing/design/telegram-bot-video`): square, silent, so Telegram plays it as a looping animation. */
+export const START_ANIMATION = 'brand/telegram/bot-start.mp4';
+/**
+ * Telegram cannot fetch the file by its URL — the Russian host drops connections from Telegram (see the webhook relay) —
+ * so the first /start after a restart uploads it, and the rest send Telegram's own file id.
+ */
+let startAnimationId: string | undefined;
+
+interface SentMessage { animation?: { file_id: string }; document?: { file_id: string } }
+
+async function sendWelcome(ctx: BotContext, chatId: number, user: TelegramUserRef): Promise<void> {
+  const caption = welcomeText(greetingName(user), ctx.botUsername);
+  const keyboard = startKeyboard(ctx.siteUrl);
+  const fields = { chat_id: chatId, caption, parse_mode: 'HTML', reply_markup: { inline_keyboard: keyboard } };
+  try {
+    if (startAnimationId) {
+      await callTelegram(ctx.token, 'sendAnimation', { ...fields, animation: startAnimationId });
+      return;
+    }
+    const video = await readFile(path.join(process.cwd(), 'public', START_ANIMATION));
+    const form = new FormData();
+    for (const [key, value] of Object.entries({ ...fields, width: 1080, height: 1080, duration: 18 })) {
+      form.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+    }
+    form.append('animation', new Blob([video], { type: 'video/mp4' }), 'canrush.mp4');
+    const sent = await callTelegramForm<SentMessage>(ctx.token, 'sendAnimation', form);
+    startAnimationId = sent.animation?.file_id ?? sent.document?.file_id;
+  } catch (error) {
+    // A stale file id or a failed upload must not cost the greeting: the same text and menu go without the video.
+    startAnimationId = undefined;
+    console.error('Telegram /start video failed', error instanceof Error ? error.message : error);
+    await send(ctx, chatId, caption, keyboard);
+  }
+}
+
 async function startChat(ctx: BotContext, telegramId: number, chatId: number): Promise<void> {
   await ctx.pool.query(`
     insert into "telegramChat" ("telegramId", "chatId") values ($1, $2)
     on conflict ("telegramId") do update set "chatId" = excluded."chatId", "blockedAt" = null`, [telegramId, chatId]);
+}
+
+async function sendSettings(ctx: BotContext, telegramId: number, chatId: number): Promise<void> {
+  await startChat(ctx, telegramId, chatId);
+  const state = await chatState(ctx.pool, telegramId);
+  await send(ctx, chatId, settingsText(state), settingsKeyboard(state));
+}
+
+async function sendCities(ctx: BotContext, telegramId: number, chatId: number): Promise<void> {
+  await startChat(ctx, telegramId, chatId);
+  await send(ctx, chatId, 'Выберите город:', cityKeyboard());
+}
+
+/** Buttons of the /start menu: each answers with a new message, the video and the menu stay as they are. */
+async function handleMenu(ctx: BotContext, telegramId: number, chatId: number, item: string): Promise<void> {
+  if (item === 'settings') return sendSettings(ctx, telegramId, chatId);
+  if (item === 'city') return sendCities(ctx, telegramId, chatId);
+  const state = await chatState(ctx.pool, telegramId);
+  const city = findCity(state.settings?.city) ?? DEFAULT_CITY;
+  if (item === 'search') return send(ctx, chatId, searchHintText(city.name));
+  if (item === 'deals') {
+    const promos = bestPromos(await cityPromos(city.id as CityId), DIGEST_LIMIT);
+    await send(ctx, chatId, promos.length ? digestText(promos, city.name) : noDealsText(city.name));
+  }
 }
 
 async function handleMessage(ctx: BotContext, message: Message): Promise<void> {
@@ -119,25 +169,21 @@ async function handleMessage(ctx: BotContext, message: Message): Promise<void> {
     await startChat(ctx, message.from.id, chatId);
     const payload = text.split(/\s+/u)[1] ?? '';
     if (payload.startsWith('login_') && await askLoginConfirmation(ctx.pool, payload.slice('login_'.length), (body, keyboard) => send(ctx, chatId, body, keyboard))) return;
+    await sendWelcome(ctx, chatId, message.from);
     const state = await chatState(ctx.pool, message.from.id);
-    await send(ctx, chatId, welcomeText(ctx, state), state.linked ? [] : [[openButton('Открыть CanRush', ctx.siteUrl)]]);
     if (!state.settings?.city) await send(ctx, chatId, 'Выберите город, чтобы цены и акции были местными:', cityKeyboard());
     return;
   }
   if (command === 'settings') {
-    await startChat(ctx, message.from.id, chatId);
-    const state = await chatState(ctx.pool, message.from.id);
-    await send(ctx, chatId, settingsText(state), settingsKeyboard(state));
+    await sendSettings(ctx, message.from.id, chatId);
     return;
   }
   if (command === 'city') {
-    await startChat(ctx, message.from.id, chatId);
-    await send(ctx, chatId, 'Выберите город:', cityKeyboard());
+    await sendCities(ctx, message.from.id, chatId);
     return;
   }
   if (command) {
-    const state = await chatState(ctx.pool, message.from.id);
-    await send(ctx, chatId, welcomeText(ctx, state));
+    await sendWelcome(ctx, chatId, message.from);
     return;
   }
 
@@ -166,7 +212,9 @@ async function handleCallback(ctx: BotContext, query: CallbackQuery): Promise<vo
   const data = query.data ?? '';
   const message = query.message;
   let notice: string | undefined;
-  if (message && data.startsWith('lg:')) {
+  if (data.startsWith('m:')) {
+    await handleMenu(ctx, query.from.id, message?.chat.id ?? query.from.id, data.slice(2));
+  } else if (message && data.startsWith('lg:')) {
     notice = (await decideLogin(ctx.pool, ctx.token, query.from, data, message.chat.id, message.message_id)) ?? undefined;
   } else if (message && data.startsWith('t:')) {
     const code = data.slice(2);

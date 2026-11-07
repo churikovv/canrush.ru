@@ -12,6 +12,8 @@ export interface InlineButton {
   url?: string;
   web_app?: { url: string };
   callback_data?: string;
+  /** Opens the chat picker with `@bot <query>` typed in: the inline search, one tap away. */
+  switch_inline_query?: string;
 }
 export type InlineKeyboard = InlineButton[][];
 
@@ -25,14 +27,18 @@ interface TelegramResponse<T> {
 
 /** Calls the Bot API. Errors never include the request URL, so the token cannot leak into logs. */
 export async function callTelegram<T = unknown>(token: string, method: string, body: Record<string, unknown>): Promise<T> {
+  return request<T>(token, method, { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }, 10_000);
+}
+
+/** The same call as multipart form data: for uploading a file (the /start video) rather than naming one. */
+export async function callTelegramForm<T = unknown>(token: string, method: string, form: FormData): Promise<T> {
+  return request<T>(token, method, { body: form }, 60_000);
+}
+
+async function request<T>(token: string, method: string, init: { headers?: Record<string, string>; body: string | FormData }, timeout: number): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`${getTelegramApiUrl()}/bot${token}/${method}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(10_000),
-    });
+    response = await fetch(`${getTelegramApiUrl()}/bot${token}/${method}`, { method: 'POST', ...init, signal: AbortSignal.timeout(timeout) });
   } catch {
     throw new TelegramApiError(`${method}: network error`, 0);
   }

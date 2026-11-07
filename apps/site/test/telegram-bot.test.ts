@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { bestPromos, promoKey, type BotPromo } from '../src/lib/telegram-bot/catalog.js';
-import { escapeHtml, marketText, productSummary, promoAlertText } from '../src/lib/telegram-bot/format.js';
+import { stat } from 'node:fs/promises';
+import path from 'node:path';
+import { escapeHtml, greetingName, marketText, productSummary, promoAlertText, startKeyboard, welcomeText } from '../src/lib/telegram-bot/format.js';
 import { moscowClock, TELEGRAM_JOBS } from '../src/lib/telegram-bot/jobs.js';
 
 const promo = (overrides: Partial<BotPromo>): BotPromo => ({
@@ -22,6 +24,32 @@ describe('Telegram bot formatting', () => {
     expect(text).toContain('Энергетик из избранного по акции');
     expect(text).toContain('<s>129 ₽</s>');
     expect(text).toContain('до 21 октября');
+  });
+});
+
+describe('Telegram /start', () => {
+  it('greets by @username, then by the first name, escaping both', () => {
+    expect(greetingName({ username: 'sobikon', first_name: 'Соня' })).toBe('@sobikon');
+    expect(greetingName({ first_name: 'Аня' })).toBe('Аня');
+    expect(greetingName({})).toBeUndefined();
+    expect(welcomeText('@sobikon', 'canrush_bot')).toMatch(/^👋🏻 Привет, <b>@sobikon<\/b>!/u);
+    expect(welcomeText('<Ann>', 'canrush_bot')).toContain('<b>&lt;Ann&gt;</b>');
+    expect(welcomeText(undefined, 'canrush_bot')).toMatch(/^👋🏻 Привет!\n/u);
+    expect(welcomeText('@a', 'canrush_bot')).toContain('<code>@canrush_bot burn</code>');
+  });
+
+  it('fits a video caption and opens the app inside Telegram', () => {
+    expect(welcomeText(`@${'x'.repeat(32)}`, 'canrush_bot').length).toBeLessThan(1024);
+    const buttons = startKeyboard('https://canrush.ru').flat();
+    expect(buttons[0]).toEqual({ text: '⚡ Запустить приложение', web_app: { url: 'https://canrush.ru' } });
+    expect(buttons.find(button => button.switch_inline_query)?.switch_inline_query).toBe('burn');
+    expect(buttons.find(button => button.text.includes('Поддержка'))?.web_app?.url).toBe('https://canrush.ru/support');
+    expect(buttons.filter(button => button.callback_data).map(button => button.callback_data)).toEqual(['m:search', 'm:deals', 'm:city', 'm:settings']);
+  });
+
+  it('keeps the /start video small enough to upload through the relay', async () => {
+    const { size } = await stat(path.join(process.cwd(), 'public/brand/telegram/bot-start.mp4'));
+    expect(size).toBeLessThan(5 * 1024 * 1024);
   });
 });
 

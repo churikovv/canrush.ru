@@ -19,7 +19,10 @@ let reply: (method: string) => Response = () => Response.json({ ok: true, result
 
 vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
   const method = String(url).split('/').pop() ?? '';
-  calls.push({ method, body: JSON.parse(String(init.body)) });
+  const body = init.body instanceof FormData
+    ? Object.fromEntries([...init.body.entries()].map(([key, value]) => [key, typeof value === 'string' ? value : `file:${value.type}`]))
+    : JSON.parse(String(init.body));
+  calls.push({ method, body });
   return reply(method);
 });
 
@@ -48,12 +51,53 @@ async function deliverOwn() {
 }
 
 describe.sequential('Telegram bot', () => {
-  it('registers the chat on /start and asks for a city', async () => {
+  it('registers the chat on /start, uploads the video with the menu and asks for a city', async () => {
     await handleTelegramUpdate(ctx, { update_id: 1, message: { message_id: 1, chat: { id: telegramId, type: 'private' }, from: { id: telegramId }, text: '/start' } });
     expect((await pool.query('select 1 from "telegramChat" where "telegramId" = $1', [telegramId])).rowCount).toBe(1);
-    expect(calls.map(call => call.method)).toEqual(['sendMessage', 'sendMessage']);
-    expect(String(calls[0]?.body.text)).toContain('бот CanRush');
+    expect(calls.map(call => call.method)).toEqual(['sendAnimation', 'sendMessage']);
+    expect(calls[0]?.body.animation).toBe('file:video/mp4');
+    expect(String(calls[0]?.body.caption)).toContain('<code>@canrush_test_bot burn</code>');
+    expect(String(calls[0]?.body.reply_markup)).toContain('m:deals');
     expect(JSON.stringify(calls[1]?.body.reply_markup)).toContain('c:moscow');
+  });
+
+  it('sends the uploaded video by its file id and greets without it when Telegram refuses', async () => {
+    await pool.query(`update "telegramChat" set city = 'moscow' where "telegramId" = $1`, [telegramId]);
+    const start = (username?: string) => handleTelegramUpdate(ctx, {
+      update_id: 10, message: { message_id: 10, chat: { id: telegramId, type: 'private' }, from: { id: telegramId, username }, text: '/start' },
+    });
+    reply = method => Response.json({ ok: true, result: method === 'sendAnimation' ? { animation: { file_id: 'anim-1' } } : {} });
+    await start('tester');
+    expect(calls[0]?.body.animation).toBe('file:video/mp4');
+    expect(String(calls[0]?.body.caption)).toContain('Привет, <b>@tester</b>!');
+
+    calls.length = 0;
+    await start();
+    expect(calls.map(call => call.method)).toEqual(['sendAnimation']);
+    expect(calls[0]?.body.animation).toBe('anim-1');
+
+    calls.length = 0;
+    reply = method => method === 'sendAnimation'
+      ? Response.json({ ok: false, error_code: 400, description: 'Bad Request: wrong file identifier' })
+      : Response.json({ ok: true, result: {} });
+    await start();
+    expect(calls.map(call => call.method)).toEqual(['sendAnimation', 'sendMessage']);
+    expect(String(calls[1]?.body.text)).toContain('Привет');
+    expect(JSON.stringify(calls[1]?.body.reply_markup)).toContain('m:search');
+  });
+
+  it('answers the menu buttons with new messages', async () => {
+    const press = async (data: string) => {
+      calls.length = 0;
+      await handleTelegramUpdate(ctx, { update_id: 11, callback_query: { id: `cb-${data}`, from: { id: telegramId }, data, message: { message_id: 10, chat: { id: telegramId, type: 'private' } } } });
+      expect(calls.at(-1)?.method).toBe('answerCallbackQuery');
+      return calls[0];
+    };
+    expect(String((await press('m:search'))?.body.text)).toContain('Burn манго');
+    expect(String((await press('m:settings'))?.body.text)).toContain('Настройки бота');
+    expect(JSON.stringify((await press('m:city'))?.body.reply_markup)).toContain('c:moscow');
+    expect(String((await press('m:deals'))?.body.text)).toMatch(/Лучшие акции недели|Акций на энергетики сейчас нет/u);
+    expect(calls.some(call => call.method === 'editMessageText' || call.method === 'editMessageReplyMarkup')).toBe(false);
   });
 
   it('answers a search with nothing found for nonsense', async () => {

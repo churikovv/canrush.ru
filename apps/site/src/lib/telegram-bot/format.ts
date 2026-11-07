@@ -1,5 +1,6 @@
+import { TELEGRAM_CHANNEL_URL } from '@/components/telegram-promo';
 import { catalogGroupSlug, flavorName } from '@/lib/catalog-query';
-import type { InlineButton } from './api';
+import type { InlineButton, InlineKeyboard } from './api';
 import type { BotProduct, BotPromo } from './catalog';
 
 export function escapeHtml(value: string): string {
@@ -26,6 +27,42 @@ export function openButton(text: string, url: string): InlineButton {
 export function truncate(value: string, length: number): string {
   const clean = value.replace(/\s+/gu, ' ').trim();
   return clean.length > length ? `${clean.slice(0, length - 1)}…` : clean;
+}
+
+/** The name /start greets: the @username when there is one, otherwise the first name. */
+export function greetingName(user: { username?: string; first_name?: string }): string | undefined {
+  if (user.username) return `@${user.username}`;
+  return user.first_name ? truncate(user.first_name, 40) || undefined : undefined;
+}
+
+/** The /start caption under the video; the copy is the owner's. */
+export function welcomeText(name: string | undefined, botUsername: string): string {
+  return [
+    name ? `👋🏻 Привет, <b>${escapeHtml(name)}</b>!` : '👋🏻 Привет!',
+    '',
+    `Мы создали самого удобного бота для любителей энергетиков. Вы можете отправить карточку с энергетиком для друга с <code>@${escapeHtml(botUsername)} burn</code>`,
+    '',
+    'Вы можете воспользоваться приложением или пользоваться через бота с помощью меню ниже 👇🏻',
+  ].join('\n');
+}
+
+/** The /start menu. `m:` buttons answer with a new message, so the menu itself never changes. */
+export function startKeyboard(siteUrl: string): InlineKeyboard {
+  return [
+    [openButton('⚡ Запустить приложение', siteUrl)],
+    [{ text: '🔎 Найти энергетик', callback_data: 'm:search' }, { text: '📤 Отправить другу', switch_inline_query: 'burn' }],
+    [{ text: '🔥 Акции недели', callback_data: 'm:deals' }, { text: '📍 Город', callback_data: 'm:city' }],
+    [{ text: '⚙️ Настройки', callback_data: 'm:settings' }, openButton('💬 Поддержка', `${siteUrl}/support`)],
+    [{ text: '📢 Канал CanRush', url: TELEGRAM_CHANNEL_URL }],
+  ];
+}
+
+export function searchHintText(cityName: string): string {
+  return `Напишите название или вкус — например, <b>Burn манго</b>. Покажу, где энергетик дешевле, и его рейтинг · ${escapeHtml(cityName)}`;
+}
+
+export function noDealsText(cityName: string): string {
+  return `Акций на энергетики сейчас нет · ${escapeHtml(cityName)}. Загляните позже: цены обновляются каждый день.`;
 }
 
 function promoDate(iso: string): string {
