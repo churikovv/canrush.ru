@@ -68,7 +68,7 @@ export function CitySelector({ selected }: { selected: CityId }) {
       {error && <p className="field-error" role="alert">{error}</p>}
       <label className="city-search">Найти город<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Название города" autoComplete="off" maxLength={50} disabled={pending} /></label>
       <ul className="city-options" aria-label="Города" aria-busy={pending}>{cities.map(item => <li key={item.id}><button type="button" disabled={pending} aria-pressed={item.id === selected} onClick={() => choose(item.id)}><span>{item.name}</span>{item.id === selected && <span aria-hidden="true">✓</span>}</button></li>)}</ul>
-      {!cities.length && <p role="status">Город не найден. Пока доступны 16 городов-миллионников.</p>}
+      {!cities.length && <p role="status">Город не найден. Пока цены есть только в крупных городах — выберите ближайший.</p>}
       {pending && <p role="status">Обновляем ассортимент…</p>}
     </dialog>}
   </>;

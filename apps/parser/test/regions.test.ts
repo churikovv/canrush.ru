@@ -4,8 +4,8 @@ import { parseCities, regionCacheFresh, REGION_TTL_MS } from '../src/regions.js'
 import { resolveLocality } from '../src/adapters/edadeal.js';
 describe('regional selection and cache boundaries', () => {
   it('maps every supported city to its own API region and coordinates', () => {
-    expect(parseCities('all')).toHaveLength(16);
-    expect(new Set(CITIES.map(city => city.geoId)).size).toBe(16);
+    expect(parseCities('all')).toHaveLength(CITIES.length);
+    expect(new Set(CITIES.map(city => city.geoId)).size).toBe(CITIES.length);
     for (const city of CITIES) {
       expect(nearestCity(city.lat, city.lng)?.id).toBe(city.id);
       expect(resolveLocality(city.geoId)).toMatchObject({ geoId: city.geoId, lat: city.lat, lng: city.lng, slug: city.slug });

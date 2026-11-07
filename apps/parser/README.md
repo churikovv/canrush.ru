@@ -17,7 +17,7 @@ npm -w apps/parser run download-images
 npm -w apps/parser run download-icons
 ```
 
-`--force` обновляет региональные снимки до истечения срока кэша. Планировщик по умолчанию обходит все 16 городов ежедневно в 06:00 Europe/Moscow (`CRON_SCHEDULE`).
+`--force` обновляет региональные снимки до истечения срока кэша. Планировщик по умолчанию обходит все города из `packages/shared/src/cities.ts` (24) ежедневно в 06:00 Europe/Moscow (`CRON_SCHEDULE`).
 
 Конфигурация брендов, вкусов и Едадила: `config/products.json`. Снимки городов: `data/regions/<city>/latest.json`; каталог сайта: `apps/site/data/regions/<city>.json`. Кэш цен живёт 6 часов, повтор после ошибки — через 30 минут. Изображения и логотипы повторно используются из дискового кэша.
 

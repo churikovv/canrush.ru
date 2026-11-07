@@ -5,7 +5,7 @@ export const CITIES = [
   { id: 'novosibirsk', name: 'Новосибирск', geoId: '65', slug: 'novosibirsk', lat: 55.030199, lng: 82.92043 },
   { id: 'yekaterinburg', name: 'Екатеринбург', geoId: '54', slug: 'ekaterinburg', lat: 56.838011, lng: 60.597465 },
   { id: 'kazan', name: 'Казань', geoId: '43', slug: 'kazan', lat: 55.796127, lng: 49.106414 },
-  { id: 'nizhny-novgorod', name: 'Нижний Новгород', geoId: '47', slug: 'nizhniy-novgorod', lat: 56.326887, lng: 44.005986 },
+  { id: 'nizhny-novgorod', name: 'Нижний Новгород', geoId: '47', slug: 'nizhnij-novgorod', lat: 56.326887, lng: 44.005986 },
   { id: 'krasnoyarsk', name: 'Красноярск', geoId: '62', slug: 'krasnoyarsk', lat: 56.010563, lng: 92.852572 },
   { id: 'chelyabinsk', name: 'Челябинск', geoId: '56', slug: 'chelyabinsk', lat: 55.159902, lng: 61.402554 },
   { id: 'samara', name: 'Самара', geoId: '51', slug: 'samara', lat: 53.195878, lng: 50.100202 },
@@ -16,6 +16,16 @@ export const CITIES = [
   { id: 'voronezh', name: 'Воронеж', geoId: '193', slug: 'voronezh', lat: 51.660781, lng: 39.200296 },
   { id: 'perm', name: 'Пермь', geoId: '50', slug: 'perm', lat: 58.010455, lng: 56.229443 },
   { id: 'volgograd', name: 'Волгоград', geoId: '38', slug: 'volgograd', lat: 48.707067, lng: 44.516975 },
+  // November 2026: Edadeal has as many energy drinks here as in Omsk or Volgograd; Irkutsk and Khabarovsk are thinner, but
+  // without them the index has no East Siberia and no Far East. `slug` is Edadeal's own (its sitemap): х → x, ь → «-».
+  { id: 'tyumen', name: 'Тюмень', geoId: '55', slug: 'tyumen', lat: 57.153033, lng: 65.534328 },
+  { id: 'saratov', name: 'Саратов', geoId: '194', slug: 'saratov', lat: 51.533103, lng: 46.034158 },
+  { id: 'barnaul', name: 'Барнаул', geoId: '197', slug: 'barnaul', lat: 53.348053, lng: 83.779875 },
+  { id: 'izhevsk', name: 'Ижевск', geoId: '44', slug: 'izhevsk', lat: 56.852593, lng: 53.204843 },
+  { id: 'irkutsk', name: 'Иркутск', geoId: '63', slug: 'irkutsk', lat: 52.286387, lng: 104.28066 },
+  { id: 'khabarovsk', name: 'Хабаровск', geoId: '76', slug: 'xabarovsk', lat: 48.480223, lng: 135.071917 },
+  { id: 'ulyanovsk', name: 'Ульяновск', geoId: '195', slug: 'ul-yanovsk', lat: 54.314192, lng: 48.403123 },
+  { id: 'yaroslavl', name: 'Ярославль', geoId: '16', slug: 'yaroslavl', lat: 57.626074, lng: 39.88447 },
 ] as const;
 export type City = (typeof CITIES)[number];
 export type CityId = City['id'];
