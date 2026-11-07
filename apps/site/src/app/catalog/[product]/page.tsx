@@ -16,7 +16,8 @@ import { getDrinkStoreOffers } from '@/lib/stores';
 import { BrandShell } from '@/components/brand-shell';
 import { CatalogProductDetail } from '@/components/catalog-product-detail';
 import { LavkaAd } from '@/components/lavka-ad';
-import { LAVKA_PROMO, adHiddenCookie, adLastDay, adMarking, adShown } from '@/lib/partner-ads';
+import { PerekrestokAd } from '@/components/perekrestok-ad';
+import { LAVKA_PROMO, adHiddenCookie, adLastDay, adMarking, pickDrinkAd } from '@/lib/partner-ads';
 import { CatalogSimilarDrinks } from '@/components/catalog-similar-drinks';
 import { Suspense } from 'react';
 import { ProfileNavigation } from '@/components/profile-navigation';
@@ -121,8 +122,9 @@ export default async function CatalogProductPage({
     getDrinkQuestions(group.brand, group.flavor, session?.user.id ?? null, companyId),
   ]);
 
-  // Lavka's promo codes at the start of every drink card where Lavka delivers, until they end, unless hidden in this browser.
-  const lavka = adShown(LAVKA_PROMO, city, new Date(), (await cookies()).has(adHiddenCookie(LAVKA_PROMO)));
+  // A partner's banner at the start of every drink card: Lavka or Perekrestok, whichever run in the city and aren't hidden here.
+  const jar = await cookies();
+  const drinkAd = pickDrinkAd(city, ad => jar.has(adHiddenCookie(ad)));
 
   // Rating and prices for search results (Product); none for a drink with neither.
   const jsonLd = drinkJsonLd({ ...group, fullName: brand?.fullName || added?.fullName || group.fullName }, summary, brand?.description || undefined);
@@ -154,7 +156,9 @@ export default async function CatalogProductPage({
         city={city}
         ceilings={ceilings}
         company={company}
-        ad={lavka ? <LavkaAd ad={LAVKA_PROMO} lastDay={adLastDay(LAVKA_PROMO)} marking={adMarking(LAVKA_PROMO)} /> : null}
+        ad={!drinkAd ? null : drinkAd.ad.key === LAVKA_PROMO.key
+          ? <LavkaAd ad={drinkAd.ad} lastDay={adLastDay(drinkAd.ad) ?? ''} marking={adMarking(drinkAd.ad)} />
+          : <PerekrestokAd ad={drinkAd.ad} code={drinkAd.code} marking={adMarking(drinkAd.ad)} />}
         similar={<Suspense fallback={null}><CatalogSimilarDrinks brand={group.brand} flavor={group.flavor} viewerId={session?.user.id ?? null} /></Suspense>}
       />
     </BrandShell>

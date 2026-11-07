@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ActionToast } from '@/components/action-toast';
+import { copyText } from '@/lib/copy-text';
 import { AD_HIDE_DAYS, adHiddenCookie, type PartnerAd, type PromoCode } from '@/lib/partner-ads';
 
 const COPY = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h9" /></svg>;
@@ -17,22 +18,6 @@ const LAVKA_MARK = <svg className="lavka-ad-mark" viewBox="0 0 44 44" aria-hidde
 </svg>;
 const CLOSE = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>;
 
-/** The clipboard API, then the old `execCommand` for WebViews and pages without it. */
-async function copyText(text: string): Promise<boolean> {
-  try { await navigator.clipboard.writeText(text); return true; } catch { /* below */ }
-  try {
-    const field = document.createElement('textarea');
-    field.value = text;
-    field.setAttribute('readonly', '');
-    field.style.position = 'fixed';
-    field.style.opacity = '0';
-    document.body.append(field);
-    field.select();
-    const done = document.execCommand('copy');
-    field.remove();
-    return done;
-  } catch { return false; }
-}
 
 /**
  * Yandex Lavka's promo codes at the start of a drink card, in the style of Lavka's own outdoor ads: their bright blue with

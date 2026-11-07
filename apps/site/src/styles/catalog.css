@@ -983,3 +983,62 @@ html[data-native-app] .lavka-ad-slot { display: none; }
 @container lavka-ad (max-width: 419px) {
   .lavka-ad-title { font-size: 1.75rem; }
 }
+
+/*
+ * Perekrestok's banners at the start of a drink card (`PerekrestokAd`, campaign in `partner-ads.ts`), in the style of
+ * their own ads: their green, a large white headline with the discount on a lime plate (their «1 час»), the code on a dark
+ * green chip, their logo on a white wave at the bottom — on white every leaf of the mark shows — with the legal line small
+ * and quiet beside it. The colours are the ad's own and stay the same in every site theme. It follows its slot's width
+ * (container `px-ad`). Hidden in the apps until their store listings say «contains ads».
+ */
+.px-ad-slot { container: px-ad / inline-size; min-width: 0; }
+html[data-native-app] .px-ad-slot { display: none; }
+.px-ad {
+  /* Their green: white type on it is 3.3:1, enough for the large headline. */
+  --px-green: #14a332;
+  --px-lime: #aae641;
+  --px-deep: #00451f;
+  --px-ink: #003d1c;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "top top" "title code" "order code" "foot foot";
+  align-items: end; gap: 0 28px; overflow: hidden; padding: 12px 14px 0 24px; border-radius: var(--radius-lg); background: var(--px-green); color: #fff;
+}
+.px-ad-top { display: flex; grid-area: top; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 8px; }
+.px-ad-label { padding: 3px 9px; border: 1px solid rgb(255 255 255 / 55%); border-radius: var(--radius-pill); font-size: .6875rem; font-weight: 700; line-height: 1.2; }
+.px-ad-close { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: var(--radius-pill); background: none; color: rgb(255 255 255 / 80%); cursor: pointer; }
+.px-ad-close:hover { background: rgb(255 255 255 / 14%); color: #fff; }
+.px-ad-close:focus-visible, .px-ad-code:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+/* The headline leads; the discount sits on their lime plate. */
+.px-ad-title { grid-area: title; margin: 0; font-size: 2.375rem; font-weight: 800; line-height: 1.1; letter-spacing: -.02em; text-wrap: balance; }
+.px-ad-title mark { padding: 0 .16em; border-radius: .2em; background: var(--px-lime); color: var(--px-ink); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.px-ad-order { grid-area: order; margin: 10px 0 0; color: rgb(255 255 255 / 92%); font-size: .9375rem; font-weight: 600; }
+/* The code comes second: a dark green chip, the link to Perekrestok. */
+.px-ad-code {
+  display: flex; grid-area: code; align-items: center; justify-content: space-between; gap: 14px; min-width: 220px; min-height: 52px; margin-right: 10px; padding: 8px 14px 8px 16px;
+  border-radius: 14px; background: var(--px-deep); color: #fff; text-decoration: none; box-shadow: 0 6px 18px rgb(0 40 18 / 28%);
+  transition: scale var(--motion-fast);
+}
+.px-ad-code:hover { scale: 1.02; }
+.px-ad-code:active { scale: .98; }
+.px-ad-code-text { display: grid; gap: 1px; }
+.px-ad-code small { color: var(--px-lime); font-size: .6875rem; font-weight: 700; }
+.px-ad-code code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.0625rem; font-weight: 800; letter-spacing: .06em; }
+.px-ad-code svg { flex: none; color: var(--px-lime); }
+/* The white wave: an arch across the card, the logo and the legal line on it. */
+.px-ad-foot {
+  display: flex; grid-area: foot; align-items: center; flex-wrap: wrap; gap: 10px 24px; margin: 20px -14px 0 -24px; padding: 22px 24px 14px;
+  border-radius: 50% 50% 0 0 / 22px 22px 0 0; background: #fff; color: var(--px-ink);
+}
+.px-ad-logo { display: block; flex: none; line-height: 0; }
+.px-ad-logo svg { width: auto; height: 22px; }
+.px-ad-fine { flex: 1 1 360px; margin: 0; color: #5d7466; font-size: .6875rem; line-height: 1.4; }
+@media (prefers-reduced-motion: reduce) { .px-ad-code { transition: none; } .px-ad-code:hover, .px-ad-code:active { scale: none; } }
+@container px-ad (max-width: 679px) {
+  .px-ad { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "title" "order" "code" "foot"; padding: 10px 10px 0 16px; }
+  .px-ad-title { margin-right: 6px; font-size: 1.875rem; }
+  .px-ad-code { min-width: 0; margin: 16px 6px 0 0; }
+  .px-ad-foot { margin: 18px -10px 0 -16px; padding: 20px 16px 14px; border-radius: 50% 50% 0 0 / 16px 16px 0 0; }
+  .px-ad-logo svg { height: 19px; }
+}
+@container px-ad (max-width: 419px) {
+  .px-ad-title { font-size: 1.625rem; }
+}

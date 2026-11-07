@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LAVKA_PROMO, adLastDay, adMarking, adShown } from '@/lib/partner-ads';
+import { LAVKA_PROMO, PEREKRESTOK_PROMO, adLastDay, adMarking, adShown, pickDrinkAd } from '@/lib/partner-ads';
 
 describe('partner ads', () => {
   it('marks the Lavka ad the way the law on advertising asks: the word, the advertiser with ИНН, the token', () => {
@@ -19,5 +19,26 @@ describe('partner ads', () => {
 
   it('offers the two codes the owner picked: −50% for new customers, −40% for those back after a year', () => {
     expect(LAVKA_PROMO.codes.map(item => [item.value, item.code])).toEqual([['−50%', '50SUP433'], ['−40%', '40ARU472']]);
+  });
+
+  it('marks Perekrestok with X5 Digital and its own token, everywhere and without an end date', () => {
+    expect(adMarking(PEREKRESTOK_PROMO)).toBe('Реклама. ООО «ИКС 5 ДИДЖИТАЛ», ИНН 9722010808. erid: 2RanykXiLS8');
+    expect(new URL(PEREKRESTOK_PROMO.href).searchParams.get('erid')).toBe(PEREKRESTOK_PROMO.erid);
+    expect(adShown(PEREKRESTOK_PROMO, 'khabarovsk', new Date('2027-06-01T00:00:00Z'))).toBe(true);
+    expect(adLastDay(PEREKRESTOK_PROMO)).toBeNull();
+    expect(PEREKRESTOK_PROMO.codes.map(item => [item.value, item.code])).toEqual([['−40%', '1956EDXBA'], ['−99%', '197ZU63MP']]);
+  });
+
+  it('lets Lavka and Perekrestok take turns where both run, and Perekrestok’s two banners elsewhere', () => {
+    const now = new Date('2026-11-10T12:00:00Z');
+    const none = () => false;
+    expect(pickDrinkAd('moscow', none, now, () => 0.1)).toEqual({ ad: LAVKA_PROMO, code: 0 });
+    expect(pickDrinkAd('moscow', none, now, () => 0.9)).toEqual({ ad: PEREKRESTOK_PROMO, code: 1 });
+    expect(pickDrinkAd('omsk', none, now, () => 0.2)).toEqual({ ad: PEREKRESTOK_PROMO, code: 0 });
+    expect(pickDrinkAd('omsk', none, now, () => 0.7)).toEqual({ ad: PEREKRESTOK_PROMO, code: 1 });
+    // After 31 December Lavka is gone, and a campaign hidden here never comes up.
+    expect(pickDrinkAd('moscow', none, new Date('2027-01-02T00:00:00Z'), () => 0.1)?.ad).toBe(PEREKRESTOK_PROMO);
+    expect(pickDrinkAd('moscow', ad => ad === PEREKRESTOK_PROMO, now, () => 0.9)?.ad).toBe(LAVKA_PROMO);
+    expect(pickDrinkAd('omsk', ad => ad === PEREKRESTOK_PROMO, now)).toBeNull();
   });
 });
