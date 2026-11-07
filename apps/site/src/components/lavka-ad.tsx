@@ -64,7 +64,8 @@ export function LavkaAd({ ad, lastDay, marking }: { ad: PartnerAd; lastDay: stri
       <span className="lavka-ad-label">Реклама</span>
       <button type="button" className="lavka-ad-close" onClick={hide} aria-label="Скрыть рекламу на неделю">{CLOSE}</button>
     </div>
-    <p className="lavka-ad-title">Холодный энергетик <br />с быстрой доставкой</p>
+    {/* «от 15 минут» never splits: on a phone the line breaks before it, not before «минут». */}
+    <p className="lavka-ad-title">Холодный энергетик <br />с доставкой от 15 минут</p>
     <div className="lavka-ad-offers">
       {main && coupon(main, true)}
       {minor.map(item => coupon(item, false))}
