@@ -83,10 +83,12 @@ interface CatalogProductDetailProps {
   photos?: string[];
   /** «Похожее», the page's last block (`CatalogSimilarDrinks`, streamed in by the page). */
   similar?: ReactNode;
+  /** A partner's ad at the start of the card (`LavkaAd`), rendered by the page where and while it runs. */
+  ad?: ReactNode;
 }
 
 
-export function CatalogProductDetail({ similar, photos = [], storeOffers = [], city, group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, questions, questionsOpen, viewerId, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ ad, similar, photos = [], storeOffers = [], city, group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, questions, questionsOpen, viewerId, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
   const newest = reviews.find(review => review.text.trim());
   const firstQuestion = questions.questions[0];
   const latestQuestion = firstQuestion ? { author: firstQuestion.username, avatarId: firstQuestion.avatarId, date: LATEST_DATE.format(new Date(firstQuestion.createdAt)), text: firstQuestion.text, answers: firstQuestion.answers.length } : null;
@@ -116,6 +118,8 @@ export function CatalogProductDetail({ similar, photos = [], storeOffers = [], c
       })()}
 
       <div className="catalog-product-information">
+        {/* A partner's ad (Yandex Lavka's coupons) opens the card, above the brand and the name. */}
+        {ad}
         <div className="catalog-product-heading-row">
           <span className="catalog-product-brand">{group.brand}</span>
           <CatalogFavoriteButton

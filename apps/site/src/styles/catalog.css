@@ -908,3 +908,78 @@ html:has(.catalog-reviews-sheet[open]) { overflow: hidden; }
 /* «Все результаты» всегда видна: на телефоне список выше экрана над клавиатурой и листается под ней. */
 .catalog-suggest-row.is-all { position: sticky; bottom: -6px; margin: 0 -6px -6px; padding-inline: 16px; border-top: 1px solid var(--color-control); border-radius: 0 0 18px 18px; background: var(--color-surface); }
 .catalog-suggest-row.is-all[aria-selected="true"], .catalog-suggest-row.is-all:hover { background: var(--color-subtle); }
+
+/*
+ * Yandex Lavka's coupons at the start of a drink card (`LavkaAd`, campaign in `partner-ads.ts`), in the style of Lavka's
+ * outdoor ads: their bright blue with a few thin light streaks; the «Яндекс ♥ Лавка» lockup alone in the top corner with
+ * room around it, the mark at the height of the letters; «Реклама» and «✕» in the other corner; a large white headline
+ * that leads; the codes after it as compact chips (the first white, the rest translucent); the legal line small and
+ * quiet. The colours are the ad's own and stay the same in every site theme. It follows its slot's width (container
+ * `lavka-ad`). Hidden in the apps until their store listings say «contains ads».
+ */
+.lavka-ad-slot { container: lavka-ad / inline-size; min-width: 0; }
+html[data-native-app] .lavka-ad-slot { display: none; }
+.lavka-ad {
+  /* Lavka's blue: white type on it is 3.1:1, enough for the large headline and the bold lockup. */
+  --lv-blue: #1d98ec;
+  /* Blue type on the white chip: 4.2:1. */
+  --lv-blue-ink: #0d7fd0;
+  --lv-ink: #0e1a28;
+  --lv-muted: #5b6878;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "logo top" "title offers" "fine fine";
+  align-items: end; gap: 0 32px; padding: 18px 14px 16px 24px; border-radius: var(--radius-lg); color: #fff;
+  background:
+    linear-gradient(118deg, transparent 0 56%, rgb(255 255 255 / 16%) 56.3%, transparent 57.4%),
+    linear-gradient(118deg, transparent 0 63%, rgb(255 255 255 / 11%) 63.2%, transparent 64%),
+    linear-gradient(104deg, transparent 0 81%, rgb(255 255 255 / 9%) 81.2%, transparent 82.3%),
+    linear-gradient(128deg, transparent 0 12%, rgb(255 255 255 / 7%) 12.2%, transparent 13.4%),
+    var(--lv-blue);
+}
+/* «Яндекс ♥ Лавка» as on the billboards: the mark between the words at the height of the letters, alone in its corner. */
+.lavka-ad-logo { display: flex; grid-area: logo; align-items: center; align-self: center; gap: .22em; margin: 0 0 22px; font-size: 1.25rem; font-weight: 700; line-height: 1; letter-spacing: -.015em; }
+.lavka-ad-mark { flex: none; width: .98em; height: .98em; color: var(--lv-blue); }
+/* «Реклама» and «✕» in the opposite corner, apart from the lockup. */
+.lavka-ad-top { display: flex; grid-area: top; align-items: center; align-self: start; justify-content: flex-end; gap: 4px; margin: -8px 0 0; }
+.lavka-ad-label { padding: 3px 9px; border: 1px solid rgb(255 255 255 / 50%); border-radius: var(--radius-pill); font-size: .6875rem; font-weight: 700; line-height: 1.2; }
+.lavka-ad-close { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: var(--radius-pill); background: none; color: rgb(255 255 255 / 75%); cursor: pointer; }
+.lavka-ad-close:hover { background: rgb(255 255 255 / 14%); color: #fff; }
+.lavka-ad-close:focus-visible, .lavka-ad-coupon:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+/* The headline leads: by far the largest type on the card, set tight like the billboards. */
+.lavka-ad-title { grid-area: title; margin: 0; font-size: 2.625rem; font-weight: 800; line-height: 1.02; letter-spacing: -.025em; text-wrap: balance; }
+/* The codes come second: compact chips, one line each. */
+.lavka-ad-offers { display: grid; grid-area: offers; gap: 8px; width: 344px; margin-right: 10px; }
+.lavka-ad-coupon { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; min-height: 44px; padding: 6px 10px 6px 14px; border-radius: 12px; text-decoration: none; transition: scale var(--motion-fast), background-color var(--motion-fast); }
+.lavka-ad-coupon:hover { scale: 1.02; }
+.lavka-ad-coupon:active { scale: .98; }
+.lavka-ad-off { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.lavka-ad-off b { font-size: 1.25rem; font-weight: 900; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.lavka-ad-off small { overflow: hidden; font-size: .75rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.lavka-ad-code { display: flex; flex: none; align-items: center; gap: 6px; align-self: stretch; padding-left: 10px; }
+.lavka-ad-code code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .875rem; font-weight: 800; letter-spacing: .05em; }
+.lavka-ad-code svg { flex: none; }
+.lavka-ad-coupon.is-main { background: #fff; color: var(--lv-ink); box-shadow: 0 4px 14px rgb(6 60 110 / 20%); }
+.is-main .lavka-ad-off b, .is-main .lavka-ad-code svg { color: var(--lv-blue-ink); }
+.is-main .lavka-ad-off small { color: var(--lv-muted); }
+.is-main .lavka-ad-code { border-left: 1.5px dashed #cfdbe7; }
+.lavka-ad-coupon.is-minor { border: 1px solid rgb(255 255 255 / 38%); background: rgb(255 255 255 / 12%); color: #fff; }
+.lavka-ad-coupon.is-minor:hover { background: rgb(255 255 255 / 20%); }
+.is-minor .lavka-ad-off b { font-size: 1.0625rem; }
+.is-minor .lavka-ad-off small { color: rgb(255 255 255 / 88%); font-weight: 600; }
+.is-minor .lavka-ad-code { border-left: 1px dashed rgb(255 255 255 / 45%); }
+.is-minor .lavka-ad-code code { font-size: .8125rem; }
+.lavka-ad-coupon[data-copied] .lavka-ad-code svg { color: #12945a; }
+.lavka-ad-coupon.is-minor[data-copied] .lavka-ad-code svg { color: #fff; }
+/* The legal line: present, small and quiet, as on Lavka's own billboards. */
+.lavka-ad-fine { grid-area: fine; margin: 16px 10px 0 0; color: rgb(255 255 255 / 72%); font-size: .6875rem; line-height: 1.4; }
+@media (prefers-reduced-motion: reduce) { .lavka-ad-coupon { transition: none; } .lavka-ad-coupon:hover, .lavka-ad-coupon:active { scale: none; } }
+@container lavka-ad (max-width: 679px) {
+  .lavka-ad { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "logo top" "title title" "offers offers" "fine fine"; padding: 16px 10px 14px 16px; }
+  .lavka-ad-logo { margin-bottom: 18px; font-size: 1.125rem; }
+  .lavka-ad-title { margin-right: 6px; font-size: 2rem; }
+  .lavka-ad-offers { width: auto; margin: 16px 6px 0 0; }
+  .lavka-ad-fine { margin: 12px 6px 0 0; }
+}
+@container lavka-ad (max-width: 419px) {
+  .lavka-ad-title { font-size: 1.75rem; }
+}

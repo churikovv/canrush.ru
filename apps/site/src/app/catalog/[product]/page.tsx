@@ -6,7 +6,7 @@ import '@/styles/catalog.css';
 import { getPriceHistory } from '@/lib/price-history-files';
 import { selectedCity } from '@/lib/location';
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { logCatalogView } from '@/lib/catalog-events';
 import { brandIngredients, getBrandProfile } from '@/lib/brand-drink-edits';
@@ -15,6 +15,8 @@ import { getBrandPrices } from '@/lib/brand-drink-prices';
 import { getDrinkStoreOffers } from '@/lib/stores';
 import { BrandShell } from '@/components/brand-shell';
 import { CatalogProductDetail } from '@/components/catalog-product-detail';
+import { LavkaAd } from '@/components/lavka-ad';
+import { LAVKA_PROMO, adHiddenCookie, adLastDay, adMarking, adShown } from '@/lib/partner-ads';
 import { CatalogSimilarDrinks } from '@/components/catalog-similar-drinks';
 import { Suspense } from 'react';
 import { ProfileNavigation } from '@/components/profile-navigation';
@@ -119,6 +121,9 @@ export default async function CatalogProductPage({
     getDrinkQuestions(group.brand, group.flavor, session?.user.id ?? null, companyId),
   ]);
 
+  // Lavka's promo codes at the start of every drink card where Lavka delivers, until they end, unless hidden in this browser.
+  const lavka = adShown(LAVKA_PROMO, city, new Date(), (await cookies()).has(adHiddenCookie(LAVKA_PROMO)));
+
   // Rating and prices for search results (Product); none for a drink with neither.
   const jsonLd = drinkJsonLd({ ...group, fullName: brand?.fullName || added?.fullName || group.fullName }, summary, brand?.description || undefined);
   return (
@@ -149,6 +154,7 @@ export default async function CatalogProductPage({
         city={city}
         ceilings={ceilings}
         company={company}
+        ad={lavka ? <LavkaAd ad={LAVKA_PROMO} lastDay={adLastDay(LAVKA_PROMO)} marking={adMarking(LAVKA_PROMO)} /> : null}
         similar={<Suspense fallback={null}><CatalogSimilarDrinks brand={group.brand} flavor={group.flavor} viewerId={session?.user.id ?? null} /></Suspense>}
       />
     </BrandShell>
