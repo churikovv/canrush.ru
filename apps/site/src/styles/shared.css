@@ -498,6 +498,9 @@ a.wall-post-author:hover { color: var(--theme-link); }
 .wall-post-edit .community-form-footer { margin-top: 10px; }
 .wall-post-edit-buttons { display: flex; gap: 8px; }
 .wall-comment > p { margin-top: 14px; font-size: .9375rem; line-height: 1.55; }
+/* Attachments keep the same distance from the heading or the text as the text keeps from the heading. */
+.wall-comment > .review-photo-thumbnails { margin-top: 14px; }
+.review-comment-body > .review-photo-thumbnails { margin: 8px 0; }
 :is(.wall-comment,.review-item) .review-discussion { margin-top: 12px; padding-top: 0; border-top: 0; }
 :is(.wall-comment,.review-item) .review-reactions { margin-left: -8px; }
 :is(.wall-comment,.review-item) .review-reactions button svg { width: 18px; height: 18px; }
