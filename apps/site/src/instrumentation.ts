@@ -30,6 +30,11 @@ export async function register() {
     const { startComebackEmailWorker } = await import('@/lib/comeback-email-worker');
     startComebackEmailWorker();
   }
+  // «Индекс цен» on /prices: production only, unless a developer opts in with PRICE_INDEX_WORKER=on.
+  if (process.env.PRICE_INDEX_WORKER === 'on' || (process.env.NODE_ENV === 'production' && process.env.PRICE_INDEX_WORKER !== 'off')) {
+    const { startPriceIndexWorker } = await import('@/lib/price-index-worker');
+    startPriceIndexWorker();
+  }
 }
 
 /**

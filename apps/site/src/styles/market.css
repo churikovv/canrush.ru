@@ -78,7 +78,8 @@
 .market-search-filters { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)) auto; align-items: end; gap: 16px; margin: 24px 0 32px; }
 .market-search-filters label { display: block; margin-bottom: 8px; font-size: .875rem; }
 .market-search-filters > div { min-width: 0; }
-.market-search-filters > a { color: var(--color-brand-deep); min-height: 44px; display: flex; align-items: center; }
+/* «Показать» and «Сбросить» — buttons as tall as the fields beside them; «Сбросить» is outlined, not a text link. */
+.market-search-filters > :is(.community-button, a.community-button) { min-height: 48px; padding-inline: 20px; }
 @media(max-width:639px) { .market-search-filters { grid-template-columns: 1fr; } }
 /* Photo actions stay on the image; transforms animate sorting without resizing the grid. */
 .market-photo-previews { position: relative; }

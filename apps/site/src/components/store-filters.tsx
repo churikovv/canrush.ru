@@ -29,7 +29,7 @@ export function StoreFilters({ brands, stations, initial, scope, basePath, addHr
       <div><label htmlFor="store-brand">Бренд</label><PriceFilterInput id="store-brand" value={brand} options={options(brands, brand)} allLabel="Все бренды" onChange={setBrand} /><input type="hidden" name="brand" value={brand} /></div>
       {(stations.length > 0 || metro) && <div><label htmlFor="store-metro">Метро</label><PriceFilterInput id="store-metro" value={metro} options={options(stations, metro)} allLabel="Все станции" onChange={setMetro} /><input type="hidden" name="metro" value={metro} /></div>}
       <button type="submit" className="community-button">Показать</button>
-      {(brand || metro || query) && <a href={`${basePath}?${new URLSearchParams(scope)}`}>Сбросить</a>}
+      {(brand || metro || query) && <a className="community-button community-button-secondary" href={`${basePath}?${new URLSearchParams(scope)}`}>Сбросить</a>}
     </div>
   </form>;
 }

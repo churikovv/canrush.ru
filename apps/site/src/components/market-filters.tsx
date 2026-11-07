@@ -26,7 +26,7 @@ export function MarketFilters({ brands, cities, initial, scope, basePath = '/mar
     <div><label htmlFor="market-city">Город</label><PriceFilterInput id="market-city" value={city} options={[...new Set([...cities,...(city?[city]:[])])].map(value=>({value,label:value}))} allLabel="Все города" onChange={setCity}/><input type="hidden" name="city" value={city}/></div>
     <div><label htmlFor="market-delivery">Доставка</label><PriceFilterInput id="market-delivery" value={delivery} options={Object.entries(DELIVERY).map(([value,label])=>({value,label}))} allLabel="Все способы" onChange={setDelivery}/><input type="hidden" name="delivery" value={delivery}/></div>
     <button type="submit" className="community-button">Показать</button>
-    {(brand||city||delivery||query)&&<a href={`${basePath}?${new URLSearchParams(scope)}`}>Сбросить</a>}
+    {(brand||city||delivery||query)&&<a className="community-button community-button-secondary" href={`${basePath}?${new URLSearchParams(scope)}`}>Сбросить</a>}
     </div>
   </form>;
 }
