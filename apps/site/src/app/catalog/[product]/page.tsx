@@ -29,7 +29,7 @@ import { getProductIngredients } from '@/lib/ingredients';
 import { auth } from '@/lib/auth';
 import { getCatalogGroup, isFavorite, loadAllCatalogGroups } from '@/lib/catalog';
 import { catalogGroupSlug, catalogRetailerCount, decodeCatalogGroupSlug, flavorName } from '@/lib/catalog-query';
-import { getReviewSummary, getReviewsForProduct, getUserReview } from '@/lib/reviews';
+import { firstReviewBonusAhead, getReviewSummary, getReviewsForProduct, getUserReview } from '@/lib/reviews';
 import { getDrinkQuestions } from '@/lib/drink-questions';
 import { drinkJsonLd } from '@/lib/drink-json-ld';
 import { ogImage, seoMetadata } from '@/lib/seo';
@@ -94,7 +94,7 @@ export default async function CatalogProductPage({
   await logCatalogView(group.brand, group.flavor);
   const { id: city } = await selectedCity();
 
-  const [favorite, reviews, summary, userReview, fileIngredients, swipes, added, brand, brandStores, ceilings, storeOffers] = await Promise.all([
+  const [favorite, reviews, summary, userReview, fileIngredients, swipes, added, brand, brandStores, ceilings, storeOffers, firstReviewBonus] = await Promise.all([
     session ? isFavorite(session.user.id, group.brand, group.flavor) : Promise.resolve(false),
     getReviewsForProduct(group.brand, group.flavor, session?.user.id ?? null),
     getReviewSummary(group.brand, group.flavor),
@@ -106,6 +106,8 @@ export default async function CatalogProductPage({
     getBrandStores(group.brand, group.flavor).catch(() => []),
     getBrandPrices(group.brand, group.flavor).catch(() => []),
     getDrinkStoreOffers(group.brand, group.flavor).catch(() => []),
+    // A guest sees the first review's reward too: it is what signing in and reviewing brings.
+    session ? firstReviewBonusAhead(session.user.id).catch(() => false) : Promise.resolve(true),
   ]);
   // The brand's own composition (an approved edit) comes first; a member's drink has no file, its label text stands in.
   const ingredients = (brand && brandIngredients(brand, group.brand, group.flavor, fileIngredients?.volumeMl ?? added?.volumes[0])) ?? fileIngredients ?? (added ? catalogDrinkIngredients(added) : null);
@@ -156,6 +158,7 @@ export default async function CatalogProductPage({
         city={city}
         ceilings={ceilings}
         company={company}
+        firstReviewBonus={firstReviewBonus}
         ad={!drinkAd ? null : drinkAd.ad.key === LAVKA_PROMO.key
           ? <LavkaAd ad={drinkAd.ad} lastDay={adLastDay(drinkAd.ad) ?? ''} marking={adMarking(drinkAd.ad)} />
           : <PerekrestokAd ad={drinkAd.ad} code={drinkAd.code} marking={adMarking(drinkAd.ad)} />}

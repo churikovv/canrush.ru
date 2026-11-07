@@ -1,4 +1,5 @@
 import { COLLECTION_MILESTONES } from '@/lib/brand-collection-fields';
+import { FIRST_REVIEW_XP, REVIEW_XP } from '@/lib/review-fields';
 import { SWIPE_XP, SWIPE_XP_LIMIT } from '@/lib/drink-swipes';
 import { STORE_XP } from '@/lib/store-fields';
 
@@ -13,7 +14,8 @@ export const XP_SOURCES: readonly XpSource[] = [
   { reason: 'collection', title: 'Коллекция вкусов', note: 'За четверть, половину и весь бренд', points: Math.max(...COLLECTION_MILESTONES.map(([, points]) => points)), upTo: true, href: '/profile', art: '/brand/medals/collector.png' },
   { reason: 'catalog-drink', title: 'Новый напиток', note: 'После проверки, с 51-го +25 XP', points: 50, href: '/catalog/new', art: '/brand/home/catalog.png' },
   { reason: 'tierlist', title: 'Тирлист', note: 'Первые 10 тирлистов', points: 50, href: '/tierlists/new', art: '/brand/home/tierlists.png' },
-  { reason: 'review', title: 'Отзыв о напитке', note: 'За каждый напиток', points: 25, href: '/search', art: '/brand/medals/first-review.png' },
+  { reason: 'review', title: 'Отзыв о напитке', note: 'За каждый напиток', points: REVIEW_XP, href: '/search', art: '/brand/medals/first-review.png' },
+  { reason: 'first-review', title: 'Первый отзыв', note: 'Один раз, сверху и 25 искр', points: FIRST_REVIEW_XP, href: '/search', art: '/brand/medals/first-review.png' },
   { reason: 'achievement', title: 'Достижение', note: 'За каждый новый тег', points: 20, href: '/profile', art: '/brand/medals/top.png' },
   { reason: 'swipe', title: 'Свайп в дейтинге', note: `Первые ${SWIPE_XP_LIMIT} свайпов`, points: SWIPE_XP, href: '/community?type=dating', art: '/brand/home/dating.png' },
   { reason: 'favorite', title: 'Избранное', note: 'Первые 20 напитков', points: 2, href: '/search', art: '/brand/achievements/date.png' },

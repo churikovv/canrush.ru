@@ -85,10 +85,12 @@ interface CatalogProductDetailProps {
   similar?: ReactNode;
   /** A partner's ad at the start of the card (`LavkaAd`), rendered by the page where and while it runs. */
   ad?: ReactNode;
+  /** The first review's bonus is still ahead for this viewer: the review form shows the reward. */
+  firstReviewBonus?: boolean;
 }
 
 
-export function CatalogProductDetail({ ad, similar, photos = [], storeOffers = [], city, group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, questions, questionsOpen, viewerId, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
+export function CatalogProductDetail({ ad, firstReviewBonus = false, similar, photos = [], storeOffers = [], city, group, priceHistory=[], ingredients, favorite, authenticated, reviews, summary, userReview, reviewsOpen, questions, questionsOpen, viewerId, swipes, addedBy, fullName, reviewDigest, radar, brand, brandStores = [], ceilings = [], company }: CatalogProductDetailProps) {
   const newest = reviews.find(review => review.text.trim());
   const firstQuestion = questions.questions[0];
   const latestQuestion = firstQuestion ? { author: firstQuestion.username, avatarId: firstQuestion.avatarId, date: LATEST_DATE.format(new Date(firstQuestion.createdAt)), text: firstQuestion.text, answers: firstQuestion.answers.length } : null;
@@ -167,6 +169,7 @@ export function CatalogProductDetail({ ad, similar, photos = [], storeOffers = [
                 userReview={userReview}
                 authenticated={authenticated}
                 radar={radar}
+                firstBonus={firstReviewBonus}
               />
             </CatalogReviewsSheet>
             {reviewDigest && summary.count > 0 && <CatalogReviewHighlights highlights={reviewDigest.body} />}

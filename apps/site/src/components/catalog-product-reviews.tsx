@@ -14,6 +14,8 @@ interface CatalogProductReviewsProps {
   summary: ReviewSummary;
   userReview: ReviewData | null;
   authenticated: boolean;
+  /** The first review's bonus is still ahead for this viewer (a guest too): the form shows the reward. */
+  firstBonus?: boolean;
   /** The rating card's radar (taste, design, average, favourites) against the catalog; absent without reviews. */
   radar?: { drink: DrinkRadar; catalog: DrinkRadar; country: string | null } | null;
 }
@@ -47,6 +49,7 @@ export function CatalogProductReviews({
   userReview,
   authenticated,
   radar,
+  firstBonus = false,
 }: CatalogProductReviewsProps) {
   if (!isResolvedFlavor(flavor)) return <section className="catalog-product-section catalog-reviews">
     <p>Вкус этого предложения не подтверждён. Общий рейтинг и новые отзывы недоступны, чтобы не смешивать разные напитки.</p>
@@ -92,7 +95,7 @@ export function CatalogProductReviews({
         </div>
 
         <div className="review-form-wrapper">
-          <ReviewFormPanel brand={brand} flavor={flavor} existing={userReview} authenticated={authenticated} />
+          <ReviewFormPanel brand={brand} flavor={flavor} existing={userReview} authenticated={authenticated} firstBonus={firstBonus} />
         </div>
       </div>
 

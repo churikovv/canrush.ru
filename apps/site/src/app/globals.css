@@ -1607,6 +1607,8 @@ html[data-cookie-notice="visible"] .brand-footer {
   line-height: 1.45;
   text-wrap: pretty;
 }
+/* The first review's reward under «Оценить напиток»: a small brand-tinted pill, the review form lives in profile too. */
+.review-first-bonus { align-self: flex-start; padding: 3px 10px; border-radius: var(--radius-pill); background: var(--theme-tint); color: var(--theme-link); font-size: .8125rem; font-weight: 700; }
 .review-form {
   display: flex;
   flex-direction: column;

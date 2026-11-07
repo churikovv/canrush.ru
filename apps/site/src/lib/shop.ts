@@ -4,7 +4,7 @@ import { isScored, TROPHY_POINTS } from '@/lib/achievement-summary';
 import { BADGE_ACHIEVEMENTS } from '@/lib/badges';
 import { experienceLevel } from '@/lib/experience-level';
 import { PROFILE_ACHIEVEMENTS } from '@/lib/profile-achievements';
-import { LEVEL_SPARKS, priceNow, raceSparks, shopItem } from '@/lib/shop-items';
+import { FIRST_REVIEW_SPARKS, LEVEL_SPARKS, priceNow, raceSparks, shopItem } from '@/lib/shop-items';
 
 export class ShopError extends Error {}
 
@@ -22,29 +22,30 @@ export function trophyScore(keys: Iterable<string>, tiers: Readonly<Record<strin
   return score;
 }
 
-export interface SparkEarnings { achievements: number; levels: number; race: number; daily: number }
+export interface SparkEarnings { achievements: number; levels: number; race: number; daily: number; firstReview: number }
 /**
  * Sparks from each source (`shop-items.ts`): achievements by rarity, every level above the first, week race places and
- * the days of «Лунный цикл» (`daily`, the sum stored on each taken day).
+ * the days of «Лунный цикл» (`daily`, the sum stored on each taken day) and the first review, once.
  */
-export function sparkEarnings(keys: Iterable<string>, xp: number, places: readonly number[], tiers: Readonly<Record<string, number>> = {}, daily = 0): SparkEarnings {
-  return { achievements: trophyScore(keys, tiers), levels: (experienceLevel(xp).level - 1) * LEVEL_SPARKS, race: places.reduce((sum, place) => sum + raceSparks(place), 0), daily };
+export function sparkEarnings(keys: Iterable<string>, xp: number, places: readonly number[], tiers: Readonly<Record<string, number>> = {}, daily = 0, firstReview = false): SparkEarnings {
+  return { achievements: trophyScore(keys, tiers), levels: (experienceLevel(xp).level - 1) * LEVEL_SPARKS, race: places.reduce((sum, place) => sum + raceSparks(place), 0), daily, firstReview: firstReview ? FIRST_REVIEW_SPARKS : 0 };
 }
 
 export interface ShopState { earned: number; sources: SparkEarnings; spent: number; balance: number; owned: string[] }
 
 async function readShop(db: Db, userId: string): Promise<ShopState> {
-  const { rows } = await db.query<{ keys: string[]; tiers: Record<string, number> | null; owned: string[] | null; spent: number; xp: number; places: number[]; daily: number }>(`select
+  const { rows } = await db.query<{ keys: string[]; tiers: Record<string, number> | null; owned: string[] | null; spent: number; xp: number; places: number[]; daily: number; firstReview: boolean }>(`select
       (select json_object_agg(key, tier) from "profileAchievement" where "userId" = $1) as tiers,
       array(select key from "profileAchievement" where "userId" = $1 union select key from "profileBadge" where "userId" = $1) as keys,
       array(select key from "shopPurchase" where "userId" = $1 order by "createdAt") as owned,
       coalesce((select sum(price) from "shopPurchase" where "userId" = $1), 0)::int as spent,
       coalesce((select sum(points) from "profileExperience" where "userId" = $1), 0)::int as xp,
       array(select place::int from "weeklyTopAward" where "userId" = $1) as places,
-      coalesce((select sum(sparks) from "dailyReward" where "userId" = $1), 0)::int as daily`, [userId]);
+      coalesce((select sum(sparks) from "dailyReward" where "userId" = $1), 0)::int as daily,
+      exists(select 1 from "profileExperience" where "userId" = $1 and reason = 'first-review') as "firstReview"`, [userId]);
   const row = rows[0]!;
-  const sources = sparkEarnings(row.keys, row.xp, row.places, row.tiers ?? {}, row.daily);
-  const earned = sources.achievements + sources.levels + sources.race + sources.daily;
+  const sources = sparkEarnings(row.keys, row.xp, row.places, row.tiers ?? {}, row.daily, row.firstReview);
+  const earned = sources.achievements + sources.levels + sources.race + sources.daily + sources.firstReview;
   // A removed achievement could leave the earnings under what was spent; the balance never goes negative.
   return { earned, sources, spent: row.spent, balance: Math.max(0, earned - row.spent), owned: row.owned ?? [] };
 }

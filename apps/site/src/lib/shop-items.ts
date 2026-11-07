@@ -14,6 +14,8 @@ export interface ShopItem { key: string; kind: ShopKind; tier: ShopTier; label: 
 
 /** Sparks for each level above the first. */
 export const LEVEL_SPARKS = 15;
+/** Sparks for the first review, once (the `first-review` XP row, migration 0207). */
+export const FIRST_REVIEW_SPARKS = 25;
 /** Sparks for a place in the week race: first, 2–5, 6–10. */
 export const RACE_SPARKS = { hero: 100, best: 60, charge: 30 } as const;
 /** Achievements pay their trophy points (`TROPHY_POINTS`: 10, 25, 50, 100). */

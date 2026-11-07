@@ -16,22 +16,23 @@ beforeAll(async () => { for (const id of ids) await pool.query(`insert into "use
 afterAll(async () => { await pool.query('delete from "user" where id=any($1::text[])', [ids]); await pool.end(); });
 describe.sequential('experience awards and wall identity', () => {
   it('awards a review once even after edits or deletion and recreation', async () => {
-    await review(a, 'one'); expect(await xp(a)).toBe(25);
-    await review(a, 'one'); expect(await xp(a)).toBe(25);
+    // The first review also pays its one-time bonus (+25, migration 0207).
+    await review(a, 'one'); expect(await xp(a)).toBe(50);
+    await review(a, 'one'); expect(await xp(a)).toBe(50);
     await pool.query('delete from review where "userId"=$1', [a]);
-    await review(a, 'one'); expect(await xp(a)).toBe(25);
+    await review(a, 'one'); expect(await xp(a)).toBe(50);
   });
   it('awards achievements once, excludes admin and shows wall avatars and selected tags', async () => {
     // Three reviews earn «:3» (+20 XP) on the next look at the profile, and only once.
-    await review(a, 'two'); await review(a, 'three'); expect(await xp(a)).toBe(75);
-    await getProfileCommunity(a); expect(await xp(a)).toBe(95);
-    await getProfileCommunity(a); expect(await xp(a)).toBe(95);
+    await review(a, 'two'); await review(a, 'three'); expect(await xp(a)).toBe(100);
+    await getProfileCommunity(a); expect(await xp(a)).toBe(120);
+    await getProfileCommunity(a); expect(await xp(a)).toBe(120);
     await pool.query('insert into "profileAchievement" ("userId",key) values ($1,\'admin\')', [a]);
-    expect(await xp(a)).toBe(95);
+    expect(await xp(a)).toBe(120);
     await setProfileTags(a, ['three']);
     const image = await pool.query('insert into "profileImage" ("userId",kind,data) values ($1,\'avatar\',$2) returning id', [a, Buffer.from('fixture')]);
     await pool.query('insert into "profileComment" ("profileId","userId",text) values ($1,$2,\'Hello\')', [b, a]);
-    expect((await getProfileWall(b)).comments[0]).toMatchObject({ tag: 'three', xp: 95, avatarId: image.rows[0].id });
+    expect((await getProfileWall(b)).comments[0]).toMatchObject({ tag: 'three', xp: 120, avatarId: image.rows[0].id });
   });
   it('enforces lifetime favorite limits under concurrent inserts', async () => {
     const results = await Promise.allSettled(Array.from({ length: 25 }, (_, i) => pool.query('insert into favorite ("userId",brand,flavor) values ($1,\'Burn\',$2)', [b, String(i)])));
@@ -52,11 +53,11 @@ describe.sequential('experience awards and wall identity', () => {
   it('only rewards published tierlists and never rewards republication', async () => {
     const result = await pool.query(`insert into "tierList" ("userId",slug,title,status) values ($1,$2,'Test','draft') returning id`, [a, `xp-${randomUUID()}`]);
     const id = result.rows[0].id;
-    expect(await xp(a)).toBe(95);
+    expect(await xp(a)).toBe(120);
     await pool.query('update "tierList" set status=\'published\' where id=$1', [id]);
-    expect(await xp(a)).toBe(145);
+    expect(await xp(a)).toBe(170);
     await pool.query('update "tierList" set status=\'draft\' where id=$1', [id]);
     await pool.query('update "tierList" set status=\'published\' where id=$1', [id]);
-    expect(await xp(a)).toBe(145);
+    expect(await xp(a)).toBe(170);
   });
 });

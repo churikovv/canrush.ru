@@ -14,7 +14,7 @@ const render = (options: { level?: number; xp?: number; value?: ProfileAppearanc
     owned: options.owned ?? [], brandFrames: (options.brandFrames ?? []) as never,
     avatarSrc: null,
     tag: options.tag && { ...options.tag, onChange: noop, href: '/profile/tester/achievements' },
-    blocks: { shown: 7, total: 12, open: noop }, shop: options.shop && { ...options.shop, earned: options.shop.balance, sources: { achievements: options.shop.balance, levels: 0, race: 0, daily: 0 }, buy: async () => ({ ok: false as const, error: '' }) }, disabled: false,
+    blocks: { shown: 7, total: 12, open: noop }, shop: options.shop && { ...options.shop, earned: options.shop.balance, sources: { achievements: options.shop.balance, levels: 0, race: 0, daily: 0, firstReview: 0 }, buy: async () => ({ ok: false as const, error: '' }) }, disabled: false,
   }));
 };
 

@@ -1,5 +1,8 @@
 import { isCountryCode } from '@/lib/countries';
 
+/** XP for a review of a drink, and the one-time bonus on top for the member's first review (`award_profile_experience`). */
+export const REVIEW_XP = 25;
+export const FIRST_REVIEW_XP = 25;
 export const MIN_REVIEW_LENGTH = 30;
 export const DETAILED_REVIEW_LENGTH = 150;
 /** Between publishable and detailed: a good review that is close to detailed, so the next step feels near. */

@@ -197,6 +197,12 @@ export async function getReviewSummaries(
   return summaries;
 }
 
+/** Whether the member's first review is still ahead: no `first-review` XP yet (paid once, migration 0207). */
+export async function firstReviewBonusAhead(userId: string): Promise<boolean> {
+  const { rows } = await getPool().query<{ ahead: boolean }>(`select not exists(select 1 from "profileExperience" where "userId" = $1 and reason = 'first-review') as ahead`, [userId]);
+  return rows[0]?.ahead ?? false;
+}
+
 export async function getUserReview(userId: string, brand: string, flavor: string): Promise<ReviewData | null> {
   const result = await getPool().query<ReviewRow>(
     `${REVIEW_SELECT} where r."userId" = $1 and r."brand" = $2 and r."flavor" = $3 limit 1`,

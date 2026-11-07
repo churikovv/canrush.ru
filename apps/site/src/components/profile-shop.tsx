@@ -9,7 +9,7 @@ import { pluralRu } from '@/lib/drink-calendar-fields';
 import type { ProfileAppearance } from '@/lib/profile-appearance';
 import { SHOP_ITEMS, SHOP_TIERS, weeklyDeal, type ShopItem, type ShopKind } from '@/lib/shop-items';
 
-export interface ShopView { earned: number; sources: { achievements: number; levels: number; race: number; daily: number }; balance: number; owned: string[] }
+export interface ShopView { earned: number; sources: { achievements: number; levels: number; race: number; daily: number; firstReview: number }; balance: number; owned: string[] }
 /** The purchase, given from above (`buyShopItemAction`): the strip renders in tests without the auth environment. */
 export type ShopBuy = (key: string) => Promise<ShopActionResult>;
 
@@ -112,9 +112,10 @@ export function ProfileShop({ open, onClose, shop, buy: purchase, onBought, worn
         <li><span>Уровни</span><b>{shop.sources.levels}</b></li>
         <li><span>Гонка недели</span><b>{shop.sources.race}</b></li>
         <li><span>Лунный цикл</span><b>{shop.sources.daily}</b></li>
+        <li><span>Первый отзыв</span><b>{shop.sources.firstReview}</b></li>
       </ul>
       {shop.earned !== shop.balance && <p className="shop-wallet-spent">Заработано {shop.earned.toLocaleString('ru-RU')} · потрачено {(shop.earned - shop.balance).toLocaleString('ru-RU')}</p>}
-      <p className="shop-wallet-note">Искры приходят сами: за достижения, каждый новый уровень и места в гонке недели. Купить их нельзя. <Link href={href}>Ближайшие достижения</Link></p>
+      <p className="shop-wallet-note">Искры приходят сами: за достижения, каждый новый уровень, места в гонке недели и первый отзыв. Купить их нельзя. <Link href={href}>Ближайшие достижения</Link></p>
     </section>
     {deal && !shop.owned.includes(deal.item.key) && <section className="shop-deal" data-tier={deal.item.tier} aria-label="Предложение недели">
       <span className="shop-deal-badge">Предложение недели · −25%</span>
